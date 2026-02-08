@@ -270,7 +270,10 @@ body {
     text-align: center;
     display: block;
     cursor: pointer;
+    font-weight: 500;
 }
+
+/* --- Sync Dropdown Fix --- */
 .sync-dropdown {
     width: 100%;
     left: 0;
@@ -280,6 +283,39 @@ body {
     position: absolute;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
+    background: var(--color-surface); /* Ensure background is set */
+    border-radius: 8px;
+    padding: 5px;
+    display: none; /* Hide by default */
+    z-index: 2010;
+}
+
+.sync-dropdown.show {
+    display: block; /* Show when active */
+    animation: fadeIn 0.2s;
+}
+
+.sync-dropdown button, .sync-dropdown label {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: left;
+    border: none;
+    background: none;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.sync-dropdown button:hover, .sync-dropdown label:hover {
+    background: var(--color-background);
+    color: var(--color-primary);
+}
+
+.sync-dropdown hr {
+    margin: 5px 0;
+    border: none;
+    border-top: 1px solid var(--color-border);
 }
 
 /* --- Standard Elements --- */
