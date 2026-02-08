@@ -15,7 +15,7 @@
         <header>
             <h1>🍽️ Recipe Manager</h1>
             <div class="header-controls">
-                <div id="syncStatus" class="sync-status disconnected">Not Connected</div>
+                <div id="syncStatus" class="sync-status disconnected" data-i18n="sync_disconnected">Not Connected</div>
                 <select id="languageSelect" onchange="changeLanguage(this.value)">
                     <option value="en">English</option>
                     <option value="bg">Български</option>
@@ -24,27 +24,30 @@
         </header>
 
         <nav>
-            <button class="nav-btn active" data-page="recipes">Recipes</button>
-            <button class="nav-btn" data-page="ingredients">Ingredients</button>
-            <button class="nav-btn" data-page="allergens">Allergens</button>
-            <button class="nav-btn" data-page="menu">Menu Planning</button>
-            <button class="nav-btn" data-page="template">Print Template</button>
+            <button class="nav-btn active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
+            <button class="nav-btn" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
+            <button class="nav-btn" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
+            <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
+            <button class="nav-btn" data-page="template" data-i18n="nav_template">Print Template</button>
         </nav>
 
         <!-- File System Controls -->
         <div class="file-controls">
-            <button class="btn btn-primary" onclick="selectSaveLocation()">📁 Select Save Location</button>
-            <button class="btn btn-secondary" onclick="manualSave()">💾 Save</button>
-            <button class="btn btn-secondary" onclick="manualLoad()">📂 Load from Folder</button>
-            <button class="btn btn-secondary" onclick="exportData()">Export</button>
-            <button class="btn btn-secondary" onclick="importData()">Import</button>
+            <button class="btn btn-primary" onclick="selectSaveLocation()" data-i18n="btn_select_location">📁 Select Save Location</button>
+            <button class="btn btn-secondary" onclick="manualSave()" data-i18n="btn_manual_save">💾 Save</button>
+            <button class="btn btn-secondary" onclick="manualLoad()" data-i18n="btn_manual_load">📂 Load from Folder</button>
+            <button class="btn btn-secondary" onclick="exportData()" data-i18n="btn_export">Export</button>
+            <button class="btn btn-secondary" onclick="importData()" data-i18n="btn_import">Import</button>
+            <!-- Hidden file input for import -->
+            <input type="file" id="importInput" accept=".json" style="display:none;">
+            <button class="btn btn-secondary" onclick="document.getElementById('importInput').click()" data-i18n="btn_import">Import</button>
         </div>
 
         <!-- Recipes Page -->
         <div id="recipes" class="page active">
             <div class="page-header">
-                <h2>Recipes</h2>
-                <button class="btn btn-primary" onclick="openRecipeModal()">+ Add Recipe</button>
+                <h2 data-i18n="nav_recipes">Recipes</h2>
+                <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
             </div>
             <div id="recipeList" class="card-grid"></div>
         </div>
@@ -52,8 +55,8 @@
         <!-- Ingredients Page -->
         <div id="ingredients" class="page">
             <div class="page-header">
-                <h2>Ingredients</h2>
-                <button class="btn btn-primary" onclick="openIngredientModal()">+ Add Ingredient</button>
+                <h2 data-i18n="nav_ingredients">Ingredients</h2>
+                <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
             </div>
             <div id="ingredientList" class="card-grid"></div>
         </div>
@@ -61,8 +64,8 @@
         <!-- Allergens Page -->
         <div id="allergens" class="page">
             <div class="page-header">
-                <h2>Allergens</h2>
-                <button class="btn btn-primary" onclick="openAllergenModal()">+ Add Allergen</button>
+                <h2 data-i18n="nav_allergens">Allergens</h2>
+                <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
             </div>
             <div id="allergenList" class="card-grid"></div>
         </div>
@@ -70,26 +73,26 @@
         <!-- Menu Planning Page -->
         <div id="menu" class="page">
             <div class="page-header">
-                <h2>Menu Planning</h2>
+                <h2 data-i18n="nav_menu">Menu Planning</h2>
                 <div class="menu-controls">
-                    <button class="btn btn-secondary" onclick="toggleView('week')">📅 Week View</button>
-                    <button class="btn btn-secondary" onclick="toggleView('month')">📆 Month View</button>
-                    <button class="btn btn-primary" onclick="saveCurrentMenu()">Save Menu</button>
+                    <button class="btn btn-secondary" onclick="toggleView('week')" data-i18n="btn_week_view">📅 Week View</button>
+                    <button class="btn btn-secondary" onclick="toggleView('month')" data-i18n="btn_month_view">📆 Month View</button>
+                    <button class="btn btn-primary" onclick="saveCurrentMenu()" data-i18n="btn_save_menu">Save Menu</button>
                 </div>
             </div>
 
             <!-- Day Selection for Printing -->
             <div style="background:var(--color-surface);padding:1rem;border-radius:var(--border-radius);margin-bottom:1.5rem;box-shadow:var(--shadow-sm);">
-                <h4 style="margin:0 0 0.75rem 0;color:var(--color-text);">📅 Select Days to Print:</h4>
+                <h4 style="margin:0 0 0.75rem 0;color:var(--color-text);" data-i18n="alert_select_days">📅 Select Days to Print:</h4>
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    <button id="printDay0" class="btn btn-small btn-secondary day-selector" onclick="togglePrintDay(0)">Sun</button>
-                    <button id="printDay1" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(1)">Mon</button>
-                    <button id="printDay2" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(2)">Tue</button>
-                    <button id="printDay3" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(3)">Wed</button>
-                    <button id="printDay4" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(4)">Thu</button>
-                    <button id="printDay5" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(5)">Fri</button>
-                    <button id="printDay6" class="btn btn-small btn-secondary day-selector" onclick="togglePrintDay(6)">Sat</button>
-                    <button class="btn btn-primary" onclick="printMenu()" style="margin-left:auto;">🖨️ Print Selected Days</button>
+                    <button id="printDay0" class="btn btn-small btn-secondary day-selector" onclick="togglePrintDay(0)" data-i18n="day_sun_short">Sun</button>
+                    <button id="printDay1" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(1)" data-i18n="day_mon_short">Mon</button>
+                    <button id="printDay2" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(2)" data-i18n="day_tue_short">Tue</button>
+                    <button id="printDay3" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(3)" data-i18n="day_wed_short">Wed</button>
+                    <button id="printDay4" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(4)" data-i18n="day_thu_short">Thu</button>
+                    <button id="printDay5" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(5)" data-i18n="day_fri_short">Fri</button>
+                    <button id="printDay6" class="btn btn-small btn-secondary day-selector" onclick="togglePrintDay(6)" data-i18n="day_sat_short">Sat</button>
+                    <button class="btn btn-primary" onclick="printMenu()" style="margin-left:auto;" data-i18n="btn_print">🖨️ Print Selected Days</button>
                 </div>
                 <p style="margin:0.75rem 0 0 0;font-size:0.875rem;color:var(--color-text-secondary);">
                     💡 Click days to toggle selection. Only selected days will appear in the printed menu.
@@ -97,14 +100,14 @@
             </div>
 
             <div class="calendar-header">
-                <button class="btn btn-secondary" onclick="changeMonth(-1)">← Previous</button>
+                <button class="btn btn-secondary" onclick="changeMonth(-1)" data-i18n="btn_previous">← Previous</button>
                 <h3 id="currentMonth"></h3>
-                <button class="btn btn-secondary" onclick="changeMonth(1)">Next →</button>
+                <button class="btn btn-secondary" onclick="changeMonth(1)" data-i18n="btn_next">Next →</button>
             </div>
             <div id="calendar" class="calendar"></div>
 
             <div class="menu-history-section">
-                <h3>Past Menus</h3>
+                <h3 data-i18n="heading_past_menus">Past Menus</h3>
                 <div id="menuHistory"></div>
             </div>
         </div>
@@ -112,14 +115,14 @@
         <!-- Print Template Page -->
         <div id="template" class="page">
             <div class="page-header">
-                <h2>Print Template Designer</h2>
-                <button class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+                <h2 data-i18n="nav_template">Print Template Designer</h2>
+                <button class="btn btn-primary" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
             </div>
 
             <div class="template-editor-container">
                 <div class="template-editor-section">
-                    <h3>Template Editor</h3>
-                    <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:0.5rem;">
+                    <h3 data-i18n="modal_edit_recipe">Template Editor</h3>
+                    <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:0.5rem;" data-i18n="template_description">
                         Customize your menu print template. Insert variables using the buttons below:
                     </p>
 
@@ -131,13 +134,6 @@
                             <li><code>{labelMenuFor}</code> - "Menu for:" label</li>
                             <li><code>{recipes}</code> - <strong>All recipes organized by day and meal type</strong></li>
                         </ul>
-                        <p style="margin:0.75rem 0 0 0;font-size:0.85rem;color:#1976d2;">
-                            💡 <strong>Tip:</strong> The <code>{recipes}</code> variable automatically formats your menu with:
-                            <br>• Day names (e.g., "Monday, February 10")
-                            <br>• Meal categories (Soups, Main Dishes, Desserts, Other)
-                            <br>• Recipe names with allergen warnings
-                            <br>• Only shows recipes from days you select for printing
-                        </p>
                     </div>
 
                     <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
@@ -150,28 +146,27 @@
                     <div id="templateEditor"></div>
 
                     <div style="margin-top:1.5rem;">
-                        <h4>Layout Style</h4>
+                        <h4 data-i18n="label_layout">Layout Style</h4>
                         <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
-                            <button class="btn btn-small btn-secondary layout-btn active" onclick="setLayout('default')">📄 Default</button>
-                            <button class="btn btn-small btn-secondary layout-btn" onclick="setLayout('columns')">📰 Two Columns</button>
-                            <button class="btn btn-small btn-secondary layout-btn" onclick="setLayout('centered')">⭐ Centered</button>
+                            <button class="btn btn-small btn-secondary layout-btn active" onclick="setLayout('default')" id="layout_default" data-i18n="btn_layout_default">📄 Default</button>
+                            <button class="btn btn-small btn-secondary layout-btn" onclick="setLayout('columns')" id="layout_columns" data-i18n="btn_layout_columns">📰 Two Columns</button>
+                            <button class="btn btn-small btn-secondary layout-btn" onclick="setLayout('centered')" id="layout_centered" data-i18n="btn_layout_centered">⭐ Centered</button>
+                             <button class="btn btn-small btn-secondary layout-btn" onclick="setLayout('grid')" id="layout_grid" data-i18n="btn_layout_grid">📅 5-Day Grid</button>
                         </div>
                     </div>
 
                     <div style="margin-top:1.5rem;">
-                        <h4>Background Image</h4>
+                        <h4 data-i18n="label_background">Background Image</h4>
                         <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
-                            <button class="btn btn-small btn-secondary" onclick="uploadBackgroundImage()">🖼️ Upload Background</button>
-                            <button class="btn btn-small btn-danger" onclick="removeBackgroundImage()">✖ Remove Background</button>
+                            <button class="btn btn-small btn-secondary" onclick="document.getElementById('uploadBgInput').click()" data-i18n="btn_upload_bg">🖼️ Upload Background</button>
+                            <input type="file" id="uploadBgInput" accept="image/*" style="display:none;">
+                            <button class="btn btn-small btn-danger" id="removeBgBtn" onclick="removeBackgroundImage()" data-i18n="btn_remove_bg">✖ Remove Background</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="template-preview-section">
-                    <h3>Preview</h3>
-                    <p style="color:var(--color-text-secondary);font-size:0.85rem;margin-bottom:1rem;">
-                        Shows how your menu will look with selected days (first 2 days shown in preview)
-                    </p>
+                    <h3 data-i18n="heading_preview">Preview</h3>
                     <div id="templatePreview" class="template-preview"></div>
                 </div>
             </div>
@@ -182,61 +177,61 @@
     <div id="recipeModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="recipeModalTitle">Add Recipe</h2>
+                <h2 id="recipeModalTitle" data-i18n="modal_add_recipe">Add Recipe</h2>
                 <button class="modal-close" onclick="closeRecipeModal()">&times;</button>
             </div>
             <form id="recipeForm" onsubmit="saveRecipe(event)">
                 <div class="form-group">
-                    <label for="recipeName">Recipe Name</label>
+                    <label for="recipeName" data-i18n="label_recipe_name">Recipe Name</label>
                     <input type="text" id="recipeName" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="recipeCategory">Category</label>
+                    <label for="recipeCategory" data-i18n="label_category">Category</label>
                     <select id="recipeCategory" required>
-                        <option value="">Select category</option>
-                        <option value="soup">🥣 Soup</option>
-                        <option value="main">🍽️ Main</option>
-                        <option value="dessert">🍰 Dessert</option>
-                        <option value="other">➕ Other</option>
+                        <option value="" data-i18n="category_select">Select category</option>
+                        <option value="soup" data-i18n="category_soup">🥣 Soup</option>
+                        <option value="main" data-i18n="category_main">🍽️ Main</option>
+                        <option value="dessert" data-i18n="category_dessert">🍰 Dessert</option>
+                        <option value="other" data-i18n="category_other">➕ Other</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="recipePortionSize">Portion Size (optional)</label>
+                    <label for="recipePortionSize" data-i18n="label_portion_size">Portion Size (optional)</label>
                     <input type="text" id="recipePortionSize" placeholder="e.g., Serves 10, 250g per serving">
                 </div>
 
                 <div class="form-group">
-                    <label>Ingredients</label>
+                    <label data-i18n="label_ingredients">Ingredients</label>
                     <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
                         <select id="ingredientSelect" style="flex:1;">
-                            <option value="">Select ingredient</option>
+                            <option value="" data-i18n="select_ingredient">Select ingredient</option>
                         </select>
-                        <button type="button" class="btn btn-secondary" onclick="addIngredientToRecipe()">Add</button>
+                        <button type="button" class="btn btn-secondary" onclick="addIngredientToRecipe()" data-i18n="btn_add">Add</button>
                     </div>
                     <div id="recipeIngredients" class="tag-container"></div>
                 </div>
 
                 <div class="form-group">
-                    <label>Allergens</label>
+                    <label data-i18n="label_allergens">Allergens</label>
                     <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
                         <select id="allergenSelect" style="flex:1;">
-                            <option value="">Select allergen</option>
+                            <option value="" data-i18n="select_allergen">Select allergen</option>
                         </select>
-                        <button type="button" class="btn btn-secondary" onclick="addAllergenToRecipe()">Add</button>
+                        <button type="button" class="btn btn-secondary" onclick="addAllergenToRecipe()" data-i18n="btn_add">Add</button>
                     </div>
                     <div id="recipeAllergens" class="tag-container"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="recipeInstructions">Instructions (optional)</label>
+                    <label for="recipeInstructions" data-i18n="label_instructions">Instructions (optional)</label>
                     <textarea id="recipeInstructions" rows="4"></textarea>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeRecipeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Recipe</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeRecipeModal()" data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn_save_recipe">Save Recipe</button>
                 </div>
             </form>
         </div>
@@ -246,17 +241,17 @@
     <div id="ingredientModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add Ingredient</h2>
+                <h2 data-i18n="modal_add_ingredient">Add Ingredient</h2>
                 <button class="modal-close" onclick="closeIngredientModal()">&times;</button>
             </div>
             <form id="ingredientForm" onsubmit="saveIngredient(event)">
                 <div class="form-group">
-                    <label for="ingredientName">Ingredient Name</label>
+                    <label for="ingredientName" data-i18n="label_ingredient_name">Ingredient Name</label>
                     <input type="text" id="ingredientName" required>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeIngredientModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeIngredientModal()" data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn_add">Add</button>
                 </div>
             </form>
         </div>
@@ -266,17 +261,17 @@
     <div id="allergenModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add Allergen</h2>
+                <h2 data-i18n="modal_add_allergen">Add Allergen</h2>
                 <button class="modal-close" onclick="closeAllergenModal()">&times;</button>
             </div>
             <form id="allergenForm" onsubmit="saveAllergen(event)">
                 <div class="form-group">
-                    <label for="allergenName">Allergen Name</label>
+                    <label for="allergenName" data-i18n="label_allergen_name">Allergen Name</label>
                     <input type="text" id="allergenName" required>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeAllergenModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAllergenModal()" data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn_add">Add</button>
                 </div>
             </form>
         </div>
