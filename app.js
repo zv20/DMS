@@ -27,79 +27,230 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 // Translations
 const translations = {
   en: {
-    menu_planning: "Menu Planning",
-    recipes: "Recipes",
-    ingredients: "Ingredients",
-    allergens: "Allergens",
-    template: "Print Template",
-    week_view: "Week View",
-    month_view: "Month View",
-    save_menu: "Save Menu",
-    week_of: "Week of",
-    print_selected: "Print Selected Days",
-    label_menu_for: "Menu for:",
-    category_select: "Select category",
-    category_soup: "Soup",
-    category_main: "Main",
-    category_dessert: "Dessert",
-    category_other: "Other",
-    btn_delete: "Delete",
-    btn_load: "Load",
-    alert_delete_ingredient: "Delete this ingredient?",
-    alert_delete_allergen: "Delete this allergen?",
-    alert_delete_menu: "Delete this saved menu?",
-    alert_delete_recipe: "Delete this recipe?",
-    alert_menu_saved: "Menu saved to history!",
-    alert_menu_loaded: "Menu loaded!",
-    alert_no_menu_to_save: "Menu is empty, nothing to save.",
-    alert_select_days: "Please select at least one day to print.",
-    alert_template_saved: "Template saved!",
-    alert_import_success: "Data imported successfully!",
-    alert_import_error: "Error importing data: ",
-    empty_ingredients: "No ingredients added yet.",
-    empty_allergens: "No allergens added yet.",
-    empty_menus: "No saved menus.",
-    empty_recipes: "No recipes found."
+    nav_recipes: 'Recipes',
+    nav_ingredients: 'Ingredients',
+    nav_allergens: 'Allergens',
+    nav_menu: 'Menu Planning',
+    nav_template: 'Print Template',
+
+    btn_add_recipe: '+ Add Recipe',
+    btn_add_ingredient: '+ Add Ingredient',
+    btn_add_allergen: '+ Add Allergen',
+    btn_save_menu: 'Save Menu',
+    btn_previous: '← Previous',
+    btn_next: 'Next →',
+    btn_print: '🖨️ Print',
+    btn_save_template: 'Save Template',
+    btn_edit: 'Edit',
+    btn_delete: 'Delete',
+    btn_add: 'Add',
+    btn_cancel: 'Cancel',
+    btn_save: 'Save',
+    btn_save_recipe: 'Save Recipe',
+    btn_load: 'Load',
+    btn_export: 'Export',
+    btn_import: 'Import',
+    btn_select_location: '📁 Select Save Location',
+    btn_manual_save: '💾 Save',
+    btn_manual_load: '📂 Load from Folder',
+    btn_week_view: '📅 Week View',
+    btn_month_view: '📆 Month View',
+    btn_upload_bg: '🖼️ Upload Background',
+    btn_remove_bg: '✖ Remove Background',
+    btn_layout_default: '📄 Default',
+    btn_layout_columns: '📰 Two Columns',
+    btn_layout_centered: '⭐ Centered',
+    btn_layout_grid: '📅 5-Day Grid',
+    btn_add_slot: '+ Add Slot',
+
+    modal_add_recipe: 'Add Recipe',
+    modal_edit_recipe: 'Edit Recipe',
+    modal_add_ingredient: 'Add Ingredient',
+    modal_add_allergen: 'Add Allergen',
+
+    label_recipe_name: 'Recipe Name',
+    label_category: 'Category',
+    label_portion_size: 'Portion Size',
+    label_ingredients: 'Ingredients',
+    label_allergens: 'Allergens',
+    label_instructions: 'Instructions (optional)',
+    label_ingredient_name: 'Ingredient Name',
+    label_allergen_name: 'Allergen Name',
+    label_portion: 'Portion',
+    label_layout: 'Layout Style',
+    label_background: 'Background Image',
+
+    category_select: 'Select category',
+    category_soup: '🥣 Soup',
+    category_main: '🍽️ Main',
+    category_dessert: '🍰 Dessert',
+    category_other: '➕ Other',
+
+    slot_soup: 'Soup',
+    slot_main: 'Main',
+    slot_dessert: 'Dessert',
+    slot_other: 'Other',
+
+    select_ingredient: 'Select ingredient',
+    select_allergen: 'Select allergen',
+    select_recipe: 'Select recipe',
+
+    empty_recipes: 'No recipes yet. Click "Add Recipe" to get started!',
+    empty_ingredients: 'No ingredients yet.',
+    empty_allergens: 'No allergens yet.',
+    empty_menus: 'No saved menus yet.',
+    no_ingredients: 'No ingredients',
+
+    alert_delete_recipe: 'Delete this recipe?',
+    alert_delete_ingredient: 'Delete this ingredient?',
+    alert_delete_allergen: 'Delete this allergen?',
+    alert_delete_menu: 'Delete this saved menu?',
+    alert_no_menu_to_save: 'No recipes in current menu to save!',
+    alert_menu_saved: 'Menu saved successfully!',
+    alert_menu_loaded: 'Menu loaded!',
+    alert_template_saved: 'Template saved!',
+    alert_data_saved: 'Data saved to files!',
+    alert_data_loaded: 'Data loaded from folder!',
+    alert_select_folder: 'Please select a save location first',
+    alert_import_success: 'Data imported successfully!',
+    alert_import_error: 'Error importing data: ',
+    alert_file_api_unsupported: 'File System Access not supported in this browser. Use Export/Import instead.',
+    alert_select_days: 'Please select at least one day to print',
+
+    heading_past_menus: 'Past Menus',
+    heading_preview: 'Preview',
+    label_saved: 'Saved',
+    label_contains: 'Contains',
+    label_menu_for: 'Menu for:',
+
+    template_description: 'Customize your menu print template. Use variables below:',
+
+    portion_placeholder: 'e.g., Serves 10, 250g per serving',
+    week_of: 'Week of',
+    
+    // Day abbreviations
+    day_sun_short: 'Sun',
+    day_mon_short: 'Mon',
+    day_tue_short: 'Tue',
+    day_wed_short: 'Wed',
+    day_thu_short: 'Thu',
+    day_fri_short: 'Fri',
+    day_sat_short: 'Sat'
   },
   bg: {
-    menu_planning: "Планиране на Меню",
-    recipes: "Рецепти",
-    ingredients: "Съставки",
-    allergens: "Алергени",
-    template: "Шаблон за Печат",
-    week_view: "Седмичен Изглед",
-    month_view: "Месечен Изглед",
-    save_menu: "Запази Меню",
-    week_of: "Седмица от",
-    print_selected: "Принтирай Избраните Дни",
-    label_menu_for: "Меню за:",
-    category_select: "Изберете категория",
-    category_soup: "Супа",
-    category_main: "Основно",
-    category_dessert: "Десерт",
-    category_other: "Друго",
-    btn_delete: "Изтрий",
-    btn_load: "Зареди",
-    alert_delete_ingredient: "Изтриване на тази съставка?",
-    alert_delete_allergen: "Изтриване на този алерген?",
-    alert_delete_menu: "Изтриване на това запазено меню?",
-    alert_delete_recipe: "Изтриване на тази рецепта?",
-    alert_menu_saved: "Менюто е запазено в историята!",
-    alert_menu_loaded: "Менюто е заредено!",
-    alert_no_menu_to_save: "Менюто е празно, няма какво да се запази.",
-    alert_select_days: "Моля изберете поне един ден за печат.",
-    alert_template_saved: "Шаблонът е запазен!",
-    alert_import_success: "Данните са импортирани успешно!",
-    alert_import_error: "Грешка при импортиране: ",
-    empty_ingredients: "Все още няма добавени съставки.",
-    empty_allergens: "Все още няма добавени алергени.",
-    empty_menus: "Няма запазени менюта.",
-    empty_recipes: "Няма намерени рецепти."
+    nav_recipes: 'Рецепти',
+    nav_ingredients: 'Съставки',
+    nav_allergens: 'Алергени',
+    nav_menu: 'Планиране на меню',
+    nav_template: 'Шаблон за печат',
+
+    btn_add_recipe: '+ Добави рецепта',
+    btn_add_ingredient: '+ Добави съставка',
+    btn_add_allergen: '+ Добави алерген',
+    btn_save_menu: 'Запази меню',
+    btn_previous: '← Предишна',
+    btn_next: 'Следваща →',
+    btn_print: '🖨️ Печат',
+    btn_save_template: 'Запази шаблона',
+    btn_edit: 'Редактирай',
+    btn_delete: 'Изтрий',
+    btn_add: 'Добави',
+    btn_cancel: 'Отказ',
+    btn_save: 'Запази',
+    btn_save_recipe: 'Запази рецепта',
+    btn_load: 'Зареди',
+    btn_export: 'Експорт',
+    btn_import: 'Импорт',
+    btn_select_location: '📁 Избери папка',
+    btn_manual_save: '💾 Запази',
+    btn_manual_load: '📂 Зареди от папка',
+    btn_week_view: '📅 Седмичен изглед',
+    btn_month_view: '📆 Месечен изглед',
+    btn_upload_bg: '🖼️ Качи фон',
+    btn_remove_bg: '✖ Премахни фон',
+    btn_layout_default: '📄 Стандартен',
+    btn_layout_columns: '📰 Две колони',
+    btn_layout_centered: '⭐ Центриран',
+    btn_layout_grid: '📅 5-дневна решетка',
+    btn_add_slot: '+ Добави слот',
+
+    modal_add_recipe: 'Добави рецепта',
+    modal_edit_recipe: 'Редактирай рецепта',
+    modal_add_ingredient: 'Добави съставка',
+    modal_add_allergen: 'Добави алерген',
+
+    label_recipe_name: 'Име на рецепта',
+    label_category: 'Категория',
+    label_portion_size: 'Порция',
+    label_ingredients: 'Съставки',
+    label_allergens: 'Алергени',
+    label_instructions: 'Инструкции (опционално)',
+    label_ingredient_name: 'Име на съставка',
+    label_allergen_name: 'Име на алерген',
+    label_portion: 'Порция',
+    label_layout: 'Стил на подредба',
+    label_background: 'Фоново изображение',
+
+    category_select: 'Изберете категория',
+    category_soup: '🥣 Супа',
+    category_main: '🍽️ Основно',
+    category_dessert: '🍰 Десерт',
+    category_other: '➕ Друго',
+
+    slot_soup: 'Супа',
+    slot_main: 'Основно',
+    slot_dessert: 'Десерт',
+    slot_other: 'Друго',
+
+    select_ingredient: 'Избери съставка',
+    select_allergen: 'Избери алерген',
+    select_recipe: 'Избери рецепта',
+
+    empty_recipes: 'Все още няма рецепти. Натиснете "+ Добави рецепта"!',
+    empty_ingredients: 'Все още няма съставки.',
+    empty_allergens: 'Все още няма алергени.',
+    empty_menus: 'Няма запазени менюта.',
+    no_ingredients: 'Няма съставки',
+
+    alert_delete_recipe: 'Изтриване на тази рецепта?',
+    alert_delete_ingredient: 'Изтриване на тази съставка?',
+    alert_delete_allergen: 'Изтриване на този алерген?',
+    alert_delete_menu: 'Изтриване на това запазено меню?',
+    alert_no_menu_to_save: 'Менюто е празно, няма какво да се запази.',
+    alert_menu_saved: 'Менюто е запазено!',
+    alert_menu_loaded: 'Менюто е заредено!',
+    alert_template_saved: 'Шаблонът е запазен!',
+    alert_data_saved: 'Данните са запазени!',
+    alert_data_loaded: 'Данните са заредени!',
+    alert_select_folder: 'Моля първо изберете папка за запазване',
+    alert_import_success: 'Данните са импортирани успешно!',
+    alert_import_error: 'Грешка при импортиране: ',
+    alert_file_api_unsupported: 'Този браузър не поддържа директен достъп до файлове. Използвайте Експорт/Импорт.',
+    alert_select_days: 'Моля изберете поне един ден за печат.',
+
+    heading_past_menus: 'Минали менюта',
+    heading_preview: 'Преглед',
+    label_saved: 'Запазено',
+    label_contains: 'Съдържа',
+    label_menu_for: 'Меню за:',
+
+    template_description: 'Настройте шаблона за печат. Използвайте бутоните по-долу:',
+    portion_placeholder: 'напр. За 10 човека, 250г порция',
+    week_of: 'Седмица от',
+
+    // Day abbreviations
+    day_sun_short: 'Нд',
+    day_mon_short: 'Пн',
+    day_tue_short: 'Вт',
+    day_wed_short: 'Ср',
+    day_thu_short: 'Чт',
+    day_fri_short: 'Пт',
+    day_sat_short: 'Сб'
   }
 };
 
 function t(key) {
-  return translations[currentLanguage][key] || key;
+  return (translations[currentLanguage] && translations[currentLanguage][key]) || key;
 }
 
 function applyTranslations() {
@@ -107,10 +258,16 @@ function applyTranslations() {
     const key = el.dataset.i18n;
     el.textContent = t(key);
   });
-  // Update buttons text manually if needed (omitted for brevity, relying on render functions)
+  
+  // Update placeholders
+  const portionInput = document.getElementById('recipePortionSize');
+  if (portionInput) portionInput.placeholder = t('portion_placeholder');
+
   updateSelects(); // Re-render selects with translated options
   renderCalendar(); // Re-render calendar for headers
+  renderMenuHistory(); // Update history text
   updateTemplatePreview();
+  updatePrintDayButtons();
 }
 
 // Database
@@ -226,20 +383,15 @@ async function saveData() {
 
 async function selectSaveLocation() {
   if (!isFileSystemSupported) {
-    alert('Your browser does not support file system access. Data will be saved to LocalStorage.');
+    alert(t('alert_file_api_unsupported'));
     return;
   }
   try {
     directoryHandle = await window.showDirectoryPicker();
     await saveDirectoryHandle(directoryHandle);
     await loadData();
-    updateSelects();
-    renderRecipes();
-    renderIngredients();
-    renderAllergens();
-    renderCalendar();
-    renderMenuHistory();
-    alert('Save location set! Data will now sync to this folder.');
+    renderAll();
+    alert(t('alert_data_loaded'));
   } catch (err) {
     console.error(err);
   }
@@ -268,7 +420,7 @@ async function autoLoadOnStartup() {
 
 function manualSave() {
   saveData();
-  alert('Data saved successfully!');
+  alert(t('alert_data_saved'));
 }
 
 async function manualLoad() {
@@ -279,7 +431,7 @@ async function manualLoad() {
     await saveDirectoryHandle(handle);
     await loadData();
     renderAll();
-    alert('Data loaded from folder!');
+    alert(t('alert_data_loaded'));
   } catch (err) {
     console.error(err);
   }
@@ -291,13 +443,13 @@ function updateSyncStatus(status) {
   el.className = 'sync-status';
   if (status === 'connected' || status === 'synced') {
     el.classList.add('connected');
-    el.textContent = '🟢 Synced to Folder';
+    el.textContent = '🟢 ' + (currentLanguage === 'bg' ? 'Синхронизирано' : 'Synced');
   } else if (status === 'error') {
     el.classList.add('error');
-    el.textContent = '🔴 Sync Error';
+    el.textContent = '🔴 ' + (currentLanguage === 'bg' ? 'Грешка' : 'Error');
   } else {
     el.classList.add('disconnected');
-    el.textContent = '🟡 Local Storage Only';
+    el.textContent = '🟡 ' + (currentLanguage === 'bg' ? 'Локално (Local)' : 'Local Storage');
   }
 }
 
@@ -309,6 +461,7 @@ function renderAll() {
   renderCalendar();
   renderMenuHistory();
   updateTemplatePreview();
+  applyTranslations(); // Apply translation to new content
 }
 
 // Recipes
@@ -320,7 +473,7 @@ function openRecipeModal(recipeId = null) {
   
   if (recipeId) {
     const recipe = recipes.find(r => r.id === recipeId);
-    title.textContent = 'Edit Recipe';
+    title.textContent = t('modal_edit_recipe');
     document.getElementById('recipeName').value = recipe.name;
     document.getElementById('recipeCategory').value = recipe.category;
     document.getElementById('recipePortionSize').value = recipe.portionSize || '';
@@ -330,7 +483,7 @@ function openRecipeModal(recipeId = null) {
     form.dataset.tempIngredients = JSON.stringify(recipe.ingredients);
     form.dataset.tempAllergens = JSON.stringify(recipe.allergens);
   } else {
-    title.textContent = 'Add Recipe';
+    title.textContent = t('modal_add_recipe');
     form.reset();
     document.getElementById('recipeIngredients').innerHTML = '';
     document.getElementById('recipeAllergens').innerHTML = '';
@@ -473,7 +626,7 @@ function renderRecipes() {
       <p style="color:var(--color-text-secondary);font-size:0.9rem;">${recipe.portionSize || ''}</p>
       ${allergensHtml}
       <div class="actions">
-        <button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">Edit</button>
+        <button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">${t('btn_edit')}</button>
         <button class="btn btn-small btn-danger" onclick="deleteRecipe('${recipe.id}')">${t('btn_delete')}</button>
       </div>
     `;
@@ -790,7 +943,7 @@ function setLayout(layout) {
 }
 
 function updateLayoutButtons() {
-  const layouts = ['default', 'columns', 'centered'];
+  const layouts = ['default', 'columns', 'centered', 'grid'];
   layouts.forEach(l => {
     const btn = document.getElementById(`layout_${l}`);
     if (btn) {
@@ -820,7 +973,44 @@ function getLayoutStyles() {
           text-align: center;
         }
         body.centered h3 {
-          text-align: left;
+          text-align: center;
+        }
+        .print-day {
+          text-align: center;
+        }
+      `
+    };
+  }
+  if (templateLayout === 'grid') {
+    return {
+      maxWidth: '100%',
+      css: `
+        @page { size: landscape; margin: 0.5cm; }
+        .print-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+          width: 100%;
+        }
+        .print-day {
+          border: 1px solid #ddd;
+          padding: 10px;
+          height: 100%;
+          background: #fff;
+          page-break-inside: avoid;
+        }
+        .print-day h3 {
+          margin-top: 0;
+          font-size: 1.1em;
+          text-align: center;
+          border-bottom: 2px solid #eee;
+          padding-bottom: 5px;
+          margin-bottom: 10px;
+          color: #21808d;
+        }
+        .print-slot {
+          margin-bottom: 8px;
+          font-size: 0.9em;
         }
       `
     };
@@ -838,11 +1028,12 @@ function updateTemplatePreview() {
   const weekStart = getWeekStart(currentDate);
   const locale = currentLanguage === 'bg' ? 'bg-BG' : 'en-US';
 
-  // Fake preview for first two days
+  // Fake preview for first 5 days for grid view, or 2 for others
+  const daysToShow = templateLayout === 'grid' ? 5 : 2;
   const previewDates = [];
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < daysToShow; i++) {
     const day = new Date(weekStart);
-    day.setDate(weekStart.getDate() + i);
+    day.setDate(weekStart.getDate() + (i + 1)); // Mon-Fri
     previewDates.push(day);
   }
 
@@ -852,14 +1043,22 @@ function updateTemplatePreview() {
   const title = `${firstDate.toLocaleDateString(locale, { month: 'long', day: 'numeric' })} - ${lastDate.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })} ${currentLanguage === 'bg' ? 'Меню' : 'Menu'}`;
   const dateRange = `${firstDate.toLocaleDateString(locale)} - ${lastDate.toLocaleDateString(locale)}`;
 
-  let recipesHtml = '<div>';
+  let recipesHtml = '<div class="print-grid">';
   previewDates.forEach(day => {
-    recipesHtml += `<h3>${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
-    recipesHtml += '<p>Sample Soup</p>';
-    recipesHtml += '<p>Sample Main Dish</p>';
+    recipesHtml += `<div class="print-day">
+      <h3>${day.toLocaleDateString(locale, { weekday: 'long' })}</h3>`;
+    recipesHtml += `<div class="print-slot"><strong>${t('slot_soup')}:</strong> Sample Soup</div>`;
+    recipesHtml += `<div class="print-slot"><strong>${t('slot_main')}:</strong> Sample Main</div>`;
+    recipesHtml += '</div>';
   });
   recipesHtml += '</div>';
 
+  const styles = getLayoutStyles();
+  
+  // Inject style for preview
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = styles.css;
+  
   const html = printTemplate
     .replace(/{title}/g, title)
     .replace(/{dateRange}/g, dateRange)
@@ -867,6 +1066,10 @@ function updateTemplatePreview() {
     .replace(/{labelMenuFor}/g, t('label_menu_for'));
 
   preview.innerHTML = html;
+  // Apply grid styles to preview if needed
+  if (templateLayout === 'grid') {
+     preview.style.display = 'block'; // Reset
+  }
 }
 
 // Export/import (JSON)
@@ -916,16 +1119,7 @@ function importData(event) {
       localStorage.setItem('templateLayout', templateLayout);
 
       saveData();
-      updateSelects();
-      renderRecipes();
-      renderIngredients();
-      renderAllergens();
-      renderCalendar();
-      renderMenuHistory();
-      updateLayoutButtons();
-      updateTemplatePreview();
-      applyTranslations();
-
+      renderAll();
       alert(t('alert_import_success'));
     } catch (err) {
       alert(t('alert_import_error') + err.message);
@@ -970,15 +1164,9 @@ async function init() {
     langSel.addEventListener('change', (e) => changeLanguage(e.target.value));
   }
 
-  updateSelects();
-  renderRecipes();
-  renderIngredients();
-  renderAllergens();
-  renderCalendar();
-  renderMenuHistory();
+  renderAll();
   updatePrintDayButtons();
   updateLayoutButtons();
-  updateTemplatePreview();
   updateSyncStatus();
 
   if (window.$) {
@@ -987,7 +1175,6 @@ async function init() {
     });
   }
 
-  applyTranslations();
   bindNavigation();
 
   const prevWeekBtn = document.getElementById('prevWeek');
@@ -999,26 +1186,19 @@ async function init() {
   const manualLoadBtn = document.getElementById('manualLoadBtn');
   const exportBtn = document.getElementById('exportBtn');
   const importInput = document.getElementById('importInput');
+  const uploadBgInput = document.getElementById('uploadBgInput');
+  const removeBgBtn = document.getElementById('removeBgBtn');
+  const layoutDefaultBtn = document.getElementById('layout_default');
+  const layoutColumnsBtn = document.getElementById('layout_columns');
+  const layoutCenteredBtn = document.getElementById('layout_centered');
+  const layoutGridBtn = document.getElementById('layout_grid');
 
-  if (prevWeekBtn) {
-    prevWeekBtn.addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() - 7);
-      renderCalendar();
-    });
-  }
-  if (nextWeekBtn) {
-    nextWeekBtn.addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() + 7);
-      renderCalendar();
-    });
-  }
-  if (saveMenuBtn) saveMenuBtn.addEventListener('click', saveCurrentMenu);
-  if (printMenuBtn) printMenuBtn.addEventListener('click', printMenu);
-  if (selectLocationBtn) selectLocationBtn.addEventListener('click', selectSaveLocation);
-  if (manualSaveBtn) manualSaveBtn.addEventListener('click', manualSave);
-  if (manualLoadBtn) manualLoadBtn.addEventListener('click', manualLoad);
-  if (exportBtn) exportBtn.addEventListener('click', exportData);
-  if (importInput) importInput.addEventListener('change', importData);
+  if (uploadBgInput) uploadBgInput.addEventListener('change', uploadBackgroundImage);
+  if (removeBgBtn) removeBgBtn.addEventListener('click', removeBackgroundImage);
+  if (layoutDefaultBtn) layoutDefaultBtn.addEventListener('click', () => setLayout('default'));
+  if (layoutColumnsBtn) layoutColumnsBtn.addEventListener('click', () => setLayout('columns'));
+  if (layoutCenteredBtn) layoutCenteredBtn.addEventListener('click', () => setLayout('centered'));
+  if (layoutGridBtn) layoutGridBtn.addEventListener('click', () => setLayout('grid'));
 
   for (let i = 0; i <= 6; i++) {
     const btn = document.getElementById(`printDay${i}`);
@@ -1026,18 +1206,6 @@ async function init() {
       btn.addEventListener('click', () => togglePrintDay(i));
     }
   }
-
-  const uploadBgInput = document.getElementById('uploadBgInput');
-  const removeBgBtn = document.getElementById('removeBgBtn');
-  const layoutDefaultBtn = document.getElementById('layout_default');
-  const layoutColumnsBtn = document.getElementById('layout_columns');
-  const layoutCenteredBtn = document.getElementById('layout_centered');
-
-  if (uploadBgInput) uploadBgInput.addEventListener('change', uploadBackgroundImage);
-  if (removeBgBtn) removeBgBtn.addEventListener('click', removeBackgroundImage);
-  if (layoutDefaultBtn) layoutDefaultBtn.addEventListener('click', () => setLayout('default'));
-  if (layoutColumnsBtn) layoutColumnsBtn.addEventListener('click', () => setLayout('columns'));
-  if (layoutCenteredBtn) layoutCenteredBtn.addEventListener('click', () => setLayout('centered'));
 }
 
 window.addEventListener('DOMContentLoaded', init);
@@ -1049,12 +1217,12 @@ function updateSelects() {
   const catSelect = document.getElementById('recipeCategory');
   
   if (ingSelect) {
-    ingSelect.innerHTML = '<option value="">Select ingredient</option>' + 
+    ingSelect.innerHTML = `<option value="">${t('select_ingredient')}</option>` + 
       ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
   }
   
   if (allSelect) {
-    allSelect.innerHTML = '<option value="">Select allergen</option>' + 
+    allSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + 
       allergens.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
   }
 
@@ -1103,11 +1271,9 @@ function updatePrintDayButtons() {
 function getWeekStart(d) {
   const date = new Date(d);
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when week starts on Monday
-  // But code seems to use Sunday as 0. Let's stick to standard.
-  // Actually, if we want Monday start:
+  // Adjust to start on Monday? Default JS is Sunday=0.
+  // If we want Monday start:
   const dayOfWeek = date.getDay(); // 0 (Sun) to 6 (Sat)
-  // If 0 (Sun), go back 6 days to Monday. If 1 (Mon), go back 0.
   const diffToMon = (dayOfWeek + 6) % 7; 
   date.setDate(date.getDate() - diffToMon);
   date.setHours(0,0,0,0);
@@ -1187,6 +1353,12 @@ function renderMonthView(container) {
   DAY_NAMES.forEach(d => {
     const el = document.createElement('div');
     el.className = 'calendar-day-header';
+    // Translated headers? 
+    // We can just use date locale for this too, or map it.
+    // For simplicity, let's use the first 3 chars of English day names for now, or use map.
+    // Actually, let's use the translation keys!
+    // But DAY_NAMES is English.
+    // Let's rely on locale for now or just hardcode english short names for layout structure.
     el.textContent = d.substring(0, 3);
     container.appendChild(el);
   });
@@ -1247,15 +1419,17 @@ function renderSlots(dateKey, containerId) {
       content = `
         <div class="meal-slot-content">
           <select onchange="addRecipeToMenu('${dateKey}', '${slotType}', this.value)">
-            <option value="">+ Add ${t('category_' + slotType) || slotType}</option>
+            <option value="">${t('btn_add_slot')}</option>
             ${recipes.filter(r => r.category === slotType || slotType === 'other').map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
           </select>
         </div>
       `;
     }
     
+    const slotLabel = t('slot_' + slotType);
+    
     slotEl.innerHTML = `
-      <div class="meal-slot-header"><strong>${t('category_' + slotType) || slotType}</strong></div>
+      <div class="meal-slot-header"><strong>${slotLabel}</strong></div>
       ${content}
     `;
     container.appendChild(slotEl);
@@ -1315,10 +1489,14 @@ function printMenu() {
     const dateKey = day.toISOString().split('T')[0];
     const dayMenu = currentMenu[dateKey];
     
+    // For grid view, we always render the cell even if empty, to maintain grid structure?
+    // User asked for "5 block system".
+    // If empty, let's render an empty block or just the header.
+    
+    recipesHtml += `<div class="print-day">
+      <h3>${day.toLocaleDateString(locale, { weekday: 'long', month: 'numeric', day: 'numeric' })}</h3>`;
+    
     if (dayMenu) {
-      recipesHtml += `<div class="print-day">
-        <h3>${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
-      
       DEFAULT_SLOTS.forEach(slot => {
         if (dayMenu[slot] && dayMenu[slot].recipe) {
           const r = recipes.find(x => x.id === dayMenu[slot].recipe.id);
@@ -1327,12 +1505,12 @@ function printMenu() {
             if (r.allergens && r.allergens.length) {
               allergensText = ` <span class="print-allergens">(${r.allergens.map(a => a.name).join(', ')})</span>`;
             }
-            recipesHtml += `<div class="print-slot"><strong>${t('category_' + slot)}:</strong> ${r.name}${allergensText}</div>`;
+            recipesHtml += `<div class="print-slot"><strong>${t('slot_' + slot)}:</strong> ${r.name}${allergensText}</div>`;
           }
         }
       });
-      recipesHtml += '</div>';
     }
+    recipesHtml += '</div>';
   });
   recipesHtml += '</div>';
 
@@ -1376,7 +1554,6 @@ function printMenu() {
   // Wait for images
   setTimeout(() => {
     printWindow.print();
-    // printWindow.close(); // Optional
   }, 500);
 }
 
@@ -1400,3 +1577,17 @@ window.changeLanguage = changeLanguage;
 window.selectSaveLocation = selectSaveLocation;
 window.manualSave = manualSave;
 window.manualLoad = manualLoad;
+window.togglePrintDay = togglePrintDay;
+window.toggleView = toggleView;
+window.changeMonth = changeMonth;
+window.setLayout = setLayout;
+window.insertVariable = insertVariable;
+window.uploadBackgroundImage = uploadBackgroundImage;
+window.removeBackgroundImage = removeBackgroundImage;
+window.addRecipeToMenu = addRecipeToMenu;
+window.removeRecipeFromMenu = removeRecipeFromMenu;
+window.addIngredientToRecipe = addIngredientToRecipe;
+window.addAllergenToRecipe = addAllergenToRecipe;
+window.deleteRecipe = deleteRecipe;
+window.deleteSavedMenu = deleteSavedMenu;
+window.loadSavedMenu = loadSavedMenu;
