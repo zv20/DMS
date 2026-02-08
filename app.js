@@ -328,6 +328,7 @@ async function loadData() {
         // Don't overwrite language from file, use local preference
         templateBackgroundImage = data.templateBackgroundImage || '';
         templateLayout = data.templateLayout || 'default';
+        selectedPrintDays = data.selectedPrintDays || [1, 2, 3, 4, 5];
         updateSyncStatus('connected');
       }
     } catch (err) {
@@ -346,6 +347,7 @@ async function loadData() {
       printTemplate = parsed.printTemplate || printTemplate;
       templateBackgroundImage = parsed.templateBackgroundImage || '';
       templateLayout = parsed.templateLayout || 'default';
+      selectedPrintDays = parsed.selectedPrintDays || [1, 2, 3, 4, 5];
     }
     updateSyncStatus('local');
   }
@@ -361,7 +363,8 @@ async function saveData() {
     printTemplate,
     currentLanguage,
     templateBackgroundImage,
-    templateLayout
+    templateLayout,
+    selectedPrintDays
   };
 
   if (directoryHandle) {
@@ -1083,7 +1086,8 @@ function exportData() {
     printTemplate,
     currentLanguage,
     templateBackgroundImage,
-    templateLayout
+    templateLayout,
+    selectedPrintDays
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1113,6 +1117,7 @@ function importData(event) {
       currentLanguage = data.currentLanguage || currentLanguage;
       templateBackgroundImage = data.templateBackgroundImage || '';
       templateLayout = data.templateLayout || 'default';
+      selectedPrintDays = data.selectedPrintDays || [1, 2, 3, 4, 5];
 
       localStorage.setItem('recipeManagerLang', currentLanguage);
       localStorage.setItem('templateBackgroundImage', templateBackgroundImage);
@@ -1200,12 +1205,7 @@ async function init() {
   if (layoutCenteredBtn) layoutCenteredBtn.addEventListener('click', () => setLayout('centered'));
   if (layoutGridBtn) layoutGridBtn.addEventListener('click', () => setLayout('grid'));
 
-  for (let i = 0; i <= 6; i++) {
-    const btn = document.getElementById(`printDay${i}`);
-    if (btn) {
-      btn.addEventListener('click', () => togglePrintDay(i));
-    }
-  }
+  // Removed redundant loop that added event listeners to printDay buttons
 }
 
 window.addEventListener('DOMContentLoaded', init);
@@ -1247,6 +1247,7 @@ function togglePrintDay(dayIndex) {
   } else {
     selectedPrintDays.push(dayIndex);
   }
+  saveData(); // Save selection to storage
   updatePrintDayButtons();
 }
 
