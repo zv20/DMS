@@ -1,4 +1,4 @@
-// Recipe Manager Application - Fixed Print + Day Selection + Full Functionality
+// Recipe Manager Application - Auto-Print Logic
 
 let recipes = [];
 let ingredients = [];
@@ -14,8 +14,6 @@ let templateLayout = localStorage.getItem('templateLayout') || 'default';
 let directoryHandle = null;
 const isFileSystemSupported = 'showDirectoryPicker' in window;
 let viewMode = localStorage.getItem('calendarViewMode') || 'week';
-// Initialize with default Mon-Fri if nothing saved yet, will be overwritten by loadData
-let selectedPrintDays = [1, 2, 3, 4, 5]; 
 
 const DB_NAME = 'RecipeManagerDB';
 const DB_VERSION = 1;
@@ -40,7 +38,7 @@ const translations = {
     btn_save_menu: 'Save Menu',
     btn_previous: '← Previous',
     btn_next: 'Next →',
-    btn_print: '🖨️ Print',
+    btn_print: '🖨️ Print Menu',
     btn_save_template: 'Save Template',
     btn_edit: 'Edit',
     btn_delete: 'Delete',
@@ -117,6 +115,7 @@ const translations = {
     alert_import_error: 'Error importing data: ',
     alert_file_api_unsupported: 'File System Access not supported in this browser. Use Export/Import instead.',
     alert_select_days: 'Please select at least one day to print',
+    alert_no_print_data: 'No meals found for this week! Please add recipes to the menu before printing.',
 
     heading_past_menus: 'Past Menus',
     heading_preview: 'Preview',
@@ -124,6 +123,7 @@ const translations = {
     label_contains: 'Contains',
     label_menu_for: 'Menu for:',
     label_print_date: 'Print Week of:',
+    text_print_hint: '💡 Only days with planned meals will be printed. Use the date picker to switch weeks.',
 
     template_description: 'Customize your menu print template. Use variables below:',
 
@@ -152,7 +152,7 @@ const translations = {
     btn_save_menu: 'Запази меню',
     btn_previous: '← Предишна',
     btn_next: 'Следваща →',
-    btn_print: '🖨️ Печат',
+    btn_print: '🖨️ Печат Меню',
     btn_save_template: 'Запази шаблона',
     btn_edit: 'Редактирай',
     btn_delete: 'Изтрий',
@@ -229,6 +229,7 @@ const translations = {
     alert_import_error: 'Грешка при импортиране: ',
     alert_file_api_unsupported: 'Този браузър не поддържа директен достъп до файлове. Използвайте Експорт/Импорт.',
     alert_select_days: 'Моля изберете поне един ден за печат.',
+    alert_no_print_data: 'Няма намерени ястия за тази седмица! Моля добавете рецепти към менюто преди печат.',
 
     heading_past_menus: 'Минали менюта',
     heading_preview: 'Преглед',
@@ -236,6 +237,7 @@ const translations = {
     label_contains: 'Съдържа',
     label_menu_for: 'Меню за:',
     label_print_date: 'Печат за седмица от:',
+    text_print_hint: '💡 Ще бъдат разпечатани само дни, за които има планирани ястия. Използвайте селектора за дата, за да смените седмицата.',
 
     template_description: 'Настройте шаблона за печат. Използвайте бутоните по-долу:',
     portion_placeholder: 'напр. За 10 човека, 250г порция',
@@ -270,7 +272,7 @@ function applyTranslations() {
   renderCalendar(); // Re-render calendar for headers
   renderMenuHistory(); // Update history text
   updateTemplatePreview();
-  updatePrintDayButtons();
+  updatePrintDatePicker();
 }
 
 // Database
@@ -331,7 +333,6 @@ async function loadData() {
         // Don't overwrite language from file, use local preference
         templateBackgroundImage = data.templateBackgroundImage || '';
         templateLayout = data.templateLayout || 'default';
-        selectedPrintDays = data.selectedPrintDays || [1, 2, 3, 4, 5];
         updateSyncStatus('connected');
       }
     } catch (err) {
@@ -350,12 +351,11 @@ async function loadData() {
       printTemplate = parsed.printTemplate || printTemplate;
       templateBackgroundImage = parsed.templateBackgroundImage || '';
       templateLayout = parsed.templateLayout || 'default';
-      selectedPrintDays = parsed.selectedPrintDays || [1, 2, 3, 4, 5];
     }
     updateSyncStatus('local');
   }
   // After load, update UI
-  updatePrintDayButtons();
+  updatePrintDatePicker();
 }
 
 async function saveData() {
@@ -368,8 +368,7 @@ async function saveData() {
     printTemplate,
     currentLanguage,
     templateBackgroundImage,
-    templateLayout,
-    selectedPrintDays
+    templateLayout
   };
 
   if (directoryHandle) {
@@ -1091,8 +1090,7 @@ function exportData() {
     printTemplate,
     currentLanguage,
     templateBackgroundImage,
-    templateLayout,
-    selectedPrintDays
+    templateLayout
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1122,8 +1120,7 @@ function importData(event) {
       currentLanguage = data.currentLanguage || currentLanguage;
       templateBackgroundImage = data.templateBackgroundImage || '';
       templateLayout = data.templateLayout || 'default';
-      selectedPrintDays = data.selectedPrintDays || [1, 2, 3, 4, 5];
-
+      
       localStorage.setItem('recipeManagerLang', currentLanguage);
       localStorage.setItem('templateBackgroundImage', templateBackgroundImage);
       localStorage.setItem('templateLayout', templateLayout);
@@ -1175,7 +1172,7 @@ async function init() {
   }
 
   renderAll();
-  updatePrintDayButtons();
+  updatePrintDatePicker();
   updateLayoutButtons();
   updateSyncStatus();
 
@@ -1187,15 +1184,6 @@ async function init() {
 
   bindNavigation();
 
-  const prevWeekBtn = document.getElementById('prevWeek');
-  const nextWeekBtn = document.getElementById('nextWeek');
-  const saveMenuBtn = document.getElementById('saveMenu');
-  const printMenuBtn = document.getElementById('printMenuBtn');
-  const selectLocationBtn = document.getElementById('selectLocationBtn');
-  const manualSaveBtn = document.getElementById('manualSaveBtn');
-  const manualLoadBtn = document.getElementById('manualLoadBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const importInput = document.getElementById('importInput');
   const uploadBgInput = document.getElementById('uploadBgInput');
   const removeBgBtn = document.getElementById('removeBgBtn');
   const layoutDefaultBtn = document.getElementById('layout_default');
@@ -1212,22 +1200,13 @@ async function init() {
   if (layoutGridBtn) layoutGridBtn.addEventListener('click', () => setLayout('grid'));
   if (printStartDateInput) {
     printStartDateInput.addEventListener('change', (e) => {
-      currentDate = new Date(e.target.value);
-      renderAll();
+      // Parse as local date to avoid timezone shifts
+      const parts = e.target.value.split('-');
+      if (parts.length === 3) {
+        currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        renderAll();
+      }
     });
-  }
-
-  // Ensure event listeners are attached only once, cleanly
-  // Clean old listeners if any (not possible with anonymous, but logic is safe)
-  for (let i = 0; i <= 6; i++) {
-    const btn = document.getElementById(`printDay${i}`);
-    if (btn) {
-      // Clone to remove old listeners
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-      // Re-attach
-      newBtn.addEventListener('click', () => togglePrintDay(i));
-    }
   }
 }
 
@@ -1262,44 +1241,10 @@ function updateSelects() {
   }
 }
 
-// Day selector for printing
-function togglePrintDay(dayIndex) {
-  const idx = selectedPrintDays.indexOf(dayIndex);
-  if (idx > -1) {
-    selectedPrintDays.splice(idx, 1);
-  } else {
-    selectedPrintDays.push(dayIndex);
-  }
-  // Sort days to keep them in order (Sun-Sat)
-  selectedPrintDays.sort((a, b) => a - b);
-  
-  saveData(); // Save selection to storage immediately
-  updatePrintDayButtons();
-}
-
-function updatePrintDayButtons() {
-  for (let i = 0; i <= 6; i++) {
-    const btn = document.getElementById(`printDay${i}`);
-    if (btn) {
-      if (selectedPrintDays.includes(i)) {
-        btn.classList.add('active');
-        btn.classList.remove('btn-secondary');
-        btn.classList.add('btn-primary');
-      } else {
-        btn.classList.remove('active');
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-secondary');
-      }
-    }
-  }
-  
-  // Sync date picker if exists
+function updatePrintDatePicker() {
   const input = document.getElementById('printStartDate');
   if (input) {
     const weekStart = getWeekStart(currentDate);
-    // Format YYYY-MM-DD local time
-    // toISOString() uses UTC, which might be wrong date if local time is behind UTC
-    // Better to use manual formatting or local ISO
     const year = weekStart.getFullYear();
     const month = String(weekStart.getMonth() + 1).padStart(2, '0');
     const day = String(weekStart.getDate()).padStart(2, '0');
@@ -1330,15 +1275,12 @@ function toggleView(mode) {
 
 function changeMonth(delta) {
   if (viewMode === 'week') {
-    // If in week view, jump by weeks instead of months?
-    // Usually "Previous/Next" in week view means +/- 1 week
-    // Let's change behavior based on view
     currentDate.setDate(currentDate.getDate() + (delta * 7));
   } else {
     currentDate.setMonth(currentDate.getMonth() + delta);
   }
   renderCalendar();
-  updatePrintDayButtons(); // Update date picker too
+  updatePrintDatePicker();
 }
 
 // Calendar Rendering (simplified for brevity, ensuring it exists)
@@ -1399,12 +1341,6 @@ function renderMonthView(container) {
   DAY_NAMES.forEach(d => {
     const el = document.createElement('div');
     el.className = 'calendar-day-header';
-    // Translated headers? 
-    // We can just use date locale for this too, or map it.
-    // For simplicity, let's use the first 3 chars of English day names for now, or use map.
-    // Actually, let's use the translation keys!
-    // But DAY_NAMES is English.
-    // Let's rely on locale for now or just hardcode english short names for layout structure.
     el.textContent = d.substring(0, 3);
     container.appendChild(el);
   });
@@ -1503,23 +1439,32 @@ function removeRecipeFromMenu(date, slot) {
 }
 
 function printMenu() {
-  if (selectedPrintDays.length === 0) {
-    alert(t('alert_select_days'));
-    return;
-  }
-
   const weekStart = getWeekStart(currentDate);
   const locale = currentLanguage === 'bg' ? 'bg-BG' : 'en-US';
 
   const selectedDates = [];
+  // Iterate current week days
   for (let i = 0; i < 7; i++) {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + i);
-    const weekday = day.getDay();
-    if (selectedPrintDays.includes(weekday)) selectedDates.push(day);
+    const dateKey = day.toISOString().split('T')[0];
+    
+    // Check if this day has ANY recipes in the menu
+    const dayData = currentMenu[dateKey];
+    let hasRecipe = false;
+    if (dayData) {
+        hasRecipe = Object.values(dayData).some(slot => slot && slot.recipe);
+    }
+    
+    // Auto-select ONLY days with recipes
+    if (hasRecipe) {
+        selectedDates.push(day);
+    }
   }
+
+  // If no days selected (empty week), alert user
   if (!selectedDates.length) {
-    alert(t('alert_select_days'));
+    alert(t('alert_no_print_data'));
     return;
   }
 
@@ -1531,13 +1476,16 @@ function printMenu() {
 
   let recipesHtml = '<div class="print-grid">';
   
+  // Set grid columns dynamically based on number of days? 
+  // User asked for "5 block system".
+  // If we have 2 days, maybe still grid, but only 2 items.
+  // We'll keep the CSS grid class, but maybe update CSS to repeat(auto-fit) or use JS to set explicit columns if needed.
+  // The current CSS is repeat(5, 1fr). If we have fewer days, they will fill 5 slots left-to-right.
+  // If we have >5 days (Mon-Sat), the 6th will wrap. This is likely acceptable.
+  
   selectedDates.forEach(day => {
     const dateKey = day.toISOString().split('T')[0];
     const dayMenu = currentMenu[dateKey];
-    
-    // For grid view, we always render the cell even if empty, to maintain grid structure?
-    // User asked for "5 block system".
-    // If empty, let's render an empty block or just the header.
     
     recipesHtml += `<div class="print-day">
       <h3>${day.toLocaleDateString(locale, { weekday: 'long', month: 'numeric', day: 'numeric' })}</h3>`;
@@ -1561,6 +1509,13 @@ function printMenu() {
   recipesHtml += '</div>';
 
   const styles = getLayoutStyles();
+  
+  // Adjust grid columns if needed
+  if (templateLayout === 'grid' && selectedDates.length !== 5) {
+     // Optional: Adjust grid to fit content better? 
+     // For now, keep fixed 5 column grid as per request, just fill available.
+  }
+
   const printWindow = window.open('', '_blank');
   
   const bgStyle = templateBackgroundImage ? 
@@ -1623,7 +1578,6 @@ window.changeLanguage = changeLanguage;
 window.selectSaveLocation = selectSaveLocation;
 window.manualSave = manualSave;
 window.manualLoad = manualLoad;
-window.togglePrintDay = togglePrintDay;
 window.toggleView = toggleView;
 window.changeMonth = changeMonth;
 window.setLayout = setLayout;
