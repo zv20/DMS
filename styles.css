@@ -104,21 +104,23 @@ nav {
     color: white;
 }
 
-/* File Controls - Responsive */
-.file-controls {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+/* Sync Controls & Dropdown */
+.sync-controls-wrapper {
+    position: relative;
+    display: inline-block;
 }
 
-/* Sync Status */
 .sync-status {
     padding: 0.5rem 1rem;
     border-radius: var(--border-radius);
     font-size: 0.875rem;
     font-weight: 500;
     white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .sync-status.connected { background: #d4edda; color: #155724; }
@@ -126,6 +128,55 @@ nav {
 .sync-status.syncing { background: #d1ecf1; color: #0c5460; }
 .sync-status.loading { background: #fff3cd; color: #856404; }
 .sync-status.error { background: #f8d7da; color: #721c24; }
+.sync-status:after {
+    content: "▼";
+    font-size: 0.7em;
+    margin-left: 5px;
+}
+
+.sync-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--color-surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 250px;
+    z-index: 100;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+}
+
+.sync-dropdown.show {
+    display: block;
+}
+
+.sync-dropdown .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.sync-dropdown .dropdown-item:hover {
+    background: var(--color-background);
+    color: var(--color-primary);
+}
+
+.sync-dropdown .divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 0.5rem 0;
+}
 
 /* Page Content */
 .page {
@@ -267,9 +318,7 @@ code {
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 50%;
-    font-size: 1.25rem;
-}
+    border-radius: 50%;\n    font-size: 1.25rem;\n}
 
 .category-soup { background: #e3f2fd; }
 .category-main { background: #fff3e0; }
@@ -329,11 +378,7 @@ code {
 }
 
 .calendar-header h3 {
-    font-size: clamp(1.25rem, 3vw, 1.5rem);
-    color: var(--color-text);
-    text-align: center;
-    flex: 1;
-}
+    font-size: clamp(1.25rem, 3vw, 1.5rem);\n    color: var(--color-text);\n    text-align: center;\n    flex: 1;\n}
 
 /* Week View - Responsive */
 .week-day-row {
@@ -345,18 +390,11 @@ code {
 }
 
 .week-day-row h3 {
-    font-size: clamp(1.125rem, 2.5vw, 1.25rem);
-    color: var(--color-primary);
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--color-border);
-}
+    font-size: clamp(1.125rem, 2.5vw, 1.25rem);\n    color: var(--color-primary);\n    margin-bottom: 1rem;\n    padding-bottom: 0.5rem;\n    border-bottom: 2px solid var(--color-border);\n}
 
 .week-slots-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-    gap: 1rem;
-}
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));\n    gap: 1rem;\n}
 
 /* Month View - Responsive Grid */
 .calendar {
@@ -371,12 +409,15 @@ code {
 
 .calendar-day {
     aspect-ratio: 1;
-    padding: 0.75rem;
+    padding: 0.5rem;
     background: var(--color-background);
     border-radius: var(--border-radius);
     cursor: pointer;
     transition: var(--transition);
-    min-height: 80px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .calendar-day:hover {
@@ -384,8 +425,28 @@ code {
 }
 
 .calendar-day h4 {
-    font-size: 1.125rem;
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    flex-shrink: 0;
+}
+
+.calendar-day-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mini-recipe-item {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid #eee;
 }
 
 /* Meal Slots - Responsive */
@@ -457,17 +518,7 @@ code {
 }
 
 .menu-history-item {
-    background: var(--color-surface);
-    padding: 1rem 1.5rem;
-    border-radius: var(--border-radius);
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--shadow-sm);
-    gap: 1rem;
-    flex-wrap: wrap;
-}
+    background: var(--color-surface);\n    padding: 1rem 1.5rem;\n    border-radius: var(--border-radius);\n    margin-bottom: 1rem;\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    box-shadow: var(--shadow-sm);\n    gap: 1rem;\n    flex-wrap: wrap;\n}
 
 /* Template Editor - Responsive */
 .template-editor-container {
@@ -476,13 +527,8 @@ code {
     gap: 2rem;
 }
 
-.template-editor-section,
-.template-preview-section {
-    background: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-md);
-}
+.template-editor-section,\n.template-preview-section {
+    background: var(--color-surface);\n    padding: 1.5rem;\n    border-radius: var(--border-radius);\n    box-shadow: var(--shadow-md);\n}
 
 .template-preview {
     min-height: 400px;
@@ -577,9 +623,7 @@ form {
     color: var(--color-text);
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.form-group input,\n.form-group select,\n.form-group textarea {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--color-border);
@@ -841,11 +885,7 @@ form {
     outline-offset: 2px;
 }
 
-button:focus,
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
+button:focus,\na:focus,\ninput:focus,\nselect:focus,\ntextarea:focus {
     outline: 2px solid var(--color-primary);
 }
 
@@ -860,7 +900,6 @@ html {
     50% { opacity: 0.5; }
 }
 
-.sync-status.syncing,
-.sync-status.loading {
+.sync-status.syncing,\n.sync-status.loading {
     animation: pulse 2s ease-in-out infinite;
 }
