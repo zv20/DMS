@@ -265,6 +265,14 @@ body {
 
 /* --- Sync Controls --- */
 .nav-footer { margin-top: 1.5rem; padding: 0 0.5rem; }
+
+/* Wrapper is critical for positioning the absolute dropdown */
+.sync-controls-wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
 .sync-status {
     width: 100%;
     text-align: center;
