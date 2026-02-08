@@ -1,4 +1,4 @@
-// Recipe Manager Application - Auto-Print Logic
+// Recipe Manager Application - Sync Dropdown + Detailed Month View
 
 let recipes = [];
 let ingredients = [];
@@ -137,7 +137,17 @@ const translations = {
     day_wed_short: 'Wed',
     day_thu_short: 'Thu',
     day_fri_short: 'Fri',
-    day_sat_short: 'Sat'
+    day_sat_short: 'Sat',
+
+    sync_connected: '🟢 Synced',
+    sync_disconnected: '🟡 Local Storage',
+    sync_error: '🔴 Error',
+    
+    sync_select_location: '📁 Select Save Location',
+    sync_save: '💾 Save Changes',
+    sync_load: '📂 Load from Folder',
+    sync_export: '⬇ Export JSON',
+    sync_import: '⬆ Import JSON'
   },
   bg: {
     nav_recipes: 'Рецепти',
@@ -250,7 +260,17 @@ const translations = {
     day_wed_short: 'Ср',
     day_thu_short: 'Чт',
     day_fri_short: 'Пт',
-    day_sat_short: 'Сб'
+    day_sat_short: 'Сб',
+
+    sync_connected: '🟢 Синхронизирано',
+    sync_disconnected: '🟡 Локално (Local)',
+    sync_error: '🔴 Грешка',
+
+    sync_select_location: '📁 Избери папка',
+    sync_save: '💾 Запази промените',
+    sync_load: '📂 Зареди от папка',
+    sync_export: '⬇ Експорт JSON',
+    sync_import: '⬆ Импорт JSON'
   }
 };
 
@@ -263,6 +283,12 @@ function applyTranslations() {
     const key = el.dataset.i18n;
     el.textContent = t(key);
   });
+  
+  // Sync Dropdown Translations (manual update since they are dynamic/onclick)
+  // We can select them by onclick attribute content or classes if we add ids.
+  // Or just re-render the dropdown content.
+  // For simplicity, let's just update the status text.
+  updateSyncStatus();
   
   // Update placeholders
   const portionInput = document.getElementById('recipePortionSize');
@@ -402,6 +428,7 @@ async function selectSaveLocation() {
   } catch (err) {
     console.error(err);
   }
+  closeSyncDropdown();
 }
 
 async function autoLoadOnStartup() {
@@ -428,6 +455,7 @@ async function autoLoadOnStartup() {
 function manualSave() {
   saveData();
   alert(t('alert_data_saved'));
+  closeSyncDropdown();
 }
 
 async function manualLoad() {
@@ -442,21 +470,58 @@ async function manualLoad() {
   } catch (err) {
     console.error(err);
   }
+  closeSyncDropdown();
+}
+
+// Sync UI Logic
+function toggleSyncDropdown() {
+    const dropdown = document.getElementById('syncDropdown');
+    dropdown.classList.toggle('show');
+}
+
+function closeSyncDropdown() {
+    const dropdown = document.getElementById('syncDropdown');
+    if (dropdown) dropdown.classList.remove('show');
+}
+
+// Close dropdown when clicking outside
+window.onclick = function(event) {
+  if (!event.target.matches('.sync-status') && !event.target.closest('.sync-dropdown')) {
+    closeSyncDropdown();
+  }
 }
 
 function updateSyncStatus(status) {
+  // If no status passed, check current state or just update text
+  if (!status) {
+      if (directoryHandle) status = 'connected';
+      else status = 'local';
+  }
+
   const el = document.getElementById('syncStatus');
   if (!el) return;
+  
   el.className = 'sync-status';
   if (status === 'connected' || status === 'synced') {
     el.classList.add('connected');
-    el.textContent = '🟢 ' + (currentLanguage === 'bg' ? 'Синхронизирано' : 'Synced');
+    el.textContent = t('sync_connected');
   } else if (status === 'error') {
     el.classList.add('error');
-    el.textContent = '🔴 ' + (currentLanguage === 'bg' ? 'Грешка' : 'Error');
+    el.textContent = t('sync_error');
   } else {
     el.classList.add('disconnected');
-    el.textContent = '🟡 ' + (currentLanguage === 'bg' ? 'Локално (Local)' : 'Local Storage');
+    el.textContent = t('sync_disconnected');
+  }
+  
+  // Re-translate dropdown items
+  const dd = document.getElementById('syncDropdown');
+  if (dd) {
+      const btns = dd.querySelectorAll('button');
+      if (btns[0]) btns[0].textContent = t('sync_select_location');
+      if (btns[1]) btns[1].textContent = t('sync_save');
+      if (btns[2]) btns[2].textContent = t('sync_load');
+      if (btns[3]) btns[3].textContent = t('sync_export'); // export
+      if (btns[4]) btns[4].textContent = t('sync_import'); // import
   }
 }
 
@@ -1101,6 +1166,7 @@ function exportData() {
   a.click();
 
   URL.revokeObjectURL(url);
+  closeSyncDropdown();
 }
 
 function importData(event) {
@@ -1133,6 +1199,7 @@ function importData(event) {
     }
   };
   reader.readAsText(file);
+  closeSyncDropdown();
 }
 
 // Language
@@ -1191,6 +1258,7 @@ async function init() {
   const layoutCenteredBtn = document.getElementById('layout_centered');
   const layoutGridBtn = document.getElementById('layout_grid');
   const printStartDateInput = document.getElementById('printStartDate');
+  const importInput = document.getElementById('importInput');
 
   if (uploadBgInput) uploadBgInput.addEventListener('change', uploadBackgroundImage);
   if (removeBgBtn) removeBgBtn.addEventListener('click', removeBackgroundImage);
@@ -1198,9 +1266,10 @@ async function init() {
   if (layoutColumnsBtn) layoutColumnsBtn.addEventListener('click', () => setLayout('columns'));
   if (layoutCenteredBtn) layoutCenteredBtn.addEventListener('click', () => setLayout('centered'));
   if (layoutGridBtn) layoutGridBtn.addEventListener('click', () => setLayout('grid'));
+  if (importInput) importInput.addEventListener('change', importData);
+  
   if (printStartDateInput) {
     printStartDateInput.addEventListener('change', (e) => {
-      // Parse as local date to avoid timezone shifts
       const parts = e.target.value.split('-');
       if (parts.length === 3) {
         currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -1358,18 +1427,32 @@ function renderMonthView(container) {
     const dateKey = day.toISOString().split('T')[0];
     const el = document.createElement('div');
     el.className = 'calendar-day';
-    el.innerHTML = `<h4>${i}</h4>`;
+    el.innerHTML = `<h4>${i}</h4><div class="calendar-day-content"></div>`;
     el.onclick = () => {
       // Switch to week view for this day?
       currentDate = day;
       toggleView('week');
     };
     
-    // Show mini indicators
+    // Check for meals
     if (currentMenu[dateKey]) {
+      const contentDiv = el.querySelector('.calendar-day-content');
       const slots = Object.values(currentMenu[dateKey]);
+      
+      // If any meal, light up bg slightly
       if (slots.some(s => s.recipe)) {
         el.style.background = '#e3f2fd';
+        
+        // Add content
+        DEFAULT_SLOTS.forEach(slot => {
+             const s = currentMenu[dateKey][slot];
+             if (s && s.recipe) {
+                 const mini = document.createElement('div');
+                 mini.className = 'mini-recipe-item';
+                 mini.textContent = `${getCategoryIcon(slot)} ${s.recipe.name}`;
+                 contentDiv.appendChild(mini);
+             }
+        });
       }
     }
     
@@ -1476,13 +1559,6 @@ function printMenu() {
 
   let recipesHtml = '<div class="print-grid">';
   
-  // Set grid columns dynamically based on number of days? 
-  // User asked for "5 block system".
-  // If we have 2 days, maybe still grid, but only 2 items.
-  // We'll keep the CSS grid class, but maybe update CSS to repeat(auto-fit) or use JS to set explicit columns if needed.
-  // The current CSS is repeat(5, 1fr). If we have fewer days, they will fill 5 slots left-to-right.
-  // If we have >5 days (Mon-Sat), the 6th will wrap. This is likely acceptable.
-  
   selectedDates.forEach(day => {
     const dateKey = day.toISOString().split('T')[0];
     const dayMenu = currentMenu[dateKey];
@@ -1510,12 +1586,6 @@ function printMenu() {
 
   const styles = getLayoutStyles();
   
-  // Adjust grid columns if needed
-  if (templateLayout === 'grid' && selectedDates.length !== 5) {
-     // Optional: Adjust grid to fit content better? 
-     // For now, keep fixed 5 column grid as per request, just fill available.
-  }
-
   const printWindow = window.open('', '_blank');
   
   const bgStyle = templateBackgroundImage ? 
@@ -1591,3 +1661,4 @@ window.addAllergenToRecipe = addAllergenToRecipe;
 window.deleteRecipe = deleteRecipe;
 window.deleteSavedMenu = deleteSavedMenu;
 window.loadSavedMenu = loadSavedMenu;
+window.toggleSyncDropdown = toggleSyncDropdown;
