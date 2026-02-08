@@ -1162,7 +1162,8 @@ function exportData() {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'recipe_manager_export.json';
+  // Updated filename to match sync file
+  a.download = 'recipe_data.json';
   a.click();
 
   URL.revokeObjectURL(url);
