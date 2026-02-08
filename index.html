@@ -1,768 +1,394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Recipe Manager & Menu Planner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe & Menu Manager</title>
   
-  <!-- Summernote CSS -->
-  <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.css" rel="stylesheet">
-  
-  <style>
-    :root {
-      /* Palette */
-      --primary: #21808d;
-      --primary-dark: #18606a;
-      --secondary: #f0f7f8;
-      --accent: #e67e22;
-      --danger: #e74c3c;
-      --success: #27ae60;
-      
-      /* Text */
-      --text-main: #2c3e50;
-      --text-muted: #7f8c8d;
-      --text-light: #ecf0f1;
-      
-      /* Structural */
-      --bg-body: #f8f9fa;
-      --bg-card: #ffffff;
-      --border: #ecf0f1;
-      --radius: 8px;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
-      
-      /* Layout */
-      --header-height: 60px;
-      --container-width: 1200px;
-    }
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css">
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  <!-- jQuery & Summernote CSS/JS (CDN) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-body);
-      color: var(--text-main);
-      line-height: 1.5;
-      padding-bottom: 80px; /* Space for mobile nav if needed */
-    }
-
-    /* --- HEADER & NAVIGATION --- */
-    header {
-      background: var(--bg-card);
-      box-shadow: var(--shadow-sm);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      height: var(--header-height);
-      display: flex;
-      align-items: center;
-      padding: 0 1rem;
-    }
-
-    .header-content {
-      width: 100%;
-      max-width: var(--container-width);
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      white-space: nowrap;
-    }
-    
-    /* Desktop Nav */
-    .nav-tabs {
-      display: flex;
-      gap: 0.25rem;
-      background: var(--secondary);
-      padding: 0.25rem;
-      border-radius: var(--radius);
-      margin: 0 1rem;
-    }
-
-    .nav-btn {
-      padding: 0.5rem 1rem;
-      border: none;
-      background: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .nav-btn:hover { color: var(--primary); }
-    .nav-btn.active {
-      background: var(--bg-card);
-      color: var(--primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* Mobile Nav (Bottom Bar) */
-    .mobile-nav {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: var(--bg-card);
-      border-top: 1px solid var(--border);
-      padding: 0.5rem;
-      z-index: 999;
-      justify-content: space-around;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-
-    .mobile-nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      background: none;
-      border: none;
-      gap: 4px;
-      flex: 1;
-    }
-    
-    .mobile-nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
-    .mobile-nav-btn.active { color: var(--primary); }
-
-    /* Controls (Sync, Lang) */
-    .controls {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: var(--text-main);
-      padding: 0.25rem;
-      border-radius: 50%;
-    }
-    .icon-btn:hover { background: var(--secondary); }
-
-    /* Sync Status */
-    .sync-wrapper { position: relative; }
-    .sync-badge {
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      background: var(--secondary);
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-    .sync-badge.connected { background: #d3f9d8; color: #2b8a3e; }
-    .sync-badge.error { background: #ffe3e3; color: #c92a2a; }
-
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 120%;
-      right: 0;
-      width: 200px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
-      border-radius: var(--radius);
-      overflow: hidden;
-      z-index: 200;
-    }
-    .dropdown-menu.show { display: block; }
-    .dropdown-menu button {
-      width: 100%;
-      text-align: left;
-      padding: 0.75rem 1rem;
-      border: none;
-      background: none;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .dropdown-menu button:last-child { border: none; }
-    .dropdown-menu button:hover { background: var(--secondary); color: var(--primary); }
-
-    /* --- LAYOUT --- */
-    .container {
-      width: 100%;
-      max-width: var(--container-width);
-      margin: 0 auto;
-      padding: 1.5rem 1rem;
-    }
-
-    .page { display: none; animation: fadeIn 0.3s ease; }
-    .page.active { display: block; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: 0; } }
-
-    /* Page Headers */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    
-    .page-header h2 { margin: 0; font-size: 1.5rem; color: var(--primary); }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    
-    .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 5px rgba(33, 128, 141, 0.3); }
-    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-    .btn-secondary { background: var(--secondary); color: var(--text-main); }
-    .btn-secondary:hover { background: #e0e7e8; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-    .btn-full { width: 100%; }
-    
-    .btn-group { display: flex; gap: 0.5rem; }
-
-    /* Cards */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .card, .recipe-card, .item-card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border);
-      padding: 1.25rem;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover, .recipe-card:hover, .item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-
-    /* Recipe specific */
-    .recipe-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
-    .recipe-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
-    .recipe-meta { font-size: 0.85rem; color: var(--text-muted); }
-    .recipe-card h3 { margin: 0 0 0.5rem 0; color: var(--primary); font-size: 1.1rem; }
-
-    /* Tags */
-    .tag-cloud, .tag-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
-    .tag {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background: var(--secondary);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .tag.allergen {
-      background: #fff5f5;
-      color: var(--danger);
-      border: 1px solid #ffc9c9;
-    }
-
-    /* --- CALENDAR & MENU --- */
-    .calendar-toolbar {
-      background: var(--bg-card);
-      padding: 1rem;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .date-nav { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px; justify-content: center; }
-    .date-nav h3 { margin: 0; font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
-
-    /* Week View Grid */
-    .week-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1rem;
-      overflow-x: auto;
-      padding-bottom: 1rem;
-    }
-    
-    .day-col, .day-column {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      min-width: 140px; /* Ensure readability on mobile scroll */
-    }
-    
-    .day-header {
-      background: var(--secondary);
-      padding: 0.75rem;
-      text-align: center;
-      font-weight: 700;
-      color: var(--primary);
-      border-bottom: 1px solid var(--border);
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-    
-    .day-body { padding: 0.75rem; }
-
-    /* Slots */
-    .slot-item, .menu-slot {
-      margin-bottom: 1rem;
-      border-bottom: 1px dashed var(--border);
-      padding-bottom: 0.75rem;
-    }
-    .slot-item:last-child { border-bottom: none; }
-    
-    .slot-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 600; }
-    
-    .slot-select, .menu-slot-select {
-      width: 100%;
-      padding: 0.4rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.9rem;
-      background: white;
-    }
-
-    /* Month View */
-    .month-grid, .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      background: var(--border);
-      gap: 1px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-bottom: 2rem;
-    }
-    .calendar-day-header {
-      background: #f0f0f0;
-      padding: 10px;
-      text-align: center;
-      font-weight: bold;
-    }
-    .month-cell, .calendar-day {
-      background: var(--bg-card);
-      min-height: 100px;
-      padding: 0.5rem;
-      cursor: pointer;
-    }
-    .month-cell:hover, .calendar-day:hover { background: #fafafa; }
-    .month-date, .calendar-day h4 { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-muted); text-align: right; }
-    .month-badges, .calendar-day-content { display: flex; flex-direction: column; gap: 2px; }
-    .mini-badge, .mini-recipe-item { font-size: 0.7rem; padding: 2px 4px; border-radius: 2px; background: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* --- FORMS & MODALS --- */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      backdrop-filter: blur(2px);
-      overflow-y: auto;
-      padding: 1rem;
-    }
-    
-    .modal-content {
-      background-color: var(--bg-card);
-      margin: 2rem auto;
-      padding: 2rem;
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 600px;
-      position: relative;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      animation: slideUp 0.3s ease;
-    }
-    
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: 0; opacity: 1; } }
-
-    .close-btn, .close { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); }
-    
-    .form-group { margin-bottom: 1.25rem; }
-    .form-label, .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
-    .form-control, .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 1rem;
-      transition: border 0.2s;
-    }
-    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1); }
-    
-    .input-group { display: flex; gap: 0.5rem; }
-    .input-group .form-control { flex: 1; }
-
-    /* Categories */
-    .category-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 0.5rem; color: white; }
-    .category-soup { background-color: #e67e22; }
-    .category-main { background-color: #27ae60; }
-    .category-dessert { background-color: #9b59b6; }
-    .category-other { background-color: #7f8c8d; }
-
-    /* --- RESPONSIVE QUERIES --- */
-    @media (max-width: 768px) {
-      :root { --header-height: 50px; }
-      
-      /* Hide desktop nav */
-      .nav-tabs { display: none; }
-      .mobile-nav { display: flex; }
-      
-      /* Stack layout */
-      .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-      .btn { width: 100%; justify-content: center; }
-      .btn-group { width: 100%; display: flex; }
-      .btn-group .btn { flex: 1; }
-      
-      /* Calendar responsive */
-      .week-view { display: flex; flex-direction: column; gap: 1rem; }
-      .week-days { display: flex !important; flex-direction: column; gap: 1rem; }
-      .day-column { margin-bottom: 10px; }
-      
-      .calendar { grid-template-columns: 1fr; }
-      .calendar-day { min-height: 80px; display: flex; align-items: center; justify-content: space-between; }
-      .calendar-day-content { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
-      
-      /* Adjust modal */
-      .modal { padding: 0; }
-      .modal-content { margin: 0; min-height: 100vh; border-radius: 0; padding: 1.5rem; width: 100%; max-width: 100%; }
-      .close-btn, .close { top: 1rem; right: 1rem; }
-      
-      /* Controls */
-      .controls { margin-left: auto; }
-      .date-nav { width: 100%; justify-content: space-between; }
-      .calendar-toolbar { flex-direction: column; align-items: stretch; }
-    }
-  </style>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- DESKTOP HEADER -->
-<header>
-  <div class="header-content">
-    <div class="brand">
-      <span>👨‍🍳</span> Recipe Manager
-    </div>
+  <div class="app-container">
     
-    <nav class="nav-tabs">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="logo">
+        <h2>🍽️ KitchenPro</h2>
+      </div>
+      
       <button class="nav-btn active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
       <button class="nav-btn" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
       <button class="nav-btn" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
-      <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu</button>
-      <button class="nav-btn" data-page="template" data-i18n="nav_template">Template</button>
+      <div class="separator"></div>
+      <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
+      <button class="nav-btn" data-page="template" data-i18n="nav_template">Print Template</button>
+      <button class="nav-btn" data-page="style-editor">Templates</button>
+
+      <div class="settings-area">
+        <select id="languageSelect" class="lang-select">
+          <option value="en">🇺🇸 English</option>
+          <option value="bg">🇧🇬 Български</option>
+        </select>
+
+        <!-- Sync / File Operations -->
+        <div class="sync-dropdown">
+            <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
+            <div id="syncDropdown" class="sync-menu">
+                <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
+                <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
+                <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
+                <hr>
+                <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
+                <label for="importInput" class="import-label" data-i18n="sync_import">⬆ Import JSON</label>
+                <input type="file" id="importInput" accept=".json" style="display:none">
+            </div>
+        </div>
+      </div>
     </nav>
 
-    <div class="controls">
-      <select id="languageSelect" class="form-control" style="padding: 0.3rem 0.5rem; width: auto; font-size: 0.85rem;">
-        <option value="en">EN</option>
-        <option value="bg">BG</option>
-      </select>
-      
-      <div class="sync-wrapper">
-        <div class="sync-badge" id="syncStatus" onclick="toggleSyncDropdown()">
-          🟡 Local
+    <!-- Main Content Area -->
+    <main class="content">
+
+      <!-- RECIPES PAGE -->
+      <div id="recipes" class="page active">
+        <div class="page-header">
+          <h1 data-i18n="nav_recipes">Recipes</h1>
+          <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
         </div>
-        <div class="dropdown-menu" id="syncDropdown">
-          <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Folder</button>
-          <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
-          <button onclick="manualLoad()" data-i18n="sync_load">📂 Load Folder</button>
-          <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-          <button onclick="document.getElementById('importInput').click()" data-i18n="sync_import">⬆ Import JSON</button>
+        
+        <div class="filters">
+            <input type="text" id="recipeSearch" placeholder="Search recipes..." onkeyup="renderRecipes()" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:250px;">
         </div>
-      </div>
-      <input type="file" id="importInput" style="display:none" accept=".json">
-    </div>
-  </div>
-</header>
 
-<!-- MAIN CONTENT -->
-<div class="container">
-
-  <!-- RECIPES PAGE -->
-  <div id="recipes" class="page active">
-    <div class="page-header">
-        <h2 data-i18n="nav_recipes">Recipes</h2>
-        <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
-    </div>
-    <div id="recipeList" class="card-grid"></div>
-  </div>
-
-  <!-- INGREDIENTS PAGE -->
-  <div id="ingredients" class="page">
-    <div class="page-header">
-        <h2 data-i18n="nav_ingredients">Ingredients</h2>
-        <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
-    </div>
-    <div id="ingredientList" class="card-grid"></div>
-  </div>
-
-  <!-- ALLERGENS PAGE -->
-  <div id="allergens" class="page">
-    <div class="page-header">
-        <h2 data-i18n="nav_allergens">Allergens</h2>
-        <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
-    </div>
-    <div id="allergenList" class="card-grid"></div>
-  </div>
-
-  <!-- MENU PLANNING PAGE -->
-  <div id="menu" class="page">
-    <div class="calendar-toolbar">
-      <div class="date-nav">
-        <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">←</button>
-        <h3 id="currentMonth"></h3>
-        <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">→</button>
-      </div>
-      
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content: center;">
-         <div class="btn-group">
-            <button class="btn btn-secondary btn-sm" onclick="toggleView('week')" data-i18n="btn_week_view">Week</button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleView('month')" data-i18n="btn_month_view">Month</button>
-         </div>
-         <button class="btn btn-primary btn-sm" onclick="printMenu()" data-i18n="btn_print">🖨️ Print</button>
-         <button class="btn btn-secondary btn-sm" onclick="saveCurrentMenu()" data-i18n="btn_save_menu">💾 Save</button>
-      </div>
-    </div>
-    
-    <div style="margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-       <label data-i18n="label_print_date" style="font-size:0.9rem; font-weight:bold;">Week of:</label>
-       <input type="date" id="printStartDate" class="form-control" style="width:auto; padding:0.4rem;">
-       <div style="font-size:0.8rem; color:var(--text-muted); margin-left: auto;" data-i18n="text_print_hint">💡 Use date picker to change week</div>
-    </div>
-
-    <!-- Calendar container where app.js renders grid -->
-    <div id="calendar"></div>
-
-    <hr style="margin: 2rem 0; border:0; border-top:1px solid var(--border);">
-    <h3 data-i18n="heading_past_menus">Past Menus</h3>
-    <div id="menuHistory" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
-  </div>
-
-  <!-- TEMPLATE PAGE -->
-  <div id="template" class="page">
-    <div class="page-header">
-        <h2 data-i18n="nav_template">Template</h2>
-        <button class="btn btn-primary" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
-    </div>
-    
-    <div class="card">
-      <p data-i18n="template_description" style="margin-bottom:1rem; color:var(--text-muted);">Customize print layout.</p>
-      
-      <div style="display:flex; gap:0.5rem; margin-bottom:1rem; overflow-x:auto; padding-bottom:0.5rem;">
-        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{title}')">Title</button>
-        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{dateRange}')">Dates</button>
-        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{recipes}')">Grid</button>
-        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{labelMenuFor}')">Label</button>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_layout">Layout</label>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-             <button class="btn btn-secondary btn-sm" id="layout_default">Default</button>
-             <button class="btn btn-secondary btn-sm" id="layout_columns">2-Col</button>
-             <button class="btn btn-secondary btn-sm" id="layout_centered">Center</button>
-             <button class="btn btn-secondary btn-sm" id="layout_grid">Grid</button>
+        <div class="grid-container" id="recipeList">
+          <!-- Recipes injected here -->
         </div>
       </div>
-      
-      <div class="form-group">
-         <label class="form-label" data-i18n="label_background">Background</label>
-         <div class="input-group">
-             <input type="file" id="uploadBgInput" accept="image/*" class="form-control">
-             <button class="btn btn-danger" id="removeBgBtn">X</button>
-         </div>
-      </div>
 
-      <div id="templateEditor"></div>
-    </div>
-
-    <h3 data-i18n="heading_preview" style="margin-top:2rem;">Preview</h3>
-    <div id="templatePreview" style="border:1px solid var(--border); padding:2rem; background:white; margin-top:1rem;"></div>
-  </div>
-
-</div>
-
-<!-- MOBILE NAV BOTTOM BAR -->
-<nav class="mobile-nav">
-  <button class="mobile-nav-btn active" data-page="recipes">
-    <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-    <span data-i18n="nav_recipes">Recipes</span>
-  </button>
-  <button class="mobile-nav-btn" data-page="ingredients">
-    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg>
-    <span data-i18n="nav_ingredients">Ingred.</span>
-  </button>
-  <button class="mobile-nav-btn" data-page="menu">
-    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5z"/></svg>
-    <span data-i18n="nav_menu">Menu</span>
-  </button>
-  <button class="mobile-nav-btn" data-page="allergens">
-    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-    <span data-i18n="nav_allergens">Alerts</span>
-  </button>
-</nav>
-
-<!-- MODALS -->
-<!-- RECIPE MODAL -->
-<div id="recipeModal" class="modal">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeRecipeModal()">&times;</button>
-    <h2 id="recipeModalTitle" data-i18n="modal_add_recipe" style="margin-top:0;">Add Recipe</h2>
-    <form id="recipeForm" onsubmit="saveRecipe(event)">
-      
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_recipe_name">Name</label>
-        <input type="text" id="recipeName" class="form-control" required>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_category">Category</label>
-        <select id="recipeCategory" class="form-control" required></select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_portion_size">Portion</label>
-        <input type="text" id="recipePortionSize" class="form-control">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_ingredients">Ingredients</label>
-        <div class="input-group">
-          <select id="ingredientSelect" class="form-control"></select>
-          <button type="button" class="btn btn-secondary" onclick="addIngredientToRecipe()" data-i18n="btn_add">Add</button>
+      <!-- INGREDIENTS PAGE -->
+      <div id="ingredients" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_ingredients">Ingredients</h1>
+          <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
         </div>
-        <div id="recipeIngredients" class="tag-cloud"></div>
+        <div class="list-container" id="ingredientList"></div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_auto_allergens">Auto Allergens</label>
-        <div id="recipeAutoAllergens" class="tag-cloud" style="padding:0.5rem; background:var(--secondary); border-radius:4px;">-</div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_manual_allergens">Manual Allergens</label>
-        <div class="input-group">
-          <select id="allergenSelect" class="form-control"></select>
-          <button type="button" class="btn btn-secondary" onclick="addManualAllergenToRecipe()" data-i18n="btn_add">Add</button>
+      <!-- ALLERGENS PAGE -->
+      <div id="allergens" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_allergens">Allergens</h1>
+          <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
         </div>
-        <div id="recipeManualAllergens" class="tag-cloud"></div>
+        <div class="list-container" id="allergenList"></div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_instructions">Instructions</label>
-        <textarea id="recipeInstructions" class="form-control" rows="4"></textarea>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_recipe">Save Recipe</button>
-    </form>
-  </div>
-</div>
-
-<!-- INGREDIENT MODAL -->
-<div id="ingredientModal" class="modal">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeIngredientModal()">&times;</button>
-    <h2 data-i18n="modal_add_ingredient" style="margin-top:0;">Add Ingredient</h2>
-    <form id="ingredientForm" onsubmit="saveIngredient(event)">
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_ingredient_name">Name</label>
-        <input type="text" id="ingredientName" class="form-control" required>
-      </div>
-      
-      <div class="form-group">
-          <label class="form-label" data-i18n="label_linked_allergens">Contains Allergens</label>
-          <div class="input-group">
-              <select id="ingredientAllergenSelect" class="form-control"></select>
-              <button type="button" class="btn btn-secondary" onclick="addLinkedAllergen()" data-i18n="btn_add">Add</button>
+      <!-- MENU PLANNING PAGE -->
+      <div id="menu" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_menu">Menu Planning</h1>
+          <div class="actions">
+             <button class="btn btn-secondary" onclick="saveCurrentMenu()" data-i18n="btn_save_menu">Save Menu</button>
+             <button class="btn btn-primary" onclick="printMenu()" data-i18n="btn_print">🖨️ Print</button>
           </div>
-          <div id="ingredientLinkedAllergens" class="tag-cloud"></div>
+        </div>
+
+        <div class="calendar-controls">
+           <button class="btn btn-secondary" onclick="changeMonth(-1)" data-i18n="btn_previous">←</button>
+           <h2 id="currentMonth">...</h2>
+           <button class="btn btn-secondary" onclick="changeMonth(1)" data-i18n="btn_next">→</button>
+           
+           <div class="view-toggles">
+               <button class="btn btn-small" onclick="toggleView('week')" data-i18n="btn_week_view">Week</button>
+               <button class="btn btn-small" onclick="toggleView('month')" data-i18n="btn_month_view">Month</button>
+           </div>
+        </div>
+
+        <!-- Print Date Picker (Hidden or Visible based on need) -->
+        <div class="print-controls" style="margin-bottom: 1rem; padding:10px; background:#f8f9fa; border-radius:8px; display:flex; gap:10px; align-items:center;">
+             <span data-i18n="label_print_date">Print Week of:</span>
+             <input type="date" id="printStartDate">
+             <span style="font-size:0.85em; color:#666;" data-i18n="text_print_hint"></span>
+        </div>
+        
+        <div class="print-day-selector" style="margin-bottom:1rem;">
+             <span style="margin-right:10px;">Print Days:</span>
+             <div class="day-toggles">
+                <button id="printDay1" class="day-toggle" onclick="togglePrintDay(1)">Mon</button>
+                <button id="printDay2" class="day-toggle" onclick="togglePrintDay(2)">Tue</button>
+                <button id="printDay3" class="day-toggle" onclick="togglePrintDay(3)">Wed</button>
+                <button id="printDay4" class="day-toggle" onclick="togglePrintDay(4)">Thu</button>
+                <button id="printDay5" class="day-toggle" onclick="togglePrintDay(5)">Fri</button>
+                <button id="printDay6" class="day-toggle" onclick="togglePrintDay(6)">Sat</button>
+                <button id="printDay0" class="day-toggle" onclick="togglePrintDay(0)">Sun</button>
+             </div>
+        </div>
+
+        <div id="calendar" class="week-view">
+           <!-- Calendar Grid -->
+        </div>
+
+        <div class="saved-menus-section">
+            <h3 data-i18n="heading_past_menus">Past Menus</h3>
+            <div id="menuHistory" class="history-list"></div>
+        </div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_ingredient">Save Ingredient</button>
-    </form>
+      <!-- TEMPLATE PAGE (Legacy) -->
+      <div id="template" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_template">Print Template</h1>
+          <button class="btn btn-primary" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
+        </div>
+        
+        <div class="template-controls">
+            <div class="form-group">
+                <label data-i18n="template_description">Customize Template</label>
+                <div class="editor-toolbar">
+                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{title}')">{Title}</button>
+                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{dateRange}')">{DateRange}</button>
+                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{recipes}')">{RecipesGrid}</button>
+                </div>
+                <div id="templateEditor"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Background Image</label>
+                <input type="file" id="uploadBgInput" accept="image/*">
+                <button id="removeBgBtn" class="btn btn-danger btn-small" data-i18n="btn_remove_bg">Remove</button>
+            </div>
+
+            <div class="form-group">
+                <label>Layout Style</label>
+                <div>
+                    <!-- Buttons injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <h3 data-i18n="heading_preview">Preview</h3>
+        <div id="templatePreview" class="template-preview"></div>
+      </div>
+
+      <!-- NEW STYLE EDITOR PAGE -->
+      <div id="style-editor" class="page">
+        <div class="page-header">
+          <h1>Template Builder</h1>
+          <div class="actions">
+             <button class="btn btn-secondary" id="btnNewTemplate">+ New</button>
+             <button class="btn btn-primary" id="btnSaveStyle">Save Template</button>
+          </div>
+        </div>
+
+        <div class="builder-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 150px);">
+            <!-- Sidebar Controls -->
+            <div class="builder-sidebar" style="background: #fff; padding: 20px; border-right: 1px solid #ddd; overflow-y: auto;">
+                
+                <div class="control-group">
+                    <h3>Saved Templates</h3>
+                    <select id="savedTemplatesSelect" class="form-control" style="width:100%; margin-bottom:10px;">
+                        <option value="default">Default Theme</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h3>Global Settings</h3>
+                    <label>Font</label>
+                    <select id="styleFont" class="form-control" style="width:100%; margin-bottom:10px;">
+                        <option value="Segoe UI">Modern (Segoe UI)</option>
+                        <option value="Georgia">Serif (Georgia)</option>
+                        <option value="Courier New">Monospace</option>
+                        <option value="Comic Sans MS">Playful</option>
+                    </select>
+                    
+                    <label>Page Background</label>
+                    <input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px;">
+                </div>
+
+                <div class="control-group">
+                    <h3>Day Card</h3>
+                    <label>Header Background</label>
+                    <input type="color" id="styleHeaderBg" class="form-control" value="#ffffff" style="width:100%; height:40px;">
+                    
+                    <label>Header Text Color</label>
+                    <input type="color" id="styleHeaderText" class="form-control" value="#21808d" style="width:100%; height:40px;">
+
+                    <label>Card Background</label>
+                    <input type="color" id="styleCardBg" class="form-control" value="#ffffff" style="width:100%; height:40px;">
+                    
+                    <label>Border Color</label>
+                    <input type="color" id="styleBorderColor" class="form-control" value="#333333" style="width:100%; height:40px;">
+
+                    <label>Border Width</label>
+                    <input type="range" id="styleBorderWidth" min="0" max="5" value="1" style="width:100%;">
+                </div>
+
+                <div class="control-group">
+                    <h3>Meal Slots</h3>
+                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <strong>Slot 1 (Soup)</strong><br>
+                        <label>Text Color:</label> <input type="color" id="styleSlot1Color" value="#000000">
+                    </div>
+                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <strong>Slot 2 (Main)</strong><br>
+                        <label>Text Color:</label> <input type="color" id="styleSlot2Color" value="#000000">
+                    </div>
+                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <strong>Slot 3 (Dessert)</strong><br>
+                        <label>Text Color:</label> <input type="color" id="styleSlot3Color" value="#000000">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Live Preview -->
+            <div class="builder-preview" style="background: #f0f2f5; padding: 20px; overflow-y: auto; display: flex; justify-content: center;">
+                <div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.8); transform-origin: top center;">
+                    <!-- Preview Content Generated Here -->
+                    <h1 style="text-align:center; color:#21808d;">MENU PREVIEW</h1>
+                    <div id="livePreviewGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                        <!-- Dummy Data for Preview -->
+                        <div class="preview-day-card" style="border:1px solid #333; padding:10px;">
+                            <h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Monday</h3>
+                            <div class="preview-slot slot1"><strong>1. Soup:</strong> Chicken Soup</div>
+                            <div class="preview-slot slot2"><strong>2. Main:</strong> Roast Beef</div>
+                            <div class="preview-slot slot3"><strong>3. Dessert:</strong> Cake</div>
+                        </div>
+                        <div class="preview-day-card" style="border:1px solid #333; padding:10px;">
+                            <h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Tuesday</h3>
+                            <div class="preview-slot slot1"><strong>1. Soup:</strong> Lentil Soup</div>
+                            <div class="preview-slot slot2"><strong>2. Main:</strong> Fish & Chips</div>
+                            <div class="preview-slot slot3"><strong>3. Dessert:</strong> Fruit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+    </main>
   </div>
-</div>
 
-<!-- ALLERGEN MODAL -->
-<div id="allergenModal" class="modal">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeAllergenModal()">&times;</button>
-    <h2 data-i18n="modal_add_allergen" style="margin-top:0;">Add Allergen</h2>
-    <form id="allergenForm" onsubmit="saveAllergen(event)">
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_allergen_name">Name</label>
-        <input type="text" id="allergenName" class="form-control" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label" data-i18n="label_color">Color</label>
-        <input type="color" id="allergenColor" class="form-control" value="#e74c3c" style="height:50px;">
-      </div>
-      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_allergen">Save Allergen</button>
-    </form>
+  <!-- RECIPE MODAL -->
+  <div id="recipeModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeRecipeModal()">&times;</span>
+      <h2 id="recipeModalTitle" data-i18n="modal_add_recipe">Add Recipe</h2>
+      <form id="recipeForm" onsubmit="saveRecipe(event)">
+        <div class="form-group">
+          <label data-i18n="label_recipe_name">Name</label>
+          <input type="text" id="recipeName" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="label_category">Category</label>
+                <select id="recipeCategory">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="label_portion_size">Portion Size</label>
+                <input type="text" id="recipePortionSize">
+            </div>
+        </div>
+
+        <!-- Ingredients Section -->
+        <div class="form-group">
+            <label data-i18n="label_ingredients">Ingredients</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <select id="ingredientSelect" style="flex:1;">
+                    <!-- Populated by JS -->
+                </select>
+                <button type="button" class="btn btn-secondary" onclick="addIngredientToRecipe()" data-i18n="btn_add">Add</button>
+            </div>
+            <div id="recipeIngredients" class="tag-container"></div>
+            
+            <div style="margin-top:5px; font-size:0.9em; color:#666;">
+                <strong data-i18n="label_auto_allergens">Auto-detected:</strong> 
+                <span id="recipeAutoAllergens">-</span>
+            </div>
+        </div>
+
+        <!-- Manual Allergens Section -->
+        <div class="form-group">
+            <label data-i18n="label_manual_allergens">Additional Allergens</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <select id="allergenSelect" style="flex:1;"></select>
+                <button type="button" class="btn btn-secondary" onclick="addManualAllergenToRecipe()" data-i18n="btn_add">Add</button>
+            </div>
+            <div id="recipeManualAllergens" class="tag-container"></div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="label_instructions">Instructions</label>
+          <textarea id="recipeInstructions" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+           <button type="button" class="btn btn-secondary" onclick="closeRecipeModal()" data-i18n="btn_cancel">Cancel</button>
+           <button type="submit" class="btn btn-primary" data-i18n="btn_save">Save</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.js"></script>
-<script src="app.js"></script>
+  <!-- INGREDIENT MODAL -->
+  <div id="ingredientModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeIngredientModal()">&times;</span>
+      <h2 data-i18n="modal_add_ingredient">Add Ingredient</h2>
+      <form id="ingredientForm" onsubmit="saveIngredient(event)">
+        <div class="form-group">
+          <label data-i18n="label_ingredient_name">Name</label>
+          <input type="text" id="ingredientName" required>
+        </div>
+        <div class="form-group">
+            <label data-i18n="label_linked_allergens">Contains Allergens:</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <select id="ingredientAllergenSelect" style="flex:1;"></select>
+                <button type="button" class="btn btn-secondary" onclick="addLinkedAllergen()" data-i18n="btn_add">Add</button>
+            </div>
+            <div id="ingredientLinkedAllergens" class="tag-container"></div>
+        </div>
+        <div class="modal-actions">
+           <button type="button" class="btn btn-secondary" onclick="closeIngredientModal()" data-i18n="btn_cancel">Cancel</button>
+           <button type="submit" class="btn btn-primary" data-i18n="btn_save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-<script>
-// Mobile Nav Interaction
-document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    // Remove active from all
-    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    
-    // Add active
-    btn.classList.add('active');
-    const pageId = btn.dataset.page;
-    document.getElementById(pageId).classList.add('active');
-    
-    // Sync desktop tab too
-    const deskBtn = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
-    if(deskBtn) deskBtn.classList.add('active');
-  });
-});
-</script>
+  <!-- ALLERGEN MODAL -->
+  <div id="allergenModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAllergenModal()">&times;</span>
+      <h2 data-i18n="modal_add_allergen">Add Allergen</h2>
+      <form id="allergenForm" onsubmit="saveAllergen(event)">
+        <div class="form-group">
+          <label data-i18n="label_allergen_name">Name</label>
+          <input type="text" id="allergenName" required>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_color">Color</label>
+          <input type="color" id="allergenColor" value="#ff0000" style="width:100%; height:40px;">
+        </div>
+        <div class="modal-actions">
+           <button type="button" class="btn btn-secondary" onclick="closeAllergenModal()" data-i18n="btn_cancel">Cancel</button>
+           <button type="submit" class="btn btn-primary" data-i18n="btn_save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
+  <script src="app.js"></script>
 </body>
 </html>
