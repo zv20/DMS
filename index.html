@@ -84,7 +84,10 @@
             <!-- Day Selection for Printing -->
             <div style="background:var(--color-surface);padding:1rem;border-radius:var(--border-radius);margin-bottom:1.5rem;box-shadow:var(--shadow-sm);">
                 <h4 style="margin:0 0 0.75rem 0;color:var(--color-text);" data-i18n="alert_select_days">📅 Select Days to Print:</h4>
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                    <label style="font-size:0.9rem;font-weight:bold;margin-right:0.5rem;" data-i18n="label_print_date">Print Week of:</label>
+                    <input type="date" id="printStartDate" class="btn btn-secondary" style="border:1px solid #ddd;padding:0.4rem;">
+                    
                     <button id="printDay0" class="btn btn-small btn-secondary day-selector" onclick="togglePrintDay(0)" data-i18n="day_sun_short">Sun</button>
                     <button id="printDay1" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(1)" data-i18n="day_mon_short">Mon</button>
                     <button id="printDay2" class="btn btn-small btn-secondary day-selector active" onclick="togglePrintDay(2)" data-i18n="day_tue_short">Tue</button>
@@ -95,7 +98,7 @@
                     <button class="btn btn-primary" onclick="printMenu()" style="margin-left:auto;" data-i18n="btn_print">🖨️ Print Selected Days</button>
                 </div>
                 <p style="margin:0.75rem 0 0 0;font-size:0.875rem;color:var(--color-text-secondary);">
-                    💡 Click days to toggle selection. Only selected days will appear in the printed menu.
+                    💡 Click days to toggle selection. Select "Week of" date to jump to a specific week.
                 </p>
             </div>
 
