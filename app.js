@@ -1,4 +1,4 @@
-// Recipe Manager Application - Fix ReferenceErrors
+// Recipe Manager Application - Fix Navigation Priority
 
 let recipes = [];
 let ingredients = [];
@@ -329,7 +329,7 @@ function applyTranslations() {
   renderAllergens();
 }
 
-// === HELPER FUNCTIONS (MOVED UP) ===
+// === HELPER FUNCTIONS ===
 function updatePrintDatePicker() {
   const input = document.getElementById('printStartDate');
   if (input) {
@@ -1471,6 +1471,9 @@ function bindNavigation() {
 
 // Init
 async function init() {
+  // Bind navigation immediately so it works even if data loading fails
+  bindNavigation();
+  
   await initDB();
   await autoLoadOnStartup();
 
@@ -1493,8 +1496,6 @@ async function init() {
       initSummernote();
     });
   }
-
-  bindNavigation();
 
   const uploadBgInput = document.getElementById('uploadBgInput');
   const removeBgBtn = document.getElementById('removeBgBtn');
