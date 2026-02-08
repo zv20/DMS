@@ -122,6 +122,7 @@ const translations = {
     label_saved: 'Saved',
     label_contains: 'Contains',
     label_menu_for: 'Menu for:',
+    label_print_date: 'Print Week of:',
 
     template_description: 'Customize your menu print template. Use variables below:',
 
@@ -233,6 +234,7 @@ const translations = {
     label_saved: 'Запазено',
     label_contains: 'Съдържа',
     label_menu_for: 'Меню за:',
+    label_print_date: 'Печат за седмица от:',
 
     template_description: 'Настройте шаблона за печат. Използвайте бутоните по-долу:',
     portion_placeholder: 'напр. За 10 човека, 250г порция',
@@ -1197,6 +1199,7 @@ async function init() {
   const layoutColumnsBtn = document.getElementById('layout_columns');
   const layoutCenteredBtn = document.getElementById('layout_centered');
   const layoutGridBtn = document.getElementById('layout_grid');
+  const printStartDateInput = document.getElementById('printStartDate');
 
   if (uploadBgInput) uploadBgInput.addEventListener('change', uploadBackgroundImage);
   if (removeBgBtn) removeBgBtn.addEventListener('click', removeBackgroundImage);
@@ -1204,8 +1207,19 @@ async function init() {
   if (layoutColumnsBtn) layoutColumnsBtn.addEventListener('click', () => setLayout('columns'));
   if (layoutCenteredBtn) layoutCenteredBtn.addEventListener('click', () => setLayout('centered'));
   if (layoutGridBtn) layoutGridBtn.addEventListener('click', () => setLayout('grid'));
+  if (printStartDateInput) {
+    printStartDateInput.addEventListener('change', (e) => {
+      currentDate = new Date(e.target.value);
+      renderAll();
+    });
+  }
 
-  // Removed redundant loop that added event listeners to printDay buttons
+  for (let i = 0; i <= 6; i++) {
+    const btn = document.getElementById(`printDay${i}`);
+    if (btn) {
+      btn.addEventListener('click', () => togglePrintDay(i));
+    }
+  }
 }
 
 window.addEventListener('DOMContentLoaded', init);
@@ -1265,6 +1279,13 @@ function updatePrintDayButtons() {
         btn.classList.add('btn-secondary');
       }
     }
+  }
+  
+  // Sync date picker if exists
+  const input = document.getElementById('printStartDate');
+  if (input) {
+    const weekStart = getWeekStart(currentDate);
+    input.value = weekStart.toISOString().split('T')[0];
   }
 }
 
