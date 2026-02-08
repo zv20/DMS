@@ -1,4 +1,4 @@
-// Recipe Manager Application - Fixed Print + Day Selection + Full Functionality
+// Recipe Manager Application - Flexible Slots & Custom Print Format
 
 let recipes = [];
 let ingredients = [];
@@ -21,7 +21,14 @@ const DB_VERSION = 1;
 const STORE_NAME = 'directoryHandles';
 let db = null;
 
-const DEFAULT_SLOTS = ['soup', 'main', 'dessert', 'other'];
+// Default slots configuration (can be overridden per day)
+const DEFAULT_SLOTS_CONFIG = [
+  { id: 'slot1', type: 'soup', label: '1' },
+  { id: 'slot2', type: 'main', label: '2' },
+  { id: 'slot3', type: 'dessert', label: '3' },
+  { id: 'slot4', type: 'other', label: '4' }
+];
+
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const PREDEFINED_ALLERGENS = [
@@ -82,6 +89,7 @@ const translations = {
     btn_layout_grid: '📅 5-Day Grid',
     btn_add_slot: '+ Add Slot',
     btn_populate_allergens: '↻ Reset Default Allergens',
+    btn_reset_slots: '↻ Reset Slots',
 
     modal_add_recipe: 'Add Recipe',
     modal_edit_recipe: 'Edit Recipe',
@@ -117,6 +125,7 @@ const translations = {
     select_ingredient: 'Select ingredient',
     select_allergen: 'Select allergen',
     select_recipe: 'Select recipe',
+    select_slot_type: 'Change Type',
 
     empty_recipes: 'No recipes yet. Click "Add Recipe" to get started!',
     empty_ingredients: 'No ingredients yet.',
@@ -213,6 +222,7 @@ const translations = {
     btn_layout_grid: '📅 5-дневна решетка',
     btn_add_slot: '+ Добави слот',
     btn_populate_allergens: '↻ Възстанови станд. алергени',
+    btn_reset_slots: '↻ Нулирай слотовете',
 
     modal_add_recipe: 'Добави рецепта',
     modal_edit_recipe: 'Редактирай рецепта',
@@ -240,14 +250,15 @@ const translations = {
     category_dessert: '🍰 Десерт',
     category_other: '➕ Друго',
 
-    slot_soup: 'Супа',
-    slot_main: 'Основно',
-    slot_dessert: 'Десерт',
-    slot_other: 'Друго',
+    slot_soup: '🥣 Супа',
+    slot_main: '🍽️ Основно',
+    slot_dessert: '🍰 Десерт',
+    slot_other: '➕ Друго',
 
     select_ingredient: 'Избери съставка',
     select_allergen: 'Избери алерген',
     select_recipe: 'Избери рецепта',
+    select_slot_type: 'Смени тип',
 
     empty_recipes: 'Все още няма рецепти. Натиснете "+ Добави рецепта"!',
     empty_ingredients: 'Все още няма съставки.',
@@ -539,8 +550,6 @@ function saveData() {
   };
 
   if (directoryHandle) {
-    // We can't write async inside a sync function easily, so we launch it and hope
-    // But for better UX we should show status
     (async () => {
         try {
           const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
@@ -725,12 +734,8 @@ function updatePrintDayButtons() {
 
 // Print menu (fixed)
 function printMenu() {
-  // If selectedPrintDays is empty, maybe default to Mon-Fri (1-5) or 0-6
-  // But let's check
   let daysToPrint = selectedPrintDays;
   if (daysToPrint.length === 0) {
-      // If user hasn't selected any, assume all week? Or prompt?
-      // Let's assume Mon-Fri if empty, for safety
       daysToPrint = [1, 2, 3, 4, 5];
   }
 
@@ -761,54 +766,67 @@ function printMenu() {
   selectedDates.forEach(day => {
     const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const dayMenu = currentMenu[dateStr];
-    if (!dayMenu || !Object.keys(dayMenu).length) return;
-    const hasAny = Object.values(dayMenu).some(slot => slot && slot.recipe);
+    if (!dayMenu) return;
+    
+    // Check for any filled slot
+    const slots = ['slot1', 'slot2', 'slot3', 'slot4'];
+    const hasAny = slots.some(sid => dayMenu[sid] && dayMenu[sid].recipe);
     if (!hasAny) return;
 
     recipesHtml += `<h3 style="font-size:1.1rem;margin:0.7rem 0 0.4rem 0;color:#21808d;border-bottom:2px solid #21808d;padding-bottom:0.3rem;">${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
     recipesHtml += '<div style="margin-left:0.5rem;font-size:0.9rem;">';
 
-    const soupSlots = [];
-    const mainSlots = [];
-    const dessertSlots = [];
-    const otherSlots = [];
+    slots.forEach((sid, index) => {
+        const slotData = dayMenu[sid];
+        if (!slotData || !slotData.recipe) return;
+        
+        const recipe = recipes.find(r => r.id === slotData.recipe);
+        if (!recipe) return;
 
-    Object.keys(dayMenu).forEach(slotId => {
-      const slotData = dayMenu[slotId];
-      if (!slotData || !slotData.recipe) return;
-      const recipe = recipes.find(r => r.id === slotData.recipe);
-      if (!recipe) return;
-      const item = { recipe, slotData };
-      if (slotData.type === 'soup') soupSlots.push(item);
-      else if (slotData.type === 'main') mainSlots.push(item);
-      else if (slotData.type === 'dessert') dessertSlots.push(item);
-      else otherSlots.push(item);
-    });
-
-    function renderGroup(label, icon, list) {
-      if (!list.length) return '';
-      let html = `<div style="margin-bottom:0.5rem;"><strong style="color:#666;">${icon} ${label}:</strong>`;
-      list.forEach(item => {
-        html += `<p style="margin:0.2rem 0 0.2rem 1rem;">${item.recipe.name}`;
-        if (item.recipe.allergens && item.recipe.allergens.length) {
-          // map allergen IDs to names
-          const algNames = item.recipe.allergens.map(a => {
-             // 'a' might be object or ID depending on how it's stored. 
-             // In recipe objects, it's typically {id, name}.
-             return a.name;
-          }).join(', ');
-          html += ` <em style="font-size:0.75rem;color:#c00;">(${algNames})</em>`;
+        // Numbered list format: 1. Name (Portion) (Ingredients)
+        // Allergens colored
+        
+        let lineHtml = `<p style="margin:0.3rem 0;"><strong>${index + 1}. ${recipe.name}</strong>`;
+        
+        if (recipe.portionSize) {
+            lineHtml += ` <span style="color:#666;">(${recipe.portionSize})</span>`;
         }
-        html += '</p>';
-      });
-      html += '</div>';
-      return html;
-    }
 
-    recipesHtml += renderGroup('Soups', '🥣', soupSlots);
-    recipesHtml += renderGroup('Main Dishes', '🍽️', mainSlots);
-    recipesHtml += renderGroup('Desserts', '🍰', dessertSlots);
-    recipesHtml += renderGroup('Other', '➕', otherSlots);
+        // Collect all allergens for this recipe to color ingredients or list them
+        const recipeAllergens = getRecipeAllergens(recipe);
+        
+        // Show ingredients with colored allergens
+        if (recipe.ingredients && recipe.ingredients.length > 0) {
+            lineHtml += ' <span style="font-size:0.85rem; color:#555;">(';
+            
+            const ingParts = recipe.ingredients.map(ing => {
+               // Check if this ingredient has allergens
+               const fullIng = ingredients.find(i => i.id === ing.id);
+               let isAllergen = false;
+               let color = '#555'; // default
+               
+               if (fullIng && fullIng.allergens && fullIng.allergens.length > 0) {
+                   isAllergen = true;
+                   // Use color of first allergen found? Or generic red?
+                   // Requirement: "ingredients colors in different color if have allergens"
+                   // Let's use red or the allergen's color if single
+                   color = '#d63031'; 
+                   if (fullIng.allergens.length === 1) {
+                       const a = allergens.find(x => x.id === fullIng.allergens[0]);
+                       if (a) color = a.color;
+                   }
+               }
+               
+               return `<span style="color:${color};${isAllergen ? 'font-weight:bold;' : ''}">${ing.name}</span>`;
+            });
+            
+            lineHtml += ingParts.join(', ');
+            lineHtml += ')</span>';
+        }
+        
+        lineHtml += '</p>';
+        recipesHtml += lineHtml;
+    });
 
     recipesHtml += '</div>';
   });
@@ -858,14 +876,6 @@ function printMenu() {
           margin: 0.2rem 0;
           font-size: 0.9rem;
         }
-        em {
-          color: #c00;
-          font-weight: 500;
-          font-size: 0.75rem;
-        }
-        strong {
-          color: #666;
-        }
       </style>
     </head>
     <body${templateLayout !== 'default' ? ' class="' + templateLayout + '"' : ''}>
@@ -874,7 +884,6 @@ function printMenu() {
     </html>
   `);
   win.document.close();
-  // Wait for images if any
   setTimeout(() => {
       win.print();
   }, 500);
@@ -883,10 +892,16 @@ function printMenu() {
 // Calendar and menu planning (simplified core)
 function ensureDefaultSlots(dateStr) {
   if (!currentMenu[dateStr]) currentMenu[dateStr] = {};
-  DEFAULT_SLOTS.forEach(slotType => {
-    if (!currentMenu[dateStr][slotType]) {
-      currentMenu[dateStr][slotType] = { type: slotType, recipe: null };
-    }
+  
+  // Use generic slot IDs 'slot1', 'slot2', 'slot3', 'slot4'
+  // But initialize them with the default TYPES if they don't exist
+  DEFAULT_SLOTS_CONFIG.forEach(conf => {
+      if (!currentMenu[dateStr][conf.id]) {
+          currentMenu[dateStr][conf.id] = { 
+              type: conf.type, // default type
+              recipe: null 
+          };
+      }
   });
 }
 
@@ -946,7 +961,6 @@ function renderCalendar() {
     calendarEl.className = 'week-view';
     const weekStart = getWeekStart(currentDate);
 
-    // Let's stick to the column layout for week view as it was.
     const weekDaysContainer = document.createElement('div');
     weekDaysContainer.className = 'week-days';
     weekDaysContainer.style.display = 'grid';
@@ -976,9 +990,11 @@ function renderCalendar() {
 
        dayColumn.appendChild(dayHeader);
 
-       DEFAULT_SLOTS.forEach(slotType => {
-           const slot = currentMenu[dateStr][slotType];
-           const slotEl = renderSlot(dateStr, slotType, slot);
+       // Render slots based on IDs slot1..slot4
+       DEFAULT_SLOTS_CONFIG.forEach((conf, index) => {
+           const slotId = conf.id;
+           const slotData = currentMenu[dateStr][slotId];
+           const slotEl = renderSlot(dateStr, slotId, slotData, index + 1);
            dayColumn.appendChild(slotEl);
        });
 
@@ -998,22 +1014,19 @@ function renderCalendar() {
         calendarEl.appendChild(h);
     });
 
-    // Days logic
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startDayIndex = firstDay.getDay(); // 0-6
+    const startDayIndex = firstDay.getDay();
 
-    // Padding
     for(let i=0; i<startDayIndex; i++) {
         const pad = document.createElement('div');
         pad.className = 'calendar-day disabled';
         calendarEl.appendChild(pad);
     }
 
-    // Dates
     for(let i=1; i<=daysInMonth; i++) {
         const dayDate = new Date(year, month, i);
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
@@ -1030,8 +1043,8 @@ function renderCalendar() {
 
         const contentDiv = cell.querySelector('.calendar-day-content');
         if (currentMenu[dateStr]) {
-            DEFAULT_SLOTS.forEach(slot => {
-                const s = currentMenu[dateStr][slot];
+            DEFAULT_SLOTS_CONFIG.forEach(conf => {
+                const s = currentMenu[dateStr][conf.id];
                 if (s && s.recipe) {
                     const r = recipes.find(x => x.id === s.recipe);
                     if (r) {
@@ -1051,32 +1064,92 @@ function renderCalendar() {
 }
 
 
-function renderSlot(dateStr, slotType, slotData) {
+function renderSlot(dateStr, slotId, slotData, indexLabel) {
   const slotEl = document.createElement('div');
   slotEl.className = 'menu-slot';
   slotEl.dataset.date = dateStr;
-  slotEl.dataset.slot = slotType;
-  slotEl.style.marginBottom = '10px';
+  slotEl.dataset.slotId = slotId;
+  slotEl.style.marginBottom = '12px';
+  slotEl.style.borderBottom = '1px dashed #eee';
+  slotEl.style.paddingBottom = '8px';
+
+  // Label Row: [1. Soup ▼]
+  const headerRow = document.createElement('div');
+  headerRow.style.display = 'flex';
+  headerRow.style.justifyContent = 'space-between';
+  headerRow.style.alignItems = 'center';
+  headerRow.style.marginBottom = '4px';
 
   const label = document.createElement('div');
-  label.className = 'menu-slot-label';
   label.style.fontSize = '0.85rem';
-  label.style.fontWeight = '600';
+  label.style.fontWeight = 'bold';
   label.style.color = '#7f8c8d';
-  label.textContent = t(`slot_${slotType}`) || slotType;
+  
+  // slotData.type might be 'soup', 'main', etc.
+  // Translate it
+  const typeKey = `slot_${slotData.type}`;
+  label.textContent = `${indexLabel}. ${t(typeKey)}`;
+  
+  // Type switcher (small icon or just click label?)
+  // Let's add a small button to switch type
+  const typeBtn = document.createElement('button');
+  typeBtn.innerHTML = '⚙';
+  typeBtn.style.border = 'none';
+  typeBtn.style.background = 'none';
+  typeBtn.style.cursor = 'pointer';
+  typeBtn.style.color = '#aaa';
+  typeBtn.style.fontSize = '0.8rem';
+  typeBtn.title = t('select_slot_type');
+  
+  typeBtn.onclick = (e) => {
+      e.stopPropagation();
+      // Cycle types: soup -> main -> dessert -> other -> soup
+      const types = ['soup', 'main', 'dessert', 'other'];
+      let idx = types.indexOf(slotData.type);
+      if (idx === -1) idx = 0;
+      const nextType = types[(idx + 1) % types.length];
+      
+      currentMenu[dateStr][slotId].type = nextType;
+      saveData();
+      renderCalendar(); // re-render to update label and filter
+  };
 
+  headerRow.appendChild(label);
+  headerRow.appendChild(typeBtn);
+  slotEl.appendChild(headerRow);
+
+  // Recipe Selector
   const select = document.createElement('select');
   select.className = 'menu-slot-select';
   select.style.width = '100%';
   select.style.padding = '5px';
   select.style.fontSize = '0.9rem';
+  select.style.borderRadius = '4px';
+  select.style.border = '1px solid #ddd';
 
   const emptyOption = document.createElement('option');
   emptyOption.value = '';
   emptyOption.textContent = t('select_recipe');
   select.appendChild(emptyOption);
 
-  recipes.forEach(r => {
+  // Filter recipes by the current slot type!
+  // This is a key feature: only show soups in soup slot, unless type is 'other' (show all?)
+  // User asked to change type, implying strict filtering.
+  // Let's filter strictly for soup/main/dessert, and 'other' shows everything?
+  // Or just sort them? 
+  // User said "separated by categories".
+  // Let's show ALL recipes but grouped? Or just filtered?
+  // "if the second instead of main be soup" -> implies we switch the slot type to soup, then pick a soup.
+  
+  const relevantRecipes = recipes.filter(r => {
+      if (slotData.type === 'other') return true; // Show all for Other
+      return r.category === slotData.type;
+  });
+  
+  // If no recipes found for category, maybe show all but warn? 
+  // Better to just show relevant ones to keep it clean.
+  
+  relevantRecipes.forEach(r => {
     const option = document.createElement('option');
     option.value = r.id;
     option.textContent = r.name;
@@ -1086,12 +1159,11 @@ function renderSlot(dateStr, slotType, slotData) {
 
   select.addEventListener('change', () => {
     if (!currentMenu[dateStr]) currentMenu[dateStr] = {};
-    if (!currentMenu[dateStr][slotType]) currentMenu[dateStr][slotType] = { type: slotType, recipe: null };
-    currentMenu[dateStr][slotType].recipe = select.value || null;
+    if (!currentMenu[dateStr][slotId]) currentMenu[dateStr][slotId] = { type: slotData.type, recipe: null }; // preserve type
+    currentMenu[dateStr][slotId].recipe = select.value || null;
     saveData();
   });
 
-  slotEl.appendChild(label);
   slotEl.appendChild(select);
 
   return slotEl;
@@ -1632,9 +1704,11 @@ function deleteRecipe(id) {
 // Menu history
 function saveCurrentMenu() {
   const dates = Object.keys(currentMenu);
-  const hasRecipes = dates.some(date =>
-    Object.values(currentMenu[date]).some(slot => slot && slot.recipe)
-  );
+  const hasRecipes = dates.some(date => {
+     // Check if any slot has a recipe
+     return Object.values(currentMenu[date]).some(slot => slot && slot.recipe);
+  });
+  
   if (!hasRecipes) {
     alert(t('alert_no_menu_to_save'));
     return;
@@ -1880,8 +1954,8 @@ function updateTemplatePreview() {
   previewDates.forEach(day => {
     recipesHtml += `<div class="print-day">
       <h3>${day.toLocaleDateString(locale, { weekday: 'long' })}</h3>`;
-    recipesHtml += `<div class="print-slot"><strong>${t('slot_soup')}:</strong> Sample Soup</div>`;
-    recipesHtml += `<div class="print-slot"><strong>${t('slot_main')}:</strong> Sample Main</div>`;
+    recipesHtml += `<div class="print-slot"><strong>1. ${t('slot_soup')}:</strong> Chicken Soup (300g) <span style="color:red">(Celery)</span></div>`;
+    recipesHtml += `<div class="print-slot"><strong>2. ${t('slot_main')}:</strong> Grilled Chicken (200g)</div>`;
     recipesHtml += '</div>';
   });
   recipesHtml += '</div>';
