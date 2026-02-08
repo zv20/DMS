@@ -4,7 +4,7 @@
     /* DEFAULT THEME (Teal/Clean) */
     --color-primary: #21808d;
     --color-primary-dark: #1a6570;
-    --color-accent: #21808d; /* Same as primary usually */
+    --color-accent: #21808d;
     --color-secondary: #6c757d;
     --color-success: #28a745;
     --color-danger: #dc3545;
@@ -18,12 +18,12 @@
     --border-radius: 12px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.15);
 }
 
-/* THEME: DARK (Midnight) */
+/* THEME: DARK */
 [data-theme="dark"] {
-    --color-primary: #82c91e; /* Lime Green accent */
+    --color-primary: #82c91e;
     --color-primary-dark: #66a80f;
     --color-accent: #82c91e;
     --color-background: #101113;
@@ -33,12 +33,12 @@
     --color-text-secondary: #adb5bd;
 }
 
-/* THEME: WARM (Sunset) */
+/* THEME: WARM */
 [data-theme="warm"] {
-    --color-primary: #fd7e14; /* Orange */
+    --color-primary: #fd7e14;
     --color-primary-dark: #d9480f;
-    --color-accent: #fab005; /* Yellow */
-    --color-background: #fff9db; /* Very light yellow */
+    --color-accent: #fab005;
+    --color-background: #fff9db;
     --color-surface: #ffffff;
     --color-border: #f1f3f5;
     --color-text: #495057;
@@ -69,7 +69,7 @@ body {
     padding: 0 1rem;
     z-index: 1000;
     box-shadow: var(--shadow-sm);
-    justify-content: center; /* Center logo by default */
+    justify-content: center;
 }
 
 .hamburger-btn {
@@ -104,7 +104,7 @@ body {
 
 /* --- Layout Container --- */
 .app-container {
-    padding-top: var(--header-height); /* Space for header */
+    padding-top: var(--header-height);
     min-height: 100vh;
 }
 
@@ -114,54 +114,70 @@ body {
     margin: 0 auto;
 }
 
-/* --- Navigation Overlay (Bubble) --- */
+/* --- Navigation Bubble (Popover Style) --- */
 .nav-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--color-surface); /* Or maybe a translucent color? Keep solid for now */
+    top: 65px; /* Just below header */
+    left: 10px;
+    width: 280px; /* Constrained width */
+    height: auto;
+    max-height: 80vh;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px; /* Rounded bubble look */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* Floating effect */
     z-index: 2000;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
     
     /* Animation Properties */
     opacity: 0;
     visibility: hidden;
-    transform: scale(0.9); /* Start slightly smaller */
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Bouncy effect */
-    clip-path: circle(0% at 40px 30px); /* Start as a dot near hamburger */
+    transform: translateY(-10px) scale(0.95);
+    transform-origin: top left;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .nav-overlay.active {
     opacity: 1;
     visibility: visible;
-    transform: scale(1);
-    clip-path: circle(150% at 40px 30px); /* Expand to fill */
+    transform: translateY(0) scale(1);
+}
+
+/* Little arrow pointing to hamburger (Pseudo-element) */
+.nav-overlay::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
+    transform: rotate(45deg);
+    z-index: 2001;
 }
 
 .close-nav-btn {
     position: absolute;
-    top: 1rem;
-    left: 1rem; /* Same spot as hamburger */
+    top: 10px;
+    right: 15px;
     background: none;
     border: none;
-    font-size: 2.5rem;
-    color: var(--color-text);
+    font-size: 1.5rem;
+    color: var(--color-text-secondary);
     cursor: pointer;
     line-height: 1;
-    z-index: 2001;
+    z-index: 2002;
+    padding: 5px;
 }
+.close-nav-btn:hover { color: var(--color-danger); }
 
 .nav-content {
     width: 100%;
-    max-width: 400px;
-    padding: 2rem;
-    text-align: center;
-    max-height: 100vh;
+    padding: 1.5rem 1rem;
     overflow-y: auto;
 }
 
@@ -170,54 +186,50 @@ body {
     width: 100%;
     background: none;
     border: none;
-    padding: 1rem;
-    font-size: 1.5rem;
+    padding: 0.8rem 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-text);
     cursor: pointer;
-    transition: color 0.2s, transform 0.2s;
+    text-align: left; /* Align left for list style */
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .nav-item:hover {
+    background: var(--color-background);
     color: var(--color-primary);
-    transform: scale(1.05);
 }
 
 .nav-item.active {
+    background: var(--color-background);
     color: var(--color-primary);
+    border-left: 4px solid var(--color-primary);
 }
 
 .nav-separator {
     height: 1px;
     background: var(--color-border);
-    margin: 1.5rem 0;
-    width: 50%;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0.5rem 0;
+    width: 100%;
 }
 
 /* --- Settings Submenu --- */
 .settings-toggle {
-    font-size: 1.2rem;
-    color: var(--color-text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.settings-toggle .arrow {
-    font-size: 0.8em;
-    transition: transform 0.3s;
+    justify-content: space-between; /* Space out arrow */
 }
 
 .settings-submenu {
-    display: none; /* Hidden by default */
+    display: none;
     background: var(--color-background);
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    margin-top: 1rem;
-    animation: fadeIn 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    margin-left: 1rem; /* Indent */
+    animation: fadeIn 0.2s ease;
 }
 
 .settings-submenu.open {
@@ -227,85 +239,53 @@ body {
 .sub-nav-item {
     display: block;
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.6rem 1rem;
     background: none;
     border: none;
     color: var(--color-text);
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
-    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    border-radius: 6px;
 }
-
-.sub-nav-item:last-child { border-bottom: none; }
-.sub-nav-item:hover { color: var(--color-primary); }
+.sub-nav-item:hover { background: rgba(0,0,0,0.05); color: var(--color-primary); }
 
 /* --- Theme Selector --- */
-.theme-selector {
-    margin-top: 1.5rem;
-    text-align: center;
-}
-.theme-selector label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.theme-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-}
+.theme-selector { margin-top: 1rem; text-align: left; padding: 0 0.5rem; }
+.theme-buttons { justify-content: flex-start; gap: 10px; margin-top: 5px; }
 
 .theme-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid var(--color-border);
-    cursor: pointer;
-    transition: transform 0.2s;
+    width: 32px;
+    height: 32px;
 }
-.theme-btn:hover { transform: scale(1.1); }
-
-.theme-default { background: linear-gradient(135deg, #21808d, #f8f9fa); }
-.theme-dark { background: linear-gradient(135deg, #1a1b1e, #82c91e); }
-.theme-warm { background: linear-gradient(135deg, #fd7e14, #fff9db); }
-
 
 /* --- Language Selector --- */
-.lang-selector { margin-top: 1.5rem; }
-.lang-select-box {
-    padding: 8px;
-    font-size: 1rem;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text);
-}
+.lang-selector { margin-top: 1rem; padding: 0 0.5rem; }
+.lang-select-box { width: 100%; }
 
-
-/* --- Sync Controls (Adapted for Overlay) --- */
-.nav-footer { margin-top: 2rem; }
-.sync-controls-wrapper { display: inline-block; position: relative; }
+/* --- Sync Controls --- */
+.nav-footer { margin-top: 1.5rem; padding: 0 0.5rem; }
 .sync-status {
-    background: var(--color-background);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    width: 100%;
+    text-align: center;
+    display: block;
+    cursor: pointer;
 }
 .sync-dropdown {
-    bottom: 100%; top: auto; /* Show above */
-    left: 50%; transform: translateX(-50%);
-    width: 260px;
+    width: 100%;
+    left: 0;
+    transform: none;
+    bottom: 100%;
+    margin-bottom: 5px;
+    position: absolute;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
 }
 
-/* --- Content Styling Updates --- */
+/* --- Standard Elements --- */
 .page { display: none; }
 .page.active { display: block; animation: fadeIn 0.4s; }
 
-/* Grid & Cards */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -322,7 +302,6 @@ body {
 }
 .recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
-/* Buttons */
 .btn {
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -335,20 +314,18 @@ body {
 .btn-secondary { background: var(--color-secondary); color: white; }
 .btn-danger { background: var(--color-danger); color: white; }
 
-/* Calendar */
 .calendar-day { background: var(--color-surface); border: 1px solid var(--color-border); }
 .calendar-day:hover { background: var(--color-background); }
 .week-view .day-column { background: var(--color-surface); }
 
-/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .grid-container { grid-template-columns: 1fr; }
     .week-view .week-days { grid-template-columns: 1fr; }
     .calendar { font-size: 0.8rem; }
+    .nav-overlay { width: 260px; } /* Slightly narrower on mobile */
 }
