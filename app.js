@@ -349,7 +349,7 @@ function applyTranslations() {
   renderCalendar();
   renderMenuHistory();
   updatePrintDayButtons();
-  updateLayoutButtons(); // Now defined below
+  updateLayoutButtons(); 
   updateTemplatePreview();
 }
 
@@ -676,9 +676,8 @@ function updatePrintDayButtons() {
   }
 }
 
-// Added this function which was missing
 function updateLayoutButtons() {
-    const layouts = ['default', 'columns', 'centered', 'grid', '4day', '3day', '2day'];
+    const layouts = ['default', 'columns', 'centered', 'grid', '4day', '3day', '2day', 'test1'];
     layouts.forEach(l => {
         const btn = document.getElementById(`layout_${l}`);
         if (btn) {
@@ -807,8 +806,8 @@ function printMenu() {
         h1 { color: #21808d; font-size: 1.6rem; margin: 0 0 0.5rem 0; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
         p { margin: 0.2rem 0; font-size: 1rem; text-align: center; color: #555; }
         
+        /* Base styles */
         .print-day { 
-            border: 1px solid #7f8c8d; /* Solid border as per sketch */
             padding: 12px; 
             background: rgba(255,255,255,0.95); 
             page-break-inside: avoid;
@@ -816,7 +815,6 @@ function printMenu() {
         .print-day-header {
             margin-top: 0;
             color: #21808d;
-            border-bottom: 2px solid #21808d;
             padding-bottom: 5px;
             margin-bottom: 10px;
             font-size: 1.1rem;
@@ -836,10 +834,40 @@ function printMenu() {
     </html>
   `);
   win.document.close();
-  // setTimeout(() => win.print(), 800); 
 }
 
 function getLayoutStyles() {
+  if (templateLayout === 'test1') {
+    return {
+      css: `
+        .print-grid { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+        .print-day { 
+            border: none; 
+            box-shadow: none; 
+            background: transparent; 
+            padding: 0; 
+            margin-bottom: 15px;
+        }
+        .print-day-header {
+            border-bottom: 1px solid #333; 
+            color: #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            text-transform: none;
+        }
+        .print-slot { 
+            margin-bottom: 5px; 
+            font-size: 1rem;
+        }
+      `
+    };
+  }
+
   if (templateLayout === '4day') {
     return {
       css: `
@@ -855,10 +883,11 @@ function getLayoutStyles() {
             height: 100%; 
             display: flex; 
             flex-direction: column; 
-            border: 1px solid #333; /* Darker border */
+            border: 1px solid #333;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
         .print-day-content { flex: 1; }
+        .print-day-header { border-bottom: 2px solid #21808d; }
       `
     };
   }
@@ -879,7 +908,8 @@ function getLayoutStyles() {
             flex-direction: column; 
             border: 1px solid #333;
         }
-        .print-day:nth-child(2) { flex: 1.2; } 
+        .print-day:nth-child(2) { flex: 1.2; }
+        .print-day-header { border-bottom: 2px solid #21808d; }
       `
     };
   }
@@ -899,7 +929,7 @@ function getLayoutStyles() {
             padding: 25px; 
             border: 2px solid #333; 
         }
-        .print-day-header { font-size: 1.5rem; text-align: center; }
+        .print-day-header { font-size: 1.5rem; text-align: center; border-bottom: 2px solid #21808d; }
         .print-slot { font-size: 1.2rem; margin-bottom: 15px; }
       `
     };
@@ -917,6 +947,7 @@ function getLayoutStyles() {
             height: 180mm;
         }
         .print-day { height: 100%; font-size: 0.9em; border: 1px solid #333; }
+        .print-day-header { border-bottom: 2px solid #21808d; }
       `
     };
   }
@@ -926,6 +957,7 @@ function getLayoutStyles() {
       css: `
         .print-grid { display: block; column-count: 2; column-gap: 2rem; }
         .print-day { margin-bottom: 15px; break-inside: avoid; border: 1px solid #ccc; }
+        .print-day-header { border-bottom: 2px solid #21808d; }
       `
     };
   }
@@ -934,6 +966,7 @@ function getLayoutStyles() {
     css: `
       .print-grid { display: flex; flex-direction: column; gap: 10px; }
       .print-day { border: 1px solid #999; }
+      .print-day-header { border-bottom: 2px solid #21808d; }
     `
   };
 }
@@ -969,6 +1002,10 @@ function renderLayoutBar() {
              <button class="btn btn-secondary btn-sm" id="layout_columns" onclick="setLayout('columns')">${t('btn_layout_columns')}</button>
              <button class="btn btn-secondary btn-sm" id="layout_centered" onclick="setLayout('centered')">${t('btn_layout_centered')}</button>
              <button class="btn btn-secondary btn-sm" id="layout_grid" onclick="setLayout('grid')">${t('btn_layout_grid')}</button>
+        </div>
+        <div style="width:100%; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #eee;">
+             <strong style="display:block; margin-bottom:0.3rem; color:#7f8c8d; font-size:0.85em;">User Custom:</strong>
+             <button class="btn btn-secondary btn-sm" id="layout_test1" onclick="setLayout('test1')">Test 1 (Clean)</button>
         </div>
     `;
     updateLayoutButtons();
