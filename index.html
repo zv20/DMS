@@ -16,50 +16,82 @@
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body data-theme="default">
 
-  <div class="app-container">
-    
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
+  <!-- Fixed App Header -->
+  <header class="app-header">
+      <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+      </button>
       <div class="logo">
         <h2>🍽️ KitchenPro</h2>
       </div>
+  </header>
+
+  <!-- Fullscreen Navigation Overlay (Bubble) -->
+  <div id="navOverlay" class="nav-overlay">
+      <button id="closeNavBtn" class="close-nav-btn">&times;</button>
       
-      <button class="nav-btn active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
-      <button class="nav-btn" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
-      <button class="nav-btn" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
-      <div class="separator"></div>
-      <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
-      <button class="nav-btn" data-page="template" data-i18n="nav_template">Print Template</button>
-      <button class="nav-btn" data-page="style-editor">Templates</button>
+      <div class="nav-content">
+          <div class="nav-links">
+              <button class="nav-item active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
+              <button class="nav-item" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
+              <button class="nav-item" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
+              <button class="nav-item" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
+          </div>
 
-      <div class="settings-area" style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-        <select id="languageSelect" class="lang-select">
-          <option value="en">🇺🇸 English</option>
-          <option value="bg">🇧🇬 Български</option>
-        </select>
+          <div class="nav-separator"></div>
 
-        <!-- Sync / File Operations -->
-        <!-- CORRECT CLASS: sync-controls-wrapper (Visible) -->
-        <div class="sync-controls-wrapper">
-            <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
-            
-            <!-- CORRECT CLASS: sync-dropdown (Hidden until toggled) -->
-            <div id="syncDropdown" class="sync-dropdown">
-                <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
-                <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
-                <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
-                <hr class="divider">
-                <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-                <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
-                <input type="file" id="importInput" accept=".json" style="display:none">
-            </div>
-        </div>
+          <!-- Settings Section (Expandable) -->
+          <div class="nav-settings-group">
+              <button class="nav-item settings-toggle" onclick="toggleSettingsSubmenu()">
+                  ⚙️ Settings <span class="arrow">▼</span>
+              </button>
+              <div id="settingsSubmenu" class="settings-submenu">
+                  <button class="sub-nav-item" data-page="template" data-i18n="nav_template">Print Template</button>
+                  <button class="sub-nav-item" data-page="style-editor">Template Builder</button>
+                  
+                  <div class="theme-selector">
+                      <label>App Theme:</label>
+                      <div class="theme-buttons">
+                          <button class="theme-btn theme-default" onclick="setAppTheme('default')" title="Modern Teal"></button>
+                          <button class="theme-btn theme-dark" onclick="setAppTheme('dark')" title="Midnight Blue"></button>
+                          <button class="theme-btn theme-warm" onclick="setAppTheme('warm')" title="Sunny Orange"></button>
+                      </div>
+                  </div>
+
+                  <div class="lang-selector">
+                      <label>Language:</label>
+                      <select id="languageSelect" class="lang-select-box">
+                          <option value="en">🇺🇸 English</option>
+                          <option value="bg">🇧🇬 Български</option>
+                      </select>
+                  </div>
+              </div>
+          </div>
+
+          <div class="nav-footer">
+               <!-- Sync Controls moved here -->
+               <div class="sync-controls-wrapper">
+                    <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
+                    <div id="syncDropdown" class="sync-dropdown">
+                        <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
+                        <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
+                        <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
+                        <hr class="divider">
+                        <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
+                        <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
+                        <input type="file" id="importInput" accept=".json" style="display:none">
+                    </div>
+                </div>
+          </div>
       </div>
-    </nav>
+  </div>
 
-    <!-- Main Content Area -->
+  <div class="app-container">
+    <!-- Main Content Area (Full Width now) -->
     <main class="content">
 
       <!-- RECIPES PAGE -->
@@ -118,10 +150,10 @@
         </div>
 
         <!-- Print Date Picker (Hidden or Visible based on need) -->
-        <div class="print-controls" style="margin-bottom: 1rem; padding:10px; background:#f8f9fa; border-radius:8px; display:flex; gap:10px; align-items:center;">
+        <div class="print-controls" style="margin-bottom: 1rem; padding:10px; background:var(--color-surface); border-radius:8px; display:flex; gap:10px; align-items:center; border: 1px solid var(--color-border);">
              <span data-i18n="label_print_date">Print Week of:</span>
              <input type="date" id="printStartDate">
-             <span style="font-size:0.85em; color:#666;" data-i18n="text_print_hint"></span>
+             <span style="font-size:0.85em; color:var(--color-text-secondary);" data-i18n="text_print_hint"></span>
         </div>
         
         <div class="print-day-selector" style="margin-bottom:1rem;">
@@ -195,7 +227,7 @@
 
         <div class="builder-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 150px);">
             <!-- Sidebar Controls -->
-            <div class="builder-sidebar" style="background: #fff; padding: 20px; border-right: 1px solid #ddd; overflow-y: auto;">
+            <div class="builder-sidebar" style="background: var(--color-surface); padding: 20px; border-right: 1px solid var(--color-border); overflow-y: auto;">
                 
                 <div class="control-group">
                     <h3>Saved Templates</h3>
@@ -255,7 +287,7 @@
             </div>
 
             <!-- Live Preview -->
-            <div class="builder-preview" style="background: #f0f2f5; padding: 20px; overflow-y: auto; display: flex; justify-content: center;">
+            <div class="builder-preview" style="background: var(--color-background); padding: 20px; overflow-y: auto; display: flex; justify-content: center;">
                 <div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.8); transform-origin: top center;">
                     <!-- Preview Content Generated Here -->
                     <h1 style="text-align:center; color:#21808d;">MENU PREVIEW</h1>
