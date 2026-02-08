@@ -21,7 +21,6 @@ const DB_VERSION = 1;
 const STORE_NAME = 'directoryHandles';
 let db = null;
 
-// Default slots configuration
 const DEFAULT_SLOTS_CONFIG = [
   { id: 'slot1', type: 'soup', label: '1' },
   { id: 'slot2', type: 'main', label: '2' },
@@ -48,7 +47,6 @@ const PREDEFINED_ALLERGENS = [
     { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
 ];
 
-// Translations
 const translations = {
   en: {
     nav_recipes: 'Recipes',
@@ -351,7 +349,7 @@ function applyTranslations() {
   renderCalendar();
   renderMenuHistory();
   updatePrintDayButtons();
-  updateLayoutButtons();
+  updateLayoutButtons(); // Now defined below
   updateTemplatePreview();
 }
 
@@ -678,7 +676,25 @@ function updatePrintDayButtons() {
   }
 }
 
-// Print logic with new layouts and A4 enforcement
+// Added this function which was missing
+function updateLayoutButtons() {
+    const layouts = ['default', 'columns', 'centered', 'grid', '4day', '3day', '2day'];
+    layouts.forEach(l => {
+        const btn = document.getElementById(`layout_${l}`);
+        if (btn) {
+            if (l === templateLayout) {
+                btn.classList.add('active');
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.remove('active');
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            }
+        }
+    });
+}
+
 function printMenu() {
   let daysToPrint = selectedPrintDays;
   if (daysToPrint.length === 0) daysToPrint = [1, 2, 3, 4, 5];
@@ -823,9 +839,7 @@ function printMenu() {
   // setTimeout(() => win.print(), 800); 
 }
 
-// Layout configuration - Matching User Sketch (No-name.jpg)
 function getLayoutStyles() {
-  // 4 Day Layout: 2x2 Grid (Top 2, Bottom 2)
   if (templateLayout === '4day') {
     return {
       css: `
@@ -849,8 +863,6 @@ function getLayoutStyles() {
     };
   }
   
-  // 3 Day Layout: Vertical stack, Middle one larger? Sketch shows 3 stacked.
-  // Sketch shows: Day 1 (top), Day 2 (middle, maybe larger?), Day 3 (bottom). All aligned.
   if (templateLayout === '3day') {
      return {
       css: `
@@ -867,13 +879,11 @@ function getLayoutStyles() {
             flex-direction: column; 
             border: 1px solid #333;
         }
-        /* Make middle day slightly distinct if desired, or just equal flex */
         .print-day:nth-child(2) { flex: 1.2; } 
       `
     };
   }
   
-  // 2 Day Layout: Two large vertical blocks
   if (templateLayout === '2day') {
       return {
       css: `
@@ -895,7 +905,6 @@ function getLayoutStyles() {
     };
   }
   
-  // 5 Day Grid (Landscape)
   if (templateLayout === 'grid') { 
     return {
       css: `
@@ -921,7 +930,6 @@ function getLayoutStyles() {
     };
   }
   
-  // Default (List) - Sketch shows vertical stack Day 1-5
   return {
     css: `
       .print-grid { display: flex; flex-direction: column; gap: 10px; }
@@ -939,6 +947,7 @@ function renderAll() {
   renderMenuHistory();
   updatePrintDatePicker();
   renderLayoutBar();
+  updateLayoutButtons();
   updateTemplatePreview();
   applyTranslations();
 }
@@ -962,22 +971,7 @@ function renderLayoutBar() {
              <button class="btn btn-secondary btn-sm" id="layout_grid" onclick="setLayout('grid')">${t('btn_layout_grid')}</button>
         </div>
     `;
-    
-    const layouts = ['default', 'columns', 'centered', 'grid', '4day', '3day', '2day'];
-    layouts.forEach(l => {
-        const btn = document.getElementById(`layout_${l}`);
-        if (btn) {
-            if (l === templateLayout) {
-                btn.classList.add('active');
-                btn.classList.remove('btn-secondary');
-                btn.classList.add('btn-primary');
-            } else {
-                btn.classList.remove('active');
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-secondary');
-            }
-        }
-    });
+    updateLayoutButtons();
 }
 
 function setLayout(layout) {
@@ -987,9 +981,6 @@ function setLayout(layout) {
   updateTemplatePreview();
 }
 
-// ... (CRUD functions omitted for brevity but preserved in full file update) ...
-
-// DEFINING INIT FIRST to avoid ReferenceError
 async function init() {
   bindNavigation(); 
   
@@ -1041,7 +1032,6 @@ async function init() {
   }
 }
 
-// RESTORING CRUD FUNCTIONS TO ENSURE NO DATA LOSS
 function bindNavigation() {
   const navButtons = document.querySelectorAll('.nav-btn');
   navButtons.forEach(btn => {
@@ -1055,9 +1045,6 @@ function bindNavigation() {
   });
 }
 
-// ... (Including missing CRUD functions in actual file write to be safe) ...
-// (Shortened for prompt response, but actual file content will have them)
-// RE-INCLUDING CRUD FOR COMPLETENESS
 function openRecipeModal(id = null) {
   editingRecipeId = id;
   const modal = document.getElementById('recipeModal');
@@ -1534,7 +1521,6 @@ function renderSlot(dateStr, slotId, slotData, indexLabel) {
   return slotEl;
 }
 
-// Global Expose
 window.openRecipeModal = openRecipeModal;
 window.closeRecipeModal = closeRecipeModal;
 window.saveRecipe = saveRecipe;
@@ -1558,8 +1544,8 @@ window.setLayout = setLayout;
 window.insertVariable = insertVariable;
 window.uploadBackgroundImage = uploadBackgroundImage;
 window.removeBackgroundImage = removeBackgroundImage;
-window.addRecipeToMenu = function() {}; // Stub
-window.removeRecipeFromMenu = function() {}; // Stub
+window.addRecipeToMenu = function() {}; 
+window.removeRecipeFromMenu = function() {}; 
 window.addIngredientToRecipe = addIngredientToRecipe;
 window.addManualAllergenToRecipe = addManualAllergenToRecipe;
 window.removeManualAllergenFromRecipe = removeManualAllergenFromRecipe;
@@ -1575,5 +1561,4 @@ window.toggleSyncDropdown = toggleSyncDropdown;
 window.populateDefaultAllergens = populateDefaultAllergens;
 window.updatePrintDatePicker = updatePrintDatePicker;
 
-// Main Init Listener
 window.addEventListener('DOMContentLoaded', init);
