@@ -964,10 +964,12 @@ function renderCalendar() {
     const weekDaysContainer = document.createElement('div');
     weekDaysContainer.className = 'week-days';
     weekDaysContainer.style.display = 'grid';
-    weekDaysContainer.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    // Week view now only shows Mon-Fri (5 columns)
+    weekDaysContainer.style.gridTemplateColumns = 'repeat(5, 1fr)';
     weekDaysContainer.style.gap = '10px';
 
-    for (let i = 0; i < 7; i++) {
+    // Iterate 1 (Monday) to 5 (Friday), skipping 0 (Sunday) and 6 (Saturday)
+    for (let i = 1; i <= 5; i++) {
        const day = new Date(weekStart);
        day.setDate(weekStart.getDate() + i);
        const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
@@ -1006,7 +1008,7 @@ function renderCalendar() {
     // MONTH VIEW
     calendarEl.className = 'calendar';
     
-    // Headers
+    // Headers - Keep standard 7-day week for Month view
     DAY_NAMES.forEach((d) => {
         const h = document.createElement('div');
         h.className = 'calendar-day-header';
@@ -1136,18 +1138,12 @@ function renderSlot(dateStr, slotId, slotData, indexLabel) {
   // This is a key feature: only show soups in soup slot, unless type is 'other' (show all?)
   // User asked to change type, implying strict filtering.
   // Let's filter strictly for soup/main/dessert, and 'other' shows everything?
-  // Or just sort them? 
   // User said "separated by categories".
-  // Let's show ALL recipes but grouped? Or just filtered?
-  // "if the second instead of main be soup" -> implies we switch the slot type to soup, then pick a soup.
   
   const relevantRecipes = recipes.filter(r => {
       if (slotData.type === 'other') return true; // Show all for Other
       return r.category === slotData.type;
   });
-  
-  // If no recipes found for category, maybe show all but warn? 
-  // Better to just show relevant ones to keep it clean.
   
   relevantRecipes.forEach(r => {
     const option = document.createElement('option');
