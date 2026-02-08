@@ -464,7 +464,7 @@ function closeSyncDropdown() {
 }
 
 window.onclick = function(event) {
-  if (!event.target.matches('.sync-status') && !event.target.closest('.sync-dropdown')) {
+  if (!event.target.matches('.sync-status') && !event.target.closest('.sync-controls-wrapper')) {
     closeSyncDropdown();
   }
 }
@@ -861,7 +861,11 @@ function renderAll() {
   updatePrintDatePicker();
   renderLayoutBar();
   updateLayoutButtons();
-  updateTemplatePreview();
+  
+  // FIX: Provide fallback or implement getLayoutStyles if needed for the legacy template preview
+  // For now, we reuse the existing function or just call updateTemplatePreview() directly.
+  updateTemplatePreview(); 
+  
   applyTranslations();
   
   // NEW
@@ -1277,6 +1281,44 @@ function insertVariable(variable) { if (window.$ && window.$('#templateEditor').
 function saveTemplate() { if (window.$ && window.$('#templateEditor').summernote) { printTemplate = window.$('#templateEditor').summernote('code'); } saveData(); alert(t('alert_template_saved')); }
 function uploadBackgroundImage(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function (e) { templateBackgroundImage = e.target.result; localStorage.setItem('templateBackgroundImage', templateBackgroundImage); updateTemplatePreview(); }; reader.readAsDataURL(file); }
 function removeBackgroundImage() { templateBackgroundImage = ''; localStorage.removeItem('templateBackgroundImage'); updateTemplatePreview(); }
+function getLayoutStyles() {
+    const s = currentStyleSettings || {
+        font: 'Segoe UI',
+        pageBg: '#ffffff',
+        headerBg: '#ffffff',
+        headerText: '#21808d',
+        cardBg: '#ffffff',
+        borderColor: '#333333',
+        borderWidth: '1',
+        slotColors: { slot1: '#000000', slot2: '#000000', slot3: '#000000' }
+    };
+    
+    return `
+    body { font-family: '${s.font}', sans-serif; background-color: ${s.pageBg}; }
+    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .print-day { 
+        background-color: ${s.cardBg}; 
+        border: ${s.borderWidth}px solid ${s.borderColor}; 
+        padding: 15px;
+    }
+    .print-day-header { 
+        background-color: ${s.headerBg}; 
+        color: ${s.headerText};
+        border-bottom: 2px solid ${s.headerText};
+        padding: 5px;
+        margin-top: 0;
+        text-transform: uppercase;
+        font-size: 1.1rem;
+    }
+    .print-slot { margin-bottom: 5px; }
+    .slot-idx { font-weight:bold; margin-right:5px; }
+    .slot1-text { color: ${s.slotColors.slot1}; }
+    .slot2-text { color: ${s.slotColors.slot2}; }
+    .slot3-text { color: ${s.slotColors.slot3}; }
+    .print-ing { font-size: 0.85em; color: #555; }
+    `;
+}
+
 function updateTemplatePreview() {
   const preview = document.getElementById('templatePreview');
   if (!preview) return;
@@ -1289,17 +1331,23 @@ function updateTemplatePreview() {
   const lastDate = previewDates[previewDates.length - 1];
   const title = `${firstDate.toLocaleDateString(locale, { month: 'long', day: 'numeric' })} - ${lastDate.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })} ${currentLanguage === 'bg' ? 'Меню' : 'Menu'}`;
   const dateRange = `${firstDate.toLocaleDateString(locale)} - ${lastDate.toLocaleDateString(locale)}`;
+  
+  // Use builder settings for colors
+  const s = currentStyleSettings || { slotColors: { slot1: '#000', slot2: '#000', slot3: '#000' } };
+  
   let recipesHtml = '<div class="print-grid">';
   previewDates.forEach(day => {
-    recipesHtml += `<div class="print-day"><h3>${day.toLocaleDateString(locale, { weekday: 'long' })}</h3>`;
-    recipesHtml += `<div class="print-slot"><strong>1. ${t('slot_soup')}:</strong> Chicken Soup (300g) <span style="color:red">(Celery)</span></div>`;
-    recipesHtml += `<div class="print-slot"><strong>2. ${t('slot_main')}:</strong> Grilled Chicken (200g)</div>`;
+    recipesHtml += `<div class="print-day"><h3 class="print-day-header">${day.toLocaleDateString(locale, { weekday: 'long' })}</h3>`;
+    recipesHtml += `<div class="print-slot" style="color:${s.slotColors.slot1}"><strong>1. ${t('slot_soup')}:</strong> Chicken Soup (300g) <span style="color:red">(Celery)</span></div>`;
+    recipesHtml += `<div class="print-slot" style="color:${s.slotColors.slot2}"><strong>2. ${t('slot_main')}:</strong> Grilled Chicken (200g)</div>`;
     recipesHtml += '</div>';
   });
   recipesHtml += '</div>';
+  
   const styles = getLayoutStyles();
   const styleEl = document.createElement('style');
-  styleEl.innerHTML = styles.css;
+  styleEl.innerHTML = styles;
+  
   const html = printTemplate.replace(/{title}/g, title).replace(/{dateRange}/g, dateRange).replace(/{recipes}/g, recipesHtml).replace(/{labelMenuFor}/g, t('label_menu_for'));
   preview.innerHTML = html;
   if (templateLayout === 'grid') { preview.style.display = 'block'; }
