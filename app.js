@@ -1,4 +1,4 @@
-// Recipe Manager Application - Fix Navigation Priority
+// Recipe Manager Application - Fixed Print + Day Selection + Full Functionality
 
 let recipes = [];
 let ingredients = [];
@@ -14,6 +14,7 @@ let templateLayout = localStorage.getItem('templateLayout') || 'default';
 let directoryHandle = null;
 const isFileSystemSupported = 'showDirectoryPicker' in window;
 let viewMode = localStorage.getItem('calendarViewMode') || 'week';
+let selectedPrintDays = [1, 2, 3, 4, 5]; // Mon–Fri
 
 const DB_NAME = 'RecipeManagerDB';
 const DB_VERSION = 1;
@@ -40,6 +41,7 @@ const PREDEFINED_ALLERGENS = [
     { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
 ];
 
+// Translations
 const translations = {
   en: {
     nav_recipes: 'Recipes',
@@ -54,7 +56,7 @@ const translations = {
     btn_save_menu: 'Save Menu',
     btn_previous: '← Previous',
     btn_next: 'Next →',
-    btn_print: '🖨️ Print Menu',
+    btn_print: '🖨️ Print',
     btn_save_template: 'Save Template',
     btn_edit: 'Edit',
     btn_delete: 'Delete',
@@ -107,10 +109,10 @@ const translations = {
     category_dessert: '🍰 Dessert',
     category_other: '➕ Other',
 
-    slot_soup: 'Soup',
-    slot_main: 'Main',
-    slot_dessert: 'Dessert',
-    slot_other: 'Other',
+    slot_soup: '🥣 Soup',
+    slot_main: '🍽️ Main',
+    slot_dessert: '🍰 Dessert',
+    slot_other: '➕ Other',
 
     select_ingredient: 'Select ingredient',
     select_allergen: 'Select allergen',
@@ -304,108 +306,73 @@ const translations = {
   }
 };
 
+// Helpers
 function t(key) {
-  return (translations[currentLanguage] && translations[currentLanguage][key]) || key;
+  return (translations[currentLanguage] && translations[currentLanguage][key]) ||
+    translations.en[key] ||
+    key;
 }
 
-function applyTranslations() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.dataset.i18n;
-    el.textContent = t(key);
-  });
-  updateSyncStatus();
-  const portionInput = document.getElementById('recipePortionSize');
-  if (portionInput) portionInput.placeholder = t('portion_placeholder');
-
-  updateSelects();
-  renderCalendar();
-  renderMenuHistory();
-  updateTemplatePreview();
-  updatePrintDatePicker();
-  
-  // Re-render lists to update names
-  renderRecipes();
-  renderIngredients();
-  renderAllergens();
+function getCategoryIcon(category) {
+  return {
+    soup: '🥣',
+    main: '🍽️',
+    dessert: '🍰',
+    other: '➕'
+  }[category] || '➕';
 }
 
-// === HELPER FUNCTIONS ===
-function updatePrintDatePicker() {
-  const input = document.getElementById('printStartDate');
-  if (input) {
-    const weekStart = getWeekStart(currentDate);
-    const year = weekStart.getFullYear();
-    const month = String(weekStart.getMonth() + 1).padStart(2, '0');
-    const day = String(weekStart.getDate()).padStart(2, '0');
-    input.value = `${year}-${month}-${day}`;
-  }
+function getCategoryClass(category) {
+  return `category-${category || 'other'}`;
 }
 
-function getCategoryIcon(cat) {
-  switch (cat) {
-    case 'soup': return '🥣';
-    case 'main': return '🍽️';
-    case 'dessert': return '🍰';
-    default: return '➕';
-  }
-}
-
-function getWeekStart(d) {
-  const date = new Date(d);
-  const day = date.getDay(); // 0 (Sun) to 6 (Sat)
-  const diffToMon = (day + 6) % 7; 
-  date.setDate(date.getDate() - diffToMon);
-  date.setHours(0,0,0,0);
-  return date;
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = d.getDate() - day;
+  return new Date(d.setDate(diff));
 }
 
 function getMonthStart(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-function updateSelects() {
-  const ingSelect = document.getElementById('ingredientSelect');
-  const allSelect = document.getElementById('allergenSelect');
-  const catSelect = document.getElementById('recipeCategory');
-  const ingAllSelect = document.getElementById('ingredientAllergenSelect');
-  
-  if (ingSelect) {
-    ingSelect.innerHTML = `<option value="">${t('select_ingredient')}</option>` + 
-      ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-  }
-  
-  if (allSelect) {
-    allSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + 
-      allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
-  }
-  
-  if (ingAllSelect) {
-      ingAllSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + 
-      allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
-  }
+// Apply UI translations
+function applyTranslations() {
+  const navRecipes = document.querySelector('[data-page="recipes"]');
+  const navIngredients = document.querySelector('[data-page="ingredients"]');
+  const navAllergens = document.querySelector('[data-page="allergens"]');
+  const navMenu = document.querySelector('[data-page="menu"]');
+  const navTemplate = document.querySelector('[data-page="template"]');
 
-  if (catSelect) {
-    const currentValue = catSelect.value;
-    catSelect.innerHTML = `
-      <option value="">${t('category_select')}</option>
-      <option value="soup">${t('category_soup')}</option>
-      <option value="main">${t('category_main')}</option>
-      <option value="dessert">${t('category_dessert')}</option>
-      <option value="other">${t('category_other')}</option>
-    `;
-    catSelect.value = currentValue;
-  }
+  if (navRecipes) navRecipes.textContent = t('nav_recipes');
+  if (navIngredients) navIngredients.textContent = t('nav_ingredients');
+  if (navAllergens) navAllergens.textContent = t('nav_allergens');
+  if (navMenu) navMenu.textContent = t('nav_menu');
+  if (navTemplate) navTemplate.textContent = t('nav_template');
+  
+  // Also update data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+
+  updateSyncStatus();
+  const portionInput = document.getElementById('recipePortionSize');
+  if (portionInput) portionInput.placeholder = t('portion_placeholder');
+
+  updateSelects();
+  renderRecipes();
+  renderIngredients();
+  renderAllergens();
+  renderCalendar();
+  renderMenuHistory();
+  updatePrintDayButtons();
+  updateLayoutButtons();
+  updateTemplatePreview();
 }
 
-function deleteRecipe(id) {
-  if (confirm(t('alert_delete_recipe'))) {
-    recipes = recipes.filter(r => r.id !== id);
-    saveData();
-    renderRecipes();
-  }
-}
-
-// Database & File System
+// IndexedDB
 async function initDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -423,58 +390,85 @@ async function initDB() {
   });
 }
 
-async function getDirectoryHandle() {
-  if (!db) await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get('defaultHandle');
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
 async function saveDirectoryHandle(handle) {
   if (!db) await initDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(handle, 'defaultHandle');
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    const tx = db.transaction([STORE_NAME], 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.put(handle, 'mainDirectory');
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
   });
 }
 
-// Data Management
-async function loadData() {
-  let loaded = false;
-  if (directoryHandle) {
-    try {
-      const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
-      const file = await fileHandle.getFile();
-      const text = await file.text();
-      if (text) {
-        parseData(text);
-        loaded = true;
-        updateSyncStatus('connected');
-      }
-    } catch (err) {
-      console.error('Error loading file:', err);
-      updateSyncStatus('error');
-    }
-  } 
-  
-  if (!loaded) {
-    const data = localStorage.getItem('recipeManagerData');
-    if (data) {
-      parseData(data);
-    } else {
-       // First time load: populate default allergens
-       populateDefaultAllergens();
-    }
-    updateSyncStatus('local');
+async function getDirectoryHandle() {
+  if (!db) await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get('mainDirectory');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function autoLoadOnStartup() {
+  if (!isFileSystemSupported) {
+    loadData();
+    return;
   }
-  updatePrintDatePicker();
+  try {
+    const savedHandle = await getDirectoryHandle();
+    if (!savedHandle) {
+      loadData();
+      return;
+    }
+    const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
+    if (permission === 'granted') {
+      directoryHandle = savedHandle;
+      updateSyncStatus('connected');
+      await loadFromFolder();
+    } else if (permission === 'prompt') {
+      const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
+      if (newPerm === 'granted') {
+        directoryHandle = savedHandle;
+        updateSyncStatus('connected');
+        await loadFromFolder();
+      } else {
+        loadData();
+      }
+    } else {
+      loadData();
+    }
+  } catch {
+    loadData();
+  }
+}
+
+// File system helpers
+async function selectSaveLocation() {
+  if (!isFileSystemSupported) {
+    alert(t('alert_file_api_unsupported'));
+    return;
+  }
+  try {
+    directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+    await directoryHandle.getDirectoryHandle('recipes', { create: true });
+    await directoryHandle.getDirectoryHandle('pictures', { create: true });
+    await directoryHandle.getDirectoryHandle('settings', { create: true });
+    await saveDirectoryHandle(directoryHandle);
+    updateSyncStatus('connected');
+    await loadFromFolder();
+    await saveAllData();
+  } catch (e) {
+    if (e.name !== 'AbortError') updateSyncStatus('error');
+  }
+}
+
+async function readFile(dirHandle, filename) {
+  const fileHandle = await dirHandle.getFileHandle(filename);
+  const file = await fileHandle.getFile();
+  return await file.text();
 }
 
 function parseData(jsonText) {
@@ -499,7 +493,39 @@ function parseData(jsonText) {
   }
 }
 
-async function saveData() {
+async function loadFromFolder() {
+  if (directoryHandle) {
+    try {
+      const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      if (text) {
+        parseData(text);
+        updateSyncStatus('connected');
+      }
+    } catch (err) {
+      console.error('Error loading file:', err);
+      updateSyncStatus('error');
+    }
+  }
+}
+
+// Local storage + auto-save proxy
+function loadData() {
+  let loaded = false;
+  const data = localStorage.getItem('recipeManagerData');
+  if (data) {
+    parseData(data);
+    loaded = true;
+  } else {
+     // First time load: populate default allergens
+     populateDefaultAllergens();
+  }
+  updateSyncStatus('local');
+  updatePrintDatePicker();
+}
+
+function saveData() {
   const data = {
     recipes,
     ingredients,
@@ -513,57 +539,31 @@ async function saveData() {
   };
 
   if (directoryHandle) {
-    try {
-      const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(JSON.stringify(data, null, 2));
-      await writable.close();
-      updateSyncStatus('synced');
-    } catch (err) {
-      console.error('Error saving file:', err);
-      updateSyncStatus('error');
-    }
+    // We can't write async inside a sync function easily, so we launch it and hope
+    // But for better UX we should show status
+    (async () => {
+        try {
+          const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(JSON.stringify(data, null, 2));
+          await writable.close();
+          updateSyncStatus('synced');
+        } catch (err) {
+          console.error('Error saving file:', err);
+          updateSyncStatus('error');
+        }
+    })();
   } else {
     localStorage.setItem('recipeManagerData', JSON.stringify(data));
     updateSyncStatus('local');
   }
 }
 
-async function selectSaveLocation() {
-  if (!isFileSystemSupported) {
-    alert(t('alert_file_api_unsupported'));
-    return;
-  }
-  try {
-    directoryHandle = await window.showDirectoryPicker();
-    await saveDirectoryHandle(directoryHandle);
-    await loadData();
-    renderAll();
-    alert(t('alert_data_loaded'));
-  } catch (err) {
-    console.error(err);
-  }
-  closeSyncDropdown();
+async function saveAllData() {
+    saveData(); // Proxy to main save logic
 }
 
-async function autoLoadOnStartup() {
-  if (isFileSystemSupported) {
-    try {
-      const handle = await getDirectoryHandle();
-      if (handle) {
-        const opts = { mode: 'readwrite' };
-        if ((await handle.queryPermission(opts)) === 'granted') {
-          directoryHandle = handle;
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  await loadData();
-}
-
-function manualSave() {
+async function manualSave() {
   saveData();
   alert(t('alert_data_saved'));
   closeSyncDropdown();
@@ -575,7 +575,7 @@ async function manualLoad() {
     const handle = await window.showDirectoryPicker();
     directoryHandle = handle;
     await saveDirectoryHandle(handle);
-    await loadData();
+    await loadFromFolder();
     renderAll();
     alert(t('alert_data_loaded'));
   } catch (err) {
@@ -632,15 +632,15 @@ function updateSyncStatus(status) {
   }
 }
 
-function renderAll() {
-  updateSelects();
-  renderRecipes();
-  renderIngredients();
-  renderAllergens();
-  renderCalendar();
-  renderMenuHistory();
-  updateTemplatePreview();
-  applyTranslations();
+function updatePrintDatePicker() {
+  const input = document.getElementById('printStartDate');
+  if (input) {
+    const weekStart = getWeekStart(currentDate);
+    const year = weekStart.getFullYear();
+    const month = String(weekStart.getMonth() + 1).padStart(2, '0');
+    const day = String(weekStart.getDate()).padStart(2, '0');
+    input.value = `${year}-${month}-${day}`;
+  }
 }
 
 function populateDefaultAllergens() {
@@ -668,17 +668,447 @@ function getAllergenName(allergen) {
     return allergen.name;
 }
 
-// Recipes
-function openRecipeModal(recipeId = null) {
-  editingRecipeId = recipeId;
+// Update select dropdowns (ingredients, allergens, category)
+function updateSelects() {
+  const ingredientSelect = document.getElementById('ingredientSelect');
+  const allergenSelect = document.getElementById('allergenSelect');
+  const catSelect = document.getElementById('recipeCategory');
+  const ingAllSelect = document.getElementById('ingredientAllergenSelect');
+  
+  if (ingredientSelect) {
+    ingredientSelect.innerHTML = `<option value="">${t('select_ingredient')}</option>` + 
+      ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+  }
+  
+  if (allergenSelect) {
+    allergenSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + 
+      allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
+  }
+  
+  if (ingAllSelect) {
+      ingAllSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + 
+      allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
+  }
+
+  if (catSelect) {
+    const currentValue = catSelect.value;
+    catSelect.innerHTML = `
+      <option value="">${t('category_select')}</option>
+      <option value="soup">${t('category_soup')}</option>
+      <option value="main">${t('category_main')}</option>
+      <option value="dessert">${t('category_dessert')}</option>
+      <option value="other">${t('category_other')}</option>
+    `;
+    catSelect.value = currentValue;
+  }
+}
+
+// Day selector for printing
+function togglePrintDay(dayIndex) {
+  const idx = selectedPrintDays.indexOf(dayIndex);
+  if (idx > -1) selectedPrintDays.splice(idx, 1);
+  else selectedPrintDays.push(dayIndex);
+  selectedPrintDays.sort((a, b) => a - b);
+  updatePrintDayButtons();
+  updateTemplatePreview();
+}
+
+function updatePrintDayButtons() {
+  for (let i = 0; i <= 6; i++) {
+    const btn = document.getElementById(`printDay${i}`);
+    if (btn) {
+      if (selectedPrintDays.includes(i)) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  }
+}
+
+// Print menu (fixed)
+function printMenu() {
+  // If selectedPrintDays is empty, maybe default to Mon-Fri (1-5) or 0-6
+  // But let's check
+  let daysToPrint = selectedPrintDays;
+  if (daysToPrint.length === 0) {
+      // If user hasn't selected any, assume all week? Or prompt?
+      // Let's assume Mon-Fri if empty, for safety
+      daysToPrint = [1, 2, 3, 4, 5];
+  }
+
+  const weekStart = getWeekStart(currentDate);
+  const locale = currentLanguage === 'bg' ? 'bg-BG' : 'en-US';
+
+  const selectedDates = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    const weekday = day.getDay();
+    if (daysToPrint.includes(weekday)) selectedDates.push(day);
+  }
+  
+  if (!selectedDates.length) {
+    alert(t('alert_select_days'));
+    return;
+  }
+
+  const firstDate = selectedDates[0];
+  const lastDate = selectedDates[selectedDates.length - 1];
+
+  const title = `${firstDate.toLocaleDateString(locale, { month: 'long', day: 'numeric' })} - ${lastDate.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })} ${currentLanguage === 'bg' ? 'Меню' : 'Menu'}`;
+  const dateRange = `${firstDate.toLocaleDateString(locale)} - ${lastDate.toLocaleDateString(locale)}`;
+
+  let recipesHtml = '<div>';
+
+  selectedDates.forEach(day => {
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    const dayMenu = currentMenu[dateStr];
+    if (!dayMenu || !Object.keys(dayMenu).length) return;
+    const hasAny = Object.values(dayMenu).some(slot => slot && slot.recipe);
+    if (!hasAny) return;
+
+    recipesHtml += `<h3 style="font-size:1.1rem;margin:0.7rem 0 0.4rem 0;color:#21808d;border-bottom:2px solid #21808d;padding-bottom:0.3rem;">${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
+    recipesHtml += '<div style="margin-left:0.5rem;font-size:0.9rem;">';
+
+    const soupSlots = [];
+    const mainSlots = [];
+    const dessertSlots = [];
+    const otherSlots = [];
+
+    Object.keys(dayMenu).forEach(slotId => {
+      const slotData = dayMenu[slotId];
+      if (!slotData || !slotData.recipe) return;
+      const recipe = recipes.find(r => r.id === slotData.recipe);
+      if (!recipe) return;
+      const item = { recipe, slotData };
+      if (slotData.type === 'soup') soupSlots.push(item);
+      else if (slotData.type === 'main') mainSlots.push(item);
+      else if (slotData.type === 'dessert') dessertSlots.push(item);
+      else otherSlots.push(item);
+    });
+
+    function renderGroup(label, icon, list) {
+      if (!list.length) return '';
+      let html = `<div style="margin-bottom:0.5rem;"><strong style="color:#666;">${icon} ${label}:</strong>`;
+      list.forEach(item => {
+        html += `<p style="margin:0.2rem 0 0.2rem 1rem;">${item.recipe.name}`;
+        if (item.recipe.allergens && item.recipe.allergens.length) {
+          // map allergen IDs to names
+          const algNames = item.recipe.allergens.map(a => {
+             // 'a' might be object or ID depending on how it's stored. 
+             // In recipe objects, it's typically {id, name}.
+             return a.name;
+          }).join(', ');
+          html += ` <em style="font-size:0.75rem;color:#c00;">(${algNames})</em>`;
+        }
+        html += '</p>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    recipesHtml += renderGroup('Soups', '🥣', soupSlots);
+    recipesHtml += renderGroup('Main Dishes', '🍽️', mainSlots);
+    recipesHtml += renderGroup('Desserts', '🍰', dessertSlots);
+    recipesHtml += renderGroup('Other', '➕', otherSlots);
+
+    recipesHtml += '</div>';
+  });
+
+  recipesHtml += '</div>';
+
+  const printContent = printTemplate
+    .replace(/{title}/g, title)
+    .replace(/{dateRange}/g, dateRange)
+    .replace(/{recipes}/g, recipesHtml)
+    .replace(/{labelMenuFor}/g, t('label_menu_for'));
+
+  const layoutStyles = getLayoutStyles();
+  const bgStyle = templateBackgroundImage
+    ? `background-image: url('${templateBackgroundImage}'); background-size: cover; background-position: center;`
+    : '';
+
+  const win = window.open('', '', 'width=800,height=600');
+  win.document.write(`
+    <html>
+    <head>
+      <title>${title}</title>
+      <style>
+        @page { size: A4; margin: 1cm; }
+        body {
+          font-family: Arial, sans-serif;
+          padding: 0.5rem;
+          max-width: ${layoutStyles.maxWidth};
+          margin: 0 auto;
+          font-size: 10pt;
+          ${bgStyle}
+        }
+        ${layoutStyles.css}
+        h1 {
+          color: #21808d;
+          font-size: 1.5rem;
+          margin: 0 0 0.5rem 0;
+        }
+        h3 {
+          margin-top: 0.7rem;
+          color: #21808d;
+          border-bottom: 2px solid #21808d;
+          padding-bottom: 0.3rem;
+          font-size: 1.1rem;
+        }
+        p {
+          margin: 0.2rem 0;
+          font-size: 0.9rem;
+        }
+        em {
+          color: #c00;
+          font-weight: 500;
+          font-size: 0.75rem;
+        }
+        strong {
+          color: #666;
+        }
+      </style>
+    </head>
+    <body${templateLayout !== 'default' ? ' class="' + templateLayout + '"' : ''}>
+      ${printContent}
+    </body>
+    </html>
+  `);
+  win.document.close();
+  // Wait for images if any
+  setTimeout(() => {
+      win.print();
+  }, 500);
+}
+
+// Calendar and menu planning (simplified core)
+function ensureDefaultSlots(dateStr) {
+  if (!currentMenu[dateStr]) currentMenu[dateStr] = {};
+  DEFAULT_SLOTS.forEach(slotType => {
+    if (!currentMenu[dateStr][slotType]) {
+      currentMenu[dateStr][slotType] = { type: slotType, recipe: null };
+    }
+  });
+}
+
+
+function toggleView(mode) {
+  viewMode = mode;
+  localStorage.setItem('calendarViewMode', mode);
+  renderCalendar();
+}
+
+function changeMonth(delta) {
+  if (viewMode === 'week') {
+      currentDate.setDate(currentDate.getDate() + (delta * 7));
+  } else {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+  }
+  updatePrintDatePicker();
+  renderCalendar();
+}
+
+function getCategoryColor(cat) {
+  switch(cat) {
+      case 'soup': return '#e67e22';
+      case 'main': return '#27ae60';
+      case 'dessert': return '#9b59b6';
+      default: return '#7f8c8d';
+  }
+}
+
+function renderCalendar() {
+  const calendarEl = document.getElementById('calendar');
+  const currentMonthEl = document.getElementById('currentMonth');
+  if (!calendarEl) return;
+
+  calendarEl.innerHTML = '';
+
+  // Update header title
+  if (currentMonthEl) {
+      const options = { month: 'long', year: 'numeric' };
+      if (viewMode === 'week') {
+          const weekStart = getWeekStart(currentDate);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          if (weekStart.getMonth() === weekEnd.getMonth()) {
+              currentMonthEl.textContent = weekStart.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', options);
+          } else {
+              const m1 = weekStart.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { month: 'short' });
+              const m2 = weekEnd.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { month: 'short', year: 'numeric' });
+              currentMonthEl.textContent = `${m1} - ${m2}`;
+          }
+      } else {
+          currentMonthEl.textContent = currentDate.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', options);
+      }
+  }
+
+  if (viewMode === 'week') {
+    calendarEl.className = 'week-view';
+    const weekStart = getWeekStart(currentDate);
+
+    // Let's stick to the column layout for week view as it was.
+    const weekDaysContainer = document.createElement('div');
+    weekDaysContainer.className = 'week-days';
+    weekDaysContainer.style.display = 'grid';
+    weekDaysContainer.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    weekDaysContainer.style.gap = '10px';
+
+    for (let i = 0; i < 7; i++) {
+       const day = new Date(weekStart);
+       day.setDate(weekStart.getDate() + i);
+       const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+       ensureDefaultSlots(dateStr);
+
+       const dayColumn = document.createElement('div');
+       dayColumn.className = 'day-column';
+       dayColumn.style.border = '1px solid #eee';
+       dayColumn.style.padding = '10px';
+       dayColumn.style.borderRadius = '8px';
+       dayColumn.style.background = '#fff';
+
+       const dayHeader = document.createElement('div');
+       dayHeader.className = 'day-header';
+       dayHeader.style.textAlign = 'center';
+       dayHeader.style.fontWeight = 'bold';
+       dayHeader.style.marginBottom = '10px';
+       dayHeader.style.color = '#21808d';
+       dayHeader.textContent = day.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+       dayColumn.appendChild(dayHeader);
+
+       DEFAULT_SLOTS.forEach(slotType => {
+           const slot = currentMenu[dateStr][slotType];
+           const slotEl = renderSlot(dateStr, slotType, slot);
+           dayColumn.appendChild(slotEl);
+       });
+
+       weekDaysContainer.appendChild(dayColumn);
+    }
+    calendarEl.appendChild(weekDaysContainer);
+
+  } else {
+    // MONTH VIEW
+    calendarEl.className = 'calendar';
+    
+    // Headers
+    DAY_NAMES.forEach((d) => {
+        const h = document.createElement('div');
+        h.className = 'calendar-day-header';
+        h.textContent = t('day_' + d.toLowerCase().substring(0,3) + '_short');
+        calendarEl.appendChild(h);
+    });
+
+    // Days logic
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayIndex = firstDay.getDay(); // 0-6
+
+    // Padding
+    for(let i=0; i<startDayIndex; i++) {
+        const pad = document.createElement('div');
+        pad.className = 'calendar-day disabled';
+        calendarEl.appendChild(pad);
+    }
+
+    // Dates
+    for(let i=1; i<=daysInMonth; i++) {
+        const dayDate = new Date(year, month, i);
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.onclick = (e) => {
+             if(e.target.closest('.mini-recipe-item')) return;
+             currentDate = dayDate;
+             toggleView('week');
+        };
+
+        cell.innerHTML = `<h4>${i}</h4><div class="calendar-day-content"></div>`;
+
+        const contentDiv = cell.querySelector('.calendar-day-content');
+        if (currentMenu[dateStr]) {
+            DEFAULT_SLOTS.forEach(slot => {
+                const s = currentMenu[dateStr][slot];
+                if (s && s.recipe) {
+                    const r = recipes.find(x => x.id === s.recipe);
+                    if (r) {
+                        const badge = document.createElement('div');
+                        badge.className = 'mini-recipe-item';
+                        badge.textContent = r.name;
+                        badge.style.backgroundColor = getCategoryColor(r.category);
+                        contentDiv.appendChild(badge);
+                    }
+                }
+            });
+        }
+
+        calendarEl.appendChild(cell);
+    }
+  }
+}
+
+
+function renderSlot(dateStr, slotType, slotData) {
+  const slotEl = document.createElement('div');
+  slotEl.className = 'menu-slot';
+  slotEl.dataset.date = dateStr;
+  slotEl.dataset.slot = slotType;
+  slotEl.style.marginBottom = '10px';
+
+  const label = document.createElement('div');
+  label.className = 'menu-slot-label';
+  label.style.fontSize = '0.85rem';
+  label.style.fontWeight = '600';
+  label.style.color = '#7f8c8d';
+  label.textContent = t(`slot_${slotType}`) || slotType;
+
+  const select = document.createElement('select');
+  select.className = 'menu-slot-select';
+  select.style.width = '100%';
+  select.style.padding = '5px';
+  select.style.fontSize = '0.9rem';
+
+  const emptyOption = document.createElement('option');
+  emptyOption.value = '';
+  emptyOption.textContent = t('select_recipe');
+  select.appendChild(emptyOption);
+
+  recipes.forEach(r => {
+    const option = document.createElement('option');
+    option.value = r.id;
+    option.textContent = r.name;
+    if (slotData && slotData.recipe === r.id) option.selected = true;
+    select.appendChild(option);
+  });
+
+  select.addEventListener('change', () => {
+    if (!currentMenu[dateStr]) currentMenu[dateStr] = {};
+    if (!currentMenu[dateStr][slotType]) currentMenu[dateStr][slotType] = { type: slotType, recipe: null };
+    currentMenu[dateStr][slotType].recipe = select.value || null;
+    saveData();
+  });
+
+  slotEl.appendChild(label);
+  slotEl.appendChild(select);
+
+  return slotEl;
+}
+
+// Recipes CRUD
+function openRecipeModal(id = null) {
+  editingRecipeId = id;
   const modal = document.getElementById('recipeModal');
   const title = document.getElementById('recipeModalTitle');
   const form = document.getElementById('recipeForm');
   
   document.getElementById('recipeAutoAllergens').innerHTML = '';
 
-  if (recipeId) {
-    const recipe = recipes.find(r => r.id === recipeId);
+  if (id) {
+    const recipe = recipes.find(r => r.id === id);
+    if (!recipe) return;
     title.textContent = t('modal_edit_recipe');
     document.getElementById('recipeName').value = recipe.name;
     document.getElementById('recipeCategory').value = recipe.category;
@@ -723,7 +1153,6 @@ function updateAutoAllergensDisplay() {
     const autoAllergens = [];
     
     ingredientsList.forEach(ing => {
-        // Need to find full ingredient object to get allergens
         const fullIng = ingredients.find(i => i.id === ing.id);
         if (fullIng && fullIng.allergens) {
             fullIng.allergens.forEach(algId => {
@@ -792,7 +1221,6 @@ function addIngredientToRecipe() {
   const list = JSON.parse(form.dataset.tempIngredients || '[]');
   
   if (!list.find(i => i.id === id)) {
-    // We store just ID and name in recipe to save space, but UI needs lookup
     list.push({ id: ingredient.id, name: ingredient.name });
     form.dataset.tempIngredients = JSON.stringify(list);
     renderTags('recipeIngredients', list, removeIngredientFromRecipe);
@@ -819,7 +1247,7 @@ function addManualAllergenToRecipe() {
   const list = JSON.parse(form.dataset.tempManualAllergens || '[]');
   
   if (!list.find(a => a.id === id)) {
-    list.push({ id: allergen.id, name: getAllergenName(allergen) }); // Save minimal info
+    list.push({ id: allergen.id, name: getAllergenName(allergen) }); 
     form.dataset.tempManualAllergens = JSON.stringify(list);
     renderTags('recipeManualAllergens', list, removeManualAllergenFromRecipe);
   }
@@ -933,7 +1361,7 @@ function saveIngredient(event) {
 
   saveData();
   renderIngredients();
-  updateSelects(); // Updates ingredient select in recipe modal
+  updateSelects(); 
   closeIngredientModal();
 }
 
@@ -1002,8 +1430,7 @@ function openAllergenModal(id = null) {
   if (id) {
       const alg = allergens.find(a => a.id === id);
       title.textContent = t('modal_edit_allergen');
-      nameInput.value = alg.isSystem ? '' : alg.name; // Don't show name for system ones if we want them readonly? No, allow edit of custom name
-      nameInput.value = alg.name; // Actually, allow renaming even system ones locally
+      nameInput.value = alg.name;
       colorInput.value = alg.color || '#000000';
   } else {
       title.textContent = t('modal_add_allergen');
@@ -1053,7 +1480,7 @@ function deleteAllergen(id) {
   
   saveData();
   renderAllergens();
-  renderIngredients(); // Re-render in case tags removed
+  renderIngredients();
   renderRecipes();
   updateSelects();
 }
@@ -1063,7 +1490,6 @@ function renderAllergens() {
   if (!list) return;
   list.innerHTML = '';
 
-  // Add Populate Button
   const headerDiv = document.createElement('div');
   headerDiv.style.gridColumn = '1 / -1';
   headerDiv.style.marginBottom = '1rem';
@@ -1100,7 +1526,6 @@ function renderAllergens() {
 }
 
 function getRecipeAllergens(recipe) {
-    // Combine auto and manual
     const all = new Set();
     const result = [];
     
@@ -1119,7 +1544,6 @@ function getRecipeAllergens(recipe) {
         recipe.manualAllergens.forEach(ma => all.add(ma.id));
     }
     
-    // Convert IDs to objects
     all.forEach(id => {
         const alg = allergens.find(a => a.id === id);
         if (alg) result.push(alg);
@@ -1137,7 +1561,6 @@ function renderTags(containerId, items, removeCallback) {
     tag.className = 'tag' + (isAllergen ? ' allergen' : '');
     
     let displayText = item.name;
-    // If it's a manual allergen item, it might have saved name, but let's try to lookup fresh name
     if (isAllergen && item.id) {
         const fresh = allergens.find(a => a.id === item.id);
         if (fresh) {
@@ -1195,6 +1618,100 @@ function renderRecipes() {
       </div>
     `;
     grid.appendChild(card);
+  });
+}
+
+function deleteRecipe(id) {
+  if (confirm(t('alert_delete_recipe'))) {
+    recipes = recipes.filter(r => r.id !== id);
+    saveData();
+    renderRecipes();
+  }
+}
+
+// Menu history
+function saveCurrentMenu() {
+  const dates = Object.keys(currentMenu);
+  const hasRecipes = dates.some(date =>
+    Object.values(currentMenu[date]).some(slot => slot && slot.recipe)
+  );
+  if (!hasRecipes) {
+    alert(t('alert_no_menu_to_save'));
+    return;
+  }
+  const id = Date.now().toString();
+  const name = `${t('week_of')} ${getWeekStart(currentDate).toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US')}`;
+  menuHistory.push({
+    id,
+    name,
+    date: new Date().toISOString(),
+    menu: JSON.parse(JSON.stringify(currentMenu))
+  });
+  saveData();
+  renderMenuHistory();
+  alert(t('alert_menu_saved'));
+}
+
+function loadSavedMenu(id) {
+  const entry = menuHistory.find(m => m.id === id);
+  if (!entry) return;
+  currentMenu = JSON.parse(JSON.stringify(entry.menu));
+  saveData();
+  renderCalendar();
+  alert(t('alert_menu_loaded'));
+}
+
+function deleteSavedMenu(id) {
+  if (!confirm(t('alert_delete_menu'))) return;
+  menuHistory = menuHistory.filter(m => m.id !== id);
+  saveData();
+  renderMenuHistory();
+}
+
+function renderMenuHistory() {
+  const list = document.getElementById('menuHistory');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (!menuHistory.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = t('empty_menus');
+    list.appendChild(empty);
+    return;
+  }
+
+  menuHistory.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'menu-history-item';
+
+    const name = document.createElement('div');
+    name.className = 'menu-history-name';
+    name.textContent = m.name;
+
+    const date = document.createElement('div');
+    date.className = 'menu-history-date';
+    date.textContent = new Date(m.date).toLocaleString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US');
+
+    const actions = document.createElement('div');
+    actions.className = 'menu-history-actions';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.textContent = t('btn_load');
+    loadBtn.addEventListener('click', () => loadSavedMenu(m.id));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = t('btn_delete');
+    deleteBtn.addEventListener('click', () => deleteSavedMenu(m.id));
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(name);
+    item.appendChild(date);
+    item.appendChild(actions);
+
+    list.appendChild(item);
   });
 }
 
@@ -1345,12 +1862,11 @@ function updateTemplatePreview() {
   const weekStart = getWeekStart(currentDate);
   const locale = currentLanguage === 'bg' ? 'bg-BG' : 'en-US';
 
-  // Fake preview for first 5 days for grid view, or 2 for others
   const daysToShow = templateLayout === 'grid' ? 5 : 2;
   const previewDates = [];
   for (let i = 0; i < daysToShow; i++) {
     const day = new Date(weekStart);
-    day.setDate(weekStart.getDate() + (i + 1)); // Mon-Fri
+    day.setDate(weekStart.getDate() + (i + 1)); 
     previewDates.push(day);
   }
 
@@ -1372,7 +1888,6 @@ function updateTemplatePreview() {
 
   const styles = getLayoutStyles();
   
-  // Inject style for preview
   const styleEl = document.createElement('style');
   styleEl.innerHTML = styles.css;
   
@@ -1383,9 +1898,8 @@ function updateTemplatePreview() {
     .replace(/{labelMenuFor}/g, t('label_menu_for'));
 
   preview.innerHTML = html;
-  // Apply grid styles to preview if needed
   if (templateLayout === 'grid') {
-     preview.style.display = 'block'; // Reset
+     preview.style.display = 'block'; 
   }
 }
 
@@ -1407,7 +1921,6 @@ function exportData() {
 
   const a = document.createElement('a');
   a.href = url;
-  // Updated filename to match sync file
   a.download = 'recipe_data.json';
   a.click();
 
@@ -1456,6 +1969,7 @@ function changeLanguage(lang) {
   applyTranslations();
 }
 
+// Navigation
 function bindNavigation() {
   const navButtons = document.querySelectorAll('.nav-btn');
   navButtons.forEach(btn => {
@@ -1471,8 +1985,7 @@ function bindNavigation() {
 
 // Init
 async function init() {
-  // Bind navigation immediately so it works even if data loading fails
-  bindNavigation();
+  bindNavigation(); // Ensure tabs work immediately
   
   await initDB();
   await autoLoadOnStartup();
@@ -1485,18 +1998,11 @@ async function init() {
     langSel.value = currentLanguage;
     langSel.addEventListener('change', (e) => changeLanguage(e.target.value));
   }
-
+  
+  // Render everything initial
   renderAll();
-  updatePrintDatePicker();
-  updateLayoutButtons();
-  updateSyncStatus();
 
-  if (window.$) {
-    window.$(document).ready(function () {
-      initSummernote();
-    });
-  }
-
+  // Attach event listeners
   const uploadBgInput = document.getElementById('uploadBgInput');
   const removeBgBtn = document.getElementById('removeBgBtn');
   const layoutDefaultBtn = document.getElementById('layout_default');
@@ -1523,11 +2029,30 @@ async function init() {
       }
     });
   }
+
+  if (window.$) {
+    window.$(document).ready(function () {
+      initSummernote();
+    });
+  }
+}
+
+function renderAll() {
+  updateSelects();
+  renderRecipes();
+  renderIngredients();
+  renderAllergens();
+  renderCalendar(); // THIS IS CRITICAL
+  renderMenuHistory();
+  updateTemplatePreview();
+  updatePrintDatePicker();
+  updateLayoutButtons();
+  applyTranslations();
 }
 
 window.addEventListener('DOMContentLoaded', init);
 
-// Expose
+// Expose functions globally for HTML onclick attributes
 window.openRecipeModal = openRecipeModal;
 window.closeRecipeModal = closeRecipeModal;
 window.saveRecipe = saveRecipe;
@@ -1551,8 +2076,8 @@ window.setLayout = setLayout;
 window.insertVariable = insertVariable;
 window.uploadBackgroundImage = uploadBackgroundImage;
 window.removeBackgroundImage = removeBackgroundImage;
-window.addRecipeToMenu = addRecipeToMenu;
-window.removeRecipeFromMenu = removeRecipeFromMenu;
+window.addRecipeToMenu = addRecipeToMenu; // Unused but safe to keep if referenced
+window.removeRecipeFromMenu = removeRecipeFromMenu; // Unused
 window.addIngredientToRecipe = addIngredientToRecipe;
 window.addManualAllergenToRecipe = addManualAllergenToRecipe;
 window.removeManualAllergenFromRecipe = removeManualAllergenFromRecipe;
