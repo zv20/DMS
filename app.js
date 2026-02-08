@@ -16,6 +16,23 @@ const isFileSystemSupported = 'showDirectoryPicker' in window;
 let viewMode = localStorage.getItem('calendarViewMode') || 'week';
 let selectedPrintDays = [1, 2, 3, 4, 5]; // Mon–Fri
 
+// NEW: Style Builder Data
+let savedTemplates = []; // [{ id, name, settings: {...} }]
+let currentStyleSettings = {
+    font: 'Segoe UI',
+    pageBg: '#ffffff',
+    headerBg: '#ffffff',
+    headerText: '#21808d',
+    cardBg: '#ffffff',
+    borderColor: '#333333',
+    borderWidth: '1',
+    slotColors: {
+        slot1: '#000000',
+        slot2: '#000000',
+        slot3: '#000000'
+    }
+};
+
 const DB_NAME = 'RecipeManagerDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'directoryHandles';
@@ -332,6 +349,8 @@ function parseData(jsonText) {
   printTemplate = data.printTemplate || printTemplate;
   templateBackgroundImage = data.templateBackgroundImage || '';
   templateLayout = data.templateLayout || 'default';
+  savedTemplates = data.savedTemplates || [];
+  if (data.currentStyleSettings) currentStyleSettings = data.currentStyleSettings;
   
   ingredients.forEach(i => {
       if (!i.allergens) i.allergens = [];
@@ -340,6 +359,9 @@ function parseData(jsonText) {
   if (allergens.length === 0) {
       populateDefaultAllergens();
   }
+
+  // Populate Saved Templates Select
+  updateSavedTemplatesList();
 }
 
 async function loadFromFolder() {
@@ -351,6 +373,7 @@ async function loadFromFolder() {
       if (text) {
         parseData(text);
         updateSyncStatus('connected');
+        loadBuilderSettings(); // Update builder UI
       }
     } catch (err) {
       console.error('Error loading file:', err);
@@ -363,6 +386,7 @@ function loadData() {
   const data = localStorage.getItem('recipeManagerData');
   if (data) {
     parseData(data);
+    loadBuilderSettings(); // Update builder UI
   } else {
      populateDefaultAllergens();
   }
@@ -380,7 +404,9 @@ function saveData() {
     printTemplate,
     currentLanguage,
     templateBackgroundImage,
-    templateLayout
+    templateLayout,
+    savedTemplates,
+    currentStyleSettings
   };
 
   if (directoryHandle) {
@@ -573,6 +599,10 @@ function updateLayoutButtons() {
 }
 
 function printMenu() {
+  // Use Style Builder if on that tab, otherwise use Legacy
+  const isBuilderActive = document.getElementById('style-editor').classList.contains('active');
+  // For now, let's prioritize the builder if settings exist, or fallback
+  
   let daysToPrint = selectedPrintDays;
   if (daysToPrint.length === 0) daysToPrint = [1, 2, 3, 4, 5];
 
@@ -594,74 +624,68 @@ function printMenu() {
 
   const firstDate = selectedDates[0];
   const lastDate = selectedDates[selectedDates.length - 1];
-
   const title = `${firstDate.toLocaleDateString(locale, { month: 'long', day: 'numeric' })} - ${lastDate.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })} ${currentLanguage === 'bg' ? 'Меню' : 'Menu'}`;
-  const dateRange = `${firstDate.toLocaleDateString(locale)} - ${lastDate.toLocaleDateString(locale)}`;
+  
+  // GENERATE CSS FROM BUILDER SETTINGS
+  const s = currentStyleSettings;
+  const builderCSS = `
+    body { font-family: '${s.font}', sans-serif; background-color: ${s.pageBg}; }
+    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .print-day { 
+        background-color: ${s.cardBg}; 
+        border: ${s.borderWidth}px solid ${s.borderColor}; 
+        padding: 15px;
+    }
+    .print-day-header { 
+        background-color: ${s.headerBg}; 
+        color: ${s.headerText};
+        border-bottom: 2px solid ${s.headerText};
+        padding: 5px;
+        margin-top: 0;
+        text-transform: uppercase;
+        font-size: 1.1rem;
+    }
+    .slot-idx { font-weight:bold; margin-right:5px; }
+    .slot1-text { color: ${s.slotColors.slot1}; }
+    .slot2-text { color: ${s.slotColors.slot2}; }
+    .slot3-text { color: ${s.slotColors.slot3}; }
+    .print-ing { font-size: 0.85em; color: #555; }
+  `;
 
-  let recipesHtml = '<div class="print-grid">'; // Wrapper for grid layouts
-
+  let contentHtml = `<h1 style="text-align:center; color:${s.headerText};">${title}</h1><div class="print-grid">`;
+  
   selectedDates.forEach(day => {
     const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const dayMenu = currentMenu[dateStr];
     if (!dayMenu) return; 
-    
-    const slots = ['slot1', 'slot2', 'slot3', 'slot4'];
-    
-    recipesHtml += `<div class="print-day">`;
-    recipesHtml += `<h3 class="print-day-header">${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
-    recipesHtml += '<div class="print-day-content">';
 
-    slots.forEach((sid, index) => {
+    contentHtml += `<div class="print-day">`;
+    contentHtml += `<h3 class="print-day-header">${day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>`;
+    
+    ['slot1', 'slot2', 'slot3', 'slot4'].forEach((sid, idx) => {
         const slotData = dayMenu[sid];
-        if (!slotData || !slotData.recipe) return;
-        
-        const recipe = recipes.find(r => r.id === slotData.recipe);
-        if (!recipe) return;
-
-        let lineHtml = `<div class="print-slot"><span class="slot-idx">${index + 1}.</span> <strong>${recipe.name}</strong>`;
-        
-        if (recipe.portionSize) {
-            lineHtml += ` <span class="print-portion">(${recipe.portionSize})</span>`;
+        if (slotData && slotData.recipe) {
+            const recipe = recipes.find(r => r.id === slotData.recipe);
+            if (recipe) {
+                // Determine style class based on slot ID
+                const textClass = (sid === 'slot1') ? 'slot1-text' : (sid === 'slot2' ? 'slot2-text' : (sid === 'slot3' ? 'slot3-text' : ''));
+                
+                contentHtml += `<div class="print-slot ${textClass}">
+                    <span class="slot-idx">${idx + 1}.</span> 
+                    <strong>${recipe.name}</strong> 
+                    <span style="font-size:0.9em">(${recipe.portionSize || ''})</span>
+                </div>`;
+                
+                // Ingredients
+                if (recipe.ingredients && recipe.ingredients.length > 0) {
+                     contentHtml += `<div class="print-ing" style="margin-left:15px; margin-bottom:5px;">${recipe.ingredients.map(i => i.name).join(', ')}</div>`;
+                }
+            }
         }
-
-        const recipeAllergens = getRecipeAllergens(recipe);
-        if (recipe.ingredients && recipe.ingredients.length > 0) {
-            lineHtml += ' <span class="print-ing">(';
-            const ingParts = recipe.ingredients.map(ing => {
-               const fullIng = ingredients.find(i => i.id === ing.id);
-               let color = '#555';
-               if (fullIng && fullIng.allergens && fullIng.allergens.length > 0) {
-                   color = '#d63031'; 
-                   if (fullIng.allergens.length === 1) {
-                       const a = allergens.find(x => x.id === fullIng.allergens[0]);
-                       if (a) color = a.color;
-                   }
-               }
-               return `<span style="color:${color};">${ing.name}</span>`;
-            });
-            lineHtml += ingParts.join(', ');
-            lineHtml += ')</span>';
-        }
-        
-        lineHtml += '</div>';
-        recipesHtml += lineHtml;
     });
-
-    recipesHtml += '</div></div>';
+    contentHtml += `</div>`;
   });
-
-  recipesHtml += '</div>'; // End wrapper
-
-  const printContent = printTemplate
-    .replace(/{title}/g, title)
-    .replace(/{dateRange}/g, dateRange)
-    .replace(/{recipes}/g, recipesHtml)
-    .replace(/{labelMenuFor}/g, t('label_menu_for'));
-
-  const layoutStyles = getLayoutStyles();
-  const bgStyle = templateBackgroundImage
-    ? `background-image: url('${templateBackgroundImage}'); background-size: cover; background-position: center;`
-    : '';
+  contentHtml += `</div>`;
 
   const win = window.open('', '', 'width=800,height=1000');
   win.document.write(`
@@ -671,183 +695,161 @@ function printMenu() {
       <title>${title}</title>
       <style>
         @page { size: A4; margin: 0.5cm; }
-        body {
-          font-family: 'Segoe UI', Arial, sans-serif;
-          margin: 0;
-          padding: 1cm;
-          width: 210mm;
-          min-height: 297mm;
-          box-sizing: border-box;
-          font-size: 11pt;
-          ${bgStyle}
-        }
-        h1 { color: #21808d; font-size: 1.6rem; margin: 0 0 0.5rem 0; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-        p { margin: 0.2rem 0; font-size: 1rem; text-align: center; color: #555; }
-        
-        /* Base styles */
-        .print-day { 
-            padding: 12px; 
-            background: rgba(255,255,255,0.95); 
-            page-break-inside: avoid;
-        }
-        .print-day-header {
-            margin-top: 0;
-            color: #21808d;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-        }
-        .print-slot { margin-bottom: 8px; line-height: 1.3; }
-        .slot-idx { color: #21808d; font-weight: bold; margin-right: 5px; }
-        .print-portion { color: #666; font-size: 0.9em; }
-        .print-ing { font-size: 0.85em; display: block; margin-left: 15px; margin-top: 2px; }
-
-        ${layoutStyles.css}
+        ${builderCSS}
       </style>
     </head>
-    <body class="${templateLayout}">
-      ${printContent}
+    <body>
+      ${contentHtml}
     </body>
     </html>
   `);
   win.document.close();
 }
 
-function getLayoutStyles() {
-  if (templateLayout === 'test1') {
-    return {
-      css: `
-        .print-grid { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-        }
-        .print-day { 
-            border: none; 
-            box-shadow: none; 
-            background: transparent; 
-            padding: 0; 
-            margin-bottom: 15px;
-        }
-        .print-day-header {
-            border-bottom: 1px solid #333; 
-            color: #000;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-            text-transform: none;
-        }
-        .print-slot { 
-            margin-bottom: 5px; 
-            font-size: 1rem;
-        }
-      `
-    };
-  }
+// --- STYLE BUILDER FUNCTIONS ---
 
-  if (templateLayout === '4day') {
-    return {
-      css: `
-        .print-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 20px;
-            height: 230mm;
-            margin-top: 20px;
+function initStyleBuilder() {
+    // Attach Event Listeners to inputs
+    const ids = ['styleFont', 'stylePageBg', 'styleHeaderBg', 'styleHeaderText', 'styleCardBg', 'styleBorderColor', 'styleBorderWidth', 'styleSlot1Color', 'styleSlot2Color', 'styleSlot3Color'];
+    
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateBuilderPreview);
         }
-        .print-day { 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            border: 1px solid #333;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    });
+
+    document.getElementById('btnSaveStyle').addEventListener('click', saveNewTemplate);
+    document.getElementById('btnNewTemplate').addEventListener('click', () => {
+        document.getElementById('savedTemplatesSelect').value = '';
+        // Reset to defaults
+        currentStyleSettings = {
+            font: 'Segoe UI',
+            pageBg: '#ffffff',
+            headerBg: '#ffffff',
+            headerText: '#21808d',
+            cardBg: '#ffffff',
+            borderColor: '#333333',
+            borderWidth: '1',
+            slotColors: { slot1:'#000', slot2:'#000', slot3:'#000' }
+        };
+        loadBuilderSettings();
+        updateBuilderPreview();
+    });
+
+    document.getElementById('savedTemplatesSelect').addEventListener('change', (e) => {
+        const id = e.target.value;
+        if (id === 'default') return;
+        const tmpl = savedTemplates.find(t => t.id === id);
+        if (tmpl) {
+            currentStyleSettings = { ...tmpl.settings };
+            loadBuilderSettings();
+            updateBuilderPreview();
         }
-        .print-day-content { flex: 1; }
-        .print-day-header { border-bottom: 2px solid #21808d; }
-      `
-    };
-  }
-  
-  if (templateLayout === '3day') {
-     return {
-      css: `
-        .print-grid { 
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            height: 240mm;
-            margin-top: 20px;
-        }
-        .print-day { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            border: 1px solid #333;
-        }
-        .print-day:nth-child(2) { flex: 1.2; }
-        .print-day-header { border-bottom: 2px solid #21808d; }
-      `
-    };
-  }
-  
-  if (templateLayout === '2day') {
-      return {
-      css: `
-        .print-grid { 
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            height: 250mm;
-            margin-top: 20px;
-        }
-        .print-day { 
-            flex: 1; 
-            padding: 25px; 
-            border: 2px solid #333; 
-        }
-        .print-day-header { font-size: 1.5rem; text-align: center; border-bottom: 2px solid #21808d; }
-        .print-slot { font-size: 1.2rem; margin-bottom: 15px; }
-      `
-    };
-  }
-  
-  if (templateLayout === 'grid') { 
-    return {
-      css: `
-        @page { size: landscape; }
-        body { width: 297mm; min-height: 210mm; }
-        .print-grid { 
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            height: 180mm;
-        }
-        .print-day { height: 100%; font-size: 0.9em; border: 1px solid #333; }
-        .print-day-header { border-bottom: 2px solid #21808d; }
-      `
-    };
-  }
-  
-  if (templateLayout === 'columns') {
-    return {
-      css: `
-        .print-grid { display: block; column-count: 2; column-gap: 2rem; }
-        .print-day { margin-bottom: 15px; break-inside: avoid; border: 1px solid #ccc; }
-        .print-day-header { border-bottom: 2px solid #21808d; }
-      `
-    };
-  }
-  
-  return {
-    css: `
-      .print-grid { display: flex; flex-direction: column; gap: 10px; }
-      .print-day { border: 1px solid #999; }
-      .print-day-header { border-bottom: 2px solid #21808d; }
-    `
-  };
+    });
+
+    loadBuilderSettings();
+    updateBuilderPreview();
 }
+
+function updateBuilderPreview() {
+    // Gather values from inputs
+    const s = {
+        font: document.getElementById('styleFont').value,
+        pageBg: document.getElementById('stylePageBg').value,
+        headerBg: document.getElementById('styleHeaderBg').value,
+        headerText: document.getElementById('styleHeaderText').value,
+        cardBg: document.getElementById('styleCardBg').value,
+        borderColor: document.getElementById('styleBorderColor').value,
+        borderWidth: document.getElementById('styleBorderWidth').value,
+        slotColors: {
+            slot1: document.getElementById('styleSlot1Color').value,
+            slot2: document.getElementById('styleSlot2Color').value,
+            slot3: document.getElementById('styleSlot3Color').value
+        }
+    };
+
+    currentStyleSettings = s; // Keep global state sync
+
+    // Apply to Preview Element
+    const sheet = document.getElementById('livePreviewSheet');
+    if (!sheet) return;
+
+    sheet.style.fontFamily = s.font;
+    sheet.style.backgroundColor = s.pageBg; // This might be weird if page is white, but allows testing
+
+    // Update Cards
+    const cards = sheet.querySelectorAll('.preview-day-card');
+    cards.forEach(card => {
+        card.style.backgroundColor = s.cardBg;
+        card.style.borderColor = s.borderColor;
+        card.style.borderWidth = s.borderWidth + 'px';
+        card.style.borderStyle = 'solid';
+    });
+
+    // Update Headers
+    const headers = sheet.querySelectorAll('.preview-day-header');
+    headers.forEach(h => {
+        h.style.backgroundColor = s.headerBg;
+        h.style.color = s.headerText;
+        h.style.borderBottomColor = s.headerText;
+    });
+
+    // Update Slots
+    sheet.querySelectorAll('.preview-slot.slot1').forEach(el => el.style.color = s.slotColors.slot1);
+    sheet.querySelectorAll('.preview-slot.slot2').forEach(el => el.style.color = s.slotColors.slot2);
+    sheet.querySelectorAll('.preview-slot.slot3').forEach(el => el.style.color = s.slotColors.slot3);
+}
+
+function loadBuilderSettings() {
+    const s = currentStyleSettings;
+    if (!s) return;
+    
+    setVal('styleFont', s.font);
+    setVal('stylePageBg', s.pageBg);
+    setVal('styleHeaderBg', s.headerBg);
+    setVal('styleHeaderText', s.headerText);
+    setVal('styleCardBg', s.cardBg);
+    setVal('styleBorderColor', s.borderColor);
+    setVal('styleBorderWidth', s.borderWidth);
+    setVal('styleSlot1Color', s.slotColors.slot1);
+    setVal('styleSlot2Color', s.slotColors.slot2);
+    setVal('styleSlot3Color', s.slotColors.slot3);
+}
+
+function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+}
+
+function saveNewTemplate() {
+    const name = prompt("Enter a name for this template:", "My Custom Theme");
+    if (!name) return;
+
+    const newTmpl = {
+        id: Date.now().toString(),
+        name: name,
+        settings: { ...currentStyleSettings }
+    };
+    
+    savedTemplates.push(newTmpl);
+    saveData();
+    updateSavedTemplatesList();
+    alert("Template saved!");
+}
+
+function updateSavedTemplatesList() {
+    const sel = document.getElementById('savedTemplatesSelect');
+    if (!sel) return;
+    
+    let html = '<option value="default">Default Theme</option>';
+    savedTemplates.forEach(t => {
+        html += `<option value="${t.id}">${t.name}</option>`;
+    });
+    sel.innerHTML = html;
+}
+
+// ---------------------------
 
 function renderAll() {
   updateSelects();
@@ -861,6 +863,11 @@ function renderAll() {
   updateLayoutButtons();
   updateTemplatePreview();
   applyTranslations();
+  
+  // NEW
+  updateSavedTemplatesList();
+  loadBuilderSettings();
+  updateBuilderPreview();
 }
 
 function renderLayoutBar() {
@@ -911,6 +918,9 @@ async function init() {
     langSel.addEventListener('change', (e) => changeLanguage(e.target.value));
   }
   
+  // NEW: Initialize Builder
+  initStyleBuilder();
+
   renderAll();
 
   const uploadBgInput = document.getElementById('uploadBgInput');
@@ -1295,7 +1305,7 @@ function updateTemplatePreview() {
   if (templateLayout === 'grid') { preview.style.display = 'block'; }
 }
 function exportData() {
-  const data = { recipes, ingredients, allergens, currentMenu, menuHistory, printTemplate, currentLanguage, templateBackgroundImage, templateLayout };
+  const data = { recipes, ingredients, allergens, currentMenu, menuHistory, printTemplate, currentLanguage, templateBackgroundImage, templateLayout, savedTemplates, currentStyleSettings };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'recipe_data.json'; a.click();
@@ -1308,6 +1318,7 @@ function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       recipes = data.recipes || []; ingredients = data.ingredients || []; allergens = data.allergens || []; currentMenu = data.currentMenu || {}; menuHistory = data.menuHistory || []; printTemplate = data.printTemplate || printTemplate; currentLanguage = data.currentLanguage || currentLanguage; templateBackgroundImage = data.templateBackgroundImage || ''; templateLayout = data.templateLayout || 'default';
+      savedTemplates = data.savedTemplates || []; if (data.currentStyleSettings) currentStyleSettings = data.currentStyleSettings;
       localStorage.setItem('recipeManagerLang', currentLanguage); localStorage.setItem('templateBackgroundImage', templateBackgroundImage); localStorage.setItem('templateLayout', templateLayout);
       saveData(); renderAll(); alert(t('alert_import_success'));
     } catch (err) { alert(t('alert_import_error') + err.message); }
