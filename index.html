@@ -15,7 +15,22 @@
         <header>
             <h1>🍽️ Recipe Manager</h1>
             <div class="header-controls">
-                <div id="syncStatus" class="sync-status disconnected" data-i18n="sync_disconnected">Not Connected</div>
+                
+                <!-- New Sync Dropdown Menu -->
+                <div class="sync-controls-wrapper">
+                    <div id="syncStatus" class="sync-status disconnected" onclick="toggleSyncDropdown()">
+                        🟡 Local Storage
+                    </div>
+                    <div id="syncDropdown" class="sync-dropdown">
+                         <button class="dropdown-item" onclick="selectSaveLocation()">📁 Select Save Location</button>
+                         <button class="dropdown-item" onclick="manualSave()">💾 Save Changes</button>
+                         <button class="dropdown-item" onclick="manualLoad()">📂 Load from Folder</button>
+                         <div class="divider"></div>
+                         <button class="dropdown-item" onclick="exportData()">⬇ Export JSON</button>
+                         <button class="dropdown-item" onclick="document.getElementById('importInput').click()">⬆ Import JSON</button>
+                    </div>
+                </div>
+
                 <select id="languageSelect" onchange="changeLanguage(this.value)">
                     <option value="en">English</option>
                     <option value="bg">Български</option>
@@ -31,17 +46,8 @@
             <button class="nav-btn" data-page="template" data-i18n="nav_template">Print Template</button>
         </nav>
 
-        <!-- File System Controls -->
-        <div class="file-controls">
-            <button class="btn btn-primary" onclick="selectSaveLocation()" data-i18n="btn_select_location">📁 Select Save Location</button>
-            <button class="btn btn-secondary" onclick="manualSave()" data-i18n="btn_manual_save">💾 Save</button>
-            <button class="btn btn-secondary" onclick="manualLoad()" data-i18n="btn_manual_load">📂 Load from Folder</button>
-            <button class="btn btn-secondary" onclick="exportData()" data-i18n="btn_export">Export</button>
-            <button class="btn btn-secondary" onclick="importData()" data-i18n="btn_import">Import</button>
-            <!-- Hidden file input for import -->
-            <input type="file" id="importInput" accept=".json" style="display:none;">
-            <button class="btn btn-secondary" onclick="document.getElementById('importInput').click()" data-i18n="btn_import">Import</button>
-        </div>
+        <!-- Hidden input for file operations -->
+        <input type="file" id="importInput" accept=".json" style="display:none;">
 
         <!-- Recipes Page -->
         <div id="recipes" class="page active">
