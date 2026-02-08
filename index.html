@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Recipe Manager & Menu Planner</title>
   
   <!-- Summernote CSS -->
@@ -11,713 +11,685 @@
   
   <style>
     :root {
-      --color-primary: #21808d;
-      --color-secondary: #f0f7f8;
-      --color-accent: #e67e22;
-      --color-text-primary: #2c3e50;
-      --color-text-secondary: #7f8c8d;
-      --color-border: #ecf0f1;
-      --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-      --radius-sm: 6px;
-      --radius-md: 10px;
+      /* Palette */
+      --primary: #21808d;
+      --primary-dark: #18606a;
+      --secondary: #f0f7f8;
+      --accent: #e67e22;
+      --danger: #e74c3c;
+      --success: #27ae60;
+      
+      /* Text */
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+      --text-light: #ecf0f1;
+      
+      /* Structural */
+      --bg-body: #f8f9fa;
+      --bg-card: #ffffff;
+      --border: #ecf0f1;
+      --radius: 8px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+      
+      /* Layout */
+      --header-height: 60px;
+      --container-width: 1200px;
     }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f8f9fa;
-      color: var(--color-text-primary);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 80px; /* Space for mobile nav if needed */
     }
 
-    /* Header & Navigation */
+    /* --- HEADER & NAVIGATION --- */
     header {
-      background-color: #fff;
-      padding: 1rem 2rem;
+      background: var(--bg-card);
       box-shadow: var(--shadow-sm);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
-    }
-
-    .brand {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--color-primary);
+      height: var(--header-height);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-    }
-
-    .nav-tabs {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .nav-btn {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--color-text-secondary);
-      border-radius: var(--radius-sm);
-      transition: all 0.2s;
-    }
-
-    .nav-btn:hover {
-      background-color: var(--color-secondary);
-      color: var(--color-primary);
-    }
-
-    .nav-btn.active {
-      background-color: var(--color-primary);
-      color: white;
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    /* Sync Dropdown */
-    .sync-dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .sync-status {
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .sync-status:hover {
-      background-color: #f0f0f0;
-      border-color: #ddd;
-    }
-
-    .sync-status.connected { background-color: #e6fcf5; color: #0ca678; }
-    .sync-status.disconnected { background-color: #fff9db; color: #f59f00; }
-    .sync-status.error { background-color: #fff5f5; color: #fa5252; }
-
-    .sync-dropdown-content {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 110%;
-      background-color: white;
-      min-width: 220px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-      border-radius: var(--radius-sm);
-      z-index: 200;
-      overflow: hidden;
-      border: 1px solid #eee;
-    }
-
-    .sync-dropdown.show .sync-dropdown-content {
-      display: block;
-    }
-
-    .sync-dropdown-content button {
-      width: 100%;
-      text-align: left;
-      padding: 12px 16px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      color: #333;
-      border-bottom: 1px solid #f5f5f5;
-    }
-
-    .sync-dropdown-content button:hover {
-      background-color: #f8f9fa;
-      color: var(--color-primary);
-    }
-    
-    .sync-dropdown-content button:last-child {
-      border-bottom: none;
-    }
-
-    select {
-      padding: 0.5rem;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--color-border);
-    }
-
-    /* Main Layout */
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
       padding: 0 1rem;
     }
 
-    .page {
-      display: none;
-      animation: fadeIn 0.3s ease;
+    .header-content {
+      width: 100%;
+      max-width: var(--container-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .page.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Buttons */
-    .btn {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-weight: 600;
-      transition: opacity 0.2s;
-      display: inline-flex;
+    .brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
       align-items: center;
       gap: 0.5rem;
+      white-space: nowrap;
     }
-
-    .btn:hover { opacity: 0.9; }
-
-    .btn-primary { background-color: var(--color-primary); color: white; }
-    .btn-secondary { background-color: #95a5a6; color: white; }
-    .btn-danger { background-color: #e74c3c; color: white; }
-    .btn-small { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
     
-    .btn-group {
+    /* Desktop Nav */
+    .nav-tabs {
       display: flex;
-      gap: 0.5rem;
-    }
-    
-    .btn-group .btn.active {
-      background-color: var(--color-accent);
-      color: white;
-    }
-
-    /* Grid Layouts */
-    .grid-recipes {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-    
-    .grid-items {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 0.25rem;
+      background: var(--secondary);
+      padding: 0.25rem;
+      border-radius: var(--radius);
+      margin: 0 1rem;
     }
 
-    /* Cards */
-    .recipe-card, .item-card {
-      background: white;
-      border-radius: var(--radius-md);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--color-border);
-      transition: transform 0.2s, box-shadow 0.2s;
+    .nav-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 6px;
       cursor: pointer;
-      position: relative;
+      transition: all 0.2s;
     }
 
-    .recipe-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
+    .nav-btn:hover { color: var(--primary); }
+    .nav-btn.active {
+      background: var(--bg-card);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
     }
 
-    .recipe-card h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); }
+    /* Mobile Nav (Bottom Bar) */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem;
+      z-index: 999;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+
+    .mobile-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      gap: 4px;
+      flex: 1;
+    }
     
-    .category-badge {
-      display: inline-block;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+    .mobile-nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
+    .mobile-nav-btn.active { color: var(--primary); }
+
+    /* Controls (Sync, Lang) */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-main);
+      padding: 0.25rem;
+      border-radius: 50%;
+    }
+    .icon-btn:hover { background: var(--secondary); }
+
+    /* Sync Status */
+    .sync-wrapper { position: relative; }
+    .sync-badge {
       font-size: 0.8rem;
-      font-weight: bold;
-      margin-right: 0.5rem;
-      color: white;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      background: var(--secondary);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
     }
-    
-    .category-soup { background-color: #e67e22; }
-    .category-main { background-color: #27ae60; }
-    .category-dessert { background-color: #9b59b6; }
-    .category-other { background-color: #7f8c8d; }
+    .sync-badge.connected { background: #d3f9d8; color: #2b8a3e; }
+    .sync-badge.error { background: #ffe3e3; color: #c92a2a; }
 
-    /* Calendar */
-    .calendar-controls {
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 120%;
+      right: 0;
+      width: 200px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      border-radius: var(--radius);
+      overflow: hidden;
+      z-index: 200;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button {
+      width: 100%;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: none;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .dropdown-menu button:last-child { border: none; }
+    .dropdown-menu button:hover { background: var(--secondary); color: var(--primary); }
+
+    /* --- LAYOUT --- */
+    .container {
+      width: 100%;
+      max-width: var(--container-width);
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: 0; } }
+
+    /* Page Headers */
+    .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
-      background: white;
-      padding: 1rem;
-      border-radius: var(--radius-md);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .page-header h2 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 5px rgba(33, 128, 141, 0.3); }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-secondary { background: var(--secondary); color: var(--text-main); }
+    .btn-secondary:hover { background: #e0e7e8; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+    .btn-full { width: 100%; }
+    
+    .btn-group { display: flex; gap: 0.5rem; }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card, .recipe-card, .item-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover, .recipe-card:hover, .item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    /* Recipe specific */
+    .recipe-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+    .recipe-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .recipe-meta { font-size: 0.85rem; color: var(--text-muted); }
+    .recipe-card h3 { margin: 0 0 0.5rem 0; color: var(--primary); font-size: 1.1rem; }
+
+    /* Tags */
+    .tag-cloud, .tag-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .tag {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--secondary);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tag.allergen {
+      background: #fff5f5;
+      color: var(--danger);
+      border: 1px solid #ffc9c9;
+    }
+
+    /* --- CALENDAR & MENU --- */
+    .calendar-toolbar {
+      background: var(--bg-card);
+      padding: 1rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .date-nav { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px; justify-content: center; }
+    .date-nav h3 { margin: 0; font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
+
+    /* Week View Grid */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+    
+    .day-col, .day-column {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      min-width: 140px; /* Ensure readability on mobile scroll */
+    }
+    
+    .day-header {
+      background: var(--secondary);
+      padding: 0.75rem;
+      text-align: center;
+      font-weight: 700;
+      color: var(--primary);
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    
+    .day-body { padding: 0.75rem; }
+
+    /* Slots */
+    .slot-item, .menu-slot {
+      margin-bottom: 1rem;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 0.75rem;
+    }
+    .slot-item:last-child { border-bottom: none; }
+    
+    .slot-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 600; }
+    
+    .slot-select, .menu-slot-select {
+      width: 100%;
+      padding: 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      background: white;
     }
 
     /* Month View */
-    .calendar {
+    .month-grid, .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
+      background: var(--border);
       gap: 1px;
-      background-color: #ddd;
-      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      overflow: hidden;
       margin-bottom: 2rem;
     }
-
     .calendar-day-header {
       background: #f0f0f0;
       padding: 10px;
       text-align: center;
       font-weight: bold;
     }
-
-    .calendar-day {
-      background: white;
-      min-height: 120px;
-      padding: 8px;
-      cursor: pointer;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .calendar-day:hover {
-        background-color: #f9f9f9;
-    }
-
-    .calendar-day h4 {
-      margin: 0 0 5px 0;
-      font-size: 0.9rem;
-      color: #666;
-      text-align: right;
-    }
-    
-    .calendar-day-content {
-        flex: 1;
-        overflow-y: auto;
-        font-size: 0.75rem;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    
-    .mini-recipe-item {
-        background-color: var(--color-secondary);
-        padding: 2px 4px;
-        border-radius: 3px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--color-text-primary);
-    }
-
-    /* Week View */
-    .week-view {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    
-    .week-day-row {
-      background: white;
-      border-radius: var(--radius-md);
-      padding: 1rem;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .week-day-row h3 {
-      margin-top: 0;
-      color: var(--color-primary);
-      border-bottom: 2px solid var(--color-secondary);
-      padding-bottom: 0.5rem;
-    }
-
-    .week-slots-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .meal-slot {
-      background: var(--color-secondary);
-      padding: 0.8rem;
-      border-radius: var(--radius-sm);
-    }
-
-    .calendar-recipe {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: white;
+    .month-cell, .calendar-day {
+      background: var(--bg-card);
+      min-height: 100px;
       padding: 0.5rem;
-      border-radius: 4px;
-      margin-top: 0.5rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      cursor: pointer;
     }
-    
-    .calendar-recipe button.remove {
-        background: none;
-        border: none;
-        color: #e74c3c;
-        cursor: pointer;
-        font-size: 1.2rem;
-        padding: 0 0.3rem;
-    }
+    .month-cell:hover, .calendar-day:hover { background: #fafafa; }
+    .month-date, .calendar-day h4 { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-muted); text-align: right; }
+    .month-badges, .calendar-day-content { display: flex; flex-direction: column; gap: 2px; }
+    .mini-badge, .mini-recipe-item { font-size: 0.7rem; padding: 2px 4px; border-radius: 2px; background: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* Modals */
+    /* --- FORMS & MODALS --- */
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
       z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
       overflow-y: auto;
+      padding: 1rem;
     }
-
+    
     .modal-content {
-      background: white;
-      margin: 5% auto;
+      background-color: var(--bg-card);
+      margin: 2rem auto;
       padding: 2rem;
-      width: 90%;
-      max-width: 600px;
-      border-radius: var(--radius-md);
-      position: relative;
-    }
-
-    .close {
-      position: absolute;
-      top: 1rem;
-      right: 1.5rem;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-
-    .form-group input, .form-group textarea, .form-group select {
+      border-radius: var(--radius);
       width: 100%;
-      padding: 0.8rem;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      box-sizing: border-box;
-    }
-
-    .tag-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .tag {
-      background: #e9ecef;
-      padding: 0.3rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .tag.allergen {
-      background: #ffe3e3;
-      color: #c92a2a;
-      border: 1px solid #ffa8a8;
+      max-width: 600px;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      animation: slideUp 0.3s ease;
     }
     
-    .tag button {
-      background: none;
-      border: none;
-      cursor: pointer;
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: 0; opacity: 1; } }
+
+    .close-btn, .close { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); }
+    
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label, .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+    .form-control, .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       font-size: 1rem;
-      line-height: 1;
-      padding: 0;
-      color: inherit;
-      opacity: 0.6;
+      transition: border 0.2s;
     }
+    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1); }
     
-    .tag button:hover { opacity: 1; }
-    
-    .auto-allergens-display {
-      background-color: #f8f9fa;
-      padding: 0.8rem;
-      border-radius: var(--radius-sm);
-      border: 1px dashed #ccc;
-      min-height: 2rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-    }
+    .input-group { display: flex; gap: 0.5rem; }
+    .input-group .form-control { flex: 1; }
 
-    /* Template Editor */
-    .template-editor-container {
-      background: white;
-      padding: 2rem;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .preview-box {
-      border: 1px solid #ddd;
-      padding: 2rem;
-      margin-top: 2rem;
-      background: white;
-      min-height: 300px;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: var(--color-text-secondary);
-        font-style: italic;
-        background: #f8f9fa;
-        border-radius: var(--radius-md);
-        border: 2px dashed #ddd;
-    }
-    
-    .menu-history-item {
-        background: white;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: var(--radius-sm);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid #eee;
-    }
+    /* Categories */
+    .category-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 0.5rem; color: white; }
+    .category-soup { background-color: #e67e22; }
+    .category-main { background-color: #27ae60; }
+    .category-dessert { background-color: #9b59b6; }
+    .category-other { background-color: #7f8c8d; }
 
-    /* Responsive */
+    /* --- RESPONSIVE QUERIES --- */
     @media (max-width: 768px) {
-      header { flex-direction: column; gap: 1rem; }
-      .controls { flex-wrap: wrap; justify-content: center; }
-      .calendar { grid-template-columns: 1fr; } 
-      .calendar-day { min-height: 80px; }
+      :root { --header-height: 50px; }
+      
+      /* Hide desktop nav */
+      .nav-tabs { display: none; }
+      .mobile-nav { display: flex; }
+      
+      /* Stack layout */
+      .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      .btn { width: 100%; justify-content: center; }
+      .btn-group { width: 100%; display: flex; }
+      .btn-group .btn { flex: 1; }
+      
+      /* Calendar responsive */
+      .week-view { display: flex; flex-direction: column; gap: 1rem; }
+      .week-days { display: flex !important; flex-direction: column; gap: 1rem; }
+      .day-column { margin-bottom: 10px; }
+      
+      .calendar { grid-template-columns: 1fr; }
+      .calendar-day { min-height: 80px; display: flex; align-items: center; justify-content: space-between; }
+      .calendar-day-content { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
+      
+      /* Adjust modal */
+      .modal { padding: 0; }
+      .modal-content { margin: 0; min-height: 100vh; border-radius: 0; padding: 1.5rem; width: 100%; max-width: 100%; }
+      .close-btn, .close { top: 1rem; right: 1rem; }
+      
+      /* Controls */
+      .controls { margin-left: auto; }
+      .date-nav { width: 100%; justify-content: space-between; }
+      .calendar-toolbar { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
 <body>
 
+<!-- DESKTOP HEADER -->
 <header>
-  <div class="brand">
-    <span>👨‍🍳</span> Recipe Manager
-  </div>
-  
-  <div class="nav-tabs">
-    <button class="nav-btn active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
-    <button class="nav-btn" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
-    <button class="nav-btn" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
-    <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
-    <button class="nav-btn" data-page="template" data-i18n="nav_template">Template</button>
-  </div>
-
-  <div class="controls">
-    <select id="languageSelect">
-      <option value="en">English</option>
-      <option value="bg">Български</option>
-    </select>
-    
-    <div class="sync-dropdown" id="syncDropdown">
-      <div class="sync-status" id="syncStatus" onclick="toggleSyncDropdown()">
-        🟡 Local Storage
-      </div>
-      <div class="sync-dropdown-content">
-        <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
-        <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
-        <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
-        <hr style="margin:0;border:0;border-top:1px solid #eee;">
-        <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-        <button onclick="document.getElementById('importInput').click()" data-i18n="sync_import">⬆ Import JSON</button>
-      </div>
+  <div class="header-content">
+    <div class="brand">
+      <span>👨‍🍳</span> Recipe Manager
     </div>
-    <input type="file" id="importInput" style="display:none" accept=".json">
+    
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
+      <button class="nav-btn" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
+      <button class="nav-btn" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
+      <button class="nav-btn" data-page="menu" data-i18n="nav_menu">Menu</button>
+      <button class="nav-btn" data-page="template" data-i18n="nav_template">Template</button>
+    </nav>
+
+    <div class="controls">
+      <select id="languageSelect" class="form-control" style="padding: 0.3rem 0.5rem; width: auto; font-size: 0.85rem;">
+        <option value="en">EN</option>
+        <option value="bg">BG</option>
+      </select>
+      
+      <div class="sync-wrapper">
+        <div class="sync-badge" id="syncStatus" onclick="toggleSyncDropdown()">
+          🟡 Local
+        </div>
+        <div class="dropdown-menu" id="syncDropdown">
+          <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Folder</button>
+          <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
+          <button onclick="manualLoad()" data-i18n="sync_load">📂 Load Folder</button>
+          <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
+          <button onclick="document.getElementById('importInput').click()" data-i18n="sync_import">⬆ Import JSON</button>
+        </div>
+      </div>
+      <input type="file" id="importInput" style="display:none" accept=".json">
+    </div>
   </div>
 </header>
 
+<!-- MAIN CONTENT -->
 <div class="container">
 
   <!-- RECIPES PAGE -->
   <div id="recipes" class="page active">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="page-header">
         <h2 data-i18n="nav_recipes">Recipes</h2>
         <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
     </div>
-    <div id="recipeList" class="grid-recipes"></div>
+    <div id="recipeList" class="card-grid"></div>
   </div>
 
   <!-- INGREDIENTS PAGE -->
   <div id="ingredients" class="page">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="page-header">
         <h2 data-i18n="nav_ingredients">Ingredients</h2>
         <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
     </div>
-    <div id="ingredientList" class="grid-items"></div>
+    <div id="ingredientList" class="card-grid"></div>
   </div>
 
   <!-- ALLERGENS PAGE -->
   <div id="allergens" class="page">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="page-header">
         <h2 data-i18n="nav_allergens">Allergens</h2>
         <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
     </div>
-    <div id="allergenList" class="grid-items"></div>
+    <div id="allergenList" class="card-grid"></div>
   </div>
 
   <!-- MENU PLANNING PAGE -->
   <div id="menu" class="page">
-    <div class="calendar-controls">
-      <div class="btn-group">
-        <button class="btn btn-secondary" onclick="changeMonth(-1)" data-i18n="btn_previous">← Previous</button>
-        <h3 id="currentMonth" style="margin:0; min-width:200px; text-align:center;"></h3>
-        <button class="btn btn-secondary" onclick="changeMonth(1)" data-i18n="btn_next">Next →</button>
+    <div class="calendar-toolbar">
+      <div class="date-nav">
+        <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">←</button>
+        <h3 id="currentMonth"></h3>
+        <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">→</button>
       </div>
       
-      <div class="btn-group">
-         <button class="btn btn-secondary" onclick="toggleView('week')" data-i18n="btn_week_view">Week</button>
-         <button class="btn btn-secondary" onclick="toggleView('month')" data-i18n="btn_month_view">Month</button>
-      </div>
-
-      <div style="display:flex; gap:0.5rem; align-items:center;">
-         <label data-i18n="label_print_date">Print Week of:</label>
-         <input type="date" id="printStartDate">
-         <button class="btn btn-primary" onclick="printMenu()" data-i18n="btn_print">🖨️ Print Menu</button>
-         <button class="btn btn-secondary" onclick="saveCurrentMenu()" data-i18n="btn_save_menu">💾 Save Menu</button>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content: center;">
+         <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="toggleView('week')" data-i18n="btn_week_view">Week</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleView('month')" data-i18n="btn_month_view">Month</button>
+         </div>
+         <button class="btn btn-primary btn-sm" onclick="printMenu()" data-i18n="btn_print">🖨️ Print</button>
+         <button class="btn btn-secondary btn-sm" onclick="saveCurrentMenu()" data-i18n="btn_save_menu">💾 Save</button>
       </div>
     </div>
     
-    <div class="alert-info" style="margin-bottom:1rem;font-size:0.9rem;color:#555;" data-i18n="text_print_hint">
-      💡 Only days with planned meals will be printed.
+    <div style="margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+       <label data-i18n="label_print_date" style="font-size:0.9rem; font-weight:bold;">Week of:</label>
+       <input type="date" id="printStartDate" class="form-control" style="width:auto; padding:0.4rem;">
+       <div style="font-size:0.8rem; color:var(--text-muted); margin-left: auto;" data-i18n="text_print_hint">💡 Use date picker to change week</div>
     </div>
 
-    <div id="calendar" class="week-view"></div>
+    <!-- Calendar container where app.js renders grid -->
+    <div id="calendar"></div>
 
-    <hr>
+    <hr style="margin: 2rem 0; border:0; border-top:1px solid var(--border);">
     <h3 data-i18n="heading_past_menus">Past Menus</h3>
-    <div id="menuHistory"></div>
+    <div id="menuHistory" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
   </div>
 
   <!-- TEMPLATE PAGE -->
   <div id="template" class="page">
-    <h2 data-i18n="nav_template">Print Template</h2>
+    <div class="page-header">
+        <h2 data-i18n="nav_template">Template</h2>
+        <button class="btn btn-primary" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
+    </div>
     
-    <div class="template-editor-container">
-      <p data-i18n="template_description">Customize your menu print template.</p>
+    <div class="card">
+      <p data-i18n="template_description" style="margin-bottom:1rem; color:var(--text-muted);">Customize print layout.</p>
       
-      <div style="margin-bottom:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn btn-small btn-secondary" onclick="insertVariable('{title}')">Title</button>
-        <button class="btn btn-small btn-secondary" onclick="insertVariable('{dateRange}')">Date Range</button>
-        <button class="btn btn-small btn-secondary" onclick="insertVariable('{recipes}')">Recipes Grid</button>
-        <button class="btn btn-small btn-secondary" onclick="insertVariable('{labelMenuFor}')">Label 'Menu For'</button>
+      <div style="display:flex; gap:0.5rem; margin-bottom:1rem; overflow-x:auto; padding-bottom:0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{title}')">Title</button>
+        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{dateRange}')">Dates</button>
+        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{recipes}')">Grid</button>
+        <button class="btn btn-secondary btn-sm" onclick="insertVariable('{labelMenuFor}')">Label</button>
       </div>
       
-      <div style="margin-bottom:1rem; border-top:1px solid #eee; padding-top:1rem;">
-        <h4 data-i18n="label_layout">Layout Style</h4>
-        <div class="btn-group">
-             <button class="btn btn-small btn-secondary" id="layout_default" data-i18n="btn_layout_default">Default</button>
-             <button class="btn btn-small btn-secondary" id="layout_columns" data-i18n="btn_layout_columns">Two Columns</button>
-             <button class="btn btn-small btn-secondary" id="layout_centered" data-i18n="btn_layout_centered">Centered</button>
-             <button class="btn btn-small btn-secondary" id="layout_grid" data-i18n="btn_layout_grid">5-Day Grid</button>
+      <div class="form-group">
+        <label class="form-label" data-i18n="label_layout">Layout</label>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+             <button class="btn btn-secondary btn-sm" id="layout_default">Default</button>
+             <button class="btn btn-secondary btn-sm" id="layout_columns">2-Col</button>
+             <button class="btn btn-secondary btn-sm" id="layout_centered">Center</button>
+             <button class="btn btn-secondary btn-sm" id="layout_grid">Grid</button>
         </div>
       </div>
       
-      <div style="margin-bottom:1rem;">
-         <h4 data-i18n="label_background">Background Image</h4>
-         <input type="file" id="uploadBgInput" accept="image/*">
-         <button class="btn btn-small btn-danger" id="removeBgBtn" data-i18n="btn_remove_bg">Remove BG</button>
+      <div class="form-group">
+         <label class="form-label" data-i18n="label_background">Background</label>
+         <div class="input-group">
+             <input type="file" id="uploadBgInput" accept="image/*" class="form-control">
+             <button class="btn btn-danger" id="removeBgBtn">X</button>
+         </div>
       </div>
 
       <div id="templateEditor"></div>
-      
-      <button class="btn btn-primary" style="margin-top:1rem;" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
     </div>
 
-    <h3 data-i18n="heading_preview">Preview</h3>
-    <div id="templatePreview" class="preview-box"></div>
+    <h3 data-i18n="heading_preview" style="margin-top:2rem;">Preview</h3>
+    <div id="templatePreview" style="border:1px solid var(--border); padding:2rem; background:white; margin-top:1rem;"></div>
   </div>
 
 </div>
 
+<!-- MOBILE NAV BOTTOM BAR -->
+<nav class="mobile-nav">
+  <button class="mobile-nav-btn active" data-page="recipes">
+    <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+    <span data-i18n="nav_recipes">Recipes</span>
+  </button>
+  <button class="mobile-nav-btn" data-page="ingredients">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg>
+    <span data-i18n="nav_ingredients">Ingred.</span>
+  </button>
+  <button class="mobile-nav-btn" data-page="menu">
+    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5z"/></svg>
+    <span data-i18n="nav_menu">Menu</span>
+  </button>
+  <button class="mobile-nav-btn" data-page="allergens">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span data-i18n="nav_allergens">Alerts</span>
+  </button>
+</nav>
+
+<!-- MODALS -->
 <!-- RECIPE MODAL -->
 <div id="recipeModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeRecipeModal()">&times;</span>
-    <h2 id="recipeModalTitle" data-i18n="modal_add_recipe">Add Recipe</h2>
+    <button class="close-btn" onclick="closeRecipeModal()">&times;</button>
+    <h2 id="recipeModalTitle" data-i18n="modal_add_recipe" style="margin-top:0;">Add Recipe</h2>
     <form id="recipeForm" onsubmit="saveRecipe(event)">
       
       <div class="form-group">
-        <label data-i18n="label_recipe_name">Recipe Name</label>
-        <input type="text" id="recipeName" required>
+        <label class="form-label" data-i18n="label_recipe_name">Name</label>
+        <input type="text" id="recipeName" class="form-control" required>
       </div>
 
       <div class="form-group">
-        <label data-i18n="label_category">Category</label>
-        <select id="recipeCategory" required>
-          <!-- Options populated by JS -->
-        </select>
+        <label class="form-label" data-i18n="label_category">Category</label>
+        <select id="recipeCategory" class="form-control" required></select>
       </div>
 
       <div class="form-group">
-        <label data-i18n="label_portion_size">Portion Size</label>
-        <input type="text" id="recipePortionSize">
+        <label class="form-label" data-i18n="label_portion_size">Portion</label>
+        <input type="text" id="recipePortionSize" class="form-control">
       </div>
 
       <div class="form-group">
-        <label data-i18n="label_ingredients">Ingredients</label>
-        <div style="display:flex; gap:0.5rem;">
-          <select id="ingredientSelect"></select>
+        <label class="form-label" data-i18n="label_ingredients">Ingredients</label>
+        <div class="input-group">
+          <select id="ingredientSelect" class="form-control"></select>
           <button type="button" class="btn btn-secondary" onclick="addIngredientToRecipe()" data-i18n="btn_add">Add</button>
         </div>
-        <div id="recipeIngredients" class="tag-container"></div>
+        <div id="recipeIngredients" class="tag-cloud"></div>
       </div>
 
       <div class="form-group">
-        <label data-i18n="label_auto_allergens">Auto-Detected Allergens (from ingredients)</label>
-        <div id="recipeAutoAllergens" class="auto-allergens-display">
-            <!-- Populated automatically -->
-        </div>
+        <label class="form-label" data-i18n="label_auto_allergens">Auto Allergens</label>
+        <div id="recipeAutoAllergens" class="tag-cloud" style="padding:0.5rem; background:var(--secondary); border-radius:4px;">-</div>
       </div>
-
+      
       <div class="form-group">
-        <label data-i18n="label_manual_allergens">Additional / Manual Allergens</label>
-        <div style="display:flex; gap:0.5rem;">
-          <select id="allergenSelect"></select>
+        <label class="form-label" data-i18n="label_manual_allergens">Manual Allergens</label>
+        <div class="input-group">
+          <select id="allergenSelect" class="form-control"></select>
           <button type="button" class="btn btn-secondary" onclick="addManualAllergenToRecipe()" data-i18n="btn_add">Add</button>
         </div>
-        <div id="recipeManualAllergens" class="tag-container"></div>
+        <div id="recipeManualAllergens" class="tag-cloud"></div>
       </div>
 
       <div class="form-group">
-        <label data-i18n="label_instructions">Instructions</label>
-        <textarea id="recipeInstructions" rows="4"></textarea>
+        <label class="form-label" data-i18n="label_instructions">Instructions</label>
+        <textarea id="recipeInstructions" class="form-control" rows="4"></textarea>
       </div>
 
-      <button type="submit" class="btn btn-primary" data-i18n="btn_save_recipe">Save Recipe</button>
+      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_recipe">Save Recipe</button>
     </form>
   </div>
 </div>
@@ -725,27 +697,24 @@
 <!-- INGREDIENT MODAL -->
 <div id="ingredientModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeIngredientModal()">&times;</span>
-    <h2 data-i18n="modal_add_ingredient">Add Ingredient</h2>
+    <button class="close-btn" onclick="closeIngredientModal()">&times;</button>
+    <h2 data-i18n="modal_add_ingredient" style="margin-top:0;">Add Ingredient</h2>
     <form id="ingredientForm" onsubmit="saveIngredient(event)">
       <div class="form-group">
-        <label data-i18n="label_ingredient_name">Ingredient Name</label>
-        <input type="text" id="ingredientName" required>
+        <label class="form-label" data-i18n="label_ingredient_name">Name</label>
+        <input type="text" id="ingredientName" class="form-control" required>
       </div>
       
       <div class="form-group">
-          <label data-i18n="label_linked_allergens">Contains Allergens:</label>
-          <div style="display:flex; gap:0.5rem;">
-              <select id="ingredientAllergenSelect"></select>
+          <label class="form-label" data-i18n="label_linked_allergens">Contains Allergens</label>
+          <div class="input-group">
+              <select id="ingredientAllergenSelect" class="form-control"></select>
               <button type="button" class="btn btn-secondary" onclick="addLinkedAllergen()" data-i18n="btn_add">Add</button>
           </div>
-          <div id="ingredientLinkedAllergens" class="tag-container"></div>
-          <p style="font-size:0.8rem; color:#666; margin-top:0.5rem;">
-              * Allergens linked here will automatically appear on any recipe using this ingredient.
-          </p>
+          <div id="ingredientLinkedAllergens" class="tag-cloud"></div>
       </div>
 
-      <button type="submit" class="btn btn-primary" data-i18n="btn_save_ingredient">Save Ingredient</button>
+      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_ingredient">Save Ingredient</button>
     </form>
   </div>
 </div>
@@ -753,18 +722,18 @@
 <!-- ALLERGEN MODAL -->
 <div id="allergenModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeAllergenModal()">&times;</span>
-    <h2 data-i18n="modal_add_allergen">Add Allergen</h2>
+    <button class="close-btn" onclick="closeAllergenModal()">&times;</button>
+    <h2 data-i18n="modal_add_allergen" style="margin-top:0;">Add Allergen</h2>
     <form id="allergenForm" onsubmit="saveAllergen(event)">
       <div class="form-group">
-        <label data-i18n="label_allergen_name">Allergen Name</label>
-        <input type="text" id="allergenName" required>
+        <label class="form-label" data-i18n="label_allergen_name">Name</label>
+        <input type="text" id="allergenName" class="form-control" required>
       </div>
       <div class="form-group">
-        <label data-i18n="label_color">Color Tag</label>
-        <input type="color" id="allergenColor" value="#ff0000" style="height:40px; padding:0;">
+        <label class="form-label" data-i18n="label_color">Color</label>
+        <input type="color" id="allergenColor" class="form-control" value="#e74c3c" style="height:50px;">
       </div>
-      <button type="submit" class="btn btn-primary" data-i18n="btn_save_allergen">Save Allergen</button>
+      <button type="submit" class="btn btn-primary btn-full" data-i18n="btn_save_allergen">Save Allergen</button>
     </form>
   </div>
 </div>
@@ -773,6 +742,27 @@
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.js"></script>
 <script src="app.js"></script>
+
+<script>
+// Mobile Nav Interaction
+document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    
+    // Add active
+    btn.classList.add('active');
+    const pageId = btn.dataset.page;
+    document.getElementById(pageId).classList.add('active');
+    
+    // Sync desktop tab too
+    const deskBtn = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
+    if(deskBtn) deskBtn.classList.add('active');
+  });
+});
+</script>
 
 </body>
 </html>
