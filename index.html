@@ -34,22 +34,25 @@
       <button class="nav-btn" data-page="template" data-i18n="nav_template">Print Template</button>
       <button class="nav-btn" data-page="style-editor">Templates</button>
 
-      <div class="settings-area">
+      <div class="settings-area" style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <select id="languageSelect" class="lang-select">
           <option value="en">🇺🇸 English</option>
           <option value="bg">🇧🇬 Български</option>
         </select>
 
         <!-- Sync / File Operations -->
-        <div class="sync-dropdown">
+        <!-- CORRECT CLASS: sync-controls-wrapper (Visible) -->
+        <div class="sync-controls-wrapper">
             <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
-            <div id="syncDropdown" class="sync-menu">
+            
+            <!-- CORRECT CLASS: sync-dropdown (Hidden until toggled) -->
+            <div id="syncDropdown" class="sync-dropdown">
                 <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
                 <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
                 <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
-                <hr>
+                <hr class="divider">
                 <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-                <label for="importInput" class="import-label" data-i18n="sync_import">⬆ Import JSON</label>
+                <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
                 <input type="file" id="importInput" accept=".json" style="display:none">
             </div>
         </div>
