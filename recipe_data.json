@@ -1,0 +1,1255 @@
+{
+  "recipes": [
+    {
+      "id": "1770567773285",
+      "name": "Супа топчета",
+      "category": "soup",
+      "portionSize": "",
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "1770567748990",
+          "name": "брашно"
+        }
+      ],
+      "manualAllergens": [
+        {
+          "id": "alg_eggs",
+          "name": "Яйца"
+        }
+      ]
+    },
+    {
+      "id": "1770567858436",
+      "name": "риба с краставици",
+      "category": "main",
+      "portionSize": "10",
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "1770567786794",
+          "name": "яйца"
+        }
+      ],
+      "manualAllergens": [
+        {
+          "id": "alg_milk",
+          "name": "Мляко"
+        }
+      ]
+    },
+    {
+      "id": "1770567873263",
+      "name": "Ябълка",
+      "category": "dessert",
+      "portionSize": "200",
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": []
+    },
+    {
+      "id": "1770567888247",
+      "name": "Хляб",
+      "category": "other",
+      "portionSize": "",
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "1770567748990",
+          "name": "брашно"
+        }
+      ],
+      "manualAllergens": [
+        {
+          "id": "alg_gluten",
+          "name": "Глутен"
+        }
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "1770567748990",
+      "name": "брашно",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "1770567786794",
+      "name": "яйца",
+      "allergens": [
+        "alg_eggs"
+      ]
+    }
+  ],
+  "allergens": [
+    {
+      "id": "alg_gluten",
+      "name": "Gluten",
+      "color": "#f59f00",
+      "isSystem": true
+    },
+    {
+      "id": "alg_crustaceans",
+      "name": "Crustaceans",
+      "color": "#ff6b6b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_eggs",
+      "name": "Eggs",
+      "color": "#ffd43b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_fish",
+      "name": "Fish",
+      "color": "#339af0",
+      "isSystem": true
+    },
+    {
+      "id": "alg_peanuts",
+      "name": "Peanuts",
+      "color": "#d9480f",
+      "isSystem": true
+    },
+    {
+      "id": "alg_soybeans",
+      "name": "Soybeans",
+      "color": "#5c940d",
+      "isSystem": true
+    },
+    {
+      "id": "alg_milk",
+      "name": "Milk",
+      "color": "#74c0fc",
+      "isSystem": true
+    },
+    {
+      "id": "alg_nuts",
+      "name": "Nuts",
+      "color": "#e67700",
+      "isSystem": true
+    },
+    {
+      "id": "alg_celery",
+      "name": "Celery",
+      "color": "#82c91e",
+      "isSystem": true
+    },
+    {
+      "id": "alg_mustard",
+      "name": "Mustard",
+      "color": "#fcc419",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sesame",
+      "name": "Sesame",
+      "color": "#adb5bd",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sulphites",
+      "name": "Sulphites",
+      "color": "#868e96",
+      "isSystem": true
+    },
+    {
+      "id": "alg_lupin",
+      "name": "Lupin",
+      "color": "#ffec99",
+      "isSystem": true
+    },
+    {
+      "id": "alg_molluscs",
+      "name": "Molluscs",
+      "color": "#ff922b",
+      "isSystem": true
+    }
+  ],
+  "currentMenu": {
+    "2026-02-08": {
+      "soup": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-09": {
+      "soup": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-10": {
+      "soup": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-11": {
+      "soup": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-12": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-13": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-14": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": "1770567888247"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-01": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-02": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-03": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-04": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-05": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-06": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "1770567858436"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "1770567873263"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "1770567888247"
+      }
+    },
+    "2026-02-07": {
+      "soup": {
+        "type": "soup",
+        "recipe": null
+      },
+      "main": {
+        "type": "main",
+        "recipe": null
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "other": {
+        "type": "other",
+        "recipe": null
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-17": {
+      "slot1": {
+        "type": "soup",
+        "recipe": "1770567773285"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-18": {
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-19": {
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-20": {
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    },
+    "2026-02-21": {
+      "slot1": {
+        "type": "soup",
+        "recipe": null
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": null
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": null
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": null
+      }
+    }
+  },
+  "menuHistory": [
+    {
+      "id": "1770583838682",
+      "name": "Week of 2/16/2026",
+      "date": "2026-02-08T20:50:38.682Z",
+      "menu": {
+        "2026-02-08": {
+          "soup": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "main": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-09": {
+          "soup": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "main": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-10": {
+          "soup": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "main": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-11": {
+          "soup": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "main": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-12": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-13": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-14": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": "1770567888247"
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-01": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-02": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-03": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-04": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-05": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-06": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": "1770567858436"
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": "1770567873263"
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": "1770567888247"
+          }
+        },
+        "2026-02-07": {
+          "soup": {
+            "type": "soup",
+            "recipe": null
+          },
+          "main": {
+            "type": "main",
+            "recipe": null
+          },
+          "dessert": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "other": {
+            "type": "other",
+            "recipe": null
+          },
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-17": {
+          "slot1": {
+            "type": "soup",
+            "recipe": "1770567773285"
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-18": {
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-19": {
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-20": {
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        },
+        "2026-02-21": {
+          "slot1": {
+            "type": "soup",
+            "recipe": null
+          },
+          "slot2": {
+            "type": "main",
+            "recipe": null
+          },
+          "slot3": {
+            "type": "dessert",
+            "recipe": null
+          },
+          "slot4": {
+            "type": "other",
+            "recipe": null
+          }
+        }
+      }
+    }
+  ],
+  "printTemplate": "<h1>{title}</h1><p>{recipes}<br></p><p><br></p>",
+  "currentLanguage": "en",
+  "templateBackgroundImage": "",
+  "templateLayout": "test1"
+}
