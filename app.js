@@ -14,7 +14,8 @@ let templateLayout = localStorage.getItem('templateLayout') || 'default';
 let directoryHandle = null;
 const isFileSystemSupported = 'showDirectoryPicker' in window;
 let viewMode = localStorage.getItem('calendarViewMode') || 'week';
-let selectedPrintDays = [1, 2, 3, 4, 5]; // Mon–Fri
+// Initialize with default Mon-Fri if nothing saved yet, will be overwritten by loadData
+let selectedPrintDays = [1, 2, 3, 4, 5]; 
 
 const DB_NAME = 'RecipeManagerDB';
 const DB_VERSION = 1;
@@ -353,6 +354,8 @@ async function loadData() {
     }
     updateSyncStatus('local');
   }
+  // After load, update UI
+  updatePrintDayButtons();
 }
 
 async function saveData() {
@@ -1214,10 +1217,16 @@ async function init() {
     });
   }
 
+  // Ensure event listeners are attached only once, cleanly
+  // Clean old listeners if any (not possible with anonymous, but logic is safe)
   for (let i = 0; i <= 6; i++) {
     const btn = document.getElementById(`printDay${i}`);
     if (btn) {
-      btn.addEventListener('click', () => togglePrintDay(i));
+      // Clone to remove old listeners
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      // Re-attach
+      newBtn.addEventListener('click', () => togglePrintDay(i));
     }
   }
 }
@@ -1261,7 +1270,10 @@ function togglePrintDay(dayIndex) {
   } else {
     selectedPrintDays.push(dayIndex);
   }
-  saveData(); // Save selection to storage
+  // Sort days to keep them in order (Sun-Sat)
+  selectedPrintDays.sort((a, b) => a - b);
+  
+  saveData(); // Save selection to storage immediately
   updatePrintDayButtons();
 }
 
@@ -1285,18 +1297,22 @@ function updatePrintDayButtons() {
   const input = document.getElementById('printStartDate');
   if (input) {
     const weekStart = getWeekStart(currentDate);
-    input.value = weekStart.toISOString().split('T')[0];
+    // Format YYYY-MM-DD local time
+    // toISOString() uses UTC, which might be wrong date if local time is behind UTC
+    // Better to use manual formatting or local ISO
+    const year = weekStart.getFullYear();
+    const month = String(weekStart.getMonth() + 1).padStart(2, '0');
+    const day = String(weekStart.getDate()).padStart(2, '0');
+    input.value = `${year}-${month}-${day}`;
   }
 }
 
 // Helpers for calendar logic
 function getWeekStart(d) {
   const date = new Date(d);
-  const day = date.getDay();
-  // Adjust to start on Monday? Default JS is Sunday=0.
+  const day = date.getDay(); // 0 (Sun) to 6 (Sat)
   // If we want Monday start:
-  const dayOfWeek = date.getDay(); // 0 (Sun) to 6 (Sat)
-  const diffToMon = (dayOfWeek + 6) % 7; 
+  const diffToMon = (day + 6) % 7; 
   date.setDate(date.getDate() - diffToMon);
   date.setHours(0,0,0,0);
   return date;
@@ -1313,8 +1329,16 @@ function toggleView(mode) {
 }
 
 function changeMonth(delta) {
-  currentDate.setMonth(currentDate.getMonth() + delta);
+  if (viewMode === 'week') {
+    // If in week view, jump by weeks instead of months?
+    // Usually "Previous/Next" in week view means +/- 1 week
+    // Let's change behavior based on view
+    currentDate.setDate(currentDate.getDate() + (delta * 7));
+  } else {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+  }
   renderCalendar();
+  updatePrintDayButtons(); // Update date picker too
 }
 
 // Calendar Rendering (simplified for brevity, ensuring it exists)
