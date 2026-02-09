@@ -58,10 +58,7 @@
         const algTags = document.getElementById('recipeManualAllergens').querySelectorAll('.tag');
         const manualAllergens = Array.from(algTags).map(t => ({ id: t.dataset.id }));
 
-        const newRecipe = {
-            id, name, category: cat, portionSize: portion, instructions: instr,
-            ingredients, manualAllergens
-        };
+        const newRecipe = {\n            id, name, category: cat, portionSize: portion, instructions: instr,\n            ingredients, manualAllergens\n        };
 
         if (window.editingRecipeId) {
             const idx = window.recipes.findIndex(r => r.id === id);
@@ -186,18 +183,19 @@
         const hasSavedHandle = await window.checkSavedHandle();
         const minWait = new Promise(resolve => setTimeout(resolve, 1500));
 
+        // Use standard 'btn' classes here to ensure they match the app theme perfectly
         if (hasSavedHandle) {
             actions.innerHTML = `
-                <button class="btn-splash btn-splash-primary" onclick="resumeSession()">
+                <button class="btn btn-primary" onclick="resumeSession()" style="min-width: 180px; height: 48px;">
                     <span>▶</span> Resume Session
                 </button>
-                <button class="btn-splash btn-splash-secondary" onclick="startFresh()">
+                <button class="btn btn-secondary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
                     <span>📂</span> Switch Folder
                 </button>
             `;
         } else {
             actions.innerHTML = `
-                <button class="btn-splash btn-splash-primary" onclick="startFresh()">
+                <button class="btn btn-primary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
                     <span>🚀</span> Get Started
                 </button>
             `;
@@ -223,8 +221,9 @@
                 await minWait;
                 hideSplash();
             } catch (e) {
+                // Restore buttons on cancel/error
                 actions.innerHTML = `
-                    <button class="btn-splash btn-splash-primary" onclick="startFresh()">
+                    <button class="btn btn-primary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
                         <span>🚀</span> Get Started
                     </button>
                 `;
