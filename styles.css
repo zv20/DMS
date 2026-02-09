@@ -328,7 +328,7 @@ body {
 
 .sync-dropdown button, .sync-dropdown label {
     display: block;
-    width: 100%;
+    width: 100%;\
     padding: 10px 15px;
     text-align: left;
     border: none;
@@ -382,7 +382,7 @@ body {
 .recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.5rem;\
     border-radius: 8px;
     font-weight: 600;
     border: none;
@@ -393,6 +393,20 @@ body {
 .btn-secondary { background: var(--color-secondary); color: white; }
 .btn-danger { background: var(--color-danger); color: white; }
 .btn-small { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+
+/* Icon Buttons (NEW) */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.icon-btn:hover { background: var(--color-background); }
+.icon-btn.edit { color: var(--color-primary); }
+.icon-btn.delete { color: var(--color-danger); }
 
 
 /* --- CALENDAR STYLES (Restored) --- */
@@ -480,7 +494,7 @@ body {
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
+    height: 100%;\
     overflow: auto;
     background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
     animation: fadeIn 0.3s;
@@ -492,7 +506,7 @@ body {
     padding: 2rem;
     border: 1px solid var(--color-border);
     width: 90%;
-    max-width: 600px;
+    max-width: 600px;\
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
     position: relative;
