@@ -9,23 +9,39 @@
         if(overlay) overlay.classList.toggle('active');
     };
 
+    // New Helper: Navigate without toggling menu blindly
+    window.navigateTo = function(pageId) {
+         // 1. Update Active Page
+         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+         const targetPage = document.getElementById(pageId);
+         if (targetPage) targetPage.classList.add('active');
+
+         // 2. Update Nav State (Visually match active item)
+         document.querySelectorAll('.nav-item, .sub-nav-item').forEach(b => {
+             b.classList.remove('active');
+             if(b.dataset.page === pageId) b.classList.add('active');
+         });
+
+         // 3. Close Nav ONLY if it is currently open
+         const overlay = document.getElementById('navOverlay');
+         if(overlay && overlay.classList.contains('active')) {
+             window.toggleNav();
+         }
+    };
+
     window.bindNavigation = function() {
         const navItems = document.querySelectorAll('.nav-item[data-page], .sub-nav-item[data-page]');
         navItems.forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item, .sub-nav-item').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                btn.classList.add('active');
-                const targetId = btn.dataset.page;
-                const page = document.getElementById(targetId);
-                if (page) page.classList.add('active');
-                window.toggleNav();
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // If the button is NOT inside the nav overlay (e.g. from Settings page),
+                // we should just navigate. Use our smart helper.
+                window.navigateTo(btn.dataset.page);
             });
         });
     };
 
     // --- Settings & Menus ---
-    // Moved Export/Import/Sync logic to here or main.js, but UI toggles remain here
     window.toggleSettingsSubmenu = function() {
         const menu = document.getElementById('settingsSubmenu');
         const btn = document.querySelector('.settings-toggle .arrow');
@@ -38,10 +54,6 @@
             }
         }
     };
-
-    // Note: The previous sync dropdown is being deprecated in favor of the full Settings page
-    // but keeping this for legacy or if we want a quick action menu.
-    // The user requested to move import/export INTO settings, so we will handle that in HTML.
 
     // --- Theme ---
     window.setAppTheme = function(themeName) {
@@ -62,27 +74,24 @@
     window.changeLanguage = function(lang) {
         window.setCurrentLanguage(lang);
         localStorage.setItem('recipeManagerLang', lang);
-        window.saveData(); // Persist language preference
+        window.saveData(); 
         window.applyTranslations();
         
-        // Update selector UI if it exists
         const sel = document.getElementById('languageSelect');
         if (sel) sel.value = lang;
     };
 
-    // --- Modal Logic (Fixing the "not defined" errors) ---
+    // --- Modal Logic ---
     window.openRecipeModal = function(id = null) {
         const modal = document.getElementById('recipeModal');
         if (!modal) return;
         modal.style.display = 'block';
         
-        // Reset form
         document.getElementById('recipeForm').reset();
         document.getElementById('recipeIngredients').innerHTML = '';
         document.getElementById('recipeManualAllergens').innerHTML = '';
         document.getElementById('recipeAutoAllergens').textContent = '-';
         
-        // Populate Categories
         const catSelect = document.getElementById('recipeCategory');
         catSelect.innerHTML = `
             <option value="soup">${window.t('category_soup')}</option>
@@ -101,7 +110,6 @@
                 document.getElementById('recipePortionSize').value = recipe.portionSize || '';
                 document.getElementById('recipeInstructions').value = recipe.instructions || '';
                 
-                // Ingredients
                 if (recipe.ingredients) {
                     recipe.ingredients.forEach(ing => {
                         const fullIng = window.ingredients.find(i => i.id === ing.id);
@@ -109,7 +117,6 @@
                     });
                 }
                 
-                // Manual Allergens
                 if (recipe.manualAllergens) {
                     recipe.manualAllergens.forEach(alg => {
                         const fullAlg = window.allergens.find(a => a.id === alg.id);
@@ -182,7 +189,6 @@
     };
 
     // --- Modal Helpers (Tag Management) ---
-    // These need to be global too since they are called by the modal logic above
     window.addIngredientTagToModal = function(ingredient) {
         const container = document.getElementById('recipeIngredients');
         if (!container.querySelector(`[data-id="${ingredient.id}"]`)) {
@@ -244,10 +250,7 @@
 
     // --- Print Logic ---
     window.printMenu = function() {
-        // Collect selected days
         const daysToPrint = [];
-        // Check checkboxes or toggles for days 0-6 (Sun-Sat)
-        // Assuming there are toggles with IDs like 'printDay1' having 'active' class
         for(let i=0; i<=6; i++) {
              const btn = document.getElementById('printDay' + i);
              if(btn && btn.classList.contains('active')) {
@@ -259,24 +262,6 @@
             alert(window.t('alert_select_days'));
             return;
         }
-
-        // We need to generate a printable view
-        // For simplicity, we can open a new window or use a print stylesheet on a hidden div
-        // Here we'll call a dedicated print render function if it exists, or just window.print()
-        // But window.print() prints the whole page. We likely want a specific print layout.
-        
-        // Let's invoke the builder preview as the print template for now, or a specific print area
-        // In the original requirements, we had a print function. Let's fix it.
-        
-        const printArea = document.createElement('div');
-        printArea.id = 'print-area';
-        printArea.style.display = 'none'; // Initially hidden, but needs to be visible for printing
-        // Actually, best practice is @media print showing this and hiding everything else.
-        
-        // Populate print area with cards for selected days
-        // ... (Printing logic implementation would go here)
-        
-        // For now, let's just trigger the browser print and ensure CSS handles hiding non-print elements
         window.print();
     };
 
@@ -301,7 +286,6 @@
             window.updateBuilderPreview();
         });
 
-        // Background Image Handling
         const uploadBgInput = document.getElementById('styleBgImageInput');
         const styleBgRemoveBtn = document.getElementById('styleBgRemoveBtn');
         
@@ -362,7 +346,6 @@
         sheet.style.backgroundColor = s.pageBg;
         sheet.style.backgroundImage = templateBackgroundImage ? `url('${templateBackgroundImage}')` : 'none';
 
-        // Apply styles to preview elements
         const cards = sheet.querySelectorAll('.preview-day-card');
         cards.forEach(card => {
             card.style.backgroundColor = s.cardBg;
