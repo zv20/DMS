@@ -1,4 +1,4 @@
-// Recipe Manager Application - UI Overhaul (v2.3)
+// Recipe Manager Application - UI Overhaul (v2.3) - FIXED CRUD
 
 let recipes = [];
 let ingredients = [];
@@ -7,6 +7,8 @@ let currentMenu = {};
 let menuHistory = [];
 let currentDate = new Date();
 let editingRecipeId = null;
+let editingIngredientId = null;
+let editingAllergenId = null;
 let currentLanguage = localStorage.getItem('recipeManagerLang') || 'en';
 let printTemplate = '<h1>{title}</h1><p><strong>{labelMenuFor}</strong> {dateRange}</p><div>{recipes}</div>';
 let templateBackgroundImage = localStorage.getItem('templateBackgroundImage') || '';
@@ -27,7 +29,7 @@ let currentStyleSettings = {
     cardBg: '#ffffff',
     borderColor: '#333333',
     borderWidth: '1',
-    slotColors: { slot1: '#000000', slot2: '#000000', slot3: '#000000' }
+    slotColors: { slot1: '#000000', slot2: '#000000', slot3: '#000000', slot4: '#000000' }
 };
 
 const DB_NAME = 'RecipeManagerDB';
@@ -200,7 +202,7 @@ async function init() {
   const closeBtn = document.getElementById('closeNavBtn');
   if(closeBtn) closeBtn.addEventListener('click', toggleNav);
 
-  const uploadBgInput = document.getElementById('uploadBgInput'); // Keep old one just in case
+  const uploadBgInput = document.getElementById('uploadBgInput');
   const styleBgInput = document.getElementById('styleBgImageInput');
   const styleBgRemoveBtn = document.getElementById('styleBgRemoveBtn');
   const printStartDateInput = document.getElementById('printStartDate');
@@ -413,7 +415,7 @@ function saveData() {
           const writable = await fileHandle.createWritable();
           await writable.write(JSON.stringify(data, null, 2));
           await writable.close();
-          updateSyncStatus('synced');
+          updateSyncStatus('connected');
         } catch (err) { console.error(err); updateSyncStatus('error'); }
     })();
   } else {
@@ -731,7 +733,7 @@ function updateTemplatePreview() {
 // Helper & Utility
 function ensureDefaultSlots(dateStr) { if (!currentMenu[dateStr]) currentMenu[dateStr] = {}; DEFAULT_SLOTS_CONFIG.forEach(conf => { if (!currentMenu[dateStr][conf.id]) { currentMenu[dateStr][conf.id] = { type: conf.type, recipe: null }; } }); }
 function getRecipeAllergens(recipe) { const all = new Set(); if (recipe.ingredients) { recipe.ingredients.forEach(ing => { const fullIng = ingredients.find(i => i.id === ing.id); if (fullIng && fullIng.allergens) { fullIng.allergens.forEach(aid => all.add(aid)); } }); } if (recipe.manualAllergens) { recipe.manualAllergens.forEach(ma => all.add(ma.id)); } const result = []; all.forEach(id => { const alg = allergens.find(a => a.id === id); if (alg) result.push(alg); }); return result; }
-function renderTags(containerId, items, removeCallback) { const container = document.getElementById(containerId); container.innerHTML = ''; items.forEach(item => { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item.name; const btn = document.createElement('button'); btn.innerHTML = '&times;'; btn.onclick = () => removeCallback(item.id); tag.appendChild(btn); container.appendChild(tag); }); }
+function renderTags(containerId, items, removeCallback) { const container = document.getElementById(containerId); if (!container) return; container.innerHTML = ''; items.forEach(item => { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item.name; const btn = document.createElement('button'); btn.innerHTML = '&times;'; btn.onclick = () => removeCallback(item.id); tag.appendChild(btn); container.appendChild(tag); }); }
 function populateDefaultAllergens() { PREDEFINED_ALLERGENS.forEach(def => { if (!allergens.find(a => a.id === def.id)) { allergens.push({ id: def.id, name: def.name, color: def.color, isSystem: true }); } }); saveData(); renderAllergens(); }
 
 // UPDATED SYNC STATUS FUNCTION
@@ -741,13 +743,11 @@ function updateSyncStatus(status) {
         else status = 'local'; 
     }
     
-    // Update Dropdown Text
     const textEl = document.getElementById('syncStatusText');
     if (textEl) {
         textEl.textContent = status === 'connected' ? t('sync_connected') : (status === 'local' ? t('sync_disconnected') : t('sync_error'));
     }
 
-    // Update Button Ring Color
     const btn = document.getElementById('syncBtn');
     if (btn) {
         btn.classList.remove('status-connected', 'status-local', 'status-error');
@@ -760,7 +760,7 @@ function updateSyncStatus(status) {
 function changeLanguage(lang) { currentLanguage = lang; localStorage.setItem('recipeManagerLang', lang); saveData(); applyTranslations(); }
 function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); }); updateSyncStatus(); }
 function updatePrintDatePicker() { const input = document.getElementById('printStartDate'); if (input) { const weekStart = getWeekStart(currentDate); input.value = weekStart.toISOString().split('T')[0]; } }
-function toggleSyncDropdown() { document.getElementById('syncDropdown').classList.toggle('show'); }
+function toggleSyncDropdown() { const dropdown = document.getElementById('syncDropdown'); if (dropdown) dropdown.classList.toggle('show'); }
 
 function togglePrintDay(d) { const idx = selectedPrintDays.indexOf(d); if(idx>-1) selectedPrintDays.splice(idx,1); else selectedPrintDays.push(d); updatePrintDayButtons(); }
 function updatePrintDayButtons() { for(let i=0;i<7;i++){ const btn=document.getElementById('printDay'+i); if(btn){ if(selectedPrintDays.includes(i)) btn.classList.add('active'); else btn.classList.remove('active'); } } }
@@ -776,7 +776,7 @@ function uploadBackgroundImage(e) {
       reader.onload = function(evt) {
           templateBackgroundImage = evt.target.result;
           saveData();
-          updateBuilderPreview(); // Update preview immediately
+          updateBuilderPreview();
           const removeBtn = document.getElementById('styleBgRemoveBtn');
           if (removeBtn) removeBtn.style.display = 'block';
       };
@@ -787,7 +787,7 @@ function uploadBackgroundImage(e) {
 function removeBackgroundImage() {
   templateBackgroundImage = '';
   saveData();
-  updateBuilderPreview(); // Update preview immediately
+  updateBuilderPreview();
   const input = document.getElementById('styleBgImageInput');
   if (input) input.value = '';
   const removeBtn = document.getElementById('styleBgRemoveBtn');
@@ -863,21 +863,268 @@ function printMenu() {
 
     printWindow.document.write(`<html><head><title>Print Menu</title><style>${styles}</style></head><body>${finalHtml}</body></html>`);
     printWindow.document.close();
-    // printWindow.print(); // Let user print manually to see preview first
 }
 
-function deleteRecipe(id) { recipes = recipes.filter(r => r.id !== id); saveData(); renderRecipes(); }
-function openRecipeModal(id) { editingRecipeId=id; document.getElementById('recipeModal').style.display='block'; }
-function closeRecipeModal() { document.getElementById('recipeModal').style.display='none'; }
-function saveRecipe(e) { e.preventDefault(); /* ... */ closeRecipeModal(); saveData(); renderRecipes(); }
-function openIngredientModal() { document.getElementById('ingredientModal').style.display='block'; }
-function closeIngredientModal() { document.getElementById('ingredientModal').style.display='none'; }
-function saveIngredient(e) { e.preventDefault(); /* ... */ closeIngredientModal(); saveData(); renderIngredients(); }
-function openAllergenModal() { document.getElementById('allergenModal').style.display='block'; }
-function closeAllergenModal() { document.getElementById('allergenModal').style.display='none'; }
-function saveAllergen(e) { e.preventDefault(); /* ... */ closeAllergenModal(); saveData(); renderAllergens(); }
+function deleteRecipe(id) { 
+    if (!confirm(t('alert_delete_recipe'))) return;
+    recipes = recipes.filter(r => r.id !== id); 
+    saveData(); 
+    renderRecipes(); 
+}
+
+// === FIXED RECIPE MODAL FUNCTIONS ===
+function openRecipeModal(id) {
+    editingRecipeId = id || null;
+    const modal = document.getElementById('recipeModal');
+    const form = document.getElementById('recipeForm');
+    const titleEl = document.getElementById('recipeModalTitle');
+    
+    // Reset form
+    form.reset();
+    form.dataset.tempIngredients = '[]';
+    form.dataset.tempManualAllergens = '[]';
+    
+    if (id) {
+        // Edit mode
+        const recipe = recipes.find(r => r.id === id);
+        if (!recipe) return;
+        
+        titleEl.textContent = t('modal_edit_recipe');
+        document.getElementById('recipeName').value = recipe.name || '';
+        document.getElementById('recipeCategory').value = recipe.category || '';
+        document.getElementById('recipePortionSize').value = recipe.portionSize || '';
+        document.getElementById('recipeInstructions').value = recipe.instructions || '';
+        
+        // Populate ingredients
+        if (recipe.ingredients && recipe.ingredients.length) {
+            const ingList = recipe.ingredients.map(ing => {
+                const fullIng = ingredients.find(i => i.id === ing.id);
+                return fullIng ? { id: fullIng.id, name: fullIng.name } : null;
+            }).filter(x => x);
+            form.dataset.tempIngredients = JSON.stringify(ingList);
+            renderTags('recipeIngredients', ingList, removeIngredientFromRecipe);
+        }
+        
+        // Populate manual allergens
+        if (recipe.manualAllergens && recipe.manualAllergens.length) {
+            const algList = recipe.manualAllergens.map(ma => {
+                const alg = allergens.find(a => a.id === ma.id);
+                return alg ? { id: alg.id, name: getAllergenName(alg) } : null;
+            }).filter(x => x);
+            form.dataset.tempManualAllergens = JSON.stringify(algList);
+            renderTags('recipeManualAllergens', algList, removeManualAllergenFromRecipe);
+        }
+    } else {
+        // Create mode
+        titleEl.textContent = t('modal_add_recipe');
+        renderTags('recipeIngredients', [], removeIngredientFromRecipe);
+        renderTags('recipeManualAllergens', [], removeManualAllergenFromRecipe);
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeRecipeModal() { 
+    const modal = document.getElementById('recipeModal');
+    modal.style.display = 'none';
+    editingRecipeId = null;
+}
+
+function saveRecipe(e) { 
+    e.preventDefault();
+    
+    const form = document.getElementById('recipeForm');
+    const name = document.getElementById('recipeName').value.trim();
+    const category = document.getElementById('recipeCategory').value;
+    const portionSize = document.getElementById('recipePortionSize').value.trim();
+    const instructions = document.getElementById('recipeInstructions').value.trim();
+    
+    if (!name) {
+        alert('Recipe name is required!');
+        return;
+    }
+    
+    const ingredientsList = JSON.parse(form.dataset.tempIngredients || '[]');
+    const manualAllergensList = JSON.parse(form.dataset.tempManualAllergens || '[]');
+    
+    if (editingRecipeId) {
+        // Update existing
+        const recipe = recipes.find(r => r.id === editingRecipeId);
+        if (recipe) {
+            recipe.name = name;
+            recipe.category = category;
+            recipe.portionSize = portionSize;
+            recipe.instructions = instructions;
+            recipe.ingredients = ingredientsList;
+            recipe.manualAllergens = manualAllergensList;
+        }
+    } else {
+        // Create new
+        const newRecipe = {
+            id: 'recipe_' + Date.now(),
+            name: name,
+            category: category,
+            portionSize: portionSize,
+            instructions: instructions,
+            ingredients: ingredientsList,
+            manualAllergens: manualAllergensList
+        };
+        recipes.push(newRecipe);
+    }
+    
+    closeRecipeModal();
+    saveData();
+    renderRecipes();
+}
+
+// === FIXED INGREDIENT MODAL FUNCTIONS ===
+function openIngredientModal(id) {
+    editingIngredientId = id || null;
+    const modal = document.getElementById('ingredientModal');
+    const form = document.getElementById('ingredientForm');
+    const titleEl = document.querySelector('#ingredientModal h2');
+    
+    form.reset();
+    form.dataset.tempLinkedAllergens = '[]';
+    
+    if (id) {
+        const ingredient = ingredients.find(i => i.id === id);
+        if (!ingredient) return;
+        
+        titleEl.textContent = t('modal_edit_ingredient');
+        document.getElementById('ingredientName').value = ingredient.name || '';
+        
+        if (ingredient.allergens && ingredient.allergens.length) {
+            const algList = ingredient.allergens.map(aid => {
+                const alg = allergens.find(a => a.id === aid);
+                return alg ? { id: alg.id, name: getAllergenName(alg) } : null;
+            }).filter(x => x);
+            form.dataset.tempLinkedAllergens = JSON.stringify(algList);
+            renderTags('ingredientLinkedAllergens', algList, removeLinkedAllergen);
+        }
+    } else {
+        titleEl.textContent = t('modal_add_ingredient');
+        renderTags('ingredientLinkedAllergens', [], removeLinkedAllergen);
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeIngredientModal() { 
+    document.getElementById('ingredientModal').style.display = 'none';
+    editingIngredientId = null;
+}
+
+function saveIngredient(e) { 
+    e.preventDefault();
+    
+    const form = document.getElementById('ingredientForm');
+    const name = document.getElementById('ingredientName').value.trim();
+    
+    if (!name) {
+        alert('Ingredient name is required!');
+        return;
+    }
+    
+    const linkedAllergensList = JSON.parse(form.dataset.tempLinkedAllergens || '[]');
+    const allergenIds = linkedAllergensList.map(a => a.id);
+    
+    if (editingIngredientId) {
+        const ingredient = ingredients.find(i => i.id === editingIngredientId);
+        if (ingredient) {
+            ingredient.name = name;
+            ingredient.allergens = allergenIds;
+        }
+    } else {
+        const newIngredient = {
+            id: 'ing_' + Date.now(),
+            name: name,
+            allergens: allergenIds
+        };
+        ingredients.push(newIngredient);
+    }
+    
+    closeIngredientModal();
+    saveData();
+    renderIngredients();
+}
+
+// === FIXED ALLERGEN MODAL FUNCTIONS ===
+function openAllergenModal(id) {
+    editingAllergenId = id || null;
+    const modal = document.getElementById('allergenModal');
+    const titleEl = document.querySelector('#allergenModal h2');
+    
+    document.getElementById('allergenForm').reset();
+    
+    if (id) {
+        const allergen = allergens.find(a => a.id === id);
+        if (!allergen) return;
+        
+        titleEl.textContent = t('modal_edit_allergen');
+        document.getElementById('allergenName').value = allergen.name || '';
+        document.getElementById('allergenColor').value = allergen.color || '#ff0000';
+    } else {
+        titleEl.textContent = t('modal_add_allergen');
+        document.getElementById('allergenColor').value = '#ff0000';
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeAllergenModal() { 
+    document.getElementById('allergenModal').style.display = 'none';
+    editingAllergenId = null;
+}
+
+function saveAllergen(e) { 
+    e.preventDefault();
+    
+    const name = document.getElementById('allergenName').value.trim();
+    const color = document.getElementById('allergenColor').value;
+    
+    if (!name) {
+        alert('Allergen name is required!');
+        return;
+    }
+    
+    if (editingAllergenId) {
+        const allergen = allergens.find(a => a.id === editingAllergenId);
+        if (allergen) {
+            allergen.name = name;
+            allergen.color = color;
+        }
+    } else {
+        const newAllergen = {
+            id: 'alg_custom_' + Date.now(),
+            name: name,
+            color: color,
+            isSystem: false
+        };
+        allergens.push(newAllergen);
+    }
+    
+    closeAllergenModal();
+    saveData();
+    renderAllergens();
+}
+
 function saveTemplate() { alert(t('alert_template_saved')); }
-function saveCurrentMenu() { alert(t('alert_menu_saved')); }
+
+function saveCurrentMenu() { 
+    const weekStart = getWeekStart(currentDate);
+    const menuName = `Week of ${weekStart.toLocaleDateString()}`;
+    const menuEntry = {
+        id: 'menu_' + Date.now(),
+        name: menuName,
+        date: new Date().toISOString(),
+        menu: JSON.parse(JSON.stringify(currentMenu))
+    };
+    menuHistory.unshift(menuEntry);
+    saveData();
+    renderMenuHistory();
+    alert(t('alert_menu_saved'));
+}
 
 // RESTORED CRUD FUNCTIONS
 function deleteSavedMenu(id) { 
@@ -901,9 +1148,15 @@ function addIngredientToRecipe() {
   const id = select.value;
   if (!id) return;
   const ingredient = ingredients.find(i => i.id === id);
+  if (!ingredient) return;
+  
   const form = document.getElementById('recipeForm');
   const list = JSON.parse(form.dataset.tempIngredients || '[]');
-  if (!list.find(i => i.id === id)) { list.push({ id: ingredient.id, name: ingredient.name }); form.dataset.tempIngredients = JSON.stringify(list); renderTags('recipeIngredients', list, removeIngredientFromRecipe); }
+  if (!list.find(i => i.id === id)) { 
+      list.push({ id: ingredient.id, name: ingredient.name }); 
+      form.dataset.tempIngredients = JSON.stringify(list); 
+      renderTags('recipeIngredients', list, removeIngredientFromRecipe); 
+  }
   select.value = '';
 }
 
@@ -912,9 +1165,15 @@ function addManualAllergenToRecipe() {
   const id = select.value;
   if (!id) return;
   const allergen = allergens.find(a => a.id === id);
+  if (!allergen) return;
+  
   const form = document.getElementById('recipeForm');
   const list = JSON.parse(form.dataset.tempManualAllergens || '[]');
-  if (!list.find(a => a.id === id)) { list.push({ id: allergen.id, name: getAllergenName(allergen) }); form.dataset.tempManualAllergens = JSON.stringify(list); renderTags('recipeManualAllergens', list, removeManualAllergenFromRecipe); }
+  if (!list.find(a => a.id === id)) { 
+      list.push({ id: allergen.id, name: getAllergenName(allergen) }); 
+      form.dataset.tempManualAllergens = JSON.stringify(list); 
+      renderTags('recipeManualAllergens', list, removeManualAllergenFromRecipe); 
+  }
   select.value = '';
 }
 
@@ -933,7 +1192,28 @@ function deleteAllergen(id) {
 }
 
 function addLinkedAllergen() { 
-    /* Placeholder for linked allergens */ 
+    const select = document.getElementById('ingredientAllergenSelect');
+    const id = select.value;
+    if (!id) return;
+    const allergen = allergens.find(a => a.id === id);
+    if (!allergen) return;
+    
+    const form = document.getElementById('ingredientForm');
+    const list = JSON.parse(form.dataset.tempLinkedAllergens || '[]');
+    if (!list.find(a => a.id === id)) {
+        list.push({ id: allergen.id, name: getAllergenName(allergen) });
+        form.dataset.tempLinkedAllergens = JSON.stringify(list);
+        renderTags('ingredientLinkedAllergens', list, removeLinkedAllergen);
+    }
+    select.value = '';
+}
+
+function removeLinkedAllergen(id) {
+    const form = document.getElementById('ingredientForm');
+    let list = JSON.parse(form.dataset.tempLinkedAllergens || '[]');
+    list = list.filter(a => a.id !== id);
+    form.dataset.tempLinkedAllergens = JSON.stringify(list);
+    renderTags('ingredientLinkedAllergens', list, removeLinkedAllergen);
 }
 
 function removeIngredientFromRecipe(id) {
@@ -965,8 +1245,9 @@ function initStyleBuilder() {
     
     const newBtn = document.getElementById('btnNewTemplate');
     if(newBtn) newBtn.addEventListener('click', () => {
-        document.getElementById('savedTemplatesSelect').value = '';
-        currentStyleSettings = { font: 'Segoe UI', pageBg: '#ffffff', headerBg: '#ffffff', headerText: '#21808d', cardBg: '#ffffff', borderColor: '#333333', borderWidth: '1', slotColors: { slot1:'#000', slot2:'#000', slot3:'#000' } };
+        const sel = document.getElementById('savedTemplatesSelect');
+        if (sel) sel.value = '';
+        currentStyleSettings = { font: 'Segoe UI', pageBg: '#ffffff', headerBg: '#ffffff', headerText: '#21808d', cardBg: '#ffffff', borderColor: '#333333', borderWidth: '1', slotColors: { slot1:'#000', slot2:'#000', slot3:'#000', slot4:'#000' } };
         loadBuilderSettings();
         updateBuilderPreview();
     });
@@ -1001,31 +1282,44 @@ function loadBuilderSettings() {
         setVal('styleSlot1Color', s.slotColors.slot1);
         setVal('styleSlot2Color', s.slotColors.slot2);
         setVal('styleSlot3Color', s.slotColors.slot3);
-        setVal('styleSlot4Color', s.slotColors.slot4); // Ensure slot4 is handled
+        setVal('styleSlot4Color', s.slotColors.slot4);
     }
 }
 
 function updateBuilderPreview() { 
+    const fontEl = document.getElementById('styleFont');
+    const pageBgEl = document.getElementById('stylePageBg');
+    const headerBgEl = document.getElementById('styleHeaderBg');
+    const headerTextEl = document.getElementById('styleHeaderText');
+    const cardBgEl = document.getElementById('styleCardBg');
+    const borderColorEl = document.getElementById('styleBorderColor');
+    const borderWidthEl = document.getElementById('styleBorderWidth');
+    const slot1ColorEl = document.getElementById('styleSlot1Color');
+    const slot2ColorEl = document.getElementById('styleSlot2Color');
+    const slot3ColorEl = document.getElementById('styleSlot3Color');
+    const slot4ColorEl = document.getElementById('styleSlot4Color');
+    
+    if (!fontEl || !pageBgEl || !headerBgEl || !headerTextEl || !cardBgEl || !borderColorEl || !borderWidthEl) return;
+    
     const s = {
-        font: document.getElementById('styleFont').value,
-        pageBg: document.getElementById('stylePageBg').value,
-        headerBg: document.getElementById('styleHeaderBg').value,
-        headerText: document.getElementById('styleHeaderText').value,
-        cardBg: document.getElementById('styleCardBg').value,
-        borderColor: document.getElementById('styleBorderColor').value,
-        borderWidth: document.getElementById('styleBorderWidth').value,
+        font: fontEl.value,
+        pageBg: pageBgEl.value,
+        headerBg: headerBgEl.value,
+        headerText: headerTextEl.value,
+        cardBg: cardBgEl.value,
+        borderColor: borderColorEl.value,
+        borderWidth: borderWidthEl.value,
         slotColors: {
-            slot1: document.getElementById('styleSlot1Color').value,
-            slot2: document.getElementById('styleSlot2Color').value,
-            slot3: document.getElementById('styleSlot3Color').value,
-            slot4: document.getElementById('styleSlot4Color') ? document.getElementById('styleSlot4Color').value : '#000000'
+            slot1: slot1ColorEl ? slot1ColorEl.value : '#000000',
+            slot2: slot2ColorEl ? slot2ColorEl.value : '#000000',
+            slot3: slot3ColorEl ? slot3ColorEl.value : '#000000',
+            slot4: slot4ColorEl ? slot4ColorEl.value : '#000000'
         }
     };
     currentStyleSettings = s;
     const sheet = document.getElementById('livePreviewSheet');
     if (!sheet) return;
     
-    // Apply Global Settings
     sheet.style.fontFamily = s.font;
     sheet.style.backgroundColor = s.pageBg;
     if (templateBackgroundImage) {
@@ -1034,7 +1328,6 @@ function updateBuilderPreview() {
         sheet.style.backgroundImage = 'none';
     }
 
-    // Apply Day Card Settings
     const cards = sheet.querySelectorAll('.preview-day-card');
     cards.forEach(card => {
         card.style.backgroundColor = s.cardBg;
@@ -1052,10 +1345,6 @@ function updateBuilderPreview() {
         }
     });
 
-    // Apply Slot Colors (Preview Only)
-    // We update the border-left colors for the slots in the preview
-    // Note: The preview slots have classes like 'slot1', 'slot2' etc.
-    // However, they are static HTML in this preview. We need to select them.
     const slot1 = sheet.querySelectorAll('.preview-slot.slot1');
     const slot2 = sheet.querySelectorAll('.preview-slot.slot2');
     const slot3 = sheet.querySelectorAll('.preview-slot.slot3');
@@ -1133,5 +1422,6 @@ window.populateDefaultAllergens = populateDefaultAllergens;
 window.updatePrintDatePicker = updatePrintDatePicker;
 window.removeIngredientFromRecipe = removeIngredientFromRecipe;
 window.removeManualAllergenFromRecipe = removeManualAllergenFromRecipe;
+window.togglePrintDay = togglePrintDay;
 
 window.addEventListener('DOMContentLoaded', init);
