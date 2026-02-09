@@ -341,24 +341,45 @@ async function saveDirectoryHandle(handle) {
 }
 
 function parseData(jsonText) {
-  const data = JSON.parse(jsonText);
-  recipes = data.recipes || [];
-  ingredients = data.ingredients || [];
-  allergens = data.allergens || [];
-  currentMenu = data.currentMenu || {};
-  menuHistory = data.menuHistory || [];
-  printTemplate = data.printTemplate || printTemplate;
-  templateLayout = data.templateLayout || 'default';
-  savedTemplates = data.savedTemplates || [];
-  if (data.currentStyleSettings) currentStyleSettings = data.currentStyleSettings;
-  if (allergens.length === 0) populateDefaultAllergens();
-  updateSavedTemplatesList();
+  try {
+      const data = JSON.parse(jsonText);
+      recipes = data.recipes || [];
+      ingredients = data.ingredients || [];
+      allergens = data.allergens || [];
+      currentMenu = data.currentMenu || {};
+      menuHistory = data.menuHistory || [];
+      printTemplate = data.printTemplate || printTemplate;
+      templateLayout = data.templateLayout || 'default';
+      savedTemplates = data.savedTemplates || [];
+      if (data.currentStyleSettings) currentStyleSettings = data.currentStyleSettings;
+      if (allergens.length === 0) populateDefaultAllergens();
+      updateSavedTemplatesList();
+      renderAll();
+      alert(t('alert_import_success'));
+  } catch (e) {
+      alert(t('alert_import_error') + e.message);
+  }
 }
 
 function loadData() {
   const data = localStorage.getItem('recipeManagerData');
-  if (data) { parseData(data); loadBuilderSettings(); } 
-  else { populateDefaultAllergens(); }
+  if (data) { 
+    try {
+        const parsed = JSON.parse(data);
+        recipes = parsed.recipes || [];
+        ingredients = parsed.ingredients || [];
+        allergens = parsed.allergens || [];
+        currentMenu = parsed.currentMenu || {};
+        menuHistory = parsed.menuHistory || [];
+        printTemplate = parsed.printTemplate || printTemplate;
+        templateLayout = parsed.templateLayout || 'default';
+        savedTemplates = parsed.savedTemplates || [];
+        if (parsed.currentStyleSettings) currentStyleSettings = parsed.currentStyleSettings;
+    } catch(e) { console.error(\"Parse error\", e); }
+    loadBuilderSettings(); 
+  } else { 
+    populateDefaultAllergens(); 
+  }
   updateSyncStatus('local');
   updatePrintDatePicker();
 }
@@ -392,6 +413,76 @@ async function loadFromFolder() {
   }
 }
 
+// --- SYNC FUNCTIONS (RESTORED) ---
+
+async function selectSaveLocation() {
+    if (!isFileSystemSupported) {
+        alert(t('alert_file_api_unsupported'));
+        return;
+    }
+    try {
+        const handle = await window.showDirectoryPicker();
+        if (handle) {
+            directoryHandle = handle;
+            await saveDirectoryHandle(handle);
+            updateSyncStatus('connected');
+            
+            // Try to load existing data first, if any
+            try {
+                await loadFromFolder();
+                alert(t('alert_data_loaded'));
+            } catch (e) {
+                // If no file exists, save current data
+                saveData();
+                alert(t('alert_data_saved'));
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        // User cancelled or error
+    }
+}
+
+function manualSave() {
+    saveData();
+    alert(t('alert_data_saved'));
+}
+
+async function manualLoad() {
+    if (!directoryHandle) {
+        alert(t('alert_select_folder'));
+        return;
+    }
+    await loadFromFolder();
+    alert(t('alert_data_loaded'));
+}
+
+function exportData() {
+    const data = { recipes, ingredients, allergens, currentMenu, menuHistory, printTemplate, currentLanguage, templateLayout, savedTemplates, currentStyleSettings };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recipe_manager_backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        parseData(e.target.result);
+        // Reset input so same file can be selected again if needed
+        document.getElementById('importInput').value = ''; 
+    };
+    reader.readAsText(file);
+}
+
 // --- RENDERING ---
 function renderAll() {
   updateSelects();
@@ -413,12 +504,12 @@ function updateSelects() {
     const allergenSelect = document.getElementById('allergenSelect');
     const ingAllSelect = document.getElementById('ingredientAllergenSelect');
     const catSelect = document.getElementById('recipeCategory');
-    if(ingredientSelect) ingredientSelect.innerHTML = `<option value="">${t('select_ingredient')}</option>` + ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-    if(allergenSelect) allergenSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
-    if(ingAllSelect) ingAllSelect.innerHTML = `<option value="">${t('select_allergen')}</option>` + allergens.map(a => `<option value="${a.id}">${getAllergenName(a)}</option>`).join('');
+    if(ingredientSelect) ingredientSelect.innerHTML = `<option value=\"\">${t('select_ingredient')}</option>` + ingredients.map(i => `<option value=\"${i.id}\">${i.name}</option>`).join('');
+    if(allergenSelect) allergenSelect.innerHTML = `<option value=\"\">${t('select_allergen')}</option>` + allergens.map(a => `<option value=\"${a.id}\">${getAllergenName(a)}</option>`).join('');
+    if(ingAllSelect) ingAllSelect.innerHTML = `<option value=\"\">${t('select_allergen')}</option>` + allergens.map(a => `<option value=\"${a.id}\">${getAllergenName(a)}</option>`).join('');
     if (catSelect) {
         const val = catSelect.value;
-        catSelect.innerHTML = `<option value="">${t('category_select')}</option><option value="soup">${t('category_soup')}</option><option value="main">${t('category_main')}</option><option value="dessert">${t('category_dessert')}</option><option value="other">${t('category_other')}</option>`;
+        catSelect.innerHTML = `<option value=\"\">${t('category_select')}</option><option value=\"soup\">${t('category_soup')}</option><option value=\"main\">${t('category_main')}</option><option value=\"dessert\">${t('category_dessert')}</option><option value=\"other\">${t('category_other')}</option>`;
         catSelect.value = val;
     }
 }
@@ -437,7 +528,7 @@ function renderRecipes() {
   grid.innerHTML = '';
   const search = document.getElementById('recipeSearch');
   const term = search ? search.value.toLowerCase() : '';
-  if (recipes.length === 0) { grid.innerHTML = `<div class="empty-state">${t('empty_recipes')}</div>`; return; }
+  if (recipes.length === 0) { grid.innerHTML = `<div class=\"empty-state\">${t('empty_recipes')}</div>`; return; }
   recipes.forEach(recipe => {
     if (term && !recipe.name.toLowerCase().includes(term)) return;
     const card = document.createElement('div');
@@ -445,8 +536,8 @@ function renderRecipes() {
     card.onclick = (e) => { if (!e.target.closest('button')) openRecipeModal(recipe.id); };
     const recipeAllergens = getRecipeAllergens(recipe);
     let allergensHtml = '';
-    if (recipeAllergens.length > 0) { allergensHtml = `<div class="tag-container" style="margin-top:0.5rem;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15">${getAllergenName(a)}</span>`).join('')}</div>`; }
-    card.innerHTML = `<h3><span class="category-badge category-${recipe.category || 'other'}">${getCategoryIcon(recipe.category)}</span>${recipe.name}</h3><p style="color:var(--color-text-secondary);font-size:0.9rem;">${recipe.portionSize || ''}</p>${allergensHtml}<div class="actions"><button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteRecipe('${recipe.id}')">${t('btn_delete')}</button></div>`;
+    if (recipeAllergens.length > 0) { allergensHtml = `<div class=\"tag-container\" style=\"margin-top:0.5rem;\">${recipeAllergens.map(a => `<span class=\"tag allergen\" style=\"border-color:${a.color};background:${a.color}15\">${getAllergenName(a)}</span>`).join('')}</div>`; }
+    card.innerHTML = `<h3><span class=\"category-badge category-${recipe.category || 'other'}\">${getCategoryIcon(recipe.category)}</span>${recipe.name}</h3><p style=\"color:var(--color-text-secondary);font-size:0.9rem;\">${recipe.portionSize || ''}</p>${allergensHtml}<div class=\"actions\"><button class=\"btn btn-small btn-secondary\" onclick=\"openRecipeModal('${recipe.id}')\">${t('btn_edit')}</button><button class=\"btn btn-small btn-danger\" onclick=\"deleteRecipe('${recipe.id}')\">${t('btn_delete')}</button></div>`;
     grid.appendChild(card);
   });
 }
@@ -455,14 +546,14 @@ function renderIngredients() {
   const list = document.getElementById('ingredientList');
   if (!list) return;
   list.innerHTML = '';
-  if (!ingredients.length) { list.innerHTML = `<div class="empty-state">${t('empty_ingredients')}</div>`; return; }
+  if (!ingredients.length) { list.innerHTML = `<div class=\"empty-state\">${t('empty_ingredients')}</div>`; return; }
   ingredients.forEach(ing => {
     const item = document.createElement('div');
     item.className = 'item-card';
     item.style.padding = '1rem';
     let tags = '';
-    if (ing.allergens && ing.allergens.length) { tags = '<div class="tag-container" style="margin-top:0.5rem;font-size:0.8em;">' + ing.allergens.map(aid => { const a = allergens.find(x => x.id === aid); return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15">${getAllergenName(a)}</span>` : ''; }).join('') + '</div>'; }
-    item.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:start;"><div><strong>${ing.name}</strong>${tags}</div><div style="display:flex;gap:0.5rem;"><button class="btn btn-small btn-secondary" onclick="openIngredientModal('${ing.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteIngredient('${ing.id}')">${t('btn_delete')}</button></div></div>`;
+    if (ing.allergens && ing.allergens.length) { tags = '<div class=\"tag-container\" style=\"margin-top:0.5rem;font-size:0.8em;\">' + ing.allergens.map(aid => { const a = allergens.find(x => x.id === aid); return a ? `<span class=\"tag allergen\" style=\"border-color:${a.color};background:${a.color}15\">${getAllergenName(a)}</span>` : ''; }).join('') + '</div>'; }
+    item.innerHTML = `<div style=\"display:flex;justify-content:space-between;align-items:start;\"><div><strong>${ing.name}</strong>${tags}</div><div style=\"display:flex;gap:0.5rem;\"><button class=\"btn btn-small btn-secondary\" onclick=\"openIngredientModal('${ing.id}')\">${t('btn_edit')}</button><button class=\"btn btn-small btn-danger\" onclick=\"deleteIngredient('${ing.id}')\">${t('btn_delete')}</button></div></div>`;
     list.appendChild(item);
   });
 }
@@ -472,14 +563,14 @@ function renderAllergens() {
   if (!list) return;
   list.innerHTML = '';
   const headerDiv = document.createElement('div');
-  headerDiv.innerHTML = `<button class="btn btn-secondary btn-small" onclick="populateDefaultAllergens()">${t('btn_populate_allergens')}</button>`;
+  headerDiv.innerHTML = `<button class=\"btn btn-secondary btn-small\" onclick=\"populateDefaultAllergens()\">${t('btn_populate_allergens')}</button>`;
   list.appendChild(headerDiv);
   if (!allergens.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = t('empty_allergens'); list.appendChild(empty); return; }
   allergens.forEach(al => {
     const item = document.createElement('div');
     item.className = 'item-card';
     item.style.borderLeft = `5px solid ${al.color}`;
-    item.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><strong>${getAllergenName(al)}</strong><div style="display:flex;gap:0.5rem;"><button class="btn btn-small btn-secondary" onclick="openAllergenModal('${al.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteAllergen('${al.id}')">${t('btn_delete')}</button></div></div>`;
+    item.innerHTML = `<div style=\"display:flex;justify-content:space-between;align-items:center;\"><strong>${getAllergenName(al)}</strong><div style=\"display:flex;gap:0.5rem;\"><button class=\"btn btn-small btn-secondary\" onclick=\"openAllergenModal('${al.id}')\">${t('btn_edit')}</button><button class=\"btn btn-small btn-danger\" onclick=\"deleteAllergen('${al.id}')\">${t('btn_delete')}</button></div></div>`;
     list.appendChild(item);
   });
 }
@@ -513,7 +604,7 @@ function renderCalendar() {
        ensureDefaultSlots(dateStr);
        const dayColumn = document.createElement('div');
        dayColumn.className = 'day-column';
-       dayColumn.innerHTML = `<div class="day-header" style="text-align:center;font-weight:bold;color:var(--color-primary);margin-bottom:10px;">${day.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>`;
+       dayColumn.innerHTML = `<div class=\"day-header\" style=\"text-align:center;font-weight:bold;color:var(--color-primary);margin-bottom:10px;\">${day.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>`;
        DEFAULT_SLOTS_CONFIG.forEach((conf, index) => { const slotId = conf.id; const slotData = currentMenu[dateStr][slotId]; const slotEl = renderSlot(dateStr, slotId, slotData, index + 1); dayColumn.appendChild(slotEl); });
        weekDaysContainer.appendChild(dayColumn);
     }
@@ -533,7 +624,7 @@ function renderCalendar() {
         const cell = document.createElement('div');
         cell.className = 'calendar-day';
         cell.onclick = (e) => { if(e.target.closest('.mini-recipe-item')) return; currentDate = dayDate; toggleView('week'); };
-        cell.innerHTML = `<h4>${i}</h4><div class="calendar-day-content"></div>`;
+        cell.innerHTML = `<h4>${i}</h4><div class=\"calendar-day-content\"></div>`;
         calendarEl.appendChild(cell);
     }
   }
@@ -548,11 +639,11 @@ function renderSlot(dateStr, slotId, slotData, indexLabel) {
   headerRow.style.display = 'flex';
   headerRow.style.justifyContent = 'space-between';
   headerRow.style.marginBottom = '4px';
-  headerRow.innerHTML = `<span style="font-size:0.85rem;font-weight:bold;color:#7f8c8d;">${indexLabel}. ${t('slot_' + slotData.type)}</span>`;
+  headerRow.innerHTML = `<span style=\"font-size:0.85rem;font-weight:bold;color:#7f8c8d;\">${indexLabel}. ${t('slot_' + slotData.type)}</span>`;
   slotEl.appendChild(headerRow);
   const select = document.createElement('select');
   select.style.width = '100%';
-  select.innerHTML = `<option value="">${t('select_recipe')}</option>`;
+  select.innerHTML = `<option value=\"\">${t('select_recipe')}</option>`;
   const relevantRecipes = recipes.filter(r => { if (slotData.type === 'other') return true; return r.category === slotData.type; });
   relevantRecipes.forEach(r => { const option = document.createElement('option'); option.value = r.id; option.textContent = r.name; if (slotData && slotData.recipe === r.id) option.selected = true; select.appendChild(option); });
   select.addEventListener('change', () => { if (!currentMenu[dateStr]) currentMenu[dateStr] = {}; if (!currentMenu[dateStr][slotId]) currentMenu[dateStr][slotId] = { type: slotData.type, recipe: null }; currentMenu[dateStr][slotId].recipe = select.value || null; saveData(); });
@@ -564,11 +655,11 @@ function renderMenuHistory() {
   const list = document.getElementById('menuHistory');
   if (!list) return;
   list.innerHTML = '';
-  if (!menuHistory.length) { list.innerHTML = `<div class="empty-state">${t('empty_menus')}</div>`; return; }
+  if (!menuHistory.length) { list.innerHTML = `<div class=\"empty-state\">${t('empty_menus')}</div>`; return; }
   menuHistory.forEach(m => {
     const item = document.createElement('div');
     item.className = 'menu-history-item';
-    item.innerHTML = `<div class="menu-history-name">${m.name}</div><div class="menu-history-date">${new Date(m.date).toLocaleString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US')}</div><div class="menu-history-actions"><button onclick="loadSavedMenu('${m.id}')">${t('btn_load')}</button><button onclick="deleteSavedMenu('${m.id}')">${t('btn_delete')}</button></div>`;
+    item.innerHTML = `<div class=\"menu-history-name\">${m.name}</div><div class=\"menu-history-date\">${new Date(m.date).toLocaleString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US')}</div><div class=\"menu-history-actions\"><button onclick=\"loadSavedMenu('${m.id}')\">${t('btn_load')}</button><button onclick=\"deleteSavedMenu('${m.id}')\">${t('btn_delete')}</button></div>`;
     list.appendChild(item);
   });
 }
@@ -578,7 +669,7 @@ function updateTemplatePreview() {
   if (!preview) return;
   const s = currentStyleSettings;
   const styles = `font-family: '${s.font}'; background-color: ${s.pageBg};`;
-  preview.innerHTML = `<div style="${styles}; padding:20px; border:1px solid #ccc;"><h3>Preview (Visual only)</h3></div>`;
+  preview.innerHTML = `<div style=\"${styles}; padding:20px; border:1px solid #ccc;\"><h3>Preview (Visual only)</h3></div>`;
 }
 
 // Helper & Utility
@@ -591,11 +682,7 @@ function changeLanguage(lang) { currentLanguage = lang; localStorage.setItem('re
 function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); }); updateSyncStatus(); }
 function updatePrintDatePicker() { const input = document.getElementById('printStartDate'); if (input) { const weekStart = getWeekStart(currentDate); input.value = weekStart.toISOString().split('T')[0]; } }
 function toggleSyncDropdown() { document.getElementById('syncDropdown').classList.toggle('show'); }
-function selectSaveLocation() { /* ... implementation from before ... */ }
-function manualSave() { saveData(); alert(t('alert_data_saved')); }
-function manualLoad() { /* ... implementation from before ... */ }
-function exportData() { /* ... */ }
-function importData(e) { /* ... */ }
+
 function togglePrintDay(d) { const idx = selectedPrintDays.indexOf(d); if(idx>-1) selectedPrintDays.splice(idx,1); else selectedPrintDays.push(d); updatePrintDayButtons(); }
 function updatePrintDayButtons() { for(let i=0;i<7;i++){ const btn=document.getElementById('printDay'+i); if(btn){ if(selectedPrintDays.includes(i)) btn.classList.add('active'); else btn.classList.remove('active'); } } }
 function changeMonth(delta) { if (viewMode === 'week') { currentDate.setDate(currentDate.getDate() + (delta * 7)); } else { currentDate.setMonth(currentDate.getMonth() + delta); } renderAll(); }
