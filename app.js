@@ -1,4 +1,4 @@
-// Recipe Manager Application - UI Overhaul (v2.3) - FIXED CRUD
+// Recipe Manager Application - UI Overhaul (v2.4) - Full Translations & Filters
 
 let recipes = [];
 let ingredients = [];
@@ -69,7 +69,8 @@ const translations = {
     nav_ingredients: 'Ingredients',
     nav_allergens: 'Allergens',
     nav_menu: 'Menu Planning',
-    nav_template: 'Print Template',
+    nav_settings: 'Settings',
+    nav_template_builder: 'Template Builder',
     btn_add_recipe: '+ Add Recipe',
     btn_add_ingredient: '+ Add Ingredient',
     btn_add_allergen: '+ Add Allergen',
@@ -83,29 +84,14 @@ const translations = {
     btn_add: 'Add',
     btn_cancel: 'Cancel',
     btn_save: 'Save',
-    btn_save_recipe: 'Save Recipe',
-    btn_save_ingredient: 'Save Ingredient',
-    btn_save_allergen: 'Save Allergen',
+    btn_reset: 'Reset',
+    btn_save_settings: 'Save Settings',
     btn_load: 'Load',
     btn_export: 'Export',
     btn_import: 'Import',
-    btn_select_location: '📁 Select Save Location',
-    btn_manual_save: '💾 Save',
-    btn_manual_load: '📂 Load from Folder',
     btn_week_view: '📅 Week View',
     btn_month_view: '📆 Month View',
-    btn_upload_bg: '🖼️ Upload Background',
-    btn_remove_bg: '✖ Remove Background',
-    btn_layout_default: '📄 Default',
-    btn_layout_columns: '📰 Two Columns',
-    btn_layout_centered: '⭐ Centered',
-    btn_layout_grid: '📅 5-Day Grid',
-    btn_layout_4day: '🗓️ 4 Days',
-    btn_layout_3day: '🗓️ 3 Days',
-    btn_layout_2day: '🗓️ 2 Days',
-    btn_add_slot: '+ Add Slot',
     btn_populate_allergens: '↻ Reset Default Allergens',
-    btn_reset_slots: '↻ Reset Slots',
     modal_add_recipe: 'Add Recipe',
     modal_edit_recipe: 'Edit Recipe',
     modal_add_ingredient: 'Add Ingredient',
@@ -121,55 +107,59 @@ const translations = {
     label_ingredient_name: 'Ingredient Name',
     label_allergen_name: 'Allergen Name',
     label_color: 'Color',
-    label_auto_allergens: 'Auto-detected Allergens (from ingredients)',
+    label_auto_allergens: 'Auto-detected Allergens',
     label_manual_allergens: 'Additional Allergens',
     label_linked_allergens: 'Linked Allergens',
-    label_layout_presets: 'Quick Presets',
+    label_print_date: 'Print Week of:',
+    label_print_days: 'Print Days:',
+    label_menu_for: 'Menu for:',
+    label_contains: 'Contains',
+    label_app_theme: 'App Theme:',
+    text_print_hint: '💡 Select days to print.',
     category_select: 'Select category',
     category_soup: '🥣 Soup',
     category_main: '🍽️ Main',
     category_dessert: '🍰 Dessert',
     category_other: '➕ Other',
-    slot_soup: '🥣 Soup',
-    slot_main: '🍽️ Main',
-    slot_dessert: '🍰 Dessert',
-    slot_other: '➕ Other',
-    select_ingredient: 'Select ingredient',
-    select_allergen: 'Select allergen',
-    select_recipe: 'Select recipe',
-    select_slot_type: 'Change Type',
+    filter_all_categories: 'All Categories',
+    filter_search_placeholder: 'Search recipes...',
+    table_actions: 'Actions',
     empty_recipes: 'No recipes found.',
     empty_ingredients: 'No ingredients found.',
     empty_allergens: 'No allergens found.',
     empty_menus: 'No saved menus yet.',
-    no_ingredients: 'No ingredients',
     alert_delete_recipe: 'Delete this recipe?',
     alert_delete_ingredient: 'Delete this ingredient?',
     alert_delete_allergen: 'Delete this allergen?',
     alert_delete_menu: 'Delete this saved menu?',
-    alert_no_menu_to_save: 'No recipes in current menu to save!',
     alert_menu_saved: 'Menu saved successfully!',
     alert_menu_loaded: 'Menu loaded!',
-    alert_template_saved: 'Template saved!',
     alert_data_saved: 'Data saved to files!',
     alert_data_loaded: 'Data loaded from folder!',
     alert_select_folder: 'Please select a save location first',
     alert_import_success: 'Data imported successfully!',
     alert_import_error: 'Error importing data: ',
-    alert_file_api_unsupported: 'File System Access not supported in this browser. Use Export/Import instead.',
+    alert_file_api_unsupported: 'File System Access not supported. Use Export/Import.',
     alert_select_days: 'Please select at least one day to print',
-    alert_no_print_data: 'No meals found for this week! Please add recipes to the menu before printing.',
-    alert_allergens_populated: 'Default allergens added!',
+    alert_no_print_data: 'No meals found for this week!',
     heading_past_menus: 'Past Menus',
-    heading_preview: 'Preview',
-    label_saved: 'Saved',
-    label_contains: 'Contains',
-    label_menu_for: 'Menu for:',
-    label_print_date: 'Print Week of:',
-    text_print_hint: '💡 Select days to print.',
-    template_description: 'Customize your print template.',
-    portion_placeholder: 'e.g. 250g',
-    week_of: 'Week of',
+    builder_page_settings: '1. Page Settings',
+    builder_default_font: 'Default Font',
+    builder_page_bg: 'Page Background',
+    builder_bg_image: 'Background Image',
+    builder_day_cards: '2. Day Cards',
+    builder_header_bg: 'Header Background',
+    builder_header_text: 'Header Text Color',
+    builder_card_bg: 'Card Background',
+    builder_border_color: 'Border Color',
+    builder_border_width: 'Border Width',
+    builder_menu_items: '3. Menu Items',
+    builder_slot1: 'Slot 1 (Soup)',
+    builder_slot2: 'Slot 2 (Main)',
+    builder_slot3: 'Slot 3 (Dessert)',
+    builder_slot4: 'Slot 4 (Other)',
+    builder_font: 'Font',
+    builder_preview_title: 'MENU PREVIEW',
     day_sun_short: 'Sun',
     day_mon_short: 'Mon',
     day_tue_short: 'Tue',
@@ -180,11 +170,139 @@ const translations = {
     sync_connected: '🟢 Synced',
     sync_disconnected: '🟡 Local',
     sync_error: '🔴 Error',
+    sync_status_label: 'Status:',
     sync_select_location: '📁 Select Save Location',
     sync_save: '💾 Save Changes',
     sync_load: '📂 Load from Folder',
     sync_export: '⬇ Export JSON',
-    sync_import: '⬆ Import JSON'
+    sync_import: '⬆ Import JSON',
+    slot_soup: '🥣 Soup',
+    slot_main: '🍽️ Main',
+    slot_dessert: '🍰 Dessert',
+    slot_other: '➕ Other',
+    select_ingredient: 'Select ingredient',
+    select_allergen: 'Select allergen',
+    select_recipe: 'Select recipe'
+  },
+  bg: {
+    nav_recipes: 'Рецепти',
+    nav_ingredients: 'Съставки',
+    nav_allergens: 'Алергени',
+    nav_menu: 'Планиране на Меню',
+    nav_settings: 'Настройки',
+    nav_template_builder: 'Дизайн на Шаблон',
+    btn_add_recipe: '+ Добави Рецепта',
+    btn_add_ingredient: '+ Добави Съставка',
+    btn_add_allergen: '+ Добави Алерген',
+    btn_save_menu: 'Запази Меню',
+    btn_previous: '← Предишен',
+    btn_next: 'Следващ →',
+    btn_print: '🖨️ Печат',
+    btn_save_template: 'Запази Шаблон',
+    btn_edit: 'Редакция',
+    btn_delete: 'Изтрий',
+    btn_add: 'Добави',
+    btn_cancel: 'Отказ',
+    btn_save: 'Запази',
+    btn_reset: 'Нулирай',
+    btn_save_settings: 'Запази Настройки',
+    btn_load: 'Зареди',
+    btn_export: 'Експорт',
+    btn_import: 'Импорт',
+    btn_week_view: '📅 Седмичен Изглед',
+    btn_month_view: '📆 Месечен Изглед',
+    btn_populate_allergens: '↻ Възстанови Алергени',
+    modal_add_recipe: 'Добави Рецепта',
+    modal_edit_recipe: 'Редактирай Рецепта',
+    modal_add_ingredient: 'Добави Съставка',
+    modal_edit_ingredient: 'Редактирай Съставка',
+    modal_add_allergen: 'Добави Алерген',
+    modal_edit_allergen: 'Редактирай Алерген',
+    label_recipe_name: 'Име на Рецепта',
+    label_category: 'Категория',
+    label_portion_size: 'Грамаж',
+    label_ingredients: 'Съставки',
+    label_allergens: 'Алергени',
+    label_instructions: 'Инструкции (опция)',
+    label_ingredient_name: 'Име на Съставка',
+    label_allergen_name: 'Име на Алерген',
+    label_color: 'Цвят',
+    label_auto_allergens: 'Авто-алергени',
+    label_manual_allergens: 'Допълнителни Алергени',
+    label_linked_allergens: 'Съдържа Алергени',
+    label_print_date: 'Седмица от:',
+    label_print_days: 'Дни за печат:',
+    label_menu_for: 'Меню за:',
+    label_contains: 'Съдържа',
+    label_app_theme: 'Тема на приложението:',
+    text_print_hint: '💡 Изберете дни за печат.',
+    category_select: 'Избери категория',
+    category_soup: '🥣 Супа',
+    category_main: '🍽️ Основно',
+    category_dessert: '🍰 Десерт',
+    category_other: '➕ Друго',
+    filter_all_categories: 'Всички Категории',
+    filter_search_placeholder: 'Търси рецепти...',
+    table_actions: 'Действия',
+    empty_recipes: 'Няма намерени рецепти.',
+    empty_ingredients: 'Няма намерени съставки.',
+    empty_allergens: 'Няма намерени алергени.',
+    empty_menus: 'Няма запазени менюта.',
+    alert_delete_recipe: 'Изтриване на тази рецепта?',
+    alert_delete_ingredient: 'Изтриване на тази съставка?',
+    alert_delete_allergen: 'Изтриване на този алерген?',
+    alert_delete_menu: 'Изтриване на това запазено меню?',
+    alert_menu_saved: 'Менюто е запазено успешно!',
+    alert_menu_loaded: 'Менюто е заредено!',
+    alert_data_saved: 'Данните са запазени във файл!',
+    alert_data_loaded: 'Данните са заредени!',
+    alert_select_folder: 'Моля, изберете папка за запис',
+    alert_import_success: 'Данните са импортирани успешно!',
+    alert_import_error: 'Грешка при импорт: ',
+    alert_file_api_unsupported: 'Браузърът не поддържа директен запис. Използвайте Експорт/Импорт.',
+    alert_select_days: 'Моля, изберете поне един ден за печат',
+    alert_no_print_data: 'Няма данни за печат за тази седмица!',
+    heading_past_menus: 'История на Менюта',
+    builder_page_settings: '1. Настройки на Страница',
+    builder_default_font: 'Шрифт по подразбиране',
+    builder_page_bg: 'Фон на страницата',
+    builder_bg_image: 'Фоново изображение',
+    builder_day_cards: '2. Дни от седмицата',
+    builder_header_bg: 'Фон на заглавието',
+    builder_header_text: 'Цвят на текста',
+    builder_card_bg: 'Фон на картата',
+    builder_border_color: 'Цвят на рамката',
+    builder_border_width: 'Дебелина на рамката',
+    builder_menu_items: '3. Елементи от менюто',
+    builder_slot1: 'Слот 1 (Супа)',
+    builder_slot2: 'Слот 2 (Основно)',
+    builder_slot3: 'Слот 3 (Десерт)',
+    builder_slot4: 'Слот 4 (Друго)',
+    builder_font: 'Шрифт',
+    builder_preview_title: 'ПРЕГЛЕД НА МЕНЮ',
+    day_sun_short: 'Нед',
+    day_mon_short: 'Пон',
+    day_tue_short: 'Вто',
+    day_wed_short: 'Сря',
+    day_thu_short: 'Чет',
+    day_fri_short: 'Пет',
+    day_sat_short: 'Съб',
+    sync_connected: '🟢 Синхронизиран',
+    sync_disconnected: '🟡 Локален',
+    sync_error: '🔴 Грешка',
+    sync_status_label: 'Статус:',
+    sync_select_location: '📁 Избери Папка',
+    sync_save: '💾 Запази Промени',
+    sync_load: '📂 Зареди от Папка',
+    sync_export: '⬇ Експорт JSON',
+    sync_import: '⬆ Импорт JSON',
+    slot_soup: '🥣 Супа',
+    slot_main: '🍽️ Основно',
+    slot_dessert: '🍰 Десерт',
+    slot_other: '➕ Друго',
+    select_ingredient: 'Избери съставка',
+    select_allergen: 'Избери алерген',
+    select_recipe: 'Избери рецепта'
   }
 };
 
@@ -411,10 +529,15 @@ function saveData() {
   if (directoryHandle) {
     (async () => {
         try {
+          const btn = document.getElementById('syncBtn');
+          if(btn) btn.classList.add('syncing');
+          
           const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
           const writable = await fileHandle.createWritable();
           await writable.write(JSON.stringify(data, null, 2));
           await writable.close();
+          
+          if(btn) btn.classList.remove('syncing');
           updateSyncStatus('connected');
         } catch (err) { console.error(err); updateSyncStatus('error'); }
     })();
@@ -544,8 +667,12 @@ function renderRecipes() {
   const tbody = document.getElementById('recipeList');
   if (!tbody) return;
   tbody.innerHTML = '';
+  
   const search = document.getElementById('recipeSearch');
+  const catFilter = document.getElementById('recipeCategoryFilter');
+  
   const term = search ? search.value.toLowerCase() : '';
+  const cat = catFilter ? catFilter.value : '';
   
   if (recipes.length === 0) { 
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${t('empty_recipes')}</td></tr>`; 
@@ -554,6 +681,7 @@ function renderRecipes() {
   
   recipes.forEach(recipe => {
     if (term && !recipe.name.toLowerCase().includes(term)) return;
+    if (cat && recipe.category !== cat) return;
     
     const tr = document.createElement('tr');
     
@@ -571,8 +699,8 @@ function renderRecipes() {
         <td>${recipe.portionSize || '-'}</td>
         <td>${allergensHtml}</td>
         <td>
-            <button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">${t('btn_edit')}</button>
-            <button class="btn btn-small btn-danger" onclick="deleteRecipe('${recipe.id}')">${t('btn_delete')}</button>
+            <button class="icon-btn edit" onclick="openRecipeModal('${recipe.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="icon-btn delete" onclick="deleteRecipe('${recipe.id}')" title="${t('btn_delete')}">🗑️</button>
         </td>
     `;
     tbody.appendChild(tr);
@@ -601,8 +729,8 @@ function renderIngredients() {
         <td><strong>${ing.name}</strong></td>
         <td>${tags}</td>
         <td>
-            <button class="btn btn-small btn-secondary" onclick="openIngredientModal('${ing.id}')">${t('btn_edit')}</button>
-            <button class="btn btn-small btn-danger" onclick="deleteIngredient('${ing.id}')">${t('btn_delete')}</button>
+            <button class="icon-btn edit" onclick="openIngredientModal('${ing.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="icon-btn delete" onclick="deleteIngredient('${ing.id}')" title="${t('btn_delete')}">🗑️</button>
         </td>
     `;
     tbody.appendChild(tr);
@@ -625,8 +753,8 @@ function renderAllergens() {
         <td><strong>${getAllergenName(al)}</strong></td>
         <td><div style="width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;"></div></td>
         <td>
-            <button class="btn btn-small btn-secondary" onclick="openAllergenModal('${al.id}')">${t('btn_edit')}</button>
-            <button class="btn btn-small btn-danger" onclick="deleteAllergen('${al.id}')">${t('btn_delete')}</button>
+            <button class="icon-btn edit" onclick="openAllergenModal('${al.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="icon-btn delete" onclick="deleteAllergen('${al.id}')" title="${t('btn_delete')}">🗑️</button>
         </td>
     `;
     tbody.appendChild(tr);
@@ -750,7 +878,7 @@ function updateSyncStatus(status) {
 
     const btn = document.getElementById('syncBtn');
     if (btn) {
-        btn.classList.remove('status-connected', 'status-local', 'status-error');
+        btn.className = 'sync-btn'; // Reset
         if (status === 'connected') btn.classList.add('status-connected');
         else if (status === 'local') btn.classList.add('status-local');
         else btn.classList.add('status-error');
@@ -758,7 +886,7 @@ function updateSyncStatus(status) {
 }
 
 function changeLanguage(lang) { currentLanguage = lang; localStorage.setItem('recipeManagerLang', lang); saveData(); applyTranslations(); }
-function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); }); updateSyncStatus(); }
+function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); }); if(document.querySelector('[data-i18n-placeholder]')) document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); }); updateSyncStatus(); }
 function updatePrintDatePicker() { const input = document.getElementById('printStartDate'); if (input) { const weekStart = getWeekStart(currentDate); input.value = weekStart.toISOString().split('T')[0]; } }
 function toggleSyncDropdown() { const dropdown = document.getElementById('syncDropdown'); if (dropdown) dropdown.classList.toggle('show'); }
 
