@@ -223,7 +223,7 @@
       },
       "slot1": {
         "type": "soup",
-        "recipe": null
+        "recipe": "1770567773285"
       },
       "slot2": {
         "type": "main",
@@ -1248,8 +1248,24 @@
       }
     }
   ],
-  "printTemplate": "<h1>{title}</h1><p>{recipes}<br></p><p><br></p>",
-  "currentLanguage": "en",
-  "templateBackgroundImage": "",
-  "templateLayout": "test1"
+  "savedTemplates": [],
+  "currentStyleSettings": {
+    "font": "Segoe UI",
+    "pageBg": "#ffffff",
+    "headerBg": "#ffffff",
+    "headerText": "#21808d",
+    "cardBg": "#ffffff",
+    "borderColor": "#333333",
+    "borderWidth": "1",
+    "slotColors": {
+      "slot1": "#000000",
+      "slot2": "#000000",
+      "slot3": "#000000",
+      "slot4": "#000000"
+    }
+  },
+  "preferences": {
+    "lang": "en",
+    "theme": "default"
+  }
 }
