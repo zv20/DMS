@@ -236,14 +236,17 @@ body {
     visibility: hidden;
     transition: background-color 0.3s, opacity 0.3s, z-index 0s 0.3s; /* Delay z-index change */
     padding-top: var(--header-height); /* Push content down */
+    pointer-events: none; /* Let clicks pass through when inactive */
 }
 
 .nav-overlay.active {
-    background-color: rgba(0,0,0,0.5); /* Dim background ONLY when active */
+    /* FIX 3: Fully transparent background when active, per user request */
+    background-color: rgba(0,0,0,0); 
     z-index: 900; /* Bring to front */
     opacity: 1;
     visibility: visible;
     transition: background-color 0.3s, opacity 0.3s, z-index 0s; /* Instant z-index change */
+    pointer-events: auto; /* Re-enable clicks inside the bubble */
 }
 
 /* The actual "Bubble" or Panel */
@@ -263,6 +266,7 @@ body {
     max-height: calc(100vh - 80px);
     overflow-y: auto;
     border: 1px solid var(--color-border);
+    pointer-events: auto; /* Ensure menu items are clickable */
 }
 
 .nav-overlay.active .nav-content {
