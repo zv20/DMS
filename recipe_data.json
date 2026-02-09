@@ -1,1253 +1,394 @@
 {
   "recipes": [
     {
-      "id": "1770567773285",
-      "name": "Супа топчета",
+      "id": "rcp_soup_1",
+      "name": "Chicken Noodle Soup",
       "category": "soup",
-      "portionSize": "",
-      "instructions": "",
+      "portionSize": "300ml",
+      "instructions": "Boil broth, add chicken and veggies, simmer, add noodles.",
       "ingredients": [
-        {
-          "id": "1770567748990",
-          "name": "брашно"
-        }
+        { "id": "ing_chicken", "name": "Chicken Breast" },
+        { "id": "ing_noodles", "name": "Egg Noodles" },
+        { "id": "ing_carrot", "name": "Carrot" }
       ],
       "manualAllergens": [
-        {
-          "id": "alg_eggs",
-          "name": "Яйца"
-        }
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_eggs", "name": "Eggs" }
       ]
     },
     {
-      "id": "1770567858436",
-      "name": "риба с краставици",
-      "category": "main",
-      "portionSize": "10",
-      "instructions": "",
+      "id": "rcp_soup_2",
+      "name": "Tomato Basil Soup",
+      "category": "soup",
+      "portionSize": "250ml",
+      "instructions": "Roast tomatoes, blend with basil and cream.",
       "ingredients": [
-        {
-          "id": "1770567786794",
-          "name": "яйца"
-        }
+        { "id": "ing_tomato", "name": "Tomatoes" },
+        { "id": "ing_basil", "name": "Basil" },
+        { "id": "ing_cream", "name": "Heavy Cream" }
       ],
       "manualAllergens": [
-        {
-          "id": "alg_milk",
-          "name": "Мляко"
-        }
+        { "id": "alg_milk", "name": "Milk" }
       ]
     },
     {
-      "id": "1770567873263",
-      "name": "Ябълка",
-      "category": "dessert",
-      "portionSize": "200",
-      "instructions": "",
-      "ingredients": [],
+      "id": "rcp_soup_3",
+      "name": "Lentil Soup",
+      "category": "soup",
+      "portionSize": "300ml",
+      "instructions": "Cook lentils with spices and broth.",
+      "ingredients": [
+        { "id": "ing_lentils", "name": "Lentils" },
+        { "id": "ing_onion", "name": "Onion" }
+      ],
       "manualAllergens": []
     },
     {
-      "id": "1770567888247",
-      "name": "Хляб",
-      "category": "other",
-      "portionSize": "",
-      "instructions": "",
+      "id": "rcp_soup_4",
+      "name": "Mushroom Cream Soup",
+      "category": "soup",
+      "portionSize": "250ml",
+      "instructions": "Sauté mushrooms, add broth and cream, blend.",
       "ingredients": [
-        {
-          "id": "1770567748990",
-          "name": "брашно"
-        }
+        { "id": "ing_mushrooms", "name": "Mushrooms" },
+        { "id": "ing_cream", "name": "Heavy Cream" }
       ],
       "manualAllergens": [
-        {
-          "id": "alg_gluten",
-          "name": "Глутен"
-        }
+        { "id": "alg_milk", "name": "Milk" }
+      ]
+    },
+    {
+      "id": "rcp_soup_5",
+      "name": "Minestrone",
+      "category": "soup",
+      "portionSize": "300ml",
+      "instructions": "Combine all veggies, beans and pasta in broth.",
+      "ingredients": [
+        { "id": "ing_beans", "name": "Kidney Beans" },
+        { "id": "ing_pasta", "name": "Small Pasta" },
+        { "id": "ing_carrot", "name": "Carrot" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_celery", "name": "Celery" }
+      ]
+    },
+    {
+      "id": "rcp_main_1",
+      "name": "Grilled Salmon",
+      "category": "main",
+      "portionSize": "150g",
+      "instructions": "Season salmon and grill until cooked through.",
+      "ingredients": [
+        { "id": "ing_salmon", "name": "Salmon Fillet" },
+        { "id": "ing_lemon", "name": "Lemon" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_fish", "name": "Fish" }
+      ]
+    },
+    {
+      "id": "rcp_main_2",
+      "name": "Spaghetti Carbonara",
+      "category": "main",
+      "portionSize": "350g",
+      "instructions": "Cook pasta. Mix eggs and cheese. Combine with hot pasta and pancetta.",
+      "ingredients": [
+        { "id": "ing_spaghetti", "name": "Spaghetti" },
+        { "id": "ing_eggs", "name": "Eggs" },
+        { "id": "ing_cheese", "name": "Parmesan Cheese" },
+        { "id": "ing_pancetta", "name": "Pancetta" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_eggs", "name": "Eggs" },
+        { "id": "alg_milk", "name": "Milk" }
+      ]
+    },
+    {
+      "id": "rcp_main_3",
+      "name": "Beef Stew",
+      "category": "main",
+      "portionSize": "400g",
+      "instructions": "Slow cook beef with vegetables and broth.",
+      "ingredients": [
+        { "id": "ing_beef", "name": "Beef Chuck" },
+        { "id": "ing_potato", "name": "Potato" },
+        { "id": "ing_carrot", "name": "Carrot" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_celery", "name": "Celery" }
+      ]
+    },
+    {
+      "id": "rcp_main_4",
+      "name": "Vegetable Stir Fry",
+      "category": "main",
+      "portionSize": "300g",
+      "instructions": "Stir fry veggies with soy sauce.",
+      "ingredients": [
+        { "id": "ing_broccoli", "name": "Broccoli" },
+        { "id": "ing_peppers", "name": "Bell Peppers" },
+        { "id": "ing_soysauce", "name": "Soy Sauce" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_soybeans", "name": "Soybeans" }
+      ]
+    },
+    {
+      "id": "rcp_main_5",
+      "name": "Roast Chicken",
+      "category": "main",
+      "portionSize": "1/4 chicken",
+      "instructions": "Season chicken and roast at 200C.",
+      "ingredients": [
+        { "id": "ing_chicken_whole", "name": "Whole Chicken" },
+        { "id": "ing_thyme", "name": "Thyme" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_main_6",
+      "name": "Cheeseburger",
+      "category": "main",
+      "portionSize": "1 burger",
+      "instructions": "Grill patty, assemble with bun and cheese.",
+      "ingredients": [
+        { "id": "ing_beef_mince", "name": "Ground Beef" },
+        { "id": "ing_bun", "name": "Burger Bun" },
+        { "id": "ing_cheese_slice", "name": "Cheddar Slice" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_milk", "name": "Milk" },
+        { "id": "alg_sesame", "name": "Sesame" }
+      ]
+    },
+    {
+      "id": "rcp_dessert_1",
+      "name": "Chocolate Cake",
+      "category": "dessert",
+      "portionSize": "1 slice",
+      "instructions": "Bake cake layers, frost with chocolate ganache.",
+      "ingredients": [
+        { "id": "ing_flour", "name": "Flour" },
+        { "id": "ing_cocoa", "name": "Cocoa Powder" },
+        { "id": "ing_sugar", "name": "Sugar" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_eggs", "name": "Eggs" }
+      ]
+    },
+    {
+      "id": "rcp_dessert_2",
+      "name": "Cheesecake",
+      "category": "dessert",
+      "portionSize": "1 slice",
+      "instructions": "Mix cream cheese and sugar, bake in crust.",
+      "ingredients": [
+        { "id": "ing_creamcheese", "name": "Cream Cheese" },
+        { "id": "ing_crackers", "name": "Graham Crackers" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_milk", "name": "Milk" },
+        { "id": "alg_gluten", "name": "Gluten" }
+      ]
+    },
+    {
+      "id": "rcp_dessert_3",
+      "name": "Fruit Salad",
+      "category": "dessert",
+      "portionSize": "150g",
+      "instructions": "Chop fresh fruits and toss.",
+      "ingredients": [
+        { "id": "ing_apple", "name": "Apple" },
+        { "id": "ing_banana", "name": "Banana" },
+        { "id": "ing_orange", "name": "Orange" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_dessert_4",
+      "name": "Ice Cream Sundae",
+      "category": "dessert",
+      "portionSize": "2 scoops",
+      "instructions": "Scoop ice cream, add sauce and nuts.",
+      "ingredients": [
+        { "id": "ing_icecream", "name": "Vanilla Ice Cream" },
+        { "id": "ing_chocolate_sauce", "name": "Chocolate Sauce" },
+        { "id": "ing_nuts", "name": "Chopped Nuts" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_milk", "name": "Milk" },
+        { "id": "alg_nuts", "name": "Nuts" },
+        { "id": "alg_peanuts", "name": "Peanuts" }
+      ]
+    },
+    {
+      "id": "rcp_other_1",
+      "name": "Garlic Bread",
+      "category": "other",
+      "portionSize": "2 slices",
+      "instructions": "Spread garlic butter on baguette, bake.",
+      "ingredients": [
+        { "id": "ing_baguette", "name": "Baguette" },
+        { "id": "ing_garlic", "name": "Garlic" },
+        { "id": "ing_butter", "name": "Butter" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_milk", "name": "Milk" }
+      ]
+    },
+    {
+      "id": "rcp_other_2",
+      "name": "Caesar Salad",
+      "category": "other",
+      "portionSize": "1 bowl",
+      "instructions": "Toss lettuce with dressing, croutons and parmesan.",
+      "ingredients": [
+        { "id": "ing_lettuce", "name": "Romaine Lettuce" },
+        { "id": "ing_croutons", "name": "Croutons" },
+        { "id": "ing_parmesan", "name": "Parmesan" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_gluten", "name": "Gluten" },
+        { "id": "alg_milk", "name": "Milk" },
+        { "id": "alg_eggs", "name": "Eggs" },
+        { "id": "alg_fish", "name": "Fish" }
+      ]
+    },
+    {
+      "id": "rcp_other_3",
+      "name": "Steamed Rice",
+      "category": "other",
+      "portionSize": "150g",
+      "instructions": "Steam jasmine rice.",
+      "ingredients": [
+        { "id": "ing_rice", "name": "Jasmine Rice" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_other_4",
+      "name": "Mashed Potatoes",
+      "category": "other",
+      "portionSize": "200g",
+      "instructions": "Boil potatoes, mash with butter and milk.",
+      "ingredients": [
+        { "id": "ing_potato", "name": "Potato" },
+        { "id": "ing_butter", "name": "Butter" },
+        { "id": "ing_milk", "name": "Milk" }
+      ],
+      "manualAllergens": [
+        { "id": "alg_milk", "name": "Milk" }
       ]
     }
   ],
   "ingredients": [
-    {
-      "id": "1770567748990",
-      "name": "брашно",
-      "allergens": [
-        "alg_gluten"
-      ]
-    },
-    {
-      "id": "1770567786794",
-      "name": "яйца",
-      "allergens": [
-        "alg_eggs"
-      ]
-    }
+    { "id": "ing_chicken", "name": "Chicken Breast", "allergens": [] },
+    { "id": "ing_noodles", "name": "Egg Noodles", "allergens": ["alg_gluten", "alg_eggs"] },
+    { "id": "ing_carrot", "name": "Carrot", "allergens": [] },
+    { "id": "ing_tomato", "name": "Tomatoes", "allergens": [] },
+    { "id": "ing_basil", "name": "Basil", "allergens": [] },
+    { "id": "ing_cream", "name": "Heavy Cream", "allergens": ["alg_milk"] },
+    { "id": "ing_lentils", "name": "Lentils", "allergens": [] },
+    { "id": "ing_onion", "name": "Onion", "allergens": [] },
+    { "id": "ing_mushrooms", "name": "Mushrooms", "allergens": [] },
+    { "id": "ing_beans", "name": "Kidney Beans", "allergens": [] },
+    { "id": "ing_pasta", "name": "Small Pasta", "allergens": ["alg_gluten"] },
+    { "id": "ing_salmon", "name": "Salmon Fillet", "allergens": ["alg_fish"] },
+    { "id": "ing_lemon", "name": "Lemon", "allergens": [] },
+    { "id": "ing_spaghetti", "name": "Spaghetti", "allergens": ["alg_gluten"] },
+    { "id": "ing_eggs", "name": "Eggs", "allergens": ["alg_eggs"] },
+    { "id": "ing_cheese", "name": "Parmesan Cheese", "allergens": ["alg_milk"] },
+    { "id": "ing_pancetta", "name": "Pancetta", "allergens": [] },
+    { "id": "ing_beef", "name": "Beef Chuck", "allergens": [] },
+    { "id": "ing_potato", "name": "Potato", "allergens": [] },
+    { "id": "ing_broccoli", "name": "Broccoli", "allergens": [] },
+    { "id": "ing_peppers", "name": "Bell Peppers", "allergens": [] },
+    { "id": "ing_soysauce", "name": "Soy Sauce", "allergens": ["alg_soybeans", "alg_gluten"] },
+    { "id": "ing_chicken_whole", "name": "Whole Chicken", "allergens": [] },
+    { "id": "ing_thyme", "name": "Thyme", "allergens": [] },
+    { "id": "ing_beef_mince", "name": "Ground Beef", "allergens": [] },
+    { "id": "ing_bun", "name": "Burger Bun", "allergens": ["alg_gluten", "alg_sesame"] },
+    { "id": "ing_cheese_slice", "name": "Cheddar Slice", "allergens": ["alg_milk"] },
+    { "id": "ing_flour", "name": "Flour", "allergens": ["alg_gluten"] },
+    { "id": "ing_cocoa", "name": "Cocoa Powder", "allergens": [] },
+    { "id": "ing_sugar", "name": "Sugar", "allergens": [] },
+    { "id": "ing_creamcheese", "name": "Cream Cheese", "allergens": ["alg_milk"] },
+    { "id": "ing_crackers", "name": "Graham Crackers", "allergens": ["alg_gluten"] },
+    { "id": "ing_apple", "name": "Apple", "allergens": [] },
+    { "id": "ing_banana", "name": "Banana", "allergens": [] },
+    { "id": "ing_orange", "name": "Orange", "allergens": [] },
+    { "id": "ing_icecream", "name": "Vanilla Ice Cream", "allergens": ["alg_milk"] },
+    { "id": "ing_chocolate_sauce", "name": "Chocolate Sauce", "allergens": [] },
+    { "id": "ing_nuts", "name": "Chopped Nuts", "allergens": ["alg_nuts"] },
+    { "id": "ing_baguette", "name": "Baguette", "allergens": ["alg_gluten"] },
+    { "id": "ing_garlic", "name": "Garlic", "allergens": [] },
+    { "id": "ing_butter", "name": "Butter", "allergens": ["alg_milk"] },
+    { "id": "ing_lettuce", "name": "Romaine Lettuce", "allergens": [] },
+    { "id": "ing_croutons", "name": "Croutons", "allergens": ["alg_gluten", "alg_milk"] },
+    { "id": "ing_parmesan", "name": "Parmesan", "allergens": ["alg_milk"] },
+    { "id": "ing_rice", "name": "Jasmine Rice", "allergens": [] },
+    { "id": "ing_milk", "name": "Milk", "allergens": ["alg_milk"] }
   ],
   "allergens": [
-    {
-      "id": "alg_gluten",
-      "name": "Gluten",
-      "color": "#f59f00",
-      "isSystem": true
-    },
-    {
-      "id": "alg_crustaceans",
-      "name": "Crustaceans",
-      "color": "#ff6b6b",
-      "isSystem": true
-    },
-    {
-      "id": "alg_eggs",
-      "name": "Eggs",
-      "color": "#ffd43b",
-      "isSystem": true
-    },
-    {
-      "id": "alg_fish",
-      "name": "Fish",
-      "color": "#339af0",
-      "isSystem": true
-    },
-    {
-      "id": "alg_peanuts",
-      "name": "Peanuts",
-      "color": "#d9480f",
-      "isSystem": true
-    },
-    {
-      "id": "alg_soybeans",
-      "name": "Soybeans",
-      "color": "#5c940d",
-      "isSystem": true
-    },
-    {
-      "id": "alg_milk",
-      "name": "Milk",
-      "color": "#74c0fc",
-      "isSystem": true
-    },
-    {
-      "id": "alg_nuts",
-      "name": "Nuts",
-      "color": "#e67700",
-      "isSystem": true
-    },
-    {
-      "id": "alg_celery",
-      "name": "Celery",
-      "color": "#82c91e",
-      "isSystem": true
-    },
-    {
-      "id": "alg_mustard",
-      "name": "Mustard",
-      "color": "#fcc419",
-      "isSystem": true
-    },
-    {
-      "id": "alg_sesame",
-      "name": "Sesame",
-      "color": "#adb5bd",
-      "isSystem": true
-    },
-    {
-      "id": "alg_sulphites",
-      "name": "Sulphites",
-      "color": "#868e96",
-      "isSystem": true
-    },
-    {
-      "id": "alg_lupin",
-      "name": "Lupin",
-      "color": "#ffec99",
-      "isSystem": true
-    },
-    {
-      "id": "alg_molluscs",
-      "name": "Molluscs",
-      "color": "#ff922b",
-      "isSystem": true
-    }
+    { "id": "alg_gluten", "name": "Gluten", "color": "#f59f00", "isSystem": true },
+    { "id": "alg_crustaceans", "name": "Crustaceans", "color": "#ff6b6b", "isSystem": true },
+    { "id": "alg_eggs", "name": "Eggs", "color": "#ffd43b", "isSystem": true },
+    { "id": "alg_fish", "name": "Fish", "color": "#339af0", "isSystem": true },
+    { "id": "alg_peanuts", "name": "Peanuts", "color": "#d9480f", "isSystem": true },
+    { "id": "alg_soybeans", "name": "Soybeans", "color": "#5c940d", "isSystem": true },
+    { "id": "alg_milk", "name": "Milk", "color": "#74c0fc", "isSystem": true },
+    { "id": "alg_nuts", "name": "Nuts", "color": "#e67700", "isSystem": true },
+    { "id": "alg_celery", "name": "Celery", "color": "#82c91e", "isSystem": true },
+    { "id": "alg_mustard", "name": "Mustard", "color": "#fcc419", "isSystem": true },
+    { "id": "alg_sesame", "name": "Sesame", "color": "#adb5bd", "isSystem": true },
+    { "id": "alg_sulphites", "name": "Sulphites", "color": "#868e96", "isSystem": true },
+    { "id": "alg_lupin", "name": "Lupin", "color": "#ffec99", "isSystem": true },
+    { "id": "alg_molluscs", "name": "Molluscs", "color": "#ff922b", "isSystem": true }
   ],
   "currentMenu": {
-    "2026-02-08": {
-      "soup": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "main": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
     "2026-02-09": {
-      "soup": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "main": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
+      "slot1": { "type": "soup", "recipe": "rcp_soup_1" },
+      "slot2": { "type": "main", "recipe": "rcp_main_1" },
+      "slot3": { "type": "dessert", "recipe": "rcp_dessert_1" },
+      "slot4": { "type": "other", "recipe": "rcp_other_1" }
     },
     "2026-02-10": {
-      "soup": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "main": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
+      "slot1": { "type": "soup", "recipe": "rcp_soup_2" },
+      "slot2": { "type": "main", "recipe": "rcp_main_2" },
+      "slot3": { "type": "dessert", "recipe": "rcp_dessert_3" },
+      "slot4": { "type": "other", "recipe": "rcp_other_2" }
     },
     "2026-02-11": {
-      "soup": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "main": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
+      "slot1": { "type": "soup", "recipe": "rcp_soup_3" },
+      "slot2": { "type": "main", "recipe": "rcp_main_6" },
+      "slot3": { "type": "dessert", "recipe": "rcp_dessert_2" },
+      "slot4": { "type": "other", "recipe": "rcp_other_4" }
     },
     "2026-02-12": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
+      "slot1": { "type": "soup", "recipe": "rcp_soup_5" },
+      "slot2": { "type": "main", "recipe": "rcp_main_5" },
+      "slot3": { "type": "dessert", "recipe": "rcp_dessert_4" },
+      "slot4": { "type": "other", "recipe": "rcp_other_3" }
     },
     "2026-02-13": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
+      "slot1": { "type": "soup", "recipe": "rcp_soup_4" },
+      "slot2": { "type": "main", "recipe": "rcp_main_3" },
+      "slot3": { "type": "dessert", "recipe": "rcp_dessert_1" },
+      "slot4": { "type": "other", "recipe": "rcp_other_1" }
     },
     "2026-02-14": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": "1770567888247"
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-01": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-02": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-03": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
-    },
-    "2026-02-04": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
-    },
-    "2026-02-05": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
-    },
-    "2026-02-06": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": "1770567858436"
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": "1770567873263"
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": "1770567888247"
-      }
-    },
-    "2026-02-07": {
-      "soup": {
-        "type": "soup",
-        "recipe": null
-      },
-      "main": {
-        "type": "main",
-        "recipe": null
-      },
-      "dessert": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "other": {
-        "type": "other",
-        "recipe": null
-      },
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-17": {
-      "slot1": {
-        "type": "soup",
-        "recipe": "1770567773285"
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-18": {
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-19": {
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-20": {
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
-    },
-    "2026-02-21": {
-      "slot1": {
-        "type": "soup",
-        "recipe": null
-      },
-      "slot2": {
-        "type": "main",
-        "recipe": null
-      },
-      "slot3": {
-        "type": "dessert",
-        "recipe": null
-      },
-      "slot4": {
-        "type": "other",
-        "recipe": null
-      }
+      "slot1": { "type": "soup", "recipe": null },
+      "slot2": { "type": "main", "recipe": "rcp_main_4" },
+      "slot3": { "type": "dessert", "recipe": null },
+      "slot4": { "type": "other", "recipe": null }
     }
   },
-  "menuHistory": [
-    {
-      "id": "1770583838682",
-      "name": "Week of 2/16/2026",
-      "date": "2026-02-08T20:50:38.682Z",
-      "menu": {
-        "2026-02-08": {
-          "soup": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "main": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-09": {
-          "soup": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "main": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-10": {
-          "soup": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "main": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-11": {
-          "soup": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "main": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-12": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-13": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-14": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": "1770567888247"
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-01": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-02": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-03": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-04": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-05": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-06": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": "1770567858436"
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": "1770567873263"
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": "1770567888247"
-          }
-        },
-        "2026-02-07": {
-          "soup": {
-            "type": "soup",
-            "recipe": null
-          },
-          "main": {
-            "type": "main",
-            "recipe": null
-          },
-          "dessert": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "other": {
-            "type": "other",
-            "recipe": null
-          },
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-17": {
-          "slot1": {
-            "type": "soup",
-            "recipe": "1770567773285"
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-18": {
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-19": {
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-20": {
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        },
-        "2026-02-21": {
-          "slot1": {
-            "type": "soup",
-            "recipe": null
-          },
-          "slot2": {
-            "type": "main",
-            "recipe": null
-          },
-          "slot3": {
-            "type": "dessert",
-            "recipe": null
-          },
-          "slot4": {
-            "type": "other",
-            "recipe": null
-          }
-        }
-      }
-    }
-  ],
+  "menuHistory": [],
   "printTemplate": "<h1>{title}</h1><p>{recipes}<br></p><p><br></p>",
   "currentLanguage": "en",
   "templateBackgroundImage": "",
