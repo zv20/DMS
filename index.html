@@ -15,18 +15,97 @@
 
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+  
+  <style>
+      /* Quick inline overrides for new list views */
+      .list-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 1rem;
+      }
+      .list-table th, .list-table td {
+          text-align: left;
+          padding: 12px;
+          border-bottom: 1px solid var(--color-border);
+      }
+      .list-table th {
+          background-color: var(--color-surface);
+          font-weight: 600;
+      }
+      .list-table tr:hover {
+          background-color: rgba(0,0,0,0.02);
+      }
+      
+      /* Header adjustments */
+      .app-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 1rem;
+      }
+      .header-right {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+      }
+      
+      /* Minimal Lang Select */
+      .lang-select-minimal {
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.3);
+          color: inherit;
+          padding: 5px;
+          border-radius: 4px;
+          font-size: 1.2rem;
+          cursor: pointer;
+      }
+      .lang-select-minimal option {
+          color: #333;
+      }
+
+      /* Compact Sync Status in Header */
+      .header-sync {
+          font-size: 0.8rem;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          background: rgba(255,255,255,0.1);
+      }
+  </style>
 </head>
 <body data-theme="default">
 
   <!-- Fixed App Header -->
   <header class="app-header">
-      <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open Menu">
-          <span></span>
-          <span></span>
-          <span></span>
-      </button>
-      <div class="logo">
-        <h2>🍽️ KitchenPro</h2>
+      <div style="display:flex; align-items:center; gap:1rem;">
+          <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open Menu">
+              <span></span>
+              <span></span>
+              <span></span>
+          </button>
+          <div class="logo">
+            <h2>🍽️ KitchenPro</h2>
+          </div>
+      </div>
+
+      <!-- Right Side Controls -->
+      <div class="header-right">
+           <div id="syncStatus" class="header-sync" onclick="toggleSyncDropdown()">Checking...</div>
+           <select id="languageSelect" class="lang-select-minimal">
+              <option value="en">🇺🇸</option>
+              <option value="bg">🇧🇬</option>
+           </select>
+           
+           <!-- Sync Dropdown (Absolute positioned relative to header-right or body) -->
+           <div id="syncDropdown" class="sync-dropdown" style="top: 60px; right: 10px;">
+                <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
+                <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
+                <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
+                <hr class="divider">
+                <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
+                <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
+                <input type="file" id="importInput" accept=".json" style="display:none">
+           </div>
       </div>
   </header>
 
@@ -36,15 +115,19 @@
       
       <div class="nav-content">
           <div class="nav-links">
-              <button class="nav-item active" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
+              <!-- Reordered: Menu First -->
+              <button class="nav-item active" data-page="menu" data-i18n="nav_menu">Menu Planner</button>
+              
+              <div class="nav-separator"></div>
+              
+              <button class="nav-item" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
               <button class="nav-item" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
               <button class="nav-item" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
-              <button class="nav-item" data-page="menu" data-i18n="nav_menu">Menu Planning</button>
           </div>
 
           <div class="nav-separator"></div>
 
-          <!-- Settings Section (Expandable) -->
+          <!-- Settings Section -->
           <div class="nav-settings-group">
               <button class="nav-item settings-toggle" onclick="toggleSettingsSubmenu()">
                   ⚙️ Settings <span class="arrow">▼</span>
@@ -60,31 +143,7 @@
                           <button class="theme-btn theme-warm" onclick="setAppTheme('warm')" title="Sunny Orange"></button>
                       </div>
                   </div>
-
-                  <div class="lang-selector">
-                      <label>Language:</label>
-                      <select id="languageSelect" class="lang-select-box">
-                          <option value="en">🇺🇸 English</option>
-                          <option value="bg">🇧🇬 Български</option>
-                      </select>
-                  </div>
               </div>
-          </div>
-
-          <div class="nav-footer">
-               <!-- Sync Controls -->
-               <div class="sync-controls-wrapper">
-                    <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
-                    <div id="syncDropdown" class="sync-dropdown">
-                        <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
-                        <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
-                        <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
-                        <hr class="divider">
-                        <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-                        <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
-                        <input type="file" id="importInput" accept=".json" style="display:none">
-                    </div>
-                </div>
           </div>
       </div>
   </div>
@@ -93,42 +152,8 @@
     <!-- Main Content Area -->
     <main class="content">
 
-      <!-- RECIPES PAGE -->
-      <div id="recipes" class="page active">
-        <div class="page-header">
-          <h1 data-i18n="nav_recipes">Recipes</h1>
-          <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
-        </div>
-        
-        <div class="filters">
-            <input type="text" id="recipeSearch" placeholder="Search recipes..." onkeyup="renderRecipes()" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:250px;">
-        </div>
-
-        <div class="grid-container" id="recipeList">
-          <!-- Recipes injected here -->
-        </div>
-      </div>
-
-      <!-- INGREDIENTS PAGE -->
-      <div id="ingredients" class="page">
-        <div class="page-header">
-          <h1 data-i18n="nav_ingredients">Ingredients</h1>
-          <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
-        </div>
-        <div class="list-container" id="ingredientList"></div>
-      </div>
-
-      <!-- ALLERGENS PAGE -->
-      <div id="allergens" class="page">
-        <div class="page-header">
-          <h1 data-i18n="nav_allergens">Allergens</h1>
-          <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
-        </div>
-        <div class="list-container" id="allergenList"></div>
-      </div>
-
-      <!-- MENU PLANNING PAGE -->
-      <div id="menu" class="page">
+      <!-- MENU PLANNING PAGE (Now First/Default) -->
+      <div id="menu" class="page active">
         <div class="page-header">
           <h1 data-i18n="nav_menu">Menu Planning</h1>
           <div class="actions">
@@ -175,6 +200,79 @@
         <div class="saved-menus-section">
             <h3 data-i18n="heading_past_menus">Past Menus</h3>
             <div id="menuHistory" class="history-list"></div>
+        </div>
+      </div>
+
+      <!-- RECIPES PAGE -->
+      <div id="recipes" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_recipes">Recipes</h1>
+          <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
+        </div>
+        
+        <div class="filters">
+            <input type="text" id="recipeSearch" placeholder="Search recipes..." onkeyup="renderRecipes()" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:250px;">
+        </div>
+
+        <!-- Changed from grid-container to table-responsive -->
+        <div class="table-responsive">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="label_recipe_name">Name</th>
+                        <th data-i18n="label_category">Category</th>
+                        <th data-i18n="label_portion_size">Portion</th>
+                        <th data-i18n="label_allergens">Allergens</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="recipeList">
+                    <!-- Rows injected here -->
+                </tbody>
+            </table>
+        </div>
+      </div>
+
+      <!-- INGREDIENTS PAGE -->
+      <div id="ingredients" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_ingredients">Ingredients</h1>
+          <button class="btn btn-primary" onclick="openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
+        </div>
+        <div class="table-responsive">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="label_ingredient_name">Name</th>
+                        <th data-i18n="label_allergens">Allergens</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ingredientList"></tbody>
+            </table>
+        </div>
+      </div>
+
+      <!-- ALLERGENS PAGE -->
+      <div id="allergens" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_allergens">Allergens</h1>
+          <button class="btn btn-primary" onclick="openAllergenModal()" data-i18n="btn_add_allergen">+ Add Allergen</button>
+        </div>
+        <div class="list-actions" style="margin-bottom:1rem;">
+            <button class="btn btn-secondary btn-small" onclick="populateDefaultAllergens()" data-i18n="btn_populate_allergens">↻ Reset Defaults</button>
+        </div>
+        <div class="table-responsive">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="label_allergen_name">Name</th>
+                        <th data-i18n="label_color">Color</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="allergenList"></tbody>
+            </table>
         </div>
       </div>
 

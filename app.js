@@ -1,4 +1,4 @@
-// Recipe Manager Application - Full Restoration (v2.1)
+// Recipe Manager Application - UI Overhaul (v2.2)
 
 let recipes = [];
 let ingredients = [];
@@ -136,9 +136,9 @@ const translations = {
     select_allergen: 'Select allergen',
     select_recipe: 'Select recipe',
     select_slot_type: 'Change Type',
-    empty_recipes: 'No recipes yet. Click "Add Recipe" to get started!',
-    empty_ingredients: 'No ingredients yet.',
-    empty_allergens: 'No allergens yet.',
+    empty_recipes: 'No recipes found.',
+    empty_ingredients: 'No ingredients found.',
+    empty_allergens: 'No allergens found.',
     empty_menus: 'No saved menus yet.',
     no_ingredients: 'No ingredients',
     alert_delete_recipe: 'Delete this recipe?',
@@ -164,19 +164,19 @@ const translations = {
     label_contains: 'Contains',
     label_menu_for: 'Menu for:',
     label_print_date: 'Print Week of:',
-    text_print_hint: '💡 Ще бъдат разпечатани само дни, за които има планирани ястия. Използвайте селектора за дата, за да смените седмицата.',
-    template_description: 'Настройте шаблона за печат. Използвайте бутоните по-долу:',
-    portion_placeholder: 'напр. За 10 човека, 250г порция',
-    week_of: 'Седмица от',
-    day_sun_short: 'Нд',
-    day_mon_short: 'Пн',
-    day_tue_short: 'Вт',
-    day_wed_short: 'Ср',
-    day_thu_short: 'Чт',
-    day_fri_short: 'Пт',
-    day_sat_short: 'Сб',
+    text_print_hint: '💡 Select days to print.',
+    template_description: 'Customize your print template.',
+    portion_placeholder: 'e.g. 250g',
+    week_of: 'Week of',
+    day_sun_short: 'Sun',
+    day_mon_short: 'Mon',
+    day_tue_short: 'Tue',
+    day_wed_short: 'Wed',
+    day_thu_short: 'Thu',
+    day_fri_short: 'Fri',
+    day_sat_short: 'Sat',
     sync_connected: '🟢 Synced',
-    sync_disconnected: '🟡 Local Storage',
+    sync_disconnected: '🟡 Local',
     sync_error: '🔴 Error',
     sync_select_location: '📁 Select Save Location',
     sync_save: '💾 Save Changes',
@@ -194,20 +194,21 @@ function getWeekStart(date) { const d = new Date(date); const day = d.getDay(); 
 
 // --- INIT ---
 async function init() {
-  // 1. Bind Listeners FIRST to ensure UI is responsive even if data loads fail
   const hamburger = document.getElementById('hamburgerBtn');
   if(hamburger) hamburger.addEventListener('click', toggleNav);
   
   const closeBtn = document.getElementById('closeNavBtn');
   if(closeBtn) closeBtn.addEventListener('click', toggleNav);
 
-  const uploadBgInput = document.getElementById('uploadBgInput');
-  const removeBgBtn = document.getElementById('removeBgBtn');
+  const uploadBgInput = document.getElementById('uploadBgInput'); // Keep old one just in case
+  const styleBgInput = document.getElementById('styleBgImageInput');
+  const styleBgRemoveBtn = document.getElementById('styleBgRemoveBtn');
   const printStartDateInput = document.getElementById('printStartDate');
   const importInput = document.getElementById('importInput');
 
   if (uploadBgInput) uploadBgInput.addEventListener('change', uploadBackgroundImage);
-  if (removeBgBtn) removeBgBtn.addEventListener('click', removeBackgroundImage);
+  if (styleBgInput) styleBgInput.addEventListener('change', uploadBackgroundImage);
+  if (styleBgRemoveBtn) styleBgRemoveBtn.addEventListener('click', removeBackgroundImage);
   if (importInput) importInput.addEventListener('change', importData);
   
   if (printStartDateInput) {
@@ -229,7 +230,6 @@ async function init() {
   bindNavigation();
   setAppTheme(currentAppTheme);
   
-  // 2. Safe Data Loading
   try {
       await initDB();
       await autoLoadOnStartup();
@@ -237,7 +237,6 @@ async function init() {
       renderAll();
   } catch (err) {
       console.error("Initialization error:", err);
-      // Even if init fails, we want UI to be somewhat clickable
   }
 
   if (window.$) {
@@ -357,7 +356,6 @@ function parseData(jsonText) {
       templateLayout = data.templateLayout || 'default';
       savedTemplates = data.savedTemplates || [];
       
-      // DEEP MERGE for Style Settings
       if (data.currentStyleSettings) {
           currentStyleSettings = {
               ...currentStyleSettings,
@@ -390,7 +388,6 @@ function loadData() {
         templateLayout = parsed.templateLayout || 'default';
         savedTemplates = parsed.savedTemplates || [];
         
-        // Deep Merge here too
         if (parsed.currentStyleSettings) {
             currentStyleSettings = {
                 ...currentStyleSettings,
@@ -539,56 +536,98 @@ function getAllergenName(allergen) {
     return allergen.name;
 }
 
+// --- NEW LIST RENDERERS ---
+
 function renderRecipes() {
-  const grid = document.getElementById('recipeList');
-  if (!grid) return;
-  grid.innerHTML = '';
+  const tbody = document.getElementById('recipeList');
+  if (!tbody) return;
+  tbody.innerHTML = '';
   const search = document.getElementById('recipeSearch');
   const term = search ? search.value.toLowerCase() : '';
-  if (recipes.length === 0) { grid.innerHTML = `<div class="empty-state">${t('empty_recipes')}</div>`; return; }
+  
+  if (recipes.length === 0) { 
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${t('empty_recipes')}</td></tr>`; 
+      return; 
+  }
+  
   recipes.forEach(recipe => {
     if (term && !recipe.name.toLowerCase().includes(term)) return;
-    const card = document.createElement('div');
-    card.className = 'recipe-card';
-    card.onclick = (e) => { if (!e.target.closest('button')) openRecipeModal(recipe.id); };
+    
+    const tr = document.createElement('tr');
+    
     const recipeAllergens = getRecipeAllergens(recipe);
-    let allergensHtml = '';
-    if (recipeAllergens.length > 0) { allergensHtml = `<div class="tag-container" style="margin-top:0.5rem;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15">${getAllergenName(a)}</span>`).join('')}</div>`; }
-    card.innerHTML = `<h3><span class="category-badge category-${recipe.category || 'other'}">${getCategoryIcon(recipe.category)}</span>${recipe.name}</h3><p style="color:var(--color-text-secondary);font-size:0.9rem;">${recipe.portionSize || ''}</p>${allergensHtml}<div class="actions"><button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteRecipe('${recipe.id}')">${t('btn_delete')}</button></div>`;
-    grid.appendChild(card);
+    let allergensHtml = '-';
+    if (recipeAllergens.length > 0) { 
+        allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${getAllergenName(a)}</span>`).join('')}</div>`; 
+    }
+
+    const catName = t('category_' + (recipe.category || 'other'));
+
+    tr.innerHTML = `
+        <td><strong>${recipe.name}</strong></td>
+        <td>${getCategoryIcon(recipe.category || 'other')} ${catName}</td>
+        <td>${recipe.portionSize || '-'}</td>
+        <td>${allergensHtml}</td>
+        <td>
+            <button class="btn btn-small btn-secondary" onclick="openRecipeModal('${recipe.id}')">${t('btn_edit')}</button>
+            <button class="btn btn-small btn-danger" onclick="deleteRecipe('${recipe.id}')">${t('btn_delete')}</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
 function renderIngredients() {
-  const list = document.getElementById('ingredientList');
-  if (!list) return;
-  list.innerHTML = '';
-  if (!ingredients.length) { list.innerHTML = `<div class="empty-state">${t('empty_ingredients')}</div>`; return; }
+  const tbody = document.getElementById('ingredientList');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  if (ingredients.length === 0) { 
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${t('empty_ingredients')}</td></tr>`; 
+      return; 
+  }
+  
   ingredients.forEach(ing => {
-    const item = document.createElement('div');
-    item.className = 'item-card';
-    item.style.padding = '1rem';
-    let tags = '';
-    if (ing.allergens && ing.allergens.length) { tags = '<div class="tag-container" style="margin-top:0.5rem;font-size:0.8em;">' + ing.allergens.map(aid => { const a = allergens.find(x => x.id === aid); return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15">${getAllergenName(a)}</span>` : ''; }).join('') + '</div>'; }
-    item.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:start;"><div><strong>${ing.name}</strong>${tags}</div><div style="display:flex;gap:0.5rem;"><button class="btn btn-small btn-secondary" onclick="openIngredientModal('${ing.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteIngredient('${ing.id}')">${t('btn_delete')}</button></div></div>`;
-    list.appendChild(item);
+    const tr = document.createElement('tr');
+    
+    let tags = '-';
+    if (ing.allergens && ing.allergens.length) { 
+        tags = '<div class="tag-container" style="gap:5px;">' + ing.allergens.map(aid => { const a = allergens.find(x => x.id === aid); return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${getAllergenName(a)}</span>` : ''; }).join('') + '</div>'; 
+    }
+
+    tr.innerHTML = `
+        <td><strong>${ing.name}</strong></td>
+        <td>${tags}</td>
+        <td>
+            <button class="btn btn-small btn-secondary" onclick="openIngredientModal('${ing.id}')">${t('btn_edit')}</button>
+            <button class="btn btn-small btn-danger" onclick="deleteIngredient('${ing.id}')">${t('btn_delete')}</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
 function renderAllergens() {
-  const list = document.getElementById('allergenList');
-  if (!list) return;
-  list.innerHTML = '';
-  const headerDiv = document.createElement('div');
-  headerDiv.innerHTML = `<button class="btn btn-secondary btn-small" onclick="populateDefaultAllergens()">${t('btn_populate_allergens')}</button>`;
-  list.appendChild(headerDiv);
-  if (!allergens.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = t('empty_allergens'); list.appendChild(empty); return; }
+  const tbody = document.getElementById('allergenList');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  if (allergens.length === 0) { 
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${t('empty_allergens')}</td></tr>`; 
+      return; 
+  }
+  
   allergens.forEach(al => {
-    const item = document.createElement('div');
-    item.className = 'item-card';
-    item.style.borderLeft = `5px solid ${al.color}`;
-    item.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><strong>${getAllergenName(al)}</strong><div style="display:flex;gap:0.5rem;"><button class="btn btn-small btn-secondary" onclick="openAllergenModal('${al.id}')">${t('btn_edit')}</button><button class="btn btn-small btn-danger" onclick="deleteAllergen('${al.id}')">${t('btn_delete')}</button></div></div>`;
-    list.appendChild(item);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><strong>${getAllergenName(al)}</strong></td>
+        <td><div style="width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;"></div></td>
+        <td>
+            <button class="btn btn-small btn-secondary" onclick="openAllergenModal('${al.id}')">${t('btn_edit')}</button>
+            <button class="btn btn-small btn-danger" onclick="deleteAllergen('${al.id}')">${t('btn_delete')}</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
@@ -714,7 +753,9 @@ function uploadBackgroundImage(e) {
       reader.onload = function(evt) {
           templateBackgroundImage = evt.target.result;
           saveData();
-          alert('Background image set!');
+          updateBuilderPreview(); // Update preview immediately
+          const removeBtn = document.getElementById('styleBgRemoveBtn');
+          if (removeBtn) removeBtn.style.display = 'block';
       };
       reader.readAsDataURL(file);
   }
@@ -723,7 +764,11 @@ function uploadBackgroundImage(e) {
 function removeBackgroundImage() {
   templateBackgroundImage = '';
   saveData();
-  alert('Background image removed!');
+  updateBuilderPreview(); // Update preview immediately
+  const input = document.getElementById('styleBgImageInput');
+  if (input) input.value = '';
+  const removeBtn = document.getElementById('styleBgRemoveBtn');
+  if (removeBtn) removeBtn.style.display = 'none';
 }
 
 function printMenu() {
@@ -731,7 +776,6 @@ function printMenu() {
     const content = [];
     let hasData = false;
 
-    // Sort selected days
     selectedPrintDays.sort((a, b) => a - b);
 
     if (selectedPrintDays.length === 0) {
@@ -780,11 +824,12 @@ function printMenu() {
 
     const printWindow = window.open('', '_blank');
     const styles = `
-        body { font-family: ${currentStyleSettings.font}; background: ${currentStyleSettings.pageBg}; color: #333; }
+        body { font-family: ${currentStyleSettings.font}; background: ${currentStyleSettings.pageBg}; color: #333; -webkit-print-color-adjust: exact; }
         .print-day { margin-bottom: 20px; padding: 10px; background: ${currentStyleSettings.cardBg}; border: ${currentStyleSettings.borderWidth}px solid ${currentStyleSettings.borderColor}; }
+        .print-day h3 { color: ${currentStyleSettings.headerText}; background: ${currentStyleSettings.headerBg}; margin: -10px -10px 10px -10px; padding: 10px; border-bottom: ${currentStyleSettings.borderWidth}px solid ${currentStyleSettings.borderColor}; }
         .print-slot { margin: 5px 0; padding-left: 10px; }
         .print-allergens { font-size: 0.8em; color: #666; }
-        h1, h2, h3 { color: ${currentStyleSettings.headerText}; }
+        ${templateBackgroundImage ? `body { background-image: url('${templateBackgroundImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; }` : ''}
     `;
     
     const finalHtml = printTemplate
@@ -795,7 +840,7 @@ function printMenu() {
 
     printWindow.document.write(`<html><head><title>Print Menu</title><style>${styles}</style></head><body>${finalHtml}</body></html>`);
     printWindow.document.close();
-    printWindow.print();
+    // printWindow.print(); // Let user print manually to see preview first
 }
 
 function deleteRecipe(id) { recipes = recipes.filter(r => r.id !== id); saveData(); renderRecipes(); }
@@ -886,7 +931,7 @@ function removeManualAllergenFromRecipe(id) {
 
 // --- STYLE BUILDER ---
 function initStyleBuilder() { 
-    const ids = ['styleFont', 'stylePageBg', 'styleHeaderBg', 'styleHeaderText', 'styleCardBg', 'styleBorderColor', 'styleBorderWidth', 'styleSlot1Color', 'styleSlot2Color', 'styleSlot3Color'];
+    const ids = ['styleFont', 'stylePageBg', 'styleHeaderBg', 'styleHeaderText', 'styleCardBg', 'styleBorderColor', 'styleBorderWidth', 'styleSlot1Color', 'styleSlot2Color', 'styleSlot3Color', 'styleSlot4Color', 'styleSlot1Font', 'styleSlot2Font', 'styleSlot3Font', 'styleSlot4Font'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', updateBuilderPreview);
@@ -933,6 +978,7 @@ function loadBuilderSettings() {
         setVal('styleSlot1Color', s.slotColors.slot1);
         setVal('styleSlot2Color', s.slotColors.slot2);
         setVal('styleSlot3Color', s.slotColors.slot3);
+        setVal('styleSlot4Color', s.slotColors.slot4); // Ensure slot4 is handled
     }
 }
 
@@ -948,17 +994,54 @@ function updateBuilderPreview() {
         slotColors: {
             slot1: document.getElementById('styleSlot1Color').value,
             slot2: document.getElementById('styleSlot2Color').value,
-            slot3: document.getElementById('styleSlot3Color').value
+            slot3: document.getElementById('styleSlot3Color').value,
+            slot4: document.getElementById('styleSlot4Color') ? document.getElementById('styleSlot4Color').value : '#000000'
         }
     };
     currentStyleSettings = s;
     const sheet = document.getElementById('livePreviewSheet');
     if (!sheet) return;
+    
+    // Apply Global Settings
     sheet.style.fontFamily = s.font;
     sheet.style.backgroundColor = s.pageBg;
+    if (templateBackgroundImage) {
+        sheet.style.backgroundImage = `url('${templateBackgroundImage}')`;
+    } else {
+        sheet.style.backgroundImage = 'none';
+    }
+
+    // Apply Day Card Settings
+    const cards = sheet.querySelectorAll('.preview-day-card');
+    cards.forEach(card => {
+        card.style.backgroundColor = s.cardBg;
+        card.style.borderColor = s.borderColor;
+        card.style.borderWidth = s.borderWidth + 'px';
+        card.style.borderStyle = 'solid';
+        
+        const header = card.querySelector('.preview-day-header');
+        if (header) {
+            header.style.backgroundColor = s.headerBg;
+            header.style.color = s.headerText;
+            header.style.borderBottomColor = s.borderColor;
+            header.style.borderBottomWidth = s.borderWidth + 'px';
+            header.style.borderBottomStyle = 'solid';
+        }
+    });
+
+    // Apply Slot Colors (Preview Only)
+    // We update the border-left colors for the slots in the preview
+    // Note: The preview slots have classes like 'slot1', 'slot2' etc.
+    // However, they are static HTML in this preview. We need to select them.
+    const slot1 = sheet.querySelectorAll('.preview-slot.slot1');
+    const slot2 = sheet.querySelectorAll('.preview-slot.slot2');
+    const slot3 = sheet.querySelectorAll('.preview-slot.slot3');
+    const slot4 = sheet.querySelectorAll('.preview-slot.slot4');
     
-    // Update live preview logic...
-    // (Simplified for this restore, ensuring no crash)
+    slot1.forEach(el => el.style.borderLeft = `3px solid ${s.slotColors.slot1}`);
+    slot2.forEach(el => el.style.borderLeft = `3px solid ${s.slotColors.slot2}`);
+    slot3.forEach(el => el.style.borderLeft = `3px solid ${s.slotColors.slot3}`);
+    slot4.forEach(el => el.style.borderLeft = `3px solid ${s.slotColors.slot4}`);
 }
 
 function updateSavedTemplatesList() { 
