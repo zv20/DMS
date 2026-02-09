@@ -53,7 +53,7 @@ const TemplateManager = {
                 }
             });
             // Load initial content
-            editor.summernote('code', window.printTemplate || \"<h1>{title}</h1><p>{recipes}</p>\");
+            editor.summernote('code', window.printTemplate || "<h1>{title}</h1><p>{recipes}</p>");
         }
     },
 
@@ -100,12 +100,12 @@ const TemplateManager = {
 
         // Generate mock data for preview
         const mockData = {
-            title: \"Weekly Menu\",
+            title: "Weekly Menu",
             date: new Date().toLocaleDateString(),
             recipes: this.generateMockRecipeList()
         };
 
-        let html = window.printTemplate || \"\";
+        let html = window.printTemplate || "";
         html = html.replace(/{title}/g, mockData.title);
         html = html.replace(/{date}/g, mockData.date);
         html = html.replace(/{recipes}/g, mockData.recipes);
@@ -114,7 +114,6 @@ const TemplateManager = {
     },
 
     generateMockRecipeList: function() {
-        // Grab a few recipes from the store for the preview
         const sampleRecipes = window.recipes.slice(0, 3).map(r => `<li>${r.name}</li>`).join('');
         return `<ul>${sampleRecipes}</ul>`;
     },
@@ -129,16 +128,15 @@ const TemplateManager = {
 
         const s = this.settings;
         const css = `
-            body { font-family: \"${s.font}\"; background-color: ${s.pageBg}; padding: 20mm; }
+            body { font-family: "${s.font}"; background-color: ${s.pageBg}; padding: 20mm; }
             .print-container { background: white; }
         `;
 
-        // Here we'd actually resolve real data for the current week
         const html = `
             <html>
             <head><style>${css}</style></head>
             <body>
-                <div class=\"print-container\">
+                <div class="print-container">
                     ${document.getElementById('templatePreviewContent').innerHTML}
                 </div>
             </body>
