@@ -11,10 +11,13 @@
 
     window.navigateTo = function(pageId) {
          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-         const targetPage = document.getElementById(pageId);\n         if (targetPage) targetPage.classList.add('active');
+         const targetPage = document.getElementById(pageId);
+         if (targetPage) targetPage.classList.add('active');
 
-         document.querySelectorAll('.nav-item, .sub-nav-item').forEach(b => {\n             b.classList.remove('active');
-             if(b.dataset.page === pageId) b.classList.add('active');\n         });
+         document.querySelectorAll('.nav-item, .sub-nav-item').forEach(b => {
+             b.classList.remove('active');
+             if(b.dataset.page === pageId) b.classList.add('active');
+         });
 
          const overlay = document.getElementById('navOverlay');
          if(overlay && overlay.classList.contains('active')) {
@@ -24,17 +27,26 @@
 
     window.bindNavigation = function() {
         const navItems = document.querySelectorAll('.nav-item[data-page], .sub-nav-item[data-page]');
-        navItems.forEach(btn => {\n            btn.addEventListener('click', (e) => {\n                e.preventDefault();
+        navItems.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 window.navigateTo(btn.dataset.page);
-            });\n        });
+            });
+        });
     };
 
     // --- Theme ---
-    window.setAppTheme = function(themeName) {\n        document.body.setAttribute('data-theme', themeName);
+    window.setAppTheme = function(themeName) {
+        document.body.setAttribute('data-theme', themeName);
         localStorage.setItem('appTheme', themeName);
-        document.querySelectorAll('.theme-btn').forEach(btn => {\n            if (btn.classList.contains(`theme-${themeName}`)) {\n                btn.style.transform = 'scale(1.2)';
-                btn.style.borderColor = 'var(--color-primary)';\n            } else {\n                btn.style.transform = 'scale(1)';
-                btn.style.borderColor = 'var(--color-border)';\n            }
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            if (btn.classList.contains(`theme-${themeName}`)) {
+                btn.style.transform = 'scale(1.2)';
+                btn.style.borderColor = 'var(--color-primary)';
+            } else {
+                btn.style.transform = 'scale(1)';
+                btn.style.borderColor = 'var(--color-border)';
+            }
         });
     };
 
@@ -62,10 +74,10 @@
         
         const catSelect = document.getElementById('recipeCategory');
         catSelect.innerHTML = `
-            <option value=\"soup\">${window.t('category_soup')}</option>
-            <option value=\"main\">${window.t('category_main')}</option>
-            <option value=\"dessert\">${window.t('category_dessert')}</option>
-            <option value=\"other\">${window.t('category_other')}</option>
+            <option value="soup">${window.t('category_soup')}</option>
+            <option value="main">${window.t('category_main')}</option>
+            <option value="dessert">${window.t('category_dessert')}</option>
+            <option value="other">${window.t('category_other')}</option>
         `;
 
         if (id) {
@@ -131,31 +143,93 @@
     window.closeIngredientModal = function() {
         document.getElementById('ingredientModal').style.display = 'none';
         window.editingIngredientId = null;
-    };\n
+    };
+
     window.openAllergenModal = function(id = null) {
         const modal = document.getElementById('allergenModal');
         if (!modal) return;
         modal.style.display = 'block';
         document.getElementById('allergenForm').reset();
         
-        if (id) {\n            window.editingAllergenId = id;
+        if (id) {
+            window.editingAllergenId = id;
             const alg = window.allergens.find(a => a.id === id);
             if (alg) {
                 document.getElementById('allergenName').value = alg.name;
                 document.getElementById('allergenColor').value = alg.color;
-            }\n        } else {
+            }
+        } else {
             window.editingAllergenId = null;
         }
-    };\n
+    };
+
     window.closeAllergenModal = function() {
         document.getElementById('allergenModal').style.display = 'none';
         window.editingAllergenId = null;
     };
 
     // --- Modal Helpers (Tag Management) ---
-    window.addIngredientTagToModal = function(ingredient) {\n        const container = document.getElementById('recipeIngredients');\n        if (!container.querySelector(`[data-id=\"${ingredient.id}\"]`)) {\n            const tag = document.createElement('span');\n            tag.className = 'tag';\n            tag.dataset.id = ingredient.id;\n            tag.innerHTML = `${ingredient.name} <span class=\"remove\" onclick=\"this.parentElement.remove(); window.updateAutoAllergens()\">×</span>`;\n            container.appendChild(tag);\n            window.updateAutoAllergens();\n        }\n    };\n\n    window.addManualAllergenTag = function(allergen) {\n        const container = document.getElementById('recipeManualAllergens');\n        if (!container.querySelector(`[data-id=\"${allergen.id}\"]`)) {\n            const tag = document.createElement('span');\n            tag.className = 'tag';\n            tag.style.borderColor = allergen.color;\n            tag.dataset.id = allergen.id;\n            tag.innerHTML = `${window.getAllergenName(allergen)} <span class=\"remove\" onclick=\"this.parentElement.remove()\">×</span>`;\n            container.appendChild(tag);\n        }\n    };\n    \n    window.addLinkedAllergenTag = function(allergen) {\n        const container = document.getElementById('ingredientLinkedAllergens');\n        if (!container.querySelector(`[data-id=\"${allergen.id}\"]`)) {\n            const tag = document.createElement('span');\n            tag.className = 'tag';\n            tag.style.borderColor = allergen.color;\n            tag.dataset.id = allergen.id;\n            tag.innerHTML = `${window.getAllergenName(allergen)} <span class=\"remove\" onclick=\"this.parentElement.remove()\">×</span>`;\n            container.appendChild(tag);\n        }\n    };\n\n    window.updateAutoAllergens = function() {\n        const container = document.getElementById('recipeIngredients');\n        const ids = Array.from(container.children).map(tag => tag.dataset.id);\n        \n        const detected = new Set();\n        ids.forEach(ingId => {\n            const ing = window.ingredients.find(i => i.id === ingId);\n            if (ing && ing.allergens) {\n                ing.allergens.forEach(aid => detected.add(aid));\n            }\n        });\n        \n        const label = document.getElementById('recipeAutoAllergens');\n        if (detected.size === 0) {\n            label.textContent = '-';\n        } else {\n            label.innerHTML = Array.from(detected).map(aid => {\n                const a = window.allergens.find(x => x.id === aid);\n                return a ? `<span class=\"tag allergen-mini\" style=\"background:${a.color}20; color:${a.color}\">${window.getAllergenName(a)}</span>` : '';\n            }).join(' ');\n        }\n    };\n\n    // --- Builder Logic (Robust) ---
+    window.addIngredientTagToModal = function(ingredient) {
+        const container = document.getElementById('recipeIngredients');
+        if (!container.querySelector(`[data-id="${ingredient.id}"]`)) {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.dataset.id = ingredient.id;
+            tag.innerHTML = `${ingredient.name} <span class="remove" onclick="this.parentElement.remove(); window.updateAutoAllergens()">×</span>`;
+            container.appendChild(tag);
+            window.updateAutoAllergens();
+        }
+    };
+
+    window.addManualAllergenTag = function(allergen) {
+        const container = document.getElementById('recipeManualAllergens');
+        if (!container.querySelector(`[data-id="${allergen.id}"]`)) {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.style.borderColor = allergen.color;
+            tag.dataset.id = allergen.id;
+            tag.innerHTML = `${window.getAllergenName(allergen)} <span class="remove" onclick="this.parentElement.remove()">×</span>`;
+            container.appendChild(tag);
+        }
+    };
+    
+    window.addLinkedAllergenTag = function(allergen) {
+        const container = document.getElementById('ingredientLinkedAllergens');
+        if (!container.querySelector(`[data-id="${allergen.id}"]`)) {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.style.borderColor = allergen.color;
+            tag.dataset.id = allergen.id;
+            tag.innerHTML = `${window.getAllergenName(allergen)} <span class="remove" onclick="this.parentElement.remove()">×</span>`;
+            container.appendChild(tag);
+        }
+    };
+
+    window.updateAutoAllergens = function() {
+        const container = document.getElementById('recipeIngredients');
+        const ids = Array.from(container.children).map(tag => tag.dataset.id);
+        
+        const detected = new Set();
+        ids.forEach(ingId => {
+            const ing = window.ingredients.find(i => i.id === ingId);
+            if (ing && ing.allergens) {
+                ing.allergens.forEach(aid => detected.add(aid));
+            }
+        });
+        
+        const label = document.getElementById('recipeAutoAllergens');
+        if (detected.size === 0) {
+            label.textContent = '-';
+        } else {
+            label.innerHTML = Array.from(detected).map(aid => {
+                const a = window.allergens.find(x => x.id === aid);
+                return a ? `<span class="tag allergen-mini" style="background:${a.color}20; color:${a.color}">${window.getAllergenName(a)}</span>` : '';
+            }).join(' ');
+        }
+    };
+
+    // --- Builder Logic (Robust) ---
     window.initStyleBuilder = function() { 
-        // Delegate to new TemplateManager if available
         if (window.TemplateManager && window.TemplateManager.init) {
             window.TemplateManager.init();
             return;
@@ -172,21 +246,32 @@
     };
 
     window.loadBuilderSettings = function() { 
-        const s = window.currentStyleSettings;\n        if (!s) return;
-        setVal('styleFont', s.font);\n        setVal('stylePageBg', s.pageBg);
+        const s = window.currentStyleSettings;
+        if (!s) return;
+        setVal('styleFont', s.font);
+        setVal('stylePageBg', s.pageBg);
     };
 
     window.updateBuilderPreview = function() { 
-        const fontEl = document.getElementById('styleFont');\n        if (!fontEl) return;
+        const fontEl = document.getElementById('styleFont');
+        if (!fontEl) return;
         
         const pageBgEl = document.getElementById('stylePageBg');
         
-        const s = {\n            font: fontEl.value,
+        const s = {
+            font: fontEl.value,
             pageBg: pageBgEl ? pageBgEl.value : '#ffffff'
         };
         
-        const sheet = document.getElementById('livePreviewSheet');\n        if (!sheet) return;
+        const sheet = document.getElementById('livePreviewSheet');
+        if (!sheet) return;
         
-        sheet.style.fontFamily = s.font;\n        sheet.style.backgroundColor = s.pageBg;
-    };\n
-    function setVal(id, val) {\n        const el = document.getElementById(id);\n        if (el) el.value = val;\n    }\n})(window);
+        sheet.style.fontFamily = s.font;
+        sheet.style.backgroundColor = s.pageBg;
+    };
+
+    function setVal(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    }
+})(window);
