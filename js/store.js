@@ -8,6 +8,7 @@
     window.currentMenu = {};
     window.menuHistory = [];
     window.savedTemplates = [];
+    window.printTemplate = "<h1>{title}</h1><p>{recipes}<br></p>"; // Default Template
     window.currentStyleSettings = {
         font: 'Segoe UI',
         pageBg: '#ffffff',
@@ -44,16 +45,14 @@
         { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
     ];
 
-    // --- DB Initialization ---
-    window.initDB = async function() {
+    // --- DB Initialization ---\n    window.initDB = async function() {
         if(db) return db; // Singleton
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = () => reject(request.error);
             request.onsuccess = () => { db = request.result; resolve(db); };
             request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+                const db = event.target.result;\n                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
             };
         });
     };
@@ -65,8 +64,7 @@
             await window.initDB();
             const handle = await getDirectoryHandle();
             return !!handle;
-        } catch (e) {
-            console.error(e);
+        } catch (e) {\n            console.error(e);
             return false;
         }
     };
@@ -85,6 +83,7 @@
             currentMenu: window.currentMenu, 
             menuHistory: window.menuHistory,
             savedTemplates: window.savedTemplates, 
+            printTemplate: window.printTemplate,
             currentStyleSettings: window.currentStyleSettings,
             preferences: { lang: lang, theme: theme }
         };
@@ -120,7 +119,7 @@
         if (dataStr) { 
             try {
                 parseData(dataStr, false);
-            } catch(e) { console.error("Parse error", e); }
+            } catch(e) { console.error(\"Parse error\", e); }
         } else { 
             window.populateDefaultAllergens(); 
         }
@@ -137,8 +136,7 @@
             
             const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
             if (permission === 'granted') {
-                directoryHandle = savedHandle;
-                await window.loadFromFolder(renderCallback);
+                directoryHandle = savedHandle;\n                await window.loadFromFolder(renderCallback);
             } else { 
                 const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
                 if (newPerm === 'granted') {
@@ -178,21 +176,19 @@
         window.currentMenu = data.currentMenu || {};
         window.menuHistory = data.menuHistory || [];
         window.savedTemplates = data.savedTemplates || [];
+        window.printTemplate = data.printTemplate || \"<h1>{title}</h1><p>{recipes}<br></p>\";
         
         if (data.currentStyleSettings) {
             window.currentStyleSettings = {
                 ...window.currentStyleSettings,
                 ...data.currentStyleSettings,
                 slotColors: { ...window.currentStyleSettings.slotColors, ...(data.currentStyleSettings.slotColors || {}) }
-            };
-        }
+            };\n        }
         
         if(data.preferences) {
             if(data.preferences.lang) {
                 localStorage.setItem('recipeManagerLang', data.preferences.lang);
-                if(window.changeLanguage) window.changeLanguage(data.preferences.lang); // This might be circular if not careful, but changeLanguage calls saveData, so be careful. 
-                // Better to just set it:
-                // window.setCurrentLanguage(data.preferences.lang);
+                if(window.changeLanguage) window.changeLanguage(data.preferences.lang); 
             }
             if(data.preferences.theme) {
                 localStorage.setItem('appTheme', data.preferences.theme);
@@ -250,22 +246,22 @@
         if (status === 'syncing') {
             indicator.innerHTML = '↻';
             indicator.classList.add('sync-spin');
-            indicator.title = "Saving...";
+            indicator.title = \"Saving...\";
         } else if (status === 'success') {
             indicator.innerHTML = '✓';
             indicator.classList.add('sync-success');
-            indicator.title = "Saved!";
+            indicator.title = \"Saved!\";
             setTimeout(() => {
                 indicator.classList.add('sync-hidden');
             }, 2000);
         } else if (status === 'error') {
             indicator.innerHTML = '⚠';
             indicator.classList.add('sync-error');
-            indicator.title = "Error Saving";
+            indicator.title = \"Error Saving\";
         } else {
             // Local
             indicator.innerHTML = '💾';
-            indicator.title = "Saved Locally";
+            indicator.title = \"Saved Locally\";
              setTimeout(() => {
                 indicator.classList.add('sync-hidden');
             }, 2000);
@@ -292,8 +288,7 @@
                 }
             }
         } catch (err) { console.error(err); }
-    };
-
+    };\n
     window.exportDataFile = function() {
         const data = { 
             recipes: window.recipes, 
@@ -302,9 +297,9 @@
             currentMenu: window.currentMenu, 
             menuHistory: window.menuHistory, 
             savedTemplates: window.savedTemplates, 
+            printTemplate: window.printTemplate,
             currentStyleSettings: window.currentStyleSettings 
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        };\n        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -321,8 +316,7 @@
         reader.onload = function(e) {
             parseData(e.target.result, true);
             if(renderCallback) renderCallback();
-        };
-        reader.readAsText(file);
+        };\n        reader.readAsText(file);
     };
 
     // Mutators (Always Trigger Save)
@@ -333,13 +327,16 @@
         if (!window.currentMenu[date]) window.currentMenu[date] = {};
         window.currentMenu[date][slotId] = data;
         window.saveData();
-    };
-    window.updateStyleSettings = function(settings) {
+    };\n    window.updateStyleSettings = function(settings) {
         window.currentStyleSettings = settings;
         window.saveData();
     };
     window.addSavedTemplate = function(tmpl) {
         window.savedTemplates.push(tmpl);
+        window.saveData();
+    };
+    window.updatePrintTemplate = function(html) {
+        window.printTemplate = html;
         window.saveData();
     };
 })(window);
