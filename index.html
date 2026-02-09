@@ -7,6 +7,7 @@
   
   <!-- CSS -->
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css"> <!-- New Loading CSS -->
 
   <!-- jQuery & Summernote CSS/JS (CDN) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 
   <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
   
   <!-- App Scripts (Loaded Sequentially) -->
   <script src="js/i18n.js"></script>
@@ -26,7 +27,21 @@
 </head>
 <body data-theme="default">
 
-  <!-- Fixed App Header -->
+  <!-- NEW: Loading Splash Screen -->
+  <div id="splashScreen" class="splash-screen">
+      <div class="splash-content">
+          <span class="splash-logo">🍽️</span>
+          <h1 class="splash-title">KitchenPro</h1>
+          <p class="splash-subtitle">Your personal recipe manager & menu planner</p>
+          
+          <div id="splashActions" class="splash-actions">
+              <!-- Content injected by JS based on state -->
+              <div class="loader-spinner"></div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Fixed App Header (Initially Hidden) -->
   <header class="app-header">
       <div style="display:flex; align-items:center; gap:1rem;">
           <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open Menu">
@@ -41,18 +56,15 @@
 
       <!-- Right Side Controls -->
       <div class="header-right">
-           <!-- Language First -->
            <select id="languageSelect" class="lang-select-minimal" title="Select Language">
               <option value="en">🇺🇸</option>
               <option value="bg">🇧🇬</option>
            </select>
            
-           <!-- NEW: Sync Button with Refresh Icon -->
            <button id="syncBtn" class="sync-btn" onclick="toggleSyncDropdown()" aria-label="Sync Options" title="Sync Status">
                ↻
            </button>
            
-           <!-- Sync Dropdown -->
            <div id="syncDropdown" class="sync-dropdown">
                 <div class="status-header">
                     <span data-i18n="sync_status_label">Status:</span> <strong id="syncStatusText">...</strong>
