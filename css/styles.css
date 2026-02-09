@@ -168,6 +168,8 @@ body {
     transition: all 0.3s;
 }
 
+/* Hamburger active state - only if needed, currently CSS toggle is via navOverlay logic in JS */
+
 .header-right {
     display: flex;
     align-items: center;
@@ -227,18 +229,21 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Dim background */
-    z-index: 900; /* Behind header, but content will be adjusted */
+    /* FIX 1: Remove background shadow overlay to fix "shadow" issue when menu is closed */
+    background-color: rgba(0,0,0,0); 
+    z-index: -1; /* Hide behind everything when inactive */
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s;
-    backdrop-filter: blur(2px);
+    transition: background-color 0.3s, opacity 0.3s, z-index 0s 0.3s; /* Delay z-index change */
     padding-top: var(--header-height); /* Push content down */
 }
 
 .nav-overlay.active {
+    background-color: rgba(0,0,0,0.5); /* Dim background ONLY when active */
+    z-index: 900; /* Bring to front */
     opacity: 1;
     visibility: visible;
+    transition: background-color 0.3s, opacity 0.3s, z-index 0s; /* Instant z-index change */
 }
 
 /* The actual "Bubble" or Panel */
@@ -396,6 +401,37 @@ body {
     margin-top: var(--header-height);
     padding: 20px;
 }
+
+/* FIX 2: Template Builder Styling to prevent overlap */
+.builder-container {
+    /* Ensure it respects the parent container boundaries */
+    height: calc(100vh - 200px) !important; 
+    overflow: hidden; /* Prevent spillover */
+}
+
+/* Fix builder sidebar scrolling and sizing */
+.builder-sidebar {
+    height: 100%;
+    overflow-y: auto;
+    border-radius: var(--radius);
+    /* Ensure internal inputs don't break layout */
+    box-shadow: var(--shadow-sm);
+}
+
+/* Fix builder preview area */
+.builder-preview {
+    height: 100%;
+    overflow-y: auto; 
+    border-radius: var(--radius);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* Ensure the preview sheet itself scales properly */
+#livePreviewSheet {
+    /* Scale logic is handled in JS, but ensure parent centers it */
+    margin: 0 auto;
+}
+
 
 .page { display: none; }
 .page.active { display: block; animation: fadeIn 0.3s; }
