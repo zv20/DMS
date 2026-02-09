@@ -196,22 +196,8 @@ function getWeekStart(date) { const d = new Date(date); const day = d.getDay(); 
 
 // --- INIT ---
 async function init() {
+  // Bind interactions FIRST so menu works even if data load fails
   bindNavigation();
-  setAppTheme(currentAppTheme);
-  
-  await initDB();
-  await autoLoadOnStartup();
-
-  const langSel = document.getElementById('languageSelect');
-  if (langSel) {
-    langSel.value = currentLanguage;
-    langSel.addEventListener('change', (e) => changeLanguage(e.target.value));
-  }
-  
-  initStyleBuilder();
-  renderAll();
-
-  // Bind new menu interactions
   const hamburger = document.getElementById('hamburgerBtn');
   if(hamburger) hamburger.addEventListener('click', toggleNav);
   
@@ -237,10 +223,30 @@ async function init() {
     });
   }
 
+  const langSel = document.getElementById('languageSelect');
+  if (langSel) {
+    langSel.value = currentLanguage;
+    langSel.addEventListener('change', (e) => changeLanguage(e.target.value));
+  }
+  
   if (window.$) {
     window.$(document).ready(function () {
       initSummernote();
     });
+  }
+
+  setAppTheme(currentAppTheme);
+  
+  // Initialize Data Logic - Wrapped in try-catch for robustness
+  try {
+      await initDB();
+      await autoLoadOnStartup();
+      
+      initStyleBuilder();
+      renderAll();
+  } catch (err) {
+      console.error("Initialization error:", err);
+      // We do not re-throw, so UI remains interactive
   }
 }
 
@@ -355,7 +361,14 @@ function parseData(jsonText) {
       savedTemplates = data.savedTemplates || [];
       if (data.currentStyleSettings) {
           // Merge to ensure new fields like slot4 and fonts exist
-          currentStyleSettings = { ...currentStyleSettings, ...data.currentStyleSettings };
+          // DEEP MERGE for slotColors and slotFonts to preserve sub-keys
+          currentStyleSettings = { 
+              ...currentStyleSettings, 
+              ...data.currentStyleSettings,
+              slotColors: { ...currentStyleSettings.slotColors, ...(data.currentStyleSettings.slotColors || {}) },
+              slotFonts: { ...currentStyleSettings.slotFonts, ...(data.currentStyleSettings.slotFonts || {}) }
+          };
+          
           if (!currentStyleSettings.slotFonts) currentStyleSettings.slotFonts = { slot1: '', slot2: '', slot3: '', slot4: '' };
           if (!currentStyleSettings.slotColors.slot4) currentStyleSettings.slotColors.slot4 = '#000000';
       }
@@ -365,6 +378,7 @@ function parseData(jsonText) {
       alert(t('alert_import_success'));
   } catch (e) {
       alert(t('alert_import_error') + e.message);
+      console.error(e);
   }
 }
 
@@ -382,7 +396,14 @@ function loadData() {
         templateLayout = parsed.templateLayout || 'default';
         savedTemplates = parsed.savedTemplates || [];
         if (parsed.currentStyleSettings) {
-            currentStyleSettings = { ...currentStyleSettings, ...parsed.currentStyleSettings };
+            // DEEP MERGE
+            currentStyleSettings = { 
+                ...currentStyleSettings, 
+                ...parsed.currentStyleSettings,
+                slotColors: { ...currentStyleSettings.slotColors, ...(parsed.currentStyleSettings.slotColors || {}) },
+                slotFonts: { ...currentStyleSettings.slotFonts, ...(parsed.currentStyleSettings.slotFonts || {}) }
+            };
+
              if (!currentStyleSettings.slotFonts) currentStyleSettings.slotFonts = { slot1: '', slot2: '', slot3: '', slot4: '' };
              if (!currentStyleSettings.slotColors.slot4) currentStyleSettings.slotColors.slot4 = '#000000';
         }
