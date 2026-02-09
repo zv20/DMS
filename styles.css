@@ -65,7 +65,7 @@ body {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     display: flex;
-    justify-content: space-between; /* Changed to space-between for left/right layout */
+    justify-content: space-between;
     align-items: center;
     padding: 0 1rem;
     z-index: 1000;
@@ -112,39 +112,60 @@ body {
     margin: 0 auto;
 }
 
-/* --- Navigation Bubble (Popover Style) --- */
+/* --- Navigation Overlay (Transparent wrapper) --- */
 .nav-overlay {
     position: fixed;
-    top: 65px; /* Just below header */
-    left: 10px;
-    width: 280px; /* Constrained width */
-    height: auto;
-    max-height: 80vh;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 16px; /* Rounded bubble look */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* Floating effect */
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Ensure no background color or blur is applied here */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     
-    /* Animation Properties */
+    z-index: 2000;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px) scale(0.95);
-    transform-origin: top left;
-    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none; /* Let clicks pass through when closed */
+    transition: opacity 0.2s ease, visibility 0.2s;
 }
 
 .nav-overlay.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto; /* Catch clicks only when open (to close menu if clicked outside) */
+    background: transparent !important;
+}
+
+/* --- The actual Floating Menu Bubble --- */
+.nav-content {
+    position: absolute;
+    top: calc(var(--header-height) + 10px);
+    left: 10px;
+    width: 280px;
+    max-height: 80vh;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    /* Animation for the bubble pop */
+    transform: translateY(-10px) scale(0.95);
+    transform-origin: top left;
+    transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: auto; /* Menu items always clickable */
+}
+
+.nav-overlay.active .nav-content {
     transform: translateY(0) scale(1);
 }
 
-/* Little arrow pointing to hamburger (Pseudo-element) */
-.nav-overlay::before {
+/* Little arrow pointing to hamburger (Pseudo-element on the bubble) */
+.nav-content::before {
     content: '';
     position: absolute;
     top: -6px;
@@ -173,27 +194,24 @@ body {
 }
 .close-nav-btn:hover { color: var(--color-danger); }
 
-.nav-content {
-    width: 100%;
-    padding: 1.5rem 1rem;
+.nav-links {
+    padding: 1rem 0;
     overflow-y: auto;
 }
 
 .nav-item {
-    display: block;
+    display: flex;
+    align-items: center;
     width: 100%;
     background: none;
     border: none;
-    padding: 0.8rem 1rem;
-    font-size: 1.1rem;
-    font-weight: 600;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
     color: var(--color-text);
     cursor: pointer;
-    text-align: left; /* Align left for list style */
-    border-radius: 8px;
+    text-align: left;
     transition: background 0.2s, color 0.2s;
-    display: flex;
-    align-items: center;
     gap: 10px;
 }
 
@@ -203,9 +221,10 @@ body {
 }
 
 .nav-item.active {
-    background: var(--color-background);
+    background: rgba(33, 128, 141, 0.1); /* Light tint of primary */
     color: var(--color-primary);
-    border-left: 4px solid var(--color-primary);
+    font-weight: 600;
+    border-left: 3px solid var(--color-primary);
 }
 
 .nav-separator {
@@ -216,10 +235,6 @@ body {
 }
 
 /* --- Settings Submenu --- */
-.settings-toggle {
-    justify-content: space-between; /* Space out arrow */
-}
-
 .settings-submenu {
     display: none;
     background: var(--color-background);
@@ -287,8 +302,7 @@ body {
     position: relative;
     width: 40px;
     height: 40px;
-    background: transparent;
-    border: 3px solid #ccc;
+    background: transparent;\n    border: 3px solid #ccc;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -299,8 +313,7 @@ body {
 }
 .sync-btn:hover { background-color: rgba(0,0,0,0.05); }
 .sync-btn.syncing { animation: rotate 1s linear infinite; }
-.sync-btn.status-connected { border-color: var(--color-success); color: var(--color-success); }
-.sync-btn.status-local { border-color: var(--color-warning); color: var(--color-warning); }
+.sync-btn.status-connected { border-color: var(--color-success); color: var(--color-success); }\n.sync-btn.status-local { border-color: var(--color-warning); color: var(--color-warning); }
 .sync-btn.status-error { border-color: var(--color-danger); color: var(--color-danger); }
 
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -328,7 +341,7 @@ body {
 
 .sync-dropdown button, .sync-dropdown label {
     display: block;
-    width: 100%;\
+    width: 100%;
     padding: 10px 15px;
     text-align: left;
     border: none;
@@ -347,8 +360,7 @@ body {
     padding: 10px;
     font-size: 0.85em;
     color: var(--color-text-secondary);
-    border-bottom: 1px solid var(--color-border);
-    text-align: center;
+    border-bottom: 1px solid var(--color-border);\n    text-align: center;
     background: var(--color-background);
     margin-bottom: 5px;
     border-radius: 8px 8px 0 0;
@@ -367,8 +379,7 @@ body {
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n    gap: 1.5rem;
 }
 
 .recipe-card, .item-card {
@@ -382,7 +393,7 @@ body {
 .recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .btn {
-    padding: 0.75rem 1.5rem;\
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     font-weight: 600;
     border: none;
@@ -412,8 +423,7 @@ body {
 /* --- CALENDAR STYLES (Restored) --- */
 .calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(7, 1fr);\n    gap: 5px;
     background: var(--color-border);
     padding: 1px;
     border-radius: var(--border-radius);
@@ -494,7 +504,7 @@ body {
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;\
+    height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
     animation: fadeIn 0.3s;
@@ -506,7 +516,7 @@ body {
     padding: 2rem;
     border: 1px solid var(--color-border);
     width: 90%;
-    max-width: 600px;\
+    max-width: 600px;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
     position: relative;
@@ -526,8 +536,7 @@ body {
 .close-btn:focus {
     color: var(--color-text);
     text-decoration: none;
-    cursor: pointer;
-}
+    cursor: pointer;\n}
 
 .form-group {
     margin-bottom: 1.2rem;
