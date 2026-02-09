@@ -7,7 +7,7 @@
   
   <!-- CSS -->
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="css/styles.css"> <!-- New Loading CSS -->
+  <link rel="stylesheet" href="css/styles.css">
 
   <!-- jQuery & Summernote CSS/JS (CDN) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -27,7 +27,7 @@
 </head>
 <body data-theme="default">
 
-  <!-- Loading Splash Screen -->
+  <!-- Splash Screen -->
   <div id="splashScreen" class="splash-screen">
       <div class="splash-content">
           <span class="splash-logo">🍽️</span>
@@ -39,7 +39,7 @@
       </div>
   </div>
 
-  <!-- Fixed App Header (Initially Hidden) -->
+  <!-- Header -->
   <header class="app-header">
       <div style="display:flex; align-items:center; gap:1rem;">
           <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open Menu">
@@ -54,7 +54,7 @@
 
       <!-- Right Side Controls -->
       <div class="header-right">
-           <!-- Sync Status Indicator (Replaces the Dropdown Button) -->
+           <!-- Sync Status Indicator -->
            <div id="syncIndicator" class="sync-indicator sync-hidden" title="Saved">
                ✓
            </div>
@@ -67,7 +67,7 @@
       </div>
   </header>
 
-  <!-- Fullscreen Navigation Overlay (Bubble) -->
+  <!-- Fullscreen Navigation Overlay -->
   <div id="navOverlay" class="nav-overlay">
       <button id="closeNavBtn" class="close-nav-btn">&times;</button>
       
@@ -80,39 +80,11 @@
               <button class="nav-item" data-page="recipes" data-i18n="nav_recipes">Recipes</button>
               <button class="nav-item" data-page="ingredients" data-i18n="nav_ingredients">Ingredients</button>
               <button class="nav-item" data-page="allergens" data-i18n="nav_allergens">Allergens</button>
-          </div>
+              
+              <div class="nav-separator"></div>
 
-          <div class="nav-separator"></div>
-
-          <!-- Settings Section (Expanded) -->
-          <div class="nav-settings-group">
-              <button class="nav-item settings-toggle" onclick="toggleSettingsSubmenu()">
-                  ⚙️ <span data-i18n="nav_settings">Settings</span> <span class="arrow">▼</span>
-              </button>
-              <div id="settingsSubmenu" class="settings-submenu">
-                  <div class="settings-group-header">General</div>
-                  
-                  <div class="theme-selector">
-                      <label data-i18n="label_app_theme">App Theme:</label>
-                      <div class="theme-buttons">
-                          <button class="theme-btn theme-default" onclick="setAppTheme('default')" title="Modern Teal"></button>
-                          <button class="theme-btn theme-dark" onclick="setAppTheme('dark')" title="Midnight Blue"></button>
-                          <button class="theme-btn theme-warm" onclick="setAppTheme('warm')" title="Sunny Orange"></button>
-                      </div>
-                  </div>
-                  
-                  <button class="sub-nav-item" data-page="style-editor" data-i18n="nav_template_builder">Template Builder</button>
-
-                  <div class="settings-group-header">Data & Sync</div>
-                  
-                  <button class="sub-nav-item" onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
-                  <button class="sub-nav-item" onclick="manualSave()" data-i18n="sync_save">💾 Force Save</button>
-                  <button class="sub-nav-item" onclick="manualLoad()" data-i18n="sync_load">📂 Reload Data</button>
-                  
-                  <button class="sub-nav-item" onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-                  <label class="sub-nav-item file-label" for="importInput" data-i18n="sync_import">⬆ Import JSON</label>
-                  <input type="file" id="importInput" accept=".json" style="display:none">
-              </div>
+              <!-- Settings Link (Now a Page) -->
+              <button class="nav-item" data-page="settings" data-i18n="nav_settings">⚙️ Settings</button>
           </div>
       </div>
   </div>
@@ -142,7 +114,6 @@
            </div>
         </div>
 
-        <!-- Print Date Picker -->
         <div class="print-controls" style="margin-bottom: 1rem; padding:10px; background:var(--color-surface); border-radius:8px; display:flex; gap:10px; align-items:center; border: 1px solid var(--color-border);">
              <span data-i18n="label_print_date">Print Week of:</span>
              <input type="date" id="printStartDate">
@@ -179,7 +150,6 @@
           <button class="btn btn-primary" onclick="openRecipeModal()" data-i18n="btn_add_recipe">+ Add Recipe</button>
         </div>
         
-        <!-- FILTER CONTROLS -->
         <div class="filter-controls">
             <input type="text" id="recipeSearch" class="filter-input" placeholder="Search recipes..." onkeyup="renderRecipes()" data-i18n-placeholder="filter_search_placeholder">
             <select id="recipeCategoryFilter" class="filter-select" onchange="renderRecipes()">
@@ -250,25 +220,92 @@
         </div>
       </div>
 
-      <!-- STYLE EDITOR PAGE -->
+      <!-- NEW SETTINGS PAGE -->
+      <div id="settings" class="page">
+          <div class="page-header">
+             <h1 data-i18n="nav_settings">Settings</h1>
+          </div>
+
+          <div class="settings-container">
+              
+              <!-- Settings Card: Appearance -->
+              <div class="settings-card">
+                  <h3 class="settings-card-title">🎨 Appearance</h3>
+                  
+                  <div class="settings-row">
+                      <label data-i18n="label_app_theme">App Theme</label>
+                      <div class="theme-buttons">
+                          <button class="theme-btn theme-default" onclick="setAppTheme('default')" title="Modern Teal"></button>
+                          <button class="theme-btn theme-dark" onclick="setAppTheme('dark')" title="Midnight Blue"></button>
+                          <button class="theme-btn theme-warm" onclick="setAppTheme('warm')" title="Sunny Orange"></button>
+                      </div>
+                  </div>
+
+                  <div class="settings-row">
+                      <label data-i18n="nav_template_builder">Menu Template</label>
+                      <button class="btn btn-secondary" onclick="document.getElementById('style-editor-link').click()">
+                          Open Template Builder
+                      </button>
+                      <!-- Hidden link to trigger page switch via logic -->
+                      <button id="style-editor-link" style="display:none;" data-page="style-editor" class="nav-item"></button> 
+                  </div>
+              </div>
+
+              <!-- Settings Card: Data & Sync -->
+              <div class="settings-card">
+                  <h3 class="settings-card-title">💾 Data & Sync</h3>
+                  
+                  <div class="settings-row">
+                      <div>
+                          <strong>Save Location</strong>
+                          <p class="settings-desc">Choose where your data is stored securely.</p>
+                      </div>
+                      <button class="btn btn-primary" onclick="selectSaveLocation()" data-i18n="sync_select_location">Change Folder</button>
+                  </div>
+
+                  <hr class="settings-divider">
+
+                  <div class="settings-actions-grid">
+                      <button class="btn btn-secondary" onclick="manualSave()">
+                          💾 <span data-i18n="sync_save">Force Save</span>
+                      </button>
+                      <button class="btn btn-secondary" onclick="manualLoad()">
+                          📂 <span data-i18n="sync_load">Reload Data</span>
+                      </button>
+                      <button class="btn btn-secondary" onclick="exportData()">
+                          ⬇ <span data-i18n="sync_export">Export JSON</span>
+                      </button>
+                      <label class="btn btn-secondary file-label" for="importInput">
+                          ⬆ <span data-i18n="sync_import">Import JSON</span>
+                      </label>
+                      <input type="file" id="importInput" accept=".json" style="display:none">
+                  </div>
+              </div>
+
+          </div>
+      </div>
+
+      <!-- STYLE EDITOR PAGE (Kept as separate page but accessible from Settings) -->
       <div id="style-editor" class="page">
-        <!-- (Unchanged) -->
         <div class="page-header">
-          <h1 data-i18n="nav_template_builder">Template Builder</h1>
+          <div style="display:flex; align-items:center; gap:10px;">
+              <button class="btn btn-secondary btn-small" onclick="document.querySelector('[data-page=\'settings\']').click()">← Back</button>
+              <h1 data-i18n="nav_template_builder">Template Builder</h1>
+          </div>
           <div class="actions">
              <button class="btn btn-secondary" id="btnNewTemplate" data-i18n="btn_reset">Reset</button>
              <button class="btn btn-primary" id="btnSaveStyle" data-i18n="btn_save_settings">Save Settings</button>
           </div>
         </div>
-        <!-- (Rest of Style Editor Content remains as is, just truncated for brevity as it was not changed) -->
+
         <div class="builder-container" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; height: calc(100vh - 150px);">
-             <!-- Sidebar content placeholder -->
+             <!-- Sidebar content placeholder (same as before) -->
              <div class="builder-sidebar" style="background: var(--color-surface); padding: 20px; border-right: 1px solid var(--color-border); overflow-y: auto;">
                   <div class="control-group"><h3 data-i18n="builder_page_settings">1. Page Settings</h3><label data-i18n="builder_default_font">Default Font</label><select id="styleFont" class="form-control" style="width:100%; margin-bottom:10px;"><option value="Segoe UI">Modern (Segoe UI)</option><option value="Georgia">Serif (Georgia)</option><option value="Courier New">Monospace</option><option value="Comic Sans MS">Playful</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option></select><label data-i18n="builder_page_bg">Page Background Color</label><input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px; margin-bottom:10px;"><label data-i18n="builder_bg_image">Background Image</label><div style="display:flex; gap:5px;"><input type="file" id="styleBgImageInput" accept="image/*" style="width:100%;"><button id="styleBgRemoveBtn" class="btn btn-small btn-danger" style="display:none;">✖</button></div></div>
                   <div class="control-group"><h3 data-i18n="builder_day_cards">2. Day Cards (Mon-Fri)</h3><label data-i18n="builder_header_bg">Header Background</label><input type="color" id="styleHeaderBg" class="form-control" value="#ffffff" style="width:100%; height:40px;"><label data-i18n="builder_header_text">Header Text Color</label><input type="color" id="styleHeaderText" class="form-control" value="#21808d" style="width:100%; height:40px;"><label data-i18n="builder_card_bg">Card Background</label><input type="color" id="styleCardBg" class="form-control" value="#ffffff" style="width:100%; height:40px;"><label data-i18n="builder_border_color">Border Color</label><input type="color" id="styleBorderColor" class="form-control" value="#333333" style="width:100%; height:40px;"><label data-i18n="builder_border_width">Border Width</label><input type="range" id="styleBorderWidth" min="0" max="5" value="1" style="width:100%;"></div>
                   <div class="control-group"><h3 data-i18n="builder_menu_items">3. Menu Items (1-4)</h3><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot1">Slot 1 (Soup)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot1Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot1Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot2">Slot 2 (Main)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot2Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot2Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot3">Slot 3 (Dessert)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot3Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot3Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item"><strong data-i18n="builder_slot4">Slot 4 (Other)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot4Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot4Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div></div>
              </div>
-             <!-- Live Preview placeholder -->
+             <!-- Live Preview placeholder (same as before) -->
              <div class="builder-preview" style="background: var(--color-background); padding: 20px; overflow-y: auto; display: flex; justify-content: center;"><div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.85); transform-origin: top center; background-size: cover; background-position: center;"><h1 style="text-align:center; color:#21808d; font-family:inherit;" data-i18n="builder_preview_title">MENU PREVIEW</h1><div id="livePreviewGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;"><div class="preview-day-card" style="border:1px solid #333; padding:10px;"><h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Monday</h3><div class="preview-slot slot1"><strong>1. Soup:</strong> Chicken Soup</div><div class="preview-slot slot2"><strong>2. Main:</strong> Roast Beef</div><div class="preview-slot slot3"><strong>3. Dessert:</strong> Cake</div><div class="preview-slot slot4"><strong>4. Other:</strong> Bread</div></div><div class="preview-day-card" style="border:1px solid #333; padding:10px;"><h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Tuesday</h3><div class="preview-slot slot1"><strong>1. Soup:</strong> Lentil Soup</div><div class="preview-slot slot2"><strong>2. Main:</strong> Fish & Chips</div><div class="preview-slot slot3"><strong>3. Dessert:</strong> Fruit</div><div class="preview-slot slot4"><strong>4. Other:</strong> Salad</div></div></div></div></div>
         </div>
       </div>
@@ -276,12 +313,12 @@
     </main>
   </div>
 
-  <!-- RECIPE MODAL -->
+  <!-- Modals (Same as before) -->
   <div id="recipeModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeRecipeModal()">&times;</span>
       <h2 id="recipeModalTitle" data-i18n="modal_add_recipe">Add Recipe</h2>
-      <form id="recipeForm" onsubmit="window.saveRecipe(event)"> <!-- Fixed: Added window. -->
+      <form id="recipeForm" onsubmit="window.saveRecipe(event)">
         <div class="form-group">
           <label data-i18n="label_recipe_name">Name</label>
           <input type="text" id="recipeName" required>
@@ -332,12 +369,11 @@
     </div>
   </div>
 
-  <!-- INGREDIENT MODAL -->
   <div id="ingredientModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeIngredientModal()">&times;</span>
       <h2 data-i18n="modal_add_ingredient">Add Ingredient</h2>
-      <form id="ingredientForm" onsubmit="window.saveIngredient(event)"> <!-- Fixed: Added window. -->
+      <form id="ingredientForm" onsubmit="window.saveIngredient(event)">
         <div class="form-group">
           <label data-i18n="label_ingredient_name">Name</label>
           <input type="text" id="ingredientName" required>
@@ -358,12 +394,11 @@
     </div>
   </div>
 
-  <!-- ALLERGEN MODAL -->
   <div id="allergenModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeAllergenModal()">&times;</span>
       <h2 data-i18n="modal_add_allergen">Add Allergen</h2>
-      <form id="allergenForm" onsubmit="window.saveAllergen(event)"> <!-- Fixed: Added window. -->
+      <form id="allergenForm" onsubmit="window.saveAllergen(event)">
         <div class="form-group">
           <label data-i18n="label_allergen_name">Name</label>
           <input type="text" id="allergenName" required>
