@@ -42,11 +42,17 @@
           justify-content: space-between;
           align-items: center;
           padding: 0 1rem;
+          /* Ensure header is the positioning context if needed, though header-right is better */
+          position: fixed; 
+          width: 100%;
+          z-index: 1000;
       }
+      
       .header-right {
           display: flex;
           align-items: center;
           gap: 1rem;
+          position: relative; /* CRITICAL: Anchor for absolute dropdown */
       }
       
       /* Minimal Lang Select */
@@ -112,6 +118,54 @@
       .status-local .status-ring { border-color: var(--color-warning); }
       .status-error .status-ring { border-color: var(--color-danger); }
 
+      /* FIXED SYNC DROPDOWN POSITIONING */
+      .sync-dropdown {
+          position: absolute;
+          top: 100%; /* Directly below the header-right container */
+          right: 0;    /* Align to the right edge */
+          margin-top: 10px;
+          width: 250px; /* Fixed width */
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          display: none;
+          z-index: 2000;
+          padding: 5px 0;
+      }
+      
+      .sync-dropdown.show {
+          display: block;
+          animation: fadeIn 0.2s ease-out;
+      }
+
+      .sync-dropdown button, .sync-dropdown label {
+          display: block;
+          width: 100%;
+          padding: 10px 15px;
+          text-align: left;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--color-text);
+          font-size: 0.95rem;
+      }
+      
+      .sync-dropdown button:hover, .sync-dropdown label:hover {
+          background-color: var(--color-background);
+          color: var(--color-primary);
+      }
+
+      .sync-dropdown .divider {
+          border: 0;
+          border-top: 1px solid var(--color-border);
+          margin: 5px 0;
+      }
+
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
   </style>
 </head>
 <body data-theme="default">
@@ -138,7 +192,6 @@
            </select>
            
            <!-- Sync Button Second (Hamburger Style) -->
-           <!-- Using 3 dots (vertical) for 'options/sync' feel, matching hamburger style logic -->
            <button id="syncBtn" class="sync-btn-style" onclick="toggleSyncDropdown()" aria-label="Sync Options">
                <span class="sync-dot"></span>
                <span class="sync-dot"></span>
@@ -147,17 +200,17 @@
                <div id="syncStatusRing" class="status-ring"></div>
            </button>
            
-           <!-- Sync Dropdown -->
-           <div id="syncDropdown" class="sync-dropdown" style="top: 60px; right: 10px;">
-                <div style="padding:10px; font-size:0.9em; color:#666; border-bottom:1px solid #eee; text-align:center;">
-                    Status: <span id="syncStatusText">Checking...</span>
+           <!-- Sync Dropdown (Now correctly positioned relative to header-right) -->
+           <div id="syncDropdown" class="sync-dropdown">
+                <div style="padding:10px; font-size:0.85em; color:var(--color-text-secondary); border-bottom:1px solid var(--color-border); text-align:center; background: var(--color-background); margin-bottom: 5px; border-radius: 8px 8px 0 0;">
+                    Status: <strong id="syncStatusText">Checking...</strong>
                 </div>
                 <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
                 <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
                 <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
                 <hr class="divider">
                 <button onclick="exportData()" data-i18n="sync_export">⬇ Export JSON</button>
-                <label for="importInput" class="dropdown-item" style="display:block; cursor:pointer;" data-i18n="sync_import">⬆ Import JSON</label>
+                <label for="importInput" style="display:block; cursor:pointer; padding: 10px 15px;" data-i18n="sync_import">⬆ Import JSON</label>
                 <input type="file" id="importInput" accept=".json" style="display:none">
            </div>
       </div>
