@@ -706,9 +706,98 @@ function changeMonth(delta) { if (viewMode === 'week') { currentDate.setDate(cur
 function toggleView(mode) { viewMode = mode; localStorage.setItem('calendarViewMode', mode); renderCalendar(); }
 function initSummernote() { if(window.$ && window.$('#templateEditor').summernote) window.$('#templateEditor').summernote(); }
 function insertVariable(v) { if(window.$ && window.$('#templateEditor').summernote) window.$('#templateEditor').summernote('pasteHTML', v); }
-function uploadBackgroundImage(e) { /* ... */ }
-function removeBackgroundImage() { /* ... */ }
-function printMenu() { /* ... */ }
+
+function uploadBackgroundImage(e) {
+  const file = e.target.files[0];
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+          templateBackgroundImage = evt.target.result;
+          saveData();
+          alert('Background image set!');
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+function removeBackgroundImage() {
+  templateBackgroundImage = '';
+  saveData();
+  alert('Background image removed!');
+}
+
+function printMenu() {
+    const weekStart = getWeekStart(currentDate);
+    const content = [];
+    let hasData = false;
+
+    // Sort selected days
+    selectedPrintDays.sort((a, b) => a - b);
+
+    if (selectedPrintDays.length === 0) {
+        alert(t('alert_select_days'));
+        return;
+    }
+
+    selectedPrintDays.forEach(dayIndex => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + dayIndex);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        if (currentMenu[dateStr]) {
+            const dayName = d.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
+            const dayDate = d.toLocaleDateString(currentLanguage === 'bg' ? 'bg-BG' : 'en-US');
+            
+            let dayHtml = `<div class="print-day"><h3>${dayName} (${dayDate})</h3>`;
+            let dayHasRecipes = false;
+
+            DEFAULT_SLOTS_CONFIG.forEach(slot => {
+                const s = currentMenu[dateStr][slot.id];
+                if (s && s.recipe) {
+                    const r = recipes.find(x => x.id === s.recipe);
+                    if (r) {
+                        dayHasRecipes = true;
+                        hasData = true;
+                        const allergens = getRecipeAllergens(r).map(a => getAllergenName(a)).join(', ');
+                        dayHtml += `
+                            <div class="print-slot" style="border-left: 3px solid ${currentStyleSettings.slotColors[slot.id] || '#000'}">
+                                <strong>${t('slot_' + s.type)}:</strong> ${r.name}
+                                ${r.portionSize ? `<span>(${r.portionSize})</span>` : ''}
+                                ${allergens ? `<div class="print-allergens">${t('label_contains')}: ${allergens}</div>` : ''}
+                            </div>`;
+                    }
+                }
+            });
+            dayHtml += '</div>';
+            if (dayHasRecipes) content.push(dayHtml);
+        }
+    });
+
+    if (!hasData) {
+        alert(t('alert_no_print_data'));
+        return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const styles = `
+        body { font-family: ${currentStyleSettings.font}; background: ${currentStyleSettings.pageBg}; color: #333; }
+        .print-day { margin-bottom: 20px; padding: 10px; background: ${currentStyleSettings.cardBg}; border: ${currentStyleSettings.borderWidth}px solid ${currentStyleSettings.borderColor}; }
+        .print-slot { margin: 5px 0; padding-left: 10px; }
+        .print-allergens { font-size: 0.8em; color: #666; }
+        h1, h2, h3 { color: ${currentStyleSettings.headerText}; }
+    `;
+    
+    const finalHtml = printTemplate
+        .replace('{title}', t('nav_menu'))
+        .replace('{labelMenuFor}', t('label_menu_for'))
+        .replace('{dateRange}', `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6*86400000).toLocaleDateString()}`)
+        .replace('{recipes}', content.join(''));
+
+    printWindow.document.write(`<html><head><title>Print Menu</title><style>${styles}</style></head><body>${finalHtml}</body></html>`);
+    printWindow.document.close();
+    printWindow.print();
+}
+
 function deleteRecipe(id) { recipes = recipes.filter(r => r.id !== id); saveData(); renderRecipes(); }
 function openRecipeModal(id) { editingRecipeId=id; document.getElementById('recipeModal').style.display='block'; }
 function closeRecipeModal() { document.getElementById('recipeModal').style.display='none'; }
