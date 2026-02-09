@@ -58,7 +58,10 @@
         const algTags = document.getElementById('recipeManualAllergens').querySelectorAll('.tag');
         const manualAllergens = Array.from(algTags).map(t => ({ id: t.dataset.id }));
 
-        const newRecipe = {\n            id, name, category: cat, portionSize: portion, instructions: instr,\n            ingredients, manualAllergens\n        };
+        const newRecipe = {
+            id, name, category: cat, portionSize: portion, instructions: instr,
+            ingredients, manualAllergens
+        };
 
         if (window.editingRecipeId) {
             const idx = window.recipes.findIndex(r => r.id === id);
