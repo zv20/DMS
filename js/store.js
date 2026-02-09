@@ -74,6 +74,10 @@
     // --- Persistence Operations ---
 
     window.saveData = function(callback) {
+        // Ensure language is saved in data object too, though it's mainly in localStorage
+        const lang = localStorage.getItem('recipeManagerLang') || 'en';
+        const theme = localStorage.getItem('appTheme') || 'default';
+        
         const data = {
             recipes: window.recipes, 
             ingredients: window.ingredients, 
@@ -81,7 +85,8 @@
             currentMenu: window.currentMenu, 
             menuHistory: window.menuHistory,
             savedTemplates: window.savedTemplates, 
-            currentStyleSettings: window.currentStyleSettings
+            currentStyleSettings: window.currentStyleSettings,
+            preferences: { lang: lang, theme: theme }
         };
         
         // LocalStorage Backup
@@ -91,36 +96,36 @@
         if (directoryHandle) {
             (async () => {
                 try {
-                    updateSyncUI('syncing');
+                    window.showSyncAnimation('syncing');
                     const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
                     const writable = await fileHandle.createWritable();
                     await writable.write(JSON.stringify(data, null, 2));
                     await writable.close();
-                    updateSyncUI('connected');
+                    window.showSyncAnimation('success');
                 } catch (err) { 
                     console.error(err); 
-                    updateSyncUI('error'); 
+                    window.showSyncAnimation('error'); 
                 }
             })();
         } else {
-            updateSyncUI('local');
+            // Even if local only, show success briefly
+             window.showSyncAnimation('local');
         }
         
         if (callback) callback();
     };
 
     window.loadData = function(renderCallback) {
-        const data = localStorage.getItem('recipeManagerData');
-        if (data) { 
+        const dataStr = localStorage.getItem('recipeManagerData');
+        if (dataStr) { 
             try {
-                parseData(data, false);
+                parseData(dataStr, false);
             } catch(e) { console.error("Parse error", e); }
         } else { 
             window.populateDefaultAllergens(); 
         }
         
         if (renderCallback) renderCallback();
-        updateSyncUI('local');
     };
 
     window.autoLoadOnStartup = async function(renderCallback) {
@@ -133,16 +138,11 @@
             const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
             if (permission === 'granted') {
                 directoryHandle = savedHandle;
-                updateSyncUI('connected');
                 await window.loadFromFolder(renderCallback);
             } else { 
-                // Need to re-request? For autoLoad we assume permission is checked or will fail.
-                // Actually, if permission is 'prompt', we need user gesture.
-                // That's why we have the splash screen now.
                 const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
                 if (newPerm === 'granted') {
                      directoryHandle = savedHandle;
-                     updateSyncUI('connected');
                      await window.loadFromFolder(renderCallback);
                 } else {
                      window.loadData(renderCallback);
@@ -161,12 +161,11 @@
                 const text = await file.text();
                 if (text) { 
                     parseData(text, true); 
-                    updateSyncUI('connected'); 
                     if(renderCallback) renderCallback();
                 }
             } catch (err) { 
                 console.error(err); 
-                updateSyncUI('error'); 
+                window.showSyncAnimation('error'); 
             }
         }
     };
@@ -188,9 +187,25 @@
             };
         }
         
+        if(data.preferences) {
+            if(data.preferences.lang) {
+                localStorage.setItem('recipeManagerLang', data.preferences.lang);
+                if(window.changeLanguage) window.changeLanguage(data.preferences.lang); // This might be circular if not careful, but changeLanguage calls saveData, so be careful. 
+                // Better to just set it:
+                // window.setCurrentLanguage(data.preferences.lang);
+            }
+            if(data.preferences.theme) {
+                localStorage.setItem('appTheme', data.preferences.theme);
+                if(window.setAppTheme) window.setAppTheme(data.preferences.theme);
+            }
+        }
+        
         if (window.allergens.length === 0) window.populateDefaultAllergens();
-        // Don't alert on auto-load
-        if (isFileImport && document.body.classList.contains('app-loaded')) alert(window.t('alert_import_success'));
+        
+        if (isFileImport && document.body.classList.contains('app-loaded')) {
+             window.showSyncAnimation('success');
+             alert(window.t('alert_import_success'));
+        }
     }
 
     window.populateDefaultAllergens = function() {
@@ -224,24 +239,38 @@
         });
     }
 
-    // --- UI Helpers ---
-    function updateSyncUI(status) {
-        const btn = document.getElementById('syncBtn');
-        const textEl = document.getElementById('syncStatusText');
+    // --- UI Helpers for Sync Animation ---
+    window.showSyncAnimation = function(status) {
+        const indicator = document.getElementById('syncIndicator');
+        if (!indicator) return;
         
-        if (textEl) {
-            textEl.textContent = status === 'connected' ? window.t('sync_connected') : (status === 'local' ? window.t('sync_disconnected') : (status === 'syncing' ? '...' : window.t('sync_error')));
+        indicator.classList.remove('sync-hidden', 'sync-spin', 'sync-success', 'sync-error');
+        indicator.style.display = 'flex';
+        
+        if (status === 'syncing') {
+            indicator.innerHTML = '↻';
+            indicator.classList.add('sync-spin');
+            indicator.title = "Saving...";
+        } else if (status === 'success') {
+            indicator.innerHTML = '✓';
+            indicator.classList.add('sync-success');
+            indicator.title = "Saved!";
+            setTimeout(() => {
+                indicator.classList.add('sync-hidden');
+            }, 2000);
+        } else if (status === 'error') {
+            indicator.innerHTML = '⚠';
+            indicator.classList.add('sync-error');
+            indicator.title = "Error Saving";
+        } else {
+            // Local
+            indicator.innerHTML = '💾';
+            indicator.title = "Saved Locally";
+             setTimeout(() => {
+                indicator.classList.add('sync-hidden');
+            }, 2000);
         }
-
-        if (btn) {
-            btn.className = 'sync-btn'; // Reset
-            btn.classList.remove('syncing');
-            if (status === 'connected') btn.classList.add('status-connected');
-            else if (status === 'local') btn.classList.add('status-local');
-            else if (status === 'syncing') btn.classList.add('syncing');
-            else btn.classList.add('status-error');
-        }
-    }
+    };
 
     // --- Export/Import Actions ---
     window.selectSaveLocation = async function(renderCallback) {
@@ -254,7 +283,6 @@
             if (handle) {
                 directoryHandle = handle;
                 await saveDirectoryHandle(handle);
-                updateSyncUI('connected');
                 try {
                     await window.loadFromFolder(renderCallback);
                     alert(window.t('alert_data_loaded'));
@@ -297,7 +325,7 @@
         reader.readAsText(file);
     };
 
-    // Mutators
+    // Mutators (Always Trigger Save)
     window.updateRecipes = function(newRecipes) { window.recipes = newRecipes; window.saveData(); };
     window.updateIngredients = function(newIng) { window.ingredients = newIng; window.saveData(); };
     window.updateAllergens = function(newAlg) { window.allergens = newAlg; window.saveData(); };
