@@ -45,14 +45,16 @@
         { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
     ];
 
-    // --- DB Initialization ---\n    window.initDB = async function() {
+    // --- DB Initialization ---
+    window.initDB = async function() {
         if(db) return db; // Singleton
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = () => reject(request.error);
             request.onsuccess = () => { db = request.result; resolve(db); };
             request.onupgradeneeded = (event) => {
-                const db = event.target.result;\n                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
             };
         });
     };
@@ -64,7 +66,8 @@
             await window.initDB();
             const handle = await getDirectoryHandle();
             return !!handle;
-        } catch (e) {\n            console.error(e);
+        } catch (e) {
+            console.error(e);
             return false;
         }
     };
@@ -72,7 +75,6 @@
     // --- Persistence Operations ---
 
     window.saveData = function(callback) {
-        // Ensure language is saved in data object too, though it's mainly in localStorage
         const lang = localStorage.getItem('recipeManagerLang') || 'en';
         const theme = localStorage.getItem('appTheme') || 'default';
         
@@ -88,10 +90,8 @@
             preferences: { lang: lang, theme: theme }
         };
         
-        // LocalStorage Backup
         localStorage.setItem('recipeManagerData', JSON.stringify(data));
 
-        // File System Write
         if (directoryHandle) {
             (async () => {
                 try {
@@ -107,7 +107,6 @@
                 }
             })();
         } else {
-            // Even if local only, show success briefly
              window.showSyncAnimation('local');
         }
         
@@ -119,7 +118,7 @@
         if (dataStr) { 
             try {
                 parseData(dataStr, false);
-            } catch(e) { console.error(\"Parse error\", e); }
+            } catch(e) { console.error("Parse error", e); }
         } else { 
             window.populateDefaultAllergens(); 
         }
@@ -136,7 +135,8 @@
             
             const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
             if (permission === 'granted') {
-                directoryHandle = savedHandle;\n                await window.loadFromFolder(renderCallback);
+                directoryHandle = savedHandle;
+                await window.loadFromFolder(renderCallback);
             } else { 
                 const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
                 if (newPerm === 'granted') {
@@ -176,14 +176,15 @@
         window.currentMenu = data.currentMenu || {};
         window.menuHistory = data.menuHistory || [];
         window.savedTemplates = data.savedTemplates || [];
-        window.printTemplate = data.printTemplate || \"<h1>{title}</h1><p>{recipes}<br></p>\";
+        window.printTemplate = data.printTemplate || "<h1>{title}</h1><p>{recipes}<br></p>";
         
         if (data.currentStyleSettings) {
             window.currentStyleSettings = {
                 ...window.currentStyleSettings,
                 ...data.currentStyleSettings,
                 slotColors: { ...window.currentStyleSettings.slotColors, ...(data.currentStyleSettings.slotColors || {}) }
-            };\n        }
+            };
+        }
         
         if(data.preferences) {
             if(data.preferences.lang) {
@@ -212,7 +213,6 @@
         });
     };
 
-    // --- Handle Management ---
     async function getDirectoryHandle() {
         if (!db) await window.initDB();
         return new Promise((resolve, reject) => {
@@ -235,7 +235,6 @@
         });
     }
 
-    // --- UI Helpers for Sync Animation ---
     window.showSyncAnimation = function(status) {
         const indicator = document.getElementById('syncIndicator');
         if (!indicator) return;
@@ -246,29 +245,27 @@
         if (status === 'syncing') {
             indicator.innerHTML = '↻';
             indicator.classList.add('sync-spin');
-            indicator.title = \"Saving...\";
+            indicator.title = "Saving...";
         } else if (status === 'success') {
             indicator.innerHTML = '✓';
             indicator.classList.add('sync-success');
-            indicator.title = \"Saved!\";
+            indicator.title = "Saved!";
             setTimeout(() => {
                 indicator.classList.add('sync-hidden');
             }, 2000);
         } else if (status === 'error') {
             indicator.innerHTML = '⚠';
             indicator.classList.add('sync-error');
-            indicator.title = \"Error Saving\";
+            indicator.title = "Error Saving";
         } else {
-            // Local
             indicator.innerHTML = '💾';
-            indicator.title = \"Saved Locally\";
+            indicator.title = "Saved Locally";
              setTimeout(() => {
                 indicator.classList.add('sync-hidden');
             }, 2000);
         }
     };
 
-    // --- Export/Import Actions ---
     window.selectSaveLocation = async function(renderCallback) {
         if (!isFileSystemSupported) {
             alert(window.t('alert_file_api_unsupported'));
@@ -288,7 +285,8 @@
                 }
             }
         } catch (err) { console.error(err); }
-    };\n
+    };
+
     window.exportDataFile = function() {
         const data = { 
             recipes: window.recipes, 
@@ -299,7 +297,8 @@
             savedTemplates: window.savedTemplates, 
             printTemplate: window.printTemplate,
             currentStyleSettings: window.currentStyleSettings 
-        };\n        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -316,10 +315,10 @@
         reader.onload = function(e) {
             parseData(e.target.result, true);
             if(renderCallback) renderCallback();
-        };\n        reader.readAsText(file);
+        };
+        reader.readAsText(file);
     };
 
-    // Mutators (Always Trigger Save)
     window.updateRecipes = function(newRecipes) { window.recipes = newRecipes; window.saveData(); };
     window.updateIngredients = function(newIng) { window.ingredients = newIng; window.saveData(); };
     window.updateAllergens = function(newAlg) { window.allergens = newAlg; window.saveData(); };
@@ -327,7 +326,8 @@
         if (!window.currentMenu[date]) window.currentMenu[date] = {};
         window.currentMenu[date][slotId] = data;
         window.saveData();
-    };\n    window.updateStyleSettings = function(settings) {
+    };
+    window.updateStyleSettings = function(settings) {
         window.currentStyleSettings = settings;
         window.saveData();
     };
