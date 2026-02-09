@@ -1,4 +1,4 @@
-// Recipe Manager Application - UI Overhaul (v2.2)
+// Recipe Manager Application - UI Overhaul (v2.3)
 
 let recipes = [];
 let ingredients = [];
@@ -733,7 +733,30 @@ function ensureDefaultSlots(dateStr) { if (!currentMenu[dateStr]) currentMenu[da
 function getRecipeAllergens(recipe) { const all = new Set(); if (recipe.ingredients) { recipe.ingredients.forEach(ing => { const fullIng = ingredients.find(i => i.id === ing.id); if (fullIng && fullIng.allergens) { fullIng.allergens.forEach(aid => all.add(aid)); } }); } if (recipe.manualAllergens) { recipe.manualAllergens.forEach(ma => all.add(ma.id)); } const result = []; all.forEach(id => { const alg = allergens.find(a => a.id === id); if (alg) result.push(alg); }); return result; }
 function renderTags(containerId, items, removeCallback) { const container = document.getElementById(containerId); container.innerHTML = ''; items.forEach(item => { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item.name; const btn = document.createElement('button'); btn.innerHTML = '&times;'; btn.onclick = () => removeCallback(item.id); tag.appendChild(btn); container.appendChild(tag); }); }
 function populateDefaultAllergens() { PREDEFINED_ALLERGENS.forEach(def => { if (!allergens.find(a => a.id === def.id)) { allergens.push({ id: def.id, name: def.name, color: def.color, isSystem: true }); } }); saveData(); renderAllergens(); }
-function updateSyncStatus(status) { if (!status) { if (directoryHandle) status = 'connected'; else status = 'local'; } const el = document.getElementById('syncStatus'); if (!el) return; el.className = 'sync-status ' + (status === 'connected' ? 'connected' : 'disconnected'); el.textContent = status === 'connected' ? t('sync_connected') : t('sync_disconnected'); }
+
+// UPDATED SYNC STATUS FUNCTION
+function updateSyncStatus(status) { 
+    if (!status) { 
+        if (directoryHandle) status = 'connected'; 
+        else status = 'local'; 
+    }
+    
+    // Update Dropdown Text
+    const textEl = document.getElementById('syncStatusText');
+    if (textEl) {
+        textEl.textContent = status === 'connected' ? t('sync_connected') : (status === 'local' ? t('sync_disconnected') : t('sync_error'));
+    }
+
+    // Update Button Ring Color
+    const btn = document.getElementById('syncBtn');
+    if (btn) {
+        btn.classList.remove('status-connected', 'status-local', 'status-error');
+        if (status === 'connected') btn.classList.add('status-connected');
+        else if (status === 'local') btn.classList.add('status-local');
+        else btn.classList.add('status-error');
+    }
+}
+
 function changeLanguage(lang) { currentLanguage = lang; localStorage.setItem('recipeManagerLang', lang); saveData(); applyTranslations(); }
 function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); }); updateSyncStatus(); }
 function updatePrintDatePicker() { const input = document.getElementById('printStartDate'); if (input) { const weekStart = getWeekStart(currentDate); input.value = weekStart.toISOString().split('T')[0]; } }
