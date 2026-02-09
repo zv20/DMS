@@ -33,8 +33,7 @@
       <div class="splash-content">
           <span class="splash-logo">🍽️</span>
           <h1 class="splash-title">KitchenPro</h1>
-          <p class="splash-subtitle">Your personal recipe manager & menu planner</p>
-          <div id="splashActions" class="splash-actions">
+          <p class="splash-subtitle">Your personal recipe manager & menu planner</p>\n          <div id="splashActions" class="splash-actions">
               <div class="loader-spinner"></div>
           </div>
       </div>
@@ -244,7 +243,6 @@
 
                   <div class="settings-row">
                       <label data-i18n="nav_template_builder">Menu Template</label>
-                      <!-- UPDATED: Use window.navigateTo directly, no hidden button -->
                       <button class="btn btn-secondary" onclick="window.navigateTo('style-editor')">
                           Open Template Builder
                       </button>
@@ -271,8 +269,7 @@
                       </button>
                       <button class="btn btn-secondary" onclick="manualLoad()">
                           📂 <span data-i18n="sync_load">Reload Data</span>
-                      </button>
-                      <button class="btn btn-secondary" onclick="exportData()">
+                      </button>\n                      <button class="btn btn-secondary" onclick="exportData()">
                           ⬇ <span data-i18n="sync_export">Export JSON</span>
                       </button>
                       <label class="btn btn-secondary file-label" for="importInput">
@@ -285,11 +282,10 @@
           </div>
       </div>
 
-      <!-- STYLE EDITOR PAGE (Kept as separate page but accessible from Settings) -->
+      <!-- STYLE EDITOR PAGE -->
       <div id="style-editor" class="page">
         <div class="page-header">
           <div style="display:flex; align-items:center; gap:10px;">
-              <!-- UPDATED: Use window.navigateTo directly -->
               <button class="btn btn-secondary btn-small" onclick="window.navigateTo('settings')">← Back</button>
               <h1 data-i18n="nav_template_builder">Template Builder</h1>
           </div>
@@ -299,22 +295,40 @@
           </div>
         </div>
 
-        <div class="builder-container" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; height: calc(100vh - 150px);">
-             <!-- Sidebar content placeholder (same as before) -->
+        <div class="builder-container" style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: calc(100vh - 150px);">
+             <!-- Sidebar content -->
              <div class="builder-sidebar" style="background: var(--color-surface); padding: 20px; border-right: 1px solid var(--color-border); overflow-y: auto;">
-                  <div class="control-group"><h3 data-i18n="builder_page_settings">1. Page Settings</h3><label data-i18n="builder_default_font">Default Font</label><select id="styleFont" class="form-control" style="width:100%; margin-bottom:10px;"><option value="Segoe UI">Modern (Segoe UI)</option><option value="Georgia">Serif (Georgia)</option><option value="Courier New">Monospace</option><option value="Comic Sans MS">Playful</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option></select><label data-i18n="builder_page_bg">Page Background Color</label><input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px; margin-bottom:10px;"><label data-i18n="builder_bg_image">Background Image</label><div style="display:flex; gap:5px;"><input type="file" id="styleBgImageInput" accept="image/*" style="width:100%;"><button id="styleBgRemoveBtn" class="btn btn-small btn-danger" style="display:none;">✖</button></div></div>
-                  <div class="control-group"><h3 data-i18n="builder_day_cards">2. Day Cards (Mon-Fri)</h3><label data-i18n="builder_header_bg">Header Background</label><input type="color" id="styleHeaderBg" class="form-control" value="#ffffff" style="width:100%; height:40px;"><label data-i18n="builder_header_text">Header Text Color</label><input type="color" id="styleHeaderText" class="form-control" value="#21808d" style="width:100%; height:40px;"><label data-i18n="builder_card_bg">Card Background</label><input type="color" id="styleCardBg" class="form-control" value="#ffffff" style="width:100%; height:40px;"><label data-i18n="builder_border_color">Border Color</label><input type="color" id="styleBorderColor" class="form-control" value="#333333" style="width:100%; height:40px;"><label data-i18n="builder_border_width">Border Width</label><input type="range" id="styleBorderWidth" min="0" max="5" value="1" style="width:100%;"></div>
-                  <div class="control-group"><h3 data-i18n="builder_menu_items">3. Menu Items (1-4)</h3><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot1">Slot 1 (Soup)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot1Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot1Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot2">Slot 2 (Main)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot2Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot2Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><strong data-i18n="builder_slot3">Slot 3 (Dessert)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot3Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot3Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div><div class="slot-config-item"><strong data-i18n="builder_slot4">Slot 4 (Other)</strong><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"><div><label style="font-size:0.8em;" data-i18n="label_color">Color</label><input type="color" id="styleSlot4Color" value="#000000" style="width:100%; height:30px;"></div><div><label style="font-size:0.8em;" data-i18n="builder_font">Font</label><select id="styleSlot4Font" style="width:100%; height:30px;"><option value="">Default</option><option value="Segoe UI">Segoe UI</option><option value="Georgia">Georgia</option><option value="Courier New">Courier</option><option value="Arial">Arial</option><option value="Impact">Impact</option></select></div></div></div></div>
+                  <div class="control-group">
+                      <h3 data-i18n="builder_html_template">HTML Template</h3>
+                      <p style="font-size:0.8em; color:var(--color-text-secondary); margin-bottom:10px;">Use {title}, {date}, {recipes} as placeholders.</p>
+                      <div id="templateEditor"></div>
+                  </div>
+                  
+                  <div class="control-group">
+                      <h3 data-i18n="builder_page_settings">Page Styles</h3>
+                      <label data-i18n="builder_default_font">Font</label>
+                      <select id="styleFont" class="form-control" style="width:100%; margin-bottom:10px;">
+                          <option value="Segoe UI">Modern</option>
+                          <option value="Georgia">Serif</option>
+                          <option value="Courier New">Monospace</option>
+                      </select>
+                      <label data-i18n="builder_page_bg">Background</label>
+                      <input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px; margin-bottom:10px;">
+                  </div>
              </div>
-             <!-- Live Preview placeholder (same as before) -->
-             <div class="builder-preview" style="background: var(--color-background); padding: 20px; overflow-y: auto; display: flex; justify-content: center;"><div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.85); transform-origin: top center; background-size: cover; background-position: center;"><h1 style="text-align:center; color:#21808d; font-family:inherit;" data-i18n="builder_preview_title">MENU PREVIEW</h1><div id="livePreviewGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;"><div class="preview-day-card" style="border:1px solid #333; padding:10px;"><h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Monday</h3><div class="preview-slot slot1"><strong>1. Soup:</strong> Chicken Soup</div><div class="preview-slot slot2"><strong>2. Main:</strong> Roast Beef</div><div class="preview-slot slot3"><strong>3. Dessert:</strong> Cake</div><div class="preview-slot slot4"><strong>4. Other:</strong> Bread</div></div><div class="preview-day-card" style="border:1px solid #333; padding:10px;"><h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Tuesday</h3><div class="preview-slot slot1"><strong>1. Soup:</strong> Lentil Soup</div><div class="preview-slot slot2"><strong>2. Main:</strong> Fish & Chips</div><div class="preview-slot slot3"><strong>3. Dessert:</strong> Fruit</div><div class="preview-slot slot4"><strong>4. Other:</strong> Salad</div></div></div></div></div>
+             <!-- Live Preview -->
+             <div class="builder-preview" style="background: var(--color-background); padding: 20px; overflow-y: auto; display: flex; justify-content: center;">
+                 <div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.85); transform-origin: top center;">
+                     <div id="templatePreviewContent"></div>
+                 </div>
+             </div>
         </div>
       </div>
 
     </main>
   </div>
 
-  <!-- Modals (Same as before) -->
+  <!-- Modals -->
   <div id="recipeModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeRecipeModal()">&times;</span>
@@ -364,8 +378,7 @@
         </div>
         <div class="modal-actions">
            <button type="button" class="btn btn-secondary" onclick="closeRecipeModal()" data-i18n="btn_cancel">Cancel</button>
-           <button type="submit" class="btn btn-primary" data-i18n="btn_save">Save</button>
-        </div>
+           <button type="submit" class="btn btn-primary" data-i18n="btn_save">Save</button>\n        </div>
       </form>
     </div>
   </div>
