@@ -50,7 +50,6 @@
         window.renderAllergens();
         window.renderCalendar();
         window.renderMenuHistory();
-        updatePrintDatePicker();
     };
 
     window.updateSelects = function() {
@@ -58,8 +57,287 @@
         const allergenSelect = document.getElementById('allergenSelect');
         const ingAllSelect = document.getElementById('ingredientAllergenSelect');
         
-        if(ingredientSelect) ingredientSelect.innerHTML = `<option value=\"\">${window.t('select_ingredient')}</option>` + window.ingredients.map(i => `<option value=\"${i.id}\">${i.name}</option>`).join('');
-        if(allergenSelect) allergenSelect.innerHTML = `<option value=\"\">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value=\"${a.id}\">${window.getAllergenName(a)}</option>`).join('');
-        if(ingAllSelect) ingAllSelect.innerHTML = `<option value=\"\">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value=\"${a.id}\">${window.getAllergenName(a)}</option>`).join('');
-    };\n
-    window.renderRecipes = function() {\n        const tbody = document.getElementById('recipeList');\n        if (!tbody) return;\n        tbody.innerHTML = '';\n        \n        const search = document.getElementById('recipeSearch');\n        const catFilter = document.getElementById('recipeCategoryFilter');\n        const term = search ? search.value.toLowerCase() : '';\n        const cat = catFilter ? catFilter.value : '';\n        \n        if (window.recipes.length === 0) { \n            tbody.innerHTML = `<tr><td colspan=\"5\" style=\"text-align:center; padding:20px;\">${window.t('empty_recipes')}</td></tr>`; \n            return; \n        }\n        \n        window.recipes.forEach(recipe => {\n            if (term && !recipe.name.toLowerCase().includes(term)) return;\n            if (cat && recipe.category !== cat) return;\n            \n            const tr = document.createElement('tr');\n            const recipeAllergens = window.getRecipeAllergens(recipe);\n            let allergensHtml = '-';\n            if (recipeAllergens.length > 0) { \n                allergensHtml = `<div class=\"tag-container\" style=\"gap:5px;\">${recipeAllergens.map(a => `<span class=\"tag allergen\" style=\"border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;\">${window.getAllergenName(a)}</span>`).join('')}</div>`; \n            }\n\n            const catName = window.t('category_' + (recipe.category || 'other'));\n\n            tr.innerHTML = `\n                <td><strong>${recipe.name}</strong></td>\n                <td>${getCategoryIcon(recipe.category || 'other')} ${catName}</td>\n                <td>${recipe.portionSize || '-'}</td>\n                <td>${allergensHtml}</td>\n                <td>\n                    <button class=\"icon-btn edit\" onclick=\"window.openRecipeModal('${recipe.id}')\" title=\"${window.t('btn_edit')}\">✏️</button>\n                    <button class=\"icon-btn delete\" onclick=\"window.deleteRecipe('${recipe.id}')\" title=\"${window.t('btn_delete')}\">🗑️</button>\n                </td>\n            `;\n            tbody.appendChild(tr);\n        });\n    };\n\n    window.renderIngredients = function() {\n        const tbody = document.getElementById('ingredientList');\n        if (!tbody) return;\n        tbody.innerHTML = '';\n        \n        if (window.ingredients.length === 0) { \n            tbody.innerHTML = `<tr><td colspan=\"3\" style=\"text-align:center; padding:20px;\">${window.t('empty_ingredients')}</td></tr>`; \n            return; \n        }\n        \n        window.ingredients.forEach(ing => {\n            const tr = document.createElement('tr');\n            let tags = '-';\n            if (ing.allergens && ing.allergens.length) { \n                tags = '<div class=\"tag-container\" style=\"gap:5px;\">' + ing.allergens.map(aid => { \n                    const a = window.allergens.find(x => x.id === aid); \n                    return a ? `<span class=\"tag allergen\" style=\"border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;\">${window.getAllergenName(a)}</span>` : ''; \n                }).join('') + '</div>'; \n            }\n\n            tr.innerHTML = `\n                <td><strong>${ing.name}</strong></td>\n                <td>${tags}</td>\n                <td>\n                    <button class=\"icon-btn edit\" onclick=\"window.openIngredientModal('${ing.id}')\" title=\"${window.t('btn_edit')}\">✏️</button>\n                    <button class=\"icon-btn delete\" onclick=\"window.deleteIngredient('${ing.id}')\" title=\"${window.t('btn_delete')}\">🗑️</button>\n                </td>\n            `;\n            tbody.appendChild(tr);\n        });\n    };\n\n    window.renderAllergens = function() {\n        const tbody = document.getElementById('allergenList');\n        if (!tbody) return;\n        tbody.innerHTML = '';\n        \n        if (window.allergens.length === 0) { \n            tbody.innerHTML = `<tr><td colspan=\"3\" style=\"text-align:center; padding:20px;\">${window.t('empty_allergens')}</td></tr>`; \n            return; \n        }\n        \n        window.allergens.forEach(al => {\n            const tr = document.createElement('tr');\n            tr.innerHTML = `\n                <td><strong>${window.getAllergenName(al)}</strong></td>\n                <td><div style=\"width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;\"></div></td>\n                <td>\n                    <button class=\"icon-btn edit\" onclick=\"window.openAllergenModal('${al.id}')\" title=\"${window.t('btn_edit')}\">✏️</button>\n                    <button class=\"icon-btn delete\" onclick=\"window.deleteAllergen('${al.id}')\" title=\"${window.t('btn_delete')}\">🗑️</button>\n                </td>\n            `;\n            tbody.appendChild(tr);\n        });\n    };\n\n    window.renderCalendar = function(currentDate) {\n        if (!currentDate) currentDate = new Date(); \n\n        const calendarEl = document.getElementById('calendar');\n        const currentMonthEl = document.getElementById('currentMonth');\n        if (!calendarEl) return;\n        calendarEl.innerHTML = '';\n        \n        if (currentMonthEl) {\n            const options = { month: 'long', year: 'numeric' };\n            if (viewMode === 'week') {\n                const weekStart = window.getWeekStart(currentDate);\n                const weekEnd = new Date(weekStart);\n                weekEnd.setDate(weekStart.getDate() + 6);\n                if (weekStart.getMonth() === weekEnd.getMonth()) { \n                    currentMonthEl.textContent = weekStart.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', options); \n                } else { \n                    const m1 = weekStart.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { month: 'short' }); \n                    const m2 = weekEnd.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { month: 'short', year: 'numeric' }); \n                    currentMonthEl.textContent = `${m1} - ${m2}`; \n                }\n            } else { \n                currentMonthEl.textContent = currentDate.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', options); \n            }\n        }\n\n        if (viewMode === 'week') {\n            calendarEl.className = 'week-view';\n            const weekStart = window.getWeekStart(currentDate);\n            const weekDaysContainer = document.createElement('div');\n            weekDaysContainer.className = 'week-days';\n            weekDaysContainer.style.display = 'grid';\n            weekDaysContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';\n            weekDaysContainer.style.gap = '10px';\n            \n            const DEFAULT_SLOTS_CONFIG = [\n                { id: 'slot1', type: 'soup', label: '1' },\n                { id: 'slot2', type: 'main', label: '2' },\n                { id: 'slot3', type: 'dessert', label: '3' },\n                { id: 'slot4', type: 'other', label: '4' }\n            ];\n\n            for (let i = 0; i < 5; i++) {\n                const day = new Date(weekStart);\n                day.setDate(weekStart.getDate() + i);\n                const dateStr = day.toISOString().split('T')[0];\n                \n                if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {};\n                DEFAULT_SLOTS_CONFIG.forEach(conf => { if (!window.currentMenu[dateStr][conf.id]) { window.currentMenu[dateStr][conf.id] = { type: conf.type, recipe: null }; } });\n\n                const dayColumn = document.createElement('div');\n                dayColumn.className = 'day-column';\n                dayColumn.innerHTML = `<div class=\"day-header\" style=\"text-align:center;font-weight:bold;color:var(--color-primary);margin-bottom:10px;\">${day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>`;\n                \n                DEFAULT_SLOTS_CONFIG.forEach((conf, index) => { \n                    const slotId = conf.id; \n                    const slotData = window.currentMenu[dateStr][slotId]; \n                    const slotEl = renderSlot(dateStr, slotId, slotData, index + 1); \n                    dayColumn.appendChild(slotEl); \n                });\n                weekDaysContainer.appendChild(dayColumn);\n            }\n            calendarEl.appendChild(weekDaysContainer);\n        } else {\n            calendarEl.className = 'calendar';\n        }\n    };\n\n    function renderSlot(dateStr, slotId, slotData, indexLabel) {\n        const slotEl = document.createElement('div');\n        slotEl.className = 'menu-slot';\n        slotEl.dataset.date = dateStr;\n        slotEl.dataset.slotId = slotId;\n        \n        const headerRow = document.createElement('div');\n        headerRow.style.display = 'flex';\n        headerRow.style.justifyContent = 'space-between';\n        headerRow.style.marginBottom = '4px';\n        headerRow.innerHTML = `<span style=\"font-size:0.85rem;font-weight:bold;color:#7f8c8d;\">${indexLabel}. ${window.t('slot_' + slotData.type)}</span>`;\n        \n        const allergenDotBar = document.createElement('div');\n        allergenDotBar.className = 'slot-allergen-dots';\n        allergenDotBar.style.display = 'flex';\n        allergenDotBar.style.gap = '2px';\n        headerRow.appendChild(allergenDotBar);\n        \n        slotEl.appendChild(headerRow);\n        \n        const select = document.createElement('select');\n        select.style.width = '100%';\n        select.innerHTML = `<option value=\"\">${window.t('select_recipe')}</option>`;\n        \n        const relevantRecipes = window.recipes.filter(r => { \n            if (slotData.type === 'other') return true; \n            return r.category === slotData.type; \n        });\n        \n        relevantRecipes.forEach(r => { \n            const option = document.createElement('option'); \n            option.value = r.id; \n            option.textContent = r.name; \n            if (slotData && slotData.recipe === r.id) option.selected = true; \n            select.appendChild(option); \n        });\n\n        const updateDots = (recipeId) => {\n            allergenDotBar.innerHTML = '';\n            if (!recipeId) return;\n            const recipe = window.recipes.find(r => r.id === recipeId);\n            const allergens = window.getRecipeAllergens(recipe);\n            allergens.forEach(a => {\n                const dot = document.createElement('div');\n                dot.style.width = '8px';\n                dot.style.height = '8px';\n                dot.style.borderRadius = '50%';\n                dot.style.backgroundColor = a.color;\n                dot.title = window.getAllergenName(a);\n                allergenDotBar.appendChild(dot);\n            });\n        };\n\n        updateDots(slotData.recipe);\n        \n        select.addEventListener('change', () => { \n            const recipeId = select.value || null;\n            if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {}; \n            if (!window.currentMenu[dateStr][slotId]) window.currentMenu[dateStr][slotId] = { type: slotData.type, recipe: null }; \n            window.currentMenu[dateStr][slotId].recipe = recipeId;\n            updateDots(recipeId);\n            window.saveData(); \n        });\n        \n        slotEl.appendChild(select);\n        return slotEl;\n    }\n\n    window.renderMenuHistory = function() {\n        const list = document.getElementById('menuHistory');\n        if (!list) return;\n        list.innerHTML = '';\n        if (!window.menuHistory.length) { list.innerHTML = `<div class=\"empty-state\">${window.t('empty_menus')}</div>`; return; }\n        window.menuHistory.forEach(m => {\n            const item = document.createElement('div');\n            item.className = 'menu-history-item';\n            item.innerHTML = `\n                <div class=\"menu-history-name\">${m.name}</div>\n                <div class=\"menu-history-date\">${new Date(m.date).toLocaleString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US')}</div>\n                <div class=\"menu-history-actions\">\n                    <button onclick=\"window.loadSavedMenu('${m.id}')\">${window.t('btn_load')}</button>\n                    <button onclick=\"window.deleteSavedMenu('${m.id}')\">${window.t('btn_delete')}</button>\n                </div>`;\n            list.appendChild(item);\n        });\n    };\n\n    function updatePrintDatePicker() { }\n\n    window.renderTags = function(containerId, items, removeCallback) {\n        const container = document.getElementById(containerId);\n        if (!container) return;\n        container.innerHTML = '';\n        items.forEach(item => {\n            const tag = document.createElement('span');\n            tag.className = 'tag';\n            tag.textContent = item.name;\n            const btn = document.createElement('button');\n            btn.innerHTML = '&times;';\n            btn.onclick = () => removeCallback(item.id);\n            tag.appendChild(btn);\n            container.appendChild(tag);\n        });\n    };\n})(window);
+        if(ingredientSelect) ingredientSelect.innerHTML = `<option value="">${window.t('select_ingredient')}</option>` + window.ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+        if(allergenSelect) allergenSelect.innerHTML = `<option value="">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+        if(ingAllSelect) ingAllSelect.innerHTML = `<option value="">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+    };
+
+    window.renderRecipes = function() {
+        const tbody = document.getElementById('recipeList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        const search = document.getElementById('recipeSearch');
+        const catFilter = document.getElementById('recipeCategoryFilter');
+        const term = search ? search.value.toLowerCase() : '';
+        const cat = catFilter ? catFilter.value : '';
+        
+        if (window.recipes.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${window.t('empty_recipes')}</td></tr>`; 
+            return; 
+        }
+        
+        window.recipes.forEach(recipe => {
+            if (term && !recipe.name.toLowerCase().includes(term)) return;
+            if (cat && recipe.category !== cat) return;
+            
+            const tr = document.createElement('tr');
+            const recipeAllergens = window.getRecipeAllergens(recipe);
+            let allergensHtml = '-';
+            if (recipeAllergens.length > 0) { 
+                allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>`).join('')}</div>`; 
+            }
+
+            const catName = window.t('category_' + (recipe.category || 'other'));
+
+            tr.innerHTML = `
+                <td><strong>${recipe.name}</strong></td>
+                <td>${getCategoryIcon(recipe.category || 'other')} ${catName}</td>
+                <td>${recipe.portionSize || '-'}</td>
+                <td>${allergensHtml}</td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openRecipeModal('${recipe.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteRecipe('${recipe.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderIngredients = function() {
+        const tbody = document.getElementById('ingredientList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (window.ingredients.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_ingredients')}</td></tr>`; 
+            return; 
+        }
+        
+        window.ingredients.forEach(ing => {
+            const tr = document.createElement('tr');
+            let tags = '-';
+            if (ing.allergens && ing.allergens.length) { 
+                tags = '<div class="tag-container" style="gap:5px;">' + ing.allergens.map(aid => { 
+                    const a = window.allergens.find(x => x.id === aid); 
+                    return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>` : ''; 
+                }).join('') + '</div>'; 
+            }
+
+            tr.innerHTML = `
+                <td><strong>${ing.name}</strong></td>
+                <td>${tags}</td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openIngredientModal('${ing.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteIngredient('${ing.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderAllergens = function() {
+        const tbody = document.getElementById('allergenList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (window.allergens.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_allergens')}</td></tr>`; 
+            return; 
+        }
+        
+        window.allergens.forEach(al => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${window.getAllergenName(al)}</strong></td>
+                <td><div style="width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;"></div></td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openAllergenModal('${al.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteAllergen('${al.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderCalendar = function(currentDate) {
+        if (!currentDate) currentDate = new Date(); 
+
+        const calendarEl = document.getElementById('calendar');
+        const currentMonthEl = document.getElementById('currentMonth');
+        if (!calendarEl) return;
+        calendarEl.innerHTML = '';
+        
+        if (currentMonthEl) {
+            const options = { month: 'long', year: 'numeric' };
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            if (viewMode === 'week') {
+                const weekStart = window.getWeekStart(currentDate);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                if (weekStart.getMonth() === weekEnd.getMonth()) { 
+                    currentMonthEl.textContent = weekStart.toLocaleDateString(lang, options); 
+                } else { 
+                    const m1 = weekStart.toLocaleDateString(lang, { month: 'short' }); 
+                    const m2 = weekEnd.toLocaleDateString(lang, { month: 'short', year: 'numeric' }); 
+                    currentMonthEl.textContent = `${m1} - ${m2}`; 
+                }
+            } else { 
+                currentMonthEl.textContent = currentDate.toLocaleDateString(lang, options); 
+            }
+        }
+
+        if (viewMode === 'week') {
+            calendarEl.className = 'week-view';
+            const weekStart = window.getWeekStart(currentDate);
+            const weekDaysContainer = document.createElement('div');
+            weekDaysContainer.className = 'week-days';
+            weekDaysContainer.style.display = 'grid';
+            weekDaysContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+            weekDaysContainer.style.gap = '10px';
+            
+            const DEFAULT_SLOTS_CONFIG = [
+                { id: 'slot1', type: 'soup', label: '1' },
+                { id: 'slot2', type: 'main', label: '2' },
+                { id: 'slot3', type: 'dessert', label: '3' },
+                { id: 'slot4', type: 'other', label: '4' }
+            ];
+
+            for (let i = 0; i < 5; i++) {
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
+                const dateStr = day.toISOString().split('T')[0];
+                
+                if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {};
+                DEFAULT_SLOTS_CONFIG.forEach(conf => { 
+                    if (!window.currentMenu[dateStr][conf.id]) { 
+                        window.currentMenu[dateStr][conf.id] = { type: conf.type, recipe: null }; 
+                    } 
+                });
+
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'day-column';
+                const dayLang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                dayColumn.innerHTML = `<div class="day-header" style="text-align:center;font-weight:bold;color:var(--color-primary);margin-bottom:10px;">${day.toLocaleDateString(dayLang, { weekday: 'short', month: 'short', day: 'numeric' })}</div>`;
+                
+                DEFAULT_SLOTS_CONFIG.forEach((conf, index) => { 
+                    const slotId = conf.id; 
+                    const slotData = window.currentMenu[dateStr][slotId]; 
+                    const slotEl = renderSlot(dateStr, slotId, slotData, index + 1); 
+                    dayColumn.appendChild(slotEl); 
+                });
+                weekDaysContainer.appendChild(dayColumn);
+            }
+            calendarEl.appendChild(weekDaysContainer);
+        } else {
+            calendarEl.className = 'calendar';
+        }
+    };
+
+    function renderSlot(dateStr, slotId, slotData, indexLabel) {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'menu-slot';
+        slotEl.dataset.date = dateStr;
+        slotEl.dataset.slotId = slotId;
+        
+        const headerRow = document.createElement('div');
+        headerRow.style.display = 'flex';
+        headerRow.style.justifyContent = 'space-between';
+        headerRow.style.marginBottom = '4px';
+        headerRow.innerHTML = `<span style="font-size:0.85rem;font-weight:bold;color:#7f8c8d;">${indexLabel}. ${window.t('slot_' + slotData.type)}</span>`;
+        
+        const allergenDotBar = document.createElement('div');
+        allergenDotBar.className = 'slot-allergen-dots';
+        allergenDotBar.style.display = 'flex';
+        allergenDotBar.style.gap = '2px';
+        headerRow.appendChild(allergenDotBar);
+        
+        slotEl.appendChild(headerRow);
+        
+        const select = document.createElement('select');
+        select.style.width = '100%';
+        select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
+        
+        const relevantRecipes = window.recipes.filter(r => { 
+            if (slotData.type === 'other') return true; 
+            return r.category === slotData.type; 
+        });
+        
+        relevantRecipes.forEach(r => { 
+            const option = document.createElement('option'); 
+            option.value = r.id; 
+            option.textContent = r.name; 
+            if (slotData && slotData.recipe === r.id) option.selected = true; 
+            select.appendChild(option); 
+        });
+
+        const updateDots = (recipeId) => {
+            allergenDotBar.innerHTML = '';
+            if (!recipeId) return;
+            const recipe = window.recipes.find(r => r.id === recipeId);
+            const allergens = window.getRecipeAllergens(recipe);
+            allergens.forEach(a => {
+                const dot = document.createElement('div');
+                dot.style.width = '8px';
+                dot.style.height = '8px';
+                dot.style.borderRadius = '50%';
+                dot.style.backgroundColor = a.color;
+                dot.title = window.getAllergenName(a);
+                allergenDotBar.appendChild(dot);
+            });
+        };
+
+        updateDots(slotData.recipe);
+        
+        select.addEventListener('change', () => { 
+            const recipeId = select.value || null;
+            if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {}; 
+            if (!window.currentMenu[dateStr][slotId]) window.currentMenu[dateStr][slotId] = { type: slotData.type, recipe: null }; 
+            window.currentMenu[dateStr][slotId].recipe = recipeId;
+            updateDots(recipeId);
+            window.saveData(); 
+        });
+        
+        slotEl.appendChild(select);
+        return slotEl;
+    }
+
+    window.renderMenuHistory = function() {
+        const list = document.getElementById('menuHistory');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!window.menuHistory.length) { 
+            list.innerHTML = `<div class="empty-state">${window.t('empty_menus')}</div>`; 
+            return; 
+        }
+        window.menuHistory.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'menu-history-item';
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            item.innerHTML = `
+                <div class="menu-history-name">${m.name}</div>
+                <div class="menu-history-date">${new Date(m.date).toLocaleString(lang)}</div>
+                <div class="menu-history-actions">
+                    <button onclick="window.loadSavedMenu('${m.id}')">${window.t('btn_load')}</button>
+                    <button onclick="window.deleteSavedMenu('${m.id}')">${window.t('btn_delete')}</button>
+                </div>`;
+            list.appendChild(item);
+        });
+    };
+
+    window.renderTags = function(containerId, items, removeCallback) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        items.forEach(item => {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = item.name;
+            const btn = document.createElement('button');
+            btn.innerHTML = '&times;';
+            btn.onclick = () => removeCallback(item.id);
+            tag.appendChild(btn);
+            container.appendChild(tag);
+        });
+    };
+})(window);
