@@ -46,6 +46,7 @@
 
     // --- DB Initialization ---
     window.initDB = async function() {
+        if(db) return db; // Singleton
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = () => reject(request.error);
@@ -55,6 +56,19 @@
                 if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
             };
         });
+    };
+
+    // --- Helper to check if handle exists (for splash screen) ---
+    window.checkSavedHandle = async function() {
+        try {
+            if (!isFileSystemSupported) return false;
+            await window.initDB();
+            const handle = await getDirectoryHandle();
+            return !!handle;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     };
 
     // --- Persistence Operations ---
@@ -122,7 +136,17 @@
                 updateSyncUI('connected');
                 await window.loadFromFolder(renderCallback);
             } else { 
-                window.loadData(renderCallback); 
+                // Need to re-request? For autoLoad we assume permission is checked or will fail.
+                // Actually, if permission is 'prompt', we need user gesture.
+                // That's why we have the splash screen now.
+                const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
+                if (newPerm === 'granted') {
+                     directoryHandle = savedHandle;
+                     updateSyncUI('connected');
+                     await window.loadFromFolder(renderCallback);
+                } else {
+                     window.loadData(renderCallback);
+                }
             }
         } catch { 
             window.loadData(renderCallback); 
@@ -165,7 +189,8 @@
         }
         
         if (window.allergens.length === 0) window.populateDefaultAllergens();
-        if (isFileImport) alert(window.t('alert_import_success'));
+        // Don't alert on auto-load
+        if (isFileImport && document.body.classList.contains('app-loaded')) alert(window.t('alert_import_success'));
     }
 
     window.populateDefaultAllergens = function() {
