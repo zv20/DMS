@@ -52,25 +52,66 @@
       /* Minimal Lang Select */
       .lang-select-minimal {
           background: transparent;
-          border: 1px solid rgba(255,255,255,0.3);
+          border: 1px solid rgba(0,0,0,0.1);
           color: inherit;
           padding: 5px;
           border-radius: 4px;
-          font-size: 1.2rem;
+          font-size: 1.5rem; /* Larger emoji */
           cursor: pointer;
+          appearance: none; /* Hide default arrow to look cleaner */
+          -webkit-appearance: none;
+          line-height: 1;
       }
-      .lang-select-minimal option {
-          color: #333;
+      .lang-select-minimal:hover {
+          background-color: rgba(0,0,0,0.05);
       }
 
-      /* Compact Sync Status in Header */
-      .header-sync {
-          font-size: 0.8rem;
+      /* Sync Button - styled like hamburger but relative */
+      .sync-btn-style {
+          position: relative; /* Override absolute from hamburger-btn */
+          left: auto;
+          width: 40px;
+          height: 40px;
+          background: none;
+          border: none;
           cursor: pointer;
-          padding: 4px 8px;
-          border-radius: 4px;
-          background: rgba(255,255,255,0.1);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center; /* Center items */
+          gap: 5px;
+          padding: 5px;
+          border-radius: 50%;
+          transition: background 0.2s;
       }
+      .sync-btn-style:hover {
+          background-color: rgba(0,0,0,0.05);
+      }
+      
+      /* Dots for Sync Menu (Kebab style) */
+      .sync-dot {
+          display: block;
+          width: 5px;
+          height: 5px;
+          background-color: var(--color-text);
+          border-radius: 50%;
+      }
+      
+      /* Status Indicator Ring */
+      .status-ring {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 2px solid transparent; /* Default hidden */
+          pointer-events: none;
+      }
+      .status-connected .status-ring { border-color: var(--color-success); }
+      .status-local .status-ring { border-color: var(--color-warning); }
+      .status-error .status-ring { border-color: var(--color-danger); }
+
   </style>
 </head>
 <body data-theme="default">
@@ -83,21 +124,34 @@
               <span></span>
               <span></span>
           </button>
-          <div class="logo">
+          <div class="logo" style="margin-left: 50px;"> <!-- Push logo right slightly to avoid overlap with absolute hamburger -->
             <h2>🍽️ KitchenPro</h2>
           </div>
       </div>
 
       <!-- Right Side Controls -->
       <div class="header-right">
-           <div id="syncStatus" class="header-sync" onclick="toggleSyncDropdown()">Checking...</div>
-           <select id="languageSelect" class="lang-select-minimal">
+           <!-- Language First -->
+           <select id="languageSelect" class="lang-select-minimal" title="Select Language">
               <option value="en">🇺🇸</option>
               <option value="bg">🇧🇬</option>
            </select>
            
-           <!-- Sync Dropdown (Absolute positioned relative to header-right or body) -->
+           <!-- Sync Button Second (Hamburger Style) -->
+           <!-- Using 3 dots (vertical) for 'options/sync' feel, matching hamburger style logic -->
+           <button id="syncBtn" class="sync-btn-style" onclick="toggleSyncDropdown()" aria-label="Sync Options">
+               <span class="sync-dot"></span>
+               <span class="sync-dot"></span>
+               <span class="sync-dot"></span>
+               <!-- Ring for status color -->
+               <div id="syncStatusRing" class="status-ring"></div>
+           </button>
+           
+           <!-- Sync Dropdown -->
            <div id="syncDropdown" class="sync-dropdown" style="top: 60px; right: 10px;">
+                <div style="padding:10px; font-size:0.9em; color:#666; border-bottom:1px solid #eee; text-align:center;">
+                    Status: <span id="syncStatusText">Checking...</span>
+                </div>
                 <button onclick="selectSaveLocation()" data-i18n="sync_select_location">📁 Select Save Location</button>
                 <button onclick="manualSave()" data-i18n="sync_save">💾 Save Changes</button>
                 <button onclick="manualLoad()" data-i18n="sync_load">📂 Load from Folder</button>
