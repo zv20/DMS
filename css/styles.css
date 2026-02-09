@@ -1,531 +1,614 @@
-/* Global Variables */
+/* Recipe Manager - Mobile First Bubble Menu & Themes */
+
 :root {
-  --color-primary: #20c997; /* Teal */
-  --color-primary-dark: #12b886;
-  --color-secondary: #f8f9fa;
-  --color-text: #343a40;
-  --color-text-secondary: #868e96;
-  --color-background: #f1f3f5;
-  --color-surface: #ffffff;
-  --color-border: #dee2e6;
-  --color-danger: #fa5252;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --radius: 8px;
-  --header-height: 60px;
+    /* DEFAULT THEME (Teal/Clean) */
+    --color-primary: #21808d;
+    --color-primary-dark: #1a6570;
+    --color-accent: #21808d;
+    --color-secondary: #6c757d;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-background: #f8f9fa;
+    --color-surface: #ffffff;
+    --color-border: #dee2e6;
+    --color-text: #212529;
+    --color-text-secondary: #6c757d;
+    --header-height: 60px;
+    --border-radius: 12px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.15);
 }
 
+/* THEME: DARK */
 [data-theme="dark"] {
-  --color-primary: #3bc9db;
-  --color-primary-dark: #22b8cf;
-  --color-secondary: #343a40;
-  --color-text: #f8f9fa;
-  --color-text-secondary: #adb5bd;
-  --color-background: #212529;
-  --color-surface: #343a40;
-  --color-border: #495057;
+    --color-primary: #82c91e;
+    --color-primary-dark: #66a80f;
+    --color-accent: #82c91e;
+    --color-background: #101113;
+    --color-surface: #1a1b1e;
+    --color-border: #2c2e33;
+    --color-text: #e9ecef;
+    --color-text-secondary: #adb5bd;
 }
 
+/* THEME: WARM */
 [data-theme="warm"] {
-  --color-primary: #fd7e14;
-  --color-primary-dark: #f76707;
-  --color-background: #fff9db;
+    --color-primary: #fd7e14;
+    --color-primary-dark: #d9480f;
+    --color-accent: #fab005;
+    --color-background: #fff9db;
+    --color-surface: #ffffff;
+    --color-border: #f1f3f5;
+    --color-text: #495057;
 }
 
-/* Reset & Base */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  line-height: 1.6;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
 }
 
-/* Splash Screen */
-.splash-screen {
+/* --- App Header (Fixed Top) --- */
+.app-header {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--color-primary);
-    z-index: 9999;
+    width: 100%;
+    height: var(--header-height);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    transition: opacity 0.5s ease-out;
-}
-
-.splash-content {
-    text-align: center;
-    color: white;
-}
-
-.splash-logo {
-    font-size: 4rem;
-    display: block;
-    margin-bottom: 10px;
-    animation: bounce 2s infinite;
-}
-
-.splash-title {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    font-weight: 300;
-}
-
-.splash-subtitle {
-    font-size: 1rem;
-    opacity: 0.9;
-    margin-bottom: 2rem;
-}
-
-.splash-actions {
-    min-height: 60px; /* Prevent layout shift */
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-.btn-splash {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 30px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-splash-primary {
-    background: white;
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
-.btn-splash-secondary {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.4);
-}
-
-.btn-splash:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.loader-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255,255,255,0.3);
-    border-top: 4px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-}
-
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-20px);} 60% {transform: translateY(-10px);} }
-
-
-/* Header */
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: var(--header-height);
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 1000;
-  box-shadow: var(--shadow-sm);
+    padding: 0 1rem;
+    z-index: 1000;
+    box-shadow: var(--shadow-sm);
 }
 
 .hamburger-btn {
     background: none;
     border: none;
     cursor: pointer;
+    width: 40px;
+    height: 40px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding: 10px;
-    z-index: 1001; /* Above logo */
+    justify-content: center;
+    gap: 6px;
+    z-index: 1001;
 }
 
 .hamburger-btn span {
     display: block;
-    width: 25px;
+    width: 24px;
     height: 3px;
-    background-color: var(--color-text);
-    border-radius: 2px;
+    background: var(--color-text);
+    border-radius: 3px;
     transition: all 0.3s;
 }
 
-/* Hamburger active state - only if needed, currently CSS toggle is via navOverlay logic in JS */
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* Sync Indicator */
-.sync-indicator {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: default;
-    transition: all 0.3s ease;
-    margin-right: 5px;
-}
-
-.sync-hidden {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.sync-spin {
+.logo h2 {
+    font-size: 1.25rem;
     color: var(--color-primary);
-    animation: spin 1s infinite linear;
+    margin: 0;
 }
 
-.sync-success {
-    color: #40c057; /* Green */
-    background: rgba(64, 192, 87, 0.1);
+/* --- Layout Container --- */
+.app-container {
+    padding-top: var(--header-height);
+    min-height: 100vh;
 }
 
-.sync-error {
-    color: #fa5252; /* Red */
-    background: rgba(250, 82, 82, 0.1);
+.content {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-
-/* Language Selector Minimal */
-.lang-select-minimal {
-    border: 1px solid var(--color-border);
-    background: var(--color-background);
-    color: var(--color-text);
-    padding: 5px;
-    border-radius: 4px;
-    font-size: 1.2rem;
-    cursor: pointer;
-}
-
-/* Nav Overlay */
+/* --- Navigation Overlay (Transparent wrapper) --- */
 .nav-overlay {
     position: fixed;
-    top: 0; /* Changed from var(--header-height) */
+    top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    /* FIX 1: Remove background shadow overlay to fix "shadow" issue when menu is closed */
-    background-color: rgba(0,0,0,0); 
-    z-index: -1; /* Hide behind everything when inactive */
+    /* Ensure no background color or blur is applied here */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    z-index: 2000;
     opacity: 0;
     visibility: hidden;
-    transition: background-color 0.3s, opacity 0.3s, z-index 0s 0.3s; /* Delay z-index change */
-    padding-top: var(--header-height); /* Push content down */
-    pointer-events: none; /* Let clicks pass through when inactive */
+    pointer-events: none; /* Let clicks pass through when closed */
+    transition: opacity 0.2s ease, visibility 0.2s;
 }
 
 .nav-overlay.active {
-    /* FIX 3: Fully transparent background when active, per user request */
-    background-color: rgba(0,0,0,0); 
-    z-index: 900; /* Bring to front */
     opacity: 1;
     visibility: visible;
-    transition: background-color 0.3s, opacity 0.3s, z-index 0s; /* Instant z-index change */
-    pointer-events: auto; /* Re-enable clicks inside the bubble */
+    pointer-events: auto; /* Catch clicks only when open (to close menu if clicked outside) */
+    background: transparent !important;
 }
 
-/* The actual "Bubble" or Panel */
+/* --- The actual Floating Menu Bubble --- */
 .nav-content {
     position: absolute;
-    top: calc(var(--header-height) + 10px); /* Positioned below header */
+    top: calc(var(--header-height) + 10px);
     left: 10px;
     width: 280px;
-    background-color: var(--color-surface);
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    transform: translateY(-20px);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-height: 80vh;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
-    border: 1px solid var(--color-border);
-    pointer-events: auto; /* Ensure menu items are clickable */
+    overflow: hidden;
+    
+    /* Animation for the bubble pop */
+    transform: translateY(-10px) scale(0.95);
+    transform-origin: top left;
+    transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: auto; /* Menu items always clickable */
 }
 
 .nav-overlay.active .nav-content {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+
+/* Little arrow pointing to hamburger (Pseudo-element on the bubble) */
+.nav-content::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
+    transform: rotate(45deg);
+    z-index: 2001;
 }
 
 .close-nav-btn {
-    display: none; /* Hide X button, clicking outside or hamburger closes it */
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    z-index: 2002;
+    padding: 5px;
 }
+.close-nav-btn:hover { color: var(--color-danger); }
 
 .nav-links {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+    padding: 1rem 0;
+    overflow-y: auto;
 }
 
 .nav-item {
-    padding: 12px 15px;
-    background: none;
-    border: none;
-    text-align: left;
-    font-size: 1rem;
-    color: var(--color-text);
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.2s;
     display: flex;
     align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
     font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+    gap: 10px;
 }
 
 .nav-item:hover {
-    background-color: var(--color-secondary);
+    background: var(--color-background);
+    color: var(--color-primary);
 }
 
 .nav-item.active {
-    background-color: var(--color-primary);
-    color: white;
+    background: rgba(33, 128, 141, 0.1); /* Light tint of primary */
+    color: var(--color-primary);
+    font-weight: 600;
+    border-left: 3px solid var(--color-primary);
 }
 
 .nav-separator {
     height: 1px;
-    background-color: var(--color-border);
-    margin: 10px 0;
+    background: var(--color-border);
+    margin: 0.5rem 0;
+    width: 100%;
 }
 
-/* Settings Page Styles */
-.settings-container {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+/* --- Settings Submenu --- */
+.settings-submenu {
+    display: none;
+    background: var(--color-background);
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    margin-left: 1rem; /* Indent */
+    animation: fadeIn 0.2s ease;
 }
 
-.settings-card {
-    background: var(--color-surface);
-    border-radius: var(--radius);
-    padding: 25px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
+.settings-submenu.open {
+    display: block;
 }
 
-.settings-card-title {
-    margin-bottom: 20px;
-    font-size: 1.2rem;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 10px;
+.sub-nav-item {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: none;
+    border: none;
     color: var(--color-text);
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 6px;
+}
+.sub-nav-item:hover { background: rgba(0,0,0,0.05); color: var(--color-primary); }
+
+/* --- Theme Selector --- */
+.theme-selector { margin-top: 1rem; text-align: left; padding: 0 0.5rem; }
+.theme-buttons { justify-content: flex-start; gap: 10px; margin-top: 5px; }
+
+.theme-btn {
+    width: 32px;
+    height: 32px;
 }
 
-.settings-row {
+/* --- Language Selector --- */
+.lang-selector { margin-top: 1rem; padding: 0 0.5rem; }
+.lang-select-box { width: 100%; }
+
+/* --- Header Right Controls & Sync --- */
+.header-right {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    gap: 20px;
+    gap: 1rem;
+    position: relative; /* Critical for dropdown positioning */
 }
 
-.settings-desc {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    margin-top: 5px;
+.lang-select-minimal {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: inherit;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    line-height: 1;
 }
 
-.settings-divider {
-    border: 0;
-    border-top: 1px solid var(--color-border);
-    margin: 20px 0;
-}
-
-.settings-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-}
-
-.settings-actions-grid .btn {
+/* Sync Button (Refresh Style) */
+.sync-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 3px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    gap: 10px;
-    height: 100px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+.sync-btn:hover { background-color: rgba(0,0,0,0.05); }
+.sync-btn.syncing { animation: rotate 1s linear infinite; }
+.sync-btn.status-connected { border-color: var(--color-success); color: var(--color-success); }
+.sync-btn.status-local { border-color: var(--color-warning); color: var(--color-warning); }
+.sync-btn.status-error { border-color: var(--color-danger); color: var(--color-danger); }
+
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Sync Dropdown */
+.sync-dropdown {
+    position: absolute;
+    top: 100%; /* Position BELOW the header */
+    right: 0;   /* Align with right edge */
+    margin-top: 15px;
+    min-width: 250px; /* Slightly wider to prevent text wrapping */
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 2100;
+    padding: 5px 0;
 }
 
+.sync-dropdown.show {
+    display: block;
+    animation: fadeIn 0.2s ease-out;
+}
 
-/* File Input Label styling */
-.file-label {
+.sync-dropdown button, .sync-dropdown label {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    border: none;
+    background: none;
+    color: var(--color-text);
     cursor: pointer;
+    font-size: 0.95rem;
 }
 
-/* Theme Selector inside Settings */
-.theme-selector {
-    padding: 0;
+.sync-dropdown button:hover, .sync-dropdown label:hover {
+    background: var(--color-background);
+    color: var(--color-primary);
 }
-.theme-buttons {
-    display: flex;
-    gap: 10px;
+
+.sync-dropdown .status-header {
+    padding: 10px;
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    text-align: center;
+    background: var(--color-background);
+    margin-bottom: 5px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
 }
-.theme-btn {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    border: 2px solid var(--color-border);
-    cursor: pointer;
+
+.sync-dropdown .divider {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    margin: 5px 0;
+}
+
+/* --- Standard Elements --- */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.4s; }
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.recipe-card, .item-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
     transition: transform 0.2s;
 }
-.theme-default { background: #20c997; }
-.theme-dark { background: #2c3e50; }
-.theme-warm { background: #fd7e14; }
+.recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
-/* Main Content */
-.app-container {
-    margin-top: var(--header-height);
-    padding: 20px;
-}
-
-/* FIX 2: Template Builder Styling to prevent overlap */
-.builder-container {
-    /* Ensure it respects the parent container boundaries */
-    height: calc(100vh - 200px) !important; 
-    overflow: hidden; /* Prevent spillover */
-}
-
-/* Fix builder sidebar scrolling and sizing */
-.builder-sidebar {
-    height: 100%;
-    overflow-y: auto;
-    border-radius: var(--radius);
-    /* Ensure internal inputs don't break layout */
-    box-shadow: var(--shadow-sm);
-}
-
-/* Fix builder preview area */
-.builder-preview {
-    height: 100%;
-    overflow-y: auto; 
-    border-radius: var(--radius);
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-}
-
-/* Ensure the preview sheet itself scales properly */
-#livePreviewSheet {
-    /* Scale logic is handled in JS, but ensure parent centers it */
-    margin: 0 auto;
-}
-
-
-.page { display: none; }
-.page.active { display: block; animation: fadeIn 0.3s; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Buttons & Controls */
 .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
     font-weight: 600;
-    transition: opacity 0.2s;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.2s;
 }
-.btn-primary { background-color: var(--color-primary); color: white; }
-.btn-secondary { background-color: var(--color-secondary); color: var(--color-text); border: 1px solid var(--color-border); }
-.btn:hover { opacity: 0.9; }
+.btn-primary { background: var(--color-primary); color: white; }
+.btn-secondary { background: var(--color-secondary); color: white; }
+.btn-danger { background: var(--color-danger); color: white; }
+.btn-small { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+/* Icon Buttons (NEW) */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.icon-btn:hover { background: var(--color-background); }
+.icon-btn.edit { color: var(--color-primary); }
+.icon-btn.delete { color: var(--color-danger); }
+
+
+/* --- CALENDAR STYLES (Restored) --- */
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    background: var(--color-border);
+    padding: 1px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
-/* Modals */
+.calendar-day-header {
+    background: var(--color-primary);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.calendar-day {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    min-height: 100px;
+    padding: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+}
+.calendar-day:hover { background: var(--color-background); }
+.calendar-day.disabled { background: var(--color-background); opacity: 0.5; cursor: default; }
+
+.calendar-day h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+/* Week View */
+.week-view .week-days {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.week-view .day-column {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    min-height: 400px;
+}
+
+.day-header {
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.menu-slot {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+}
+
+.menu-slot select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+
+/* --- MODAL STYLES (Restored) --- */
 .modal {
-    display: none; 
-    position: fixed; 
-    z-index: 2000; 
-    left: 0; top: 0; width: 100%; height: 100%; 
-    background-color: rgba(0,0,0,0.5); 
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 3000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+    animation: fadeIn 0.3s;
 }
+
 .modal-content {
     background-color: var(--color-surface);
-    margin: 10% auto;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: var(--shadow-md);
-}
-.close { float: right; font-size: 28px; cursor: pointer; }
-
-/* Forms */
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
-.form-control, input[type="text"], input[type="number"], select, textarea {
-    width: 100%;
-    padding: 8px;
+    margin: 5% auto;
+    padding: 2rem;
     border: 1px solid var(--color-border);
-    border-radius: 4px;
-    background-color: var(--color-background);
+    width: 90%;
+    max-width: 600px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    animation: slideIn 0.3s;
+}
+
+.close-btn {
+    color: var(--color-text-secondary);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--color-text);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 1rem;
+    background: var(--color-background);
     color: var(--color-text);
 }
 
 .tag-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 5px;
-    min-height: 30px;
-    border: 1px dashed var(--color-border);
-    padding: 5px;
-    border-radius: 4px;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
 }
+
 .tag {
-    background-color: var(--color-primary);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
+    background: var(--color-background);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
     display: flex;
     align-items: center;
-    gap: 5px;
-}
-.tag .remove { cursor: pointer; font-weight: bold; }
-
-/* Calendar/Grid Styles (Basic) */
-.week-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    gap: 6px;
+    border: 1px solid var(--color-border);
 }
 
-/* Print Handling */
-@media print {
-    .app-header, .nav-overlay, .page-header .actions, .calendar-controls, .print-controls, .print-day-selector, .saved-menus-section {
-        display: none !important;
-    }
-    .app-container { margin: 0; padding: 0; }
+.tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-weight: bold;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+.tag button:hover { color: var(--color-danger); }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .grid-container { grid-template-columns: 1fr; }
+    .week-view .week-days { grid-template-columns: 1fr; }
+    .calendar { font-size: 0.8rem; }
+    .nav-overlay { width: 260px; } /* Slightly narrower on mobile */
+    .modal-content { margin: 10% auto; width: 95%; padding: 1.5rem; }
 }
