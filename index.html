@@ -50,7 +50,6 @@
                   ⚙️ Settings <span class="arrow">▼</span>
               </button>
               <div id="settingsSubmenu" class="settings-submenu">
-                  <button class="sub-nav-item" data-page="template" data-i18n="nav_template">Print Template</button>
                   <button class="sub-nav-item" data-page="style-editor">Template Builder</button>
                   
                   <div class="theme-selector">
@@ -73,7 +72,7 @@
           </div>
 
           <div class="nav-footer">
-               <!-- Sync Controls moved here -->
+               <!-- Sync Controls -->
                <div class="sync-controls-wrapper">
                     <div id="syncStatus" class="sync-status" onclick="toggleSyncDropdown()">Checking...</div>
                     <div id="syncDropdown" class="sync-dropdown">
@@ -91,7 +90,7 @@
   </div>
 
   <div class="app-container">
-    <!-- Main Content Area (Full Width now) -->
+    <!-- Main Content Area -->
     <main class="content">
 
       <!-- RECIPES PAGE -->
@@ -149,7 +148,7 @@
            </div>
         </div>
 
-        <!-- Print Date Picker (Hidden or Visible based on need) -->
+        <!-- Print Date Picker -->
         <div class="print-controls" style="margin-bottom: 1rem; padding:10px; background:var(--color-surface); border-radius:8px; display:flex; gap:10px; align-items:center; border: 1px solid var(--color-border);">
              <span data-i18n="label_print_date">Print Week of:</span>
              <input type="date" id="printStartDate">
@@ -179,79 +178,44 @@
         </div>
       </div>
 
-      <!-- TEMPLATE PAGE (Legacy) -->
-      <div id="template" class="page">
-        <div class="page-header">
-          <h1 data-i18n="nav_template">Print Template</h1>
-          <button class="btn btn-primary" onclick="saveTemplate()" data-i18n="btn_save_template">Save Template</button>
-        </div>
-        
-        <div class="template-controls">
-            <div class="form-group">
-                <label data-i18n="template_description">Customize Template</label>
-                <div class="editor-toolbar">
-                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{title}')">{Title}</button>
-                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{dateRange}')">{DateRange}</button>
-                    <button class="btn btn-small btn-secondary" onclick="insertVariable('{recipes}')">{RecipesGrid}</button>
-                </div>
-                <div id="templateEditor"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Background Image</label>
-                <input type="file" id="uploadBgInput" accept="image/*">
-                <button id="removeBgBtn" class="btn btn-danger btn-small" data-i18n="btn_remove_bg">Remove</button>
-            </div>
-
-            <div class="form-group">
-                <label>Layout Style</label>
-                <div>
-                    <!-- Buttons injected by JS -->
-                </div>
-            </div>
-        </div>
-
-        <h3 data-i18n="heading_preview">Preview</h3>
-        <div id="templatePreview" class="template-preview"></div>
-      </div>
-
       <!-- NEW STYLE EDITOR PAGE -->
       <div id="style-editor" class="page">
         <div class="page-header">
           <h1>Template Builder</h1>
           <div class="actions">
-             <button class="btn btn-secondary" id="btnNewTemplate">+ New</button>
-             <button class="btn btn-primary" id="btnSaveStyle">Save Template</button>
+             <button class="btn btn-secondary" id="btnNewTemplate">Reset</button>
+             <button class="btn btn-primary" id="btnSaveStyle">Save Settings</button>
           </div>
         </div>
 
-        <div class="builder-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 150px);">
+        <div class="builder-container" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; height: calc(100vh - 150px);">
             <!-- Sidebar Controls -->
             <div class="builder-sidebar" style="background: var(--color-surface); padding: 20px; border-right: 1px solid var(--color-border); overflow-y: auto;">
                 
                 <div class="control-group">
-                    <h3>Saved Templates</h3>
-                    <select id="savedTemplatesSelect" class="form-control" style="width:100%; margin-bottom:10px;">
-                        <option value="default">Default Theme</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <h3>Global Settings</h3>
-                    <label>Font</label>
+                    <h3>1. Page Settings</h3>
+                    <label>Default Font</label>
                     <select id="styleFont" class="form-control" style="width:100%; margin-bottom:10px;">
                         <option value="Segoe UI">Modern (Segoe UI)</option>
                         <option value="Georgia">Serif (Georgia)</option>
                         <option value="Courier New">Monospace</option>
                         <option value="Comic Sans MS">Playful</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
                     </select>
                     
-                    <label>Page Background</label>
-                    <input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px;">
+                    <label>Page Background Color</label>
+                    <input type="color" id="stylePageBg" class="form-control" value="#ffffff" style="width:100%; height:40px; margin-bottom:10px;">
+                    
+                    <label>Background Image</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="file" id="styleBgImageInput" accept="image/*" style="width:100%;">
+                        <button id="styleBgRemoveBtn" class="btn btn-small btn-danger" style="display:none;">✖</button>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <h3>Day Card</h3>
+                    <h3>2. Day Cards (Mon-Fri)</h3>
                     <label>Header Background</label>
                     <input type="color" id="styleHeaderBg" class="form-control" value="#ffffff" style="width:100%; height:40px;">
                     
@@ -269,28 +233,105 @@
                 </div>
 
                 <div class="control-group">
-                    <h3>Meal Slots</h3>
-                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <strong>Slot 1 (Soup)</strong><br>
-                        <label>Text Color:</label> <input type="color" id="styleSlot1Color" value="#000000">
+                    <h3>3. Menu Items (1-4)</h3>
+                    
+                    <!-- Slot 1 -->
+                    <div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                        <strong>Slot 1 (Soup)</strong>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                            <div>
+                                <label style="font-size:0.8em;">Color</label>
+                                <input type="color" id="styleSlot1Color" value="#000000" style="width:100%; height:30px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8em;">Font</label>
+                                <select id="styleSlot1Font" style="width:100%; height:30px;">
+                                    <option value="">Default</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <strong>Slot 2 (Main)</strong><br>
-                        <label>Text Color:</label> <input type="color" id="styleSlot2Color" value="#000000">
+
+                    <!-- Slot 2 -->
+                    <div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                        <strong>Slot 2 (Main)</strong>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                            <div>
+                                <label style="font-size:0.8em;">Color</label>
+                                <input type="color" id="styleSlot2Color" value="#000000" style="width:100%; height:30px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8em;">Font</label>
+                                <select id="styleSlot2Font" style="width:100%; height:30px;">
+                                    <option value="">Default</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div style="margin-bottom: 10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <strong>Slot 3 (Dessert)</strong><br>
-                        <label>Text Color:</label> <input type="color" id="styleSlot3Color" value="#000000">
+
+                    <!-- Slot 3 -->
+                    <div class="slot-config-item" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                        <strong>Slot 3 (Dessert)</strong>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                            <div>
+                                <label style="font-size:0.8em;">Color</label>
+                                <input type="color" id="styleSlot3Color" value="#000000" style="width:100%; height:30px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8em;">Font</label>
+                                <select id="styleSlot3Font" style="width:100%; height:30px;">
+                                    <option value="">Default</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Slot 4 -->
+                    <div class="slot-config-item">
+                        <strong>Slot 4 (Other)</strong>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                            <div>
+                                <label style="font-size:0.8em;">Color</label>
+                                <input type="color" id="styleSlot4Color" value="#000000" style="width:100%; height:30px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8em;">Font</label>
+                                <select id="styleSlot4Font" style="width:100%; height:30px;">
+                                    <option value="">Default</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
 
             <!-- Live Preview -->
             <div class="builder-preview" style="background: var(--color-background); padding: 20px; overflow-y: auto; display: flex; justify-content: center;">
-                <div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.8); transform-origin: top center;">
+                <div id="livePreviewSheet" style="background: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); transform: scale(0.85); transform-origin: top center; background-size: cover; background-position: center;">
                     <!-- Preview Content Generated Here -->
-                    <h1 style="text-align:center; color:#21808d;">MENU PREVIEW</h1>
+                    <h1 style="text-align:center; color:#21808d; font-family:inherit;">MENU PREVIEW</h1>
                     <div id="livePreviewGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                         <!-- Dummy Data for Preview -->
                         <div class="preview-day-card" style="border:1px solid #333; padding:10px;">
@@ -298,12 +339,14 @@
                             <div class="preview-slot slot1"><strong>1. Soup:</strong> Chicken Soup</div>
                             <div class="preview-slot slot2"><strong>2. Main:</strong> Roast Beef</div>
                             <div class="preview-slot slot3"><strong>3. Dessert:</strong> Cake</div>
+                            <div class="preview-slot slot4"><strong>4. Other:</strong> Bread</div>
                         </div>
                         <div class="preview-day-card" style="border:1px solid #333; padding:10px;">
                             <h3 class="preview-day-header" style="border-bottom:2px solid #21808d; color:#21808d;">Tuesday</h3>
                             <div class="preview-slot slot1"><strong>1. Soup:</strong> Lentil Soup</div>
                             <div class="preview-slot slot2"><strong>2. Main:</strong> Fish & Chips</div>
                             <div class="preview-slot slot3"><strong>3. Dessert:</strong> Fruit</div>
+                            <div class="preview-slot slot4"><strong>4. Other:</strong> Salad</div>
                         </div>
                     </div>
                 </div>
