@@ -9,15 +9,21 @@
 (function(window) {
     let saveLocation = null;
     let autoSaveTimeout = null;
+    let db = null;
+
+    const DB_NAME = 'KitchenProDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'settings';
+    const HANDLE_KEY = 'directoryHandle';
 
     // Global data stores
     window.recipes = [];
     window.ingredients = [];
     window.allergens = [];
-    window.currentMenu = {}; // Now holds ALL menus by date {"2026-02-10": {slot1: {...}, ...}}
+    window.currentMenu = {};
     window.savedTemplates = [];
     window.currentCalendarDate = new Date();
-    window.currentViewMode = 'weekly'; // 'weekly' or 'monthly'
+    window.currentViewMode = 'weekly';
 
     window.PREDEFINED_ALLERGENS = [
         { id: 'alg_gluten', name: 'Gluten', color: '#f59f00', name_bg: 'Глутен' },
@@ -36,17 +42,77 @@
         { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
     ];
 
-    // Check if user has previously selected a folder
-    window.checkPreviousFolder = function() {
-        return localStorage.getItem('folderGranted') === 'true';
+    // Initialize IndexedDB
+    window.initDB = async function() {
+        if (db) return db;
+        
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                db = request.result;
+                resolve(db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const database = event.target.result;
+                if (!database.objectStoreNames.contains(STORE_NAME)) {
+                    database.createObjectStore(STORE_NAME);
+                }
+            };
+        });
     };
 
-    // Initialize File System - Ask user to select folder
+    // Save directory handle to IndexedDB
+    async function saveDirectoryHandle(handle) {
+        try {
+            await window.initDB();
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            store.put(handle, HANDLE_KEY);
+            
+            return new Promise((resolve, reject) => {
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            });
+        } catch (err) {
+            console.error('Error saving directory handle:', err);
+        }
+    }
+
+    // Get directory handle from IndexedDB
+    async function getDirectoryHandle() {
+        try {
+            await window.initDB();
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(HANDLE_KEY);
+            
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (err) {
+            console.error('Error getting directory handle:', err);
+            return null;
+        }
+    }
+
+    // Check if user has previously selected a folder
+    window.checkPreviousFolder = async function() {
+        const handle = await getDirectoryHandle();
+        return !!handle;
+    };
+
+    // Select folder and save handle
     window.selectSaveLocation = async function() {
         try {
             const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
             saveLocation = dirHandle;
-            localStorage.setItem('folderGranted', 'true');
+            
+            // Save handle to IndexedDB for persistence
+            await saveDirectoryHandle(dirHandle);
             
             // Check if files exist, if not create them
             await window.ensureFilesExist();
@@ -63,18 +129,34 @@
 
     // Auto-load from previously selected folder
     window.autoLoadFromFolder = async function() {
-        if (!window.checkPreviousFolder()) {
-            return false;
-        }
-
         try {
-            const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-            saveLocation = dirHandle;
-            await window.loadAllData();
-            return true;
+            const handle = await getDirectoryHandle();
+            if (!handle) {
+                return false;
+            }
+
+            // Verify permission
+            const permission = await handle.queryPermission({ mode: 'readwrite' });
+            
+            if (permission === 'granted') {
+                saveLocation = handle;
+                await window.loadAllData();
+                return true;
+            } else {
+                // Request permission
+                const newPermission = await handle.requestPermission({ mode: 'readwrite' });
+                
+                if (newPermission === 'granted') {
+                    saveLocation = handle;
+                    await window.loadAllData();
+                    return true;
+                } else {
+                    console.log('Permission denied');
+                    return false;
+                }
+            }
         } catch (err) {
             console.error('Could not access previous folder:', err);
-            localStorage.removeItem('folderGranted');
             return false;
         }
     };
