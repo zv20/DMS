@@ -8,7 +8,6 @@
     window.currentMenu = {};
     window.menuHistory = [];
     window.savedTemplates = [];
-    window.printTemplate = ""; // Deprecated in favor of structured blocks
     
     // Upgraded Structured Style Settings
     window.currentStyleSettings = {
@@ -44,6 +43,7 @@
         slotColors: { slot1: '#21808d', slot2: '#e67e22', slot3: '#9b59b6', slot4: '#34495e' }
     };
 
+    // Configuration
     const DB_NAME = 'RecipeManagerDB';
     const DB_VERSION = 1;
     const STORE_NAME = 'directoryHandles';
@@ -79,6 +79,18 @@
                 if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
             };
         });
+    };
+
+    window.checkSavedHandle = async function() {
+        try {
+            if (!isFileSystemSupported) return false;
+            await window.initDB();
+            const handle = await getDirectoryHandle();
+            return !!handle;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     };
 
     window.saveData = function(callback) {
@@ -119,6 +131,60 @@
         if (callback) callback();
     };
 
+    window.loadData = function(renderCallback) {
+        const dataStr = localStorage.getItem('recipeManagerData');
+        if (dataStr) { 
+            try {
+                parseData(dataStr, false);
+            } catch(e) { console.error("Parse error", e); }
+        } else { 
+            window.populateDefaultAllergens(); 
+        }
+        if (renderCallback) renderCallback();
+    };
+
+    window.autoLoadOnStartup = async function(renderCallback) {
+        if (!isFileSystemSupported) { window.loadData(renderCallback); return; }
+        try {
+            await window.initDB();
+            const savedHandle = await getDirectoryHandle();
+            if (!savedHandle) { window.loadData(renderCallback); return; }
+            
+            const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
+            if (permission === 'granted') {
+                directoryHandle = savedHandle;
+                await window.loadFromFolder(renderCallback);
+            } else { 
+                const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
+                if (newPerm === 'granted') {
+                     directoryHandle = savedHandle;
+                     await window.loadFromFolder(renderCallback);
+                } else {
+                     window.loadData(renderCallback);
+                }
+            }
+        } catch { 
+            window.loadData(renderCallback); 
+        }
+    };
+
+    window.loadFromFolder = async function(renderCallback) {
+        if (directoryHandle) {
+            try {
+                const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                if (text) { 
+                    parseData(text, true); 
+                    if(renderCallback) renderCallback();
+                }
+            } catch (err) { 
+                console.error(err); 
+                window.showSyncAnimation('error'); 
+            }
+        }
+    };
+
     function parseData(jsonText, isFileImport) {
         const data = JSON.parse(jsonText);
         window.recipes = data.recipes || [];
@@ -149,21 +215,109 @@
         if (window.allergens.length === 0) window.populateDefaultAllergens();
     }
 
-    // --- Other Boilerplate (Check autoLoad, handles, etc.) ---
-    window.autoLoadOnStartup = async function(renderCallback) {
-        const dataStr = localStorage.getItem('recipeManagerData');
-        if (dataStr) parseData(dataStr, false);
-        if (renderCallback) renderCallback();
+    window.populateDefaultAllergens = function() {
+        window.PREDEFINED_ALLERGENS.forEach(def => {
+            if (!window.allergens.find(a => a.id === def.id)) {
+                window.allergens.push({ id: def.id, name: def.name, color: def.color, isSystem: true });
+            }
+        });
     };
 
-    window.updateStyleSettings = function(settings) {
-        window.currentStyleSettings = settings;
-        window.saveData();
+    async function getDirectoryHandle() {
+        if (!db) await window.initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([STORE_NAME], 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get('mainDirectory');
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function saveDirectoryHandle(handle) {
+        if (!db) await window.initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([STORE_NAME], 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(handle, 'mainDirectory');
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    window.showSyncAnimation = function(status) {
+        const indicator = document.getElementById('syncIndicator');
+        if (!indicator) return;
+        indicator.classList.remove('sync-hidden', 'sync-spin', 'sync-success', 'sync-error');
+        indicator.style.display = 'flex';
+        
+        if (status === 'syncing') {
+            indicator.innerHTML = '↻';
+            indicator.classList.add('sync-spin');
+        } else if (status === 'success') {
+            indicator.innerHTML = '✓';
+            indicator.classList.add('sync-success');
+            setTimeout(() => indicator.classList.add('sync-hidden'), 2000);
+        } else if (status === 'error') {
+            indicator.innerHTML = '⚠';
+            indicator.classList.add('sync-error');
+        } else {
+            indicator.innerHTML = '💾';
+            setTimeout(() => indicator.classList.add('sync-hidden'), 2000);
+        }
     };
 
-    window.addSavedTemplate = function(tmpl) {
-        window.savedTemplates.push(tmpl);
-        window.saveData();
+    window.selectSaveLocation = async function(renderCallback) {
+        if (!isFileSystemSupported) return;
+        try {
+            const handle = await window.showDirectoryPicker();
+            if (handle) {
+                directoryHandle = handle;
+                await saveDirectoryHandle(handle);
+                try {
+                    await window.loadFromFolder(renderCallback);
+                } catch (e) {
+                    window.saveData();
+                }
+            }
+        } catch (err) { console.error(err); }
     };
 
+    window.exportDataFile = function() {
+        const data = { 
+            recipes: window.recipes, 
+            ingredients: window.ingredients, 
+            allergens: window.allergens, 
+            currentMenu: window.currentMenu, 
+            menuHistory: window.menuHistory, 
+            savedTemplates: window.savedTemplates, 
+            currentStyleSettings: window.currentStyleSettings 
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'recipe_manager_backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    window.importDataFile = function(file, renderCallback) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            parseData(e.target.result, true);
+            if(renderCallback) renderCallback();
+        };
+        reader.readAsText(file);
+    };
+
+    window.updateRecipes = function(newRecipes) { window.recipes = newRecipes; window.saveData(); };
+    window.updateIngredients = function(newIng) { window.ingredients = newIng; window.saveData(); };
+    window.updateAllergens = function(newAlg) { window.allergens = newAlg; window.saveData(); };
+    window.updateStyleSettings = function(settings) { window.currentStyleSettings = settings; window.saveData(); };
+    window.addSavedTemplate = function(tmpl) { window.savedTemplates.push(tmpl); window.saveData(); };
+    window.updatePrintTemplate = function(html) { window.printTemplate = html; window.saveData(); };
 })(window);
