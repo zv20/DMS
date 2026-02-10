@@ -15,7 +15,6 @@
   <script src="js/render.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/template.js"></script>
-  <script src="js/custom-builder.js"></script>
   <script src="js/main.js"></script>
 </head>
 <body data-theme="default">
@@ -155,8 +154,7 @@
           <div class="page-header"><h1>Settings</h1></div>
           <div class="settings-card">
               <h3>🎨 Appearance</h3>
-              <button class="btn btn-secondary" onclick="window.navigateTo('style-editor')" style="margin-bottom: 10px; width: 100%;">Open Template Builder</button>
-              <button class="btn btn-secondary" onclick="window.navigateTo('custom-designer')" style="width: 100%;">🎨 Open Custom Designer (Advanced)</button>
+              <button class="btn btn-secondary" onclick="window.navigateTo('style-editor')" style="width: 100%;">📝 Open Template Builder</button>
           </div>
           <div class="settings-card" style="margin-top:20px;">
               <h3>💾 Data</h3>
@@ -189,7 +187,11 @@
                       <h3>🖼️ Background</h3>
                       <label>Image URL (optional)</label>
                       <input type="text" id="backgroundImage" class="form-control" placeholder="https://example.com/image.jpg">
-                      <small style="color:#666; font-size:0.85rem; display:block; margin-top:5px;">Leave blank for no background</small>
+                      <small style="color:#666; font-size:0.85rem; display:block; margin-top:5px;">
+                          <strong>Recommended size:</strong> 2480 x 3508 px (A4 at 300 DPI)<br>
+                          <strong>Or:</strong> 1654 x 2339 px (A4 at 200 DPI)<br>
+                          Leave blank for no background
+                      </small>
                   </section>
 
                   <!-- Header Settings -->
@@ -373,45 +375,6 @@
                        <div id="previewHeader"></div>
                        <div id="previewDaysList"></div>
                        <div id="previewFooter"></div>
-                  </div>
-             </div>
-        </div>
-      </div>
-
-      <!-- CUSTOM DESIGNER PAGE -->
-      <div id="custom-designer" class="page">
-        <div class="page-header">
-          <button class="btn btn-secondary btn-small" onclick="window.navigateTo('settings')">← Back</button>
-          <h1>🎨 Custom Designer</h1>
-          <div class="actions">
-              <button class="btn btn-primary" onclick="window.CustomBuilder.saveDesign()">Save Design</button>
-              <button class="btn btn-secondary" onclick="window.CustomBuilder.printDesign()">🖨️ Print</button>
-              <button class="btn btn-danger" onclick="window.CustomBuilder.clearCanvas()">Clear</button>
-          </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 200px 1fr 250px; gap: 15px; height: calc(100vh - 150px);">
-             <!-- LEFT: Elements Palette -->
-             <div style="background: white; border-radius: 8px; padding: 15px; overflow-y: auto;">
-                  <h3 style="margin-top: 0; font-size: 14pt;">Elements</h3>
-                  <p style="font-size: 9pt; color: #666; margin-bottom: 15px;">Drag elements onto canvas</p>
-                  <div id="elementsPalette" style="display: grid; grid-template-columns: 1fr; gap: 10px;"></div>
-                  
-                  <h3 style="margin-top: 30px; font-size: 14pt;">Saved Designs</h3>
-                  <div id="designsList" style="margin-top: 10px;"></div>
-             </div>
-
-             <!-- CENTER: Canvas -->
-             <div style="background: #e9ecef; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow: auto;">
-                  <div id="designCanvas" style="position: relative; width: 210mm; height: 297mm; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                      <div class="canvas-helper" style="position: absolute; top: 10px; left: 10px; color: #ccc; font-size: 10pt; pointer-events: none;">Drag elements here</div>
-                  </div>
-             </div>
-
-             <!-- RIGHT: Properties Panel -->
-             <div style="background: white; border-radius: 8px; padding: 15px; overflow-y: auto;">
-                  <div id="propertiesPanel">
-                      <p style="color: #999; text-align: center; padding: 20px;">Select an element to edit properties</p>
                   </div>
              </div>
         </div>
