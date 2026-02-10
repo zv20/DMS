@@ -121,11 +121,11 @@
     text-align: center;
 }
 
-/* Weekly View */
+/* Weekly View - Always 5 Columns in One Row */
 .week-view {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(200px, 18vw, 300px), 1fr)); /* Fluid columns */
-    gap: clamp(10px, 1.5vw, 15px);
+    grid-template-columns: repeat(5, 1fr); /* Always 5 equal columns */
+    gap: clamp(8px, 1.2vw, 15px);
     width: 100%;
     max-width: 100%; /* Use full available width */
     margin: 0 auto;
@@ -134,9 +134,10 @@
 .day-column {
     background: white;
     border-radius: 8px;
-    padding: clamp(10px, 1.5vw, 15px);
+    padding: clamp(8px, 1.2vw, 15px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 0;
+    min-width: 0; /* Allow columns to shrink below content width */
+    overflow: hidden; /* Prevent overflow */
 }
 
 .day-header-weekly {
@@ -148,21 +149,21 @@
 }
 
 .day-header-weekly strong {
-    font-size: clamp(11pt, 1.3vw, 13pt);
+    font-size: clamp(10pt, 1.1vw, 13pt);
     color: #212529;
     display: block;
     margin-bottom: 4px;
 }
 
 .day-header-weekly small {
-    font-size: clamp(8pt, 1vw, 10pt);
+    font-size: clamp(8pt, 0.9vw, 10pt);
     color: #6c757d;
 }
 
 /* Meal Slot */
 .meal-slot {
-    margin-bottom: 12px;
-    padding: 10px;
+    margin-bottom: clamp(8px, 1vw, 12px);
+    padding: clamp(6px, 0.8vw, 10px);
     background: #f8f9fa;
     border-radius: 6px;
     border-left-width: 4px;
@@ -171,11 +172,11 @@
 
 .meal-slot .category-select {
     width: 100%;
-    padding: clamp(5px, 0.8vw, 8px);
+    padding: clamp(4px, 0.6vw, 8px);
     margin-bottom: 8px;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    font-size: clamp(8pt, 1vw, 10pt);
+    font-size: clamp(8pt, 0.9vw, 10pt);
     font-weight: 600;
     background: white;
     cursor: pointer;
@@ -183,10 +184,10 @@
 
 .meal-slot .recipe-select {
     width: 100%;
-    padding: clamp(5px, 0.8vw, 8px);
+    padding: clamp(4px, 0.6vw, 8px);
     border: 1px solid #ced4da;
     border-radius: 4px;
-    font-size: clamp(8pt, 1vw, 10pt);
+    font-size: clamp(8pt, 0.9vw, 10pt);
     background: white;
     cursor: pointer;
 }
@@ -196,16 +197,9 @@
     font-style: italic;
 }
 
-/* Responsive Adjustments for Smaller Screens */
+/* Responsive Adjustments */
 
-/* Tablets and smaller */
-@media (max-width: 992px) {
-    .week-view {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Fewer columns on tablets */
-    }
-}
-
-/* Mobile devices */
+/* Mobile devices - Keep 5 columns but reduce padding/gaps */
 @media (max-width: 768px) {
     .calendar-controls {
         flex-direction: column;
@@ -220,28 +214,71 @@
     }
     
     .week-view {
-        grid-template-columns: 1fr; /* Single column on mobile */
+        gap: 6px; /* Tighter gap on mobile */
     }
     
     .day-column {
-        padding: 12px;
+        padding: 6px; /* Reduced padding on mobile */
+    }
+    
+    .meal-slot {
+        padding: 5px;
+        margin-bottom: 6px;
+    }
+    
+    .meal-slot .category-select,
+    .meal-slot .recipe-select {
+        font-size: 7.5pt; /* Smaller font on mobile */
+        padding: 4px;
     }
     
     /* Keep monthly calendar readable on mobile */
     .day-cell {
-        min-height: 70px; /* Ensure cells don't get too small */
+        min-height: 70px;
     }
 }
 
 /* Very small mobile devices */
 @media (max-width: 480px) {
+    .week-view {
+        gap: 4px; /* Even tighter on very small screens */
+    }
+    
+    .day-column {
+        padding: 4px;
+    }
+    
+    .day-header-weekly {
+        padding: 6px 2px;
+        margin-bottom: 8px;
+    }
+    
+    .day-header-weekly strong {
+        font-size: 9pt;
+    }
+    
+    .day-header-weekly small {
+        font-size: 7pt;
+    }
+    
+    .meal-slot {
+        padding: 4px;
+        margin-bottom: 5px;
+    }
+    
+    .meal-slot .category-select,
+    .meal-slot .recipe-select {
+        font-size: 7pt;
+        padding: 3px;
+    }
+    
     .monthly-calendar {
         padding: 8px;
     }
     
     .month-grid,
     .month-header {
-        gap: 4px; /* Tighter spacing on small screens */
+        gap: 4px;
     }
     
     .day-cell {
@@ -251,11 +288,6 @@
     
     .day-header {
         padding: 6px 2px;
-    }
-    
-    .meal-slot {
-        padding: 8px;
-        margin-bottom: 10px;
     }
 }
 
