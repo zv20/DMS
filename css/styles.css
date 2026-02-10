@@ -1,10 +1,10 @@
 /* Recipe Manager - Mobile First Bubble Menu & Themes */
 
 :root {
-    /* DEFAULT THEME (Teal/Clean) */
-    --color-primary: #21808d;
-    --color-primary-dark: #1a6570;
-    --color-accent: #21808d;
+    /* DEFAULT THEME (Orange/Warm) */
+    --color-primary: #fd7e14;
+    --color-primary-dark: #d9480f;
+    --color-accent: #fd7e14;
     --color-secondary: #6c757d;
     --color-success: #28a745;
     --color-danger: #dc3545;
@@ -17,8 +17,8 @@
     
     /* Dimensions & Spacing */
     --header-height: 60px;
-    --border-radius: 10px; /* Unified Radius */
-    --input-height: 42px;  /* Unified Height */
+    --border-radius: 10px;
+    --input-height: 42px;
     
     /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
@@ -38,15 +38,15 @@
     --color-text-secondary: #adb5bd;
 }
 
-/* THEME: WARM */
-[data-theme="warm"] {
-    --color-primary: #fd7e14;
-    --color-primary-dark: #d9480f;
-    --color-accent: #fab005;
-    --color-background: #fff9db;
+/* THEME: TEAL */
+[data-theme="teal"] {
+    --color-primary: #21808d;
+    --color-primary-dark: #1a6570;
+    --color-accent: #21808d;
+    --color-background: #f8f9fa;
     --color-surface: #ffffff;
-    --color-border: #f1f3f5;
-    --color-text: #495057;
+    --color-border: #dee2e6;
+    --color-text: #212529;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -103,7 +103,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0 1.5rem;
-    height: 48px; /* Slightly taller for emphasis */
+    height: 48px;
     min-width: 180px;
     border-radius: var(--border-radius);
     font-size: 1.05rem;
@@ -296,7 +296,7 @@ body {
     gap: 10px;
 }
 .nav-item:hover { background: var(--color-background); color: var(--color-primary); }
-.nav-item.active { background: rgba(33, 128, 141, 0.1); color: var(--color-primary); font-weight: 600; border-left: 3px solid var(--color-primary); }
+.nav-item.active { background: rgba(253, 126, 20, 0.1); color: var(--color-primary); font-weight: 600; border-left: 3px solid var(--color-primary); }
 .nav-separator { height: 1px; background: var(--color-border); margin: 0.5rem 0; width: 100%; }
 
 /* --- Settings Submenu --- */
@@ -321,25 +321,23 @@ body {
 }
 .lang-select-minimal:hover { background: rgba(0,0,0,0.05); }
 
-.sync-btn {
+.sync-indicator {
     position: relative;
     width: 40px;
     height: 40px;
     background: transparent;
-    border: 2px solid #ccc; /* Thinner border */
+    border: 2px solid #ccc;
     border-radius: 50%;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
     transition: all 0.2s ease;
 }
-.sync-btn:hover { background-color: rgba(0,0,0,0.05); transform: scale(1.05); }
-.sync-btn.syncing { animation: rotate 1s linear infinite; }
-.sync-btn.status-connected { border-color: var(--color-success); color: var(--color-success); }
-.sync-btn.status-local { border-color: var(--color-warning); color: var(--color-warning); }
-.sync-btn.status-error { border-color: var(--color-danger); color: var(--color-danger); }
+.sync-indicator.sync-spin { animation: rotate 1s linear infinite; }
+.sync-indicator.sync-success { border-color: var(--color-success); color: var(--color-success); }
+.sync-indicator.sync-error { border-color: var(--color-danger); color: var(--color-danger); }
+.sync-indicator.sync-hidden { opacity: 0; }
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* --- UNIFIED BUTTONS & INPUTS --- */
@@ -402,7 +400,7 @@ select,
 textarea,
 .form-control {
     width: 100%;
-    height: var(--input-height); /* Match button height */
+    height: var(--input-height);
     padding: 0 0.8rem;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
@@ -412,17 +410,20 @@ textarea,
     transition: border-color 0.2s, box-shadow 0.2s;
     font-family: inherit;
 }
-textarea { height: auto; padding: 0.8rem; } /* Override height for textarea */
+textarea { height: auto; padding: 0.8rem; }
 
 input:focus, select:focus, textarea:focus, .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.15);
+    box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.15);
 }
 
 /* --- Cards & Grid --- */
 .page { display: none; padding-bottom: 80px; }
 .page.active { display: block; animation: fadeIn 0.4s; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.page-header h1 { margin: 0; color: var(--color-primary); }
+.actions { display: flex; gap: 0.5rem; }
 
 .grid-container {
     display: grid;
@@ -443,7 +444,7 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
 .recipe-card:hover, .item-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .settings-card { margin-bottom: 1.5rem; }
-.settings-card-title { margin-bottom: 1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; color: var(--color-primary); }
+.settings-card h3 { margin-bottom: 1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; color: var(--color-primary); }
 .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 10px; }
 .settings-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 2px; }
 
@@ -467,40 +468,46 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
     padding: 2rem;
     border: 1px solid var(--color-border);
     width: 90%; max-width: 600px;
-    border-radius: 16px; /* Larger radius for modals */
+    border-radius: 16px;
     box-shadow: var(--shadow-lg);
     position: relative; animation: slideIn 0.3s;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
-.close-btn {
+.close {
     position: absolute; top: 15px; right: 15px;
     background: var(--color-background);
     color: var(--color-text-secondary);
     width: 36px; height: 36px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
+    font-size: 1.5rem; cursor: pointer; transition: all 0.2s;
     border: 1px solid var(--color-border);
+    line-height: 1;
 }
-.close-btn:hover { background: var(--color-danger); color: white; border-color: var(--color-danger); }
+.close:hover { background: var(--color-danger); color: white; border-color: var(--color-danger); }
 
 /* --- Form Groups --- */
 .form-group { margin-bottom: 1.2rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; }
+label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--color-text); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
 /* Tag Container */
-.tag-container { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.tag-container { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; padding: 0.5rem; min-height: 40px; }
 .tag {
     background: var(--color-background); padding: 0.3rem 0.8rem;
     border-radius: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
     border: 1px solid var(--color-border);
 }
-.tag button { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-weight: bold; font-size: 1.1rem; line-height: 1; padding: 0; }
-.tag button:hover { color: var(--color-danger); }
+.tag.allergen { border-width: 2px; }
+.tag button, .tag .remove { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-weight: bold; font-size: 1.1rem; line-height: 1; padding: 0; }
+.tag button:hover, .tag .remove:hover { color: var(--color-danger); }
 
 /* --- Calendar Specifics --- */
 .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; background: var(--color-surface); padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); }
+.calendar-controls h2 { margin: 0; color: var(--color-primary); }
 .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--color-border); border-radius: var(--border-radius); overflow: hidden; border: 1px solid var(--color-border); }
 .calendar-day-header { background: var(--color-surface); color: var(--color-text); padding: 10px; text-align: center; font-weight: 600; border-bottom: 2px solid var(--color-primary); }
 .calendar-day { background: var(--color-surface); min-height: 100px; padding: 5px; cursor: pointer; transition: background 0.2s; position: relative; }
@@ -516,7 +523,7 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
     min-height: 400px;
     box-shadow: var(--shadow-sm);
 }
-.day-header { text-align: center; font-weight: bold; color: var(--color-primary); margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 2px solid rgba(33, 128, 141, 0.1); padding-bottom: 10px; }
+.day-header { text-align: center; font-weight: bold; color: var(--color-primary); margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 2px solid rgba(253, 126, 20, 0.2); padding-bottom: 10px; }
 
 .menu-slot {
     background: var(--color-background);
@@ -527,13 +534,16 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
     transition: border-color 0.2s;
 }
 .menu-slot:hover { border-color: var(--color-primary); }
-.menu-slot select { background: transparent; border: none; padding: 0; height: auto; font-size: 0.95rem; cursor: pointer; }
+.menu-slot select { background: transparent; border: none; padding: 0; height: auto; font-size: 0.95rem; cursor: pointer; width: 100%; }
 .menu-slot select:focus { box-shadow: none; }
 
 /* Filter Controls */
 .filter-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
 .filter-input { flex: 2; }
 .filter-select { flex: 1; }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--color-text-secondary); font-size: 1.1rem; }
 
 /* Animations */
 @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
@@ -542,8 +552,9 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
 @media (max-width: 768px) {
     .grid-container { grid-template-columns: 1fr; }
     .week-view .week-days { grid-template-columns: 1fr; }
-    .nav-overlay { width: 260px; }
+    .nav-content { width: 260px; }
     .modal-content { margin: 10% auto; width: 95%; padding: 1.5rem; }
     .filter-controls { flex-direction: column; gap: 0.5rem; }
     .form-row { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; }
 }
