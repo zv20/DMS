@@ -20,51 +20,51 @@
     border-color: #fd7e14;
 }
 
-/* Monthly Calendar View */
+/* Monthly Calendar View - Fully Responsive */
 .monthly-calendar {
     background: white;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 2vw;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .month-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 1vw;
+    margin-bottom: 1.5vw;
 }
 
 .day-header {
     text-align: center;
     font-weight: 600;
     color: #fd7e14;
-    padding: 12px 8px;
+    padding: 1vw 0.5vw;
     background: #fff5e6;
-    border-radius: 6px;
-    font-size: 11pt;
+    border-radius: 8px;
+    font-size: clamp(10pt, 1vw, 14pt);
 }
 
 .month-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    gap: 1vw;
 }
 
 .day-cell {
     aspect-ratio: 1;
-    min-height: 100px;
-    padding: 12px;
+    padding: 1vw;
     border: 2px solid #e9ecef;
-    border-radius: 8px;
+    border-radius: 10px;
     background: white;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 0;
 }
 
 .day-cell:hover {
@@ -103,17 +103,17 @@
 }
 
 .day-number {
-    font-size: 16pt;
+    font-size: clamp(12pt, 1.5vw, 22pt);
     font-weight: 700;
     color: #212529;
     line-height: 1;
 }
 
 .meal-indicators {
-    font-size: 14pt;
+    font-size: clamp(10pt, 1.2vw, 18pt);
     font-weight: 700;
     color: #fd7e14;
-    letter-spacing: 5px;
+    letter-spacing: 0.3vw;
     text-align: center;
 }
 
@@ -189,31 +189,6 @@
 
 /* Responsive Design */
 
-/* Large screens (desktops) */
-@media (max-width: 1400px) {
-    .week-view {
-        grid-template-columns: repeat(5, minmax(180px, 1fr));
-        gap: 12px;
-    }
-    
-    .day-column {
-        padding: 12px;
-    }
-    
-    .day-cell {
-        min-height: 90px;
-        padding: 10px;
-    }
-    
-    .day-number {
-        font-size: 15pt;
-    }
-    
-    .meal-indicators {
-        font-size: 13pt;
-    }
-}
-
 /* Medium screens (tablets landscape) */
 @media (max-width: 1200px) {
     .week-view {
@@ -229,26 +204,17 @@
         padding: 15px;
     }
     
-    .day-cell {
-        min-height: 85px;
-        padding: 8px;
-    }
-    
-    .day-number {
-        font-size: 14pt;
-    }
-    
-    .meal-indicators {
-        font-size: 12pt;
-        letter-spacing: 4px;
-    }
-    
     .month-grid {
-        gap: 8px;
+        gap: 10px;
     }
     
     .month-header {
-        gap: 8px;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .day-cell {
+        padding: 10px;
     }
 }
 
@@ -269,31 +235,25 @@
         padding: 5px;
     }
     
-    .day-cell {
-        min-height: 75px;
-        padding: 8px;
-    }
-    
-    .day-number {
-        font-size: 13pt;
-    }
-    
-    .meal-indicators {
-        font-size: 11pt;
-        letter-spacing: 3px;
-    }
-    
-    .day-header {
-        font-size: 10pt;
-        padding: 10px 6px;
+    .monthly-calendar {
+        padding: 12px;
     }
     
     .month-grid {
-        gap: 6px;
+        gap: 8px;
     }
     
     .month-header {
-        gap: 6px;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .day-cell {
+        padding: 8px;
+    }
+    
+    .day-header {
+        padding: 10px 6px;
     }
 }
 
@@ -321,37 +281,25 @@
         padding: 12px;
     }
     
-    /* Monthly view adjustments */
     .monthly-calendar {
-        padding: 12px;
+        padding: 10px;
     }
     
     .month-grid {
-        gap: 5px;
+        gap: 6px;
     }
     
     .month-header {
-        gap: 5px;
+        gap: 6px;
         margin-bottom: 10px;
     }
     
     .day-cell {
-        min-height: 65px;
         padding: 6px;
-    }
-    
-    .day-number {
-        font-size: 12pt;
-    }
-    
-    .meal-indicators {
-        font-size: 10pt;
-        letter-spacing: 2px;
     }
     
     .day-header {
         padding: 8px 4px;
-        font-size: 9pt;
     }
 }
 
@@ -385,22 +333,11 @@
     }
     
     .day-cell {
-        min-height: 55px;
         padding: 5px;
-    }
-    
-    .day-number {
-        font-size: 11pt;
-    }
-    
-    .meal-indicators {
-        font-size: 9pt;
-        letter-spacing: 1px;
     }
     
     .day-header {
         padding: 6px 2px;
-        font-size: 8pt;
     }
     
     .month-grid {
