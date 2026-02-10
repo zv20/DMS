@@ -213,6 +213,23 @@ body {
     margin: 0 auto;
 }
 
+/* Full width for menu planner page */
+#menu.page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#menu .page-header {
+    padding: 0 1rem;
+}
+
+#menu .calendar-controls,
+#menu .week-view,
+#menu .monthly-calendar {
+    padding-left: 0;
+    padding-right: 0;
+}
+
 /* --- Navigation Overlay --- */
 .nav-overlay {
     position: fixed;
@@ -622,4 +639,10 @@ label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95
     .filter-controls { flex-direction: column; gap: 0.5rem; }
     .form-row { grid-template-columns: 1fr; }
     .page-header { flex-direction: column; align-items: flex-start; }
+    
+    /* Reset menu padding on mobile */
+    #menu.page {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
 }
