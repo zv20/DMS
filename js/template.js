@@ -1,6 +1,7 @@
 /**
  * Structured Template Manager
  * Handles Header, Daily Blocks (Mon-Fri), and Footer logic.
+ * Connects the Menu Planner data to the Print Layout.
  */
 
 (function(window) {
@@ -17,14 +18,13 @@
                 if (el) el.addEventListener('input', () => this.refreshPreview());
             });
 
-            // Load initial values from store
             const s = window.currentStyleSettings;
             if (s) {
                 this.setVal('headerText', s.header.text);
                 this.setVal('headerColor', s.header.color);
                 this.setVal('headerSize', s.header.fontSize);
                 this.setVal('dayBg', s.dayBlock.bg);
-                this.setVal('dayRadius', s.dayBlock.borderRadius);
+                this.setVal('dayRadius', s.dayBlock.borderRadius.replace('px',''));
                 this.setVal('daySticker', s.dayBlock.sticker);
                 this.setVal('footerText', s.footer.text);
             }
@@ -38,21 +38,47 @@
         refreshPreview: function() {
             const s = this.getSettingsFromUI();
             
-            // Header
+            // Preview Header
             const h = document.getElementById('previewHeader');
-            h.innerHTML = `<h1 style="color:${s.header.color}; font-size:${s.header.fontSize}; text-align:center;">${s.header.text}</h1>`;
-            h.innerHTML += `<p style="text-align:center; color:#7f8c8d;">Feb 02 - Feb 06, 2026</p>`;
+            const dateRange = this.getCurrentDateRangeText();
+            h.innerHTML = `
+                <h1 style="color:${s.header.color}; font-size:${s.header.fontSize}; text-align:center; margin-bottom:5px;">${s.header.text}</h1>
+                <p style="text-align:center; color:#7f8c8d; margin-top:0;">${dateRange}</p>
+            `;
 
-            // Days (Mock 3 days for preview)
+            // Preview Days (Injecting REAL data from the current view if available)
             const list = document.getElementById('previewDaysList');
             list.innerHTML = '';
-            ['Monday', 'Tuesday', 'Wednesday'].forEach(dayName => {
-                list.appendChild(this.createDayBlock(dayName, s, true));
-            });
+            
+            const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
+            for (let i = 0; i < 5; i++) {
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
+                const dateStr = day.toISOString().split('T')[0];
+                const dayMenu = window.currentMenu[dateStr];
+                
+                // In preview, show all days but mark empty ones
+                const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
+                const block = this.createDayBlock(dayName, dayMenu, s);
+                if (!this.hasMeals(dayMenu)) {
+                    block.style.opacity = '0.5';
+                    block.style.borderStyle = 'dashed';
+                }
+                list.appendChild(block);
+            }
 
             // Footer
             const f = document.getElementById('previewFooter');
-            f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:10mm; color:${s.footer.color}; font-size:${s.footer.fontSize}">${s.footer.text}</div>`;
+            f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:10mm; color:#7f8c8d; font-size:12pt; text-align:center;">${s.footer.text}</div>`;
+        },
+
+        getCurrentDateRangeText: function() {
+            const start = window.getWeekStart(window.currentCalendarDate || new Date());
+            const end = new Date(start);
+            end.setDate(start.getDate() + 4);
+            const options = { month: 'short', day: 'numeric' };
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            return `${start.toLocaleDateString(lang, options)} — ${end.toLocaleDateString(lang, options)}, ${end.getFullYear()}`;
         },
 
         getSettingsFromUI: function() {
@@ -68,14 +94,17 @@
                     sticker: document.getElementById('daySticker').value
                 },
                 footer: {
-                    text: document.getElementById('footerText').value,
-                    color: '#7f8c8d',
-                    fontSize: '12pt'
+                    text: document.getElementById('footerText').value
                 }
             };
         },
 
-        createDayBlock: function(dayName, settings, isPreview) {
+        hasMeals: function(dayMenu) {
+            if (!dayMenu) return false;
+            return Object.values(dayMenu).some(slot => slot.recipe !== null);
+        },
+
+        createDayBlock: function(dayName, dayMenu, settings) {
             const block = document.createElement('div');
             block.className = 'print-day-block';
             block.style.cssText = `
@@ -85,16 +114,30 @@
                 margin-bottom: 15px;
                 border: 1px solid #eee;
                 position: relative;
+                page-break-inside: avoid;
             `;
             
+            let mealsHtml = '';
+            if (dayMenu) {
+                Object.entries(dayMenu).forEach(([slotId, slot]) => {
+                    if (slot.recipe) {
+                        const recipe = window.recipes.find(r => r.id === slot.recipe);
+                        if (recipe) {
+                            mealsHtml += `<div style="margin-bottom:5px;"><strong>${window.t('slot_' + slot.type)}:</strong> ${recipe.name}</div>`;
+                        }
+                    }
+                });
+            }
+
+            if (!mealsHtml) mealsHtml = `<i style="color:#ccc;">${window.t('empty_day') || 'No meals planned'}</i>`;
+
             block.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f0f0f0; margin-bottom:10px; padding-bottom:5px;">
-                    <h2 style="margin:0; font-size:16pt;">${dayName}</h2>
-                    <span style="font-size:20pt;">${settings.dayBlock.sticker}</span>
+                    <h2 style="margin:0; font-size:16pt; color:#2c3e50;">${dayName}</h2>
+                    <span style="font-size:24pt;">${settings.dayBlock.sticker}</span>
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div><strong>🥣 Soup:</strong> Recipe Name</div>
-                    <div><strong>🍽️ Main:</strong> Recipe Name</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12pt;">
+                    ${mealsHtml}
                 </div>
             `;
             return block;
@@ -104,19 +147,24 @@
     window.openTemplatePicker = function() {
         const modal = document.getElementById('templatePickerModal');
         const grid = document.getElementById('templateGrid');
+        if (!modal || !grid) return;
+        
         modal.style.display = 'block';
         grid.innerHTML = '';
 
-        // Add "Current Settings" as an option
-        const current = document.createElement('div');
-        current.className = 'template-card';
-        current.innerHTML = `<h4>${window.currentStyleSettings.name}</h4><button class="btn btn-primary" onclick="window.printWithTemplate('current')">Select</button>`;
-        grid.appendChild(current);
+        const templates = [
+            { id: 'current', name: window.t('current_template') || 'Current Active' },
+            ...window.savedTemplates
+        ];
 
-        window.savedTemplates.forEach(t => {
+        templates.forEach(t => {
             const card = document.createElement('div');
-            card.className = 'template-card';
-            card.innerHTML = `<h4>${t.name}</h4><button class="btn btn-primary" onclick="window.printWithTemplate('${t.id}')">Select</button>`;
+            card.style.cssText = 'padding:15px; border:1px solid #ddd; border-radius:8px; text-align:center; background:#f9f9f9;';
+            card.innerHTML = `
+                <div style="font-size:30pt; margin-bottom:10px;">📄</div>
+                <h4 style="margin:0 0 10px 0;">${t.name}</h4>
+                <button class="btn btn-primary" onclick="window.printWithTemplate('${t.id}')" style="width:100%;">Select</button>
+            `;
             grid.appendChild(card);
         });
     };
@@ -127,10 +175,48 @@
             settings = window.savedTemplates.find(t => t.id === id);
         }
         
-        // Final logic to hide empty days based on window.currentMenu
-        // ... (This will be expanded in next iteration with real menu data injection)
-        alert('Preparing print with template: ' + settings.name);
-        window.print();
+        const printWindow = window.open('', '_blank');
+        const dateRange = TemplateManager.getCurrentDateRangeText();
+        
+        // Build actual print content
+        let daysHtml = '';
+        const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
+        for (let i = 0; i < 5; i++) {
+            const day = new Date(weekStart);
+            day.setDate(weekStart.getDate() + i);
+            const dateStr = day.toISOString().split('T')[0];
+            const dayMenu = window.currentMenu[dateStr];
+            
+            if (TemplateManager.hasMeals(dayMenu)) {
+                const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
+                const block = TemplateManager.createDayBlock(dayName, dayMenu, settings);
+                daysHtml += block.outerHTML;
+            }
+        }
+
+        const html = `
+            <html>
+            <head>
+                <title>Print Menu</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; padding: 20mm; background: #fff; }
+                    .print-day-block { page-break-inside: avoid; }
+                    @media print { body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:5px;">${settings.header.text}</h1>
+                <p style="text-align:center; color:#7f8c8d; margin-bottom:30px;">${dateRange}</p>
+                ${daysHtml}
+                <div style="margin-top:20mm; border-top:1px solid #eee; padding-top:5mm; text-align:center; color:#7f8c8d;">${settings.footer.text}</div>
+                <script>window.onload = () => { window.print(); window.close(); };</script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        document.getElementById('templatePickerModal').style.display = 'none';
     };
 
     window.saveStructuredTemplate = function() {
