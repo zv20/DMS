@@ -182,6 +182,14 @@
                       <div id="templateLibrary" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
                   </section>
 
+                  <!-- Background Image -->
+                  <section class="control-section" style="margin-top:20px;">
+                      <h3>🖼️ Background Image</h3>
+                      <label>Image URL (optional)</label>
+                      <input type="text" id="backgroundImage" class="form-control" placeholder="https://example.com/image.jpg">
+                      <small style="color:#666; font-size:0.85rem; display:block; margin-top:5px;">Leave blank for no background</small>
+                  </section>
+
                   <!-- Header Settings -->
                   <section class="control-section" style="margin-top:20px;">
                       <h3>🔝 Header</h3>
@@ -191,6 +199,38 @@
                       <input type="color" id="headerColor" value="#fd7e14">
                       <label style="margin-top:10px;">Font Size</label>
                       <input type="text" id="headerSize" class="form-control" value="24pt" style="width:80px;">
+                  </section>
+
+                  <!-- Day Block Styling -->
+                  <section class="control-section" style="margin-top:20px;">
+                      <h3>📅 Day Block Style</h3>
+                      <label>Background Color</label>
+                      <input type="color" id="dayBg" value="#ffffff">
+                      <label style="margin-top:10px;">Border Radius (px)</label>
+                      <input type="number" id="dayRadius" value="8" style="width:80px;">
+                      
+                      <label style="margin-top:10px;">Border Width (px)</label>
+                      <input type="number" id="dayBorderWidth" value="2" min="0" max="10" style="width:80px;">
+                      
+                      <label style="margin-top:10px;">Border Color</label>
+                      <input type="color" id="dayBorderColor" value="#e0e0e0">
+                      
+                      <label style="margin-top:10px;">Border Style</label>
+                      <select id="dayBorderStyle" class="form-control">
+                          <option value="solid">Solid</option>
+                          <option value="dashed">Dashed</option>
+                          <option value="dotted">Dotted</option>
+                          <option value="double">Double</option>
+                      </select>
+                      
+                      <label style="margin-top:10px;">Day Sticker</label>
+                      <select id="daySticker" class="form-control">
+                          <option value="🍽️">🍽️ Plate</option>
+                          <option value="🍲">🍲 Pot</option>
+                          <option value="🍴">🍴 Fork & Knife</option>
+                          <option value="✨">✨ Sparkle</option>
+                          <option value="👨‍🍳">👨‍🍳 Chef</option>
+                      </select>
                   </section>
 
                   <!-- Meal Block Settings -->
@@ -224,23 +264,6 @@
                           <label><input type="checkbox" id="slot4_showCalories" checked> Show Calories</label><br>
                           <label><input type="checkbox" id="slot4_showAllergens" checked> Show Allergen Badges</label>
                       </div>
-                  </section>
-
-                  <!-- Day Block Styling -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>📅 Day Block Style</h3>
-                      <label>Background Color</label>
-                      <input type="color" id="dayBg" value="#ffffff">
-                      <label style="margin-top:10px;">Border Radius (px)</label>
-                      <input type="number" id="dayRadius" value="8" style="width:80px;">
-                      <label style="margin-top:10px;">Day Sticker</label>
-                      <select id="daySticker" class="form-control">
-                          <option value="🍽️">🍽️ Plate</option>
-                          <option value="🍲">🍲 Pot</option>
-                          <option value="🍴">🍴 Fork & Knife</option>
-                          <option value="✨">✨ Sparkle</option>
-                          <option value="👨‍🍳">👨‍🍳 Chef</option>
-                      </select>
                   </section>
 
                   <!-- Footer Settings -->
