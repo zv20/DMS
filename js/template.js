@@ -126,8 +126,8 @@
             const dateRange = this.getCurrentDateRangeText();
             if (h) {
                 h.innerHTML = `
-                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:5px; font-weight:600;">${settings.header.text}</h1>
-                    <p style="text-align:center; color:#7f8c8d; margin-top:0; font-size:12pt;">${dateRange}</p>
+                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:3px; font-weight:600;">${settings.header.text}</h1>
+                    <p style="text-align:center; color:#7f8c8d; margin-top:0; margin-bottom:10px; font-size:10pt;">${dateRange}</p>
                 `;
             }
 
@@ -157,7 +157,7 @@
             // Footer
             const f = document.getElementById('previewFooter');
             if (f) {
-                f.innerHTML = `<div style="border-top:2px solid #eee; padding-top:15px; margin-top:20px; color:#7f8c8d; font-size:11pt; text-align:center;">${settings.footer.text}</div>`;
+                f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:8px; margin-top:10px; color:#7f8c8d; font-size:9pt; text-align:center;">${settings.footer.text}</div>`;
             }
         },
 
@@ -167,16 +167,16 @@
             block.style.cssText = `
                 background: ${settings.dayBlock.bg};
                 border-radius: ${settings.dayBlock.borderRadius};
-                padding: 15px;
-                margin-bottom: 20px;
-                border: 2px solid #f0f0f0;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                border: 1px solid #e0e0e0;
                 page-break-inside: avoid;
             `;
 
             let contentHtml = `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e0e0e0; margin-bottom:15px; padding-bottom:10px;">
-                    <h2 style="margin:0; font-size:18pt; color:#2c3e50; font-weight:600;">${dayName}</h2>
-                    <span style="font-size:28pt;">${settings.dayBlock.sticker}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0; margin-bottom:6px; padding-bottom:4px;">
+                    <h2 style="margin:0; font-size:13pt; color:#2c3e50; font-weight:600;">${dayName}</h2>
+                    <span style="font-size:18pt;">${settings.dayBlock.sticker}</span>
                 </div>
             `;
 
@@ -201,7 +201,7 @@
             }
 
             if (!this.hasMeals(dayMenu)) {
-                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:20px;">${window.t('empty_day') || 'No meals planned'}</p>`;
+                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:10px; font-size:9pt;">${window.t('empty_day') || 'No meals planned'}</p>`;
             }
 
             block.innerHTML = contentHtml;
@@ -209,41 +209,62 @@
         },
 
         createMealBlock: function(recipe, slotConfig, slotSettings, index) {
-            let html = `<div style="margin-bottom:15px; padding:12px; background:#f9f9f9; border-radius:6px; border-left:4px solid #fd7e14;">`;
+            const lang = window.getCurrentLanguage();
+            const isBulgarian = lang === 'bg';
             
-            // Title line
-            let titleLine = `<div style="font-size:13pt; font-weight:600; color:#333; margin-bottom:5px;">${index}. ${recipe.name}`;
+            let html = `<div style="margin-bottom:6px; padding:6px 8px; background:#f9f9f9; border-radius:4px; border-left:3px solid #fd7e14;">`;
             
-            // Portion and Calories on same line
+            // Title line with portion and calories
+            let titleLine = `<div style="font-size:10pt; font-weight:600; color:#333; margin-bottom:3px;">${index}. ${recipe.name}`;
+            
+            // Add portion size and calories with language-specific units
             let metadata = [];
-            if (recipe.portionSize) metadata.push(recipe.portionSize);
-            if (slotSettings.showCalories && recipe.calories) metadata.push(`${recipe.calories} cal`);
-            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:#666;">(${metadata.join(', ')})</span>`;
+            if (recipe.portionSize) {
+                const portionUnit = isBulgarian ? 'гр' : 'g';
+                const portionValue = recipe.portionSize.replace(/g|gr|гр/gi, '').trim();
+                metadata.push(`${portionValue}${portionUnit}`);
+            }
+            if (slotSettings.showCalories && recipe.calories) {
+                const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
+                metadata.push(`${recipe.calories} ${calorieUnit}`);
+            }
+            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:#666; font-size:9pt;">(${metadata.join(', ')})</span>`;
             
             titleLine += `</div>`;
             html += titleLine;
 
-            // Ingredients
+            // Ingredients with red underlined allergens
             if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
-                const ingredientNames = recipe.ingredients.map(ing => {
+                const recipeAllergens = window.getRecipeAllergens(recipe);
+                const allergenIds = new Set(recipeAllergens.map(a => a.id));
+                
+                const ingredientsList = recipe.ingredients.map(ing => {
                     const fullIng = window.ingredients.find(i => i.id === ing.id);
-                    return fullIng ? fullIng.name : '';
+                    if (!fullIng) return '';
+                    
+                    // Check if this ingredient has any allergens
+                    const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
+                    
+                    if (slotSettings.showAllergens && hasAllergen) {
+                        return `<span style="color:#dc3545; text-decoration:underline; font-weight:500;">${fullIng.name}</span>`;
+                    }
+                    return fullIng.name;
                 }).filter(n => n).join(', ');
                 
-                if (ingredientNames) {
-                    html += `<div style="font-size:10pt; color:#555; margin-top:5px; line-height:1.4;"><em>Ingredients:</em> ${ingredientNames}</div>`;
+                if (ingredientsList) {
+                    html += `<div style="font-size:8pt; color:#555; margin-top:3px; line-height:1.3;"><em>Ingredients:</em> ${ingredientsList}</div>`;
                 }
             }
 
-            // Allergen Badges
-            if (slotSettings.showAllergens) {
-                const allergens = window.getRecipeAllergens(recipe);
-                if (allergens.length) {
-                    html += `<div style="display:flex; gap:6px; margin-top:8px;">`;
-                    allergens.forEach(a => {
-                        html += `<div style="width:24px; height:24px; border-radius:50%; background:${a.color}; display:flex; align-items:center; justify-content:center; font-size:10pt; font-weight:bold; color:white; box-shadow:0 2px 4px rgba(0,0,0,0.2);" title="${window.getAllergenName(a)}">${window.getAllergenName(a).charAt(0).toUpperCase()}</div>`;
-                    });
-                    html += `</div>`;
+            // Manual allergens also shown as red underlined
+            if (slotSettings.showAllergens && recipe.manualAllergens && recipe.manualAllergens.length > 0) {
+                const manualAllergenNames = recipe.manualAllergens.map(ma => {
+                    const alg = window.allergens.find(a => a.id === ma.id);
+                    return alg ? `<span style="color:#dc3545; text-decoration:underline; font-weight:500;">${window.getAllergenName(alg)}</span>` : '';
+                }).filter(n => n).join(', ');
+                
+                if (manualAllergenNames) {
+                    html += `<div style="font-size:8pt; color:#555; margin-top:2px; line-height:1.3;"><em>Additional allergens:</em> ${manualAllergenNames}</div>`;
                 }
             }
 
@@ -411,6 +432,8 @@
 
         const printWindow = window.open('', '_blank');
         const dateRange = TemplateManager.getCurrentDateRangeText();
+        const lang = window.getCurrentLanguage();
+        const isBulgarian = lang === 'bg';
         
         let daysHtml = '';
         const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
@@ -422,7 +445,7 @@
             const dayMenu = window.currentMenu[dateStr];
             
             if (TemplateManager.hasMeals(dayMenu)) {
-                const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
+                const dayName = day.toLocaleDateString(isBulgarian ? 'bg-BG' : 'en-US', { weekday: 'long' });
                 const block = TemplateManager.createDetailedDayBlock(dayName, dayMenu, settings, dateStr);
                 daysHtml += block.outerHTML;
             }
@@ -433,19 +456,33 @@
             <head>
                 <title>Print Menu</title>
                 <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20mm; background: #fff; }
-                    .print-day-block { page-break-inside: avoid; }
+                    @page { 
+                        size: A4;
+                        margin: 12mm;
+                    }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        padding: 0;
+                        margin: 0;
+                        background: #fff;
+                        font-size: 10pt;
+                    }
+                    .print-day-block { 
+                        page-break-inside: avoid; 
+                    }
                     @media print { 
-                        body { padding: 0; } 
-                        @page { margin: 15mm; }
+                        body { 
+                            padding: 0; 
+                            margin: 0;
+                        }
                     }
                 </style>
             </head>
             <body>
-                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:5px; font-weight:600;">${settings.header.text}</h1>
-                <p style="text-align:center; color:#7f8c8d; margin-bottom:30px; font-size:12pt;">${dateRange}</p>
+                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:3px; font-weight:600;">${settings.header.text}</h1>
+                <p style="text-align:center; color:#7f8c8d; margin-bottom:15px; margin-top:0; font-size:10pt;">${dateRange}</p>
                 ${daysHtml}
-                <div style="margin-top:20mm; border-top:2px solid #eee; padding-top:5mm; text-align:center; color:#7f8c8d; font-size:11pt;">${settings.footer.text}</div>
+                <div style="margin-top:10px; border-top:1px solid #eee; padding-top:5px; text-align:center; color:#7f8c8d; font-size:9pt;">${settings.footer.text}</div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
             </html>
