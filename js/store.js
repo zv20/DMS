@@ -1,55 +1,23 @@
-// Data Store & Persistence Layer (Global Scope)
+/**
+ * Data Store Manager
+ * Handles ALL data persistence with separate files:
+ * - data.json: recipes, ingredients, allergens
+ * - menus.json: all menu planning by date
+ * - settings.json: templates and preferences
+ */
 
 (function(window) {
-    // Global Data Containers
+    let saveLocation = null;
+    let autoSaveTimeout = null;
+
+    // Global data stores
     window.recipes = [];
     window.ingredients = [];
     window.allergens = [];
-    window.currentMenu = {};
-    window.menuHistory = [];
+    window.currentMenu = {}; // Now holds ALL menus by date {"2026-02-10": {slot1: {...}, ...}}
     window.savedTemplates = [];
-    
-    // Upgraded Structured Style Settings
-    window.currentStyleSettings = {
-        name: 'Default Template',
-        font: 'Segoe UI',
-        pageBg: '#f4f7f6',
-        header: {
-            text: 'Weekly Menu',
-            fontSize: '24pt',
-            color: '#21808d',
-            bg: '#ffffff',
-            padding: '10mm'
-        },
-        dayBlock: {
-            font: 'Segoe UI',
-            fontSize: '14pt',
-            color: '#333333',
-            bg: '#ffffff',
-            borderColor: '#eeeeee',
-            borderWidth: '1',
-            borderRadius: '8px',
-            padding: '5mm',
-            showSticker: true,
-            sticker: '🍽️'
-        },
-        footer: {
-            text: 'Other Information / Notes',
-            fontSize: '12pt',
-            color: '#7f8c8d',
-            bg: '#ffffff',
-            padding: '5mm'
-        },
-        slotColors: { slot1: '#21808d', slot2: '#e67e22', slot3: '#9b59b6', slot4: '#34495e' }
-    };
-
-    // Configuration
-    const DB_NAME = 'RecipeManagerDB';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'directoryHandles';
-    let db = null;
-    let directoryHandle = null;
-    const isFileSystemSupported = 'showDirectoryPicker' in window;
+    window.currentCalendarDate = new Date();
+    window.currentViewMode = 'weekly'; // 'weekly' or 'monthly'
 
     window.PREDEFINED_ALLERGENS = [
         { id: 'alg_gluten', name: 'Gluten', color: '#f59f00', name_bg: 'Глутен' },
@@ -68,152 +36,78 @@
         { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
     ];
 
-    window.initDB = async function() {
-        if(db) return db;
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => { db = request.result; resolve(db); };
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
-            };
-        });
-    };
-
-    window.checkSavedHandle = async function() {
+    // Initialize File System
+    window.initFileSystem = async function() {
         try {
-            if (!isFileSystemSupported) return false;
-            await window.initDB();
-            const handle = await getDirectoryHandle();
-            return !!handle;
-        } catch (e) {
-            console.error(e);
+            const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            saveLocation = dirHandle;
+            localStorage.setItem('lastSaveLocation', 'granted');
+            await window.loadAllData();
+            return true;
+        } catch (err) {
+            console.error('File system access denied:', err);
             return false;
         }
     };
 
-    window.saveData = function(callback) {
-        const lang = localStorage.getItem('recipeManagerLang') || 'en';
-        const theme = localStorage.getItem('appTheme') || 'default';
-        
-        const data = {
-            recipes: window.recipes, 
-            ingredients: window.ingredients, 
-            allergens: window.allergens, 
-            currentMenu: window.currentMenu, 
-            menuHistory: window.menuHistory,
-            savedTemplates: window.savedTemplates, 
-            currentStyleSettings: window.currentStyleSettings,
-            preferences: { lang: lang, theme: theme }
-        };
-        
-        localStorage.setItem('recipeManagerData', JSON.stringify(data));
+    window.selectSaveLocation = async function() {
+        const granted = await window.initFileSystem();
+        if (granted) {
+            alert('Storage folder selected successfully!');
+            window.renderUI();
+        }
+    };
 
-        if (directoryHandle) {
-            (async () => {
+    // Load all data from files
+    window.loadAllData = async function() {
+        if (!saveLocation) {
+            const lastAccess = localStorage.getItem('lastSaveLocation');
+            if (lastAccess === 'granted') {
                 try {
-                    window.showSyncAnimation('syncing');
-                    const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(JSON.stringify(data, null, 2));
-                    await writable.close();
-                    window.showSyncAnimation('success');
-                } catch (err) { 
-                    console.error(err); 
-                    window.showSyncAnimation('error'); 
+                    const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    saveLocation = dirHandle;
+                } catch (err) {
+                    console.log('No folder selected');
+                    return;
                 }
-            })();
-        } else {
-             window.showSyncAnimation('local');
+            } else {
+                return;
+            }
         }
-        
-        if (callback) callback();
-    };
 
-    window.loadData = function(renderCallback) {
-        const dataStr = localStorage.getItem('recipeManagerData');
-        if (dataStr) { 
-            try {
-                parseData(dataStr, false);
-            } catch(e) { console.error("Parse error", e); }
-        } else { 
-            window.populateDefaultAllergens(); 
-        }
-        if (renderCallback) renderCallback();
-    };
-
-    window.autoLoadOnStartup = async function(renderCallback) {
-        if (!isFileSystemSupported) { window.loadData(renderCallback); return; }
         try {
-            await window.initDB();
-            const savedHandle = await getDirectoryHandle();
-            if (!savedHandle) { window.loadData(renderCallback); return; }
-            
-            const permission = await savedHandle.queryPermission({ mode: 'readwrite' });
-            if (permission === 'granted') {
-                directoryHandle = savedHandle;
-                await window.loadFromFolder(renderCallback);
-            } else { 
-                const newPerm = await savedHandle.requestPermission({ mode: 'readwrite' });
-                if (newPerm === 'granted') {
-                     directoryHandle = savedHandle;
-                     await window.loadFromFolder(renderCallback);
-                } else {
-                     window.loadData(renderCallback);
-                }
+            // Load data.json (recipes, ingredients, allergens)
+            const dataContent = await window.readFile(saveLocation, 'data.json');
+            if (dataContent) {
+                const parsed = JSON.parse(dataContent);
+                window.recipes = parsed.recipes || [];
+                window.ingredients = parsed.ingredients || [];
+                window.allergens = parsed.allergens || [];
             }
-        } catch { 
-            window.loadData(renderCallback); 
+
+            // Load menus.json (all menu planning by date)
+            const menusContent = await window.readFile(saveLocation, 'menus.json');
+            if (menusContent) {
+                window.currentMenu = JSON.parse(menusContent);
+            }
+
+            // Load settings.json (templates, preferences)
+            const settingsContent = await window.readFile(saveLocation, 'settings.json');
+            if (settingsContent) {
+                const parsed = JSON.parse(settingsContent);
+                window.savedTemplates = parsed.templates || [];
+            }
+
+            // Populate default allergens if empty
+            if (window.allergens.length === 0) {
+                window.populateDefaultAllergens();
+            }
+
+            console.log('All data loaded successfully');
+        } catch (err) {
+            console.error('Error loading data:', err);
         }
     };
-
-    window.loadFromFolder = async function(renderCallback) {
-        if (directoryHandle) {
-            try {
-                const fileHandle = await directoryHandle.getFileHandle('recipe_data.json', { create: true });
-                const file = await fileHandle.getFile();
-                const text = await file.text();
-                if (text) { 
-                    parseData(text, true); 
-                    if(renderCallback) renderCallback();
-                }
-            } catch (err) { 
-                console.error(err); 
-                window.showSyncAnimation('error'); 
-            }
-        }
-    };
-
-    function parseData(jsonText, isFileImport) {
-        const data = JSON.parse(jsonText);
-        window.recipes = data.recipes || [];
-        window.ingredients = data.ingredients || [];
-        window.allergens = data.allergens || [];
-        window.currentMenu = data.currentMenu || {};
-        window.menuHistory = data.menuHistory || [];
-        window.savedTemplates = data.savedTemplates || [];
-        
-        if (data.currentStyleSettings) {
-            window.currentStyleSettings = {
-                ...window.currentStyleSettings,
-                ...data.currentStyleSettings
-            };
-        }
-        
-        if(data.preferences) {
-            if(data.preferences.lang) {
-                localStorage.setItem('recipeManagerLang', data.preferences.lang);
-                if(window.changeLanguage) window.changeLanguage(data.preferences.lang); 
-            }
-            if(data.preferences.theme) {
-                localStorage.setItem('appTheme', data.preferences.theme);
-                if(window.setAppTheme) window.setAppTheme(data.preferences.theme);
-            }
-        }
-        
-        if (window.allergens.length === 0) window.populateDefaultAllergens();
-    }
 
     window.populateDefaultAllergens = function() {
         window.PREDEFINED_ALLERGENS.forEach(def => {
@@ -223,101 +117,130 @@
         });
     };
 
-    async function getDirectoryHandle() {
-        if (!db) await window.initDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction([STORE_NAME], 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.get('mainDirectory');
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
-    }
+    // Save data.json (recipes, ingredients, allergens)
+    window.saveData = function() {
+        if (!saveLocation) return;
 
-    async function saveDirectoryHandle(handle) {
-        if (!db) await window.initDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction([STORE_NAME], 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.put(handle, 'mainDirectory');
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
-        });
-    }
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(async () => {
+            try {
+                const data = {
+                    recipes: window.recipes,
+                    ingredients: window.ingredients,
+                    allergens: window.allergens
+                };
+                await window.writeFile(saveLocation, 'data.json', JSON.stringify(data, null, 2));
+                window.showSyncIndicator();
+            } catch (err) {
+                console.error('Error saving data.json:', err);
+            }
+        }, 300);
+    };
 
-    window.showSyncAnimation = function(status) {
-        const indicator = document.getElementById('syncIndicator');
-        if (!indicator) return;
-        indicator.classList.remove('sync-hidden', 'sync-spin', 'sync-success', 'sync-error');
-        indicator.style.display = 'flex';
-        
-        if (status === 'syncing') {
-            indicator.innerHTML = '↻';
-            indicator.classList.add('sync-spin');
-        } else if (status === 'success') {
-            indicator.innerHTML = '✓';
-            indicator.classList.add('sync-success');
-            setTimeout(() => indicator.classList.add('sync-hidden'), 2000);
-        } else if (status === 'error') {
-            indicator.innerHTML = '⚠';
-            indicator.classList.add('sync-error');
-        } else {
-            indicator.innerHTML = '💾';
-            setTimeout(() => indicator.classList.add('sync-hidden'), 2000);
+    // Save menus.json (all menu planning)
+    window.saveMenus = function() {
+        if (!saveLocation) return;
+
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(async () => {
+            try {
+                await window.writeFile(saveLocation, 'menus.json', JSON.stringify(window.currentMenu, null, 2));
+                window.showSyncIndicator();
+            } catch (err) {
+                console.error('Error saving menus.json:', err);
+            }
+        }, 300);
+    };
+
+    // Save settings.json (templates, preferences)
+    window.saveSettings = function() {
+        if (!saveLocation) return;
+
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(async () => {
+            try {
+                const settings = {
+                    templates: window.savedTemplates
+                };
+                await window.writeFile(saveLocation, 'settings.json', JSON.stringify(settings, null, 2));
+                window.showSyncIndicator();
+            } catch (err) {
+                console.error('Error saving settings.json:', err);
+            }
+        }, 300);
+    };
+
+    // File I/O Helpers
+    window.readFile = async function(dirHandle, filename) {
+        try {
+            const fileHandle = await dirHandle.getFileHandle(filename);
+            const file = await fileHandle.getFile();
+            return await file.text();
+        } catch (err) {
+            if (err.name === 'NotFoundError') {
+                console.log(`${filename} not found, will create on save`);
+                return null;
+            }
+            throw err;
         }
     };
 
-    window.selectSaveLocation = async function(renderCallback) {
-        if (!isFileSystemSupported) return;
-        try {
-            const handle = await window.showDirectoryPicker();
-            if (handle) {
-                directoryHandle = handle;
-                await saveDirectoryHandle(handle);
-                try {
-                    await window.loadFromFolder(renderCallback);
-                } catch (e) {
-                    window.saveData();
-                }
-            }
-        } catch (err) { console.error(err); }
+    window.writeFile = async function(dirHandle, filename, content) {
+        const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
     };
 
-    window.exportDataFile = function() {
-        const data = { 
-            recipes: window.recipes, 
-            ingredients: window.ingredients, 
-            allergens: window.allergens, 
-            currentMenu: window.currentMenu, 
-            menuHistory: window.menuHistory, 
-            savedTemplates: window.savedTemplates, 
-            currentStyleSettings: window.currentStyleSettings 
+    // Visual feedback for auto-save
+    window.showSyncIndicator = function() {
+        const indicator = document.getElementById('syncIndicator');
+        if (!indicator) return;
+        
+        indicator.classList.remove('sync-hidden');
+        indicator.classList.add('sync-visible');
+        indicator.textContent = '✓';
+        
+        setTimeout(() => {
+            indicator.classList.remove('sync-visible');
+            indicator.classList.add('sync-hidden');
+        }, 2000);
+    };
+
+    // Update menu for specific date
+    window.updateMenuForDate = function(dateStr, slotId, category, recipeId) {
+        if (!window.currentMenu[dateStr]) {
+            window.currentMenu[dateStr] = {
+                slot1: { category: 'soup', recipe: null },
+                slot2: { category: 'main', recipe: null },
+                slot3: { category: 'dessert', recipe: null },
+                slot4: { category: 'other', recipe: null }
+            };
+        }
+
+        window.currentMenu[dateStr][slotId] = {
+            category: category,
+            recipe: recipeId
         };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'recipe_manager_backup.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+
+        window.saveMenus();
     };
 
-    window.importDataFile = function(file, renderCallback) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            parseData(e.target.result, true);
-            if(renderCallback) renderCallback();
+    // Get menu for specific date
+    window.getMenuForDate = function(dateStr) {
+        return window.currentMenu[dateStr] || {
+            slot1: { category: 'soup', recipe: null },
+            slot2: { category: 'main', recipe: null },
+            slot3: { category: 'dessert', recipe: null },
+            slot4: { category: 'other', recipe: null }
         };
-        reader.readAsText(file);
     };
 
-    window.updateRecipes = function(newRecipes) { window.recipes = newRecipes; window.saveData(); };
-    window.updateIngredients = function(newIng) { window.ingredients = newIng; window.saveData(); };
-    window.updateAllergens = function(newAlg) { window.allergens = newAlg; window.saveData(); };
-    window.updateStyleSettings = function(settings) { window.currentStyleSettings = settings; window.saveData(); };
-    window.addSavedTemplate = function(tmpl) { window.savedTemplates.push(tmpl); window.saveData(); };
-    window.updatePrintTemplate = function(html) { window.printTemplate = html; window.saveData(); };
+    // Check if date has any meals
+    window.dateHasMeals = function(dateStr) {
+        const menu = window.currentMenu[dateStr];
+        if (!menu) return false;
+        return Object.values(menu).some(slot => slot.recipe !== null);
+    };
+
 })(window);
