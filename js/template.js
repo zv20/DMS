@@ -8,8 +8,9 @@
     let activeTemplateId = null;
 
     const TemplateManager = {
-        // Preset Templates
+        // Preset Templates (12 total)
         presets: [
+            // ORIGINAL 5 PRESETS
             {
                 id: 'preset_classic',
                 name: '🎨 Classic Orange',
@@ -87,6 +88,127 @@
                 mealTitle: { fontSize: '9pt', color: '#2c3e50', fontWeight: '600' },
                 ingredients: { fontSize: '7.5pt', color: '#5a6c7d', fontStyle: 'normal' },
                 footer: { text: 'Nutritionally Balanced Meals', fontSize: '8pt', color: '#7f8c8d' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                }
+            },
+            
+            // NEW 7 PRESETS
+            {
+                id: 'preset_weekend',
+                name: '🌅 Weekend Brunch (2 days)',
+                header: { text: 'Weekend Specials', color: '#ff6b6b', fontSize: '22pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#fff8f0', borderRadius: '10px', borderWidth: '2', borderColor: '#ffa94d', borderStyle: 'solid' },
+                dayName: { fontSize: '13pt', color: '#d9480f', fontWeight: 'bold' },
+                mealTitle: { fontSize: '10pt', color: '#495057', fontWeight: '600' },
+                ingredients: { fontSize: '8pt', color: '#6c757d', fontStyle: 'italic' },
+                footer: { text: '☕ Relax & Enjoy Your Weekend!', fontSize: '9pt', color: '#868e96' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_school',
+                name: '🎒 School Days (3 days)',
+                header: { text: '📚 School Lunch Menu', color: '#4c6ef5', fontSize: '20pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#e7f5ff', borderRadius: '12px', borderWidth: '3', borderColor: '#74c0fc', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#1864ab', fontWeight: 'bold' },
+                mealTitle: { fontSize: '10pt', color: '#1971c2', fontWeight: 'bold' },
+                ingredients: { fontSize: '8pt', color: '#495057', fontStyle: 'normal' },
+                footer: { text: '🌟 Healthy Choices for Growing Minds', fontSize: '8pt', color: '#5c7cfa' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: true, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_business',
+                name: '💼 Business Week (4 days)',
+                header: { text: 'Executive Dining Menu', color: '#212529', fontSize: '19pt', fontWeight: '600' },
+                dayBlock: { bg: '#f1f3f5', borderRadius: '4px', borderWidth: '1', borderColor: '#868e96', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#212529', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#343a40', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#6c757d', fontStyle: 'normal' },
+                footer: { text: 'Professionally Catered | All Rights Reserved', fontSize: '7pt', color: '#adb5bd' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: false, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_bistro',
+                name: '🍷 Bistro Style (2 days)',
+                header: { text: 'Bistro du Chef', color: '#862e9c', fontSize: '24pt', fontWeight: 'normal' },
+                dayBlock: { bg: '#f8f0fc', borderRadius: '8px', borderWidth: '2', borderColor: '#d0bfff', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#862e9c', fontWeight: '500' },
+                mealTitle: { fontSize: '9pt', color: '#5f3dc4', fontWeight: 'normal' },
+                ingredients: { fontSize: '7.5pt', color: '#7950f2', fontStyle: 'italic' },
+                footer: { text: '✨ Bon Appétit | Chef Recommended', fontSize: '8pt', color: '#9775fa' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_wellness',
+                name: '🥗 Wellness Plan (3 days)',
+                header: { text: 'Wellness Menu', color: '#2f9e44', fontSize: '21pt', fontWeight: '600' },
+                dayBlock: { bg: '#ebfbee', borderRadius: '10px', borderWidth: '2', borderColor: '#8ce99a', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#2b8a3e', fontWeight: '600' },
+                mealTitle: { fontSize: '9pt', color: '#2f9e44', fontWeight: '600' },
+                ingredients: { fontSize: '8pt', color: '#37b24d', fontStyle: 'normal' },
+                footer: { text: '🌱 Nourish Your Body & Soul', fontSize: '8pt', color: '#51cf66' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_mediterranean',
+                name: '🌊 Mediterranean (4 days)',
+                header: { text: 'Mediterranean Menu', color: '#0b7285', fontSize: '20pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#e3fafc', borderRadius: '10px', borderWidth: '2', borderColor: '#66d9e8', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#0c8599', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#1098ad', fontWeight: '600' },
+                ingredients: { fontSize: '8pt', color: '#1864ab', fontStyle: 'italic' },
+                footer: { text: '🌞 Fresh & Flavorful Mediterranean Cuisine', fontSize: '8pt', color: '#15aabf' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_traditional',
+                name: '📋 Traditional (5 days)',
+                header: { text: 'WEEKLY MENU PLAN', color: '#5c940d', fontSize: '18pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#ffffff', borderRadius: '4px', borderWidth: '2', borderColor: '#a9d18e', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#5c940d', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#495057', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#6c757d', fontStyle: 'italic' },
+                footer: { text: 'Home-Cooked Goodness Since 1995', fontSize: '8pt', color: '#82c91e' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: true, showAllergens: true },
