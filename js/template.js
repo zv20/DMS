@@ -31,10 +31,9 @@
             activeTemplateId = 'default';
             this.setVal('headerText', 'Weekly Menu');
             this.setVal('headerColor', '#fd7e14');
-            this.setVal('headerSize', '24pt');
+            this.setVal('headerSize', '20pt');
             this.setVal('dayBg', '#ffffff');
             this.setVal('dayRadius', 8);
-            this.setVal('daySticker', '🍽️');
             this.setVal('dayBorderWidth', 2);
             this.setVal('dayBorderColor', '#e0e0e0');
             this.setVal('dayBorderStyle', 'solid');
@@ -54,7 +53,6 @@
             this.setVal('headerSize', template.header.fontSize);
             this.setVal('dayBg', template.dayBlock.bg);
             this.setVal('dayRadius', template.dayBlock.borderRadius.replace('px', ''));
-            this.setVal('daySticker', template.dayBlock.sticker);
             this.setVal('dayBorderWidth', template.dayBlock.borderWidth || 2);
             this.setVal('dayBorderColor', template.dayBlock.borderColor || '#e0e0e0');
             this.setVal('dayBorderStyle', template.dayBlock.borderStyle || 'solid');
@@ -74,7 +72,7 @@
         },
 
         bindUI: function() {
-            const inputs = ['headerText', 'headerColor', 'headerSize', 'dayBg', 'dayRadius', 'daySticker', 
+            const inputs = ['headerText', 'headerColor', 'headerSize', 'dayBg', 'dayRadius', 
                            'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle', 'backgroundImage', 'footerText'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
@@ -113,12 +111,11 @@
                 header: { 
                     text: document.getElementById('headerText')?.value || 'Weekly Menu',
                     color: document.getElementById('headerColor')?.value || '#fd7e14',
-                    fontSize: document.getElementById('headerSize')?.value || '24pt'
+                    fontSize: document.getElementById('headerSize')?.value || '20pt'
                 },
                 dayBlock: {
                     bg: document.getElementById('dayBg')?.value || '#ffffff',
                     borderRadius: (document.getElementById('dayRadius')?.value || '8') + 'px',
-                    sticker: document.getElementById('daySticker')?.value || '🍽️',
                     borderWidth: document.getElementById('dayBorderWidth')?.value || '2',
                     borderColor: document.getElementById('dayBorderColor')?.value || '#e0e0e0',
                     borderStyle: document.getElementById('dayBorderStyle')?.value || 'solid'
@@ -150,8 +147,8 @@
             const dateRange = this.getCurrentDateRangeText();
             if (h) {
                 h.innerHTML = `
-                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:3px; font-weight:600;">${settings.header.text}</h1>
-                    <p style="text-align:center; color:#7f8c8d; margin-top:0; margin-bottom:10px; font-size:10pt;">${dateRange}</p>
+                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin:0 0 2px 0; font-weight:600; line-height:1.2;">${settings.header.text}</h1>
+                    <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
                 `;
             }
 
@@ -180,7 +177,7 @@
             // Footer
             const f = document.getElementById('previewFooter');
             if (f) {
-                f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:8px; margin-top:10px; color:#7f8c8d; font-size:9pt; text-align:center;">${settings.footer.text}</div>`;
+                f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:4px; margin-top:6px; color:#7f8c8d; font-size:8pt; text-align:center; line-height:1;">${settings.footer.text}</div>`;
             }
         },
 
@@ -190,16 +187,16 @@
             block.style.cssText = `
                 background: ${settings.dayBlock.bg};
                 border-radius: ${settings.dayBlock.borderRadius};
-                padding: 8px 12px;
-                margin-bottom: 10px;
+                padding: 10px 12px;
+                margin-bottom: 6px;
                 border: ${settings.dayBlock.borderWidth}px ${settings.dayBlock.borderStyle} ${settings.dayBlock.borderColor};
                 page-break-inside: avoid;
             `;
 
+            // Day header without sticker
             let contentHtml = `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0; margin-bottom:8px; padding-bottom:4px;">
-                    <h2 style="margin:0; font-size:13pt; color:#2c3e50; font-weight:600;">${dayName}</h2>
-                    <span style="font-size:18pt;">${settings.dayBlock.sticker}</span>
+                <div style="border-bottom:1px solid #d0d0d0; margin-bottom:6px; padding-bottom:3px;">
+                    <h2 style="margin:0; font-size:11pt; color:#2c3e50; font-weight:600; line-height:1.2;">${dayName}</h2>
                 </div>
             `;
 
@@ -224,7 +221,7 @@
             }
 
             if (!this.hasMeals(dayMenu)) {
-                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:10px; font-size:9pt;">${window.t('empty_day') || 'No meals planned'}</p>`;
+                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; font-size:8pt; margin:0; line-height:1;">${window.t('empty_day') || 'No meals planned'}</p>`;
             }
 
             block.innerHTML = contentHtml;
@@ -235,11 +232,11 @@
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
-            // Clean text format - no boxes
-            let html = `<div style="margin-bottom:8px;">`;
+            // Clean text format - no boxes, compact spacing
+            let html = `<div style="margin-bottom:5px;">`;
             
             // Title line with portion and calories
-            let titleLine = `<div style="font-size:10pt; font-weight:600; color:#333; margin-bottom:2px;">${index}. ${recipe.name}`;
+            let titleLine = `<div style="font-size:9pt; font-weight:600; color:#333; margin-bottom:2px; line-height:1.2;">${index}. ${recipe.name}`;
             
             // Add portion size and calories with language-specific units
             let metadata = [];
@@ -252,7 +249,7 @@
                 const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
                 metadata.push(`${recipe.calories} ${calorieUnit}`);
             }
-            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:#666; font-size:9pt;">(${metadata.join(', ')})</span>`;
+            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:#666; font-size:8pt;">(${metadata.join(', ')})</span>`;
             
             titleLine += `</div>`;
             html += titleLine;
@@ -276,7 +273,7 @@
                 }).filter(n => n).join(', ');
                 
                 if (ingredientsList) {
-                    html += `<div style="font-size:8pt; color:#555; margin-top:2px; margin-left:12px; line-height:1.3;"><em>Ingredients:</em> ${ingredientsList}</div>`;
+                    html += `<div style="font-size:7.5pt; color:#555; margin-top:1px; margin-left:10px; line-height:1.2;"><em>Ingredients:</em> ${ingredientsList}</div>`;
                 }
             }
 
@@ -472,14 +469,15 @@
                 <style>
                     @page { 
                         size: A4;
-                        margin: 12mm;
+                        margin: 10mm;
                     }
                     body { 
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                         padding: 0;
                         margin: 0;
                         background: #fff;
-                        font-size: 10pt;
+                        font-size: 9pt;
+                        line-height: 1.2;
                         ${backgroundStyle}
                     }
                     .print-day-block { 
@@ -494,10 +492,10 @@
                 </style>
             </head>
             <body>
-                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin-bottom:3px; font-weight:600;">${settings.header.text}</h1>
-                <p style="text-align:center; color:#7f8c8d; margin-bottom:15px; margin-top:0; font-size:10pt;">${dateRange}</p>
+                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin:0 0 2px 0; font-weight:600; line-height:1.2;">${settings.header.text}</h1>
+                <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
                 ${daysHtml}
-                <div style="margin-top:10px; border-top:1px solid #eee; padding-top:5px; text-align:center; color:#7f8c8d; font-size:9pt;">${settings.footer.text}</div>
+                <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:#7f8c8d; font-size:8pt; line-height:1;">${settings.footer.text}</div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
             </html>
