@@ -48,6 +48,7 @@
         const name = document.getElementById('recipeName').value;
         const cat = document.getElementById('recipeCategory').value;
         const portion = document.getElementById('recipePortionSize').value;
+        const calories = document.getElementById('recipeCalories').value;
         const instr = document.getElementById('recipeInstructions').value;
         
         // Collect Ingredients from tags
@@ -59,8 +60,9 @@
         const manualAllergens = Array.from(algTags).map(t => ({ id: t.dataset.id }));
 
         const newRecipe = {
-            id, name, category: cat, portionSize: portion, instructions: instr,
-            ingredients, manualAllergens
+            id, name, category: cat, portionSize: portion, 
+            calories: calories ? parseInt(calories) : null,
+            instructions: instr, ingredients, manualAllergens
         };
 
         if (window.editingRecipeId) {
