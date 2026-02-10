@@ -1144,6 +1144,20 @@
           "name": "Milk"
         }
       ]
+    },
+    {
+      "id": "rcp_1770745634903",
+      "name": "Agora",
+      "category": "soup",
+      "portionSize": "250",
+      "calories": 220,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1"
+        }
+      ],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
@@ -1555,7 +1569,7 @@
       },
       "slot1": {
         "type": "soup",
-        "recipe": "rcp_100"
+        "recipe": "rcp_1770745634903"
       },
       "slot2": {
         "type": "main",
@@ -1563,11 +1577,11 @@
       },
       "slot3": {
         "type": "dessert",
-        "recipe": "rcp_104"
+        "recipe": null
       },
       "slot4": {
         "type": "other",
-        "recipe": "rcp_102"
+        "recipe": null
       }
     },
     "2026-02-10": {
@@ -1589,19 +1603,19 @@
       },
       "slot1": {
         "type": "soup",
-        "recipe": "rcp_105"
+        "recipe": null
       },
       "slot2": {
         "type": "main",
-        "recipe": "rcp_112"
+        "recipe": null
       },
       "slot3": {
         "type": "dessert",
-        "recipe": "rcp_119"
+        "recipe": null
       },
       "slot4": {
         "type": "other",
-        "recipe": "rcp_111"
+        "recipe": null
       }
     },
     "2026-02-11": {
@@ -1623,19 +1637,19 @@
       },
       "slot1": {
         "type": "soup",
-        "recipe": "rcp_100"
+        "recipe": null
       },
       "slot2": {
         "type": "main",
-        "recipe": "rcp_110"
+        "recipe": null
       },
       "slot3": {
         "type": "dessert",
-        "recipe": "rcp_103"
+        "recipe": null
       },
       "slot4": {
         "type": "other",
-        "recipe": "rcp_122"
+        "recipe": null
       }
     },
     "2026-02-12": {
@@ -1691,19 +1705,19 @@
       },
       "slot1": {
         "type": "soup",
-        "recipe": "rcp_117"
+        "recipe": null
       },
       "slot2": {
         "type": "main",
-        "recipe": "rcp_125"
+        "recipe": "rcp_107"
       },
       "slot3": {
         "type": "dessert",
-        "recipe": "rcp_128"
+        "recipe": "rcp_103"
       },
       "slot4": {
         "type": "other",
-        "recipe": "rcp_117"
+        "recipe": null
       }
     },
     "2026-02-14": {
@@ -1779,22 +1793,39 @@
   "savedTemplates": [
     {
       "header": {
-        "text": "Седмично Меню",
+        "text": "Weekly Menu",
         "color": "#fd7e14",
-        "fontSize": "12"
+        "fontSize": "20pt",
+        "fontWeight": "bold"
       },
       "dayBlock": {
         "bg": "#ffffff",
-        "borderRadius": "3px",
-        "sticker": "🍽️",
+        "borderRadius": "8px",
         "borderWidth": "2",
         "borderColor": "#e0e0e0",
-        "borderStyle": "dashed"
+        "borderStyle": "solid"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
       },
       "footer": {
-        "text": "Алергените са подчертани.\nМенюто е собразено с изискванията на Наредба Nº 37, Наредба Nº9 на М3Х и Рецептурника\nза ученическо столово хранене\nМенютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.\nМенюто е съгласувано с мед. лице - Елиза Дамянова. •\nМенюто може да претьрпи промени, поради независещи от нас"
+        "text": "Prepared with care by KitchenPro",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
       },
-      "backgroundImage": "",
+      "backgroundImage": "https://www.freepik.com/free-photo/christmas-decoration-with-space_1361154.htm#fromView=search&page=1&position=3&uuid=ea9ecdf1-47f2-4e10-976b-f44887aa24fb&query=1240+%C3%97+1754+cristmas+",
       "slotSettings": {
         "slot1": {
           "showIngredients": true,
@@ -1817,27 +1848,44 @@
           "showAllergens": true
         }
       },
-      "name": "Оригинал",
-      "id": "tmpl_1770731949143"
+      "name": "My Template 1",
+      "id": "tmpl_1770746939339"
     },
     {
       "header": {
-        "text": "Седмично Меню",
+        "text": "Weekly Menu",
         "color": "#fd7e14",
-        "fontSize": "12"
+        "fontSize": "20pt",
+        "fontWeight": "bold"
       },
       "dayBlock": {
         "bg": "#ffffff",
-        "borderRadius": "0px",
-        "sticker": "🍽️",
-        "borderWidth": "1",
-        "borderColor": "#aa2c2c",
-        "borderStyle": "dotted"
+        "borderRadius": "8px",
+        "borderWidth": "2",
+        "borderColor": "#e0e0e0",
+        "borderStyle": "solid"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
       },
       "footer": {
-        "text": "Алергените са подчертани.\nМенюто е собразено с изискванията на Наредба Nº 37, Наредба Nº9 на М3Х и Рецептурника\nза ученическо столово хранене\nМенютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.\nМенюто е съгласувано с мед. лице - Елиза Дамянова. •\nМенюто може да претьрпи промени, поради независещи от нас"
+        "text": "Prepared with care by KitchenPro",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
       },
-      "backgroundImage": "",
+      "backgroundImage": "https://i.pinimg.com/736x/c9/21/92/c921924d77b119c41ca5fd6a4aee49fc.jpg",
       "slotSettings": {
         "slot1": {
           "showIngredients": true,
@@ -1860,8 +1908,8 @@
           "showAllergens": true
         }
       },
-      "name": "ORG",
-      "id": "tmpl_1770733313712"
+      "name": "My Template 2",
+      "id": "tmpl_1770747146001"
     }
   ],
   "currentStyleSettings": {
