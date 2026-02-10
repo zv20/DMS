@@ -1,5 +1,7 @@
 /* Recipe Manager - Mobile First Bubble Menu & Themes */
 
+@import url('calendar.css');
+
 :root {
     /* DEFAULT THEME (Orange/Warm) */
     --color-primary: #fd7e14;
@@ -78,7 +80,13 @@ body {
 .splash-content { text-align: center; animation: fadeIn 0.5s ease-out; }
 .splash-logo { font-size: 4rem; display: block; margin-bottom: 10px; animation: bounce 2s infinite; }
 .splash-title { font-size: 2rem; color: var(--color-primary); margin-bottom: 5px; font-weight: bold; }
-.splash-subtitle { font-size: 1rem; color: var(--color-text-secondary); margin-bottom: 20px; }
+.splash-subtitle { 
+    font-size: 1rem; 
+    color: var(--color-text-secondary); 
+    margin-bottom: 20px;
+    min-height: 24px;
+    transition: all 0.3s ease;
+}
 .loader-spinner {
     border: 4px solid rgba(0, 0, 0, 0.1);
     width: 36px;
@@ -96,6 +104,7 @@ body {
     gap: 10px;
     align-items: center;
     margin-top: 20px;
+    min-height: 60px;
 }
 
 .btn-splash {
@@ -332,12 +341,16 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+}
+.sync-indicator.sync-visible {
+    opacity: 1 !important;
+    transform: scale(1.1);
 }
 .sync-indicator.sync-spin { animation: rotate 1s linear infinite; }
 .sync-indicator.sync-success { border-color: var(--color-success); color: var(--color-success); }
 .sync-indicator.sync-error { border-color: var(--color-danger); color: var(--color-danger); }
-.sync-indicator.sync-hidden { opacity: 0; }
+.sync-indicator.sync-hidden { opacity: 0; transform: scale(0.8); }
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* --- UNIFIED BUTTONS & INPUTS --- */
