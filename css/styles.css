@@ -545,6 +545,58 @@ label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95
 /* Empty State */
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--color-text-secondary); font-size: 1.1rem; }
 
+/* --- CUSTOM DESIGNER STYLES --- */
+
+/* Palette Items */
+.palette-item {
+    background: var(--color-surface);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    text-align: center;
+    cursor: grab;
+    transition: all 0.2s;
+    user-select: none;
+}
+.palette-item:hover {
+    border-color: var(--color-primary);
+    border-style: solid;
+    background: var(--color-background);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+.palette-item:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* Canvas Elements */
+.canvas-element {
+    user-select: none;
+    transition: outline 0.2s;
+}
+.canvas-element:hover {
+    outline: 2px dashed var(--color-primary) !important;
+    outline-offset: -2px;
+}
+
+/* Property Groups */
+.property-group {
+    margin-bottom: 15px;
+}
+.property-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+/* Design Canvas */
+#designCanvas {
+    position: relative;
+}
+
 /* Animations */
 @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
