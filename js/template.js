@@ -1,12 +1,106 @@
 /**
  * Advanced Template Manager
- * Per-block settings, template library, and detailed meal printing
+ * Per-block settings, template library, detailed meal printing, and preset templates
  */
 
 (function(window) {
     let activeTemplateId = null;
 
     const TemplateManager = {
+        // Preset Templates
+        presets: [
+            {
+                id: 'preset_classic',
+                name: '🎨 Classic Orange',
+                dayCount: 5,
+                header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '20pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#ffffff', borderRadius: '8px', borderWidth: '2', borderColor: '#e0e0e0', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#2c3e50', fontWeight: '600' },
+                mealTitle: { fontSize: '9pt', color: '#333333', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#555555', fontStyle: 'italic' },
+                footer: { text: 'Prepared with care by KitchenPro', fontSize: '8pt', color: '#7f8c8d' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_modern',
+                name: '⚡ Modern Bold',
+                dayCount: 5,
+                header: { text: 'THIS WEEK', color: '#2c3e50', fontSize: '24pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#ecf0f1', borderRadius: '12px', borderWidth: '0', borderColor: '#bdc3c7', borderStyle: 'solid' },
+                dayName: { fontSize: '14pt', color: '#e74c3c', fontWeight: 'bold' },
+                mealTitle: { fontSize: '10pt', color: '#2c3e50', fontWeight: 'bold' },
+                ingredients: { fontSize: '8pt', color: '#7f8c8d', fontStyle: 'normal' },
+                footer: { text: '✨ Enjoy your meals!', fontSize: '9pt', color: '#95a5a6' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: false, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: true, showAllergens: false }
+                }
+            },
+            {
+                id: 'preset_minimal',
+                name: '🌿 Minimal Clean',
+                dayCount: 5,
+                header: { text: 'Menu', color: '#27ae60', fontSize: '18pt', fontWeight: 'normal' },
+                dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '1', borderColor: '#bdc3c7', borderStyle: 'solid' },
+                dayName: { fontSize: '10pt', color: '#27ae60', fontWeight: '500' },
+                mealTitle: { fontSize: '9pt', color: '#34495e', fontWeight: 'normal' },
+                ingredients: { fontSize: '7pt', color: '#7f8c8d', fontStyle: 'italic' },
+                footer: { text: '', fontSize: '7pt', color: '#95a5a6' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot3: { showIngredients: false, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: false }
+                }
+            },
+            {
+                id: 'preset_colorful',
+                name: '🌈 Colorful Fun',
+                dayCount: 3,
+                header: { text: '🍽️ Menu Time!', color: '#9b59b6', fontSize: '22pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#fef5e7', borderRadius: '15px', borderWidth: '3', borderColor: '#f39c12', borderStyle: 'dashed' },
+                dayName: { fontSize: '13pt', color: '#e67e22', fontWeight: 'bold' },
+                mealTitle: { fontSize: '10pt', color: '#8e44ad', fontWeight: '600' },
+                ingredients: { fontSize: '8pt', color: '#16a085', fontStyle: 'normal' },
+                footer: { text: '🌟 Bon Appétit!', fontSize: '10pt', color: '#e74c3c' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_professional',
+                name: '💼 Professional',
+                dayCount: 2,
+                header: { text: 'Weekly Meal Plan', color: '#1a1a2e', fontSize: '20pt', fontWeight: '600' },
+                dayBlock: { bg: '#f8f9fa', borderRadius: '6px', borderWidth: '2', borderColor: '#34495e', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#1a1a2e', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#2c3e50', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#5a6c7d', fontStyle: 'normal' },
+                footer: { text: 'Nutritionally Balanced Meals', fontSize: '8pt', color: '#7f8c8d' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                }
+            }
+        ],
+
         init: function() {
             this.loadActiveTemplate();
             this.bindUI();
@@ -29,14 +123,27 @@
 
         applyDefaultSettings: function() {
             activeTemplateId = 'default';
+            this.setVal('dayCount', 5);
             this.setVal('headerText', 'Weekly Menu');
             this.setVal('headerColor', '#fd7e14');
             this.setVal('headerSize', '20pt');
+            this.setVal('headerWeight', 'bold');
             this.setVal('dayBg', '#ffffff');
             this.setVal('dayRadius', 8);
             this.setVal('dayBorderWidth', 2);
             this.setVal('dayBorderColor', '#e0e0e0');
             this.setVal('dayBorderStyle', 'solid');
+            this.setVal('dayNameSize', '11pt');
+            this.setVal('dayNameColor', '#2c3e50');
+            this.setVal('dayNameWeight', '600');
+            this.setVal('mealTitleSize', '9pt');
+            this.setVal('mealTitleColor', '#333333');
+            this.setVal('mealTitleWeight', '600');
+            this.setVal('ingredientsSize', '7.5pt');
+            this.setVal('ingredientsColor', '#555555');
+            this.setVal('ingredientsStyle', 'italic');
+            this.setVal('footerSize', '8pt');
+            this.setVal('footerColor', '#7f8c8d');
             this.setVal('backgroundImage', '');
             this.setVal('footerText', 'Prepared with care by KitchenPro');
             
@@ -48,14 +155,27 @@
         },
 
         applyTemplateToUI: function(template) {
+            this.setVal('dayCount', template.dayCount || 5);
             this.setVal('headerText', template.header.text);
             this.setVal('headerColor', template.header.color);
             this.setVal('headerSize', template.header.fontSize);
+            this.setVal('headerWeight', template.header.fontWeight || 'bold');
             this.setVal('dayBg', template.dayBlock.bg);
             this.setVal('dayRadius', template.dayBlock.borderRadius.replace('px', ''));
             this.setVal('dayBorderWidth', template.dayBlock.borderWidth || 2);
             this.setVal('dayBorderColor', template.dayBlock.borderColor || '#e0e0e0');
             this.setVal('dayBorderStyle', template.dayBlock.borderStyle || 'solid');
+            this.setVal('dayNameSize', template.dayName?.fontSize || '11pt');
+            this.setVal('dayNameColor', template.dayName?.color || '#2c3e50');
+            this.setVal('dayNameWeight', template.dayName?.fontWeight || '600');
+            this.setVal('mealTitleSize', template.mealTitle?.fontSize || '9pt');
+            this.setVal('mealTitleColor', template.mealTitle?.color || '#333333');
+            this.setVal('mealTitleWeight', template.mealTitle?.fontWeight || '600');
+            this.setVal('ingredientsSize', template.ingredients?.fontSize || '7.5pt');
+            this.setVal('ingredientsColor', template.ingredients?.color || '#555555');
+            this.setVal('ingredientsStyle', template.ingredients?.fontStyle || 'italic');
+            this.setVal('footerSize', template.footer?.fontSize || '8pt');
+            this.setVal('footerColor', template.footer?.color || '#7f8c8d');
             this.setVal('backgroundImage', template.backgroundImage || '');
             this.setVal('footerText', template.footer.text);
             
@@ -72,8 +192,12 @@
         },
 
         bindUI: function() {
-            const inputs = ['headerText', 'headerColor', 'headerSize', 'dayBg', 'dayRadius', 
-                           'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle', 'backgroundImage', 'footerText'];
+            const inputs = ['dayCount', 'headerText', 'headerColor', 'headerSize', 'headerWeight',
+                           'dayBg', 'dayRadius', 'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle',
+                           'dayNameSize', 'dayNameColor', 'dayNameWeight',
+                           'mealTitleSize', 'mealTitleColor', 'mealTitleWeight',
+                           'ingredientsSize', 'ingredientsColor', 'ingredientsStyle',
+                           'footerSize', 'footerColor', 'backgroundImage', 'footerText'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('input', () => this.refreshPreview());
@@ -108,10 +232,12 @@
             }
 
             return {
+                dayCount: parseInt(document.getElementById('dayCount')?.value) || 5,
                 header: { 
                     text: document.getElementById('headerText')?.value || 'Weekly Menu',
                     color: document.getElementById('headerColor')?.value || '#fd7e14',
-                    fontSize: document.getElementById('headerSize')?.value || '20pt'
+                    fontSize: document.getElementById('headerSize')?.value || '20pt',
+                    fontWeight: document.getElementById('headerWeight')?.value || 'bold'
                 },
                 dayBlock: {
                     bg: document.getElementById('dayBg')?.value || '#ffffff',
@@ -120,8 +246,25 @@
                     borderColor: document.getElementById('dayBorderColor')?.value || '#e0e0e0',
                     borderStyle: document.getElementById('dayBorderStyle')?.value || 'solid'
                 },
+                dayName: {
+                    fontSize: document.getElementById('dayNameSize')?.value || '11pt',
+                    color: document.getElementById('dayNameColor')?.value || '#2c3e50',
+                    fontWeight: document.getElementById('dayNameWeight')?.value || '600'
+                },
+                mealTitle: {
+                    fontSize: document.getElementById('mealTitleSize')?.value || '9pt',
+                    color: document.getElementById('mealTitleColor')?.value || '#333333',
+                    fontWeight: document.getElementById('mealTitleWeight')?.value || '600'
+                },
+                ingredients: {
+                    fontSize: document.getElementById('ingredientsSize')?.value || '7.5pt',
+                    color: document.getElementById('ingredientsColor')?.value || '#555555',
+                    fontStyle: document.getElementById('ingredientsStyle')?.value || 'italic'
+                },
                 footer: {
-                    text: document.getElementById('footerText')?.value || ''
+                    text: document.getElementById('footerText')?.value || '',
+                    fontSize: document.getElementById('footerSize')?.value || '8pt',
+                    color: document.getElementById('footerColor')?.value || '#7f8c8d'
                 },
                 backgroundImage: document.getElementById('backgroundImage')?.value || '',
                 slotSettings: slotSettings
@@ -144,10 +287,10 @@
             
             // Header
             const h = document.getElementById('previewHeader');
-            const dateRange = this.getCurrentDateRangeText();
+            const dateRange = this.getCurrentDateRangeText(settings.dayCount);
             if (h) {
                 h.innerHTML = `
-                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin:0 0 2px 0; font-weight:600; line-height:1.2;">${settings.header.text}</h1>
+                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
                     <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
                 `;
             }
@@ -158,7 +301,7 @@
                 list.innerHTML = '';
                 const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
                 
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < settings.dayCount; i++) {
                     const day = new Date(weekStart);
                     day.setDate(weekStart.getDate() + i);
                     const dateStr = day.toISOString().split('T')[0];
@@ -177,7 +320,7 @@
             // Footer
             const f = document.getElementById('previewFooter');
             if (f) {
-                f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:4px; margin-top:6px; color:#7f8c8d; font-size:8pt; text-align:center; line-height:1;">${settings.footer.text}</div>`;
+                f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:4px; margin-top:6px; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; text-align:center; line-height:1;">${settings.footer.text}</div>`;
             }
         },
 
@@ -196,7 +339,7 @@
             // Day header without sticker
             let contentHtml = `
                 <div style="border-bottom:1px solid #d0d0d0; margin-bottom:6px; padding-bottom:3px;">
-                    <h2 style="margin:0; font-size:11pt; color:#2c3e50; font-weight:600; line-height:1.2;">${dayName}</h2>
+                    <h2 style="margin:0; font-size:${settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
                 </div>
             `;
 
@@ -214,7 +357,7 @@
                         const recipe = window.recipes.find(r => r.id === slot.recipe);
                         if (recipe) {
                             const slotSettings = settings.slotSettings[slotConfig.id];
-                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, index + 1);
+                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, settings, index + 1);
                         }
                     }
                 });
@@ -228,15 +371,14 @@
             return block;
         },
 
-        createMealBlock: function(recipe, slotConfig, slotSettings, index) {
+        createMealBlock: function(recipe, slotConfig, slotSettings, settings, index) {
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
-            // Clean text format - no boxes, compact spacing
             let html = `<div style="margin-bottom:5px;">`;
             
             // Title line with portion and calories
-            let titleLine = `<div style="font-size:9pt; font-weight:600; color:#333; margin-bottom:2px; line-height:1.2;">${index}. ${recipe.name}`;
+            let titleLine = `<div style="font-size:${settings.mealTitle.fontSize}; font-weight:${settings.mealTitle.fontWeight}; color:${settings.mealTitle.color}; margin-bottom:2px; line-height:1.2;">${index}. ${recipe.name}`;
             
             // Add portion size and calories with language-specific units
             let metadata = [];
@@ -263,7 +405,6 @@
                     const fullIng = window.ingredients.find(i => i.id === ing.id);
                     if (!fullIng) return '';
                     
-                    // Check if this ingredient has any allergens
                     const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
                     
                     if (slotSettings.showAllergens && hasAllergen) {
@@ -273,7 +414,7 @@
                 }).filter(n => n).join(', ');
                 
                 if (ingredientsList) {
-                    html += `<div style="font-size:7.5pt; color:#555; margin-top:1px; margin-left:10px; line-height:1.2;"><em>Ingredients:</em> ${ingredientsList}</div>`;
+                    html += `<div style="font-size:${settings.ingredients.fontSize}; color:${settings.ingredients.color}; font-style:${settings.ingredients.fontStyle}; margin-top:1px; margin-left:10px; line-height:1.2;"><em>Ingredients:</em> ${ingredientsList}</div>`;
                 }
             }
 
@@ -286,10 +427,10 @@
             return Object.values(dayMenu).some(slot => slot.recipe !== null);
         },
 
-        getCurrentDateRangeText: function() {
+        getCurrentDateRangeText: function(dayCount) {
             const start = window.getWeekStart(window.currentCalendarDate || new Date());
             const end = new Date(start);
-            end.setDate(start.getDate() + 4);
+            end.setDate(start.getDate() + (dayCount - 1));
             const options = { month: 'short', day: 'numeric' };
             const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
             return `${start.toLocaleDateString(lang, options)} — ${end.toLocaleDateString(lang, options)}, ${end.getFullYear()}`;
@@ -301,7 +442,28 @@
             
             container.innerHTML = '';
 
+            // Preset Templates
+            const presetHeader = document.createElement('h4');
+            presetHeader.textContent = '🎨 Preset Templates';
+            presetHeader.style.cssText = 'margin: 0 0 10px 0; color: #fd7e14; font-size: 11pt;';
+            container.appendChild(presetHeader);
+
+            this.presets.forEach(preset => {
+                const card = this.createPresetCard(preset);
+                container.appendChild(card);
+            });
+
+            // Separator
+            const separator = document.createElement('div');
+            separator.style.cssText = 'height: 1px; background: #ddd; margin: 20px 0;';
+            container.appendChild(separator);
+
             // Default Template
+            const customHeader = document.createElement('h4');
+            customHeader.textContent = '📝 My Templates';
+            customHeader.style.cssText = 'margin: 0 0 10px 0; color: #6c757d; font-size: 11pt;';
+            container.appendChild(customHeader);
+
             const defaultCard = this.createTemplateCard({
                 id: 'default',
                 name: 'Default Template'
@@ -315,6 +477,43 @@
             });
         },
 
+        createPresetCard: function(preset) {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                padding: 8px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+            `;
+            
+            card.onmouseenter = () => card.style.borderColor = '#fd7e14';
+            card.onmouseleave = () => card.style.borderColor = '#ddd';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = preset.name;
+            nameSpan.style.cssText = 'font-weight: 500; font-size: 9pt; color: #333;';
+            
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'Use';
+            loadBtn.className = 'btn btn-small btn-primary';
+            loadBtn.style.height = '28px';
+            loadBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.applyTemplateToUI(preset);
+                this.refreshPreview();
+            };
+
+            card.appendChild(nameSpan);
+            card.appendChild(loadBtn);
+            return card;
+        },
+
         createTemplateCard: function(template, isActive) {
             const card = document.createElement('div');
             card.style.cssText = `
@@ -325,6 +524,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                margin-bottom: 8px;
             `;
 
             const nameSpan = document.createElement('span');
@@ -440,14 +640,14 @@
         }
 
         const printWindow = window.open('', '_blank');
-        const dateRange = TemplateManager.getCurrentDateRangeText();
+        const dateRange = TemplateManager.getCurrentDateRangeText(settings.dayCount);
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
         let daysHtml = '';
         const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
         
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < settings.dayCount; i++) {
             const day = new Date(weekStart);
             day.setDate(weekStart.getDate() + i);
             const dateStr = day.toISOString().split('T')[0];
@@ -492,10 +692,10 @@
                 </style>
             </head>
             <body>
-                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; text-align:center; margin:0 0 2px 0; font-weight:600; line-height:1.2;">${settings.header.text}</h1>
+                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
                 <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
                 ${daysHtml}
-                <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:#7f8c8d; font-size:8pt; line-height:1;">${settings.footer.text}</div>
+                <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; line-height:1;">${settings.footer.text}</div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
             </html>
