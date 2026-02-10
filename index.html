@@ -12,6 +12,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/store.js"></script>
+  <script src="js/calendar.js"></script>
   <script src="js/render.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/template.js"></script>
@@ -79,11 +80,20 @@
              <button class="btn btn-primary" onclick="window.openTemplatePicker()" data-i18n="btn_print">🖨️ Print Menu</button>
           </div>
         </div>
+        
+        <!-- View Switcher & Calendar Controls -->
         <div class="calendar-controls">
-           <button class="btn btn-secondary" onclick="window.changeMonth(-1)">←</button>
-           <h2 id="currentMonth">...</h2>
-           <button class="btn btn-secondary" onclick="window.changeMonth(1)">→</button>
+           <div style="display: flex; gap: 10px;">
+               <button class="btn btn-secondary active" id="weeklyViewBtn">📅 Weekly</button>
+               <button class="btn btn-secondary" id="monthlyViewBtn">📆 Monthly</button>
+           </div>
+           <div style="display: flex; align-items: center; gap: 10px;">
+               <button class="btn btn-secondary" onclick="window.changeMonth(-1)">←</button>
+               <h2 id="currentMonth" style="margin: 0; min-width: 200px; text-align: center;">...</h2>
+               <button class="btn btn-secondary" onclick="window.changeMonth(1)">→</button>
+           </div>
         </div>
+        
         <div id="calendar" class="week-view"></div>
       </div>
 
