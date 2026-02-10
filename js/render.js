@@ -2,9 +2,8 @@
 
 (function(window) {
     let viewMode = localStorage.getItem('calendarViewMode') || 'week';
-    window.currentCalendarDate = new Date(); // Track current view globally
+    window.currentCalendarDate = new Date();
 
-    // --- Helper Renderers ---
     function getCategoryIcon(cat) { 
         return { soup: '🥣', main: '🍽️', dessert: '🍰', other: '➕' }[cat] || '➕'; 
     }
@@ -39,7 +38,6 @@
         return result;
     };
 
-    // --- Main Renderers ---
     window.renderAll = function() {
         window.updateSelects();
         window.renderRecipes();
@@ -96,9 +94,65 @@
         });
     };
 
+    window.renderIngredients = function() {
+        const tbody = document.getElementById('ingredientList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (window.ingredients.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_ingredients')}</td></tr>`; 
+            return; 
+        }
+        
+        window.ingredients.forEach(ing => {
+            const tr = document.createElement('tr');
+            let tags = '-';
+            if (ing.allergens && ing.allergens.length) { 
+                tags = '<div class="tag-container" style="gap:5px;">' + ing.allergens.map(aid => { 
+                    const a = window.allergens.find(x => x.id === aid); 
+                    return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>` : ''; 
+                }).join('') + '</div>'; 
+            }
+
+            tr.innerHTML = `
+                <td><strong>${ing.name}</strong></td>
+                <td>${tags}</td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openIngredientModal('${ing.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteIngredient('${ing.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderAllergens = function() {
+        const tbody = document.getElementById('allergenList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (window.allergens.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_allergens')}</td></tr>`; 
+            return; 
+        }
+        
+        window.allergens.forEach(al => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${window.getAllergenName(al)}</strong></td>
+                <td><div style="width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;"></div></td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openAllergenModal('${al.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteAllergen('${al.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
     window.renderCalendar = function(date) {
         if (!date) date = new Date();
-        window.currentCalendarDate = date; // Update global state
+        window.currentCalendarDate = date;
 
         const calendarEl = document.getElementById('calendar');
         const currentMonthEl = document.getElementById('currentMonth');
@@ -195,7 +249,6 @@
         return slotEl;
     }
 
-    // --- History & Navigation ---
     window.changeMonth = (delta) => {
         const d = new Date(window.currentCalendarDate);
         if (viewMode === 'week') d.setDate(d.getDate() + (delta * 7));
@@ -203,8 +256,27 @@
         window.renderCalendar(d);
     };
 
-    window.renderMenuHistory = function() { /* ... */ };
-    window.renderIngredients = function() { /* ... */ };
-    window.renderAllergens = function() { /* ... */ };
+    window.renderMenuHistory = function() {
+        const list = document.getElementById('menuHistory');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!window.menuHistory.length) { 
+            list.innerHTML = `<div class="empty-state">${window.t('empty_menus')}</div>`; 
+            return; 
+        }
+        window.menuHistory.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'menu-history-item';
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            item.innerHTML = `
+                <div class="menu-history-name">${m.name}</div>
+                <div class="menu-history-date">${new Date(m.date).toLocaleString(lang)}</div>
+                <div class="menu-history-actions">
+                    <button onclick="window.loadSavedMenu('${m.id}')">${window.t('btn_load')}</button>
+                    <button onclick="window.deleteSavedMenu('${m.id}')">${window.t('btn_delete')}</button>
+                </div>`;
+            list.appendChild(item);
+        });
+    };
 
 })(window);
