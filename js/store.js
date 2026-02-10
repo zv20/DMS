@@ -36,44 +36,95 @@
         { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
     ];
 
-    // Initialize File System
-    window.initFileSystem = async function() {
+    // Check if user has previously selected a folder
+    window.checkPreviousFolder = function() {
+        return localStorage.getItem('folderGranted') === 'true';
+    };
+
+    // Initialize File System - Ask user to select folder
+    window.selectSaveLocation = async function() {
         try {
             const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
             saveLocation = dirHandle;
-            localStorage.setItem('lastSaveLocation', 'granted');
+            localStorage.setItem('folderGranted', 'true');
+            
+            // Check if files exist, if not create them
+            await window.ensureFilesExist();
             await window.loadAllData();
+            
             return true;
         } catch (err) {
-            console.error('File system access denied:', err);
+            if (err.name !== 'AbortError') {
+                console.error('File system access denied:', err);
+            }
             return false;
         }
     };
 
-    window.selectSaveLocation = async function() {
-        const granted = await window.initFileSystem();
-        if (granted) {
-            alert('Storage folder selected successfully!');
-            window.renderUI();
+    // Auto-load from previously selected folder
+    window.autoLoadFromFolder = async function() {
+        if (!window.checkPreviousFolder()) {
+            return false;
+        }
+
+        try {
+            const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            saveLocation = dirHandle;
+            await window.loadAllData();
+            return true;
+        } catch (err) {
+            console.error('Could not access previous folder:', err);
+            localStorage.removeItem('folderGranted');
+            return false;
+        }
+    };
+
+    // Ensure all data files exist (create if missing)
+    window.ensureFilesExist = async function() {
+        if (!saveLocation) return;
+
+        try {
+            // Check/create data.json
+            const dataExists = await window.fileExists(saveLocation, 'data.json');
+            if (!dataExists) {
+                await window.writeFile(saveLocation, 'data.json', JSON.stringify({
+                    recipes: [],
+                    ingredients: [],
+                    allergens: []
+                }, null, 2));
+            }
+
+            // Check/create menus.json
+            const menusExists = await window.fileExists(saveLocation, 'menus.json');
+            if (!menusExists) {
+                await window.writeFile(saveLocation, 'menus.json', JSON.stringify({}, null, 2));
+            }
+
+            // Check/create settings.json
+            const settingsExists = await window.fileExists(saveLocation, 'settings.json');
+            if (!settingsExists) {
+                await window.writeFile(saveLocation, 'settings.json', JSON.stringify({
+                    templates: []
+                }, null, 2));
+            }
+        } catch (err) {
+            console.error('Error ensuring files exist:', err);
+        }
+    };
+
+    // Check if file exists
+    window.fileExists = async function(dirHandle, filename) {
+        try {
+            await dirHandle.getFileHandle(filename);
+            return true;
+        } catch (err) {
+            return false;
         }
     };
 
     // Load all data from files
     window.loadAllData = async function() {
-        if (!saveLocation) {
-            const lastAccess = localStorage.getItem('lastSaveLocation');
-            if (lastAccess === 'granted') {
-                try {
-                    const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-                    saveLocation = dirHandle;
-                } catch (err) {
-                    console.log('No folder selected');
-                    return;
-                }
-            } else {
-                return;
-            }
-        }
+        if (!saveLocation) return;
 
         try {
             // Load data.json (recipes, ingredients, allergens)
@@ -101,9 +152,10 @@
             // Populate default allergens if empty
             if (window.allergens.length === 0) {
                 window.populateDefaultAllergens();
+                window.saveData(); // Save defaults
             }
 
-            console.log('All data loaded successfully');
+            console.log('✅ All data loaded successfully');
         } catch (err) {
             console.error('Error loading data:', err);
         }
@@ -170,6 +222,22 @@
         }, 300);
     };
 
+    // Wrapper functions for compatibility
+    window.updateRecipes = function(recipes) {
+        window.recipes = recipes;
+        window.saveData();
+    };
+
+    window.updateIngredients = function(ingredients) {
+        window.ingredients = ingredients;
+        window.saveData();
+    };
+
+    window.updateAllergens = function(allergens) {
+        window.allergens = allergens;
+        window.saveData();
+    };
+
     // File I/O Helpers
     window.readFile = async function(dirHandle, filename) {
         try {
@@ -198,11 +266,11 @@
         if (!indicator) return;
         
         indicator.classList.remove('sync-hidden');
-        indicator.classList.add('sync-visible');
+        indicator.classList.add('sync-visible', 'sync-success');
         indicator.textContent = '✓';
         
         setTimeout(() => {
-            indicator.classList.remove('sync-visible');
+            indicator.classList.remove('sync-visible', 'sync-success');
             indicator.classList.add('sync-hidden');
         }, 2000);
     };

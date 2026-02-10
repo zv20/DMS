@@ -1,6 +1,7 @@
-// Main Entry Point (Global Scope)
+// Main Entry Point with Animated Loading
 
 (function(window) {
+    
     // --- Initialization ---
     async function init() {
         const hamburger = document.getElementById('hamburgerBtn');
@@ -9,19 +10,7 @@
         const closeBtn = document.getElementById('closeNavBtn');
         if(closeBtn) closeBtn.addEventListener('click', window.toggleNav);
         
-        // Bind Global Inputs
-        const printStartDateInput = document.getElementById('printStartDate');
-        const importInput = document.getElementById('importInput');
         const langSel = document.getElementById('languageSelect');
-
-        if (importInput) importInput.addEventListener('change', (e) => window.importDataFile(e.target.files[0], window.renderAll));
-        
-        if (printStartDateInput) {
-            printStartDateInput.addEventListener('change', (e) => {
-                window.renderAll();
-            });
-        }
-
         if (langSel) {
             langSel.value = window.getCurrentLanguage();
             langSel.addEventListener('change', (e) => window.changeLanguage(e.target.value));
@@ -30,18 +19,110 @@
         window.bindNavigation();
         window.setAppTheme(localStorage.getItem('appTheme') || 'default');
 
-        // --- Splash Screen Logic ---
-        await handleSplashScreen();
-
-        if (window.$) {
-            window.$(document).ready(function () {
-                // Summernote init if needed
-            });
-        }
+        // --- Animated Loading Screen ---
+        await handleAnimatedLoading();
     }
 
-    // --- CRUD Save Functions (Moved here or exposed from modal logic) ---
-    // These need to be global for the form onsubmit handlers in index.html
+    // --- Animated Loading with Messages ---
+    async function handleAnimatedLoading() {
+        const splash = document.getElementById('splashScreen');
+        const actions = document.getElementById('splashActions');
+        const subtitle = splash.querySelector('.splash-subtitle');
+        
+        const loadingMessages = [
+            '🔍 Checking for data folder...',
+            '📂 Loading settings...',
+            '📋 Loading templates...',
+            '🥘 Loading recipes...',
+            '🧂 Loading ingredients...'
+        ];
+        
+        let messageIndex = 0;
+        
+        // Function to show loading messages
+        function showNextMessage() {
+            if (messageIndex < loadingMessages.length) {
+                subtitle.textContent = loadingMessages[messageIndex];
+                messageIndex++;
+            }
+        }
+        
+        // Start message rotation
+        actions.innerHTML = '<div class="loader-spinner"></div>';
+        showNextMessage();
+        const messageInterval = setInterval(showNextMessage, 800);
+        
+        try {
+            // Check if user has previously selected folder
+            const hasPreviousFolder = window.checkPreviousFolder();
+            
+            if (hasPreviousFolder) {
+                // Try to auto-load from previous folder
+                const loaded = await window.autoLoadFromFolder();
+                
+                if (loaded) {
+                    // Successfully loaded
+                    clearInterval(messageInterval);
+                    subtitle.textContent = '✅ Ready!';
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    hideSplash();
+                } else {
+                    // Failed to access previous folder, ask user
+                    clearInterval(messageInterval);
+                    askForFolder();
+                }
+            } else {
+                // First time user - ask for folder
+                clearInterval(messageInterval);
+                askForFolder();
+            }
+        } catch (err) {
+            console.error('Loading error:', err);
+            clearInterval(messageInterval);
+            askForFolder();
+        }
+        
+        function askForFolder() {
+            subtitle.textContent = 'Select a folder to store your data';
+            actions.innerHTML = `
+                <button class="btn btn-primary" onclick="window.selectFolderAndStart()" style="min-width: 200px; height: 48px;">
+                    <span>📁</span> Select Folder
+                </button>
+            `;
+        }
+        
+        function hideSplash() {
+            splash.style.opacity = '0';
+            document.body.classList.add('app-loaded');
+            setTimeout(() => {
+                splash.style.display = 'none';
+                window.initStyleBuilder();
+                window.renderAll();
+                if (window.CalendarManager) {
+                    window.CalendarManager.init();
+                }
+            }, 500);
+        }
+        
+        // Global function for folder selection button
+        window.selectFolderAndStart = async function() {
+            actions.innerHTML = '<div class="loader-spinner"></div>';
+            subtitle.textContent = '⏳ Setting up your workspace...';
+            
+            const selected = await window.selectSaveLocation();
+            
+            if (selected) {
+                subtitle.textContent = '✅ All set!';
+                await new Promise(resolve => setTimeout(resolve, 500));
+                hideSplash();
+            } else {
+                // User cancelled, show button again
+                askForFolder();
+            }
+        };
+    }
+
+    // --- CRUD Save Functions ---
     window.saveRecipe = function(e) {
         e.preventDefault();
         const id = window.editingRecipeId || window.generateId('rcp');
@@ -51,11 +132,9 @@
         const calories = document.getElementById('recipeCalories').value;
         const instr = document.getElementById('recipeInstructions').value;
         
-        // Collect Ingredients from tags
         const ingTags = document.getElementById('recipeIngredients').querySelectorAll('.tag');
         const ingredients = Array.from(ingTags).map(t => ({ id: t.dataset.id }));
         
-        // Collect Manual Allergens
         const algTags = document.getElementById('recipeManualAllergens').querySelectorAll('.tag');
         const manualAllergens = Array.from(algTags).map(t => ({ id: t.dataset.id }));
 
@@ -72,7 +151,7 @@
             window.recipes.push(newRecipe);
         }
         
-        window.updateRecipes(window.recipes); // Saves and triggers sync
+        window.updateRecipes(window.recipes);
         window.closeRecipeModal();
         window.renderRecipes();
     };
@@ -97,7 +176,7 @@
         window.updateIngredients(window.ingredients);
         window.closeIngredientModal();
         window.renderIngredients();
-        window.updateSelects(); // Refresh dropdowns
+        window.updateSelects();
     };
 
     window.saveAllergen = function(e) {
@@ -146,116 +225,12 @@
             window.updateSelects();
         }
     };
-    
-    // Add item functions for modals
-    window.addIngredientToRecipe = function() {
-        const sel = document.getElementById('ingredientSelect');
-        const id = sel.value;
-        if (!id) return;
-        const ing = window.ingredients.find(i => i.id === id);
-        if (ing) {
-            window.addIngredientTagToModal(ing);
-            sel.value = '';
-        }
-    };
-    
-    window.addManualAllergenToRecipe = function() {
-        const sel = document.getElementById('allergenSelect');
-        const id = sel.value;
-        if (!id) return;
-        const alg = window.allergens.find(a => a.id === id);
-        if (alg) {
-            window.addManualAllergenTag(alg);
-            sel.value = '';
-        }
-    };
-    
-    window.addLinkedAllergen = function() {
-        const sel = document.getElementById('ingredientAllergenSelect');
-        const id = sel.value;
-        if (!id) return;
-        const alg = window.allergens.find(a => a.id === id);
-        if (alg) {
-            window.addLinkedAllergenTag(alg);
-            sel.value = '';
-        }
-    };
-
-
-    async function handleSplashScreen() {
-        const splash = document.getElementById('splashScreen');
-        const actions = document.getElementById('splashActions');
-        const hasSavedHandle = await window.checkSavedHandle();
-        const minWait = new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Use standard 'btn' classes here to ensure they match the app theme perfectly
-        if (hasSavedHandle) {
-            actions.innerHTML = `
-                <button class="btn btn-primary" onclick="resumeSession()" style="min-width: 180px; height: 48px;">
-                    <span>▶</span> Resume Session
-                </button>
-                <button class="btn btn-secondary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
-                    <span>📂</span> Switch Folder
-                </button>
-            `;
-        } else {
-            actions.innerHTML = `
-                <button class="btn btn-primary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
-                    <span>🚀</span> Get Started
-                </button>
-            `;
-        }
-
-        window.resumeSession = async () => {
-            actions.innerHTML = '<div class="loader-spinner"></div>';
-            try {
-                await window.autoLoadOnStartup(window.renderAll); 
-                await minWait; 
-                hideSplash();
-            } catch (e) {
-                console.error("Resume failed", e);
-                alert("Could not access folder. Please select it again.");
-                startFresh();
-            }
-        };
-
-        window.startFresh = async () => {
-            actions.innerHTML = '<div class="loader-spinner"></div>';
-            try {
-                await window.selectSaveLocation(window.renderAll);
-                await minWait;
-                hideSplash();
-            } catch (e) {
-                // Restore buttons on cancel/error
-                actions.innerHTML = `
-                    <button class="btn btn-primary" onclick="startFresh()" style="min-width: 180px; height: 48px;">
-                        <span>🚀</span> Get Started
-                    </button>
-                `;
-            }
-        };
-
-        function hideSplash() {
-            splash.style.opacity = '0';
-            document.body.classList.add('app-loaded');
-            setTimeout(() => {
-                splash.style.display = 'none';
-                window.initStyleBuilder();
-                window.renderAll();
-            }, 500);
-        }
-    }
 
     // --- Expose Global Functions ---
-    window.manualSave = () => window.saveData(() => console.log('Manual save triggered')); // Feedback handled by animation
-    window.manualLoad = () => window.loadFromFolder(window.renderAll);
-    window.exportData = window.exportDataFile;
-    window.changeMonth = (delta) => { /* Logic needed in render.js or here for date state */ window.renderAll(); };
-    window.toggleView = (mode) => { localStorage.setItem('calendarViewMode', mode); window.renderAll(); };
-    window.togglePrintDay = (day) => { 
-        const btn = document.getElementById('printDay' + day);
-        if(btn) btn.classList.toggle('active');
-        // Save print preferences if needed
+    window.changeMonth = (delta) => {
+        if (window.CalendarManager) {
+            window.CalendarManager.changeMonth(delta);
+        }
     };
 
     // Start App
