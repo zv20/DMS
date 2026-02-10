@@ -115,7 +115,38 @@
           <h1 data-i18n="nav_ingredients">Ingredients</h1>
           <button class="btn btn-primary" onclick="window.openIngredientModal()">+ Add Ingredient</button>
         </div>
-        <tbody id="ingredientList"></tbody>
+        <div class="table-responsive">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="label_ingredient_name">Name</th>
+                        <th data-i18n="label_allergens">Allergens</th>
+                        <th data-i18n="table_actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ingredientList"></tbody>
+            </table>
+        </div>
+      </div>
+
+      <!-- ALLERGENS PAGE -->
+      <div id="allergens" class="page">
+        <div class="page-header">
+          <h1 data-i18n="nav_allergens">Allergens</h1>
+          <button class="btn btn-primary" onclick="window.openAllergenModal()">+ Add Allergen</button>
+        </div>
+        <div class="table-responsive">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="label_allergen_name">Name</th>
+                        <th data-i18n="label_color">Color</th>
+                        <th data-i18n="table_actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="allergenList"></tbody>
+            </table>
+        </div>
       </div>
 
       <!-- SETTINGS PAGE -->
@@ -173,7 +204,7 @@
     </main>
   </div>
 
-  <!-- Modals -->
+  <!-- MODALS -->
   <div id="templatePickerModal" class="modal">
       <div class="modal-content">
           <h2>Select Template</h2>
@@ -187,13 +218,39 @@
           <span class="close" onclick="window.closeRecipeModal()">&times;</span>
           <h2 id="recipeModalTitle">Add Recipe</h2>
           <form id="recipeForm" onsubmit="window.saveRecipe(event)">
-              <input type="text" id="recipeName" required placeholder="Recipe Name">
-              <select id="recipeCategory"></select>
-              <input type="text" id="recipePortionSize" placeholder="Portion Size">
-              <div id="recipeIngredients" class="tag-container"></div>
-              <div id="recipeManualAllergens" class="tag-container"></div>
-              <textarea id="recipeInstructions" placeholder="Instructions"></textarea>
-              <button type="submit" class="btn btn-primary">Save</button>
+              <label data-i18n="label_recipe_name">Recipe Name</label>
+              <input type="text" id="recipeName" class="form-control" required placeholder="Recipe Name">
+              
+              <label data-i18n="label_category">Category</label>
+              <select id="recipeCategory" class="form-control"></select>
+              
+              <label data-i18n="label_portion_size">Portion Size</label>
+              <input type="text" id="recipePortionSize" class="form-control" placeholder="e.g., 250g">
+              
+              <label data-i18n="label_ingredients">Ingredients</label>
+              <div style="display:flex; gap:5px; margin-bottom:10px;">
+                  <select id="ingredientSelect" class="form-control" style="flex:1;"></select>
+                  <button type="button" class="btn btn-secondary" onclick="window.addIngredientFromSelect()">Add</button>
+              </div>
+              <div id="recipeIngredients" class="tag-container" style="margin-bottom:15px;"></div>
+              
+              <label>Auto-detected Allergens</label>
+              <div id="recipeAutoAllergens" style="margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:4px; min-height:30px;">-</div>
+              
+              <label data-i18n="label_manual_allergens">Manual Allergens</label>
+              <div style="display:flex; gap:5px; margin-bottom:10px;">
+                  <select id="allergenSelect" class="form-control" style="flex:1;"></select>
+                  <button type="button" class="btn btn-secondary" onclick="window.addAllergenFromSelect()">Add</button>
+              </div>
+              <div id="recipeManualAllergens" class="tag-container" style="margin-bottom:15px;"></div>
+              
+              <label data-i18n="label_instructions">Instructions</label>
+              <textarea id="recipeInstructions" class="form-control" rows="4" placeholder="Cooking instructions..."></textarea>
+              
+              <div style="margin-top:20px;">
+                  <button type="submit" class="btn btn-primary">Save Recipe</button>
+                  <button type="button" class="btn btn-secondary" onclick="window.closeRecipeModal()">Cancel</button>
+              </div>
           </form>
       </div>
   </div>
@@ -201,11 +258,41 @@
   <div id="ingredientModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="window.closeIngredientModal()">&times;</span>
-      <h2>Add Ingredient</h2>
+      <h2 id="ingredientModalTitle">Add Ingredient</h2>
       <form id="ingredientForm" onsubmit="window.saveIngredient(event)">
-        <input type="text" id="ingredientName" required placeholder="Ingredient Name">
-        <div id="ingredientLinkedAllergens" class="tag-container"></div>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <label data-i18n="label_ingredient_name">Ingredient Name</label>
+        <input type="text" id="ingredientName" class="form-control" required placeholder="Ingredient Name">
+        
+        <label data-i18n="label_allergens">Allergens</label>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <select id="ingredientAllergenSelect" class="form-control" style="flex:1;"></select>
+            <button type="button" class="btn btn-secondary" onclick="window.addIngredientAllergenFromSelect()">Add</button>
+        </div>
+        <div id="ingredientLinkedAllergens" class="tag-container" style="margin-bottom:15px;"></div>
+        
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Save Ingredient</button>
+            <button type="button" class="btn btn-secondary" onclick="window.closeIngredientModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="allergenModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="window.closeAllergenModal()">&times;</span>
+      <h2 id="allergenModalTitle">Add Allergen</h2>
+      <form id="allergenForm" onsubmit="window.saveAllergen(event)">
+        <label data-i18n="label_allergen_name">Allergen Name</label>
+        <input type="text" id="allergenName" class="form-control" required placeholder="Allergen Name">
+        
+        <label data-i18n="label_color">Color</label>
+        <input type="color" id="allergenColor" class="form-control" value="#3498db">
+        
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Save Allergen</button>
+            <button type="button" class="btn btn-secondary" onclick="window.closeAllergenModal()">Cancel</button>
+        </div>
       </form>
     </div>
   </div>
