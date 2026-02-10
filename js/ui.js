@@ -88,6 +88,7 @@
                 document.getElementById('recipeName').value = recipe.name;
                 document.getElementById('recipeCategory').value = recipe.category || 'other';
                 document.getElementById('recipePortionSize').value = recipe.portionSize || '';
+                document.getElementById('recipeCalories').value = recipe.calories || '';
                 document.getElementById('recipeInstructions').value = recipe.instructions || '';
                 
                 if (recipe.ingredients) {
@@ -168,6 +169,40 @@
         window.editingAllergenId = null;
     };
 
+    // --- Helpers ---
+    window.addIngredientFromSelect = function() {
+        const sel = document.getElementById('ingredientSelect');
+        if (sel && sel.value) {
+            const ing = window.ingredients.find(i => i.id === sel.value);
+            if (ing) {
+                window.addIngredientTagToModal(ing);
+                sel.value = '';
+            }
+        }
+    };
+
+    window.addAllergenFromSelect = function() {
+        const sel = document.getElementById('allergenSelect');
+        if (sel && sel.value) {
+            const alg = window.allergens.find(a => a.id === sel.value);
+            if (alg) {
+                window.addManualAllergenTag(alg);
+                sel.value = '';
+            }
+        }
+    };
+
+    window.addIngredientAllergenFromSelect = function() {
+        const sel = document.getElementById('ingredientAllergenSelect');
+        if (sel && sel.value) {
+            const alg = window.allergens.find(a => a.id === sel.value);
+            if (alg) {
+                window.addLinkedAllergenTag(alg);
+                sel.value = '';
+            }
+        }
+    };
+
     // --- Modal Helpers (Tag Management) ---
     window.addIngredientTagToModal = function(ingredient) {
         const container = document.getElementById('recipeIngredients');
@@ -223,7 +258,7 @@
         } else {
             label.innerHTML = Array.from(detected).map(aid => {
                 const a = window.allergens.find(x => x.id === aid);
-                return a ? `<span class="tag allergen-mini" style="background:${a.color}20; color:${a.color}">${window.getAllergenName(a)}</span>` : '';
+                return a ? `<span class="tag allergen-mini" style="background:${a.color}20; color:${a.color}; padding:3px 8px; border-radius:12px; font-size:0.85rem;">${window.getAllergenName(a)}</span>` : '';
             }).join(' ');
         }
     };
