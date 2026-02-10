@@ -56,9 +56,20 @@
             this.render();
         },
 
-        changeMonth: function(offset) {
-            this.currentDate.setMonth(this.currentDate.getMonth() + offset);
+        // Navigate by month or week depending on view mode
+        navigate: function(offset) {
+            if (this.viewMode === 'monthly') {
+                this.currentDate.setMonth(this.currentDate.getMonth() + offset);
+            } else {
+                // Weekly view - navigate by weeks
+                this.currentDate.setDate(this.currentDate.getDate() + (offset * 7));
+            }
             this.render();
+        },
+
+        // Legacy function for compatibility
+        changeMonth: function(offset) {
+            this.navigate(offset);
         },
 
         render: function() {
@@ -265,7 +276,7 @@
 
     // Global navigation functions
     window.changeMonth = function(offset) {
-        window.CalendarManager.changeMonth(offset);
+        window.CalendarManager.navigate(offset);
     };
 
     // Initialize on load

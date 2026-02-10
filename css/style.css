@@ -1,0 +1,13 @@
+/* Remove any conflicting width constraints */
+#app-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    #app-container {
+        padding: 10px;
+    }
+}
