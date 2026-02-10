@@ -4,16 +4,27 @@
       "id": "rcp_100",
       "name": "Roasted Mustard Chowder",
       "category": "soup",
-      "portionSize": "1 servings",
+      "portionSize": "120",
+      "calories": 220,
       "instructions": "1. Prepare Mustard. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_48", "name": "Mustard"},
-        {"id": "ing_18", "name": "Tomato"},
-        {"id": "ing_16", "name": "Eggs"}
+        {
+          "id": "ing_48"
+        },
+        {
+          "id": "ing_18"
+        },
+        {
+          "id": "ing_16"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_mustard", "name": "Mustard"},
-        {"id": "alg_eggs", "name": "Eggs"}
+        {
+          "id": "alg_mustard"
+        },
+        {
+          "id": "alg_eggs"
+        }
       ]
     },
     {
@@ -23,17 +34,44 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Cheddar Cheese. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_3", "name": "Cheddar Cheese"},
-        {"id": "ing_2", "name": "Butter"},
-        {"id": "ing_6", "name": "Wheat Flour"},
-        {"id": "ing_14", "name": "Salmon"},
-        {"id": "ing_15", "name": "Tuna"},
-        {"id": "ing_33", "name": "Apple"}
+        {
+          "id": "ing_3",
+          "name": "Cheddar Cheese"
+        },
+        {
+          "id": "ing_2",
+          "name": "Butter"
+        },
+        {
+          "id": "ing_6",
+          "name": "Wheat Flour"
+        },
+        {
+          "id": "ing_14",
+          "name": "Salmon"
+        },
+        {
+          "id": "ing_15",
+          "name": "Tuna"
+        },
+        {
+          "id": "ing_33",
+          "name": "Apple"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_gluten", "name": "Gluten"},
-        {"id": "alg_fish", "name": "Fish"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        },
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        }
       ]
     },
     {
@@ -43,13 +81,28 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Green Peas. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_29", "name": "Green Peas"},
-        {"id": "ing_38", "name": "Sugar"},
-        {"id": "ing_18", "name": "Tomato"},
-        {"id": "ing_1", "name": "Milk"}
+        {
+          "id": "ing_29",
+          "name": "Green Peas"
+        },
+        {
+          "id": "ing_38",
+          "name": "Sugar"
+        },
+        {
+          "id": "ing_18",
+          "name": "Tomato"
+        },
+        {
+          "id": "ing_1",
+          "name": "Milk"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     },
     {
@@ -59,15 +112,36 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Salmon. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_14", "name": "Salmon"},
-        {"id": "ing_49", "name": "Mayonnaise"},
-        {"id": "ing_22", "name": "Broccoli"},
-        {"id": "ing_7", "name": "Spaghetti"}
+        {
+          "id": "ing_14",
+          "name": "Salmon"
+        },
+        {
+          "id": "ing_49",
+          "name": "Mayonnaise"
+        },
+        {
+          "id": "ing_22",
+          "name": "Broccoli"
+        },
+        {
+          "id": "ing_7",
+          "name": "Spaghetti"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_fish", "name": "Fish"},
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        },
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -77,15 +151,36 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Salt. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_39", "name": "Salt"},
-        {"id": "ing_17", "name": "Tofu"},
-        {"id": "ing_3", "name": "Cheddar Cheese"},
-        {"id": "ing_47", "name": "Honey"},
-        {"id": "ing_30", "name": "Mushrooms"}
+        {
+          "id": "ing_39",
+          "name": "Salt"
+        },
+        {
+          "id": "ing_17",
+          "name": "Tofu"
+        },
+        {
+          "id": "ing_3",
+          "name": "Cheddar Cheese"
+        },
+        {
+          "id": "ing_47",
+          "name": "Honey"
+        },
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_soybeans", "name": "Soybeans"},
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_soybeans",
+          "name": "Soybeans"
+        },
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     },
     {
@@ -95,11 +190,26 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Olive Oil. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_41", "name": "Olive Oil"},
-        {"id": "ing_40", "name": "Black Pepper"},
-        {"id": "ing_24", "name": "Bell Pepper"},
-        {"id": "ing_37", "name": "Strawberries"},
-        {"id": "ing_13", "name": "Pork Chop"}
+        {
+          "id": "ing_41",
+          "name": "Olive Oil"
+        },
+        {
+          "id": "ing_40",
+          "name": "Black Pepper"
+        },
+        {
+          "id": "ing_24",
+          "name": "Bell Pepper"
+        },
+        {
+          "id": "ing_37",
+          "name": "Strawberries"
+        },
+        {
+          "id": "ing_13",
+          "name": "Pork Chop"
+        }
       ],
       "manualAllergens": []
     },
@@ -110,13 +220,28 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Tuna. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_15", "name": "Tuna"},
-        {"id": "ing_7", "name": "Spaghetti"},
-        {"id": "ing_25", "name": "Garlic"}
+        {
+          "id": "ing_15",
+          "name": "Tuna"
+        },
+        {
+          "id": "ing_7",
+          "name": "Spaghetti"
+        },
+        {
+          "id": "ing_25",
+          "name": "Garlic"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_fish", "name": "Fish"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -126,17 +251,44 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Spinach. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_23", "name": "Spinach"},
-        {"id": "ing_14", "name": "Salmon"},
-        {"id": "ing_43", "name": "Soy Sauce"},
-        {"id": "ing_18", "name": "Tomato"},
-        {"id": "ing_45", "name": "Peanut Butter"}
+        {
+          "id": "ing_23",
+          "name": "Spinach"
+        },
+        {
+          "id": "ing_14",
+          "name": "Salmon"
+        },
+        {
+          "id": "ing_43",
+          "name": "Soy Sauce"
+        },
+        {
+          "id": "ing_18",
+          "name": "Tomato"
+        },
+        {
+          "id": "ing_45",
+          "name": "Peanut Butter"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_fish", "name": "Fish"},
-        {"id": "alg_soybeans", "name": "Soybeans"},
-        {"id": "alg_gluten", "name": "Gluten"},
-        {"id": "alg_peanuts", "name": "Peanuts"}
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        },
+        {
+          "id": "alg_soybeans",
+          "name": "Soybeans"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        },
+        {
+          "id": "alg_peanuts",
+          "name": "Peanuts"
+        }
       ]
     },
     {
@@ -146,10 +298,22 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Mushrooms. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_30", "name": "Mushrooms"},
-        {"id": "ing_25", "name": "Garlic"},
-        {"id": "ing_18", "name": "Tomato"},
-        {"id": "ing_41", "name": "Olive Oil"}
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        },
+        {
+          "id": "ing_25",
+          "name": "Garlic"
+        },
+        {
+          "id": "ing_18",
+          "name": "Tomato"
+        },
+        {
+          "id": "ing_41",
+          "name": "Olive Oil"
+        }
       ],
       "manualAllergens": []
     },
@@ -160,9 +324,18 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Carrot. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_21", "name": "Carrot"},
-        {"id": "ing_26", "name": "Lettuce"},
-        {"id": "ing_18", "name": "Tomato"}
+        {
+          "id": "ing_21",
+          "name": "Carrot"
+        },
+        {
+          "id": "ing_26",
+          "name": "Lettuce"
+        },
+        {
+          "id": "ing_18",
+          "name": "Tomato"
+        }
       ],
       "manualAllergens": []
     },
@@ -173,16 +346,40 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Lettuce. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_26", "name": "Lettuce"},
-        {"id": "ing_42", "name": "Vinegar"},
-        {"id": "ing_30", "name": "Mushrooms"},
-        {"id": "ing_10", "name": "Oats"},
-        {"id": "ing_17", "name": "Tofu"},
-        {"id": "ing_9", "name": "White Rice"}
+        {
+          "id": "ing_26",
+          "name": "Lettuce"
+        },
+        {
+          "id": "ing_42",
+          "name": "Vinegar"
+        },
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        },
+        {
+          "id": "ing_10",
+          "name": "Oats"
+        },
+        {
+          "id": "ing_17",
+          "name": "Tofu"
+        },
+        {
+          "id": "ing_9",
+          "name": "White Rice"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_gluten", "name": "Gluten"},
-        {"id": "alg_soybeans", "name": "Soybeans"}
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        },
+        {
+          "id": "alg_soybeans",
+          "name": "Soybeans"
+        }
       ]
     },
     {
@@ -192,16 +389,40 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Bell Pepper. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_24", "name": "Bell Pepper"},
-        {"id": "ing_15", "name": "Tuna"},
-        {"id": "ing_9", "name": "White Rice"},
-        {"id": "ing_33", "name": "Apple"},
-        {"id": "ing_32", "name": "Eggplant"},
-        {"id": "ing_6", "name": "Wheat Flour"}
+        {
+          "id": "ing_24",
+          "name": "Bell Pepper"
+        },
+        {
+          "id": "ing_15",
+          "name": "Tuna"
+        },
+        {
+          "id": "ing_9",
+          "name": "White Rice"
+        },
+        {
+          "id": "ing_33",
+          "name": "Apple"
+        },
+        {
+          "id": "ing_32",
+          "name": "Eggplant"
+        },
+        {
+          "id": "ing_6",
+          "name": "Wheat Flour"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_fish", "name": "Fish"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -211,17 +432,44 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Salt. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_39", "name": "Salt"},
-        {"id": "ing_5", "name": "Yogurt"},
-        {"id": "ing_25", "name": "Garlic"},
-        {"id": "ing_48", "name": "Mustard"},
-        {"id": "ing_50", "name": "Shrimp"},
-        {"id": "ing_30", "name": "Mushrooms"}
+        {
+          "id": "ing_39",
+          "name": "Salt"
+        },
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        },
+        {
+          "id": "ing_25",
+          "name": "Garlic"
+        },
+        {
+          "id": "ing_48",
+          "name": "Mustard"
+        },
+        {
+          "id": "ing_50",
+          "name": "Shrimp"
+        },
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_mustard", "name": "Mustard"},
-        {"id": "alg_crustaceans", "name": "Crustaceans"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_mustard",
+          "name": "Mustard"
+        },
+        {
+          "id": "alg_crustaceans",
+          "name": "Crustaceans"
+        }
       ]
     },
     {
@@ -231,15 +479,36 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Shrimp. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_50", "name": "Shrimp"},
-        {"id": "ing_42", "name": "Vinegar"},
-        {"id": "ing_22", "name": "Broccoli"},
-        {"id": "ing_8", "name": "Sourdough Bread"},
-        {"id": "ing_19", "name": "Potato"}
+        {
+          "id": "ing_50",
+          "name": "Shrimp"
+        },
+        {
+          "id": "ing_42",
+          "name": "Vinegar"
+        },
+        {
+          "id": "ing_22",
+          "name": "Broccoli"
+        },
+        {
+          "id": "ing_8",
+          "name": "Sourdough Bread"
+        },
+        {
+          "id": "ing_19",
+          "name": "Potato"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_crustaceans", "name": "Crustaceans"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_crustaceans",
+          "name": "Crustaceans"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -249,15 +518,36 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Apple. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_33", "name": "Apple"},
-        {"id": "ing_49", "name": "Mayonnaise"},
-        {"id": "ing_12", "name": "Ground Beef"},
-        {"id": "ing_7", "name": "Spaghetti"},
-        {"id": "ing_41", "name": "Olive Oil"}
+        {
+          "id": "ing_33",
+          "name": "Apple"
+        },
+        {
+          "id": "ing_49",
+          "name": "Mayonnaise"
+        },
+        {
+          "id": "ing_12",
+          "name": "Ground Beef"
+        },
+        {
+          "id": "ing_7",
+          "name": "Spaghetti"
+        },
+        {
+          "id": "ing_41",
+          "name": "Olive Oil"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -267,15 +557,36 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Mayonnaise. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_49", "name": "Mayonnaise"},
-        {"id": "ing_11", "name": "Chicken Breast"},
-        {"id": "ing_35", "name": "Orange"},
-        {"id": "ing_50", "name": "Shrimp"},
-        {"id": "ing_34", "name": "Banana"}
+        {
+          "id": "ing_49",
+          "name": "Mayonnaise"
+        },
+        {
+          "id": "ing_11",
+          "name": "Chicken Breast"
+        },
+        {
+          "id": "ing_35",
+          "name": "Orange"
+        },
+        {
+          "id": "ing_50",
+          "name": "Shrimp"
+        },
+        {
+          "id": "ing_34",
+          "name": "Banana"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_crustaceans", "name": "Crustaceans"}
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_crustaceans",
+          "name": "Crustaceans"
+        }
       ]
     },
     {
@@ -285,12 +596,24 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Sourdough Bread. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_8", "name": "Sourdough Bread"},
-        {"id": "ing_24", "name": "Bell Pepper"},
-        {"id": "ing_20", "name": "Red Onion"}
+        {
+          "id": "ing_8",
+          "name": "Sourdough Bread"
+        },
+        {
+          "id": "ing_24",
+          "name": "Bell Pepper"
+        },
+        {
+          "id": "ing_20",
+          "name": "Red Onion"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -300,12 +623,24 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Honey. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_47", "name": "Honey"},
-        {"id": "ing_32", "name": "Eggplant"},
-        {"id": "ing_5", "name": "Yogurt"}
+        {
+          "id": "ing_47",
+          "name": "Honey"
+        },
+        {
+          "id": "ing_32",
+          "name": "Eggplant"
+        },
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     },
     {
@@ -315,14 +650,32 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Banana. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_34", "name": "Banana"},
-        {"id": "ing_39", "name": "Salt"},
-        {"id": "ing_28", "name": "Corn"},
-        {"id": "ing_14", "name": "Salmon"},
-        {"id": "ing_35", "name": "Orange"}
+        {
+          "id": "ing_34",
+          "name": "Banana"
+        },
+        {
+          "id": "ing_39",
+          "name": "Salt"
+        },
+        {
+          "id": "ing_28",
+          "name": "Corn"
+        },
+        {
+          "id": "ing_14",
+          "name": "Salmon"
+        },
+        {
+          "id": "ing_35",
+          "name": "Orange"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_fish", "name": "Fish"}
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        }
       ]
     },
     {
@@ -332,18 +685,48 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Banana. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_34", "name": "Banana"},
-        {"id": "ing_29", "name": "Green Peas"},
-        {"id": "ing_8", "name": "Sourdough Bread"},
-        {"id": "ing_16", "name": "Eggs"},
-        {"id": "ing_15", "name": "Tuna"},
-        {"id": "ing_5", "name": "Yogurt"}
+        {
+          "id": "ing_34",
+          "name": "Banana"
+        },
+        {
+          "id": "ing_29",
+          "name": "Green Peas"
+        },
+        {
+          "id": "ing_8",
+          "name": "Sourdough Bread"
+        },
+        {
+          "id": "ing_16",
+          "name": "Eggs"
+        },
+        {
+          "id": "ing_15",
+          "name": "Tuna"
+        },
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_gluten", "name": "Gluten"},
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_fish", "name": "Fish"},
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        },
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_fish",
+          "name": "Fish"
+        },
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     },
     {
@@ -353,13 +736,28 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Yogurt. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_5", "name": "Yogurt"},
-        {"id": "ing_46", "name": "Walnuts"},
-        {"id": "ing_41", "name": "Olive Oil"}
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        },
+        {
+          "id": "ing_46",
+          "name": "Walnuts"
+        },
+        {
+          "id": "ing_41",
+          "name": "Olive Oil"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_nuts", "name": "Nuts"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_nuts",
+          "name": "Nuts"
+        }
       ]
     },
     {
@@ -369,17 +767,44 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Yogurt. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_5", "name": "Yogurt"},
-        {"id": "ing_33", "name": "Apple"},
-        {"id": "ing_16", "name": "Eggs"},
-        {"id": "ing_18", "name": "Tomato"},
-        {"id": "ing_43", "name": "Soy Sauce"}
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        },
+        {
+          "id": "ing_33",
+          "name": "Apple"
+        },
+        {
+          "id": "ing_16",
+          "name": "Eggs"
+        },
+        {
+          "id": "ing_18",
+          "name": "Tomato"
+        },
+        {
+          "id": "ing_43",
+          "name": "Soy Sauce"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_soybeans", "name": "Soybeans"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_soybeans",
+          "name": "Soybeans"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -389,13 +814,28 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Zucchini. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_31", "name": "Zucchini"},
-        {"id": "ing_27", "name": "Cucumber"},
-        {"id": "ing_13", "name": "Pork Chop"},
-        {"id": "ing_7", "name": "Spaghetti"}
+        {
+          "id": "ing_31",
+          "name": "Zucchini"
+        },
+        {
+          "id": "ing_27",
+          "name": "Cucumber"
+        },
+        {
+          "id": "ing_13",
+          "name": "Pork Chop"
+        },
+        {
+          "id": "ing_7",
+          "name": "Spaghetti"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -405,16 +845,40 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Mushrooms. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_30", "name": "Mushrooms"},
-        {"id": "ing_47", "name": "Honey"},
-        {"id": "ing_4", "name": "Heavy Cream"},
-        {"id": "ing_44", "name": "Almonds"},
-        {"id": "ing_42", "name": "Vinegar"},
-        {"id": "ing_46", "name": "Walnuts"}
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        },
+        {
+          "id": "ing_47",
+          "name": "Honey"
+        },
+        {
+          "id": "ing_4",
+          "name": "Heavy Cream"
+        },
+        {
+          "id": "ing_44",
+          "name": "Almonds"
+        },
+        {
+          "id": "ing_42",
+          "name": "Vinegar"
+        },
+        {
+          "id": "ing_46",
+          "name": "Walnuts"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_nuts", "name": "Nuts"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_nuts",
+          "name": "Nuts"
+        }
       ]
     },
     {
@@ -424,12 +888,24 @@
       "portionSize": "4 servings",
       "instructions": "1. Prepare Eggs. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_16", "name": "Eggs"},
-        {"id": "ing_13", "name": "Pork Chop"},
-        {"id": "ing_35", "name": "Orange"}
+        {
+          "id": "ing_16",
+          "name": "Eggs"
+        },
+        {
+          "id": "ing_13",
+          "name": "Pork Chop"
+        },
+        {
+          "id": "ing_35",
+          "name": "Orange"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_eggs", "name": "Eggs"}
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        }
       ]
     },
     {
@@ -439,15 +915,36 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Mushrooms. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_30", "name": "Mushrooms"},
-        {"id": "ing_16", "name": "Eggs"},
-        {"id": "ing_5", "name": "Yogurt"},
-        {"id": "ing_29", "name": "Green Peas"},
-        {"id": "ing_36", "name": "Lemon"}
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        },
+        {
+          "id": "ing_16",
+          "name": "Eggs"
+        },
+        {
+          "id": "ing_5",
+          "name": "Yogurt"
+        },
+        {
+          "id": "ing_29",
+          "name": "Green Peas"
+        },
+        {
+          "id": "ing_36",
+          "name": "Lemon"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     },
     {
@@ -457,10 +954,22 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Chicken Breast. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_11", "name": "Chicken Breast"},
-        {"id": "ing_27", "name": "Cucumber"},
-        {"id": "ing_32", "name": "Eggplant"},
-        {"id": "ing_31", "name": "Zucchini"}
+        {
+          "id": "ing_11",
+          "name": "Chicken Breast"
+        },
+        {
+          "id": "ing_27",
+          "name": "Cucumber"
+        },
+        {
+          "id": "ing_32",
+          "name": "Eggplant"
+        },
+        {
+          "id": "ing_31",
+          "name": "Zucchini"
+        }
       ],
       "manualAllergens": []
     },
@@ -471,16 +980,40 @@
       "portionSize": "2 servings",
       "instructions": "1. Prepare Milk. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_1", "name": "Milk"},
-        {"id": "ing_25", "name": "Garlic"},
-        {"id": "ing_17", "name": "Tofu"},
-        {"id": "ing_30", "name": "Mushrooms"},
-        {"id": "ing_19", "name": "Potato"},
-        {"id": "ing_28", "name": "Corn"}
+        {
+          "id": "ing_1",
+          "name": "Milk"
+        },
+        {
+          "id": "ing_25",
+          "name": "Garlic"
+        },
+        {
+          "id": "ing_17",
+          "name": "Tofu"
+        },
+        {
+          "id": "ing_30",
+          "name": "Mushrooms"
+        },
+        {
+          "id": "ing_19",
+          "name": "Potato"
+        },
+        {
+          "id": "ing_28",
+          "name": "Corn"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_soybeans", "name": "Soybeans"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_soybeans",
+          "name": "Soybeans"
+        }
       ]
     },
     {
@@ -490,14 +1023,32 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Heavy Cream. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_4", "name": "Heavy Cream"},
-        {"id": "ing_38", "name": "Sugar"},
-        {"id": "ing_48", "name": "Mustard"},
-        {"id": "ing_35", "name": "Orange"}
+        {
+          "id": "ing_4",
+          "name": "Heavy Cream"
+        },
+        {
+          "id": "ing_38",
+          "name": "Sugar"
+        },
+        {
+          "id": "ing_48",
+          "name": "Mustard"
+        },
+        {
+          "id": "ing_35",
+          "name": "Orange"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_mustard", "name": "Mustard"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_mustard",
+          "name": "Mustard"
+        }
       ]
     },
     {
@@ -507,17 +1058,44 @@
       "portionSize": "1 servings",
       "instructions": "1. Prepare Apple. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_33", "name": "Apple"},
-        {"id": "ing_34", "name": "Banana"},
-        {"id": "ing_11", "name": "Chicken Breast"},
-        {"id": "ing_4", "name": "Heavy Cream"},
-        {"id": "ing_50", "name": "Shrimp"},
-        {"id": "ing_6", "name": "Wheat Flour"}
+        {
+          "id": "ing_33",
+          "name": "Apple"
+        },
+        {
+          "id": "ing_34",
+          "name": "Banana"
+        },
+        {
+          "id": "ing_11",
+          "name": "Chicken Breast"
+        },
+        {
+          "id": "ing_4",
+          "name": "Heavy Cream"
+        },
+        {
+          "id": "ing_50",
+          "name": "Shrimp"
+        },
+        {
+          "id": "ing_6",
+          "name": "Wheat Flour"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_milk", "name": "Milk"},
-        {"id": "alg_crustaceans", "name": "Crustaceans"},
-        {"id": "alg_gluten", "name": "Gluten"}
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        },
+        {
+          "id": "alg_crustaceans",
+          "name": "Crustaceans"
+        },
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        }
       ]
     },
     {
@@ -527,163 +1105,762 @@
       "portionSize": "3 servings",
       "instructions": "1. Prepare Sourdough Bread. 2. Mix with other ingredients. 3. Cook and serve.",
       "ingredients": [
-        {"id": "ing_8", "name": "Sourdough Bread"},
-        {"id": "ing_37", "name": "Strawberries"},
-        {"id": "ing_16", "name": "Eggs"},
-        {"id": "ing_38", "name": "Sugar"},
-        {"id": "ing_39", "name": "Salt"},
-        {"id": "ing_3", "name": "Cheddar Cheese"}
+        {
+          "id": "ing_8",
+          "name": "Sourdough Bread"
+        },
+        {
+          "id": "ing_37",
+          "name": "Strawberries"
+        },
+        {
+          "id": "ing_16",
+          "name": "Eggs"
+        },
+        {
+          "id": "ing_38",
+          "name": "Sugar"
+        },
+        {
+          "id": "ing_39",
+          "name": "Salt"
+        },
+        {
+          "id": "ing_3",
+          "name": "Cheddar Cheese"
+        }
       ],
       "manualAllergens": [
-        {"id": "alg_gluten", "name": "Gluten"},
-        {"id": "alg_eggs", "name": "Eggs"},
-        {"id": "alg_milk", "name": "Milk"}
+        {
+          "id": "alg_gluten",
+          "name": "Gluten"
+        },
+        {
+          "id": "alg_eggs",
+          "name": "Eggs"
+        },
+        {
+          "id": "alg_milk",
+          "name": "Milk"
+        }
       ]
     }
   ],
   "ingredients": [
-    {"id": "ing_1", "name": "Milk", "allergens": ["alg_milk"]},
-    {"id": "ing_2", "name": "Butter", "allergens": ["alg_milk"]},
-    {"id": "ing_3", "name": "Cheddar Cheese", "allergens": ["alg_milk"]},
-    {"id": "ing_4", "name": "Heavy Cream", "allergens": ["alg_milk"]},
-    {"id": "ing_5", "name": "Yogurt", "allergens": ["alg_milk"]},
-    {"id": "ing_6", "name": "Wheat Flour", "allergens": ["alg_gluten"]},
-    {"id": "ing_7", "name": "Spaghetti", "allergens": ["alg_gluten"]},
-    {"id": "ing_8", "name": "Sourdough Bread", "allergens": ["alg_gluten"]},
-    {"id": "ing_9", "name": "White Rice", "allergens": []},
-    {"id": "ing_10", "name": "Oats", "allergens": ["alg_gluten"]},
-    {"id": "ing_11", "name": "Chicken Breast", "allergens": []},
-    {"id": "ing_12", "name": "Ground Beef", "allergens": []},
-    {"id": "ing_13", "name": "Pork Chop", "allergens": []},
-    {"id": "ing_14", "name": "Salmon", "allergens": ["alg_fish"]},
-    {"id": "ing_15", "name": "Tuna", "allergens": ["alg_fish"]},
-    {"id": "ing_16", "name": "Eggs", "allergens": ["alg_eggs"]},
-    {"id": "ing_17", "name": "Tofu", "allergens": ["alg_soybeans"]},
-    {"id": "ing_18", "name": "Tomato", "allergens": []},
-    {"id": "ing_19", "name": "Potato", "allergens": []},
-    {"id": "ing_20", "name": "Red Onion", "allergens": []},
-    {"id": "ing_21", "name": "Carrot", "allergens": []},
-    {"id": "ing_22", "name": "Broccoli", "allergens": []},
-    {"id": "ing_23", "name": "Spinach", "allergens": []},
-    {"id": "ing_24", "name": "Bell Pepper", "allergens": []},
-    {"id": "ing_25", "name": "Garlic", "allergens": []},
-    {"id": "ing_26", "name": "Lettuce", "allergens": []},
-    {"id": "ing_27", "name": "Cucumber", "allergens": []},
-    {"id": "ing_28", "name": "Corn", "allergens": []},
-    {"id": "ing_29", "name": "Green Peas", "allergens": []},
-    {"id": "ing_30", "name": "Mushrooms", "allergens": []},
-    {"id": "ing_31", "name": "Zucchini", "allergens": []},
-    {"id": "ing_32", "name": "Eggplant", "allergens": []},
-    {"id": "ing_33", "name": "Apple", "allergens": []},
-    {"id": "ing_34", "name": "Banana", "allergens": []},
-    {"id": "ing_35", "name": "Orange", "allergens": []},
-    {"id": "ing_36", "name": "Lemon", "allergens": []},
-    {"id": "ing_37", "name": "Strawberries", "allergens": []},
-    {"id": "ing_38", "name": "Sugar", "allergens": []},
-    {"id": "ing_39", "name": "Salt", "allergens": []},
-    {"id": "ing_40", "name": "Black Pepper", "allergens": []},
-    {"id": "ing_41", "name": "Olive Oil", "allergens": []},
-    {"id": "ing_42", "name": "Vinegar", "allergens": []},
-    {"id": "ing_43", "name": "Soy Sauce", "allergens": ["alg_soybeans", "alg_gluten"]},
-    {"id": "ing_44", "name": "Almonds", "allergens": ["alg_nuts"]},
-    {"id": "ing_45", "name": "Peanut Butter", "allergens": ["alg_peanuts"]},
-    {"id": "ing_46", "name": "Walnuts", "allergens": ["alg_nuts"]},
-    {"id": "ing_47", "name": "Honey", "allergens": []},
-    {"id": "ing_48", "name": "Mustard", "allergens": ["alg_mustard"]},
-    {"id": "ing_49", "name": "Mayonnaise", "allergens": ["alg_eggs"]},
-    {"id": "ing_50", "name": "Shrimp", "allergens": ["alg_crustaceans"]}
+    {
+      "id": "ing_1",
+      "name": "Milk",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_2",
+      "name": "Butter",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_3",
+      "name": "Cheddar Cheese",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_4",
+      "name": "Heavy Cream",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_5",
+      "name": "Yogurt",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_6",
+      "name": "Wheat Flour",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_7",
+      "name": "Spaghetti",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_8",
+      "name": "Sourdough Bread",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_9",
+      "name": "White Rice",
+      "allergens": []
+    },
+    {
+      "id": "ing_10",
+      "name": "Oats",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_11",
+      "name": "Chicken Breast",
+      "allergens": []
+    },
+    {
+      "id": "ing_12",
+      "name": "Ground Beef",
+      "allergens": []
+    },
+    {
+      "id": "ing_13",
+      "name": "Pork Chop",
+      "allergens": []
+    },
+    {
+      "id": "ing_14",
+      "name": "Salmon",
+      "allergens": [
+        "alg_fish"
+      ]
+    },
+    {
+      "id": "ing_15",
+      "name": "Tuna",
+      "allergens": [
+        "alg_fish"
+      ]
+    },
+    {
+      "id": "ing_16",
+      "name": "Eggs",
+      "allergens": [
+        "alg_eggs"
+      ]
+    },
+    {
+      "id": "ing_17",
+      "name": "Tofu",
+      "allergens": [
+        "alg_soybeans"
+      ]
+    },
+    {
+      "id": "ing_18",
+      "name": "Tomato",
+      "allergens": []
+    },
+    {
+      "id": "ing_19",
+      "name": "Potato",
+      "allergens": []
+    },
+    {
+      "id": "ing_20",
+      "name": "Red Onion",
+      "allergens": []
+    },
+    {
+      "id": "ing_21",
+      "name": "Carrot",
+      "allergens": []
+    },
+    {
+      "id": "ing_22",
+      "name": "Broccoli",
+      "allergens": []
+    },
+    {
+      "id": "ing_23",
+      "name": "Spinach",
+      "allergens": []
+    },
+    {
+      "id": "ing_24",
+      "name": "Bell Pepper",
+      "allergens": []
+    },
+    {
+      "id": "ing_25",
+      "name": "Garlic",
+      "allergens": []
+    },
+    {
+      "id": "ing_26",
+      "name": "Lettuce",
+      "allergens": []
+    },
+    {
+      "id": "ing_27",
+      "name": "Cucumber",
+      "allergens": []
+    },
+    {
+      "id": "ing_28",
+      "name": "Corn",
+      "allergens": []
+    },
+    {
+      "id": "ing_29",
+      "name": "Green Peas",
+      "allergens": []
+    },
+    {
+      "id": "ing_30",
+      "name": "Mushrooms",
+      "allergens": []
+    },
+    {
+      "id": "ing_31",
+      "name": "Zucchini",
+      "allergens": []
+    },
+    {
+      "id": "ing_32",
+      "name": "Eggplant",
+      "allergens": []
+    },
+    {
+      "id": "ing_33",
+      "name": "Apple",
+      "allergens": []
+    },
+    {
+      "id": "ing_34",
+      "name": "Banana",
+      "allergens": []
+    },
+    {
+      "id": "ing_35",
+      "name": "Orange",
+      "allergens": []
+    },
+    {
+      "id": "ing_36",
+      "name": "Lemon",
+      "allergens": []
+    },
+    {
+      "id": "ing_37",
+      "name": "Strawberries",
+      "allergens": []
+    },
+    {
+      "id": "ing_38",
+      "name": "Sugar",
+      "allergens": []
+    },
+    {
+      "id": "ing_39",
+      "name": "Salt",
+      "allergens": []
+    },
+    {
+      "id": "ing_40",
+      "name": "Black Pepper",
+      "allergens": []
+    },
+    {
+      "id": "ing_41",
+      "name": "Olive Oil",
+      "allergens": []
+    },
+    {
+      "id": "ing_42",
+      "name": "Vinegar",
+      "allergens": []
+    },
+    {
+      "id": "ing_43",
+      "name": "Soy Sauce",
+      "allergens": [
+        "alg_soybeans",
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_44",
+      "name": "Almonds",
+      "allergens": [
+        "alg_nuts"
+      ]
+    },
+    {
+      "id": "ing_45",
+      "name": "Peanut Butter",
+      "allergens": [
+        "alg_peanuts"
+      ]
+    },
+    {
+      "id": "ing_46",
+      "name": "Walnuts",
+      "allergens": [
+        "alg_nuts"
+      ]
+    },
+    {
+      "id": "ing_47",
+      "name": "Honey",
+      "allergens": []
+    },
+    {
+      "id": "ing_48",
+      "name": "Mustard",
+      "allergens": [
+        "alg_mustard"
+      ]
+    },
+    {
+      "id": "ing_49",
+      "name": "Mayonnaise",
+      "allergens": [
+        "alg_eggs"
+      ]
+    },
+    {
+      "id": "ing_50",
+      "name": "Shrimp",
+      "allergens": [
+        "alg_crustaceans"
+      ]
+    },
+    {
+      "id": "ing_1770726868282",
+      "name": "purple",
+      "allergens": []
+    },
+    {
+      "id": "ing_1770726975439",
+      "name": "4545",
+      "allergens": []
+    }
   ],
   "allergens": [
-    {"id": "alg_gluten", "name": "Gluten", "color": "#f59f00", "isSystem": true},
-    {"id": "alg_crustaceans", "name": "Crustaceans", "color": "#ff6b6b", "isSystem": true},
-    {"id": "alg_eggs", "name": "Eggs", "color": "#ffd43b", "isSystem": true},
-    {"id": "alg_fish", "name": "Fish", "color": "#339af0", "isSystem": true},
-    {"id": "alg_peanuts", "name": "Peanuts", "color": "#d9480f", "isSystem": true},
-    {"id": "alg_soybeans", "name": "Soybeans", "color": "#5c940d", "isSystem": true},
-    {"id": "alg_milk", "name": "Milk", "color": "#74c0fc", "isSystem": true},
-    {"id": "alg_nuts", "name": "Nuts", "color": "#e67700", "isSystem": true},
-    {"id": "alg_celery", "name": "Celery", "color": "#82c91e", "isSystem": true},
-    {"id": "alg_mustard", "name": "Mustard", "color": "#fcc419", "isSystem": true},
-    {"id": "alg_sesame", "name": "Sesame", "color": "#adb5bd", "isSystem": true},
-    {"id": "alg_sulphites", "name": "Sulphites", "color": "#868e96", "isSystem": true},
-    {"id": "alg_lupin", "name": "Lupin", "color": "#ffec99", "isSystem": true},
-    {"id": "alg_molluscs", "name": "Molluscs", "color": "#ff922b", "isSystem": true}
+    {
+      "id": "alg_gluten",
+      "name": "Gluten",
+      "color": "#f59f00",
+      "isSystem": true
+    },
+    {
+      "id": "alg_crustaceans",
+      "name": "Crustaceans",
+      "color": "#ff6b6b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_eggs",
+      "name": "Eggs",
+      "color": "#ffd43b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_fish",
+      "name": "Fish",
+      "color": "#339af0",
+      "isSystem": true
+    },
+    {
+      "id": "alg_peanuts",
+      "name": "Peanuts",
+      "color": "#d9480f",
+      "isSystem": true
+    },
+    {
+      "id": "alg_soybeans",
+      "name": "Soybeans",
+      "color": "#5c940d",
+      "isSystem": true
+    },
+    {
+      "id": "alg_milk",
+      "name": "Milk",
+      "color": "#74c0fc",
+      "isSystem": true
+    },
+    {
+      "id": "alg_nuts",
+      "name": "Nuts",
+      "color": "#e67700",
+      "isSystem": true
+    },
+    {
+      "id": "alg_celery",
+      "name": "Celery",
+      "color": "#82c91e",
+      "isSystem": true
+    },
+    {
+      "id": "alg_mustard",
+      "name": "Mustard",
+      "color": "#fcc419",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sesame",
+      "name": "Sesame",
+      "color": "#adb5bd",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sulphites",
+      "name": "Sulphites",
+      "color": "#868e96",
+      "isSystem": true
+    },
+    {
+      "id": "alg_lupin",
+      "name": "Lupin",
+      "color": "#ffec99",
+      "isSystem": true
+    },
+    {
+      "id": "alg_molluscs",
+      "name": "Molluscs",
+      "color": "#ff922b",
+      "isSystem": true
+    }
   ],
   "currentMenu": {
     "2026-02-09": {
-      "soup": {"type": "soup", "recipe": "rcp_113"},
-      "main": {"type": "main", "recipe": "rcp_108"},
-      "dessert": {"type": "dessert", "recipe": "rcp_104"},
-      "other": {"type": "other", "recipe": "rcp_102"},
-      "slot1": {"type": "soup", "recipe": "rcp_113"},
-      "slot2": {"type": "main", "recipe": "rcp_108"},
-      "slot3": {"type": "dessert", "recipe": "rcp_104"},
-      "slot4": {"type": "other", "recipe": "rcp_102"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_113"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_108"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_104"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_102"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_100"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_108"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_104"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_102"
+      }
     },
     "2026-02-10": {
-      "soup": {"type": "soup", "recipe": "rcp_105"},
-      "main": {"type": "main", "recipe": "rcp_109"},
-      "dessert": {"type": "dessert", "recipe": "rcp_119"},
-      "other": {"type": "other", "recipe": "rcp_111"},
-      "slot1": {"type": "soup", "recipe": "rcp_105"},
-      "slot2": {"type": "main", "recipe": "rcp_109"},
-      "slot3": {"type": "dessert", "recipe": "rcp_119"},
-      "slot4": {"type": "other", "recipe": "rcp_111"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_105"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_109"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_119"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_111"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_105"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_112"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_119"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_111"
+      }
     },
     "2026-02-11": {
-      "soup": {"type": "soup", "recipe": "rcp_100"},
-      "main": {"type": "main", "recipe": "rcp_110"},
-      "dessert": {"type": "dessert", "recipe": "rcp_103"},
-      "other": {"type": "other", "recipe": "rcp_122"},
-      "slot1": {"type": "soup", "recipe": "rcp_100"},
-      "slot2": {"type": "main", "recipe": "rcp_110"},
-      "slot3": {"type": "dessert", "recipe": "rcp_103"},
-      "slot4": {"type": "other", "recipe": "rcp_122"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_100"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_110"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_103"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_122"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_100"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_110"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_103"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_122"
+      }
     },
     "2026-02-12": {
-      "soup": {"type": "soup", "recipe": "rcp_126"},
-      "main": {"type": "main", "recipe": "rcp_115"},
-      "dessert": {"type": "dessert", "recipe": "rcp_124"},
-      "other": {"type": "other", "recipe": "rcp_123"},
-      "slot1": {"type": "soup", "recipe": "rcp_126"},
-      "slot2": {"type": "main", "recipe": "rcp_115"},
-      "slot3": {"type": "dessert", "recipe": "rcp_124"},
-      "slot4": {"type": "other", "recipe": "rcp_123"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_126"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_115"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_124"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_123"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_126"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_115"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_124"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_123"
+      }
     },
     "2026-02-13": {
-      "soup": {"type": "soup", "recipe": "rcp_117"},
-      "main": {"type": "main", "recipe": "rcp_125"},
-      "dessert": {"type": "dessert", "recipe": "rcp_128"},
-      "other": {"type": "other", "recipe": "rcp_116"},
-      "slot1": {"type": "soup", "recipe": "rcp_117"},
-      "slot2": {"type": "main", "recipe": "rcp_125"},
-      "slot3": {"type": "dessert", "recipe": "rcp_128"},
-      "slot4": {"type": "other", "recipe": "rcp_116"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_117"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_125"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_128"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_116"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_117"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_125"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_128"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_117"
+      }
     },
     "2026-02-14": {
-      "soup": {"type": "soup", "recipe": "rcp_129"},
-      "main": {"type": "main", "recipe": "rcp_120"},
-      "dessert": {"type": "dessert", "recipe": "rcp_106"},
-      "other": {"type": "other", "recipe": "rcp_122"},
-      "slot1": {"type": "soup", "recipe": "rcp_129"},
-      "slot2": {"type": "main", "recipe": "rcp_120"},
-      "slot3": {"type": "dessert", "recipe": "rcp_106"},
-      "slot4": {"type": "other", "recipe": "rcp_122"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_129"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_120"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_106"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_122"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_129"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_120"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_106"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_122"
+      }
     },
     "2026-02-15": {
-      "soup": {"type": "soup", "recipe": "rcp_121"},
-      "main": {"type": "main", "recipe": "rcp_127"},
-      "dessert": {"type": "dessert", "recipe": "rcp_104"},
-      "other": {"type": "other", "recipe": "rcp_102"},
-      "slot1": {"type": "soup", "recipe": "rcp_121"},
-      "slot2": {"type": "main", "recipe": "rcp_127"},
-      "slot3": {"type": "dessert", "recipe": "rcp_104"},
-      "slot4": {"type": "other", "recipe": "rcp_102"}
+      "soup": {
+        "type": "soup",
+        "recipe": "rcp_121"
+      },
+      "main": {
+        "type": "main",
+        "recipe": "rcp_127"
+      },
+      "dessert": {
+        "type": "dessert",
+        "recipe": "rcp_104"
+      },
+      "other": {
+        "type": "other",
+        "recipe": "rcp_102"
+      },
+      "slot1": {
+        "type": "soup",
+        "recipe": "rcp_121"
+      },
+      "slot2": {
+        "type": "main",
+        "recipe": "rcp_127"
+      },
+      "slot3": {
+        "type": "dessert",
+        "recipe": "rcp_104"
+      },
+      "slot4": {
+        "type": "other",
+        "recipe": "rcp_102"
+      }
     }
   },
   "menuHistory": [],
-  "printTemplate": "<h1>{title}</h1><p>{recipes}<br></p><p><br></p>",
-  "currentLanguage": "en",
-  "templateBackgroundImage": "",
-  "templateLayout": "test1"
+  "savedTemplates": [
+    {
+      "header": {
+        "text": "Weekly Menu",
+        "color": "#fd7e14",
+        "fontSize": "24pt"
+      },
+      "dayBlock": {
+        "bg": "#ffffff",
+        "borderRadius": "8px",
+        "sticker": "🍽️"
+      },
+      "footer": {
+        "text": "Prepared with care by KitchenPro"
+      },
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "My Template 3",
+      "id": "tmpl_1770729213994"
+    }
+  ],
+  "currentStyleSettings": {
+    "name": "Default Template",
+    "font": "Segoe UI",
+    "pageBg": "#ffffff",
+    "header": {
+      "text": "Weekly Menu",
+      "fontSize": "24pt",
+      "color": "#21808d",
+      "bg": "#ffffff",
+      "padding": "10mm"
+    },
+    "dayBlock": {
+      "font": "Segoe UI",
+      "fontSize": "14pt",
+      "color": "#333333",
+      "bg": "#ffffff",
+      "borderColor": "#eeeeee",
+      "borderWidth": "1",
+      "borderRadius": "8px",
+      "padding": "5mm",
+      "showSticker": true,
+      "sticker": "🍽️"
+    },
+    "footer": {
+      "text": "Other Information / Notes",
+      "fontSize": "12pt",
+      "color": "#7f8c8d",
+      "bg": "#ffffff",
+      "padding": "5mm"
+    },
+    "slotColors": {
+      "slot1": "#000000",
+      "slot2": "#000000",
+      "slot3": "#000000",
+      "slot4": "#000000"
+    },
+    "headerBg": "#ffffff",
+    "headerText": "#21808d",
+    "cardBg": "#ffffff",
+    "borderColor": "#333333",
+    "borderWidth": "1"
+  },
+  "preferences": {
+    "lang": "bg",
+    "theme": "default"
+  }
 }
