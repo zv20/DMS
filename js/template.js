@@ -1,6 +1,7 @@
 /**
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
+ * Auto-detects days with meals for printing
  */
 
 (function(window) {
@@ -12,7 +13,6 @@
             {
                 id: 'preset_classic',
                 name: '🎨 Classic Orange',
-                dayCount: 5,
                 header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '20pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ffffff', borderRadius: '8px', borderWidth: '2', borderColor: '#e0e0e0', borderStyle: 'solid' },
                 dayName: { fontSize: '11pt', color: '#2c3e50', fontWeight: '600' },
@@ -30,7 +30,6 @@
             {
                 id: 'preset_modern',
                 name: '⚡ Modern Bold',
-                dayCount: 5,
                 header: { text: 'THIS WEEK', color: '#2c3e50', fontSize: '24pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ecf0f1', borderRadius: '12px', borderWidth: '0', borderColor: '#bdc3c7', borderStyle: 'solid' },
                 dayName: { fontSize: '14pt', color: '#e74c3c', fontWeight: 'bold' },
@@ -48,7 +47,6 @@
             {
                 id: 'preset_minimal',
                 name: '🌿 Minimal Clean',
-                dayCount: 5,
                 header: { text: 'Menu', color: '#27ae60', fontSize: '18pt', fontWeight: 'normal' },
                 dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '1', borderColor: '#bdc3c7', borderStyle: 'solid' },
                 dayName: { fontSize: '10pt', color: '#27ae60', fontWeight: '500' },
@@ -66,7 +64,6 @@
             {
                 id: 'preset_colorful',
                 name: '🌈 Colorful Fun',
-                dayCount: 3,
                 header: { text: '🍽️ Menu Time!', color: '#9b59b6', fontSize: '22pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#fef5e7', borderRadius: '15px', borderWidth: '3', borderColor: '#f39c12', borderStyle: 'dashed' },
                 dayName: { fontSize: '13pt', color: '#e67e22', fontWeight: 'bold' },
@@ -84,7 +81,6 @@
             {
                 id: 'preset_professional',
                 name: '💼 Professional',
-                dayCount: 2,
                 header: { text: 'Weekly Meal Plan', color: '#1a1a2e', fontSize: '20pt', fontWeight: '600' },
                 dayBlock: { bg: '#f8f9fa', borderRadius: '6px', borderWidth: '2', borderColor: '#34495e', borderStyle: 'solid' },
                 dayName: { fontSize: '12pt', color: '#1a1a2e', fontWeight: 'bold' },
@@ -123,7 +119,6 @@
 
         applyDefaultSettings: function() {
             activeTemplateId = 'default';
-            this.setVal('dayCount', 5);
             this.setVal('headerText', 'Weekly Menu');
             this.setVal('headerColor', '#fd7e14');
             this.setVal('headerSize', '20pt');
@@ -155,7 +150,6 @@
         },
 
         applyTemplateToUI: function(template) {
-            this.setVal('dayCount', template.dayCount || 5);
             this.setVal('headerText', template.header.text);
             this.setVal('headerColor', template.header.color);
             this.setVal('headerSize', template.header.fontSize);
@@ -192,7 +186,7 @@
         },
 
         bindUI: function() {
-            const inputs = ['dayCount', 'headerText', 'headerColor', 'headerSize', 'headerWeight',
+            const inputs = ['headerText', 'headerColor', 'headerSize', 'headerWeight',
                            'dayBg', 'dayRadius', 'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle',
                            'dayNameSize', 'dayNameColor', 'dayNameWeight',
                            'mealTitleSize', 'mealTitleColor', 'mealTitleWeight',
@@ -232,7 +226,6 @@
             }
 
             return {
-                dayCount: parseInt(document.getElementById('dayCount')?.value) || 5,
                 header: { 
                     text: document.getElementById('headerText')?.value || 'Weekly Menu',
                     color: document.getElementById('headerColor')?.value || '#fd7e14',
@@ -285,9 +278,9 @@
                 sheet.style.backgroundImage = 'none';
             }
             
-            // Header
+            // Header - show full 5 days in preview
             const h = document.getElementById('previewHeader');
-            const dateRange = this.getCurrentDateRangeText(settings.dayCount);
+            const dateRange = this.getDateRangeText(0, 4);
             if (h) {
                 h.innerHTML = `
                     <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
@@ -295,13 +288,13 @@
                 `;
             }
 
-            // Days List
+            // Days List - preview shows all 5 days
             const list = document.getElementById('previewDaysList');
             if (list) {
                 list.innerHTML = '';
                 const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
                 
-                for (let i = 0; i < settings.dayCount; i++) {
+                for (let i = 0; i < 5; i++) {
                     const day = new Date(weekStart);
                     day.setDate(weekStart.getDate() + i);
                     const dateStr = day.toISOString().split('T')[0];
@@ -336,7 +329,7 @@
                 page-break-inside: avoid;
             `;
 
-            // Day header without sticker
+            // Day header
             let contentHtml = `
                 <div style="border-bottom:1px solid #d0d0d0; margin-bottom:6px; padding-bottom:3px;">
                     <h2 style="margin:0; font-size:${settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
@@ -427,13 +420,16 @@
             return Object.values(dayMenu).some(slot => slot.recipe !== null);
         },
 
-        getCurrentDateRangeText: function(dayCount) {
+        getDateRangeText: function(startOffset, endOffset) {
             const start = window.getWeekStart(window.currentCalendarDate || new Date());
-            const end = new Date(start);
-            end.setDate(start.getDate() + (dayCount - 1));
+            const startDay = new Date(start);
+            startDay.setDate(start.getDate() + startOffset);
+            const endDay = new Date(start);
+            endDay.setDate(start.getDate() + endOffset);
+            
             const options = { month: 'short', day: 'numeric' };
             const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
-            return `${start.toLocaleDateString(lang, options)} — ${end.toLocaleDateString(lang, options)}, ${end.getFullYear()}`;
+            return `${startDay.toLocaleDateString(lang, options)} — ${endDay.toLocaleDateString(lang, options)}, ${endDay.getFullYear()}`;
         },
 
         renderTemplateLibrary: function() {
@@ -640,14 +636,16 @@
         }
 
         const printWindow = window.open('', '_blank');
-        const dateRange = TemplateManager.getCurrentDateRangeText(settings.dayCount);
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
+        // AUTO-DETECT: Find days with meals
         let daysHtml = '';
         const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
+        let daysWithMeals = [];
         
-        for (let i = 0; i < settings.dayCount; i++) {
+        // Scan all 5 weekdays to find which have meals
+        for (let i = 0; i < 5; i++) {
             const day = new Date(weekStart);
             day.setDate(weekStart.getDate() + i);
             const dateStr = day.toISOString().split('T')[0];
@@ -657,8 +655,21 @@
                 const dayName = day.toLocaleDateString(isBulgarian ? 'bg-BG' : 'en-US', { weekday: 'long' });
                 const block = TemplateManager.createDetailedDayBlock(dayName, dayMenu, settings, dateStr);
                 daysHtml += block.outerHTML;
+                daysWithMeals.push(i);
             }
         }
+
+        // If no meals planned, show message
+        if (daysWithMeals.length === 0) {
+            alert('No meals planned for this week. Please add meals before printing.');
+            printWindow.close();
+            return;
+        }
+
+        // Calculate date range based on actual days with meals
+        const firstDay = daysWithMeals[0];
+        const lastDay = daysWithMeals[daysWithMeals.length - 1];
+        const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay);
 
         const backgroundStyle = settings.backgroundImage ? `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;` : '';
 
