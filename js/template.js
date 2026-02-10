@@ -35,6 +35,10 @@
             this.setVal('dayBg', '#ffffff');
             this.setVal('dayRadius', 8);
             this.setVal('daySticker', '🍽️');
+            this.setVal('dayBorderWidth', 2);
+            this.setVal('dayBorderColor', '#e0e0e0');
+            this.setVal('dayBorderStyle', 'solid');
+            this.setVal('backgroundImage', '');
             this.setVal('footerText', 'Prepared with care by KitchenPro');
             
             for (let i = 1; i <= 4; i++) {
@@ -51,6 +55,10 @@
             this.setVal('dayBg', template.dayBlock.bg);
             this.setVal('dayRadius', template.dayBlock.borderRadius.replace('px', ''));
             this.setVal('daySticker', template.dayBlock.sticker);
+            this.setVal('dayBorderWidth', template.dayBlock.borderWidth || 2);
+            this.setVal('dayBorderColor', template.dayBlock.borderColor || '#e0e0e0');
+            this.setVal('dayBorderStyle', template.dayBlock.borderStyle || 'solid');
+            this.setVal('backgroundImage', template.backgroundImage || '');
             this.setVal('footerText', template.footer.text);
             
             if (template.slotSettings) {
@@ -66,7 +74,8 @@
         },
 
         bindUI: function() {
-            const inputs = ['headerText', 'headerColor', 'headerSize', 'dayBg', 'dayRadius', 'daySticker', 'footerText'];
+            const inputs = ['headerText', 'headerColor', 'headerSize', 'dayBg', 'dayRadius', 'daySticker', 
+                           'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle', 'backgroundImage', 'footerText'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('input', () => this.refreshPreview());
@@ -109,17 +118,32 @@
                 dayBlock: {
                     bg: document.getElementById('dayBg')?.value || '#ffffff',
                     borderRadius: (document.getElementById('dayRadius')?.value || '8') + 'px',
-                    sticker: document.getElementById('daySticker')?.value || '🍽️'
+                    sticker: document.getElementById('daySticker')?.value || '🍽️',
+                    borderWidth: document.getElementById('dayBorderWidth')?.value || '2',
+                    borderColor: document.getElementById('dayBorderColor')?.value || '#e0e0e0',
+                    borderStyle: document.getElementById('dayBorderStyle')?.value || 'solid'
                 },
                 footer: {
                     text: document.getElementById('footerText')?.value || ''
                 },
+                backgroundImage: document.getElementById('backgroundImage')?.value || '',
                 slotSettings: slotSettings
             };
         },
 
         refreshPreview: function() {
             const settings = this.getSettingsFromUI();
+            
+            // Apply background image to preview sheet
+            const sheet = document.getElementById('livePreviewSheet');
+            if (sheet && settings.backgroundImage) {
+                sheet.style.backgroundImage = `url(${settings.backgroundImage})`;
+                sheet.style.backgroundSize = 'cover';
+                sheet.style.backgroundPosition = 'center';
+                sheet.style.backgroundRepeat = 'no-repeat';
+            } else if (sheet) {
+                sheet.style.backgroundImage = 'none';
+            }
             
             // Header
             const h = document.getElementById('previewHeader');
@@ -148,7 +172,6 @@
                     
                     if (!this.hasMeals(dayMenu)) {
                         block.style.opacity = '0.4';
-                        block.style.borderStyle = 'dashed';
                     }
                     list.appendChild(block);
                 }
@@ -167,14 +190,14 @@
             block.style.cssText = `
                 background: ${settings.dayBlock.bg};
                 border-radius: ${settings.dayBlock.borderRadius};
-                padding: 8px 10px;
-                margin-bottom: 8px;
-                border: 1px solid #e0e0e0;
+                padding: 8px 12px;
+                margin-bottom: 10px;
+                border: ${settings.dayBlock.borderWidth}px ${settings.dayBlock.borderStyle} ${settings.dayBlock.borderColor};
                 page-break-inside: avoid;
             `;
 
             let contentHtml = `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0; margin-bottom:6px; padding-bottom:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0; margin-bottom:8px; padding-bottom:4px;">
                     <h2 style="margin:0; font-size:13pt; color:#2c3e50; font-weight:600;">${dayName}</h2>
                     <span style="font-size:18pt;">${settings.dayBlock.sticker}</span>
                 </div>
@@ -212,10 +235,11 @@
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
-            let html = `<div style="margin-bottom:6px; padding:6px 8px; background:#f9f9f9; border-radius:4px; border-left:3px solid #fd7e14;">`;
+            // Clean text format - no boxes
+            let html = `<div style="margin-bottom:8px;">`;
             
             // Title line with portion and calories
-            let titleLine = `<div style="font-size:10pt; font-weight:600; color:#333; margin-bottom:3px;">${index}. ${recipe.name}`;
+            let titleLine = `<div style="font-size:10pt; font-weight:600; color:#333; margin-bottom:2px;">${index}. ${recipe.name}`;
             
             // Add portion size and calories with language-specific units
             let metadata = [];
@@ -252,19 +276,7 @@
                 }).filter(n => n).join(', ');
                 
                 if (ingredientsList) {
-                    html += `<div style="font-size:8pt; color:#555; margin-top:3px; line-height:1.3;"><em>Ingredients:</em> ${ingredientsList}</div>`;
-                }
-            }
-
-            // Manual allergens also shown as red underlined
-            if (slotSettings.showAllergens && recipe.manualAllergens && recipe.manualAllergens.length > 0) {
-                const manualAllergenNames = recipe.manualAllergens.map(ma => {
-                    const alg = window.allergens.find(a => a.id === ma.id);
-                    return alg ? `<span style="color:#dc3545; text-decoration:underline; font-weight:500;">${window.getAllergenName(alg)}</span>` : '';
-                }).filter(n => n).join(', ');
-                
-                if (manualAllergenNames) {
-                    html += `<div style="font-size:8pt; color:#555; margin-top:2px; line-height:1.3;"><em>Additional allergens:</em> ${manualAllergenNames}</div>`;
+                    html += `<div style="font-size:8pt; color:#555; margin-top:2px; margin-left:12px; line-height:1.3;"><em>Ingredients:</em> ${ingredientsList}</div>`;
                 }
             }
 
@@ -451,6 +463,8 @@
             }
         }
 
+        const backgroundStyle = settings.backgroundImage ? `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;` : '';
+
         const html = `
             <html>
             <head>
@@ -466,6 +480,7 @@
                         margin: 0;
                         background: #fff;
                         font-size: 10pt;
+                        ${backgroundStyle}
                     }
                     .print-day-block { 
                         page-break-inside: avoid; 
