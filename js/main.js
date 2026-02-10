@@ -53,8 +53,8 @@
         const messageInterval = setInterval(showNextMessage, 800);
         
         try {
-            // Check if user has previously selected folder
-            const hasPreviousFolder = window.checkPreviousFolder();
+            // Check if user has previously selected folder (AWAIT THIS)
+            const hasPreviousFolder = await window.checkPreviousFolder();
             
             if (hasPreviousFolder) {
                 // Try to auto-load from previous folder
