@@ -16,7 +16,7 @@
 
     window.CalendarManager = {
         currentDate: new Date(),
-        viewMode: 'weekly', // 'weekly' or 'monthly'
+        viewMode: 'monthly', // Default to 'monthly' view
 
         init: function() {
             this.bindControls();
@@ -139,7 +139,7 @@
                 const isToday = this.isToday(date);
                 
                 const menu = window.getMenuForDate(dateStr);
-                const mealNumbers = this.getMealNumbers(menu);
+                const mealNames = this.getMealNames(menu); // Changed to get meal names
                 
                 // Create day cell
                 const dayCell = document.createElement('div');
@@ -157,10 +157,19 @@
                 dayCell.appendChild(dayNumber);
                 
                 // Meal indicators (if has meals and not weekend)
-                if (mealNumbers.length > 0 && !isWeekend) {
+                if (mealNames.length > 0 && !isWeekend) {
                     const mealIndicators = document.createElement('div');
                     mealIndicators.className = 'meal-indicators';
-                    mealIndicators.textContent = mealNumbers.join(' ');
+                    
+                    // Add each meal name as a separate line
+                    mealNames.forEach(mealText => {
+                        const mealLine = document.createElement('div');
+                        mealLine.style.fontSize = '0.7rem';
+                        mealLine.style.marginTop = '2px';
+                        mealLine.textContent = mealText;
+                        mealIndicators.appendChild(mealLine);
+                    });
+                    
                     dayCell.appendChild(mealIndicators);
                 }
                 
@@ -280,6 +289,22 @@
             return defaults[slotNumber - 1] || 'other';
         },
 
+        // NEW: Get meal names with numbers for monthly view
+        getMealNames: function(menu) {
+            const names = [];
+            for (let i = 1; i <= 4; i++) {
+                const slot = menu[`slot${i}`];
+                if (slot && slot.recipe) {
+                    const recipe = window.recipes.find(r => r.id === slot.recipe);
+                    if (recipe) {
+                        names.push(`${i}. ${recipe.name}`);
+                    }
+                }
+            }
+            return names;
+        },
+
+        // Keep old function for backward compatibility
         getMealNumbers: function(menu) {
             const numbers = [];
             for (let i = 1; i <= 4; i++) {
