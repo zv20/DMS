@@ -3,6 +3,7 @@
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
  * NOW WITH: Full Bulgarian/English translation support
+ * FIXED: Background images now print correctly by storing filenames
  */
 
 (function(window) {
@@ -316,7 +317,7 @@
                     titleKey: 'section_background',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">${window.t('label_image_url')}</label>
-                        <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;">
+                        <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;" data-filename="">
                         <small style="color:#666; font-size:0.7rem; display:block; margin-top:4px; line-height:1.3;">
                             <strong>${window.t('text_recommended_size')}</strong> ${window.t('text_image_dimensions')}
                         </small>
@@ -614,9 +615,12 @@
                 
                 window.saveSettings();
                 
-                // Load the image and set it in the UI
+                // Load the image for preview and store filename in data attribute
                 const imageUrl = await window.loadImageFile(filename);
-                document.getElementById('backgroundImage').value = imageUrl;
+                const bgInput = document.getElementById('backgroundImage');
+                bgInput.value = imageUrl; // Display blob URL for preview
+                bgInput.dataset.filename = filename; // Store actual filename
+                
                 this.refreshPreview();
                 this.renderUploadsGallery();
                 
@@ -668,7 +672,9 @@
                     useBtn.style.padding = '0 6px';
                     useBtn.onclick = async () => {
                         const url = await window.loadImageFile(img.filename);
-                        document.getElementById('backgroundImage').value = url;
+                        const bgInput = document.getElementById('backgroundImage');
+                        bgInput.value = url; // Display blob URL for preview
+                        bgInput.dataset.filename = img.filename; // Store filename for saving/printing
                         this.refreshPreview();
                     };
                     
@@ -741,6 +747,9 @@
             this.setVal('backgroundImage', '');
             this.setVal('footerText', 'Prepared with care by KitchenPro');
             
+            const bgInput = document.getElementById('backgroundImage');
+            if (bgInput) bgInput.dataset.filename = '';
+            
             for (let i = 1; i <= 4; i++) {
                 this.setChecked(`slot${i}_showIngredients`, true);
                 this.setChecked(`slot${i}_showCalories`, true);
@@ -748,7 +757,7 @@
             }
         },
 
-        applyTemplateToUI: function(template) {
+        applyTemplateToUI: async function(template) {
             this.setVal('headerText', template.header.text);
             this.setVal('headerColor', template.header.color);
             this.setVal('headerSize', template.header.fontSize);
@@ -769,8 +778,24 @@
             this.setVal('ingredientsStyle', template.ingredients?.fontStyle || 'italic');
             this.setVal('footerSize', template.footer?.fontSize || '8pt');
             this.setVal('footerColor', template.footer?.color || '#7f8c8d');
-            this.setVal('backgroundImage', template.backgroundImage || '');
             this.setVal('footerText', template.footer.text);
+            
+            // Handle background image - convert filename to blob URL for display
+            const bgInput = document.getElementById('backgroundImage');
+            if (template.backgroundImage) {
+                // If it's a filename (not a URL), load it as blob
+                if (!template.backgroundImage.startsWith('http') && !template.backgroundImage.startsWith('blob:')) {
+                    const imageUrl = await window.loadImageFile(template.backgroundImage);
+                    bgInput.value = imageUrl || '';
+                    bgInput.dataset.filename = template.backgroundImage;
+                } else {
+                    bgInput.value = template.backgroundImage;
+                    bgInput.dataset.filename = '';
+                }
+            } else {
+                bgInput.value = '';
+                bgInput.dataset.filename = '';
+            }
             
             if (template.slotSettings) {
                 for (let i = 1; i <= 4; i++) {
@@ -824,6 +849,10 @@
                 };
             }
 
+            // Get filename from data attribute, not the blob URL value
+            const bgInput = document.getElementById('backgroundImage');
+            const backgroundImage = bgInput?.dataset.filename || bgInput?.value || '';
+
             return {
                 header: { 
                     text: document.getElementById('headerText')?.value || 'Weekly Menu',
@@ -858,20 +887,27 @@
                     fontSize: document.getElementById('footerSize')?.value || '8pt',
                     color: document.getElementById('footerColor')?.value || '#7f8c8d'
                 },
-                backgroundImage: document.getElementById('backgroundImage')?.value || '',
+                backgroundImage: backgroundImage, // This is now the filename, not blob URL
                 slotSettings: slotSettings
             };
         },
 
-        refreshPreview: function() {
+        refreshPreview: async function() {
             const settings = this.getSettingsFromUI();
             
             const sheet = document.getElementById('livePreviewSheet');
             if (sheet && settings.backgroundImage) {
-                sheet.style.backgroundImage = `url(${settings.backgroundImage})`;
-                sheet.style.backgroundSize = 'cover';
-                sheet.style.backgroundPosition = 'center';
-                sheet.style.backgroundRepeat = 'no-repeat';
+                // Convert filename to blob URL for preview
+                let previewUrl = settings.backgroundImage;
+                if (!previewUrl.startsWith('http') && !previewUrl.startsWith('blob:')) {
+                    previewUrl = await window.loadImageFile(settings.backgroundImage);
+                }
+                if (previewUrl) {
+                    sheet.style.backgroundImage = `url(${previewUrl})`;
+                    sheet.style.backgroundSize = 'cover';
+                    sheet.style.backgroundPosition = 'center';
+                    sheet.style.backgroundRepeat = 'no-repeat';
+                }
             } else if (sheet) {
                 sheet.style.backgroundImage = 'none';
             }
@@ -1407,31 +1443,8 @@
         // Convert background image to base64 for printing
         let backgroundStyle = '';
         if (settings.backgroundImage) {
-            // Check if it's a blob URL or filename reference
-            if (settings.backgroundImage.startsWith('blob:')) {
-                try {
-                    // Find the filename from imageUploads
-                    const bgInput = document.getElementById('backgroundImage');
-                    const currentBlobUrl = bgInput ? bgInput.value : settings.backgroundImage;
-                    
-                    // Try to find matching upload
-                    const uploadMatch = window.imageUploads?.find(img => {
-                        // This is a rough match - in practice the blob URL won't match filename
-                        return true; // We'll use the first one as fallback
-                    });
-                    
-                    if (uploadMatch && uploadMatch.filename) {
-                        // Convert file to base64
-                        const base64 = await window.convertImageFileToBase64(uploadMatch.filename);
-                        if (base64) {
-                            backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Failed to convert background image for printing:', error);
-                }
-            } else if (!settings.backgroundImage.startsWith('http')) {
-                // It's a filename, convert to base64
+            // If it's not a URL, it's a filename - convert to base64
+            if (!settings.backgroundImage.startsWith('http')) {
                 try {
                     const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
                     if (base64) {
