@@ -250,15 +250,16 @@
         }
     };
 
-    // FIXED: Initialize from appSettings, fallback to 'en'
+    // Initialize from appSettings, fallback to 'en'
     let currentLanguage = 'en';
 
     window.t = function(key) {
         return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
     };
 
-    // FIXED: Update changeLanguage to only save to settings.json (not localStorage)
+    // Update changeLanguage to only save to settings.json
     window.changeLanguage = function(lang, shouldSave = true) {
+        console.log('🌍 changeLanguage called:', lang, 'shouldSave:', shouldSave);
         currentLanguage = lang;
         
         // Update the language selector dropdown
@@ -269,11 +270,25 @@
         window.applyTranslations();
         
         // Save to settings.json if shouldSave is true
-        if (shouldSave && window.appSettings) {
-            window.appSettings.language = lang;
-            if (typeof window.saveSettings === 'function') {
-                window.saveSettings();
+        if (shouldSave) {
+            console.log('💾 Attempting to save language. appSettings exists:', !!window.appSettings);
+            console.log('💾 saveSettings function exists:', typeof window.saveSettings);
+            
+            if (window.appSettings) {
+                window.appSettings.language = lang;
+                console.log('✅ Updated appSettings.language to:', lang);
+                
+                if (typeof window.saveSettings === 'function') {
+                    console.log('📝 Calling saveSettings()...');
+                    window.saveSettings();
+                } else {
+                    console.error('❌ saveSettings function not found!');
+                }
+            } else {
+                console.error('❌ appSettings not found!');
             }
+        } else {
+            console.log('⏭️ Skipping save (shouldSave = false)');
         }
     };
 
@@ -296,7 +311,7 @@
         currentLanguage = lang;
     };
 
-    // FIXED: Initialize language from appSettings on load
+    // Initialize language from appSettings on load
     window.initLanguage = function() {
         if (window.appSettings && window.appSettings.language) {
             currentLanguage = window.appSettings.language;
