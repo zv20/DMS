@@ -50,16 +50,8 @@
         });
     };
 
-    // --- Language ---
-    window.changeLanguage = function(lang) {
-        window.setCurrentLanguage(lang);
-        localStorage.setItem('recipeManagerLang', lang);
-        window.saveData(); 
-        window.applyTranslations();
-        
-        const sel = document.getElementById('languageSelect');
-        if (sel) sel.value = lang;
-    };
+    // NOTE: changeLanguage is now defined in i18n.js only
+    // Removed duplicate definition that was overwriting the i18n.js version
 
     // --- Modal Logic ---
     window.openRecipeModal = function(id = null) {
