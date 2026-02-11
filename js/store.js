@@ -4,10 +4,13 @@
  * - data.json: recipes, ingredients, allergens
  * - menus.json: all menu planning by date
  * - settings.json: templates and preferences (including language)
+ * 
+ * All files are stored in a "KitchenPro_Data" subfolder for better organization
  */
 
 (function(window) {
     let saveLocation = null;
+    let dataFolder = null; // Subfolder for data files
     let autoSaveTimeout = null;
     let db = null;
 
@@ -15,6 +18,7 @@
     const DB_VERSION = 1;
     const STORE_NAME = 'settings';
     const HANDLE_KEY = 'directoryHandle';
+    const DATA_FOLDER_NAME = 'KitchenPro_Data'; // Subfolder name
 
     // Global data stores
     window.recipes = [];
@@ -108,11 +112,24 @@
         return !!handle;
     };
 
+    // NEW: Get or create the data subfolder
+    async function getDataFolder(parentHandle) {
+        try {
+            return await parentHandle.getDirectoryHandle(DATA_FOLDER_NAME, { create: true });
+        } catch (err) {
+            console.error('Error creating data folder:', err);
+            throw err;
+        }
+    }
+
     // Select folder and save handle
     window.selectSaveLocation = async function() {
         try {
             const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
             saveLocation = dirHandle;
+            
+            // Create/get the data subfolder
+            dataFolder = await getDataFolder(dirHandle);
             
             // Save handle to IndexedDB for persistence
             await saveDirectoryHandle(dirHandle);
@@ -143,6 +160,7 @@
             
             if (permission === 'granted') {
                 saveLocation = handle;
+                dataFolder = await getDataFolder(handle);
                 await window.loadAllData();
                 return true;
             } else {
@@ -151,6 +169,7 @@
                 
                 if (newPermission === 'granted') {
                     saveLocation = handle;
+                    dataFolder = await getDataFolder(handle);
                     await window.loadAllData();
                     return true;
                 } else {
@@ -164,15 +183,15 @@
         }
     };
 
-    // Ensure all data files exist (create if missing)
+    // Ensure all data files exist (create if missing) in the data subfolder
     window.ensureFilesExist = async function() {
-        if (!saveLocation) return;
+        if (!dataFolder) return;
 
         try {
             // Check/create data.json
-            const dataExists = await window.fileExists(saveLocation, 'data.json');
+            const dataExists = await window.fileExists(dataFolder, 'data.json');
             if (!dataExists) {
-                await window.writeFile(saveLocation, 'data.json', JSON.stringify({
+                await window.writeFile(dataFolder, 'data.json', JSON.stringify({
                     recipes: [],
                     ingredients: [],
                     allergens: []
@@ -180,15 +199,15 @@
             }
 
             // Check/create menus.json
-            const menusExists = await window.fileExists(saveLocation, 'menus.json');
+            const menusExists = await window.fileExists(dataFolder, 'menus.json');
             if (!menusExists) {
-                await window.writeFile(saveLocation, 'menus.json', JSON.stringify({}, null, 2));
+                await window.writeFile(dataFolder, 'menus.json', JSON.stringify({}, null, 2));
             }
 
             // Check/create settings.json
-            const settingsExists = await window.fileExists(saveLocation, 'settings.json');
+            const settingsExists = await window.fileExists(dataFolder, 'settings.json');
             if (!settingsExists) {
-                await window.writeFile(saveLocation, 'settings.json', JSON.stringify({
+                await window.writeFile(dataFolder, 'settings.json', JSON.stringify({
                     templates: [],
                     language: 'en'
                 }, null, 2));
@@ -208,13 +227,13 @@
         }
     };
 
-    // Load all data from files
+    // Load all data from files in data subfolder
     window.loadAllData = async function() {
-        if (!saveLocation) return;
+        if (!dataFolder) return;
 
         try {
             // Load data.json (recipes, ingredients, allergens)
-            const dataContent = await window.readFile(saveLocation, 'data.json');
+            const dataContent = await window.readFile(dataFolder, 'data.json');
             if (dataContent) {
                 const parsed = JSON.parse(dataContent);
                 window.recipes = parsed.recipes || [];
@@ -223,13 +242,13 @@
             }
 
             // Load menus.json (all menu planning by date)
-            const menusContent = await window.readFile(saveLocation, 'menus.json');
+            const menusContent = await window.readFile(dataFolder, 'menus.json');
             if (menusContent) {
                 window.currentMenu = JSON.parse(menusContent);
             }
 
             // Load settings.json (templates, preferences)
-            const settingsContent = await window.readFile(saveLocation, 'settings.json');
+            const settingsContent = await window.readFile(dataFolder, 'settings.json');
             if (settingsContent) {
                 const parsed = JSON.parse(settingsContent);
                 window.savedTemplates = parsed.templates || [];
@@ -253,7 +272,7 @@
                 window.saveData(); // Save defaults
             }
 
-            console.log('✅ All data loaded successfully');
+            console.log('✅ All data loaded successfully from', DATA_FOLDER_NAME);
         } catch (err) {
             console.error('Error loading data:', err);
         }
@@ -267,9 +286,9 @@
         });
     };
 
-    // Save data.json (recipes, ingredients, allergens)
+    // Save data.json (recipes, ingredients, allergens) to data subfolder
     window.saveData = function() {
-        if (!saveLocation) return;
+        if (!dataFolder) return;
 
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(async () => {
@@ -279,7 +298,7 @@
                     ingredients: window.ingredients,
                     allergens: window.allergens
                 };
-                await window.writeFile(saveLocation, 'data.json', JSON.stringify(data, null, 2));
+                await window.writeFile(dataFolder, 'data.json', JSON.stringify(data, null, 2));
                 window.showSyncIndicator();
             } catch (err) {
                 console.error('Error saving data.json:', err);
@@ -287,14 +306,14 @@
         }, 300);
     };
 
-    // Save menus.json (all menu planning)
+    // Save menus.json (all menu planning) to data subfolder
     window.saveMenus = function() {
-        if (!saveLocation) return;
+        if (!dataFolder) return;
 
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(async () => {
             try {
-                await window.writeFile(saveLocation, 'menus.json', JSON.stringify(window.currentMenu, null, 2));
+                await window.writeFile(dataFolder, 'menus.json', JSON.stringify(window.currentMenu, null, 2));
                 window.showSyncIndicator();
             } catch (err) {
                 console.error('Error saving menus.json:', err);
@@ -302,9 +321,9 @@
         }, 300);
     };
 
-    // Save settings.json (templates, language preference)
+    // Save settings.json (templates, language preference) to data subfolder
     window.saveSettings = function() {
-        if (!saveLocation) return;
+        if (!dataFolder) return;
 
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(async () => {
@@ -313,7 +332,7 @@
                     templates: window.savedTemplates,
                     language: window.appSettings.language
                 };
-                await window.writeFile(saveLocation, 'settings.json', JSON.stringify(settings, null, 2));
+                await window.writeFile(dataFolder, 'settings.json', JSON.stringify(settings, null, 2));
                 window.showSyncIndicator();
             } catch (err) {
                 console.error('Error saving settings.json:', err);
