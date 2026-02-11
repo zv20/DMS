@@ -2,10 +2,12 @@
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
+ * NOW WITH: Combined week selection + template picker in one modal
  */
 
 (function(window) {
     let activeTemplateId = null;
+    let selectedWeekStart = null; // Track selected week for printing
 
     const TemplateManager = {
         // Preset Templates (12 total)
@@ -542,8 +544,8 @@
             return Object.values(dayMenu).some(slot => slot.recipe !== null);
         },
 
-        getDateRangeText: function(startOffset, endOffset) {
-            const start = window.getWeekStart(window.currentCalendarDate || new Date());
+        getDateRangeText: function(startOffset, endOffset, customWeekStart) {
+            const start = customWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
             const startDay = new Date(start);
             startDay.setDate(start.getDate() + startOffset);
             const endDay = new Date(start);
@@ -552,6 +554,45 @@
             const options = { month: 'short', day: 'numeric' };
             const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
             return `${startDay.toLocaleDateString(lang, options)} — ${endDay.toLocaleDateString(lang, options)}, ${endDay.getFullYear()}`;
+        },
+
+        // NEW: Get all weeks that have meals planned
+        getWeeksWithMeals: function() {
+            const weeks = [];
+            const dates = Object.keys(window.currentMenu).filter(dateStr => {
+                return this.hasMeals(window.currentMenu[dateStr]);
+            });
+
+            if (dates.length === 0) return [];
+
+            // Group dates by week
+            const weekMap = new Map();
+            dates.forEach(dateStr => {
+                const date = new Date(dateStr);
+                const weekStart = window.getWeekStart(date);
+                const weekKey = weekStart.toISOString().split('T')[0];
+                
+                if (!weekMap.has(weekKey)) {
+                    weekMap.set(weekKey, {
+                        weekStart: weekStart,
+                        dates: []
+                    });
+                }
+                weekMap.get(weekKey).dates.push(dateStr);
+            });
+
+            // Convert to array and sort by date (latest first)
+            weekMap.forEach((value, key) => {
+                weeks.push({
+                    weekStart: value.weekStart,
+                    label: this.getDateRangeText(0, 4, value.weekStart),
+                    dateCount: value.dates.length
+                });
+            });
+
+            // Sort: latest first
+            weeks.sort((a, b) => b.weekStart - a.weekStart);
+            return weeks;
         },
 
         renderTemplateLibrary: function() {
@@ -694,7 +735,7 @@
             if (activeTemplateId === id) {
                 this.loadTemplate('default');
             }
-            window.saveData();
+            window.saveSettings(); // Save to settings.json file
             this.renderTemplateLibrary();
         }
     };
@@ -709,7 +750,7 @@
         settings.id = 'tmpl_' + Date.now();
         
         window.savedTemplates.push(settings);
-        window.saveData();
+        window.saveSettings(); // Save to settings.json file
         
         activeTemplateId = settings.id;
         localStorage.setItem('activeTemplateId', settings.id);
@@ -717,6 +758,7 @@
         alert('Template saved!');
     };
 
+    // NEW: Combined Week + Template Selection Modal
     window.openTemplatePicker = function() {
         const modal = document.getElementById('templatePickerModal');
         const grid = document.getElementById('templateGrid');
@@ -724,6 +766,54 @@
         
         modal.style.display = 'block';
         grid.innerHTML = '';
+
+        // Get weeks with meals
+        const weeksWithMeals = TemplateManager.getWeeksWithMeals();
+        
+        if (weeksWithMeals.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">No weeks with meals found. Please plan some meals first!</p>';
+            return;
+        }
+
+        // Week Selector Section
+        const weekSection = document.createElement('div');
+        weekSection.style.cssText = 'margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;';
+        
+        const weekLabel = document.createElement('label');
+        weekLabel.textContent = '📅 Select Week to Print:';
+        weekLabel.style.cssText = 'display: block; font-weight: 600; margin-bottom: 10px; font-size: 14pt;';
+        
+        const weekSelect = document.createElement('select');
+        weekSelect.id = 'weekSelector';
+        weekSelect.style.cssText = 'width: 100%; padding: 12px; font-size: 12pt; border-radius: 6px; border: 2px solid #dee2e6;';
+        
+        weeksWithMeals.forEach((week, index) => {
+            const option = document.createElement('option');
+            option.value = week.weekStart.toISOString().split('T')[0];
+            option.textContent = `${week.label} (${week.dateCount} days with meals)`;
+            if (index === 0) option.selected = true; // Select latest week by default
+            weekSelect.appendChild(option);
+        });
+        
+        weekSection.appendChild(weekLabel);
+        weekSection.appendChild(weekSelect);
+        grid.appendChild(weekSection);
+
+        // Set selected week
+        selectedWeekStart = new Date(weekSelect.value);
+        weekSelect.addEventListener('change', (e) => {
+            selectedWeekStart = new Date(e.target.value);
+        });
+
+        // Template Grid Section
+        const templateSection = document.createElement('div');
+        const templateLabel = document.createElement('h3');
+        templateLabel.textContent = '📝 Select Template:';
+        templateLabel.style.cssText = 'margin: 0 0 20px 0; font-size: 14pt;';
+        templateSection.appendChild(templateLabel);
+
+        const templateGridContainer = document.createElement('div');
+        templateGridContainer.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;';
 
         const allTemplates = [
             { id: 'current', name: 'Current Active Template' },
@@ -738,12 +828,16 @@
             card.innerHTML = `
                 <div style="font-size:30pt; margin-bottom:10px;">📝</div>
                 <h4 style="margin:0 0 10px 0;">${t.name}</h4>
-                <button class="btn btn-primary" onclick="event.stopPropagation(); window.printWithTemplate('${t.id}')" style="width:100%;">Print</button>
+                <button class="btn btn-primary" onclick="event.stopPropagation(); window.printWithTemplate('${t.id}')" style="width:100%;">🖨️ Print</button>
             `;
-            grid.appendChild(card);
+            templateGridContainer.appendChild(card);
         });
+
+        templateSection.appendChild(templateGridContainer);
+        grid.appendChild(templateSection);
     };
 
+    // Updated print function to use selected week
     window.printWithTemplate = function(id) {
         let settings;
         if (id === 'current') {
@@ -757,13 +851,15 @@
             return;
         }
 
+        // Use selectedWeekStart if available, otherwise use current week
+        const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
+
         const printWindow = window.open('', '_blank');
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
         // AUTO-DETECT: Find days with meals
         let daysHtml = '';
-        const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
         let daysWithMeals = [];
         
         // Scan all 5 weekdays to find which have meals
@@ -791,7 +887,7 @@
         // Calculate date range based on actual days with meals
         const firstDay = daysWithMeals[0];
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
-        const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay);
+        const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
 
         const backgroundStyle = settings.backgroundImage ? `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;` : '';
 
@@ -837,6 +933,19 @@
         printWindow.document.write(html);
         printWindow.document.close();
         document.getElementById('templatePickerModal').style.display = 'none';
+        
+        // Reset selected week
+        selectedWeekStart = null;
+    };
+
+    // Helper function for getting week start (needed for template manager)
+    window.getWeekStart = window.getWeekStart || function(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        d.setDate(diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
     };
 
     document.addEventListener('DOMContentLoaded', () => {
