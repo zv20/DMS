@@ -2,7 +2,7 @@
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
- * NOW WITH: Fully collapsible organized categories
+ * NOW WITH: Fully collapsible organized categories + auto-refresh on data load
  */
 
 (function(window) {
@@ -290,11 +290,22 @@
         ],
 
         init: function() {
+            console.log('🎪 Template Manager init() called');
+            console.log('📋 savedTemplates on init:', window.savedTemplates.length);
+            
             this.loadActiveTemplate();
             this.renderCollapsibleSections();
             this.bindImageUpload();
             this.renderTemplateLibrary();
             this.refreshPreview();
+            
+            // Listen for dataLoaded event to refresh template library
+            window.addEventListener('dataLoaded', (e) => {
+                console.log('🔄 dataLoaded event received! Refreshing template library...');
+                console.log('📋 Templates loaded:', e.detail.templates.length);
+                this.renderTemplateLibrary();
+                this.renderUploadsGallery();
+            });
         },
 
         renderCollapsibleSections: function() {
@@ -1044,6 +1055,8 @@
         renderTemplateLibrary: function() {
             const container = document.getElementById('templateLibrary');
             if (!container) return;
+            
+            console.log('🔄 Rendering template library. Templates available:', window.savedTemplates.length);
             
             container.innerHTML = '';
 
