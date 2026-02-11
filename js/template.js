@@ -3,6 +3,7 @@
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
  * NOW WITH: Combined week selection + template picker in one modal
+ * PLUS: More presets including double-column layout & local image uploads
  */
 
 (function(window) {
@@ -10,7 +11,7 @@
     let selectedWeekStart = null; // Track selected week for printing
 
     const TemplateManager = {
-        // Preset Templates (12 total)
+        // Preset Templates (15 total - including double-column and more styles)
         presets: [
             // ORIGINAL 5 PRESETS
             {
@@ -99,67 +100,52 @@
                 }
             },
             
-            // NEW 7 PRESETS
+            // NEW 10 PRESETS (including double-column layouts)
             {
-                id: 'preset_weekend',
-                name: '🌅 Weekend Brunch (2 days)',
-                header: { text: 'Weekend Specials', color: '#ff6b6b', fontSize: '22pt', fontWeight: 'bold' },
-                dayBlock: { bg: '#fff8f0', borderRadius: '10px', borderWidth: '2', borderColor: '#ffa94d', borderStyle: 'solid' },
-                dayName: { fontSize: '13pt', color: '#d9480f', fontWeight: 'bold' },
-                mealTitle: { fontSize: '10pt', color: '#495057', fontWeight: '600' },
-                ingredients: { fontSize: '8pt', color: '#6c757d', fontStyle: 'italic' },
-                footer: { text: '☕ Relax & Enjoy Your Weekend!', fontSize: '9pt', color: '#868e96' },
+                id: 'preset_double_column',
+                name: '📋 Double Column',
+                isDoubleColumn: true,
+                header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '18pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#ffffff', borderRadius: '6px', borderWidth: '1', borderColor: '#dee2e6', borderStyle: 'solid' },
+                dayName: { fontSize: '10pt', color: '#2c3e50', fontWeight: 'bold' },
+                mealTitle: { fontSize: '8pt', color: '#333333', fontWeight: '600' },
+                ingredients: { fontSize: '7pt', color: '#555555', fontStyle: 'italic' },
+                footer: { text: 'KitchenPro © 2026', fontSize: '7pt', color: '#7f8c8d' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot2: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
                     slot3: { showIngredients: true, showCalories: false, showAllergens: true },
                     slot4: { showIngredients: false, showCalories: false, showAllergens: true }
                 }
             },
             {
-                id: 'preset_school',
-                name: '🎒 School Days (3 days)',
-                header: { text: '📚 School Lunch Menu', color: '#4c6ef5', fontSize: '20pt', fontWeight: 'bold' },
-                dayBlock: { bg: '#e7f5ff', borderRadius: '12px', borderWidth: '3', borderColor: '#74c0fc', borderStyle: 'solid' },
-                dayName: { fontSize: '12pt', color: '#1864ab', fontWeight: 'bold' },
-                mealTitle: { fontSize: '10pt', color: '#1971c2', fontWeight: 'bold' },
-                ingredients: { fontSize: '8pt', color: '#495057', fontStyle: 'normal' },
-                footer: { text: '🌟 Healthy Choices for Growing Minds', fontSize: '8pt', color: '#5c7cfa' },
+                id: 'preset_compact_grid',
+                name: '📦 Compact Grid',
+                isDoubleColumn: true,
+                header: { text: 'Menu at a Glance', color: '#495057', fontSize: '16pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#f8f9fa', borderRadius: '4px', borderWidth: '1', borderColor: '#adb5bd', borderStyle: 'solid' },
+                dayName: { fontSize: '9pt', color: '#343a40', fontWeight: 'bold' },
+                mealTitle: { fontSize: '7.5pt', color: '#495057', fontWeight: '600' },
+                ingredients: { fontSize: '6.5pt', color: '#6c757d', fontStyle: 'normal' },
+                footer: { text: '', fontSize: '6pt', color: '#868e96' },
                 backgroundImage: '',
                 slotSettings: {
-                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot4: { showIngredients: false, showCalories: true, showAllergens: true }
+                    slot1: { showIngredients: false, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: false, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: false, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: false }
                 }
             },
             {
-                id: 'preset_business',
-                name: '💼 Business Week (4 days)',
-                header: { text: 'Executive Dining Menu', color: '#212529', fontSize: '19pt', fontWeight: '600' },
-                dayBlock: { bg: '#f1f3f5', borderRadius: '4px', borderWidth: '1', borderColor: '#868e96', borderStyle: 'solid' },
-                dayName: { fontSize: '11pt', color: '#212529', fontWeight: 'bold' },
-                mealTitle: { fontSize: '9pt', color: '#343a40', fontWeight: '600' },
-                ingredients: { fontSize: '7.5pt', color: '#6c757d', fontStyle: 'normal' },
-                footer: { text: 'Professionally Catered | All Rights Reserved', fontSize: '7pt', color: '#adb5bd' },
-                backgroundImage: '',
-                slotSettings: {
-                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot3: { showIngredients: false, showCalories: true, showAllergens: true },
-                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
-                }
-            },
-            {
-                id: 'preset_bistro',
-                name: '🍷 Bistro Style (2 days)',
-                header: { text: 'Bistro du Chef', color: '#862e9c', fontSize: '24pt', fontWeight: 'normal' },
-                dayBlock: { bg: '#f8f0fc', borderRadius: '8px', borderWidth: '2', borderColor: '#d0bfff', borderStyle: 'solid' },
-                dayName: { fontSize: '12pt', color: '#862e9c', fontWeight: '500' },
+                id: 'preset_elegant',
+                name: '✨ Elegant Serif',
+                header: { text: 'Culinary Selection', color: '#6c5ce7', fontSize: '22pt', fontWeight: 'normal' },
+                dayBlock: { bg: '#fdfcfb', borderRadius: '10px', borderWidth: '2', borderColor: '#a29bfe', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#6c5ce7', fontWeight: '500' },
                 mealTitle: { fontSize: '9pt', color: '#5f3dc4', fontWeight: 'normal' },
                 ingredients: { fontSize: '7.5pt', color: '#7950f2', fontStyle: 'italic' },
-                footer: { text: '✨ Bon Appétit | Chef Recommended', fontSize: '8pt', color: '#9775fa' },
+                footer: { text: '♥️ Crafted with Love', fontSize: '8pt', color: '#a29bfe' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: false, showAllergens: true },
@@ -169,31 +155,48 @@
                 }
             },
             {
-                id: 'preset_wellness',
-                name: '🥗 Wellness Plan (3 days)',
-                header: { text: 'Wellness Menu', color: '#2f9e44', fontSize: '21pt', fontWeight: '600' },
-                dayBlock: { bg: '#ebfbee', borderRadius: '10px', borderWidth: '2', borderColor: '#8ce99a', borderStyle: 'solid' },
-                dayName: { fontSize: '11pt', color: '#2b8a3e', fontWeight: '600' },
-                mealTitle: { fontSize: '9pt', color: '#2f9e44', fontWeight: '600' },
-                ingredients: { fontSize: '8pt', color: '#37b24d', fontStyle: 'normal' },
-                footer: { text: '🌱 Nourish Your Body & Soul', fontSize: '8pt', color: '#51cf66' },
+                id: 'preset_retro',
+                name: '🕰️ Retro Diner',
+                header: { text: "JOE'S DINER WEEKLY SPECIALS", color: '#e63946', fontSize: '20pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#fff3e0', borderRadius: '8px', borderWidth: '3', borderColor: '#e63946', borderStyle: 'double' },
+                dayName: { fontSize: '12pt', color: '#d62828', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#6a040f', fontWeight: 'bold' },
+                ingredients: { fontSize: '8pt', color: '#9d0208', fontStyle: 'normal' },
+                footer: { text: '🍔 Open 24/7 - Your Favorite Spot Since Forever', fontSize: '8pt', color: '#f77f00' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: true, showAllergens: true },
                     slot2: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: true, showCalories: false, showAllergens: false }
                 }
             },
             {
-                id: 'preset_mediterranean',
-                name: '🌊 Mediterranean (4 days)',
-                header: { text: 'Mediterranean Menu', color: '#0b7285', fontSize: '20pt', fontWeight: 'bold' },
-                dayBlock: { bg: '#e3fafc', borderRadius: '10px', borderWidth: '2', borderColor: '#66d9e8', borderStyle: 'solid' },
-                dayName: { fontSize: '12pt', color: '#0c8599', fontWeight: 'bold' },
-                mealTitle: { fontSize: '9pt', color: '#1098ad', fontWeight: '600' },
-                ingredients: { fontSize: '8pt', color: '#1864ab', fontStyle: 'italic' },
-                footer: { text: '🌞 Fresh & Flavorful Mediterranean Cuisine', fontSize: '8pt', color: '#15aabf' },
+                id: 'preset_zen',
+                name: '🧘 Zen Minimal',
+                header: { text: 'menu', color: '#2d3436', fontSize: '16pt', fontWeight: 'normal' },
+                dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '0', borderColor: 'transparent', borderStyle: 'solid' },
+                dayName: { fontSize: '10pt', color: '#636e72', fontWeight: 'normal' },
+                mealTitle: { fontSize: '8pt', color: '#2d3436', fontWeight: 'normal' },
+                ingredients: { fontSize: '7pt', color: '#95a5a6', fontStyle: 'italic' },
+                footer: { text: '―', fontSize: '10pt', color: '#dfe6e9' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: false, showAllergens: false },
+                    slot2: { showIngredients: true, showCalories: false, showAllergens: false },
+                    slot3: { showIngredients: false, showCalories: false, showAllergens: false },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: false }
+                }
+            },
+            {
+                id: 'preset_bright_cafe',
+                name: '☕ Bright Cafe',
+                header: { text: 'Cafe Menu of the Week', color: '#ff9ff3', fontSize: '21pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#fff5f7', borderRadius: '12px', borderWidth: '2', borderColor: '#feca57', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#ff6348', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#1e90ff', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#5f27cd', fontStyle: 'normal' },
+                footer: { text: '🍰 Fresh Daily - Smile Included!', fontSize: '8pt', color: '#ff9ff3' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: true, showAllergens: true },
@@ -203,20 +206,72 @@
                 }
             },
             {
-                id: 'preset_traditional',
-                name: '📋 Traditional (5 days)',
-                header: { text: 'WEEKLY MENU PLAN', color: '#5c940d', fontSize: '18pt', fontWeight: 'bold' },
-                dayBlock: { bg: '#ffffff', borderRadius: '4px', borderWidth: '2', borderColor: '#a9d18e', borderStyle: 'solid' },
-                dayName: { fontSize: '11pt', color: '#5c940d', fontWeight: 'bold' },
-                mealTitle: { fontSize: '9pt', color: '#495057', fontWeight: '600' },
-                ingredients: { fontSize: '7.5pt', color: '#6c757d', fontStyle: 'italic' },
-                footer: { text: 'Home-Cooked Goodness Since 1995', fontSize: '8pt', color: '#82c91e' },
+                id: 'preset_forest',
+                name: '🌲 Forest Green',
+                header: { text: 'Nature\'s Kitchen', color: '#2d6a4f', fontSize: '20pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#f1faee', borderRadius: '10px', borderWidth: '2', borderColor: '#52b788', borderStyle: 'solid' },
+                dayName: { fontSize: '11pt', color: '#1b4332', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#2d6a4f', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#40916c', fontStyle: 'italic' },
+                footer: { text: '🌱 Farm to Table - Organic & Fresh', fontSize: '8pt', color: '#74c69d' },
                 backgroundImage: '',
                 slotSettings: {
                     slot1: { showIngredients: true, showCalories: true, showAllergens: true },
                     slot2: { showIngredients: true, showCalories: true, showAllergens: true },
                     slot3: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
+                    slot4: { showIngredients: true, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_ocean',
+                name: '🌊 Ocean Blue',
+                header: { text: 'Seaside Dining', color: '#023e8a', fontSize: '21pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#caf0f8', borderRadius: '8px', borderWidth: '2', borderColor: '#0077b6', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#03045e', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#023e8a', fontWeight: '600' },
+                ingredients: { fontSize: '7.5pt', color: '#0096c7', fontStyle: 'italic' },
+                footer: { text: '🌊 Fresh Catch Daily', fontSize: '8pt', color: '#00b4d8' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_luxury',
+                name: '🥂 Luxury Gold',
+                header: { text: 'PRESTIGE MENU', color: '#c9920d', fontSize: '22pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#fffaf0', borderRadius: '6px', borderWidth: '3', borderColor: '#d4af37', borderStyle: 'solid' },
+                dayName: { fontSize: '12pt', color: '#8b6914', fontWeight: 'bold' },
+                mealTitle: { fontSize: '9pt', color: '#6b5414', fontWeight: 'bold' },
+                ingredients: { fontSize: '7.5pt', color: '#9a7b2f', fontStyle: 'normal' },
+                footer: { text: '⭐ Five-Star Excellence', fontSize: '8pt', color: '#c9920d' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot3: { showIngredients: true, showCalories: false, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: true }
+                }
+            },
+            {
+                id: 'preset_newspaper',
+                name: '📰 Newspaper Style',
+                isDoubleColumn: true,
+                header: { text: 'THE KITCHEN GAZETTE', color: '#000000', fontSize: '18pt', fontWeight: 'bold' },
+                dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '1', borderColor: '#000000', borderStyle: 'solid' },
+                dayName: { fontSize: '10pt', color: '#000000', fontWeight: 'bold' },
+                mealTitle: { fontSize: '8pt', color: '#333333', fontWeight: 'bold' },
+                ingredients: { fontSize: '7pt', color: '#666666', fontStyle: 'normal' },
+                footer: { text: 'Volume 1, Issue 1 - All Rights Reserved', fontSize: '7pt', color: '#000000' },
+                backgroundImage: '',
+                slotSettings: {
+                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
+                    slot3: { showIngredients: false, showCalories: true, showAllergens: true },
+                    slot4: { showIngredients: false, showCalories: false, showAllergens: false }
                 }
             }
         ],
@@ -224,8 +279,131 @@
         init: function() {
             this.loadActiveTemplate();
             this.bindUI();
-            this.renderTemplateLibrary();
+            this.bindImageUpload();
+            this.renderTemplateLibrary(); // FIXED: Always render library on init
             this.refreshPreview();
+        },
+
+        // NEW: Local Image Uploads Storage
+        bindImageUpload: function() {
+            const bgInput = document.getElementById('backgroundImage');
+            if (!bgInput) return;
+            
+            // Add file upload button next to URL input
+            const uploadBtn = document.createElement('button');
+            uploadBtn.className = 'btn btn-secondary';
+            uploadBtn.textContent = '📎 Upload Image';
+            uploadBtn.type = 'button';
+            uploadBtn.style.marginTop = '10px';
+            uploadBtn.style.width = '100%';
+            
+            uploadBtn.onclick = () => this.uploadBackgroundImage();
+            bgInput.parentNode.insertBefore(uploadBtn, bgInput.nextSibling);
+            
+            // Add uploads gallery
+            this.renderUploadsGallery();
+        },
+
+        uploadBackgroundImage: function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageData = event.target.result;
+                    const imageName = `upload_${Date.now()}_${file.name}`;
+                    
+                    // Save to uploads array
+                    if (!window.imageUploads) window.imageUploads = [];
+                    window.imageUploads.push({
+                        id: imageName,
+                        name: file.name,
+                        data: imageData,
+                        timestamp: Date.now()
+                    });
+                    
+                    window.saveSettings(); // Save to settings.json
+                    
+                    // Apply to current template
+                    document.getElementById('backgroundImage').value = imageData;
+                    this.refreshPreview();
+                    this.renderUploadsGallery();
+                    
+                    alert(`✅ Image "${file.name}" uploaded successfully!`);
+                };
+                reader.readAsDataURL(file);
+            };
+            
+            input.click();
+        },
+
+        renderUploadsGallery: function() {
+            const bgInput = document.getElementById('backgroundImage');
+            if (!bgInput) return;
+            
+            // Remove existing gallery
+            const existingGallery = document.getElementById('uploadsGallery');
+            if (existingGallery) existingGallery.remove();
+            
+            // Create new gallery
+            const gallery = document.createElement('div');
+            gallery.id = 'uploadsGallery';
+            gallery.style.cssText = 'margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;';
+            
+            if (!window.imageUploads || window.imageUploads.length === 0) {
+                gallery.innerHTML = '<small style="color: #6c757d;">No uploads yet. Upload one above!</small>';
+            } else {
+                const header = document.createElement('div');
+                header.style.cssText = 'font-weight: bold; margin-bottom: 8px; font-size: 9pt; color: #495057;';
+                header.textContent = '📎 My Uploads:';
+                gallery.appendChild(header);
+                
+                window.imageUploads.forEach(img => {
+                    const imgCard = document.createElement('div');
+                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px; margin-bottom: 6px; border: 1px solid #dee2e6;';
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = img.data;
+                    thumbnail.style.cssText = 'width: 40px; height: 40px; object-fit: cover; border-radius: 4px;';
+                    
+                    const info = document.createElement('div');
+                    info.style.flex = '1';
+                    info.innerHTML = `<div style="font-size: 8pt; font-weight: 500;">${img.name}</div>`;
+                    
+                    const useBtn = document.createElement('button');
+                    useBtn.className = 'btn btn-small btn-primary';
+                    useBtn.textContent = 'Use';
+                    useBtn.style.fontSize = '7pt';
+                    useBtn.onclick = () => {
+                        document.getElementById('backgroundImage').value = img.data;
+                        this.refreshPreview();
+                    };
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'icon-btn delete';
+                    deleteBtn.textContent = '🗑️';
+                    deleteBtn.onclick = () => {
+                        if (confirm(`Delete "${img.name}"?`)) {
+                            window.imageUploads = window.imageUploads.filter(i => i.id !== img.id);
+                            window.saveSettings();
+                            this.renderUploadsGallery();
+                        }
+                    };
+                    
+                    imgCard.appendChild(thumbnail);
+                    imgCard.appendChild(info);
+                    imgCard.appendChild(useBtn);
+                    imgCard.appendChild(deleteBtn);
+                    gallery.appendChild(imgCard);
+                });
+            }
+            
+            bgInput.parentNode.appendChild(gallery);
         },
 
         loadActiveTemplate: function() {
@@ -632,15 +810,20 @@
             }, activeTemplateId === 'default');
             container.appendChild(defaultCard);
 
-            // Saved Templates
-            window.savedTemplates.forEach(tmpl => {
-                const card = this.createTemplateCard(tmpl, activeTemplateId === tmpl.id);
-                container.appendChild(card);
-            });
+            // FIXED: Check if savedTemplates exists and has items
+            if (window.savedTemplates && window.savedTemplates.length > 0) {
+                window.savedTemplates.forEach(tmpl => {
+                    const card = this.createTemplateCard(tmpl, activeTemplateId === tmpl.id);
+                    container.appendChild(card);
+                });
+            }
         },
 
         createPresetCard: function(preset) {
             const card = document.createElement('div');
+            const isDoubleColumn = preset.isDoubleColumn || false;
+            const badge = isDoubleColumn ? ' <span style="background:#fd7e14; color:white; padding:2px 6px; border-radius:4px; font-size:7pt; font-weight:bold;">2-COL</span>' : '';
+            
             card.style.cssText = `
                 padding: 8px;
                 border: 2px solid #ddd;
@@ -658,7 +841,7 @@
             card.onmouseleave = () => card.style.borderColor = '#ddd';
 
             const nameSpan = document.createElement('span');
-            nameSpan.textContent = preset.name;
+            nameSpan.innerHTML = preset.name + badge;
             nameSpan.style.cssText = 'font-weight: 500; font-size: 9pt; color: #333;';
             
             const loadBtn = document.createElement('button');
