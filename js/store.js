@@ -26,6 +26,7 @@
     window.allergens = [];
     window.currentMenu = {};
     window.savedTemplates = [];
+    window.imageUploads = []; // Image uploads storage
     window.appSettings = {
         language: 'en'
     };
@@ -212,6 +213,7 @@
             if (!settingsExists) {
                 await window.writeFile(dataFolder, 'settings.json', JSON.stringify({
                     templates: [],
+                    imageUploads: [],
                     language: 'en'
                 }, null, 2));
             }
@@ -250,11 +252,15 @@
                 window.currentMenu = JSON.parse(menusContent);
             }
 
-            // Load settings.json (templates, preferences)
+            // Load settings.json (templates, preferences, image uploads)
             const settingsContent = await window.readFile(dataFolder, 'settings.json');
             if (settingsContent) {
                 const parsed = JSON.parse(settingsContent);
                 window.savedTemplates = parsed.templates || [];
+                window.imageUploads = parsed.imageUploads || [];
+                
+                console.log('📋 Loaded templates:', window.savedTemplates.length);
+                console.log('🖼️ Loaded image uploads:', window.imageUploads.length);
                 
                 // Load language preference
                 if (parsed.language) {
@@ -277,6 +283,15 @@
             }
 
             console.log('✅ All data loaded successfully from "data" folder');
+            
+            // DISPATCH EVENT TO NOTIFY TEMPLATE BUILDER
+            window.dispatchEvent(new CustomEvent('dataLoaded', {
+                detail: {
+                    templates: window.savedTemplates,
+                    imageUploads: window.imageUploads
+                }
+            }));
+            
         } catch (err) {
             console.error('Error loading data:', err);
         }
@@ -325,7 +340,7 @@
         }, 300);
     };
 
-    // Save settings.json (templates, language preference) to data subfolder
+    // Save settings.json (templates, language preference, image uploads) to data subfolder
     window.saveSettings = function() {
         console.log('💾 saveSettings() called. dataFolder exists:', !!dataFolder);
         console.log('💾 Current language in appSettings:', window.appSettings.language);
@@ -340,6 +355,7 @@
             try {
                 const settings = {
                     templates: window.savedTemplates,
+                    imageUploads: window.imageUploads || [],
                     language: window.appSettings.language
                 };
                 console.log('💾 Writing settings to file:', settings);
