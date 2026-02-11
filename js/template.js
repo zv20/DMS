@@ -6,6 +6,7 @@
  * FIXED: Background images now print correctly by storing filenames
  * FIXED: Templates now properly load images by awaiting async operations
  * FIXED: Print now converts background images to base64 BEFORE opening window
+ * FIXED: Force browsers to actually PRINT backgrounds with print-color-adjust CSS
  */
 
 (function(window) {
@@ -1481,6 +1482,9 @@
                         font-size: 9pt;
                         line-height: 1.2;
                         ${backgroundStyle}
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                        color-adjust: exact;
                     }
                     .print-day-block { 
                         page-break-inside: avoid; 
@@ -1489,6 +1493,9 @@
                         body { 
                             padding: 0; 
                             margin: 0;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
                         }
                     }
                 </style>
