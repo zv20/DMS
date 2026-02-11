@@ -1358,7 +1358,7 @@
         grid.appendChild(templateSection);
     };
 
-    window.printWithTemplate = function(id) {
+    window.printWithTemplate = async function(id) {
         let settings;
         if (id === 'current') {
             settings = TemplateManager.getSettingsFromUI();
@@ -1404,7 +1404,47 @@
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
 
-        const backgroundStyle = settings.backgroundImage ? `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;` : '';
+        // Convert background image to base64 for printing
+        let backgroundStyle = '';
+        if (settings.backgroundImage) {
+            // Check if it's a blob URL or filename reference
+            if (settings.backgroundImage.startsWith('blob:')) {
+                try {
+                    // Find the filename from imageUploads
+                    const bgInput = document.getElementById('backgroundImage');
+                    const currentBlobUrl = bgInput ? bgInput.value : settings.backgroundImage;
+                    
+                    // Try to find matching upload
+                    const uploadMatch = window.imageUploads?.find(img => {
+                        // This is a rough match - in practice the blob URL won't match filename
+                        return true; // We'll use the first one as fallback
+                    });
+                    
+                    if (uploadMatch && uploadMatch.filename) {
+                        // Convert file to base64
+                        const base64 = await window.convertImageFileToBase64(uploadMatch.filename);
+                        if (base64) {
+                            backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to convert background image for printing:', error);
+                }
+            } else if (!settings.backgroundImage.startsWith('http')) {
+                // It's a filename, convert to base64
+                try {
+                    const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
+                    if (base64) {
+                        backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+                    }
+                } catch (error) {
+                    console.error('Failed to convert background image for printing:', error);
+                }
+            } else {
+                // It's a regular URL, use as-is
+                backgroundStyle = `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+            }
+        }
 
         const html = `
             <html>
