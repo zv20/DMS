@@ -80,9 +80,10 @@
             if (recipeAllergens.length > 0) { 
                 allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>`).join('')}</div>`; 
             }
+            // FIXED: Removed getCategoryIcon() - translation already includes icon
             tr.innerHTML = `
                 <td><strong>${recipe.name}</strong></td>
-                <td>${getCategoryIcon(recipe.category || 'other')} ${window.t('category_' + (recipe.category || 'other'))}</td>
+                <td>${window.t('category_' + (recipe.category || 'other'))}</td>
                 <td>${recipe.portionSize || '-'}</td>
                 <td>${allergensHtml}</td>
                 <td>
@@ -227,8 +228,57 @@
         headerRow.appendChild(dotBar);
         slotEl.appendChild(headerRow);
         
+        // NEW: Add category switcher + recipe selector in a flex row
+        const selectorRow = document.createElement('div');
+        selectorRow.style.display = 'flex';
+        selectorRow.style.gap = '8px';
+        selectorRow.style.alignItems = 'center';
+        
+        // Category icon button group
+        const categoryGroup = document.createElement('div');
+        categoryGroup.style.display = 'flex';
+        categoryGroup.style.gap = '4px';
+        categoryGroup.style.flexShrink = '0';
+        
+        const categories = ['soup', 'main', 'dessert', 'other'];
+        categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'category-icon-btn';
+            btn.textContent = getCategoryIcon(cat);
+            btn.title = window.t('category_' + cat);
+            btn.style.cssText = `
+                width: 32px;
+                height: 32px;
+                border: 2px solid ${slotData.type === cat ? '#fd7e14' : '#dee2e6'};
+                background: ${slotData.type === cat ? '#fd7e14' : '#fff'};
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                padding: 0;
+            `;
+            
+            btn.addEventListener('click', () => {
+                // Update slot type
+                if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {};
+                window.currentMenu[dateStr][slotId] = { type: cat, recipe: null };
+                window.saveData();
+                // Re-render entire calendar to update UI
+                window.renderCalendar(window.currentCalendarDate);
+            });
+            
+            categoryGroup.appendChild(btn);
+        });
+        
+        selectorRow.appendChild(categoryGroup);
+        
+        // Recipe dropdown
         const select = document.createElement('select');
         select.className = 'recipe-select';
+        select.style.flex = '1';
         select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
         
         window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)).forEach(r => { 
@@ -259,7 +309,9 @@
             window.saveData(); 
         });
         
-        slotEl.appendChild(select);
+        selectorRow.appendChild(select);
+        slotEl.appendChild(selectorRow);
+        
         return slotEl;
     }
 
