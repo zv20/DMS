@@ -166,14 +166,11 @@
         }
 
         if (viewMode === 'week') {
+            // Set class for CSS Grid styling
             calendarEl.className = 'week-view';
             const weekStart = window.getWeekStart(date);
-            const weekDaysContainer = document.createElement('div');
-            weekDaysContainer.className = 'week-days';
-            weekDaysContainer.style.display = 'grid';
-            weekDaysContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-            weekDaysContainer.style.gap = '10px';
             
+            // NO WRAPPER - Add day columns directly to calendar element
             const SLOTS = [{id:'slot1',type:'soup'},{id:'slot2',type:'main'},{id:'slot3',type:'dessert'},{id:'slot4',type:'other'}];
 
             for (let i = 0; i < 5; i++) {
@@ -184,37 +181,54 @@
 
                 const dayColumn = document.createElement('div');
                 dayColumn.className = 'day-column';
-                const langStr = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
-                dayColumn.innerHTML = `<div class="day-header" style="text-align:center;font-weight:bold;color:var(--color-primary);margin-bottom:10px;">${day.toLocaleDateString(langStr, { weekday: 'short', month: 'short', day: 'numeric' })}</div>`;
                 
+                // Day header with proper class from calendar.css
+                const langStr = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header-weekly';
+                const dayName = day.toLocaleDateString(langStr, { weekday: 'long' });
+                const dayDate = day.toLocaleDateString(langStr, { month: 'short', day: 'numeric' });
+                dayHeader.innerHTML = `<strong>${dayName}</strong><small>${dayDate}</small>`;
+                dayColumn.appendChild(dayHeader);
+                
+                // Add meal slots
                 SLOTS.forEach((conf, index) => { 
                     const slotData = window.currentMenu[dateStr][conf.id] || { type: conf.type, recipe: null }; 
                     dayColumn.appendChild(renderSlot(dateStr, conf.id, slotData, index + 1)); 
                 });
-                weekDaysContainer.appendChild(dayColumn);
+                
+                // Add directly to calendar (no wrapper!)
+                calendarEl.appendChild(dayColumn);
             }
-            calendarEl.appendChild(weekDaysContainer);
         }
     };
 
     function renderSlot(dateStr, slotId, slotData, indexLabel) {
         const slotEl = document.createElement('div');
-        slotEl.className = 'menu-slot';
+        slotEl.className = 'meal-slot ' + slotData.type;
         
         const headerRow = document.createElement('div');
         headerRow.style.display = 'flex';
         headerRow.style.justifyContent = 'space-between';
-        headerRow.innerHTML = `<span style="font-size:0.85rem;font-weight:bold;color:#7f8c8d;">${indexLabel}. ${window.t('slot_' + slotData.type)}</span>`;
+        headerRow.style.alignItems = 'center';
+        headerRow.style.marginBottom = '8px';
+        
+        const slotLabel = document.createElement('span');
+        slotLabel.style.fontSize = '0.85rem';
+        slotLabel.style.fontWeight = 'bold';
+        slotLabel.style.color = '#7f8c8d';
+        slotLabel.textContent = `${indexLabel}. ${window.t('slot_' + slotData.type)}`;
+        headerRow.appendChild(slotLabel);
         
         const dotBar = document.createElement('div');
         dotBar.className = 'slot-allergen-dots';
         dotBar.style.display = 'flex';
-        dotBar.style.gap = '2px';
+        dotBar.style.gap = '3px';
         headerRow.appendChild(dotBar);
         slotEl.appendChild(headerRow);
         
         const select = document.createElement('select');
-        select.style.width = '100%';
+        select.className = 'recipe-select';
         select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
         
         window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)).forEach(r => { 
