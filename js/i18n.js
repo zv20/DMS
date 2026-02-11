@@ -30,6 +30,7 @@
             btn_week_view: '📅 Week View',
             btn_month_view: '📆 Month View',
             btn_populate_allergens: '↻ Reset Default Allergens',
+            btn_customize: '📝 Template Builder',
             modal_add_recipe: 'Add Recipe',
             modal_edit_recipe: 'Edit Recipe',
             modal_add_ingredient: 'Add Ingredient',
@@ -66,6 +67,7 @@
             empty_ingredients: 'No ingredients found.',
             empty_allergens: 'No allergens found.',
             empty_menus: 'No saved menus yet.',
+            empty_day: 'No meals planned',
             alert_delete_recipe: 'Delete this recipe?',
             alert_delete_ingredient: 'Delete this ingredient?',
             alert_delete_allergen: 'Delete this allergen?',
@@ -151,6 +153,7 @@
             btn_week_view: '📅 Седмичен Изглед',
             btn_month_view: '📆 Месечен Изглед',
             btn_populate_allergens: '↻ Възстанови Алергени',
+            btn_customize: '📝 Дизайн на Шаблон',
             modal_add_recipe: 'Добави Рецепта',
             modal_edit_recipe: 'Редактирай Рецепта',
             modal_add_ingredient: 'Добави Съставка',
@@ -187,6 +190,7 @@
             empty_ingredients: 'Няма намерени съставки.',
             empty_allergens: 'Няма намерени алергени.',
             empty_menus: 'Няма запазени менюта.',
+            empty_day: 'Няма планирани ядения',
             alert_delete_recipe: 'Изтриване на тази рецепта?',
             alert_delete_ingredient: 'Изтриване на тази съставка?',
             alert_delete_allergen: 'Изтриване на този алерген?',
@@ -252,10 +256,18 @@
         return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
     };
 
-    window.changeLanguage = function(lang, callback) {
+    // Update changeLanguage to save to settings.json
+    window.changeLanguage = function(lang, shouldSave = true) {
         currentLanguage = lang;
         localStorage.setItem('recipeManagerLang', lang);
-        if (callback) callback();
+        
+        // Save to settings.json if shouldSave is true
+        if (shouldSave && window.appSettings) {
+            window.appSettings.language = lang;
+            if (typeof window.saveSettings === 'function') {
+                window.saveSettings();
+            }
+        }
     };
 
     window.applyTranslations = function() {
