@@ -2,13 +2,13 @@
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
- * NOW WITH: Combined week selection + template picker in one modal
- * PLUS: More presets including double-column layout & local image uploads
+ * NOW WITH: Collapsible preset templates & compact sidebar
  */
 
 (function(window) {
     let activeTemplateId = null;
-    let selectedWeekStart = null; // Track selected week for printing
+    let selectedWeekStart = null;
+    let presetsExpanded = false; // Track preset section state
 
     const TemplateManager = {
         // Preset Templates (15 total - including double-column and more styles)
@@ -280,27 +280,26 @@
             this.loadActiveTemplate();
             this.bindUI();
             this.bindImageUpload();
-            this.renderTemplateLibrary(); // FIXED: Always render library on init
+            this.renderTemplateLibrary();
             this.refreshPreview();
         },
 
-        // NEW: Local Image Uploads Storage
         bindImageUpload: function() {
             const bgInput = document.getElementById('backgroundImage');
             if (!bgInput) return;
             
-            // Add file upload button next to URL input
             const uploadBtn = document.createElement('button');
             uploadBtn.className = 'btn btn-secondary';
             uploadBtn.textContent = '📎 Upload Image';
             uploadBtn.type = 'button';
-            uploadBtn.style.marginTop = '10px';
+            uploadBtn.style.marginTop = '8px';
             uploadBtn.style.width = '100%';
+            uploadBtn.style.fontSize = '0.85rem';
+            uploadBtn.style.height = '36px';
             
             uploadBtn.onclick = () => this.uploadBackgroundImage();
             bgInput.parentNode.insertBefore(uploadBtn, bgInput.nextSibling);
             
-            // Add uploads gallery
             this.renderUploadsGallery();
         },
 
@@ -318,7 +317,6 @@
                     const imageData = event.target.result;
                     const imageName = `upload_${Date.now()}_${file.name}`;
                     
-                    // Save to uploads array
                     if (!window.imageUploads) window.imageUploads = [];
                     window.imageUploads.push({
                         id: imageName,
@@ -327,9 +325,8 @@
                         timestamp: Date.now()
                     });
                     
-                    window.saveSettings(); // Save to settings.json
+                    window.saveSettings();
                     
-                    // Apply to current template
                     document.getElementById('backgroundImage').value = imageData;
                     this.refreshPreview();
                     this.renderUploadsGallery();
@@ -346,39 +343,40 @@
             const bgInput = document.getElementById('backgroundImage');
             if (!bgInput) return;
             
-            // Remove existing gallery
             const existingGallery = document.getElementById('uploadsGallery');
             if (existingGallery) existingGallery.remove();
             
-            // Create new gallery
             const gallery = document.createElement('div');
             gallery.id = 'uploadsGallery';
-            gallery.style.cssText = 'margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;';
+            gallery.style.cssText = 'margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 6px;';
             
             if (!window.imageUploads || window.imageUploads.length === 0) {
-                gallery.innerHTML = '<small style="color: #6c757d;">No uploads yet. Upload one above!</small>';
+                gallery.innerHTML = '<small style="color: #6c757d; font-size: 0.8rem;">No uploads yet</small>';
             } else {
                 const header = document.createElement('div');
-                header.style.cssText = 'font-weight: bold; margin-bottom: 8px; font-size: 9pt; color: #495057;';
+                header.style.cssText = 'font-weight: 600; margin-bottom: 6px; font-size: 0.8rem; color: #495057;';
                 header.textContent = '📎 My Uploads:';
                 gallery.appendChild(header);
                 
                 window.imageUploads.forEach(img => {
                     const imgCard = document.createElement('div');
-                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px; margin-bottom: 6px; border: 1px solid #dee2e6;';
+                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 6px; padding: 4px; background: white; border-radius: 4px; margin-bottom: 4px; border: 1px solid #dee2e6;';
                     
                     const thumbnail = document.createElement('img');
                     thumbnail.src = img.data;
-                    thumbnail.style.cssText = 'width: 40px; height: 40px; object-fit: cover; border-radius: 4px;';
+                    thumbnail.style.cssText = 'width: 32px; height: 32px; object-fit: cover; border-radius: 3px;';
                     
                     const info = document.createElement('div');
                     info.style.flex = '1';
-                    info.innerHTML = `<div style="font-size: 8pt; font-weight: 500;">${img.name}</div>`;
+                    info.style.overflow = 'hidden';
+                    info.innerHTML = `<div style="font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${img.name}</div>`;
                     
                     const useBtn = document.createElement('button');
                     useBtn.className = 'btn btn-small btn-primary';
                     useBtn.textContent = 'Use';
-                    useBtn.style.fontSize = '7pt';
+                    useBtn.style.fontSize = '0.7rem';
+                    useBtn.style.height = '24px';
+                    useBtn.style.padding = '0 8px';
                     useBtn.onclick = () => {
                         document.getElementById('backgroundImage').value = img.data;
                         this.refreshPreview();
@@ -387,6 +385,9 @@
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'icon-btn delete';
                     deleteBtn.textContent = '🗑️';
+                    deleteBtn.style.width = '24px';
+                    deleteBtn.style.height = '24px';
+                    deleteBtn.style.fontSize = '0.9rem';
                     deleteBtn.onclick = () => {
                         if (confirm(`Delete "${img.name}"?`)) {
                             window.imageUploads = window.imageUploads.filter(i => i.id !== img.id);
@@ -569,7 +570,6 @@
         refreshPreview: function() {
             const settings = this.getSettingsFromUI();
             
-            // Apply background image to preview sheet
             const sheet = document.getElementById('livePreviewSheet');
             if (sheet && settings.backgroundImage) {
                 sheet.style.backgroundImage = `url(${settings.backgroundImage})`;
@@ -580,7 +580,6 @@
                 sheet.style.backgroundImage = 'none';
             }
             
-            // Header - show full 5 days in preview
             const h = document.getElementById('previewHeader');
             const dateRange = this.getDateRangeText(0, 4);
             if (h) {
@@ -590,7 +589,6 @@
                 `;
             }
 
-            // Days List - preview shows all 5 days
             const list = document.getElementById('previewDaysList');
             if (list) {
                 list.innerHTML = '';
@@ -612,7 +610,6 @@
                 }
             }
 
-            // Footer
             const f = document.getElementById('previewFooter');
             if (f) {
                 f.innerHTML = `<div style="border-top:1px solid #eee; padding-top:4px; margin-top:6px; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; text-align:center; line-height:1;">${settings.footer.text}</div>`;
@@ -631,7 +628,6 @@
                 page-break-inside: avoid;
             `;
 
-            // Day header
             let contentHtml = `
                 <div style="border-bottom:1px solid #d0d0d0; margin-bottom:6px; padding-bottom:3px;">
                     <h2 style="margin:0; font-size:${settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
@@ -672,10 +668,8 @@
             
             let html = `<div style="margin-bottom:5px;">`;
             
-            // Title line with portion and calories
             let titleLine = `<div style="font-size:${settings.mealTitle.fontSize}; font-weight:${settings.mealTitle.fontWeight}; color:${settings.mealTitle.color}; margin-bottom:2px; line-height:1.2;">${index}. ${recipe.name}`;
             
-            // Add portion size and calories with language-specific units
             let metadata = [];
             if (recipe.portionSize) {
                 const portionUnit = isBulgarian ? 'гр' : 'g';
@@ -691,7 +685,6 @@
             titleLine += `</div>`;
             html += titleLine;
 
-            // Ingredients with red underlined allergens
             if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
                 const recipeAllergens = window.getRecipeAllergens(recipe);
                 const allergenIds = new Set(recipeAllergens.map(a => a.id));
@@ -734,7 +727,6 @@
             return `${startDay.toLocaleDateString(lang, options)} — ${endDay.toLocaleDateString(lang, options)}, ${endDay.getFullYear()}`;
         },
 
-        // FIXED: Get all weeks that have meals planned - parse dates in local timezone
         getWeeksWithMeals: function() {
             const weeks = [];
             const dates = Object.keys(window.currentMenu).filter(dateStr => {
@@ -743,10 +735,8 @@
 
             if (dates.length === 0) return [];
 
-            // Group dates by week
             const weekMap = new Map();
             dates.forEach(dateStr => {
-                // FIXED: Parse date in local timezone to avoid Monday bug
                 const parts = dateStr.split('-');
                 const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
                 
@@ -762,7 +752,6 @@
                 weekMap.get(weekKey).dates.push(dateStr);
             });
 
-            // Convert to array and sort by date (latest first)
             weekMap.forEach((value, key) => {
                 weeks.push({
                     weekStart: value.weekStart,
@@ -771,37 +760,73 @@
                 });
             });
 
-            // Sort: latest first
             weeks.sort((a, b) => b.weekStart - a.weekStart);
             return weeks;
         },
 
+        // NEW: Collapsible preset templates
         renderTemplateLibrary: function() {
             const container = document.getElementById('templateLibrary');
             if (!container) return;
             
             container.innerHTML = '';
 
-            // Preset Templates
-            const presetHeader = document.createElement('h4');
-            presetHeader.textContent = '🎨 Preset Templates';
-            presetHeader.style.cssText = 'margin: 0 0 10px 0; color: #fd7e14; font-size: 11pt;';
-            container.appendChild(presetHeader);
-
+            // COLLAPSIBLE Preset Templates Section
+            const presetSection = document.createElement('div');
+            presetSection.style.cssText = 'margin-bottom: 15px;';
+            
+            const presetHeader = document.createElement('div');
+            presetHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--color-background); border-radius: 6px; cursor: pointer; transition: background 0.2s;';
+            presetHeader.onmouseenter = () => presetHeader.style.background = '#e9ecef';
+            presetHeader.onmouseleave = () => presetHeader.style.background = 'var(--color-background)';
+            
+            const presetTitle = document.createElement('h4');
+            presetTitle.textContent = '🎨 Preset Templates';
+            presetTitle.style.cssText = 'margin: 0; color: #fd7e14; font-size: 10pt; font-weight: 600;';
+            
+            const toggleIcon = document.createElement('span');
+            toggleIcon.textContent = presetsExpanded ? '▼' : '▶';
+            toggleIcon.style.cssText = 'font-size: 10pt; color: #6c757d; transition: transform 0.2s;';
+            
+            presetHeader.appendChild(presetTitle);
+            presetHeader.appendChild(toggleIcon);
+            presetSection.appendChild(presetHeader);
+            
+            // Collapsible content
+            const presetContent = document.createElement('div');
+            presetContent.id = 'presetContent';
+            presetContent.style.cssText = `
+                max-height: ${presetsExpanded ? '2000px' : '0'};
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                padding-top: ${presetsExpanded ? '8px' : '0'};
+            `;
+            
             this.presets.forEach(preset => {
                 const card = this.createPresetCard(preset);
-                container.appendChild(card);
+                presetContent.appendChild(card);
             });
+            
+            presetSection.appendChild(presetContent);
+            container.appendChild(presetSection);
+            
+            // Toggle functionality
+            presetHeader.onclick = () => {
+                presetsExpanded = !presetsExpanded;
+                toggleIcon.textContent = presetsExpanded ? '▼' : '▶';
+                presetContent.style.maxHeight = presetsExpanded ? '2000px' : '0';
+                presetContent.style.paddingTop = presetsExpanded ? '8px' : '0';
+            };
 
             // Separator
             const separator = document.createElement('div');
-            separator.style.cssText = 'height: 1px; background: #ddd; margin: 20px 0;';
+            separator.style.cssText = 'height: 1px; background: #ddd; margin: 15px 0;';
             container.appendChild(separator);
 
-            // Default Template
+            // My Templates Section
             const customHeader = document.createElement('h4');
             customHeader.textContent = '📝 My Templates';
-            customHeader.style.cssText = 'margin: 0 0 10px 0; color: #6c757d; font-size: 11pt;';
+            customHeader.style.cssText = 'margin: 0 0 8px 0; color: #6c757d; font-size: 10pt; font-weight: 600;';
             container.appendChild(customHeader);
 
             const defaultCard = this.createTemplateCard({
@@ -810,7 +835,6 @@
             }, activeTemplateId === 'default');
             container.appendChild(defaultCard);
 
-            // FIXED: Check if savedTemplates exists and has items
             if (window.savedTemplates && window.savedTemplates.length > 0) {
                 window.savedTemplates.forEach(tmpl => {
                     const card = this.createTemplateCard(tmpl, activeTemplateId === tmpl.id);
@@ -822,32 +846,40 @@
         createPresetCard: function(preset) {
             const card = document.createElement('div');
             const isDoubleColumn = preset.isDoubleColumn || false;
-            const badge = isDoubleColumn ? ' <span style="background:#fd7e14; color:white; padding:2px 6px; border-radius:4px; font-size:7pt; font-weight:bold;">2-COL</span>' : '';
+            const badge = isDoubleColumn ? ' <span style="background:#fd7e14; color:white; padding:1px 5px; border-radius:3px; font-size:0.65rem; font-weight:bold;">2-COL</span>' : '';
             
             card.style.cssText = `
-                padding: 8px;
-                border: 2px solid #ddd;
-                border-radius: 6px;
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                padding: 6px 8px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                background: #ffffff;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 5px;
                 cursor: pointer;
                 transition: all 0.2s;
             `;
             
-            card.onmouseenter = () => card.style.borderColor = '#fd7e14';
-            card.onmouseleave = () => card.style.borderColor = '#ddd';
+            card.onmouseenter = () => {
+                card.style.borderColor = '#fd7e14';
+                card.style.background = '#fff5e6';
+            };
+            card.onmouseleave = () => {
+                card.style.borderColor = '#ddd';
+                card.style.background = '#ffffff';
+            };
 
             const nameSpan = document.createElement('span');
             nameSpan.innerHTML = preset.name + badge;
-            nameSpan.style.cssText = 'font-weight: 500; font-size: 9pt; color: #333;';
+            nameSpan.style.cssText = 'font-weight: 500; font-size: 0.8rem; color: #333; flex: 1;';
             
             const loadBtn = document.createElement('button');
             loadBtn.textContent = 'Use';
             loadBtn.className = 'btn btn-small btn-primary';
-            loadBtn.style.height = '28px';
+            loadBtn.style.height = '26px';
+            loadBtn.style.padding = '0 10px';
+            loadBtn.style.fontSize = '0.75rem';
             loadBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.applyTemplateToUI(preset);
@@ -862,29 +894,34 @@
         createTemplateCard: function(template, isActive) {
             const card = document.createElement('div');
             card.style.cssText = `
-                padding: 10px;
-                border: 2px solid ${isActive ? '#fd7e14' : '#ddd'};
+                padding: 8px 10px;
+                border: 1px solid ${isActive ? '#fd7e14' : '#ddd'};
                 border-radius: 6px;
                 background: ${isActive ? '#fff5e6' : '#f9f9f9'};
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
             `;
 
             const nameSpan = document.createElement('span');
             nameSpan.textContent = template.name;
             nameSpan.style.fontWeight = isActive ? '600' : '400';
             nameSpan.style.color = isActive ? '#fd7e14' : '#333';
+            nameSpan.style.fontSize = '0.85rem';
+            nameSpan.style.flex = '1';
             
             const btnContainer = document.createElement('div');
             btnContainer.style.display = 'flex';
-            btnContainer.style.gap = '5px';
+            btnContainer.style.gap = '4px';
 
             if (!isActive) {
                 const loadBtn = document.createElement('button');
                 loadBtn.textContent = 'Load';
                 loadBtn.className = 'btn btn-small btn-secondary';
+                loadBtn.style.height = '28px';
+                loadBtn.style.padding = '0 10px';
+                loadBtn.style.fontSize = '0.75rem';
                 loadBtn.onclick = () => this.loadTemplate(template.id);
                 btnContainer.appendChild(loadBtn);
             }
@@ -893,6 +930,9 @@
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '🗑️';
                 deleteBtn.className = 'icon-btn delete';
+                deleteBtn.style.width = '28px';
+                deleteBtn.style.height = '28px';
+                deleteBtn.style.fontSize = '0.9rem';
                 deleteBtn.onclick = () => this.deleteTemplate(template.id);
                 btnContainer.appendChild(deleteBtn);
             }
@@ -921,7 +961,7 @@
             if (activeTemplateId === id) {
                 this.loadTemplate('default');
             }
-            window.saveSettings(); // Save to settings.json file
+            window.saveSettings();
             this.renderTemplateLibrary();
         }
     };
@@ -936,7 +976,7 @@
         settings.id = 'tmpl_' + Date.now();
         
         window.savedTemplates.push(settings);
-        window.saveSettings(); // Save to settings.json file
+        window.saveSettings();
         
         activeTemplateId = settings.id;
         localStorage.setItem('activeTemplateId', settings.id);
@@ -944,7 +984,6 @@
         alert('Template saved!');
     };
 
-    // NEW: Combined Week + Template Selection Modal
     window.openTemplatePicker = function() {
         const modal = document.getElementById('templatePickerModal');
         const grid = document.getElementById('templateGrid');
@@ -953,7 +992,6 @@
         modal.style.display = 'block';
         grid.innerHTML = '';
 
-        // Get weeks with meals
         const weeksWithMeals = TemplateManager.getWeeksWithMeals();
         
         if (weeksWithMeals.length === 0) {
@@ -961,7 +999,6 @@
             return;
         }
 
-        // Week Selector Section
         const weekSection = document.createElement('div');
         weekSection.style.cssText = 'margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;';
         
@@ -977,7 +1014,7 @@
             const option = document.createElement('option');
             option.value = week.weekStart.toISOString().split('T')[0];
             option.textContent = `${week.label} (${week.dateCount} days with meals)`;
-            if (index === 0) option.selected = true; // Select latest week by default
+            if (index === 0) option.selected = true;
             weekSelect.appendChild(option);
         });
         
@@ -985,7 +1022,6 @@
         weekSection.appendChild(weekSelect);
         grid.appendChild(weekSection);
 
-        // FIXED: Parse selected week in local timezone
         const parts = weekSelect.value.split('-');
         selectedWeekStart = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         
@@ -994,7 +1030,6 @@
             selectedWeekStart = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         });
 
-        // Template Grid Section
         const templateSection = document.createElement('div');
         const templateLabel = document.createElement('h3');
         templateLabel.textContent = '📝 Select Template:';
@@ -1026,7 +1061,6 @@
         grid.appendChild(templateSection);
     };
 
-    // Updated print function to use selected week
     window.printWithTemplate = function(id) {
         let settings;
         if (id === 'current') {
@@ -1040,18 +1074,15 @@
             return;
         }
 
-        // Use selectedWeekStart if available, otherwise use current week
         const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
 
         const printWindow = window.open('', '_blank');
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
-        // AUTO-DETECT: Find days with meals
         let daysHtml = '';
         let daysWithMeals = [];
         
-        // Scan all 5 weekdays to find which have meals
         for (let i = 0; i < 5; i++) {
             const day = new Date(weekStart);
             day.setDate(weekStart.getDate() + i);
@@ -1066,14 +1097,12 @@
             }
         }
 
-        // If no meals planned, show message
         if (daysWithMeals.length === 0) {
             alert('No meals planned for this week. Please add meals before printing.');
             printWindow.close();
             return;
         }
 
-        // Calculate date range based on actual days with meals
         const firstDay = daysWithMeals[0];
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
@@ -1123,11 +1152,9 @@
         printWindow.document.close();
         document.getElementById('templatePickerModal').style.display = 'none';
         
-        // Reset selected week
         selectedWeekStart = null;
     };
 
-    // Helper function for getting week start (needed for template manager)
     window.getWeekStart = window.getWeekStart || function(date) {
         const d = new Date(date);
         const day = d.getDay();
