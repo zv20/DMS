@@ -4,6 +4,7 @@
  * Auto-detects days with meals for printing
  * NOW WITH: Full Bulgarian/English translation support
  * FIXED: Background images now print correctly by storing filenames
+ * FIXED: Templates now properly load images by awaiting async operations
  */
 
 (function(window) {
@@ -1213,9 +1214,9 @@
             loadBtn.style.height = '24px';
             loadBtn.style.padding = '0 8px';
             loadBtn.style.fontSize = '0.7rem';
-            loadBtn.onclick = (e) => {
+            loadBtn.onclick = async (e) => {
                 e.stopPropagation();
-                this.applyTemplateToUI(preset);
+                await this.applyTemplateToUI(preset);
                 this.refreshPreview();
             };
 
@@ -1275,12 +1276,12 @@
             return card;
         },
 
-        loadTemplate: function(id) {
+        loadTemplate: async function(id) {
             if (id === 'default') {
                 this.applyDefaultSettings();
             } else {
                 const tmpl = window.savedTemplates.find(t => t.id === id);
-                if (tmpl) this.applyTemplateToUI(tmpl);
+                if (tmpl) await this.applyTemplateToUI(tmpl);
             }
             activeTemplateId = id;
             localStorage.setItem('activeTemplateId', id);
