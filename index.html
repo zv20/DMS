@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KitchenPro DMS</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=10.6">
+  <link rel="stylesheet" href="css/styles.css?v=10.7">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
   
-  <script src="js/i18n.js?v=10.6"></script>
-  <script src="js/utils.js?v=10.6"></script>
-  <script src="js/store.js?v=10.6"></script>
-  <script src="js/calendar.js?v=10.6"></script>
-  <script src="js/render.js?v=10.6"></script>
-  <script src="js/ui.js?v=10.6"></script>
-  <script src="js/template.js?v=10.6"></script>
-  <script src="js/main.js?v=10.6"></script>
+  <script src="js/i18n.js?v=10.7"></script>
+  <script src="js/utils.js?v=10.7"></script>
+  <script src="js/store.js?v=10.7"></script>
+  <script src="js/calendar.js?v=10.7"></script>
+  <script src="js/render.js?v=10.7"></script>
+  <script src="js/ui.js?v=10.7"></script>
+  <script src="js/template.js?v=10.7"></script>
+  <script src="js/main.js?v=10.7"></script>
 </head>
 <body data-theme="default">
 
@@ -179,201 +179,21 @@
           </div>
         </div>
         
-        <div class="builder-layout" style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; min-height: calc(100vh - 150px);">
+        <div class="builder-layout" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; min-height: calc(100vh - 150px);">
              <!-- LEFT PANEL: Controls -->
-             <div class="builder-controls" style="overflow-y: auto; padding: 20px; background: white; border-radius: 8px; height: fit-content; max-height: calc(100vh - 180px);">
+             <div class="builder-controls" style="overflow-y: auto; padding: 15px; background: white; border-radius: 8px; height: fit-content; max-height: calc(100vh - 180px);">
                   
                   <!-- Template Library -->
                   <section class="control-section">
-                      <h3>📋 Template Library</h3>
-                      <div id="templateLibrary" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+                      <h3 style="margin: 0 0 10px 0; color: #495057; font-size: 11pt; font-weight: 600;">📋 Template Library</h3>
+                      <div id="templateLibrary" style="display:flex; flex-direction:column; gap:6px;"></div>
                   </section>
 
-                  <!-- Background Image -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🖼️ Background</h3>
-                      <label>Image URL (optional)</label>
-                      <input type="text" id="backgroundImage" class="form-control" placeholder="https://example.com/image.jpg">
-                      <small style="color:#666; font-size:0.85rem; display:block; margin-top:5px;">
-                          <strong>Recommended size:</strong> 2480 x 3508 px (A4 at 300 DPI)<br>
-                          <strong>Or:</strong> 1654 x 2339 px (A4 at 200 DPI)<br>
-                          Leave blank for no background
-                      </small>
-                  </section>
+                  <!-- Collapsible Sections -->
+                  <div id="collapsibleSections" style="margin-top: 15px;">
+                      <!-- Each section will be injected by JS -->
+                  </div>
 
-                  <!-- Header Settings -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🔝 Header</h3>
-                      <label>Title</label>
-                      <input type="text" id="headerText" class="form-control" placeholder="Weekly Menu" value="Weekly Menu">
-                      
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                          <div>
-                              <label>Color</label>
-                              <input type="color" id="headerColor" value="#fd7e14" style="width:100%;">
-                          </div>
-                          <div>
-                              <label>Font Size</label>
-                              <input type="text" id="headerSize" class="form-control" value="20pt">
-                          </div>
-                      </div>
-                      
-                      <label style="margin-top:10px;">Font Weight</label>
-                      <select id="headerWeight" class="form-control">
-                          <option value="normal">Normal</option>
-                          <option value="600">Semi-Bold</option>
-                          <option value="bold" selected>Bold</option>
-                      </select>
-                  </section>
-
-                  <!-- Day Block Styling -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>📅 Day Block Style</h3>
-                      <label>Background Color</label>
-                      <input type="color" id="dayBg" value="#ffffff" style="width:100%;">
-                      
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                          <div>
-                              <label>Border Radius (px)</label>
-                              <input type="number" id="dayRadius" value="8" class="form-control">
-                          </div>
-                          <div>
-                              <label>Border Width (px)</label>
-                              <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control">
-                          </div>
-                      </div>
-                      
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                          <div>
-                              <label>Border Color</label>
-                              <input type="color" id="dayBorderColor" value="#e0e0e0" style="width:100%;">
-                          </div>
-                          <div>
-                              <label>Border Style</label>
-                              <select id="dayBorderStyle" class="form-control">
-                                  <option value="solid">Solid</option>
-                                  <option value="dashed">Dashed</option>
-                                  <option value="dotted">Dotted</option>
-                                  <option value="double">Double</option>
-                              </select>
-                          </div>
-                      </div>
-                  </section>
-
-                  <!-- Day Name Styling -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>📌 Day Name Style</h3>
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                          <div>
-                              <label>Font Size</label>
-                              <input type="text" id="dayNameSize" class="form-control" value="11pt">
-                          </div>
-                          <div>
-                              <label>Color</label>
-                              <input type="color" id="dayNameColor" value="#2c3e50" style="width:100%;">
-                          </div>
-                      </div>
-                      <label style="margin-top:10px;">Font Weight</label>
-                      <select id="dayNameWeight" class="form-control">
-                          <option value="normal">Normal</option>
-                          <option value="500">Medium</option>
-                          <option value="600" selected>Semi-Bold</option>
-                          <option value="bold">Bold</option>
-                      </select>
-                  </section>
-
-                  <!-- Meal Title Styling -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🍽️ Meal Title Style</h3>
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                          <div>
-                              <label>Font Size</label>
-                              <input type="text" id="mealTitleSize" class="form-control" value="9pt">
-                          </div>
-                          <div>
-                              <label>Color</label>
-                              <input type="color" id="mealTitleColor" value="#333333" style="width:100%;">
-                          </div>
-                      </div>
-                      <label style="margin-top:10px;">Font Weight</label>
-                      <select id="mealTitleWeight" class="form-control">
-                          <option value="normal">Normal</option>
-                          <option value="500">Medium</option>
-                          <option value="600" selected>Semi-Bold</option>
-                          <option value="bold">Bold</option>
-                      </select>
-                  </section>
-
-                  <!-- Ingredients Styling -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🧂 Ingredients Style</h3>
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                          <div>
-                              <label>Font Size</label>
-                              <input type="text" id="ingredientsSize" class="form-control" value="7.5pt">
-                          </div>
-                          <div>
-                              <label>Color</label>
-                              <input type="color" id="ingredientsColor" value="#555555" style="width:100%;">
-                          </div>
-                      </div>
-                      <label style="margin-top:10px;">Font Style</label>
-                      <select id="ingredientsStyle" class="form-control">
-                          <option value="normal">Normal</option>
-                          <option value="italic" selected>Italic</option>
-                      </select>
-                  </section>
-
-                  <!-- Meal Block Settings -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🍲 Meal Visibility</h3>
-                      
-                      <div class="meal-type-config" style="border:1px solid #ddd; padding:10px; border-radius:6px; margin-bottom:10px;">
-                          <h4 style="margin:0 0 10px 0; color:#fd7e14; font-size:10pt;">🥣 Soup (Slot 1)</h4>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot1_showIngredients" checked> Show Ingredients</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot1_showCalories" checked> Show Calories</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot1_showAllergens" checked> Highlight Allergens</label>
-                      </div>
-
-                      <div class="meal-type-config" style="border:1px solid #ddd; padding:10px; border-radius:6px; margin-bottom:10px;">
-                          <h4 style="margin:0 0 10px 0; color:#fd7e14; font-size:10pt;">🍽️ Main (Slot 2)</h4>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot2_showIngredients" checked> Show Ingredients</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot2_showCalories" checked> Show Calories</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot2_showAllergens" checked> Highlight Allergens</label>
-                      </div>
-
-                      <div class="meal-type-config" style="border:1px solid #ddd; padding:10px; border-radius:6px; margin-bottom:10px;">
-                          <h4 style="margin:0 0 10px 0; color:#fd7e14; font-size:10pt;">🍰 Dessert (Slot 3)</h4>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot3_showIngredients" checked> Show Ingredients</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot3_showCalories" checked> Show Calories</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot3_showAllergens" checked> Highlight Allergens</label>
-                      </div>
-
-                      <div class="meal-type-config" style="border:1px solid #ddd; padding:10px; border-radius:6px; margin-bottom:10px;">
-                          <h4 style="margin:0 0 10px 0; color:#fd7e14; font-size:10pt;">➕ Other (Slot 4)</h4>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot4_showIngredients" checked> Show Ingredients</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot4_showCalories" checked> Show Calories</label><br>
-                          <label style="font-size:9pt;"><input type="checkbox" id="slot4_showAllergens" checked> Highlight Allergens</label>
-                      </div>
-                  </section>
-
-                  <!-- Footer Settings -->
-                  <section class="control-section" style="margin-top:20px;">
-                      <h3>🔚 Footer</h3>
-                      <label>Text</label>
-                      <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes...">Prepared with care by KitchenPro</textarea>
-                      
-                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                          <div>
-                              <label>Font Size</label>
-                              <input type="text" id="footerSize" class="form-control" value="8pt">
-                          </div>
-                          <div>
-                              <label>Color</label>
-                              <input type="color" id="footerColor" value="#7f8c8d" style="width:100%;">
-                          </div>
-                      </div>
-                  </section>
              </div>
 
              <!-- RIGHT PANEL: Live Preview -->
