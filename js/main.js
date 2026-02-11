@@ -96,6 +96,10 @@
             document.body.classList.add('app-loaded');
             setTimeout(() => {
                 splash.style.display = 'none';
+                
+                // FIXED: Apply translations after settings are loaded
+                window.applyTranslations();
+                
                 window.initStyleBuilder();
                 window.renderAll();
                 if (window.CalendarManager) {
