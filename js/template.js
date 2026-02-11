@@ -2,13 +2,26 @@
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
- * NOW WITH: Collapsible preset templates & compact sidebar
+ * NOW WITH: Fully collapsible organized categories
  */
 
 (function(window) {
     let activeTemplateId = null;
     let selectedWeekStart = null;
-    let presetsExpanded = false; // Track preset section state
+    let presetsExpanded = false;
+    
+    // Track which sections are expanded (all start collapsed except first 2)
+    const sectionStates = {
+        presets: false,
+        background: true,
+        header: true,
+        dayBlock: false,
+        dayName: false,
+        mealTitle: false,
+        ingredients: false,
+        mealVisibility: false,
+        footer: false
+    };
 
     const TemplateManager = {
         // Preset Templates (15 total - including double-column and more styles)
@@ -278,10 +291,269 @@
 
         init: function() {
             this.loadActiveTemplate();
-            this.bindUI();
+            this.renderCollapsibleSections();
             this.bindImageUpload();
             this.renderTemplateLibrary();
             this.refreshPreview();
+        },
+
+        renderCollapsibleSections: function() {
+            const container = document.getElementById('collapsibleSections');
+            if (!container) return;
+            
+            const sections = [
+                {
+                    id: 'background',
+                    icon: '🖼️',
+                    title: 'Background',
+                    html: `
+                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Image URL (optional)</label>
+                        <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;">
+                        <small style="color:#666; font-size:0.7rem; display:block; margin-top:4px; line-height:1.3;">
+                            <strong>Recommended:</strong> 2480x3508px (A4@300DPI) or 1654x2339px (A4@200DPI)
+                        </small>
+                    `
+                },
+                {
+                    id: 'header',
+                    icon: '🔽',
+                    title: 'Header',
+                    html: `
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Title</label>
+                        <input type="text" id="headerText" class="form-control" placeholder="Weekly Menu" value="Weekly Menu" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <input type="color" id="headerColor" value="#fd7e14" style="width:100%; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <input type="text" id="headerSize" class="form-control" value="20pt" style="font-size:0.85rem; height:32px;">
+                            </div>
+                        </div>
+                        
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <select id="headerWeight" class="form-control" style="font-size:0.85rem; height:32px;">
+                            <option value="normal">Normal</option>
+                            <option value="600">Semi-Bold</option>
+                            <option value="bold" selected>Bold</option>
+                        </select>
+                    `
+                },
+                {
+                    id: 'dayBlock',
+                    icon: '📅',
+                    title: 'Day Block Style',
+                    html: `
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Background Color</label>
+                        <input type="color" id="dayBg" value="#ffffff" style="width:100%; height:32px; margin-bottom:8px;">
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Radius</label>
+                                <input type="number" id="dayRadius" value="8" class="form-control" style="font-size:0.85rem; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Width</label>
+                                <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control" style="font-size:0.85rem; height:32px;">
+                            </div>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Color</label>
+                                <input type="color" id="dayBorderColor" value="#e0e0e0" style="width:100%; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Style</label>
+                                <select id="dayBorderStyle" class="form-control" style="font-size:0.85rem; height:32px;">
+                                    <option value="solid">Solid</option>
+                                    <option value="dashed">Dashed</option>
+                                    <option value="dotted">Dotted</option>
+                                    <option value="double">Double</option>
+                                </select>
+                            </div>
+                        </div>
+                    `
+                },
+                {
+                    id: 'dayName',
+                    icon: '📌',
+                    title: 'Day Name Style',
+                    html: `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <input type="text" id="dayNameSize" class="form-control" value="11pt" style="font-size:0.85rem; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <input type="color" id="dayNameColor" value="#2c3e50" style="width:100%; height:32px;">
+                            </div>
+                        </div>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <select id="dayNameWeight" class="form-control" style="font-size:0.85rem; height:32px;">
+                            <option value="normal">Normal</option>
+                            <option value="500">Medium</option>
+                            <option value="600" selected>Semi-Bold</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    `
+                },
+                {
+                    id: 'mealTitle',
+                    icon: '🍽️',
+                    title: 'Meal Title Style',
+                    html: `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <input type="text" id="mealTitleSize" class="form-control" value="9pt" style="font-size:0.85rem; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <input type="color" id="mealTitleColor" value="#333333" style="width:100%; height:32px;">
+                            </div>
+                        </div>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <select id="mealTitleWeight" class="form-control" style="font-size:0.85rem; height:32px;">
+                            <option value="normal">Normal</option>
+                            <option value="500">Medium</option>
+                            <option value="600" selected>Semi-Bold</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    `
+                },
+                {
+                    id: 'ingredients',
+                    icon: '🧂',
+                    title: 'Ingredients Style',
+                    html: `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <input type="text" id="ingredientsSize" class="form-control" value="7.5pt" style="font-size:0.85rem; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <input type="color" id="ingredientsColor" value="#555555" style="width:100%; height:32px;">
+                            </div>
+                        </div>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Style</label>
+                        <select id="ingredientsStyle" class="form-control" style="font-size:0.85rem; height:32px;">
+                            <option value="normal">Normal</option>
+                            <option value="italic" selected>Italic</option>
+                        </select>
+                    `
+                },
+                {
+                    id: 'mealVisibility',
+                    icon: '🍲',
+                    title: 'Meal Visibility',
+                    html: `
+                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🥣 Soup (Slot 1)</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showIngredients" checked> Show Ingredients</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showCalories" checked> Show Calories</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot1_showAllergens" checked> Highlight Allergens</label>
+                        </div>
+
+                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🍽️ Main (Slot 2)</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showIngredients" checked> Show Ingredients</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showCalories" checked> Show Calories</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot2_showAllergens" checked> Highlight Allergens</label>
+                        </div>
+
+                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🍰 Dessert (Slot 3)</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showIngredients" checked> Show Ingredients</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showCalories" checked> Show Calories</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot3_showAllergens" checked> Highlight Allergens</label>
+                        </div>
+
+                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; background:#fafafa;">
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">➕ Other (Slot 4)</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showIngredients" checked> Show Ingredients</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showCalories" checked> Show Calories</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot4_showAllergens" checked> Highlight Allergens</label>
+                        </div>
+                    `
+                },
+                {
+                    id: 'footer',
+                    icon: '🔚',
+                    title: 'Footer',
+                    html: `
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Text</label>
+                        <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes..." style="font-size:0.85rem; margin-bottom:8px;">Prepared with care by KitchenPro</textarea>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <input type="text" id="footerSize" class="form-control" value="8pt" style="font-size:0.85rem; height:32px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <input type="color" id="footerColor" value="#7f8c8d" style="width:100%; height:32px;">
+                            </div>
+                        </div>
+                    `
+                }
+            ];
+
+            sections.forEach(section => {
+                const sectionDiv = this.createCollapsibleSection(section);
+                container.appendChild(sectionDiv);
+            });
+            
+            // Bind UI after sections are created
+            this.bindUI();
+        },
+
+        createCollapsibleSection: function(section) {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'margin-bottom: 10px;';
+            
+            const header = document.createElement('div');
+            header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--color-background); border-radius: 5px; cursor: pointer; transition: background 0.2s;';
+            header.onmouseenter = () => header.style.background = '#e9ecef';
+            header.onmouseleave = () => header.style.background = 'var(--color-background)';
+            
+            const title = document.createElement('h4');
+            title.textContent = `${section.icon} ${section.title}`;
+            title.style.cssText = 'margin: 0; color: #495057; font-size: 9.5pt; font-weight: 600;';
+            
+            const toggleIcon = document.createElement('span');
+            const isExpanded = sectionStates[section.id] !== undefined ? sectionStates[section.id] : false;
+            toggleIcon.textContent = isExpanded ? '▼' : '▶';
+            toggleIcon.style.cssText = 'font-size: 9pt; color: #6c757d; transition: transform 0.2s;';
+            
+            header.appendChild(title);
+            header.appendChild(toggleIcon);
+            wrapper.appendChild(header);
+            
+            const content = document.createElement('div');
+            content.innerHTML = section.html;
+            content.style.cssText = `
+                max-height: ${isExpanded ? '1000px' : '0'};
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                padding: ${isExpanded ? '10px' : '0'} 10px;
+            `;
+            
+            wrapper.appendChild(content);
+            
+            header.onclick = () => {
+                const expanded = sectionStates[section.id];
+                sectionStates[section.id] = !expanded;
+                toggleIcon.textContent = sectionStates[section.id] ? '▼' : '▶';
+                content.style.maxHeight = sectionStates[section.id] ? '1000px' : '0';
+                content.style.padding = sectionStates[section.id] ? '10px' : '0 10px';
+            };
+            
+            return wrapper;
         },
 
         bindImageUpload: function() {
@@ -292,10 +564,10 @@
             uploadBtn.className = 'btn btn-secondary';
             uploadBtn.textContent = '📎 Upload Image';
             uploadBtn.type = 'button';
-            uploadBtn.style.marginTop = '8px';
+            uploadBtn.style.marginTop = '6px';
             uploadBtn.style.width = '100%';
-            uploadBtn.style.fontSize = '0.85rem';
-            uploadBtn.style.height = '36px';
+            uploadBtn.style.fontSize = '0.8rem';
+            uploadBtn.style.height = '32px';
             
             uploadBtn.onclick = () => this.uploadBackgroundImage();
             bgInput.parentNode.insertBefore(uploadBtn, bgInput.nextSibling);
@@ -348,35 +620,35 @@
             
             const gallery = document.createElement('div');
             gallery.id = 'uploadsGallery';
-            gallery.style.cssText = 'margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 6px;';
+            gallery.style.cssText = 'margin-top: 8px; padding: 6px; background: #f8f9fa; border-radius: 4px;';
             
             if (!window.imageUploads || window.imageUploads.length === 0) {
-                gallery.innerHTML = '<small style="color: #6c757d; font-size: 0.8rem;">No uploads yet</small>';
+                gallery.innerHTML = '<small style="color: #6c757d; font-size: 0.75rem;">No uploads yet</small>';
             } else {
                 const header = document.createElement('div');
-                header.style.cssText = 'font-weight: 600; margin-bottom: 6px; font-size: 0.8rem; color: #495057;';
+                header.style.cssText = 'font-weight: 600; margin-bottom: 4px; font-size: 0.75rem; color: #495057;';
                 header.textContent = '📎 My Uploads:';
                 gallery.appendChild(header);
                 
                 window.imageUploads.forEach(img => {
                     const imgCard = document.createElement('div');
-                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 6px; padding: 4px; background: white; border-radius: 4px; margin-bottom: 4px; border: 1px solid #dee2e6;';
+                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 5px; padding: 3px; background: white; border-radius: 3px; margin-bottom: 3px; border: 1px solid #dee2e6;';
                     
                     const thumbnail = document.createElement('img');
                     thumbnail.src = img.data;
-                    thumbnail.style.cssText = 'width: 32px; height: 32px; object-fit: cover; border-radius: 3px;';
+                    thumbnail.style.cssText = 'width: 28px; height: 28px; object-fit: cover; border-radius: 2px;';
                     
                     const info = document.createElement('div');
                     info.style.flex = '1';
                     info.style.overflow = 'hidden';
-                    info.innerHTML = `<div style="font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${img.name}</div>`;
+                    info.innerHTML = `<div style="font-size: 0.7rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${img.name}</div>`;
                     
                     const useBtn = document.createElement('button');
                     useBtn.className = 'btn btn-small btn-primary';
                     useBtn.textContent = 'Use';
-                    useBtn.style.fontSize = '0.7rem';
-                    useBtn.style.height = '24px';
-                    useBtn.style.padding = '0 8px';
+                    useBtn.style.fontSize = '0.65rem';
+                    useBtn.style.height = '22px';
+                    useBtn.style.padding = '0 6px';
                     useBtn.onclick = () => {
                         document.getElementById('backgroundImage').value = img.data;
                         this.refreshPreview();
@@ -385,9 +657,9 @@
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'icon-btn delete';
                     deleteBtn.textContent = '🗑️';
-                    deleteBtn.style.width = '24px';
-                    deleteBtn.style.height = '24px';
-                    deleteBtn.style.fontSize = '0.9rem';
+                    deleteBtn.style.width = '22px';
+                    deleteBtn.style.height = '22px';
+                    deleteBtn.style.fontSize = '0.8rem';
                     deleteBtn.onclick = () => {
                         if (confirm(`Delete "${img.name}"?`)) {
                             window.imageUploads = window.imageUploads.filter(i => i.id !== img.id);
@@ -404,7 +676,12 @@
                 });
             }
             
-            bgInput.parentNode.appendChild(gallery);
+            const uploadBtnSibling = bgInput.nextSibling.nextSibling;
+            if (uploadBtnSibling) {
+                bgInput.parentNode.insertBefore(gallery, uploadBtnSibling);
+            } else {
+                bgInput.parentNode.appendChild(gallery);
+            }
         },
 
         loadActiveTemplate: function() {
@@ -764,7 +1041,6 @@
             return weeks;
         },
 
-        // NEW: Collapsible preset templates
         renderTemplateLibrary: function() {
             const container = document.getElementById('templateLibrary');
             if (!container) return;
@@ -773,20 +1049,20 @@
 
             // COLLAPSIBLE Preset Templates Section
             const presetSection = document.createElement('div');
-            presetSection.style.cssText = 'margin-bottom: 15px;';
+            presetSection.style.cssText = 'margin-bottom: 10px;';
             
             const presetHeader = document.createElement('div');
-            presetHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--color-background); border-radius: 6px; cursor: pointer; transition: background 0.2s;';
+            presetHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--color-background); border-radius: 5px; cursor: pointer; transition: background 0.2s;';
             presetHeader.onmouseenter = () => presetHeader.style.background = '#e9ecef';
             presetHeader.onmouseleave = () => presetHeader.style.background = 'var(--color-background)';
             
             const presetTitle = document.createElement('h4');
             presetTitle.textContent = '🎨 Preset Templates';
-            presetTitle.style.cssText = 'margin: 0; color: #fd7e14; font-size: 10pt; font-weight: 600;';
+            presetTitle.style.cssText = 'margin: 0; color: #fd7e14; font-size: 9.5pt; font-weight: 600;';
             
             const toggleIcon = document.createElement('span');
             toggleIcon.textContent = presetsExpanded ? '▼' : '▶';
-            toggleIcon.style.cssText = 'font-size: 10pt; color: #6c757d; transition: transform 0.2s;';
+            toggleIcon.style.cssText = 'font-size: 9pt; color: #6c757d; transition: transform 0.2s;';
             
             presetHeader.appendChild(presetTitle);
             presetHeader.appendChild(toggleIcon);
@@ -799,7 +1075,7 @@
                 max-height: ${presetsExpanded ? '2000px' : '0'};
                 overflow: hidden;
                 transition: max-height 0.3s ease;
-                padding-top: ${presetsExpanded ? '8px' : '0'};
+                padding-top: ${presetsExpanded ? '6px' : '0'};
             `;
             
             this.presets.forEach(preset => {
@@ -815,18 +1091,18 @@
                 presetsExpanded = !presetsExpanded;
                 toggleIcon.textContent = presetsExpanded ? '▼' : '▶';
                 presetContent.style.maxHeight = presetsExpanded ? '2000px' : '0';
-                presetContent.style.paddingTop = presetsExpanded ? '8px' : '0';
+                presetContent.style.paddingTop = presetsExpanded ? '6px' : '0';
             };
 
             // Separator
             const separator = document.createElement('div');
-            separator.style.cssText = 'height: 1px; background: #ddd; margin: 15px 0;';
+            separator.style.cssText = 'height: 1px; background: #ddd; margin: 10px 0;';
             container.appendChild(separator);
 
             // My Templates Section
             const customHeader = document.createElement('h4');
             customHeader.textContent = '📝 My Templates';
-            customHeader.style.cssText = 'margin: 0 0 8px 0; color: #6c757d; font-size: 10pt; font-weight: 600;';
+            customHeader.style.cssText = 'margin: 0 0 6px 0; color: #6c757d; font-size: 9.5pt; font-weight: 600;';
             container.appendChild(customHeader);
 
             const defaultCard = this.createTemplateCard({
@@ -846,17 +1122,17 @@
         createPresetCard: function(preset) {
             const card = document.createElement('div');
             const isDoubleColumn = preset.isDoubleColumn || false;
-            const badge = isDoubleColumn ? ' <span style="background:#fd7e14; color:white; padding:1px 5px; border-radius:3px; font-size:0.65rem; font-weight:bold;">2-COL</span>' : '';
+            const badge = isDoubleColumn ? ' <span style="background:#fd7e14; color:white; padding:1px 4px; border-radius:2px; font-size:0.6rem; font-weight:bold;">2-COL</span>' : '';
             
             card.style.cssText = `
-                padding: 6px 8px;
+                padding: 5px 8px;
                 border: 1px solid #ddd;
-                border-radius: 5px;
+                border-radius: 4px;
                 background: #ffffff;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 5px;
+                margin-bottom: 4px;
                 cursor: pointer;
                 transition: all 0.2s;
             `;
@@ -872,14 +1148,14 @@
 
             const nameSpan = document.createElement('span');
             nameSpan.innerHTML = preset.name + badge;
-            nameSpan.style.cssText = 'font-weight: 500; font-size: 0.8rem; color: #333; flex: 1;';
+            nameSpan.style.cssText = 'font-weight: 500; font-size: 0.75rem; color: #333; flex: 1;';
             
             const loadBtn = document.createElement('button');
             loadBtn.textContent = 'Use';
             loadBtn.className = 'btn btn-small btn-primary';
-            loadBtn.style.height = '26px';
-            loadBtn.style.padding = '0 10px';
-            loadBtn.style.fontSize = '0.75rem';
+            loadBtn.style.height = '24px';
+            loadBtn.style.padding = '0 8px';
+            loadBtn.style.fontSize = '0.7rem';
             loadBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.applyTemplateToUI(preset);
@@ -894,21 +1170,21 @@
         createTemplateCard: function(template, isActive) {
             const card = document.createElement('div');
             card.style.cssText = `
-                padding: 8px 10px;
+                padding: 6px 8px;
                 border: 1px solid ${isActive ? '#fd7e14' : '#ddd'};
-                border-radius: 6px;
+                border-radius: 4px;
                 background: ${isActive ? '#fff5e6' : '#f9f9f9'};
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 6px;
+                margin-bottom: 5px;
             `;
 
             const nameSpan = document.createElement('span');
             nameSpan.textContent = template.name;
             nameSpan.style.fontWeight = isActive ? '600' : '400';
             nameSpan.style.color = isActive ? '#fd7e14' : '#333';
-            nameSpan.style.fontSize = '0.85rem';
+            nameSpan.style.fontSize = '0.8rem';
             nameSpan.style.flex = '1';
             
             const btnContainer = document.createElement('div');
@@ -919,9 +1195,9 @@
                 const loadBtn = document.createElement('button');
                 loadBtn.textContent = 'Load';
                 loadBtn.className = 'btn btn-small btn-secondary';
-                loadBtn.style.height = '28px';
-                loadBtn.style.padding = '0 10px';
-                loadBtn.style.fontSize = '0.75rem';
+                loadBtn.style.height = '24px';
+                loadBtn.style.padding = '0 8px';
+                loadBtn.style.fontSize = '0.7rem';
                 loadBtn.onclick = () => this.loadTemplate(template.id);
                 btnContainer.appendChild(loadBtn);
             }
@@ -930,9 +1206,9 @@
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '🗑️';
                 deleteBtn.className = 'icon-btn delete';
-                deleteBtn.style.width = '28px';
-                deleteBtn.style.height = '28px';
-                deleteBtn.style.fontSize = '0.9rem';
+                deleteBtn.style.width = '24px';
+                deleteBtn.style.height = '24px';
+                deleteBtn.style.fontSize = '0.85rem';
                 deleteBtn.onclick = () => this.deleteTemplate(template.id);
                 btnContainer.appendChild(deleteBtn);
             }
@@ -1165,7 +1441,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (document.getElementById('headerText')) {
+        if (document.getElementById('collapsibleSections')) {
             TemplateManager.init();
         }
     });
