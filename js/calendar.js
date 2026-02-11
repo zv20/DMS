@@ -151,9 +151,11 @@
             const container = document.getElementById('calendar');
             if (!container) return;
 
+            // Clear container
+            container.innerHTML = '';
+            container.className = 'week-view';
+
             const weekStart = this.getWeekStart(this.currentDate);
-            const year = weekStart.getFullYear();
-            const month = weekStart.getMonth();
             
             // Update month header
             const header = document.getElementById('currentMonth');
@@ -163,8 +165,7 @@
                 header.textContent = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
             }
 
-            let html = '<div class="week-view">';
-            
+            // USE DOM MANIPULATION (like render.js) instead of string HTML
             for (let i = 0; i < 5; i++) {
                 const date = new Date(weekStart);
                 date.setDate(weekStart.getDate() + i);
@@ -174,52 +175,80 @@
                 
                 const menu = window.getMenuForDate(dateStr);
                 
-                html += `<div class="day-column" data-date="${dateStr}">`;
-                html += `<div class="day-header-weekly">`;
-                html += `<strong>${dayName}</strong><br>`;
-                html += `<small>${dayDate}</small>`;
-                html += `</div>`;
+                // Create day column with DOM
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'day-column';
+                dayColumn.dataset.date = dateStr;
                 
-                // 4 meal slots
+                // Create day header
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header-weekly';
+                const strong = document.createElement('strong');
+                strong.textContent = dayName;
+                const small = document.createElement('small');
+                small.textContent = dayDate;
+                dayHeader.appendChild(strong);
+                dayHeader.appendChild(document.createElement('br'));
+                dayHeader.appendChild(small);
+                dayColumn.appendChild(dayHeader);
+                
+                // Add 4 meal slots
                 for (let slot = 1; slot <= 4; slot++) {
                     const slotData = menu[`slot${slot}`] || { category: this.getDefaultCategory(slot), recipe: null };
-                    html += this.renderMealSlot(dateStr, `slot${slot}`, slotData);
+                    dayColumn.appendChild(this.createMealSlotElement(dateStr, `slot${slot}`, slotData));
                 }
                 
-                html += '</div>';
+                // Append directly to container (no wrapper!)
+                container.appendChild(dayColumn);
             }
-            
-            html += '</div>';
-            container.innerHTML = html;
         },
 
-        renderMealSlot: function(dateStr, slotId, slotData) {
+        // Create meal slot using DOM manipulation
+        createMealSlotElement: function(dateStr, slotId, slotData) {
             const category = window.MEAL_CATEGORIES.find(c => c.id === slotData.category) || window.MEAL_CATEGORIES[0];
             const recipe = slotData.recipe ? window.recipes.find(r => r.id === slotData.recipe) : null;
             
-            let html = `<div class="meal-slot" style="border-left: 4px solid ${category.color};">`;
+            const slotEl = document.createElement('div');
+            slotEl.className = 'meal-slot';
+            slotEl.style.borderLeft = `4px solid ${category.color}`;
             
             // Category selector
-            html += `<select class="category-select" onchange="window.CalendarManager.changeCategory('${dateStr}', '${slotId}', this.value)">`;
+            const categorySelect = document.createElement('select');
+            categorySelect.className = 'category-select';
             window.MEAL_CATEGORIES.forEach(cat => {
-                const selected = cat.id === slotData.category ? 'selected' : '';
-                html += `<option value="${cat.id}" ${selected}>${cat.icon} ${cat.label}</option>`;
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = `${cat.icon} ${cat.label}`;
+                if (cat.id === slotData.category) option.selected = true;
+                categorySelect.appendChild(option);
             });
-            html += '</select>';
+            categorySelect.addEventListener('change', (e) => {
+                this.changeCategory(dateStr, slotId, e.target.value);
+            });
+            slotEl.appendChild(categorySelect);
             
             // Recipe selector
-            html += `<select class="recipe-select" onchange="window.CalendarManager.selectRecipe('${dateStr}', '${slotId}', this.value)">`;
-            html += '<option value="">-- Select --</option>';
+            const recipeSelect = document.createElement('select');
+            recipeSelect.className = 'recipe-select';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '-- Select --';
+            recipeSelect.appendChild(defaultOption);
             
             const categoryRecipes = window.recipes.filter(r => r.category === slotData.category);
             categoryRecipes.forEach(rec => {
-                const selected = recipe && recipe.id === rec.id ? 'selected' : '';
-                html += `<option value="${rec.id}" ${selected}>${rec.name}</option>`;
+                const option = document.createElement('option');
+                option.value = rec.id;
+                option.textContent = rec.name;
+                if (recipe && recipe.id === rec.id) option.selected = true;
+                recipeSelect.appendChild(option);
             });
-            html += '</select>';
+            recipeSelect.addEventListener('change', (e) => {
+                this.selectRecipe(dateStr, slotId, e.target.value);
+            });
+            slotEl.appendChild(recipeSelect);
             
-            html += '</div>';
-            return html;
+            return slotEl;
         },
 
         getDefaultCategory: function(slotNumber) {
