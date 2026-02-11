@@ -332,8 +332,15 @@
             return d;
         },
 
+        // FIXED: Parse date string in local timezone to avoid Monday bug
         gotoWeek: function(dateStr) {
-            this.currentDate = new Date(dateStr);
+            // Parse ISO date string (YYYY-MM-DD) in LOCAL timezone
+            const parts = dateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+            const day = parseInt(parts[2], 10);
+            
+            this.currentDate = new Date(year, month, day);
             this.switchView('weekly');
         },
 
