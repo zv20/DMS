@@ -80,7 +80,6 @@
             if (recipeAllergens.length > 0) { 
                 allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>`).join('')}</div>`; 
             }
-            // FIXED: Removed getCategoryIcon() - translation already includes icon
             tr.innerHTML = `
                 <td><strong>${recipe.name}</strong></td>
                 <td>${window.t('category_' + (recipe.category || 'other'))}</td>
@@ -167,11 +166,8 @@
         }
 
         if (viewMode === 'week') {
-            // Set class for CSS Grid styling
             calendarEl.className = 'week-view';
             const weekStart = window.getWeekStart(date);
-            
-            // NO WRAPPER - Add day columns directly to calendar element
             const SLOTS = [{id:'slot1',type:'soup'},{id:'slot2',type:'main'},{id:'slot3',type:'dessert'},{id:'slot4',type:'other'}];
 
             for (let i = 0; i < 5; i++) {
@@ -183,7 +179,6 @@
                 const dayColumn = document.createElement('div');
                 dayColumn.className = 'day-column';
                 
-                // Day header with proper class from calendar.css
                 const langStr = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'day-header-weekly';
@@ -192,13 +187,11 @@
                 dayHeader.innerHTML = `<strong>${dayName}</strong><small>${dayDate}</small>`;
                 dayColumn.appendChild(dayHeader);
                 
-                // Add meal slots
                 SLOTS.forEach((conf, index) => { 
                     const slotData = window.currentMenu[dateStr][conf.id] || { type: conf.type, recipe: null }; 
                     dayColumn.appendChild(renderSlot(dateStr, conf.id, slotData, index + 1)); 
                 });
                 
-                // Add directly to calendar (no wrapper!)
                 calendarEl.appendChild(dayColumn);
             }
         }
@@ -208,6 +201,7 @@
         const slotEl = document.createElement('div');
         slotEl.className = 'meal-slot ' + slotData.type;
         
+        // Header with slot number and allergen dots
         const headerRow = document.createElement('div');
         headerRow.style.display = 'flex';
         headerRow.style.justifyContent = 'space-between';
@@ -218,7 +212,7 @@
         slotLabel.style.fontSize = '0.85rem';
         slotLabel.style.fontWeight = 'bold';
         slotLabel.style.color = '#7f8c8d';
-        slotLabel.textContent = `${indexLabel}. ${window.t('slot_' + slotData.type)}`;
+        slotLabel.textContent = `${indexLabel}.`;
         headerRow.appendChild(slotLabel);
         
         const dotBar = document.createElement('div');
@@ -228,24 +222,24 @@
         headerRow.appendChild(dotBar);
         slotEl.appendChild(headerRow);
         
-        // NEW: Compact dropdown + recipe selector in a flex row
+        // Selector row: Category icon dropdown + Recipe dropdown
         const selectorRow = document.createElement('div');
         selectorRow.style.display = 'flex';
-        selectorRow.style.gap = '8px';
+        selectorRow.style.gap = '6px';
         selectorRow.style.alignItems = 'stretch';
         
-        // Category icon dropdown (compact)
+        // Category icon dropdown (icon only!)
         const categorySelect = document.createElement('select');
         categorySelect.className = 'category-select-compact';
         categorySelect.style.cssText = `
-            width: 48px;
-            font-size: 18px;
+            width: 42px;
+            font-size: 20px;
             text-align: center;
             border: 2px solid #fd7e14;
             border-radius: 6px;
             background: #fff;
             cursor: pointer;
-            padding: 4px;
+            padding: 4px 2px;
             flex-shrink: 0;
         `;
         
@@ -253,7 +247,7 @@
         categories.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
-            opt.textContent = getCategoryIcon(cat) + ' ' + window.t('category_' + cat);
+            opt.textContent = getCategoryIcon(cat); // ICON ONLY!
             if (slotData.type === cat) opt.selected = true;
             categorySelect.appendChild(opt);
         });
@@ -263,7 +257,6 @@
             if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {};
             window.currentMenu[dateStr][slotId] = { type: newCat, recipe: null };
             window.saveData();
-            // Re-render entire calendar to update UI
             window.renderCalendar(window.currentCalendarDate);
         });
         
