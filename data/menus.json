@@ -1,9 +1,94 @@
 {
-  "2026-02-09": {},
-  "2026-02-10": {},
-  "2026-02-11": {},
-  "2026-02-12": {},
-  "2026-02-13": {},
+  "2026-02-09": {
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_004"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_bg_004"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_en_013"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    }
+  },
+  "2026-02-10": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_bg_003"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_bg_006"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_bg_013"
+    }
+  },
+  "2026-02-11": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_en_013"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_006"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_bg_002"
+    }
+  },
+  "2026-02-12": {
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_005"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_en_002"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_en_011"
+    }
+  },
+  "2026-02-13": {
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_en_002"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_008"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_bg_012"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    }
+  },
   "2026-02-04": {
     "slot1": {
       "category": "main",
