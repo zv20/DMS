@@ -6,12 +6,12 @@
 
 (function(window) {
 
-    // Category definitions
+    // Category definitions - now use translation keys
     window.MEAL_CATEGORIES = [
-        { id: 'soup', label: 'Soup', icon: '🥣', color: '#fd7e14' },
-        { id: 'main', label: 'Main', icon: '🍽️', color: '#28a745' },
-        { id: 'dessert', label: 'Dessert', icon: '🍰', color: '#e83e8c' },
-        { id: 'other', label: 'Other', icon: '➕', color: '#6c757d' }
+        { id: 'soup', label: 'slot_soup', icon: '🥣', color: '#fd7e14' },
+        { id: 'main', label: 'slot_main', icon: '🍽️', color: '#28a745' },
+        { id: 'dessert', label: 'slot_dessert', icon: '🍰', color: '#e83e8c' },
+        { id: 'other', label: 'slot_other', icon: '➕', color: '#6c757d' }
     ];
 
     window.CalendarManager = {
@@ -94,21 +94,22 @@
             // Update month header
             const header = document.getElementById('currentMonth');
             if (header) {
-                header.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                header.textContent = new Date(year, month).toLocaleDateString(lang, { month: 'long', year: 'numeric' });
             }
 
             // Create monthly calendar container using DOM
             const monthlyCalendar = document.createElement('div');
             monthlyCalendar.className = 'monthly-calendar';
             
-            // Create day headers (Mon, Tue, Wed, etc.)
+            // Create day headers (Mon, Tue, Wed, etc.) - NOW TRANSLATED
             const monthHeader = document.createElement('div');
             monthHeader.className = 'month-header';
-            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            dayNames.forEach(dayName => {
+            const dayKeys = ['day_mon_short', 'day_tue_short', 'day_wed_short', 'day_thu_short', 'day_fri_short', 'day_sat_short', 'day_sun_short'];
+            dayKeys.forEach(key => {
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'day-header';
-                dayHeader.textContent = dayName;
+                dayHeader.textContent = window.t(key);
                 monthHeader.appendChild(dayHeader);
             });
             monthlyCalendar.appendChild(monthHeader);
@@ -139,7 +140,7 @@
                 const isToday = this.isToday(date);
                 
                 const menu = window.getMenuForDate(dateStr);
-                const mealNames = this.getMealNames(menu); // Changed to get meal names
+                const mealNames = this.getMealNames(menu);
                 
                 // Create day cell
                 const dayCell = document.createElement('div');
@@ -190,12 +191,13 @@
 
             const weekStart = this.getWeekStart(this.currentDate);
             
-            // Update month header
+            // Update month header - NOW TRANSLATED
             const header = document.getElementById('currentMonth');
             if (header) {
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekStart.getDate() + 4);
-                header.textContent = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                header.textContent = `${window.t('text_week_of')} ${weekStart.toLocaleDateString(lang, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(lang, { month: 'short', day: 'numeric', year: 'numeric' })}`;
             }
 
             // USE DOM MANIPULATION (like render.js) instead of string HTML
@@ -203,8 +205,9 @@
                 const date = new Date(weekStart);
                 date.setDate(weekStart.getDate() + i);
                 const dateStr = date.toISOString().split('T')[0];
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-                const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                const dayName = date.toLocaleDateString(lang, { weekday: 'long' });
+                const dayDate = date.toLocaleDateString(lang, { month: 'short', day: 'numeric' });
                 
                 const menu = window.getMenuForDate(dateStr);
                 
@@ -245,13 +248,13 @@
             slotEl.className = 'meal-slot';
             slotEl.style.borderLeft = `4px solid ${category.color}`;
             
-            // Category selector
+            // Category selector - NOW TRANSLATED
             const categorySelect = document.createElement('select');
             categorySelect.className = 'category-select';
             window.MEAL_CATEGORIES.forEach(cat => {
                 const option = document.createElement('option');
                 option.value = cat.id;
-                option.textContent = `${cat.icon} ${cat.label}`;
+                option.textContent = window.t(cat.label); // Use translation key
                 if (cat.id === slotData.category) option.selected = true;
                 categorySelect.appendChild(option);
             });
@@ -260,12 +263,12 @@
             });
             slotEl.appendChild(categorySelect);
             
-            // Recipe selector
+            // Recipe selector - NOW TRANSLATED
             const recipeSelect = document.createElement('select');
             recipeSelect.className = 'recipe-select';
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
-            defaultOption.textContent = '-- Select --';
+            defaultOption.textContent = window.t('text_select_default'); // Translated
             recipeSelect.appendChild(defaultOption);
             
             const categoryRecipes = window.recipes.filter(r => r.category === slotData.category);
@@ -289,7 +292,7 @@
             return defaults[slotNumber - 1] || 'other';
         },
 
-        // NEW: Get meal names with numbers for monthly view
+        // Get meal names with numbers for monthly view
         getMealNames: function(menu) {
             const names = [];
             for (let i = 1; i <= 4; i++) {
