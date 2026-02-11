@@ -5,6 +5,7 @@
  * NOW WITH: Full Bulgarian/English translation support
  * FIXED: Background images now print correctly by storing filenames
  * FIXED: Templates now properly load images by awaiting async operations
+ * FIXED: Print now converts background images to base64 BEFORE opening window
  */
 
 (function(window) {
@@ -1410,7 +1411,30 @@
 
         const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
 
-        const printWindow = window.open('', '_blank');
+        // CONVERT BACKGROUND IMAGE TO BASE64 BEFORE OPENING PRINT WINDOW
+        console.log('🖼️ Converting background image to base64...');
+        let backgroundStyle = '';
+        if (settings.backgroundImage) {
+            // If it's not a URL, it's a filename - convert to base64
+            if (!settings.backgroundImage.startsWith('http')) {
+                try {
+                    console.log('📁 Loading file:', settings.backgroundImage);
+                    const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
+                    if (base64) {
+                        console.log('✅ Base64 conversion successful, length:', base64.length);
+                        backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+                    } else {
+                        console.warn('⚠️ Base64 conversion returned null');
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to convert background image for printing:', error);
+                }
+            } else {
+                // It's a regular URL, use as-is
+                backgroundStyle = `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+            }
+        }
+
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
@@ -1433,32 +1457,12 @@
 
         if (daysWithMeals.length === 0) {
             alert(window.t('alert_no_meals_week'));
-            printWindow.close();
             return;
         }
 
         const firstDay = daysWithMeals[0];
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
-
-        // Convert background image to base64 for printing
-        let backgroundStyle = '';
-        if (settings.backgroundImage) {
-            // If it's not a URL, it's a filename - convert to base64
-            if (!settings.backgroundImage.startsWith('http')) {
-                try {
-                    const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
-                    if (base64) {
-                        backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
-                    }
-                } catch (error) {
-                    console.error('Failed to convert background image for printing:', error);
-                }
-            } else {
-                // It's a regular URL, use as-is
-                backgroundStyle = `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
-            }
-        }
 
         const html = `
             <html>
@@ -1499,6 +1503,8 @@
             </html>
         `;
 
+        console.log('🖨️ Opening print window...');
+        const printWindow = window.open('', '_blank');
         printWindow.document.write(html);
         printWindow.document.close();
         document.getElementById('templatePickerModal').style.display = 'none';
