@@ -3,7 +3,7 @@
  * Handles ALL data persistence with separate files:
  * - data.json: recipes, ingredients, allergens
  * - menus.json: all menu planning by date
- * - settings.json: templates and preferences
+ * - settings.json: templates and preferences (including language)
  */
 
 (function(window) {
@@ -22,6 +22,9 @@
     window.allergens = [];
     window.currentMenu = {};
     window.savedTemplates = [];
+    window.appSettings = {
+        language: 'en'
+    };
     window.currentCalendarDate = new Date();
     window.currentViewMode = 'weekly';
 
@@ -186,7 +189,8 @@
             const settingsExists = await window.fileExists(saveLocation, 'settings.json');
             if (!settingsExists) {
                 await window.writeFile(saveLocation, 'settings.json', JSON.stringify({
-                    templates: []
+                    templates: [],
+                    language: 'en'
                 }, null, 2));
             }
         } catch (err) {
@@ -229,6 +233,18 @@
             if (settingsContent) {
                 const parsed = JSON.parse(settingsContent);
                 window.savedTemplates = parsed.templates || [];
+                
+                // Load language preference
+                if (parsed.language) {
+                    window.appSettings.language = parsed.language;
+                    // Apply language
+                    if (typeof window.changeLanguage === 'function') {
+                        window.changeLanguage(parsed.language, false); // Don't save again
+                    }
+                    // Update language selector
+                    const langSelect = document.getElementById('languageSelect');
+                    if (langSelect) langSelect.value = parsed.language;
+                }
             }
 
             // Populate default allergens if empty
@@ -286,7 +302,7 @@
         }, 300);
     };
 
-    // Save settings.json (templates, preferences)
+    // Save settings.json (templates, language preference)
     window.saveSettings = function() {
         if (!saveLocation) return;
 
@@ -294,7 +310,8 @@
         autoSaveTimeout = setTimeout(async () => {
             try {
                 const settings = {
-                    templates: window.savedTemplates
+                    templates: window.savedTemplates,
+                    language: window.appSettings.language
                 };
                 await window.writeFile(saveLocation, 'settings.json', JSON.stringify(settings, null, 2));
                 window.showSyncIndicator();
