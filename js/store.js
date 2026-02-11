@@ -4,6 +4,7 @@
  * - data.json: recipes, ingredients, allergens
  * - menus.json: all menu planning by date
  * - settings.json: templates and preferences (including language)
+ * - pictures/: folder for uploaded images
  * 
  * All files are stored in a "data" subfolder for better organization
  */
@@ -11,6 +12,7 @@
 (function(window) {
     let saveLocation = null;
     let dataFolder = null; // Subfolder for data files
+    let picturesFolder = null; // Subfolder for images
     let autoSaveTimeout = null;
     let db = null;
 
@@ -19,6 +21,7 @@
     const STORE_NAME = 'settings';
     const HANDLE_KEY = 'directoryHandle';
     const DATA_FOLDER_NAME = 'data'; // Subfolder name
+    const PICTURES_FOLDER_NAME = 'pictures'; // Pictures subfolder name
 
     // Global data stores
     window.recipes = [];
@@ -26,7 +29,7 @@
     window.allergens = [];
     window.currentMenu = {};
     window.savedTemplates = [];
-    window.imageUploads = []; // Image uploads storage
+    window.imageUploads = []; // Now stores { id, name, filename } instead of base64
     window.appSettings = {
         language: 'en'
     };
@@ -123,6 +126,16 @@
         }
     }
 
+    // Get or create the pictures subfolder inside data folder
+    async function getPicturesFolder(dataFolderHandle) {
+        try {
+            return await dataFolderHandle.getDirectoryHandle(PICTURES_FOLDER_NAME, { create: true });
+        } catch (err) {
+            console.error('Error creating pictures folder:', err);
+            throw err;
+        }
+    }
+
     // Select folder and save handle
     window.selectSaveLocation = async function() {
         try {
@@ -132,6 +145,10 @@
             // Create/get the data subfolder
             dataFolder = await getDataFolder(dirHandle);
             console.log('✅ dataFolder set:', dataFolder);
+            
+            // Create/get the pictures subfolder inside data folder
+            picturesFolder = await getPicturesFolder(dataFolder);
+            console.log('✅ picturesFolder set:', picturesFolder);
             
             // Save handle to IndexedDB for persistence
             await saveDirectoryHandle(dirHandle);
@@ -163,7 +180,9 @@
             if (permission === 'granted') {
                 saveLocation = handle;
                 dataFolder = await getDataFolder(handle);
+                picturesFolder = await getPicturesFolder(dataFolder);
                 console.log('✅ dataFolder set (auto-load):', dataFolder);
+                console.log('✅ picturesFolder set (auto-load):', picturesFolder);
                 await window.loadAllData();
                 return true;
             } else {
@@ -173,7 +192,9 @@
                 if (newPermission === 'granted') {
                     saveLocation = handle;
                     dataFolder = await getDataFolder(handle);
+                    picturesFolder = await getPicturesFolder(dataFolder);
                     console.log('✅ dataFolder set (after permission):', dataFolder);
+                    console.log('✅ picturesFolder set (after permission):', picturesFolder);
                     await window.loadAllData();
                     return true;
                 } else {
@@ -232,6 +253,79 @@
         }
     };
 
+    // Save image file to pictures folder
+    window.saveImageFile = async function(blob, filename) {
+        if (!picturesFolder) {
+            console.error('Pictures folder not initialized');
+            return null;
+        }
+
+        try {
+            const fileHandle = await picturesFolder.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            console.log('✅ Image saved:', filename);
+            return `pictures/${filename}`;
+        } catch (err) {
+            console.error('Error saving image file:', err);
+            return null;
+        }
+    };
+
+    // Load image file from pictures folder
+    window.loadImageFile = async function(filename) {
+        if (!picturesFolder) {
+            console.error('Pictures folder not initialized');
+            return null;
+        }
+
+        try {
+            const fileHandle = await picturesFolder.getFileHandle(filename);
+            const file = await fileHandle.getFile();
+            return URL.createObjectURL(file);
+        } catch (err) {
+            console.error('Error loading image file:', err);
+            return null;
+        }
+    };
+
+    // Delete image file from pictures folder
+    window.deleteImageFile = async function(filename) {
+        if (!picturesFolder) {
+            console.error('Pictures folder not initialized');
+            return false;
+        }
+
+        try {
+            await picturesFolder.removeEntry(filename);
+            console.log('✅ Image deleted:', filename);
+            return true;
+        } catch (err) {
+            console.error('Error deleting image file:', err);
+            return false;
+        }
+    };
+
+    // Load all images from pictures folder
+    window.loadAllImages = async function() {
+        if (!picturesFolder) return {};
+
+        const images = {};
+        try {
+            for await (const entry of picturesFolder.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    images[entry.name] = URL.createObjectURL(file);
+                }
+            }
+            console.log('✅ Loaded images:', Object.keys(images).length);
+        } catch (err) {
+            console.error('Error loading images:', err);
+        }
+        return images;
+    };
+
     // Load all data from files in data subfolder
     window.loadAllData = async function() {
         if (!dataFolder) return;
@@ -275,6 +369,9 @@
                     if (langSelect) langSelect.value = parsed.language;
                 }
             }
+
+            // Load all images from pictures folder
+            window.imageCache = await window.loadAllImages();
 
             // Populate default allergens if empty
             if (window.allergens.length === 0) {
@@ -456,5 +553,8 @@
         if (!menu) return false;
         return Object.values(menu).some(slot => slot.recipe !== null);
     };
+
+    // Cache for loaded images
+    window.imageCache = {};
 
 })(window);
