@@ -583,43 +583,50 @@
             this.renderUploadsGallery();
         },
 
-        uploadBackgroundImage: function() {
+        uploadBackgroundImage: async function() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             
-            input.onchange = (e) => {
+            input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const imageData = event.target.result;
-                    const imageName = `upload_${Date.now()}_${file.name}`;
-                    
-                    if (!window.imageUploads) window.imageUploads = [];
-                    window.imageUploads.push({
-                        id: imageName,
-                        name: file.name,
-                        data: imageData,
-                        timestamp: Date.now()
-                    });
-                    
-                    window.saveSettings();
-                    
-                    document.getElementById('backgroundImage').value = imageData;
-                    this.refreshPreview();
-                    this.renderUploadsGallery();
-                    
-                    alert(window.t('alert_image_uploaded'));
-                };
-                reader.readAsDataURL(file);
+                const timestamp = Date.now();
+                const filename = `bg_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                
+                // Save file to pictures folder
+                const filepath = await window.saveImageFile(file, filename);
+                
+                if (!filepath) {
+                    alert('Failed to save image file. Please try again.');
+                    return;
+                }
+                
+                // Store metadata only (not base64)
+                if (!window.imageUploads) window.imageUploads = [];
+                window.imageUploads.push({
+                    id: filename,
+                    name: file.name,
+                    filename: filename,
+                    timestamp: timestamp
+                });
+                
+                window.saveSettings();
+                
+                // Load the image and set it in the UI
+                const imageUrl = await window.loadImageFile(filename);
+                document.getElementById('backgroundImage').value = imageUrl;
+                this.refreshPreview();
+                this.renderUploadsGallery();
+                
+                alert(window.t('alert_image_uploaded'));
             };
             
             input.click();
         },
 
-        renderUploadsGallery: function() {
+        renderUploadsGallery: async function() {
             const bgInput = document.getElementById('backgroundImage');
             if (!bgInput) return;
             
@@ -638,12 +645,14 @@
                 header.textContent = window.t('text_my_uploads');
                 gallery.appendChild(header);
                 
-                window.imageUploads.forEach(img => {
+                for (const img of window.imageUploads) {
+                    const imageUrl = await window.loadImageFile(img.filename);
+                    
                     const imgCard = document.createElement('div');
                     imgCard.style.cssText = 'display: flex; align-items: center; gap: 5px; padding: 3px; background: white; border-radius: 3px; margin-bottom: 3px; border: 1px solid #dee2e6;';
                     
                     const thumbnail = document.createElement('img');
-                    thumbnail.src = img.data;
+                    thumbnail.src = imageUrl || '';
                     thumbnail.style.cssText = 'width: 28px; height: 28px; object-fit: cover; border-radius: 2px;';
                     
                     const info = document.createElement('div');
@@ -657,8 +666,9 @@
                     useBtn.style.fontSize = '0.65rem';
                     useBtn.style.height = '22px';
                     useBtn.style.padding = '0 6px';
-                    useBtn.onclick = () => {
-                        document.getElementById('backgroundImage').value = img.data;
+                    useBtn.onclick = async () => {
+                        const url = await window.loadImageFile(img.filename);
+                        document.getElementById('backgroundImage').value = url;
                         this.refreshPreview();
                     };
                     
@@ -668,8 +678,9 @@
                     deleteBtn.style.width = '22px';
                     deleteBtn.style.height = '22px';
                     deleteBtn.style.fontSize = '0.8rem';
-                    deleteBtn.onclick = () => {
+                    deleteBtn.onclick = async () => {
                         if (confirm(`${window.t('alert_delete_image')} "${img.name}"?`)) {
+                            await window.deleteImageFile(img.filename);
                             window.imageUploads = window.imageUploads.filter(i => i.id !== img.id);
                             window.saveSettings();
                             this.renderUploadsGallery();
@@ -681,7 +692,7 @@
                     imgCard.appendChild(useBtn);
                     imgCard.appendChild(deleteBtn);
                     gallery.appendChild(imgCard);
-                });
+                }
             }
             
             const uploadBtnSibling = bgInput.nextSibling.nextSibling;
