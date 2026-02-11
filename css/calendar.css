@@ -14,6 +14,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     flex-wrap: wrap;
     gap: 15px;
+    max-width: none;
 }
 
 .calendar-controls .btn.active {
@@ -30,6 +31,7 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 15px;
     width: 100%;
+    max-width: none !important;
 }
 
 .day-column {
@@ -38,6 +40,7 @@
     padding: 15px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     border: 1px solid #e9ecef;
+    min-width: 0; /* Allow flex shrinking */
 }
 
 .day-header-weekly {
@@ -108,6 +111,7 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: none;
 }
 
 .month-header {
