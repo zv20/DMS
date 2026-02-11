@@ -59,6 +59,140 @@
       },
       "name": "test1",
       "id": "tmpl_1770830408170"
+    },
+    {
+      "header": {
+        "text": "🍽️ Menu Time!",
+        "color": "#9b59b6",
+        "fontSize": "22pt",
+        "fontWeight": "bold"
+      },
+      "dayBlock": {
+        "bg": "#fef5e7",
+        "borderRadius": "15px",
+        "borderWidth": "3",
+        "borderColor": "#f39c12",
+        "borderStyle": "dashed"
+      },
+      "dayName": {
+        "fontSize": "13pt",
+        "color": "#e67e22",
+        "fontWeight": "bold"
+      },
+      "mealTitle": {
+        "fontSize": "10pt",
+        "color": "#8e44ad",
+        "fontWeight": "600"
+      },
+      "ingredients": {
+        "fontSize": "8pt",
+        "color": "#16a085",
+        "fontStyle": "normal"
+      },
+      "footer": {
+        "text": "🌟 Bon Appétit!",
+        "fontSize": "10pt",
+        "color": "#e74c3c"
+      },
+      "backgroundImage": "blob:null/91bab945-e0b8-4670-8359-fcdceaaf1ae8",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Мой Шаблон 2",
+      "id": "tmpl_1770851309563"
+    },
+    {
+      "header": {
+        "text": "🍽️ Menu Time!",
+        "color": "#9b59b6",
+        "fontSize": "22pt",
+        "fontWeight": "bold"
+      },
+      "dayBlock": {
+        "bg": "#fef5e7",
+        "borderRadius": "15px",
+        "borderWidth": "3",
+        "borderColor": "#f39c12",
+        "borderStyle": "dashed"
+      },
+      "dayName": {
+        "fontSize": "13pt",
+        "color": "#e67e22",
+        "fontWeight": "bold"
+      },
+      "mealTitle": {
+        "fontSize": "10pt",
+        "color": "#8e44ad",
+        "fontWeight": "600"
+      },
+      "ingredients": {
+        "fontSize": "8pt",
+        "color": "#16a085",
+        "fontStyle": "normal"
+      },
+      "footer": {
+        "text": "🌟 Bon Appétit!",
+        "fontSize": "10pt",
+        "color": "#e74c3c"
+      },
+      "backgroundImage": "bg_1770849921918_5rer.jpg",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Мой Шаблон 3",
+      "id": "tmpl_1770851550395"
+    }
+  ],
+  "imageUploads": [
+    {
+      "id": "bg_1770849921918_5rer.jpg",
+      "name": "5rer.jpg",
+      "filename": "bg_1770849921918_5rer.jpg",
+      "timestamp": 1770849921918
+    },
+    {
+      "id": "bg_1770849935255_images21.jpg",
+      "name": "images21.jpg",
+      "filename": "bg_1770849935255_images21.jpg",
+      "timestamp": 1770849935255
     }
   ],
   "language": "bg"
