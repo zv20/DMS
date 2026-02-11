@@ -84,6 +84,10 @@
             const container = document.getElementById('calendar');
             if (!container) return;
 
+            // Clear container
+            container.innerHTML = '';
+            container.className = '';
+
             const year = this.currentDate.getFullYear();
             const month = this.currentDate.getMonth();
             
@@ -93,19 +97,25 @@
                 header.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             }
 
-            // Create monthly calendar grid
-            let html = '<div class="monthly-calendar">';
+            // Create monthly calendar container using DOM
+            const monthlyCalendar = document.createElement('div');
+            monthlyCalendar.className = 'monthly-calendar';
             
-            // Day headers
-            html += '<div class="month-header">';
+            // Create day headers (Mon, Tue, Wed, etc.)
+            const monthHeader = document.createElement('div');
+            monthHeader.className = 'month-header';
             const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            dayNames.forEach(day => {
-                html += `<div class="day-header">${day}</div>`;
+            dayNames.forEach(dayName => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = dayName;
+                monthHeader.appendChild(dayHeader);
             });
-            html += '</div>';
+            monthlyCalendar.appendChild(monthHeader);
 
-            // Calendar grid
-            html += '<div class="month-grid">';
+            // Create month grid
+            const monthGrid = document.createElement('div');
+            monthGrid.className = 'month-grid';
             
             const firstDay = new Date(year, month, 1);
             let dayOfWeek = firstDay.getDay();
@@ -115,7 +125,9 @@
             
             // Empty cells before first day
             for (let i = 0; i < dayOfWeek; i++) {
-                html += '<div class="day-cell empty"></div>';
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell empty';
+                monthGrid.appendChild(emptyCell);
             }
             
             // Days of month
@@ -129,22 +141,34 @@
                 const menu = window.getMenuForDate(dateStr);
                 const mealNumbers = this.getMealNumbers(menu);
                 
-                let classes = 'day-cell';
-                if (isWeekend) classes += ' weekend';
-                if (isToday) classes += ' today';
+                // Create day cell
+                const dayCell = document.createElement('div');
+                dayCell.className = 'day-cell';
+                if (isWeekend) dayCell.classList.add('weekend');
+                if (isToday) dayCell.classList.add('today');
                 
-                html += `<div class="${classes}" onclick="window.CalendarManager.gotoWeek('${dateStr}')">`;
-                html += `<div class="day-number">${day}</div>`;
+                // Make clickable to jump to weekly view
+                dayCell.addEventListener('click', () => this.gotoWeek(dateStr));
                 
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayCell.appendChild(dayNumber);
+                
+                // Meal indicators (if has meals and not weekend)
                 if (mealNumbers.length > 0 && !isWeekend) {
-                    html += `<div class="meal-indicators">${mealNumbers.join(' ')}</div>`;
+                    const mealIndicators = document.createElement('div');
+                    mealIndicators.className = 'meal-indicators';
+                    mealIndicators.textContent = mealNumbers.join(' ');
+                    dayCell.appendChild(mealIndicators);
                 }
                 
-                html += '</div>';
+                monthGrid.appendChild(dayCell);
             }
             
-            html += '</div></div>';
-            container.innerHTML = html;
+            monthlyCalendar.appendChild(monthGrid);
+            container.appendChild(monthlyCalendar);
         },
 
         renderWeekly: function() {
