@@ -130,6 +130,7 @@
             
             // Create/get the data subfolder
             dataFolder = await getDataFolder(dirHandle);
+            console.log('✅ dataFolder set:', dataFolder);
             
             // Save handle to IndexedDB for persistence
             await saveDirectoryHandle(dirHandle);
@@ -161,6 +162,7 @@
             if (permission === 'granted') {
                 saveLocation = handle;
                 dataFolder = await getDataFolder(handle);
+                console.log('✅ dataFolder set (auto-load):', dataFolder);
                 await window.loadAllData();
                 return true;
             } else {
@@ -170,6 +172,7 @@
                 if (newPermission === 'granted') {
                     saveLocation = handle;
                     dataFolder = await getDataFolder(handle);
+                    console.log('✅ dataFolder set (after permission):', dataFolder);
                     await window.loadAllData();
                     return true;
                 } else {
@@ -256,6 +259,7 @@
                 // Load language preference
                 if (parsed.language) {
                     window.appSettings.language = parsed.language;
+                    console.log('🌍 Loaded language from settings.json:', parsed.language);
                     // Apply language
                     if (typeof window.changeLanguage === 'function') {
                         window.changeLanguage(parsed.language, false); // Don't save again
@@ -323,7 +327,13 @@
 
     // Save settings.json (templates, language preference) to data subfolder
     window.saveSettings = function() {
-        if (!dataFolder) return;
+        console.log('💾 saveSettings() called. dataFolder exists:', !!dataFolder);
+        console.log('💾 Current language in appSettings:', window.appSettings.language);
+        
+        if (!dataFolder) {
+            console.error('❌ Cannot save settings: dataFolder is null! Please select a folder first.');
+            return;
+        }
 
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(async () => {
@@ -332,10 +342,12 @@
                     templates: window.savedTemplates,
                     language: window.appSettings.language
                 };
+                console.log('💾 Writing settings to file:', settings);
                 await window.writeFile(dataFolder, 'settings.json', JSON.stringify(settings, null, 2));
+                console.log('✅ Settings saved successfully!');
                 window.showSyncIndicator();
             } catch (err) {
-                console.error('Error saving settings.json:', err);
+                console.error('❌ Error saving settings.json:', err);
             }
         }, 300);
     };
