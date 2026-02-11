@@ -2,7 +2,7 @@
  * Advanced Template Manager
  * Per-block settings, template library, detailed meal printing, and preset templates
  * Auto-detects days with meals for printing
- * NOW WITH: Fully collapsible organized categories + auto-refresh on data load
+ * NOW WITH: Full Bulgarian/English translation support
  */
 
 (function(window) {
@@ -24,12 +24,11 @@
     };
 
     const TemplateManager = {
-        // Preset Templates (15 total - including double-column and more styles)
+        // Preset Templates (15 total - now using translation keys for names)
         presets: [
-            // ORIGINAL 5 PRESETS
             {
                 id: 'preset_classic',
-                name: '🎨 Classic Orange',
+                nameKey: 'preset_classic',
                 header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '20pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ffffff', borderRadius: '8px', borderWidth: '2', borderColor: '#e0e0e0', borderStyle: 'solid' },
                 dayName: { fontSize: '11pt', color: '#2c3e50', fontWeight: '600' },
@@ -46,7 +45,7 @@
             },
             {
                 id: 'preset_modern',
-                name: '⚡ Modern Bold',
+                nameKey: 'preset_modern',
                 header: { text: 'THIS WEEK', color: '#2c3e50', fontSize: '24pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ecf0f1', borderRadius: '12px', borderWidth: '0', borderColor: '#bdc3c7', borderStyle: 'solid' },
                 dayName: { fontSize: '14pt', color: '#e74c3c', fontWeight: 'bold' },
@@ -63,7 +62,7 @@
             },
             {
                 id: 'preset_minimal',
-                name: '🌿 Minimal Clean',
+                nameKey: 'preset_minimal',
                 header: { text: 'Menu', color: '#27ae60', fontSize: '18pt', fontWeight: 'normal' },
                 dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '1', borderColor: '#bdc3c7', borderStyle: 'solid' },
                 dayName: { fontSize: '10pt', color: '#27ae60', fontWeight: '500' },
@@ -80,7 +79,7 @@
             },
             {
                 id: 'preset_colorful',
-                name: '🌈 Colorful Fun',
+                nameKey: 'preset_colorful',
                 header: { text: '🍽️ Menu Time!', color: '#9b59b6', fontSize: '22pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#fef5e7', borderRadius: '15px', borderWidth: '3', borderColor: '#f39c12', borderStyle: 'dashed' },
                 dayName: { fontSize: '13pt', color: '#e67e22', fontWeight: 'bold' },
@@ -97,7 +96,7 @@
             },
             {
                 id: 'preset_professional',
-                name: '💼 Professional',
+                nameKey: 'preset_professional',
                 header: { text: 'Weekly Meal Plan', color: '#1a1a2e', fontSize: '20pt', fontWeight: '600' },
                 dayBlock: { bg: '#f8f9fa', borderRadius: '6px', borderWidth: '2', borderColor: '#34495e', borderStyle: 'solid' },
                 dayName: { fontSize: '12pt', color: '#1a1a2e', fontWeight: 'bold' },
@@ -112,11 +111,9 @@
                     slot4: { showIngredients: true, showCalories: true, showAllergens: true }
                 }
             },
-            
-            // NEW 10 PRESETS (including double-column layouts)
             {
                 id: 'preset_double_column',
-                name: '📋 Double Column',
+                nameKey: 'preset_double_column',
                 isDoubleColumn: true,
                 header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '18pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ffffff', borderRadius: '6px', borderWidth: '1', borderColor: '#dee2e6', borderStyle: 'solid' },
@@ -134,7 +131,7 @@
             },
             {
                 id: 'preset_compact_grid',
-                name: '📦 Compact Grid',
+                nameKey: 'preset_compact_grid',
                 isDoubleColumn: true,
                 header: { text: 'Menu at a Glance', color: '#495057', fontSize: '16pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#f8f9fa', borderRadius: '4px', borderWidth: '1', borderColor: '#adb5bd', borderStyle: 'solid' },
@@ -152,7 +149,7 @@
             },
             {
                 id: 'preset_elegant',
-                name: '✨ Elegant Serif',
+                nameKey: 'preset_elegant',
                 header: { text: 'Culinary Selection', color: '#6c5ce7', fontSize: '22pt', fontWeight: 'normal' },
                 dayBlock: { bg: '#fdfcfb', borderRadius: '10px', borderWidth: '2', borderColor: '#a29bfe', borderStyle: 'solid' },
                 dayName: { fontSize: '12pt', color: '#6c5ce7', fontWeight: '500' },
@@ -169,7 +166,7 @@
             },
             {
                 id: 'preset_retro',
-                name: '🕰️ Retro Diner',
+                nameKey: 'preset_retro',
                 header: { text: "JOE'S DINER WEEKLY SPECIALS", color: '#e63946', fontSize: '20pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#fff3e0', borderRadius: '8px', borderWidth: '3', borderColor: '#e63946', borderStyle: 'double' },
                 dayName: { fontSize: '12pt', color: '#d62828', fontWeight: 'bold' },
@@ -186,7 +183,7 @@
             },
             {
                 id: 'preset_zen',
-                name: '🧘 Zen Minimal',
+                nameKey: 'preset_zen',
                 header: { text: 'menu', color: '#2d3436', fontSize: '16pt', fontWeight: 'normal' },
                 dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '0', borderColor: 'transparent', borderStyle: 'solid' },
                 dayName: { fontSize: '10pt', color: '#636e72', fontWeight: 'normal' },
@@ -203,7 +200,7 @@
             },
             {
                 id: 'preset_bright_cafe',
-                name: '☕ Bright Cafe',
+                nameKey: 'preset_bright_cafe',
                 header: { text: 'Cafe Menu of the Week', color: '#ff9ff3', fontSize: '21pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#fff5f7', borderRadius: '12px', borderWidth: '2', borderColor: '#feca57', borderStyle: 'solid' },
                 dayName: { fontSize: '11pt', color: '#ff6348', fontWeight: 'bold' },
@@ -220,7 +217,7 @@
             },
             {
                 id: 'preset_forest',
-                name: '🌲 Forest Green',
+                nameKey: 'preset_forest',
                 header: { text: 'Nature\'s Kitchen', color: '#2d6a4f', fontSize: '20pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#f1faee', borderRadius: '10px', borderWidth: '2', borderColor: '#52b788', borderStyle: 'solid' },
                 dayName: { fontSize: '11pt', color: '#1b4332', fontWeight: 'bold' },
@@ -237,7 +234,7 @@
             },
             {
                 id: 'preset_ocean',
-                name: '🌊 Ocean Blue',
+                nameKey: 'preset_ocean',
                 header: { text: 'Seaside Dining', color: '#023e8a', fontSize: '21pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#caf0f8', borderRadius: '8px', borderWidth: '2', borderColor: '#0077b6', borderStyle: 'solid' },
                 dayName: { fontSize: '12pt', color: '#03045e', fontWeight: 'bold' },
@@ -254,7 +251,7 @@
             },
             {
                 id: 'preset_luxury',
-                name: '🥂 Luxury Gold',
+                nameKey: 'preset_luxury',
                 header: { text: 'PRESTIGE MENU', color: '#c9920d', fontSize: '22pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#fffaf0', borderRadius: '6px', borderWidth: '3', borderColor: '#d4af37', borderStyle: 'solid' },
                 dayName: { fontSize: '12pt', color: '#8b6914', fontWeight: 'bold' },
@@ -271,7 +268,7 @@
             },
             {
                 id: 'preset_newspaper',
-                name: '📰 Newspaper Style',
+                nameKey: 'preset_newspaper',
                 isDoubleColumn: true,
                 header: { text: 'THE KITCHEN GAZETTE', color: '#000000', fontSize: '18pt', fontWeight: 'bold' },
                 dayBlock: { bg: '#ffffff', borderRadius: '0px', borderWidth: '1', borderColor: '#000000', borderStyle: 'solid' },
@@ -315,74 +312,74 @@
             const sections = [
                 {
                     id: 'background',
-                    icon: '🖼️',
-                    title: 'Background',
+                    iconKey: 'section_background',
+                    titleKey: 'section_background',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Image URL (optional)</label>
+                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">${window.t('label_image_url')}</label>
                         <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;">
                         <small style="color:#666; font-size:0.7rem; display:block; margin-top:4px; line-height:1.3;">
-                            <strong>Recommended:</strong> 2480x3508px (A4@300DPI) or 1654x2339px (A4@200DPI)
+                            <strong>${window.t('text_recommended_size')}</strong> ${window.t('text_image_dimensions')}
                         </small>
                     `
                 },
                 {
                     id: 'header',
-                    icon: '🔽',
-                    title: 'Header',
+                    iconKey: 'section_header',
+                    titleKey: 'section_header',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Title</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_title')}</label>
                         <input type="text" id="headerText" class="form-control" placeholder="Weekly Menu" value="Weekly Menu" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_color')}</label>
                                 <input type="color" id="headerColor" value="#fd7e14" style="width:100%; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_size')}</label>
                                 <input type="text" id="headerSize" class="form-control" value="20pt" style="font-size:0.85rem; height:32px;">
                             </div>
                         </div>
                         
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_weight')}</label>
                         <select id="headerWeight" class="form-control" style="font-size:0.85rem; height:32px;">
-                            <option value="normal">Normal</option>
-                            <option value="600">Semi-Bold</option>
-                            <option value="bold" selected>Bold</option>
+                            <option value="normal">${window.t('font_weight_normal')}</option>
+                            <option value="600">${window.t('font_weight_semibold')}</option>
+                            <option value="bold" selected>${window.t('font_weight_bold')}</option>
                         </select>
                     `
                 },
                 {
                     id: 'dayBlock',
-                    icon: '📅',
-                    title: 'Day Block Style',
+                    iconKey: 'section_day_block',
+                    titleKey: 'section_day_block',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Background Color</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_background_color')}</label>
                         <input type="color" id="dayBg" value="#ffffff" style="width:100%; height:32px; margin-bottom:8px;">
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Radius</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_border_radius')}</label>
                                 <input type="number" id="dayRadius" value="8" class="form-control" style="font-size:0.85rem; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Width</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_border_width')}</label>
                                 <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control" style="font-size:0.85rem; height:32px;">
                             </div>
                         </div>
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_border_color')}</label>
                                 <input type="color" id="dayBorderColor" value="#e0e0e0" style="width:100%; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Border Style</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_border_style')}</label>
                                 <select id="dayBorderStyle" class="form-control" style="font-size:0.85rem; height:32px;">
-                                    <option value="solid">Solid</option>
-                                    <option value="dashed">Dashed</option>
-                                    <option value="dotted">Dotted</option>
-                                    <option value="double">Double</option>
+                                    <option value="solid">${window.t('border_style_solid')}</option>
+                                    <option value="dashed">${window.t('border_style_dashed')}</option>
+                                    <option value="dotted">${window.t('border_style_dotted')}</option>
+                                    <option value="double">${window.t('border_style_double')}</option>
                                 </select>
                             </div>
                         </div>
@@ -390,123 +387,123 @@
                 },
                 {
                     id: 'dayName',
-                    icon: '📌',
-                    title: 'Day Name Style',
+                    iconKey: 'section_day_name',
+                    titleKey: 'section_day_name',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_size')}</label>
                                 <input type="text" id="dayNameSize" class="form-control" value="11pt" style="font-size:0.85rem; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_color')}</label>
                                 <input type="color" id="dayNameColor" value="#2c3e50" style="width:100%; height:32px;">
                             </div>
                         </div>
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_weight')}</label>
                         <select id="dayNameWeight" class="form-control" style="font-size:0.85rem; height:32px;">
-                            <option value="normal">Normal</option>
-                            <option value="500">Medium</option>
-                            <option value="600" selected>Semi-Bold</option>
-                            <option value="bold">Bold</option>
+                            <option value="normal">${window.t('font_weight_normal')}</option>
+                            <option value="500">${window.t('font_weight_medium')}</option>
+                            <option value="600" selected>${window.t('font_weight_semibold')}</option>
+                            <option value="bold">${window.t('font_weight_bold')}</option>
                         </select>
                     `
                 },
                 {
                     id: 'mealTitle',
-                    icon: '🍽️',
-                    title: 'Meal Title Style',
+                    iconKey: 'section_meal_title',
+                    titleKey: 'section_meal_title',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_size')}</label>
                                 <input type="text" id="mealTitleSize" class="form-control" value="9pt" style="font-size:0.85rem; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_color')}</label>
                                 <input type="color" id="mealTitleColor" value="#333333" style="width:100%; height:32px;">
                             </div>
                         </div>
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Weight</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_weight')}</label>
                         <select id="mealTitleWeight" class="form-control" style="font-size:0.85rem; height:32px;">
-                            <option value="normal">Normal</option>
-                            <option value="500">Medium</option>
-                            <option value="600" selected>Semi-Bold</option>
-                            <option value="bold">Bold</option>
+                            <option value="normal">${window.t('font_weight_normal')}</option>
+                            <option value="500">${window.t('font_weight_medium')}</option>
+                            <option value="600" selected>${window.t('font_weight_semibold')}</option>
+                            <option value="bold">${window.t('font_weight_bold')}</option>
                         </select>
                     `
                 },
                 {
                     id: 'ingredients',
-                    icon: '🧂',
-                    title: 'Ingredients Style',
+                    iconKey: 'section_ingredients',
+                    titleKey: 'section_ingredients',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_size')}</label>
                                 <input type="text" id="ingredientsSize" class="form-control" value="7.5pt" style="font-size:0.85rem; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_color')}</label>
                                 <input type="color" id="ingredientsColor" value="#555555" style="width:100%; height:32px;">
                             </div>
                         </div>
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Style</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_style')}</label>
                         <select id="ingredientsStyle" class="form-control" style="font-size:0.85rem; height:32px;">
-                            <option value="normal">Normal</option>
-                            <option value="italic" selected>Italic</option>
+                            <option value="normal">${window.t('font_style_normal')}</option>
+                            <option value="italic" selected>${window.t('font_style_italic')}</option>
                         </select>
                     `
                 },
                 {
                     id: 'mealVisibility',
-                    icon: '🍲',
-                    title: 'Meal Visibility',
+                    iconKey: 'section_meal_visibility',
+                    titleKey: 'section_meal_visibility',
                     html: `
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🥣 Soup (Slot 1)</h4>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showIngredients" checked> Show Ingredients</label>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showCalories" checked> Show Calories</label>
-                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot1_showAllergens" checked> Highlight Allergens</label>
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_1_label')}</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot1_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
 
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🍽️ Main (Slot 2)</h4>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showIngredients" checked> Show Ingredients</label>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showCalories" checked> Show Calories</label>
-                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot2_showAllergens" checked> Highlight Allergens</label>
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_2_label')}</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot2_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
 
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">🍰 Dessert (Slot 3)</h4>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showIngredients" checked> Show Ingredients</label>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showCalories" checked> Show Calories</label>
-                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot3_showAllergens" checked> Highlight Allergens</label>
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_3_label')}</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot3_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
 
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">➕ Other (Slot 4)</h4>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showIngredients" checked> Show Ingredients</label>
-                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showCalories" checked> Show Calories</label>
-                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot4_showAllergens" checked> Highlight Allergens</label>
+                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_4_label')}</h4>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label style="font-size:0.8rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label style="font-size:0.8rem; display:block;"><input type="checkbox" id="slot4_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
                     `
                 },
                 {
                     id: 'footer',
-                    icon: '🔚',
-                    title: 'Footer',
+                    iconKey: 'section_footer',
+                    titleKey: 'section_footer',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Text</label>
+                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_text')}</label>
                         <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes..." style="font-size:0.85rem; margin-bottom:8px;">Prepared with care by KitchenPro</textarea>
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Font Size</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_font_size')}</label>
                                 <input type="text" id="footerSize" class="form-control" value="8pt" style="font-size:0.85rem; height:32px;">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Color</label>
+                                <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_color')}</label>
                                 <input type="color" id="footerColor" value="#7f8c8d" style="width:100%; height:32px;">
                             </div>
                         </div>
@@ -533,7 +530,7 @@
             header.onmouseleave = () => header.style.background = 'var(--color-background)';
             
             const title = document.createElement('h4');
-            title.textContent = `${section.icon} ${section.title}`;
+            title.textContent = window.t(section.titleKey);
             title.style.cssText = 'margin: 0; color: #495057; font-size: 9.5pt; font-weight: 600;';
             
             const toggleIcon = document.createElement('span');
@@ -573,7 +570,7 @@
             
             const uploadBtn = document.createElement('button');
             uploadBtn.className = 'btn btn-secondary';
-            uploadBtn.textContent = '📎 Upload Image';
+            uploadBtn.textContent = window.t('btn_upload_image');
             uploadBtn.type = 'button';
             uploadBtn.style.marginTop = '6px';
             uploadBtn.style.width = '100%';
@@ -614,7 +611,7 @@
                     this.refreshPreview();
                     this.renderUploadsGallery();
                     
-                    alert(`✅ Image "${file.name}" uploaded successfully!`);
+                    alert(window.t('alert_image_uploaded'));
                 };
                 reader.readAsDataURL(file);
             };
@@ -634,11 +631,11 @@
             gallery.style.cssText = 'margin-top: 8px; padding: 6px; background: #f8f9fa; border-radius: 4px;';
             
             if (!window.imageUploads || window.imageUploads.length === 0) {
-                gallery.innerHTML = '<small style="color: #6c757d; font-size: 0.75rem;">No uploads yet</small>';
+                gallery.innerHTML = `<small style="color: #6c757d; font-size: 0.75rem;">${window.t('text_no_uploads')}</small>`;
             } else {
                 const header = document.createElement('div');
                 header.style.cssText = 'font-weight: 600; margin-bottom: 4px; font-size: 0.75rem; color: #495057;';
-                header.textContent = '📎 My Uploads:';
+                header.textContent = window.t('text_my_uploads');
                 gallery.appendChild(header);
                 
                 window.imageUploads.forEach(img => {
@@ -656,7 +653,7 @@
                     
                     const useBtn = document.createElement('button');
                     useBtn.className = 'btn btn-small btn-primary';
-                    useBtn.textContent = 'Use';
+                    useBtn.textContent = window.t('btn_use');
                     useBtn.style.fontSize = '0.65rem';
                     useBtn.style.height = '22px';
                     useBtn.style.padding = '0 6px';
@@ -672,7 +669,7 @@
                     deleteBtn.style.height = '22px';
                     deleteBtn.style.fontSize = '0.8rem';
                     deleteBtn.onclick = () => {
-                        if (confirm(`Delete "${img.name}"?`)) {
+                        if (confirm(`${window.t('alert_delete_image')} "${img.name}"?`)) {
                             window.imageUploads = window.imageUploads.filter(i => i.id !== img.id);
                             window.saveSettings();
                             this.renderUploadsGallery();
@@ -943,7 +940,7 @@
             }
 
             if (!this.hasMeals(dayMenu)) {
-                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; font-size:8pt; margin:0; line-height:1;">${window.t('empty_day') || 'No meals planned'}</p>`;
+                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; font-size:8pt; margin:0; line-height:1;">${window.t('empty_day')}</p>`;
             }
 
             block.innerHTML = contentHtml;
@@ -990,7 +987,7 @@
                 }).filter(n => n).join(', ');
                 
                 if (ingredientsList) {
-                    html += `<div style="font-size:${settings.ingredients.fontSize}; color:${settings.ingredients.color}; font-style:${settings.ingredients.fontStyle}; margin-top:1px; margin-left:10px; line-height:1.2;"><em>Ingredients:</em> ${ingredientsList}</div>`;
+                    html += `<div style="font-size:${settings.ingredients.fontSize}; color:${settings.ingredients.color}; font-style:${settings.ingredients.fontStyle}; margin-top:1px; margin-left:10px; line-height:1.2;"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
                 }
             }
 
@@ -1070,7 +1067,7 @@
             presetHeader.onmouseleave = () => presetHeader.style.background = 'var(--color-background)';
             
             const presetTitle = document.createElement('h4');
-            presetTitle.textContent = '🎨 Preset Templates';
+            presetTitle.textContent = window.t('heading_preset_templates');
             presetTitle.style.cssText = 'margin: 0; color: #fd7e14; font-size: 9.5pt; font-weight: 600;';
             
             const toggleIcon = document.createElement('span');
@@ -1114,13 +1111,13 @@
 
             // My Templates Section
             const customHeader = document.createElement('h4');
-            customHeader.textContent = '📝 My Templates';
+            customHeader.textContent = window.t('heading_my_templates');
             customHeader.style.cssText = 'margin: 0 0 6px 0; color: #6c757d; font-size: 9.5pt; font-weight: 600;';
             container.appendChild(customHeader);
 
             const defaultCard = this.createTemplateCard({
                 id: 'default',
-                name: 'Default Template'
+                name: window.t('template_default')
             }, activeTemplateId === 'default');
             container.appendChild(defaultCard);
 
@@ -1160,11 +1157,11 @@
             };
 
             const nameSpan = document.createElement('span');
-            nameSpan.innerHTML = preset.name + badge;
+            nameSpan.innerHTML = window.t(preset.nameKey) + badge;
             nameSpan.style.cssText = 'font-weight: 500; font-size: 0.75rem; color: #333; flex: 1;';
             
             const loadBtn = document.createElement('button');
-            loadBtn.textContent = 'Use';
+            loadBtn.textContent = window.t('btn_use');
             loadBtn.className = 'btn btn-small btn-primary';
             loadBtn.style.height = '24px';
             loadBtn.style.padding = '0 8px';
@@ -1206,7 +1203,7 @@
 
             if (!isActive) {
                 const loadBtn = document.createElement('button');
-                loadBtn.textContent = 'Load';
+                loadBtn.textContent = window.t('btn_load');
                 loadBtn.className = 'btn btn-small btn-secondary';
                 loadBtn.style.height = '24px';
                 loadBtn.style.padding = '0 8px';
@@ -1245,7 +1242,7 @@
         },
 
         deleteTemplate: function(id) {
-            if (!confirm('Delete this template?')) return;
+            if (!confirm(window.t('alert_delete_template'))) return;
             window.savedTemplates = window.savedTemplates.filter(t => t.id !== id);
             if (activeTemplateId === id) {
                 this.loadTemplate('default');
@@ -1257,7 +1254,7 @@
 
     // Global Functions
     window.saveCurrentTemplate = function() {
-        const name = prompt('Template Name:', 'My Template ' + (window.savedTemplates.length + 1));
+        const name = prompt(window.t('alert_template_name_prompt'), window.t('template_my_template') + ' ' + (window.savedTemplates.length + 1));
         if (!name) return;
         
         const settings = TemplateManager.getSettingsFromUI();
@@ -1270,7 +1267,7 @@
         activeTemplateId = settings.id;
         localStorage.setItem('activeTemplateId', settings.id);
         TemplateManager.renderTemplateLibrary();
-        alert('Template saved!');
+        alert(window.t('alert_template_saved'));
     };
 
     window.openTemplatePicker = function() {
@@ -1284,7 +1281,7 @@
         const weeksWithMeals = TemplateManager.getWeeksWithMeals();
         
         if (weeksWithMeals.length === 0) {
-            grid.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">No weeks with meals found. Please plan some meals first!</p>';
+            grid.innerHTML = `<p style="text-align:center; color:#999; padding:40px;">${window.t('alert_no_meals_week')}</p>`;
             return;
         }
 
@@ -1292,7 +1289,7 @@
         weekSection.style.cssText = 'margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;';
         
         const weekLabel = document.createElement('label');
-        weekLabel.textContent = '📅 Select Week to Print:';
+        weekLabel.textContent = window.t('heading_select_week');
         weekLabel.style.cssText = 'display: block; font-weight: 600; margin-bottom: 10px; font-size: 14pt;';
         
         const weekSelect = document.createElement('select');
@@ -1321,7 +1318,7 @@
 
         const templateSection = document.createElement('div');
         const templateLabel = document.createElement('h3');
-        templateLabel.textContent = '📝 Select Template:';
+        templateLabel.textContent = window.t('heading_select_template');
         templateLabel.style.cssText = 'margin: 0 0 20px 0; font-size: 14pt;';
         templateSection.appendChild(templateLabel);
 
@@ -1329,7 +1326,7 @@
         templateGridContainer.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;';
 
         const allTemplates = [
-            { id: 'current', name: 'Current Active Template' },
+            { id: 'current', name: window.t('template_current') },
             ...window.savedTemplates
         ];
 
@@ -1341,7 +1338,7 @@
             card.innerHTML = `
                 <div style="font-size:30pt; margin-bottom:10px;">📝</div>
                 <h4 style="margin:0 0 10px 0;">${t.name}</h4>
-                <button class="btn btn-primary" onclick="event.stopPropagation(); window.printWithTemplate('${t.id}')" style="width:100%;">🖨️ Print</button>
+                <button class="btn btn-primary" onclick="event.stopPropagation(); window.printWithTemplate('${t.id}')" style="width:100%;">${window.t('btn_print')}</button>
             `;
             templateGridContainer.appendChild(card);
         });
@@ -1359,7 +1356,7 @@
         }
         
         if (!settings) {
-            alert('Template not found');
+            alert(window.t('alert_template_not_found'));
             return;
         }
 
@@ -1387,7 +1384,7 @@
         }
 
         if (daysWithMeals.length === 0) {
-            alert('No meals planned for this week. Please add meals before printing.');
+            alert(window.t('alert_no_meals_week'));
             printWindow.close();
             return;
         }
@@ -1401,7 +1398,7 @@
         const html = `
             <html>
             <head>
-                <title>Print Menu</title>
+                <title>${window.t('modal_print_menu')}</title>
                 <style>
                     @page { 
                         size: A4;
