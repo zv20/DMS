@@ -5,7 +5,7 @@
  * - menus.json: all menu planning by date
  * - settings.json: templates and preferences (including language)
  * 
- * All files are stored in a "KitchenPro_Data" subfolder for better organization
+ * All files are stored in a "data" subfolder for better organization
  */
 
 (function(window) {
@@ -18,7 +18,7 @@
     const DB_VERSION = 1;
     const STORE_NAME = 'settings';
     const HANDLE_KEY = 'directoryHandle';
-    const DATA_FOLDER_NAME = 'KitchenPro_Data'; // Subfolder name
+    const DATA_FOLDER_NAME = 'data'; // Subfolder name
 
     // Global data stores
     window.recipes = [];
@@ -112,7 +112,7 @@
         return !!handle;
     };
 
-    // NEW: Get or create the data subfolder
+    // Get or create the data subfolder
     async function getDataFolder(parentHandle) {
         try {
             return await parentHandle.getDirectoryHandle(DATA_FOLDER_NAME, { create: true });
@@ -272,7 +272,7 @@
                 window.saveData(); // Save defaults
             }
 
-            console.log('✅ All data loaded successfully from', DATA_FOLDER_NAME);
+            console.log('✅ All data loaded successfully from "data" folder');
         } catch (err) {
             console.error('Error loading data:', err);
         }
