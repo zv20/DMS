@@ -556,7 +556,7 @@
             return `${startDay.toLocaleDateString(lang, options)} — ${endDay.toLocaleDateString(lang, options)}, ${endDay.getFullYear()}`;
         },
 
-        // NEW: Get all weeks that have meals planned
+        // FIXED: Get all weeks that have meals planned - parse dates in local timezone
         getWeeksWithMeals: function() {
             const weeks = [];
             const dates = Object.keys(window.currentMenu).filter(dateStr => {
@@ -568,7 +568,10 @@
             // Group dates by week
             const weekMap = new Map();
             dates.forEach(dateStr => {
-                const date = new Date(dateStr);
+                // FIXED: Parse date in local timezone to avoid Monday bug
+                const parts = dateStr.split('-');
+                const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                
                 const weekStart = window.getWeekStart(date);
                 const weekKey = weekStart.toISOString().split('T')[0];
                 
@@ -799,10 +802,13 @@
         weekSection.appendChild(weekSelect);
         grid.appendChild(weekSection);
 
-        // Set selected week
-        selectedWeekStart = new Date(weekSelect.value);
+        // FIXED: Parse selected week in local timezone
+        const parts = weekSelect.value.split('-');
+        selectedWeekStart = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        
         weekSelect.addEventListener('change', (e) => {
-            selectedWeekStart = new Date(e.target.value);
+            const parts = e.target.value.split('-');
+            selectedWeekStart = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         });
 
         // Template Grid Section
