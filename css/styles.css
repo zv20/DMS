@@ -215,19 +215,24 @@ body {
 
 /* Full width for menu planner page */
 #menu.page {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    margin-left: calc(-1 * (100vw - 100%) / 2) !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
 }
 
 #menu .page-header {
-    padding: 0 1rem;
+    max-width: calc(100vw - 2rem);
+    margin: 0 auto 1.5rem auto;
 }
 
 #menu .calendar-controls,
 #menu .week-view,
 #menu .monthly-calendar {
-    padding-left: 0;
-    padding-right: 0;
+    max-width: calc(100vw - 2rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
 /* --- Navigation Overlay --- */
@@ -642,7 +647,9 @@ label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95
     
     /* Reset menu padding on mobile */
     #menu.page {
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
 }
