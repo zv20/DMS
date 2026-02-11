@@ -1,0 +1,25 @@
+{
+  "2026-02-09": {},
+  "2026-02-10": {},
+  "2026-02-11": {},
+  "2026-02-12": {},
+  "2026-02-13": {},
+  "2026-02-04": {
+    "slot1": {
+      "category": "main",
+      "recipe": null
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": null
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": null
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": null
+    }
+  }
+}
