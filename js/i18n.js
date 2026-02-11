@@ -250,16 +250,23 @@
         }
     };
 
-    let currentLanguage = localStorage.getItem('recipeManagerLang') || 'en';
+    // FIXED: Initialize from appSettings, fallback to 'en'
+    let currentLanguage = 'en';
 
     window.t = function(key) {
         return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
     };
 
-    // Update changeLanguage to save to settings.json
+    // FIXED: Update changeLanguage to only save to settings.json (not localStorage)
     window.changeLanguage = function(lang, shouldSave = true) {
         currentLanguage = lang;
-        localStorage.setItem('recipeManagerLang', lang);
+        
+        // Update the language selector dropdown
+        const langSelect = document.getElementById('languageSelect');
+        if (langSelect) langSelect.value = lang;
+        
+        // Apply translations to all elements
+        window.applyTranslations();
         
         // Save to settings.json if shouldSave is true
         if (shouldSave && window.appSettings) {
@@ -287,5 +294,12 @@
 
     window.setCurrentLanguage = function(lang) {
         currentLanguage = lang;
+    };
+
+    // FIXED: Initialize language from appSettings on load
+    window.initLanguage = function() {
+        if (window.appSettings && window.appSettings.language) {
+            currentLanguage = window.appSettings.language;
+        }
     };
 })(window);
