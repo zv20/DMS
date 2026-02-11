@@ -290,6 +290,29 @@
         }
     };
 
+    // Convert image file to base64 data URL (for printing)
+    window.convertImageFileToBase64 = async function(filename) {
+        if (!picturesFolder) {
+            console.error('Pictures folder not initialized');
+            return null;
+        }
+
+        try {
+            const fileHandle = await picturesFolder.getFileHandle(filename);
+            const file = await fileHandle.getFile();
+            
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        } catch (err) {
+            console.error('Error converting image file to base64:', err);
+            return null;
+        }
+    };
+
     // Delete image file from pictures folder
     window.deleteImageFile = async function(filename) {
         if (!picturesFolder) {
