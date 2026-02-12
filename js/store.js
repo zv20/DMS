@@ -5,6 +5,7 @@
  * - menus.json: all menu planning by date
  * - settings.json: templates and preferences (including language)
  * - pictures/: folder for uploaded images
+ * - archive/menus/: folder for saved PDF menus
  * 
  * All files are stored in a "data" subfolder for better organization
  */
@@ -347,6 +348,51 @@
             console.error('Error loading images:', err);
         }
         return images;
+    };
+
+    // Save PDF to archive/menus folder
+    window.savePDFToArchive = async function(pdfBlob, filename) {
+        if (!dataFolder) {
+            console.error('Data folder not initialized');
+            return null;
+        }
+
+        try {
+            // Get or create archive/menus folder structure
+            const archiveFolder = await dataFolder.getDirectoryHandle('archive', { create: true });
+            const menusFolder = await archiveFolder.getDirectoryHandle('menus', { create: true });
+            
+            // Save PDF file
+            const fileHandle = await menusFolder.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(pdfBlob);
+            await writable.close();
+            
+            console.log('✅ PDF saved to archive:', filename);
+            
+            // Return blob URL to open in new tab
+            return URL.createObjectURL(pdfBlob);
+        } catch (err) {
+            console.error('Error saving PDF to archive:', err);
+            return null;
+        }
+    };
+
+    // Open archive folder (for user reference)
+    window.openArchiveFolder = async function() {
+        if (!dataFolder) {
+            alert('Please select a storage folder first!');
+            return;
+        }
+        
+        try {
+            const archiveFolder = await dataFolder.getDirectoryHandle('archive', { create: true });
+            await archiveFolder.getDirectoryHandle('menus', { create: true });
+            alert('Archive folder created at: data/archive/menus/\n\nAll printed menus are automatically saved there!');
+        } catch (err) {
+            console.error('Error accessing archive folder:', err);
+            alert('Error accessing archive folder. Please check console.');
+        }
     };
 
     // Load all data from files in data subfolder
