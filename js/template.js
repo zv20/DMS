@@ -90,36 +90,36 @@
                     id: 'layout',
                     titleKey: 'Layout & Spacing',
                     html: `
-                        <div style="margin-bottom:8px;">
-                            <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Page Margins (mm)</label>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="tb-margin-grid">
+                            <label class="tb-margin-label">Page Margins (mm)</label>
+                            <div class="tb-grid-2">
                                 <div>
-                                    <label style="font-size:0.75rem;">Top</label>
-                                    <input type="number" id="marginTop" value="8" min="0" max="30" class="form-control" style="font-size:0.85rem; height:28px;">
+                                    <label class="tb-label-sm">Top</label>
+                                    <input type="number" id="marginTop" value="8" min="0" max="30" class="form-control tb-input-sm">
                                 </div>
                                 <div>
-                                    <label style="font-size:0.75rem;">Bottom</label>
-                                    <input type="number" id="marginBottom" value="8" min="0" max="30" class="form-control" style="font-size:0.85rem; height:28px;">
+                                    <label class="tb-label-sm">Bottom</label>
+                                    <input type="number" id="marginBottom" value="8" min="0" max="30" class="form-control tb-input-sm">
                                 </div>
                                 <div>
-                                    <label style="font-size:0.75rem;">Left</label>
-                                    <input type="number" id="marginLeft" value="8" min="0" max="30" class="form-control" style="font-size:0.85rem; height:28px;">
+                                    <label class="tb-label-sm">Left</label>
+                                    <input type="number" id="marginLeft" value="8" min="0" max="30" class="form-control tb-input-sm">
                                 </div>
                                 <div>
-                                    <label style="font-size:0.75rem;">Right</label>
-                                    <input type="number" id="marginRight" value="8" min="0" max="30" class="form-control" style="font-size:0.85rem; height:28px;">
+                                    <label class="tb-label-sm">Right</label>
+                                    <input type="number" id="marginRight" value="8" min="0" max="30" class="form-control tb-input-sm">
                                 </div>
                             </div>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="tb-grid-2 tb-mb-8">
                             <div>
-                                <label style="font-size:0.85rem;">Day Block Spacing (px)</label>
-                                <input type="number" id="dayBlockSpacing" value="6" min="0" max="20" class="form-control" style="font-size:0.85rem; height:28px;">
+                                <label class="tb-label">Day Block Spacing (px)</label>
+                                <input type="number" id="dayBlockSpacing" value="6" min="0" max="20" class="form-control tb-input-sm">
                             </div>
                             <div>
-                                <label style="font-size:0.85rem;">Column Gap (px)</label>
-                                <input type="number" id="columnGap" value="10" min="0" max="30" class="form-control" style="font-size:0.85rem; height:28px;">
+                                <label class="tb-label">Column Gap (px)</label>
+                                <input type="number" id="columnGap" value="10" min="0" max="30" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -130,18 +130,18 @@
                     id: 'background',
                     titleKey: 'Background',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Background Image</label>
-                        <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;" data-filename="">
+                        <label class="tb-label tb-mb-6">Background Image</label>
+                        <input type="text" id="backgroundImage" class="form-control tb-input" placeholder="https://..." data-filename="">
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-top:8px;">
+                        <div class="tb-grid-3 tb-mt-8">
                             <div>
-                                <label style="font-size:0.75rem;">Opacity</label>
-                                <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="1" style="width:100%;">
-                                <small id="bgOpacityValue" style="font-size:0.7rem;">100%</small>
+                                <label class="tb-label-sm">Opacity</label>
+                                <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="1" class="tb-range">
+                                <small id="bgOpacityValue" class="tb-range-value">100%</small>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Position</label>
-                                <select id="bgPosition" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Position</label>
+                                <select id="bgPosition" class="form-control tb-input-sm">
                                     <option value="center">Center</option>
                                     <option value="top">Top</option>
                                     <option value="bottom">Bottom</option>
@@ -150,14 +150,14 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Overlay</label>
-                                <input type="color" id="bgOverlay" value="#000000" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Overlay</label>
+                                <input type="color" id="bgOverlay" value="#000000" class="tb-color">
                             </div>
                         </div>
-                        <div style="margin-top:4px;">
-                            <label style="font-size:0.75rem;">Overlay Opacity</label>
-                            <input type="range" id="bgOverlayOpacity" min="0" max="1" step="0.1" value="0" style="width:100%;">
-                            <small id="bgOverlayOpacityValue" style="font-size:0.7rem;">0%</small>
+                        <div class="tb-mt-4">
+                            <label class="tb-label-sm">Overlay Opacity</label>
+                            <input type="range" id="bgOverlayOpacity" min="0" max="1" step="0.1" value="0" class="tb-range">
+                            <small id="bgOverlayOpacityValue" class="tb-range-value">0%</small>
                         </div>
                     `
                 },
@@ -167,13 +167,13 @@
                     id: 'branding',
                     titleKey: 'Branding & Logo',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Logo Image</label>
-                        <input type="text" id="logoImage" class="form-control" placeholder="Upload logo..." style="font-size:0.85rem; height:32px;" data-filename="" readonly>
+                        <label class="tb-label tb-mb-6">Logo Image</label>
+                        <input type="text" id="logoImage" class="form-control tb-input" placeholder="Upload logo..." data-filename="" readonly>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-top:8px;">
+                        <div class="tb-grid-3 tb-mt-8">
                             <div>
-                                <label style="font-size:0.75rem;">Position</label>
-                                <select id="logoPosition" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Position</label>
+                                <select id="logoPosition" class="form-control tb-input-sm">
                                     <option value="top-left">Top Left</option>
                                     <option value="top-center">Top Center</option>
                                     <option value="top-right">Top Right</option>
@@ -181,12 +181,12 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Width (px)</label>
-                                <input type="number" id="logoWidth" value="80" min="20" max="200" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Width (px)</label>
+                                <input type="number" id="logoWidth" value="80" min="20" max="200" class="form-control tb-input-sm">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Height (px)</label>
-                                <input type="number" id="logoHeight" value="80" min="20" max="200" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Height (px)</label>
+                                <input type="number" id="logoHeight" value="80" min="20" max="200" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -197,21 +197,21 @@
                     id: 'header',
                     titleKey: 'Header',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_title')}</label>
-                        <input type="text" id="headerText" class="form-control" value="Weekly Menu" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
+                        <label class="tb-label">${window.t('label_title')}</label>
+                        <input type="text" id="headerText" class="form-control tb-input tb-mb-8" value="Weekly Menu">
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div class="tb-grid-3 tb-mb-8">
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="headerColor" value="#fd7e14" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="headerColor" value="#fd7e14" class="tb-color">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="headerSize" class="form-control" value="20pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="headerSize" class="form-control tb-input-sm" value="20pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Weight</label>
-                                <select id="headerWeight" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Weight</label>
+                                <select id="headerWeight" class="form-control tb-input-sm">
                                     <option value="normal">Normal</option>
                                     <option value="600">Semibold</option>
                                     <option value="bold" selected>Bold</option>
@@ -219,10 +219,10 @@
                             </div>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-3">
                             <div>
-                                <label style="font-size:0.75rem;">Font</label>
-                                <select id="headerFont" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Font</label>
+                                <select id="headerFont" class="form-control tb-input-sm">
                                     <option value="Segoe UI" selected>Segoe UI</option>
                                     <option value="Arial">Arial</option>
                                     <option value="Georgia">Georgia</option>
@@ -231,16 +231,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Align</label>
-                                <select id="headerAlign" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Align</label>
+                                <select id="headerAlign" class="form-control tb-input-sm">
                                     <option value="left">Left</option>
                                     <option value="center" selected>Center</option>
                                     <option value="right">Right</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Transform</label>
-                                <select id="headerTransform" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Transform</label>
+                                <select id="headerTransform" class="form-control tb-input-sm">
                                     <option value="none" selected>None</option>
                                     <option value="uppercase">UPPERCASE</option>
                                     <option value="lowercase">lowercase</option>
@@ -256,22 +256,22 @@
                     id: 'dateRange',
                     titleKey: 'Date Range',
                     html: `
-                        <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
+                        <label class="tb-label-xs">
                             <input type="checkbox" id="showDateRange" checked> Show Date Range
                         </label>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-3">
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="dateRangeSize" class="form-control" value="9pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="dateRangeSize" class="form-control tb-input-sm" value="9pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="dateRangeColor" value="#7f8c8d" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="dateRangeColor" value="#7f8c8d" class="tb-color">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Weight</label>
-                                <select id="dateRangeWeight" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Weight</label>
+                                <select id="dateRangeWeight" class="form-control tb-input-sm">
                                     <option value="normal" selected>Normal</option>
                                     <option value="600">Semibold</option>
                                     <option value="bold">Bold</option>
@@ -286,21 +286,21 @@
                     id: 'dayBlock',
                     titleKey: 'Day Block',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Background Color</label>
-                        <input type="color" id="dayBg" value="#ffffff" style="width:100%; height:32px; margin-bottom:8px;">
+                        <label class="tb-label">Background Color</label>
+                        <input type="color" id="dayBg" value="#ffffff" class="tb-color-lg tb-mb-8">
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div class="tb-grid-3 tb-mb-8">
                             <div>
-                                <label style="font-size:0.75rem;">Border Radius</label>
-                                <input type="number" id="dayRadius" value="8" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Border Radius</label>
+                                <input type="number" id="dayRadius" value="8" class="form-control tb-input-sm">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Border Width</label>
-                                <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Border Width</label>
+                                <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control tb-input-sm">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Border Style</label>
-                                <select id="dayBorderStyle" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Border Style</label>
+                                <select id="dayBorderStyle" class="form-control tb-input-sm">
                                     <option value="solid">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
@@ -309,9 +309,9 @@
                             </div>
                         </div>
                         
-                        <div style="margin-bottom:8px;">
-                            <label style="font-size:0.75rem;">Border Sides</label>
-                            <select id="dayBorderSides" class="form-control" style="font-size:0.75rem; height:28px;">
+                        <div class="tb-mb-8">
+                            <label class="tb-label-sm">Border Sides</label>
+                            <select id="dayBorderSides" class="form-control tb-input-sm">
                                 <option value="all" selected>All</option>
                                 <option value="top">Top Only</option>
                                 <option value="bottom">Bottom Only</option>
@@ -321,14 +321,14 @@
                             </select>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-2">
                             <div>
-                                <label style="font-size:0.75rem;">Border Color</label>
-                                <input type="color" id="dayBorderColor" value="#e0e0e0" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Border Color</label>
+                                <input type="color" id="dayBorderColor" value="#e0e0e0" class="tb-color">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Shadow</label>
-                                <select id="dayShadow" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Shadow</label>
+                                <select id="dayShadow" class="form-control tb-input-sm">
                                     <option value="none" selected>None</option>
                                     <option value="light">Light</option>
                                     <option value="medium">Medium</option>
@@ -344,18 +344,18 @@
                     id: 'dayName',
                     titleKey: 'Day Name',
                     html: `
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                        <div class="tb-grid-2 tb-mb-6">
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="dayNameSize" class="form-control" value="11pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="dayNameSize" class="form-control tb-input-sm" value="11pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="dayNameColor" value="#2c3e50" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="dayNameColor" value="#2c3e50" class="tb-color">
                             </div>
                         </div>
-                        <label style="font-size:0.75rem;">Weight</label>
-                        <select id="dayNameWeight" class="form-control" style="font-size:0.75rem; height:28px;">
+                        <label class="tb-label-sm">Weight</label>
+                        <select id="dayNameWeight" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
                             <option value="500">Medium</option>
                             <option value="600" selected>Semibold</option>
@@ -367,18 +367,18 @@
                     id: 'mealTitle',
                     titleKey: 'Meal Title',
                     html: `
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                        <div class="tb-grid-2 tb-mb-6">
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="mealTitleSize" class="form-control" value="9pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="mealTitleSize" class="form-control tb-input-sm" value="9pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="mealTitleColor" value="#333333" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="mealTitleColor" value="#333333" class="tb-color">
                             </div>
                         </div>
-                        <label style="font-size:0.75rem;">Weight</label>
-                        <select id="mealTitleWeight" class="form-control" style="font-size:0.75rem; height:28px;">
+                        <label class="tb-label-sm">Weight</label>
+                        <select id="mealTitleWeight" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
                             <option value="500">Medium</option>
                             <option value="600" selected>Semibold</option>
@@ -392,8 +392,8 @@
                     id: 'mealNumbering',
                     titleKey: 'Meal Numbering',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Numbering Style</label>
-                        <select id="mealNumberStyle" class="form-control" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
+                        <label class="tb-label tb-mb-6">Numbering Style</label>
+                        <select id="mealNumberStyle" class="form-control tb-input tb-mb-8">
                             <option value="numbers" selected>Numbers (1. 2. 3. 4.)</option>
                             <option value="bullets">Bullets (•)</option>
                             <option value="letters">Letters (A. B. C. D.)</option>
@@ -401,14 +401,14 @@
                             <option value="none">None</option>
                         </select>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-2">
                             <div>
-                                <label style="font-size:0.75rem;">Prefix</label>
-                                <input type="text" id="mealNumberPrefix" class="form-control" placeholder="e.g., #" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Prefix</label>
+                                <input type="text" id="mealNumberPrefix" class="form-control tb-input-sm" placeholder="e.g., #">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Suffix</label>
-                                <input type="text" id="mealNumberSuffix" class="form-control" value="." placeholder="e.g., )" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Suffix</label>
+                                <input type="text" id="mealNumberSuffix" class="form-control tb-input-sm" value="." placeholder="e.g., )">
                             </div>
                         </div>
                     `
@@ -419,33 +419,33 @@
                     id: 'separators',
                     titleKey: 'Separators',
                     html: `
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:8px; background:#fafafa;">
-                            <label style="font-size:0.8rem; display:block; margin-bottom:6px;">
+                        <div class="tb-section-box">
+                            <label class="tb-label-xs">
                                 <input type="checkbox" id="headerSepEnabled"> Header Separator
                             </label>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px;">
-                                <select id="headerSepStyle" class="form-control" style="font-size:0.7rem; height:24px;">
+                            <div class="tb-grid-3-sm">
+                                <select id="headerSepStyle" class="form-control tb-input-xs">
                                     <option value="solid">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                 </select>
-                                <input type="color" id="headerSepColor" value="#ddd" style="width:100%; height:24px;">
-                                <input type="number" id="headerSepWidth" value="1" min="1" max="5" class="form-control" style="font-size:0.7rem; height:24px;">
+                                <input type="color" id="headerSepColor" value="#ddd" class="tb-color-xs">
+                                <input type="number" id="headerSepWidth" value="1" min="1" max="5" class="form-control tb-input-xs">
                             </div>
                         </div>
                         
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; background:#fafafa;">
-                            <label style="font-size:0.8rem; display:block; margin-bottom:6px;">
+                        <div class="tb-section-box">
+                            <label class="tb-label-xs">
                                 <input type="checkbox" id="footerSepEnabled" checked> Footer Separator
                             </label>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px;">
-                                <select id="footerSepStyle" class="form-control" style="font-size:0.7rem; height:24px;">
+                            <div class="tb-grid-3-sm">
+                                <select id="footerSepStyle" class="form-control tb-input-xs">
                                     <option value="solid">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                 </select>
-                                <input type="color" id="footerSepColor" value="#eee" style="width:100%; height:24px;">
-                                <input type="number" id="footerSepWidth" value="1" min="1" max="5" class="form-control" style="font-size:0.7rem; height:24px;">
+                                <input type="color" id="footerSepColor" value="#eee" class="tb-color-xs">
+                                <input type="number" id="footerSepWidth" value="1" min="1" max="5" class="form-control tb-input-xs">
                             </div>
                         </div>
                     `
@@ -455,18 +455,18 @@
                     id: 'ingredients',
                     titleKey: 'Ingredients',
                     html: `
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                        <div class="tb-grid-2 tb-mb-6">
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="ingredientsSize" class="form-control" value="7.5pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="ingredientsSize" class="form-control tb-input-sm" value="7.5pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="ingredientsColor" value="#555555" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="ingredientsColor" value="#555555" class="tb-color">
                             </div>
                         </div>
-                        <label style="font-size:0.75rem;">Style</label>
-                        <select id="ingredientsStyle" class="form-control" style="font-size:0.75rem; height:28px;">
+                        <label class="tb-label-sm">Style</label>
+                        <select id="ingredientsStyle" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
                             <option value="italic" selected>Italic</option>
                         </select>
@@ -476,29 +476,29 @@
                     id: 'mealVisibility',
                     titleKey: 'Meal Visibility',
                     html: `
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_1_label')}</h4>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showIngredients" checked> ${window.t('show_ingredients')}</label>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot1_showCalories" checked> ${window.t('show_calories')}</label>
-                            <label style="font-size:0.75rem; display:block;"><input type="checkbox" id="slot1_showAllergens" checked> ${window.t('show_allergens')}</label>
+                        <div class="tb-section-box">
+                            <h4 class="tb-slot-header">${window.t('slot_1_label')}</h4>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot1_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot1_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label class="tb-slot-label-last"><input type="checkbox" id="slot1_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_2_label')}</h4>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showIngredients" checked> ${window.t('show_ingredients')}</label>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot2_showCalories" checked> ${window.t('show_calories')}</label>
-                            <label style="font-size:0.75rem; display:block;"><input type="checkbox" id="slot2_showAllergens" checked> ${window.t('show_allergens')}</label>
+                        <div class="tb-section-box">
+                            <h4 class="tb-slot-header">${window.t('slot_2_label')}</h4>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot2_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot2_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label class="tb-slot-label-last"><input type="checkbox" id="slot2_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_3_label')}</h4>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showIngredients" checked> ${window.t('show_ingredients')}</label>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot3_showCalories" checked> ${window.t('show_calories')}</label>
-                            <label style="font-size:0.75rem; display:block;"><input type="checkbox" id="slot3_showAllergens" checked> ${window.t('show_allergens')}</label>
+                        <div class="tb-section-box">
+                            <h4 class="tb-slot-header">${window.t('slot_3_label')}</h4>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot3_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot3_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label class="tb-slot-label-last"><input type="checkbox" id="slot3_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
-                        <div style="border:1px solid #ddd; padding:8px; border-radius:4px; background:#fafafa;">
-                            <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_4_label')}</h4>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showIngredients" checked> ${window.t('show_ingredients')}</label>
-                            <label style="font-size:0.75rem; display:block; margin-bottom:2px;"><input type="checkbox" id="slot4_showCalories" checked> ${window.t('show_calories')}</label>
-                            <label style="font-size:0.75rem; display:block;"><input type="checkbox" id="slot4_showAllergens" checked> ${window.t('show_allergens')}</label>
+                        <div class="tb-section-box">
+                            <h4 class="tb-slot-header">${window.t('slot_4_label')}</h4>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot4_showIngredients" checked> ${window.t('show_ingredients')}</label>
+                            <label class="tb-slot-label"><input type="checkbox" id="slot4_showCalories" checked> ${window.t('show_calories')}</label>
+                            <label class="tb-slot-label-last"><input type="checkbox" id="slot4_showAllergens" checked> ${window.t('show_allergens')}</label>
                         </div>
                     `
                 },
@@ -508,25 +508,25 @@
                     id: 'pageBorder',
                     titleKey: 'Page Border',
                     html: `
-                        <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
+                        <label class="tb-label-xs">
                             <input type="checkbox" id="pageBorderEnabled"> Enable Page Border
                         </label>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                        <div class="tb-grid-2 tb-mb-6">
                             <div>
-                                <label style="font-size:0.75rem;">Width</label>
-                                <input type="number" id="pageBorderWidth" value="1" min="1" max="10" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Width</label>
+                                <input type="number" id="pageBorderWidth" value="1" min="1" max="10" class="form-control tb-input-sm">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="pageBorderColor" value="#000000" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="pageBorderColor" value="#000000" class="tb-color">
                             </div>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-2">
                             <div>
-                                <label style="font-size:0.75rem;">Style</label>
-                                <select id="pageBorderStyle" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Style</label>
+                                <select id="pageBorderStyle" class="form-control tb-input-sm">
                                     <option value="solid">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
@@ -534,8 +534,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Corner Radius</label>
-                                <input type="number" id="pageBorderRadius" value="0" min="0" max="20" class="form-control" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Corner Radius</label>
+                                <input type="number" id="pageBorderRadius" value="0" min="0" max="20" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -545,17 +545,17 @@
                     id: 'footer',
                     titleKey: 'Footer',
                     html: `
-                        <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Text</label>
-                        <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes..." style="font-size:0.85rem; margin-bottom:8px;">Prepared with care by KitchenPro</textarea>
+                        <label class="tb-label">Text</label>
+                        <textarea id="footerText" class="form-control tb-textarea" rows="2" placeholder="Additional notes...">Prepared with care by KitchenPro</textarea>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="tb-grid-2">
                             <div>
-                                <label style="font-size:0.75rem;">Size</label>
-                                <input type="text" id="footerSize" class="form-control" value="8pt" style="font-size:0.75rem; height:28px;">
+                                <label class="tb-label-sm">Size</label>
+                                <input type="text" id="footerSize" class="form-control tb-input-sm" value="8pt">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem;">Color</label>
-                                <input type="color" id="footerColor" value="#7f8c8d" style="width:100%; height:28px;">
+                                <label class="tb-label-sm">Color</label>
+                                <input type="color" id="footerColor" value="#7f8c8d" class="tb-color">
                             </div>
                         </div>
                     `
