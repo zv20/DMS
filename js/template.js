@@ -6,7 +6,7 @@
  * FIXED: Background images now print correctly by storing filenames
  * FIXED: Templates now properly load images by awaiting async operations
  * FIXED: Print now converts background images to base64 BEFORE opening window
- * FIXED: Force browsers to actually PRINT backgrounds with print-color-adjust CSS
+ * FIXED: Using IMG tag instead of CSS background for reliable printing
  */
 
 (function(window) {
@@ -1412,9 +1412,9 @@
 
         const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
 
-        // CONVERT BACKGROUND IMAGE TO BASE64 BEFORE OPENING PRINT WINDOW
+        // CONVERT BACKGROUND IMAGE TO BASE64 AND CREATE IMG TAG
         console.log('🖼️ Converting background image to base64...');
-        let backgroundStyle = '';
+        let backgroundImageTag = '';
         if (settings.backgroundImage) {
             // If it's not a URL, it's a filename - convert to base64
             if (!settings.backgroundImage.startsWith('http')) {
@@ -1423,7 +1423,8 @@
                     const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
                     if (base64) {
                         console.log('✅ Base64 conversion successful, length:', base64.length);
-                        backgroundStyle = `background-image: url(${base64}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+                        // Create an IMG tag positioned as background
+                        backgroundImageTag = `<img src="${base64}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none;">`;
                     } else {
                         console.warn('⚠️ Base64 conversion returned null');
                     }
@@ -1432,7 +1433,7 @@
                 }
             } else {
                 // It's a regular URL, use as-is
-                backgroundStyle = `background-image: url(${settings.backgroundImage}); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+                backgroundImageTag = `<img src="${settings.backgroundImage}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none;">`;
             }
         }
 
@@ -1481,30 +1482,29 @@
                         background: #fff;
                         font-size: 9pt;
                         line-height: 1.2;
-                        ${backgroundStyle}
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                        color-adjust: exact;
+                        position: relative;
                     }
                     .print-day-block { 
-                        page-break-inside: avoid; 
+                        page-break-inside: avoid;
+                        position: relative;
+                        z-index: 1;
                     }
                     @media print { 
                         body { 
                             padding: 0; 
                             margin: 0;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                            color-adjust: exact !important;
                         }
                     }
                 </style>
             </head>
             <body>
-                <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
-                <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
-                ${daysHtml}
-                <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; line-height:1;">${settings.footer.text}</div>
+                ${backgroundImageTag}
+                <div style="position: relative; z-index: 1;">
+                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
+                    <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
+                    ${daysHtml}
+                    <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; line-height:1;">${settings.footer.text}</div>
+                </div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
             </html>
