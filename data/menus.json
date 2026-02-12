@@ -106,5 +106,41 @@
       "category": "other",
       "recipe": null
     }
+  },
+  "2026-02-17": {
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_bg_001"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_007"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_en_013"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    }
+  },
+  "2026-02-18": {
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_en_003"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_en_006"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_en_011"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bg_011"
+    }
   }
 }
