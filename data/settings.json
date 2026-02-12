@@ -239,6 +239,180 @@
       },
       "name": "Мой Шаблон 4",
       "id": "tmpl_1770904986725"
+    },
+    {
+      "header": {
+        "text": "Седмично меню",
+        "color": "#fd7e14",
+        "fontSize": "80",
+        "fontWeight": "bold"
+      },
+      "dayBlock": {
+        "bg": "#ffffff",
+        "borderRadius": "8px",
+        "borderWidth": "2",
+        "borderColor": "#e0e0e0",
+        "borderStyle": "solid"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
+      },
+      "footer": {
+        "text": "Prepared with care by KitchenPro",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
+      },
+      "backgroundImage": "",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Седмично меню",
+      "id": "tmpl_1770911774223"
+    },
+    {
+      "layout": {
+        "marginTop": "8",
+        "marginBottom": "8",
+        "marginLeft": "8",
+        "marginRight": "8",
+        "dayBlockSpacing": "6",
+        "columnGap": "10"
+      },
+      "header": {
+        "text": "Weekly Menu",
+        "color": "#fd7e14",
+        "fontSize": "20pt",
+        "fontWeight": "bold",
+        "fontFamily": "Segoe UI",
+        "textAlign": "center",
+        "textTransform": "none"
+      },
+      "dateRange": {
+        "show": true,
+        "fontSize": "9pt",
+        "color": "#7f8c8d",
+        "fontWeight": "normal",
+        "textAlign": "center"
+      },
+      "dayBlock": {
+        "bg": "#ffffff",
+        "borderRadius": "8px",
+        "borderWidth": "2",
+        "borderColor": "#e0e0e0",
+        "borderStyle": "solid",
+        "borderSides": "all",
+        "shadow": "none"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "mealNumbering": {
+        "style": "numbers",
+        "prefix": "",
+        "suffix": "."
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
+      },
+      "separators": {
+        "headerEnabled": false,
+        "headerStyle": "solid",
+        "headerColor": "#000000",
+        "headerWidth": "1",
+        "footerEnabled": true,
+        "footerStyle": "solid",
+        "footerColor": "#000000",
+        "footerWidth": "1"
+      },
+      "footer": {
+        "text": "Prepared with care by KitchenPro",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
+      },
+      "background": {
+        "opacity": "1",
+        "position": "center",
+        "overlay": "#000000",
+        "overlayOpacity": "0"
+      },
+      "branding": {
+        "logo": "",
+        "logoPosition": "top-left",
+        "logoWidth": "80",
+        "logoHeight": "80"
+      },
+      "pageBorder": {
+        "enabled": false,
+        "width": "1",
+        "color": "#000000",
+        "style": "solid",
+        "radius": "0"
+      },
+      "backgroundImage": "bg_1770849921918_5rer.jpg",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Мой Шаблон 6",
+      "id": "tmpl_1770912729801"
     }
   ],
   "imageUploads": [
@@ -253,6 +427,13 @@
       "name": "images21.jpg",
       "filename": "bg_1770849935255_images21.jpg",
       "timestamp": 1770849935255
+    },
+    {
+      "id": "logo_1770912812188_pngtree_wolf_logo_png_image_2306634.jpg",
+      "name": "pngtree-wolf-logo-png-image_2306634.jpg",
+      "filename": "logo_1770912812188_pngtree_wolf_logo_png_image_2306634.jpg",
+      "timestamp": 1770912812188,
+      "type": "logo"
     }
   ],
   "language": "bg"
