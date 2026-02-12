@@ -1,14 +1,6 @@
 /**
- * Advanced Template Manager - COMPLETE IMPLEMENTATION
+ * Advanced Template Manager
  * 20+ customization features with full rendering support
- * 
- * NEW FEATURES:
- * - Layout: Page margins, spacing controls, padding options
- * - Typography: Font families, line height, text alignment, transforms  
- * - Visual: Logo upload, shadows, customizable separators
- * - Content: Date range styling, meal numbering options
- * - Background: Opacity, positioning, overlays, multiple images
- * - Borders: Outer page borders, selective sides, corner styles
  */
 
 (function(window) {
@@ -16,7 +8,6 @@
     let selectedWeekStart = null;
     let presetsExpanded = false;
     
-    // Track which sections are expanded
     const sectionStates = {
         presets: false,
         layout: true,
@@ -36,39 +27,14 @@
     };
 
     const TemplateManager = {
-        presets: window.DMSPresets || [
-            {
-                id: 'preset_classic',
-                nameKey: 'Classic Menu',
-                layout: { marginTop: 8, marginBottom: 8, marginLeft: 8, marginRight: 8, dayBlockSpacing: 6, dayBlockPadding: '10px 12px', columnGap: 10 },
-                header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '20pt', fontWeight: 'bold', fontFamily: 'Segoe UI', textAlign: 'center', textTransform: 'none', lineHeight: '1.2' },
-                dateRange: { show: true, fontSize: '9pt', color: '#7f8c8d', fontWeight: 'normal', textAlign: 'center' },
-                dayBlock: { bg: '#ffffff', borderRadius: '8px', borderWidth: '2', borderColor: '#e0e0e0', borderStyle: 'solid', borderSides: 'all', shadow: 'none', padding: '10px 12px' },
-                dayName: { fontSize: '11pt', color: '#2c3e50', fontWeight: '600', fontFamily: 'inherit', lineHeight: '1.2', textAlign: 'left', textTransform: 'none' },
-                mealTitle: { fontSize: '9pt', color: '#333333', fontWeight: '600', fontFamily: 'inherit', lineHeight: '1.2', textAlign: 'left' },
-                mealNumbering: { style: 'numbers', prefix: '', suffix: '.' },
-                ingredients: { fontSize: '7.5pt', color: '#555555', fontStyle: 'italic', lineHeight: '1.2' },
-                separators: { headerEnabled: false, headerStyle: 'solid', headerColor: '#ddd', headerWidth: 1, footerEnabled: true, footerStyle: 'solid', footerColor: '#eee', footerWidth: 1 },
-                footer: { text: 'Prepared with care by KitchenPro', fontSize: '8pt', color: '#7f8c8d', textAlign: 'center' },
-                background: { image: '', opacity: 1, position: 'center', overlay: '', overlayOpacity: 0 },
-                branding: { logo: '', logoPosition: 'top-right', logoWidth: 80, logoHeight: 80 },
-                pageBorder: { enabled: false, width: 1, color: '#000000', style: 'solid', radius: 0 },
-                backgroundImage: '',
-                slotSettings: {
-                    slot1: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot2: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot3: { showIngredients: true, showCalories: true, showAllergens: true },
-                    slot4: { showIngredients: true, showCalories: true, showAllergens: true }
-                }
-            }
-        ],
+        presets: window.DMSPresets || [],
 
         init: function() {
             console.log('🎪 Enhanced Template Manager init()');
             console.log('📋 Loaded presets:', this.presets.length);
             
             this.loadActiveTemplate();
-            this.renderPresetTemplates();  // ✅ NEW: Render presets
+            this.renderPresetTemplates();
             this.renderCollapsibleSections();
             this.bindImageUpload();
             this.bindLogoUpload();
@@ -82,7 +48,6 @@
             });
         },
 
-        // ✅ NEW: Render preset templates in the builder menu
         renderPresetTemplates: function() {
             const container = document.getElementById('presetTemplatesContainer');
             if (!container) return;
@@ -123,7 +88,7 @@
                 // LAYOUT SECTION
                 {
                     id: 'layout',
-                    titleKey: 'Layout & Spacing',  // ✅ Using plain English (will be displayed as-is)
+                    titleKey: 'Layout & Spacing',
                     html: `
                         <div style="margin-bottom:8px;">
                             <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Page Margins (mm)</label>
@@ -160,10 +125,10 @@
                     `
                 },
                 
-                // BACKGROUND SECTION (Enhanced)
+                // BACKGROUND SECTION
                 {
                     id: 'background',
-                    titleKey: 'Background',  // ✅ Plain English
+                    titleKey: 'Background',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Background Image</label>
                         <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;" data-filename="">
@@ -197,10 +162,10 @@
                     `
                 },
                 
-                // BRANDING SECTION (Logo)
+                // BRANDING SECTION
                 {
                     id: 'branding',
-                    titleKey: 'Branding & Logo',  // ✅ Plain English
+                    titleKey: 'Branding & Logo',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Logo Image</label>
                         <input type="text" id="logoImage" class="form-control" placeholder="Upload logo..." style="font-size:0.85rem; height:32px;" data-filename="" readonly>
@@ -227,10 +192,10 @@
                     `
                 },
                 
-                // HEADER SECTION (Enhanced)
+                // HEADER SECTION
                 {
                     id: 'header',
-                    titleKey: 'Header',  // ✅ Plain English
+                    titleKey: 'Header',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_title')}</label>
                         <input type="text" id="headerText" class="form-control" value="Weekly Menu" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
@@ -289,7 +254,7 @@
                 // DATE RANGE SECTION
                 {
                     id: 'dateRange',
-                    titleKey: 'Date Range',  // ✅ Plain English
+                    titleKey: 'Date Range',
                     html: `
                         <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
                             <input type="checkbox" id="showDateRange" checked> Show Date Range
@@ -316,10 +281,10 @@
                     `
                 },
                 
-                // DAY BLOCK SECTION (Enhanced)
+                // DAY BLOCK SECTION
                 {
                     id: 'dayBlock',
-                    titleKey: 'Day Block',  // ✅ Plain English
+                    titleKey: 'Day Block',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Background Color</label>
                         <input type="color" id="dayBg" value="#ffffff" style="width:100%; height:32px; margin-bottom:8px;">
@@ -374,10 +339,10 @@
                     `
                 },
                 
-                // DAY NAME, MEAL TITLE, INGREDIENTS, MEAL VISIBILITY sections
+                // Additional sections...
                 {
                     id: 'dayName',
-                    titleKey: 'Day Name',  // ✅ Plain English
+                    titleKey: 'Day Name',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -400,7 +365,7 @@
                 },
                 {
                     id: 'mealTitle',
-                    titleKey: 'Meal Title',  // ✅ Plain English
+                    titleKey: 'Meal Title',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -425,7 +390,7 @@
                 // MEAL NUMBERING SECTION
                 {
                     id: 'mealNumbering',
-                    titleKey: 'Meal Numbering',  // ✅ Plain English
+                    titleKey: 'Meal Numbering',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Numbering Style</label>
                         <select id="mealNumberStyle" class="form-control" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
@@ -452,7 +417,7 @@
                 // SEPARATORS SECTION
                 {
                     id: 'separators',
-                    titleKey: 'Separators',  // ✅ Plain English
+                    titleKey: 'Separators',
                     html: `
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:8px; background:#fafafa;">
                             <label style="font-size:0.8rem; display:block; margin-bottom:6px;">
@@ -488,7 +453,7 @@
                 
                 {
                     id: 'ingredients',
-                    titleKey: 'Ingredients',  // ✅ Plain English
+                    titleKey: 'Ingredients',
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -509,7 +474,7 @@
                 },
                 {
                     id: 'mealVisibility',
-                    titleKey: 'Meal Visibility',  // ✅ Plain English
+                    titleKey: 'Meal Visibility',
                     html: `
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
                             <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_1_label')}</h4>
@@ -541,7 +506,7 @@
                 // PAGE BORDER SECTION
                 {
                     id: 'pageBorder',
-                    titleKey: 'Page Border',  // ✅ Plain English
+                    titleKey: 'Page Border',
                     html: `
                         <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
                             <input type="checkbox" id="pageBorderEnabled"> Enable Page Border
@@ -578,7 +543,7 @@
                 
                 {
                     id: 'footer',
-                    titleKey: 'Footer',  // ✅ Plain English
+                    titleKey: 'Footer',
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Text</label>
                         <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes..." style="font-size:0.85rem; margin-bottom:8px;">Prepared with care by KitchenPro</textarea>
@@ -616,7 +581,7 @@
             header.onmouseleave = () => header.style.background = 'var(--color-background)';
             
             const title = document.createElement('h4');
-            title.textContent = section.titleKey;  // ✅ Using titleKey directly (plain English)
+            title.textContent = section.titleKey;
             title.style.cssText = 'margin: 0; color: #495057; font-size: 9.5pt; font-weight: 600;';
             
             const toggleIcon = document.createElement('span');
@@ -884,7 +849,6 @@
         applyDefaultSettings: function() {
             activeTemplateId = 'default';
             
-            // Layout defaults
             this.setVal('marginTop', 8);
             this.setVal('marginBottom', 8);
             this.setVal('marginLeft', 8);
@@ -892,7 +856,6 @@
             this.setVal('dayBlockSpacing', 6);
             this.setVal('columnGap', 10);
             
-            // Header defaults
             this.setVal('headerText', 'Weekly Menu');
             this.setVal('headerColor', '#fd7e14');
             this.setVal('headerSize', '20pt');
@@ -901,13 +864,11 @@
             this.setVal('headerAlign', 'center');
             this.setVal('headerTransform', 'none');
             
-            // Date range defaults
             this.setChecked('showDateRange', true);
             this.setVal('dateRangeSize', '9pt');
             this.setVal('dateRangeColor', '#7f8c8d');
             this.setVal('dateRangeWeight', 'normal');
             
-            // Day block defaults
             this.setVal('dayBg', '#ffffff');
             this.setVal('dayRadius', 8);
             this.setVal('dayBorderWidth', 2);
@@ -916,27 +877,22 @@
             this.setVal('dayBorderSides', 'all');
             this.setVal('dayShadow', 'none');
             
-            // Day name defaults
             this.setVal('dayNameSize', '11pt');
             this.setVal('dayNameColor', '#2c3e50');
             this.setVal('dayNameWeight', '600');
             
-            // Meal title defaults
             this.setVal('mealTitleSize', '9pt');
             this.setVal('mealTitleColor', '#333333');
             this.setVal('mealTitleWeight', '600');
             
-            // Meal numbering defaults
             this.setVal('mealNumberStyle', 'numbers');
             this.setVal('mealNumberPrefix', '');
             this.setVal('mealNumberSuffix', '.');
             
-            // Ingredients defaults
             this.setVal('ingredientsSize', '7.5pt');
             this.setVal('ingredientsColor', '#555555');
             this.setVal('ingredientsStyle', 'italic');
             
-            // Separators defaults
             this.setChecked('headerSepEnabled', false);
             this.setVal('headerSepStyle', 'solid');
             this.setVal('headerSepColor', '#ddd');
@@ -946,25 +902,21 @@
             this.setVal('footerSepColor', '#eee');
             this.setVal('footerSepWidth', 1);
             
-            // Footer defaults
             this.setVal('footerSize', '8pt');
             this.setVal('footerColor', '#7f8c8d');
             this.setVal('footerText', 'Prepared with care by KitchenPro');
             
-            // Background defaults
             this.setVal('backgroundImage', '');
             this.setVal('bgOpacity', 1);
             this.setVal('bgPosition', 'center');
             this.setVal('bgOverlay', '#000000');
             this.setVal('bgOverlayOpacity', 0);
             
-            // Branding defaults
             this.setVal('logoImage', '');
             this.setVal('logoPosition', 'top-right');
             this.setVal('logoWidth', 80);
             this.setVal('logoHeight', 80);
             
-            // Page border defaults
             this.setChecked('pageBorderEnabled', false);
             this.setVal('pageBorderWidth', 1);
             this.setVal('pageBorderColor', '#000000');
@@ -982,7 +934,6 @@
         },
 
         applyTemplateToUI: async function(template) {
-            // Apply all settings from template
             this.setVal('headerText', template.header?.text || 'Weekly Menu');
             this.setVal('headerColor', template.header?.color || '#fd7e14');
             this.setVal('headerSize', template.header?.fontSize || '20pt');
@@ -991,13 +942,11 @@
             this.setVal('headerAlign', template.header?.textAlign || 'center');
             this.setVal('headerTransform', template.header?.textTransform || 'none');
             
-            // Date range
             this.setChecked('showDateRange', template.dateRange?.show !== false);
             this.setVal('dateRangeSize', template.dateRange?.fontSize || '9pt');
             this.setVal('dateRangeColor', template.dateRange?.color || '#7f8c8d');
             this.setVal('dateRangeWeight', template.dateRange?.fontWeight || 'normal');
             
-            // Day block
             this.setVal('dayBg', template.dayBlock?.bg || '#ffffff');
             this.setVal('dayRadius', parseInt(template.dayBlock?.borderRadius) || 8);
             this.setVal('dayBorderWidth', parseInt(template.dayBlock?.borderWidth) || 2);
@@ -1006,7 +955,6 @@
             this.setVal('dayBorderSides', template.dayBlock?.borderSides || 'all');
             this.setVal('dayShadow', template.dayBlock?.shadow || 'none');
             
-            // Layout
             this.setVal('marginTop', template.layout?.marginTop || 8);
             this.setVal('marginBottom', template.layout?.marginBottom || 8);
             this.setVal('marginLeft', template.layout?.marginLeft || 8);
@@ -1014,7 +962,6 @@
             this.setVal('dayBlockSpacing', template.layout?.dayBlockSpacing || 6);
             this.setVal('columnGap', template.layout?.columnGap || 10);
             
-            // Other sections
             this.setVal('dayNameSize', template.dayName?.fontSize || '11pt');
             this.setVal('dayNameColor', template.dayName?.color || '#2c3e50');
             this.setVal('dayNameWeight', template.dayName?.fontWeight || '600');
@@ -1044,7 +991,6 @@
             this.setVal('footerColor', template.footer?.color || '#7f8c8d');
             this.setVal('footerText', template.footer?.text || '');
             
-            // Background - ✅ FIXED: Better image loading
             const bgInput = document.getElementById('backgroundImage');
             if (template.backgroundImage) {
                 try {
@@ -1072,7 +1018,6 @@
             this.setVal('bgOverlay', template.background?.overlay || '#000000');
             this.setVal('bgOverlayOpacity', template.background?.overlayOpacity || 0);
             
-            // Branding - ✅ FIXED: Better logo loading
             const logoInput = document.getElementById('logoImage');
             if (template.branding?.logo) {
                 try {
@@ -1098,14 +1043,12 @@
             this.setVal('logoWidth', template.branding?.logoWidth || 80);
             this.setVal('logoHeight', template.branding?.logoHeight || 80);
             
-            // Page border
             this.setChecked('pageBorderEnabled', template.pageBorder?.enabled || false);
             this.setVal('pageBorderWidth', template.pageBorder?.width || 1);
             this.setVal('pageBorderColor', template.pageBorder?.color || '#000000');
             this.setVal('pageBorderStyle', template.pageBorder?.style || 'solid');
             this.setVal('pageBorderRadius', template.pageBorder?.radius || 0);
             
-            // Slot settings
             for (let i = 1; i <= 4; i++) {
                 const slot = template.slotSettings?.[`slot${i}`];
                 this.setChecked(`slot${i}_showIngredients`, slot?.showIngredients !== false);
@@ -1172,10 +1115,10 @@
             }
 
             const bgInput = document.getElementById('backgroundImage');
-            const backgroundImage = bgInput?.dataset.filename || '';  // ✅ FIXED: Always use filename
+            const backgroundImage = bgInput?.dataset.filename || '';
 
             const logoInput = document.getElementById('logoImage');
-            const logoFilename = logoInput?.dataset.filename || '';  // ✅ FIXED: Always use filename
+            const logoFilename = logoInput?.dataset.filename || '';
 
             return {
                 layout: {
@@ -1253,7 +1196,7 @@
                     overlayOpacity: document.getElementById('bgOverlayOpacity')?.value || 0
                 },
                 branding: {
-                    logo: logoFilename,  // ✅ FIXED: Use filename directly
+                    logo: logoFilename,
                     logoPosition: document.getElementById('logoPosition')?.value || 'top-right',
                     logoWidth: document.getElementById('logoWidth')?.value || 80,
                     logoHeight: document.getElementById('logoHeight')?.value || 80
@@ -1265,7 +1208,7 @@
                     style: document.getElementById('pageBorderStyle')?.value || 'solid',
                     radius: document.getElementById('pageBorderRadius')?.value || 0
                 },
-                backgroundImage: backgroundImage,  // ✅ FIXED: Use filename directly
+                backgroundImage: backgroundImage,
                 slotSettings: slotSettings
             };
         },
@@ -1273,7 +1216,6 @@
         refreshPreview: async function() {
             const settings = this.getSettingsFromUI();
             
-            // Apply shadow to day blocks
             const getShadowStyle = (shadow) => {
                 switch(shadow) {
                     case 'light': return '0 1px 3px rgba(0,0,0,0.12)';
@@ -1283,7 +1225,6 @@
                 }
             };
             
-            // Apply border sides
             const getBorderStyle = (width, style, color, sides) => {
                 if (sides === 'none') return 'none';
                 if (sides === 'all') return `${width}px ${style} ${color}`;
@@ -1300,7 +1241,7 @@
             
             const sheet = document.getElementById('livePreviewSheet');
             if (sheet && settings.backgroundImage) {
-                let previewUrl = await window.loadImageFile(settings.backgroundImage);  // ✅ FIXED: Always load from file
+                let previewUrl = await window.loadImageFile(settings.backgroundImage);
                 if (previewUrl) {
                     sheet.style.backgroundImage = `url(${previewUrl})`;
                     sheet.style.backgroundSize = 'cover';
@@ -1430,13 +1371,12 @@
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
-            // Get meal number based on style
             const getMealNumber = (idx, style, prefix, suffix) => {
                 let num = '';
                 switch(style) {
                     case 'numbers': num = idx.toString(); break;
                     case 'bullets': return '•';
-                    case 'letters': num = String.fromCharCode(64 + idx); break; // A, B, C, D
+                    case 'letters': num = String.fromCharCode(64 + idx); break;
                     case 'roman': 
                         const romans = ['I', 'II', 'III', 'IV'];
                         num = romans[idx - 1] || idx.toString();
@@ -1562,9 +1502,7 @@
             return weeks;
         },
 
-        // ✅ COMPLETE IMPLEMENTATION #1: Render Template Library
         renderTemplateLibrary: function() {
-            console.log('🎨 Rendering template library');
             const container = document.getElementById('savedTemplatesLibrary');
             if (!container) return;
 
@@ -1618,9 +1556,7 @@
             });
         },
 
-        // ✅ COMPLETE IMPLEMENTATION #2: Load Template
         loadTemplate: async function(id) {
-            console.log('📂 Loading template:', id);
             const template = window.savedTemplates.find(t => t.id === id);
             if (!template) {
                 alert(window.t('alert_template_not_found'));
@@ -1635,9 +1571,7 @@
             alert(`${window.t('alert_template_loaded')}: "${template.name}"`);
         },
 
-        // ✅ COMPLETE IMPLEMENTATION #3: Delete Template
         deleteTemplate: function(id) {
-            console.log('🗑️ Deleting template:', id);
             const template = window.savedTemplates.find(t => t.id === id);
             if (!template) return;
 
@@ -1660,7 +1594,6 @@
         }
     };
 
-    // Global Functions
     window.saveCurrentTemplate = function() {
         const name = prompt(window.t('alert_template_name_prompt'), window.t('template_my_template') + ' ' + (window.savedTemplates.length + 1));
         if (!name) return;
@@ -1678,10 +1611,7 @@
         alert(window.t('alert_template_saved'));
     };
 
-    // ✅ COMPLETE IMPLEMENTATION #4: Open Template Picker Modal
     window.openTemplatePicker = function() {
-        console.log('🖨️ Opening template picker');
-        
         const weeks = TemplateManager.getWeeksWithMeals();
         if (weeks.length === 0) {
             alert(window.t('alert_no_weeks'));
@@ -1752,10 +1682,7 @@
         };
     };
 
-    // ✅ COMPLETE IMPLEMENTATION #5: Print with Template (Full PDF Generation)
     window.printWithTemplate = async function(templateId) {
-        console.log('🖨️ Printing with template:', templateId, 'for week:', selectedWeekStart);
-
         if (!selectedWeekStart) {
             alert(window.t('alert_no_week_selected'));
             return;
@@ -1775,19 +1702,16 @@
             return;
         }
 
-        // ✅ FIXED: Load background image properly
         let bgImageUrl = '';
         if (settings.backgroundImage) {
             bgImageUrl = await window.loadImageFile(settings.backgroundImage);
         }
 
-        // ✅ FIXED: Load logo properly
         let logoUrl = '';
         if (settings.branding?.logo) {
             logoUrl = await window.loadImageFile(settings.branding.logo);
         }
 
-        // Generate full HTML with all template settings
         let html = `
         <!DOCTYPE html>
         <html lang="${window.getCurrentLanguage()}">
@@ -1918,7 +1842,6 @@
             </div>
         `;
 
-        // Generate day blocks
         for (let i = 0; i < 5; i++) {
             const day = new Date(selectedWeekStart);
             day.setDate(selectedWeekStart.getDate() + i);
@@ -1947,7 +1870,6 @@
                             const lang = window.getCurrentLanguage();
                             const isBulgarian = lang === 'bg';
 
-                            // Generate meal number
                             let numberStr = '';
                             const style = settings.mealNumbering.style;
                             const prefix = settings.mealNumbering.prefix;
