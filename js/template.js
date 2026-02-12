@@ -7,6 +7,7 @@
  * FIXED: Templates now properly load images by awaiting async operations
  * FIXED: Print now converts background images to base64 BEFORE opening window
  * FIXED: Using IMG tag instead of CSS background for reliable printing
+ * FIXED: Two-column layout for preset templates
  */
 
 (function(window) {
@@ -1403,6 +1404,10 @@
             settings = TemplateManager.getSettingsFromUI();
         } else {
             settings = window.savedTemplates.find(t => t.id === id);
+            if (!settings) {
+                // Check if it's a preset
+                settings = TemplateManager.presets.find(p => p.id === id);
+            }
         }
         
         if (!settings) {
@@ -1440,6 +1445,9 @@
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
         
+        // Check if this template uses two-column layout
+        const isDoubleColumn = settings.isDoubleColumn || false;
+        
         let daysHtml = '';
         let daysWithMeals = [];
         
@@ -1465,6 +1473,11 @@
         const firstDay = daysWithMeals[0];
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
+
+        // Wrap days in grid container if template uses two columns
+        const daysContainer = isDoubleColumn 
+            ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; column-gap: 15px;">${daysHtml}</div>`
+            : daysHtml;
 
         const html = `
             <html>
@@ -1502,7 +1515,7 @@
                 <div style="position: relative; z-index: 1;">
                     <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
                     <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
-                    ${daysHtml}
+                    ${daysContainer}
                     <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; line-height:1;">${settings.footer.text}</div>
                 </div>
                 <script>window.onload = () => { window.print(); };</script>
