@@ -3,6 +3,7 @@
  * 20+ customization features with full rendering support
  * Refactored to use centralized constants
  * FIXED: Background images now print using IMG tag instead of CSS
+ * NEW: Single-page A4 print constraint with auto-scaling
  */
 
 (function(window) {
@@ -1875,10 +1876,20 @@
                     margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
                 }
                 
-                body {
-                    font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
+                * {
+                    box-sizing: border-box;
+                }
+                
+                html, body {
+                    width: 210mm;
+                    height: 297mm;
                     margin: 0;
                     padding: 0;
+                    overflow: hidden;
+                }
+                
+                body {
+                    font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
                     position: relative;
                     ${settings.pageBorder.enabled ? `
                         border: ${settings.pageBorder.width}px ${settings.pageBorder.style} ${settings.pageBorder.color};
@@ -1887,12 +1898,20 @@
                     ` : ''}
                 }
                 
-                .print-header {
-                    text-align: ${settings.header.textAlign};
-                    margin-bottom: 12px;
+                #page-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
                     position: relative;
                     z-index: 1;
-                    ${settings.separators.headerEnabled ? `border-bottom: ${settings.separators.headerWidth}px ${settings.separators.headerStyle} ${settings.separators.headerColor}; padding-bottom: 6px;` : ''}
+                }
+                
+                .print-header {
+                    text-align: ${settings.header.textAlign};
+                    margin-bottom: 8px;
+                    flex-shrink: 0;
+                    ${settings.separators.headerEnabled ? `border-bottom: ${settings.separators.headerWidth}px ${settings.separators.headerStyle} ${settings.separators.headerColor}; padding-bottom: 4px;` : ''}
                 }
                 .print-header h1 {
                     color: ${settings.header.color};
@@ -1900,7 +1919,8 @@
                     font-weight: ${settings.header.fontWeight};
                     font-family: ${settings.header.fontFamily};
                     text-transform: ${settings.header.textTransform};
-                    margin: 0 0 4px 0;
+                    margin: 0 0 3px 0;
+                    line-height: 1.1;
                 }
                 .date-range {
                     font-size: ${settings.dateRange.fontSize};
@@ -1908,14 +1928,21 @@
                     font-weight: ${settings.dateRange.fontWeight};
                     text-align: ${settings.dateRange.textAlign};
                     margin: 0;
+                    line-height: 1;
                 }
+                
+                #days-container {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    overflow: hidden;
+                }
+                
                 .print-day-block {
                     background: ${settings.dayBlock.bg};
                     border-radius: ${settings.dayBlock.borderRadius};
-                    padding: 10px 12px;
-                    margin-bottom: ${settings.layout.dayBlockSpacing}px;
-                    position: relative;
-                    z-index: 1;
+                    padding: 6px 8px;
                     ${(() => {
                         const w = settings.dayBlock.borderWidth;
                         const s = settings.dayBlock.borderStyle;
@@ -1932,29 +1959,35 @@
                     })()}
                     box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                     page-break-inside: avoid;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .day-name {
                     font-size: ${settings.dayName.fontSize};
                     color: ${settings.dayName.color};
                     font-weight: ${settings.dayName.fontWeight};
                     border-bottom: 1px solid ${CONST.COLORS.DAY_SEPARATOR_COLOR};
-                    margin-bottom: 6px;
-                    padding-bottom: 3px;
+                    margin-bottom: 4px;
+                    padding-bottom: 2px;
+                    line-height: 1.1;
                 }
                 .meal-item {
-                    margin-bottom: 5px;
+                    margin-bottom: 3px;
                 }
                 .meal-title {
                     font-size: ${settings.mealTitle.fontSize};
                     color: ${settings.mealTitle.color};
                     font-weight: ${settings.mealTitle.fontWeight};
-                    margin-bottom: 2px;
+                    margin-bottom: 1px;
+                    line-height: 1.1;
                 }
                 .ingredients {
                     font-size: ${settings.ingredients.fontSize};
                     color: ${settings.ingredients.color};
                     font-style: ${settings.ingredients.fontStyle};
-                    margin-left: 10px;
+                    margin-left: 8px;
+                    line-height: 1.1;
                 }
                 .allergen-highlight {
                     color: ${CONST.COLORS.ALLERGEN_COLOR};
@@ -1965,20 +1998,38 @@
                     text-align: center;
                     font-size: ${settings.footer.fontSize};
                     color: ${settings.footer.color};
-                    margin-top: 12px;
-                    position: relative;
-                    z-index: 1;
-                    ${settings.separators.footerEnabled ? `border-top: ${settings.separators.footerWidth}px ${settings.separators.footerStyle} ${settings.separators.footerColor}; padding-top: 6px;` : ''}
+                    margin-top: 6px;
+                    flex-shrink: 0;
+                    line-height: 1;
+                    ${settings.separators.footerEnabled ? `border-top: ${settings.separators.footerWidth}px ${settings.separators.footerStyle} ${settings.separators.footerColor}; padding-top: 4px;` : ''}
+                }
+                
+                @media print {
+                    html, body {
+                        width: 210mm;
+                        height: 297mm;
+                    }
+                    
+                    #page-container {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .print-day-block {
+                        page-break-inside: avoid;
+                    }
                 }
             </style>
         </head>
         <body>
             ${backgroundImageTag}
-            <div style="position: relative; z-index: 1;">
+            <div id="page-container">
                 <div class="print-header">
                     <h1>${settings.header.text}</h1>
                     ${settings.dateRange.show ? `<p class="date-range">${TemplateManager.getDateRangeText(0, 4, selectedWeekStart)}</p>` : ''}
                 </div>
+                
+                <div id="days-container">
         `;
 
         for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
@@ -2025,7 +2076,7 @@
                                 metadata.push(`${recipe.calories} ${calorieUnit}`);
                             }
                             if (metadata.length) {
-                                html += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:8pt;">(${metadata.join(', ')})</span>`;
+                                html += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:7pt;">(${metadata.join(', ')})</span>`;
                             }
                             html += `</div>`;
 
@@ -2056,13 +2107,15 @@
                     }
                 });
             } else {
-                html += `<p style="color:${CONST.COLORS.EMPTY_DAY_COLOR}; font-style:italic; text-align:center; padding:8px 0; margin:0;">${window.t('empty_day')}</p>`;
+                html += `<p style="color:${CONST.COLORS.EMPTY_DAY_COLOR}; font-style:italic; text-align:center; padding:6px 0; margin:0; font-size:7pt;">${window.t('empty_day')}</p>`;
             }
 
             html += `</div>`;
         }
 
         html += `
+                </div>
+                
                 <div class="print-footer">${settings.footer.text}</div>
             </div>
         </body>
