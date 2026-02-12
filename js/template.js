@@ -36,10 +36,10 @@
     };
 
     const TemplateManager = {
-        presets: [
+        presets: window.DMSPresets || [
             {
                 id: 'preset_classic',
-                nameKey: 'preset_classic',
+                nameKey: 'Classic Menu',
                 layout: { marginTop: 8, marginBottom: 8, marginLeft: 8, marginRight: 8, dayBlockSpacing: 6, dayBlockPadding: '10px 12px', columnGap: 10 },
                 header: { text: 'Weekly Menu', color: '#fd7e14', fontSize: '20pt', fontWeight: 'bold', fontFamily: 'Segoe UI', textAlign: 'center', textTransform: 'none', lineHeight: '1.2' },
                 dateRange: { show: true, fontSize: '9pt', color: '#7f8c8d', fontWeight: 'normal', textAlign: 'center' },
@@ -65,6 +65,7 @@
 
         init: function() {
             console.log('🎪 Enhanced Template Manager init()');
+            console.log('📋 Loaded presets:', this.presets.length);
             
             this.loadActiveTemplate();
             this.renderPresetTemplates();  // ✅ NEW: Render presets
@@ -97,7 +98,7 @@
 
                 const title = document.createElement('div');
                 title.style.cssText = 'font-weight: 600; font-size: 0.9rem; color: #333;';
-                title.textContent = window.t(preset.nameKey) || 'Classic Template';
+                title.textContent = preset.nameKey || 'Classic Template';
 
                 card.appendChild(title);
                 card.onclick = () => this.applyPresetTemplate(preset);
