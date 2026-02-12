@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KitchenPro DMS</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=10.8">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=11.0">
   
-  <script src="js/i18n.js?v=10.8"></script>
-  <script src="js/utils.js?v=10.8"></script>
-  <script src="js/store.js?v=10.8"></script>
-  <script src="js/calendar.js?v=10.8"></script>
-  <script src="js/render.js?v=10.8"></script>
-  <script src="js/ui.js?v=10.8"></script>
-  <script src="js/template.js?v=10.8"></script>
-  <script src="js/main.js?v=10.8"></script>
+  <!-- PDF Generation Libraries (Local) -->
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/jspdf.umd.min.js"></script>
+  
+  <script src="js/i18n.js?v=11.0"></script>
+  <script src="js/utils.js?v=11.0"></script>
+  <script src="js/store.js?v=11.0"></script>
+  <script src="js/calendar.js?v=11.0"></script>
+  <script src="js/render.js?v=11.0"></script>
+  <script src="js/ui.js?v=11.0"></script>
+  <script src="js/template.js?v=11.0"></script>
+  <script src="js/main.js?v=11.0"></script>
 </head>
 <body data-theme="default">
 
@@ -166,6 +168,11 @@
           <div class="settings-card">
               <h3 data-i18n="heading_data">💾 Data</h3>
               <button class="btn btn-primary" onclick="window.selectSaveLocation()" data-i18n="btn_change_folder">Change Storage Folder</button>
+          </div>
+          <div class="settings-card">
+              <h3>📁 PDF Archive</h3>
+              <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Printed menus are automatically saved to: <code>archive/menus/</code></p>
+              <button class="btn btn-secondary" onclick="window.openArchiveFolder()" data-i18n="btn_open_archive">Open Archive Folder</button>
           </div>
       </div>
 
