@@ -1868,6 +1868,13 @@
                     size: A4;
                     margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
                 }
+                
+                * {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }
+                
                 body {
                     font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
                     margin: 0;
@@ -1894,6 +1901,17 @@
                     opacity: ${settings.background.opacity};
                     z-index: -1;
                     pointer-events: none;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }
+                
+                @media print {
+                    body::before {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                    }
                 }
                 ` : ''}
                 .print-header {
