@@ -1,0 +1,141 @@
+/**
+ * Template Builder Styles
+ * Extracted from inline styles for better maintainability
+ */
+
+/* Section Labels */
+.tb-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.tb-label-sm {
+    font-size: 0.75rem;
+}
+
+.tb-label-xs {
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Input Fields */
+.tb-input {
+    font-size: 0.85rem;
+    height: 32px;
+}
+
+.tb-input-sm {
+    font-size: 0.75rem;
+    height: 28px;
+}
+
+.tb-input-xs {
+    font-size: 0.7rem;
+    height: 24px;
+}
+
+/* Grid Layouts */
+.tb-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.tb-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.tb-grid-3-sm {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+}
+
+/* Margins */
+.tb-mb-6 {
+    margin-bottom: 6px;
+}
+
+.tb-mb-8 {
+    margin-bottom: 8px;
+}
+
+.tb-mt-8 {
+    margin-top: 8px;
+}
+
+.tb-mt-4 {
+    margin-top: 4px;
+}
+
+/* Color Inputs */
+.tb-color {
+    width: 100%;
+    height: 28px;
+}
+
+.tb-color-lg {
+    width: 100%;
+    height: 32px;
+}
+
+/* Range Sliders */
+.tb-range {
+    width: 100%;
+}
+
+.tb-range-value {
+    font-size: 0.7rem;
+}
+
+/* Section Container */
+.tb-section-box {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: #fafafa;
+}
+
+/* Margin Grid Container */
+.tb-margin-grid {
+    margin-bottom: 8px;
+}
+
+.tb-margin-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* Slot Visibility Headers */
+.tb-slot-header {
+    margin: 0 0 6px 0;
+    color: #fd7e14;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+/* Slot Label */
+.tb-slot-label {
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.tb-slot-label-last {
+    font-size: 0.75rem;
+    display: block;
+}
+
+/* Textarea */
+.tb-textarea {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
