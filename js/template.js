@@ -8,7 +8,7 @@
  * FIXED: Print now converts background images to base64 BEFORE opening window
  * FIXED: Using IMG tag instead of CSS background for reliable printing
  * FIXED: Two-column layout for preset templates
- * FIXED: A4 page fitting - 5 days now fit on single page
+ * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
  */
 
 (function(window) {
@@ -1480,13 +1480,15 @@
             ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 10px;">${daysHtml}</div>`
             : daysHtml;
 
-        // ADJUST STYLING FOR TWO-COLUMN LAYOUTS TO FIT A4
-        const pageMargin = isDoubleColumn ? '8mm' : '10mm';
-        const headerFontSize = isDoubleColumn ? '14pt' : settings.header.fontSize;
-        const dateRangeFontSize = isDoubleColumn ? '7pt' : '9pt';
-        const footerFontSize = isDoubleColumn ? '6pt' : settings.footer.fontSize;
-        const dayBlockPadding = isDoubleColumn ? '6px 8px' : '10px 12px';
-        const dayBlockMargin = isDoubleColumn ? '3px' : '6px';
+        // ALL TEMPLATES NOW USE COMPACT A4 SIZING FOR 5-DAY FIT
+        const pageMargin = '8mm';
+        const headerFontSize = '14pt';
+        const dateRangeFontSize = '7pt';
+        const footerFontSize = '6pt';
+        const dayBlockPadding = '6px 8px';
+        const dayBlockMargin = '3px';
+        const baseFontSize = '7.5pt';
+        const baseLineHeight = '1.15';
 
         const html = `
             <html>
@@ -1502,8 +1504,8 @@
                         padding: 0;
                         margin: 0;
                         background: #fff;
-                        font-size: ${isDoubleColumn ? '7.5pt' : '9pt'};
-                        line-height: 1.15;
+                        font-size: ${baseFontSize};
+                        line-height: ${baseLineHeight};
                         position: relative;
                     }
                     .print-day-block { 
@@ -1525,9 +1527,9 @@
                 ${backgroundImageTag}
                 <div style="position: relative; z-index: 1;">
                     <h1 style="color:${settings.header.color}; font-size:${headerFontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 1px 0; line-height:1.1;">${settings.header.text}</h1>
-                    <p style="text-align:center; color:#7f8c8d; margin:0 0 ${isDoubleColumn ? '4px' : '8px'} 0; font-size:${dateRangeFontSize}; line-height:1;">${dateRange}</p>
+                    <p style="text-align:center; color:#7f8c8d; margin:0 0 4px 0; font-size:${dateRangeFontSize}; line-height:1;">${dateRange}</p>
                     ${daysContainer}
-                    <div style="margin-top:${isDoubleColumn ? '3px' : '6px'}; border-top:1px solid #eee; padding-top:${isDoubleColumn ? '2px' : '4px'}; text-align:center; color:${settings.footer.color}; font-size:${footerFontSize}; line-height:1;">${settings.footer.text}</div>
+                    <div style="margin-top:3px; border-top:1px solid #eee; padding-top:2px; text-align:center; color:${settings.footer.color}; font-size:${footerFontSize}; line-height:1;">${settings.footer.text}</div>
                 </div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
