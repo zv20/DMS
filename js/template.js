@@ -948,13 +948,122 @@
         },
 
         applyTemplateToUI: async function(template) {
-            // Apply all settings from template...
+            // Apply all settings from template
             this.setVal('headerText', template.header?.text || 'Weekly Menu');
             this.setVal('headerColor', template.header?.color || '#fd7e14');
             this.setVal('headerSize', template.header?.fontSize || '20pt');
             this.setVal('headerWeight', template.header?.fontWeight || 'bold');
+            this.setVal('headerFont', template.header?.fontFamily || 'Segoe UI');
+            this.setVal('headerAlign', template.header?.textAlign || 'center');
+            this.setVal('headerTransform', template.header?.textTransform || 'none');
             
-            // ... (rest of existing applyTemplateToUI code)
+            // Date range
+            this.setChecked('showDateRange', template.dateRange?.show !== false);
+            this.setVal('dateRangeSize', template.dateRange?.fontSize || '9pt');
+            this.setVal('dateRangeColor', template.dateRange?.color || '#7f8c8d');
+            this.setVal('dateRangeWeight', template.dateRange?.fontWeight || 'normal');
+            
+            // Day block
+            this.setVal('dayBg', template.dayBlock?.bg || '#ffffff');
+            this.setVal('dayRadius', parseInt(template.dayBlock?.borderRadius) || 8);
+            this.setVal('dayBorderWidth', parseInt(template.dayBlock?.borderWidth) || 2);
+            this.setVal('dayBorderColor', template.dayBlock?.borderColor || '#e0e0e0');
+            this.setVal('dayBorderStyle', template.dayBlock?.borderStyle || 'solid');
+            this.setVal('dayBorderSides', template.dayBlock?.borderSides || 'all');
+            this.setVal('dayShadow', template.dayBlock?.shadow || 'none');
+            
+            // Layout
+            this.setVal('marginTop', template.layout?.marginTop || 8);
+            this.setVal('marginBottom', template.layout?.marginBottom || 8);
+            this.setVal('marginLeft', template.layout?.marginLeft || 8);
+            this.setVal('marginRight', template.layout?.marginRight || 8);
+            this.setVal('dayBlockSpacing', template.layout?.dayBlockSpacing || 6);
+            this.setVal('columnGap', template.layout?.columnGap || 10);
+            
+            // Other sections
+            this.setVal('dayNameSize', template.dayName?.fontSize || '11pt');
+            this.setVal('dayNameColor', template.dayName?.color || '#2c3e50');
+            this.setVal('dayNameWeight', template.dayName?.fontWeight || '600');
+            
+            this.setVal('mealTitleSize', template.mealTitle?.fontSize || '9pt');
+            this.setVal('mealTitleColor', template.mealTitle?.color || '#333333');
+            this.setVal('mealTitleWeight', template.mealTitle?.fontWeight || '600');
+            
+            this.setVal('mealNumberStyle', template.mealNumbering?.style || 'numbers');
+            this.setVal('mealNumberPrefix', template.mealNumbering?.prefix || '');
+            this.setVal('mealNumberSuffix', template.mealNumbering?.suffix || '.');
+            
+            this.setVal('ingredientsSize', template.ingredients?.fontSize || '7.5pt');
+            this.setVal('ingredientsColor', template.ingredients?.color || '#555555');
+            this.setVal('ingredientsStyle', template.ingredients?.fontStyle || 'italic');
+            
+            this.setChecked('headerSepEnabled', template.separators?.headerEnabled || false);
+            this.setVal('headerSepStyle', template.separators?.headerStyle || 'solid');
+            this.setVal('headerSepColor', template.separators?.headerColor || '#ddd');
+            this.setVal('headerSepWidth', template.separators?.headerWidth || 1);
+            this.setChecked('footerSepEnabled', template.separators?.footerEnabled !== false);
+            this.setVal('footerSepStyle', template.separators?.footerStyle || 'solid');
+            this.setVal('footerSepColor', template.separators?.footerColor || '#eee');
+            this.setVal('footerSepWidth', template.separators?.footerWidth || 1);
+            
+            this.setVal('footerSize', template.footer?.fontSize || '8pt');
+            this.setVal('footerColor', template.footer?.color || '#7f8c8d');
+            this.setVal('footerText', template.footer?.text || '');
+            
+            // Background
+            const bgInput = document.getElementById('backgroundImage');
+            if (template.backgroundImage) {
+                const imageUrl = await window.loadImageFile(template.backgroundImage);
+                if (bgInput) {
+                    bgInput.value = imageUrl || '';
+                    bgInput.dataset.filename = template.backgroundImage;
+                }
+            } else {
+                if (bgInput) {
+                    bgInput.value = '';
+                    bgInput.dataset.filename = '';
+                }
+            }
+            
+            this.setVal('bgOpacity', template.background?.opacity || 1);
+            this.setVal('bgPosition', template.background?.position || 'center');
+            this.setVal('bgOverlay', template.background?.overlay || '#000000');
+            this.setVal('bgOverlayOpacity', template.background?.overlayOpacity || 0);
+            
+            // Branding
+            const logoInput = document.getElementById('logoImage');
+            if (template.branding?.logo) {
+                const logoUrl = await window.loadImageFile(template.branding.logo);
+                if (logoInput) {
+                    logoInput.value = logoUrl || '';
+                    logoInput.dataset.filename = template.branding.logo;
+                }
+            } else {
+                if (logoInput) {
+                    logoInput.value = '';
+                    logoInput.dataset.filename = '';
+                }
+            }
+            this.setVal('logoPosition', template.branding?.logoPosition || 'top-right');
+            this.setVal('logoWidth', template.branding?.logoWidth || 80);
+            this.setVal('logoHeight', template.branding?.logoHeight || 80);
+            
+            // Page border
+            this.setChecked('pageBorderEnabled', template.pageBorder?.enabled || false);
+            this.setVal('pageBorderWidth', template.pageBorder?.width || 1);
+            this.setVal('pageBorderColor', template.pageBorder?.color || '#000000');
+            this.setVal('pageBorderStyle', template.pageBorder?.style || 'solid');
+            this.setVal('pageBorderRadius', template.pageBorder?.radius || 0);
+            
+            // Slot settings
+            for (let i = 1; i <= 4; i++) {
+                const slot = template.slotSettings?.[`slot${i}`];
+                this.setChecked(`slot${i}_showIngredients`, slot?.showIngredients !== false);
+                this.setChecked(`slot${i}_showCalories`, slot?.showCalories !== false);
+                this.setChecked(`slot${i}_showAllergens`, slot?.showAllergens !== false);
+            }
+            
+            this.refreshPreview();
         },
 
         bindUI: function() {
@@ -1401,16 +1510,101 @@
             return weeks;
         },
 
+        // ✅ COMPLETE IMPLEMENTATION #1: Render Template Library
         renderTemplateLibrary: function() {
-            console.log('🎨 Rendering template library (stub - implement full version)');
+            console.log('🎨 Rendering template library');
+            const container = document.getElementById('savedTemplatesLibrary');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (!window.savedTemplates || window.savedTemplates.length === 0) {
+                container.innerHTML = `<p style="color: #6c757d; font-size: 0.85rem; text-align: center; padding: 10px;">${window.t('text_no_templates')}</p>`;
+                return;
+            }
+
+            window.savedTemplates.forEach(tmpl => {
+                const card = document.createElement('div');
+                card.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 10px; margin-bottom: 8px; background: white; transition: all 0.2s;';
+                
+                if (activeTemplateId === tmpl.id) {
+                    card.style.borderColor = 'var(--color-primary)';
+                    card.style.background = '#fff8f0';
+                }
+
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+
+                const title = document.createElement('div');
+                title.style.cssText = 'font-weight: 600; font-size: 0.9rem; color: #333;';
+                title.textContent = tmpl.name || window.t('template_unnamed');
+
+                const actions = document.createElement('div');
+                actions.style.cssText = 'display: flex; gap: 4px;';
+
+                const loadBtn = document.createElement('button');
+                loadBtn.className = 'btn btn-small btn-primary';
+                loadBtn.textContent = window.t('btn_load');
+                loadBtn.style.fontSize = '0.75rem';
+                loadBtn.style.height = '26px';
+                loadBtn.style.padding = '0 8px';
+                loadBtn.onclick = () => this.loadTemplate(tmpl.id);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'icon-btn delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.style.width = '26px';
+                deleteBtn.style.height = '26px';
+                deleteBtn.onclick = () => this.deleteTemplate(tmpl.id);
+
+                actions.appendChild(loadBtn);
+                actions.appendChild(deleteBtn);
+                header.appendChild(title);
+                header.appendChild(actions);
+                card.appendChild(header);
+                container.appendChild(card);
+            });
         },
 
+        // ✅ COMPLETE IMPLEMENTATION #2: Load Template
         loadTemplate: async function(id) {
             console.log('📂 Loading template:', id);
+            const template = window.savedTemplates.find(t => t.id === id);
+            if (!template) {
+                alert(window.t('alert_template_not_found'));
+                return;
+            }
+
+            await this.applyTemplateToUI(template);
+            activeTemplateId = id;
+            localStorage.setItem('activeTemplateId', id);
+            this.renderTemplateLibrary();
+            this.refreshPreview();
+            alert(`${window.t('alert_template_loaded')}: "${template.name}"`);
         },
 
+        // ✅ COMPLETE IMPLEMENTATION #3: Delete Template
         deleteTemplate: function(id) {
             console.log('🗑️ Deleting template:', id);
+            const template = window.savedTemplates.find(t => t.id === id);
+            if (!template) return;
+
+            if (!confirm(`${window.t('alert_delete_template')} "${template.name}"?`)) {
+                return;
+            }
+
+            window.savedTemplates = window.savedTemplates.filter(t => t.id !== id);
+            window.saveSettings();
+
+            if (activeTemplateId === id) {
+                activeTemplateId = 'default';
+                localStorage.setItem('activeTemplateId', 'default');
+                this.applyDefaultSettings();
+                this.refreshPreview();
+            }
+
+            this.renderTemplateLibrary();
+            alert(window.t('alert_template_deleted'));
         }
     };
 
@@ -1432,12 +1626,345 @@
         alert(window.t('alert_template_saved'));
     };
 
+    // ✅ COMPLETE IMPLEMENTATION #4: Open Template Picker Modal
     window.openTemplatePicker = function() {
-        console.log('🖨️ Opening template picker (stub)');
+        console.log('🖨️ Opening template picker');
+        
+        const weeks = TemplateManager.getWeeksWithMeals();
+        if (weeks.length === 0) {
+            alert(window.t('alert_no_weeks'));
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'templatePickerModal';
+        modal.className = 'modal-overlay';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+
+        const content = document.createElement('div');
+        content.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+
+        content.innerHTML = `
+            <h3 style="margin: 0 0 15px 0; color: var(--color-primary);">📄 ${window.t('title_select_week')}</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">${window.t('text_select_week_prompt')}</p>
+            <div id="weekSelectList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="cancelPrintBtn" class="btn btn-secondary">${window.t('btn_cancel')}</button>
+                <button id="confirmPrintBtn" class="btn btn-primary" disabled>${window.t('btn_print')}</button>
+            </div>
+        `;
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        const weekList = document.getElementById('weekSelectList');
+        weeks.forEach((week, index) => {
+            const weekCard = document.createElement('div');
+            weekCard.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;';
+            weekCard.innerHTML = `
+                <div style="font-weight: 600; font-size: 0.9rem; color: #333;">${week.label}</div>
+                <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">${week.dateCount} ${window.t('text_days_with_meals')}</div>
+            `;
+
+            weekCard.onclick = () => {
+                document.querySelectorAll('#weekSelectList > div').forEach(card => {
+                    card.style.borderColor = '#dee2e6';
+                    card.style.background = 'white';
+                });
+                weekCard.style.borderColor = 'var(--color-primary)';
+                weekCard.style.background = '#fff8f0';
+                selectedWeekStart = week.weekStart;
+                document.getElementById('confirmPrintBtn').disabled = false;
+            };
+
+            weekList.appendChild(weekCard);
+
+            if (index === 0) {
+                weekCard.click();
+            }
+        });
+
+        document.getElementById('cancelPrintBtn').onclick = () => {
+            modal.remove();
+        };
+
+        document.getElementById('confirmPrintBtn').onclick = () => {
+            modal.remove();
+            if (selectedWeekStart) {
+                window.printWithTemplate(activeTemplateId || 'default');
+            }
+        };
+
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
     };
 
-    window.printWithTemplate = async function(id) {
-        console.log('🖨️ Printing with template:', id);
+    // ✅ COMPLETE IMPLEMENTATION #5: Print with Template (Full PDF Generation)
+    window.printWithTemplate = async function(templateId) {
+        console.log('🖨️ Printing with template:', templateId, 'for week:', selectedWeekStart);
+
+        if (!selectedWeekStart) {
+            alert(window.t('alert_no_week_selected'));
+            return;
+        }
+
+        let settings;
+        if (templateId === 'default') {
+            settings = TemplateManager.getSettingsFromUI();
+        } else {
+            const template = window.savedTemplates.find(t => t.id === templateId);
+            settings = template || TemplateManager.getSettingsFromUI();
+        }
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert(window.t('alert_popup_blocked'));
+            return;
+        }
+
+        // Generate full HTML with all template settings
+        let html = `
+        <!DOCTYPE html>
+        <html lang="${window.getCurrentLanguage()}">
+        <head>
+            <meta charset="UTF-8">
+            <title>${settings.header.text} - ${TemplateManager.getDateRangeText(0, 4, selectedWeekStart)}</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
+                }
+                body {
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    ${settings.pageBorder.enabled ? `
+                        border: ${settings.pageBorder.width}px ${settings.pageBorder.style} ${settings.pageBorder.color};
+                        border-radius: ${settings.pageBorder.radius}px;
+                        padding: 10mm;
+                    ` : ''}
+                }
+                ${settings.backgroundImage ? `
+                body::before {
+                    content: '';
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-image: url('${await window.loadImageFile(settings.backgroundImage) || settings.backgroundImage}');
+                    background-size: cover;
+                    background-position: ${settings.background.position};
+                    background-repeat: no-repeat;
+                    opacity: ${settings.background.opacity};
+                    z-index: -1;
+                }
+                ` : ''}
+                .print-header {
+                    text-align: ${settings.header.textAlign};
+                    margin-bottom: 12px;
+                    ${settings.separators.headerEnabled ? `border-bottom: ${settings.separators.headerWidth}px ${settings.separators.headerStyle} ${settings.separators.headerColor}; padding-bottom: 6px;` : ''}
+                }
+                .print-header h1 {
+                    color: ${settings.header.color};
+                    font-size: ${settings.header.fontSize};
+                    font-weight: ${settings.header.fontWeight};
+                    font-family: ${settings.header.fontFamily};
+                    text-transform: ${settings.header.textTransform};
+                    margin: 0 0 4px 0;
+                }
+                .date-range {
+                    font-size: ${settings.dateRange.fontSize};
+                    color: ${settings.dateRange.color};
+                    font-weight: ${settings.dateRange.fontWeight};
+                    text-align: ${settings.dateRange.textAlign};
+                    margin: 0;
+                }
+                .print-day-block {
+                    background: ${settings.dayBlock.bg};
+                    border-radius: ${settings.dayBlock.borderRadius};
+                    padding: 10px 12px;
+                    margin-bottom: ${settings.layout.dayBlockSpacing}px;
+                    ${(() => {
+                        const w = settings.dayBlock.borderWidth;
+                        const s = settings.dayBlock.borderStyle;
+                        const c = settings.dayBlock.borderColor;
+                        const sides = settings.dayBlock.borderSides;
+                        if (sides === 'none') return '';
+                        if (sides === 'all') return `border: ${w}px ${s} ${c};`;
+                        let css = '';
+                        if (sides === 'top') css = `border-top: ${w}px ${s} ${c};`;
+                        else if (sides === 'bottom') css = `border-bottom: ${w}px ${s} ${c};`;
+                        else if (sides === 'left-right') css = `border-left: ${w}px ${s} ${c}; border-right: ${w}px ${s} ${c};`;
+                        else if (sides === 'top-bottom') css = `border-top: ${w}px ${s} ${c}; border-bottom: ${w}px ${s} ${c};`;
+                        return css;
+                    })()}
+                    ${(() => {
+                        switch(settings.dayBlock.shadow) {
+                            case 'light': return 'box-shadow: 0 1px 3px rgba(0,0,0,0.12);';
+                            case 'medium': return 'box-shadow: 0 2px 6px rgba(0,0,0,0.16);';
+                            case 'strong': return 'box-shadow: 0 4px 12px rgba(0,0,0,0.24);';
+                            default: return '';
+                        }
+                    })()}
+                    page-break-inside: avoid;
+                }
+                .day-name {
+                    font-size: ${settings.dayName.fontSize};
+                    color: ${settings.dayName.color};
+                    font-weight: ${settings.dayName.fontWeight};
+                    border-bottom: 1px solid #d0d0d0;
+                    margin-bottom: 6px;
+                    padding-bottom: 3px;
+                }
+                .meal-item {
+                    margin-bottom: 5px;
+                }
+                .meal-title {
+                    font-size: ${settings.mealTitle.fontSize};
+                    color: ${settings.mealTitle.color};
+                    font-weight: ${settings.mealTitle.fontWeight};
+                    margin-bottom: 2px;
+                }
+                .ingredients {
+                    font-size: ${settings.ingredients.fontSize};
+                    color: ${settings.ingredients.color};
+                    font-style: ${settings.ingredients.fontStyle};
+                    margin-left: 10px;
+                }
+                .allergen-highlight {
+                    color: #dc3545;
+                    text-decoration: underline;
+                    font-weight: 500;
+                }
+                .print-footer {
+                    text-align: center;
+                    font-size: ${settings.footer.fontSize};
+                    color: ${settings.footer.color};
+                    margin-top: 12px;
+                    ${settings.separators.footerEnabled ? `border-top: ${settings.separators.footerWidth}px ${settings.separators.footerStyle} ${settings.separators.footerColor}; padding-top: 6px;` : ''}
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-header">
+                <h1>${settings.header.text}</h1>
+                ${settings.dateRange.show ? `<p class="date-range">${TemplateManager.getDateRangeText(0, 4, selectedWeekStart)}</p>` : ''}
+            </div>
+        `;
+
+        // Generate day blocks
+        for (let i = 0; i < 5; i++) {
+            const day = new Date(selectedWeekStart);
+            day.setDate(selectedWeekStart.getDate() + i);
+            const dateStr = day.toISOString().split('T')[0];
+            const dayMenu = window.currentMenu[dateStr];
+            const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
+
+            html += `<div class="print-day-block">`;
+            html += `<div class="day-name">${dayName}</div>`;
+
+            if (dayMenu && TemplateManager.hasMeals(dayMenu)) {
+                const slots = [
+                    { id: 'slot1', type: 'soup' },
+                    { id: 'slot2', type: 'main' },
+                    { id: 'slot3', type: 'dessert' },
+                    { id: 'slot4', type: 'other' }
+                ];
+
+                let mealIndex = 1;
+                slots.forEach(slotConfig => {
+                    const slot = dayMenu[slotConfig.id];
+                    if (slot && slot.recipe) {
+                        const recipe = window.recipes.find(r => r.id === slot.recipe);
+                        if (recipe) {
+                            const slotSettings = settings.slotSettings[slotConfig.id];
+                            const lang = window.getCurrentLanguage();
+                            const isBulgarian = lang === 'bg';
+
+                            // Generate meal number
+                            let numberStr = '';
+                            const style = settings.mealNumbering.style;
+                            const prefix = settings.mealNumbering.prefix;
+                            const suffix = settings.mealNumbering.suffix;
+                            
+                            switch(style) {
+                                case 'numbers': numberStr = `${prefix}${mealIndex}${suffix}`; break;
+                                case 'bullets': numberStr = '•'; break;
+                                case 'letters': numberStr = `${prefix}${String.fromCharCode(64 + mealIndex)}${suffix}`; break;
+                                case 'roman': 
+                                    const romans = ['I', 'II', 'III', 'IV'];
+                                    numberStr = `${prefix}${romans[mealIndex - 1]}${suffix}`;
+                                    break;
+                                case 'none': numberStr = ''; break;
+                            }
+
+                            html += `<div class="meal-item">`;
+                            html += `<div class="meal-title">${numberStr} ${recipe.name}`;
+                            
+                            let metadata = [];
+                            if (recipe.portionSize) {
+                                const portionUnit = isBulgarian ? 'гр' : 'g';
+                                const portionValue = recipe.portionSize.replace(/g|gr|гр/gi, '').trim();
+                                metadata.push(`${portionValue}${portionUnit}`);
+                            }
+                            if (slotSettings.showCalories && recipe.calories) {
+                                const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
+                                metadata.push(`${recipe.calories} ${calorieUnit}`);
+                            }
+                            if (metadata.length) {
+                                html += ` <span style="font-weight:normal; color:#666; font-size:8pt;">(${metadata.join(', ')})</span>`;
+                            }
+                            html += `</div>`;
+
+                            if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
+                                const recipeAllergens = window.getRecipeAllergens(recipe);
+                                const allergenIds = new Set(recipeAllergens.map(a => a.id));
+                                
+                                const ingredientsList = recipe.ingredients.map(ing => {
+                                    const fullIng = window.ingredients.find(i => i.id === ing.id);
+                                    if (!fullIng) return '';
+                                    
+                                    const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
+                                    
+                                    if (slotSettings.showAllergens && hasAllergen) {
+                                        return `<span class="allergen-highlight">${fullIng.name}</span>`;
+                                    }
+                                    return fullIng.name;
+                                }).filter(n => n).join(', ');
+                                
+                                if (ingredientsList) {
+                                    html += `<div class="ingredients"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
+                                }
+                            }
+
+                            html += `</div>`;
+                            mealIndex++;
+                        }
+                    }
+                });
+            } else {
+                html += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; margin:0;">${window.t('empty_day')}</p>`;
+            }
+
+            html += `</div>`;
+        }
+
+        html += `
+            <div class="print-footer">${settings.footer.text}</div>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        };
     };
 
     window.getWeekStart = window.getWeekStart || function(date) {
