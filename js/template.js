@@ -9,7 +9,8 @@
  * FIXED: Using IMG tag instead of CSS background for reliable printing
  * FIXED: Two-column layout for preset templates
  * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
- * FIXED: Auto-centering for 2-3 day menus
+ * NEW: PDF generation with html2canvas + jsPDF - no print dialog!
+ * NEW: Auto-save PDFs to archive/menus/ folder
  */
 
 (function(window) {
@@ -1400,6 +1401,7 @@
         grid.appendChild(templateSection);
     };
 
+    // NEW PDF GENERATION FUNCTION - Replaces old print dialog!
     window.printWithTemplate = async function(id) {
         let settings;
         if (id === 'current') {
@@ -1407,7 +1409,6 @@
         } else {
             settings = window.savedTemplates.find(t => t.id === id);
             if (!settings) {
-                // Check if it's a preset
                 settings = TemplateManager.presets.find(p => p.id === id);
             }
         }
@@ -1419,35 +1420,26 @@
 
         const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
 
-        // CONVERT BACKGROUND IMAGE TO BASE64 AND CREATE IMG TAG
+        // Convert background image to base64
         console.log('🖼️ Converting background image to base64...');
         let backgroundImageTag = '';
         if (settings.backgroundImage) {
-            // If it's not a URL, it's a filename - convert to base64
             if (!settings.backgroundImage.startsWith('http')) {
                 try {
-                    console.log('📁 Loading file:', settings.backgroundImage);
                     const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
                     if (base64) {
-                        console.log('✅ Base64 conversion successful, length:', base64.length);
-                        // Create an IMG tag positioned as background
                         backgroundImageTag = `<img src="${base64}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none;">`;
-                    } else {
-                        console.warn('⚠️ Base64 conversion returned null');
                     }
                 } catch (error) {
-                    console.error('❌ Failed to convert background image for printing:', error);
+                    console.error('❌ Failed to convert background image:', error);
                 }
             } else {
-                // It's a regular URL, use as-is
                 backgroundImageTag = `<img src="${settings.backgroundImage}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none;">`;
             }
         }
 
         const lang = window.getCurrentLanguage();
         const isBulgarian = lang === 'bg';
-        
-        // Check if this template uses two-column layout
         const isDoubleColumn = settings.isDoubleColumn || false;
         
         let daysHtml = '';
@@ -1476,89 +1468,103 @@
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
 
-        // Determine if days should be centered (2-3 days only)
         const shouldCenter = daysWithMeals.length >= 2 && daysWithMeals.length <= 3;
 
-        // Wrap days in appropriate container
         let daysContainer;
         if (shouldCenter) {
-            // Center days on page
-            daysContainer = `<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                <div style="width: ${isDoubleColumn ? '100%' : '70%'}; max-width: 600px;">
-                    ${daysHtml}
-                </div>
-            </div>`;
+            daysContainer = `<div style="display: flex; flex-direction: column; align-items: center; width: 100%;"><div style="width: ${isDoubleColumn ? '100%' : '70%'}; max-width: 600px;">${daysHtml}</div></div>`;
         } else if (isDoubleColumn) {
-            // Use two-column grid
             daysContainer = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 10px;">${daysHtml}</div>`;
         } else {
-            // Standard single column
             daysContainer = daysHtml;
         }
-
-        // ALL TEMPLATES NOW USE COMPACT A4 SIZING FOR 5-DAY FIT
-        const pageMargin = '8mm';
-        const headerFontSize = '14pt';
-        const dateRangeFontSize = '7pt';
-        const footerFontSize = '6pt';
-        const dayBlockPadding = '6px 8px';
-        const dayBlockMargin = '3px';
-        const baseFontSize = '7.5pt';
-        const baseLineHeight = '1.15';
 
         const html = `
             <html>
             <head>
                 <title>${window.t('modal_print_menu')}</title>
                 <style>
-                    @page { 
-                        size: A4;
-                        margin: ${pageMargin};
-                    }
                     body { 
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                        padding: 0;
+                        padding: 8mm;
                         margin: 0;
                         background: #fff;
-                        font-size: ${baseFontSize};
-                        line-height: ${baseLineHeight};
+                        font-size: 7.5pt;
+                        line-height: 1.15;
                         position: relative;
+                        width: 210mm;
+                        min-height: 297mm;
                     }
                     .print-day-block { 
                         page-break-inside: avoid;
                         position: relative;
                         z-index: 1;
-                        padding: ${dayBlockPadding} !important;
-                        margin-bottom: ${dayBlockMargin} !important;
-                    }
-                    @media print { 
-                        body { 
-                            padding: 0; 
-                            margin: 0;
-                        }
+                        padding: 6px 8px !important;
+                        margin-bottom: 3px !important;
                     }
                 </style>
             </head>
             <body>
                 ${backgroundImageTag}
                 <div style="position: relative; z-index: 1;">
-                    <h1 style="color:${settings.header.color}; font-size:${headerFontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 1px 0; line-height:1.1;">${settings.header.text}</h1>
-                    <p style="text-align:center; color:#7f8c8d; margin:0 0 4px 0; font-size:${dateRangeFontSize}; line-height:1;">${dateRange}</p>
+                    <h1 style="color:${settings.header.color}; font-size:14pt; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 1px 0; line-height:1.1;">${settings.header.text}</h1>
+                    <p style="text-align:center; color:#7f8c8d; margin:0 0 4px 0; font-size:7pt; line-height:1;">${dateRange}</p>
                     ${daysContainer}
-                    <div style="margin-top:3px; border-top:1px solid #eee; padding-top:2px; text-align:center; color:${settings.footer.color}; font-size:${footerFontSize}; line-height:1;">${settings.footer.text}</div>
+                    <div style="margin-top:3px; border-top:1px solid #eee; padding-top:2px; text-align:center; color:${settings.footer.color}; font-size:6pt; line-height:1;">${settings.footer.text}</div>
                 </div>
-                <script>window.onload = () => { window.print(); };</script>
             </body>
             </html>
         `;
 
-        console.log('🖨️ Opening print window...');
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(html);
-        printWindow.document.close();
-        document.getElementById('templatePickerModal').style.display = 'none';
-        
-        selectedWeekStart = null;
+        // Create hidden container for PDF generation
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        container.style.cssText = 'position:absolute; left:-9999px; width:210mm; min-height:297mm; background:white;';
+        document.body.appendChild(container);
+
+        try {
+            console.log('📸 Capturing HTML as image...');
+            const canvas = await html2canvas(container.querySelector('body'), {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            });
+
+            console.log('📄 Generating PDF...');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+
+            // Generate filename
+            const timestamp = new Date().toISOString().split('T')[0];
+            const templateName = (settings.name || 'menu').replace(/[^a-z0-9]/gi, '_');
+            const filename = `menu_${timestamp}_${templateName}.pdf`;
+
+            // Save PDF
+            console.log('💾 Saving PDF...');
+            const pdfBlob = pdf.output('blob');
+            const pdfUrl = await window.savePDFToArchive(pdfBlob, filename);
+
+            if (pdfUrl) {
+                // Open PDF in new tab
+                window.open(pdfUrl, '_blank');
+                alert(`✅ Menu saved to archive/menus/${filename}`);
+            } else {
+                alert('❌ Failed to save PDF. Please try again.');
+            }
+
+        } catch (error) {
+            console.error('❌ PDF generation error:', error);
+            alert('Failed to generate PDF: ' + error.message);
+        } finally {
+            // Cleanup
+            document.body.removeChild(container);
+            document.getElementById('templatePickerModal').style.display = 'none';
+            selectedWeekStart = null;
+        }
     };
 
     window.getWeekStart = window.getWeekStart || function(date) {
