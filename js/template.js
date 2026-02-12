@@ -10,7 +10,7 @@
  * FIXED: Two-column layout for preset templates
  * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
  * NEW: Browser print dialog + background PDF archiving with date-based naming
- * NEW: Print window auto-closes after print dialog is dismissed
+ * NEW: Hidden print window + toast notification for clean UX
  */
 
 (function(window) {
@@ -1323,6 +1323,51 @@
         }
     };
 
+    // Toast Notification Helper
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: ${type === 'success' ? '#28a745' : '#dc3545'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        toast.textContent = message;
+        
+        // Add animation keyframes
+        if (!document.getElementById('toast-animations')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animations';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(400px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     // Global Functions
     window.saveCurrentTemplate = function() {
         const name = prompt(window.t('alert_template_name_prompt'), window.t('template_my_template') + ' ' + (window.savedTemplates.length + 1));
@@ -1418,7 +1463,7 @@
         grid.appendChild(templateSection);
     };
 
-    // RESTORED: Traditional browser print dialog + background PDF archiving + AUTO-CLOSE
+    // HIDDEN PRINT WINDOW + TOAST NOTIFICATION
     window.printWithTemplate = async function(id) {
         let settings;
         if (id === 'current') {
@@ -1532,30 +1577,30 @@
                     ${daysContainer}
                     <div style="margin-top:3px; border-top:1px solid #eee; padding-top:2px; text-align:center; color:${settings.footer.color}; font-size:6pt; line-height:1;">${settings.footer.text}</div>
                 </div>
-                <script>
-                    // Auto-close window after print dialog is dismissed
-                    window.onafterprint = function() {
-                        window.close();
-                    };
-                </script>
             </body>
             </html>
         `;
 
-        // Open in new tab for printing
-        const printWindow = window.open('', '_blank');
+        // Open window OFF-SCREEN (hidden from user)
+        const printWindow = window.open('', '_blank', 'width=1,height=1,left=-1000,top=-1000');
         printWindow.document.write(html);
         printWindow.document.close();
         
-        // Wait for images to load before triggering print dialog
+        // Wait for images to load, then print and immediately close
         printWindow.onload = () => {
             printWindow.focus();
             printWindow.print();
             
-            // Generate filename: Feb3-Feb7_2026.pdf
-            const filename = TemplateManager.getDateRangeFilename(weekStart);
+            // Close window immediately (print dialog stays open as it's modal)
+            setTimeout(() => {
+                printWindow.close();
+            }, 100);
             
-            // Background PDF archiving (async - doesn't block print dialog)
+            // Show success notification on main page
+            const filename = TemplateManager.getDateRangeFilename(weekStart);
+            showToast(`✅ ${window.t('text_menu_sent_to_printer') || 'Menu sent to printer!'}`);
+            
+            // Background PDF archiving (async)
             savePDFInBackground(html, filename);
         };
         
