@@ -8,6 +8,7 @@
  * FIXED: Print now converts background images to base64 BEFORE opening window
  * FIXED: Using IMG tag instead of CSS background for reliable printing
  * FIXED: Two-column layout for preset templates
+ * FIXED: A4 page fitting - 5 days now fit on single page
  */
 
 (function(window) {
@@ -1476,8 +1477,16 @@
 
         // Wrap days in grid container if template uses two columns
         const daysContainer = isDoubleColumn 
-            ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; column-gap: 15px;">${daysHtml}</div>`
+            ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 10px;">${daysHtml}</div>`
             : daysHtml;
+
+        // ADJUST STYLING FOR TWO-COLUMN LAYOUTS TO FIT A4
+        const pageMargin = isDoubleColumn ? '8mm' : '10mm';
+        const headerFontSize = isDoubleColumn ? '14pt' : settings.header.fontSize;
+        const dateRangeFontSize = isDoubleColumn ? '7pt' : '9pt';
+        const footerFontSize = isDoubleColumn ? '6pt' : settings.footer.fontSize;
+        const dayBlockPadding = isDoubleColumn ? '6px 8px' : '10px 12px';
+        const dayBlockMargin = isDoubleColumn ? '3px' : '6px';
 
         const html = `
             <html>
@@ -1486,21 +1495,23 @@
                 <style>
                     @page { 
                         size: A4;
-                        margin: 10mm;
+                        margin: ${pageMargin};
                     }
                     body { 
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                         padding: 0;
                         margin: 0;
                         background: #fff;
-                        font-size: 9pt;
-                        line-height: 1.2;
+                        font-size: ${isDoubleColumn ? '7.5pt' : '9pt'};
+                        line-height: 1.15;
                         position: relative;
                     }
                     .print-day-block { 
                         page-break-inside: avoid;
                         position: relative;
                         z-index: 1;
+                        padding: ${dayBlockPadding} !important;
+                        margin-bottom: ${dayBlockMargin} !important;
                     }
                     @media print { 
                         body { 
@@ -1513,10 +1524,10 @@
             <body>
                 ${backgroundImageTag}
                 <div style="position: relative; z-index: 1;">
-                    <h1 style="color:${settings.header.color}; font-size:${settings.header.fontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 2px 0; line-height:1.2;">${settings.header.text}</h1>
-                    <p style="text-align:center; color:#7f8c8d; margin:0 0 8px 0; font-size:9pt; line-height:1;">${dateRange}</p>
+                    <h1 style="color:${settings.header.color}; font-size:${headerFontSize}; font-weight:${settings.header.fontWeight}; text-align:center; margin:0 0 1px 0; line-height:1.1;">${settings.header.text}</h1>
+                    <p style="text-align:center; color:#7f8c8d; margin:0 0 ${isDoubleColumn ? '4px' : '8px'} 0; font-size:${dateRangeFontSize}; line-height:1;">${dateRange}</p>
                     ${daysContainer}
-                    <div style="margin-top:6px; border-top:1px solid #eee; padding-top:4px; text-align:center; color:${settings.footer.color}; font-size:${settings.footer.fontSize}; line-height:1;">${settings.footer.text}</div>
+                    <div style="margin-top:${isDoubleColumn ? '3px' : '6px'}; border-top:1px solid #eee; padding-top:${isDoubleColumn ? '2px' : '4px'}; text-align:center; color:${settings.footer.color}; font-size:${footerFontSize}; line-height:1;">${settings.footer.text}</div>
                 </div>
                 <script>window.onload = () => { window.print(); };</script>
             </body>
