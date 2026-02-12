@@ -2,6 +2,7 @@
  * Advanced Template Manager
  * 20+ customization features with full rendering support
  * Refactored to use centralized constants
+ * FIXED: Background images now print using IMG tag instead of CSS
  */
 
 (function(window) {
@@ -342,7 +343,7 @@
                     `
                 },
                 
-                // Additional sections...
+                // Additional sections..
                 {
                     id: 'dayName',
                     titleKey: 'Day Name',
@@ -1838,17 +1839,22 @@
             return;
         }
 
-        // Load and validate background image
-        let bgImageUrl = '';
+        // 🖼️ CONVERT BACKGROUND IMAGE TO BASE64 AND CREATE IMG TAG (Not CSS!)
+        console.log('🖼️ Converting background image for printing...');
+        let backgroundImageTag = '';
         if (settings.backgroundImage) {
-            console.log('🖼️ Loading background image:', settings.backgroundImage);
-            bgImageUrl = await window.loadImageFile(settings.backgroundImage);
-            console.log('🖼️ Background image loaded, length:', bgImageUrl ? bgImageUrl.length : 0);
-            
-            // Verify it's a valid data URL
-            if (bgImageUrl && !bgImageUrl.startsWith('data:')) {
-                console.warn('⚠️ Background image is not a data URL');
-                bgImageUrl = '';
+            try {
+                console.log('📁 Loading file:', settings.backgroundImage);
+                const base64 = await window.convertImageFileToBase64(settings.backgroundImage);
+                if (base64) {
+                    console.log('✅ Base64 conversion successful, length:', base64.length);
+                    // Create an IMG tag positioned as background - this WILL print!
+                    backgroundImageTag = `<img src="${base64}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: ${settings.background.opacity}; z-index: -1; pointer-events: none;">`;
+                } else {
+                    console.warn('⚠️ Base64 conversion returned null');
+                }
+            } catch (error) {
+                console.error('❌ Failed to convert background image:', error);
             }
         }
 
@@ -1869,12 +1875,6 @@
                     margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
                 }
                 
-                * {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                    color-adjust: exact !important;
-                }
-                
                 body {
                     font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
                     margin: 0;
@@ -1886,34 +1886,7 @@
                         padding: 10mm;
                     ` : ''}
                 }
-                ${bgImageUrl ? `
-                body::before {
-                    content: '';
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-image: url("${bgImageUrl}");
-                    background-size: cover;
-                    background-position: ${settings.background.position};
-                    background-repeat: no-repeat;
-                    opacity: ${settings.background.opacity};
-                    z-index: -1;
-                    pointer-events: none;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                    color-adjust: exact !important;
-                }
                 
-                @media print {
-                    body::before {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        color-adjust: exact !important;
-                    }
-                }
-                ` : ''}
                 .print-header {
                     text-align: ${settings.header.textAlign};
                     margin-bottom: 12px;
@@ -2000,10 +1973,12 @@
             </style>
         </head>
         <body>
-            <div class="print-header">
-                <h1>${settings.header.text}</h1>
-                ${settings.dateRange.show ? `<p class="date-range">${TemplateManager.getDateRangeText(0, 4, selectedWeekStart)}</p>` : ''}
-            </div>
+            ${backgroundImageTag}
+            <div style="position: relative; z-index: 1;">
+                <div class="print-header">
+                    <h1>${settings.header.text}</h1>
+                    ${settings.dateRange.show ? `<p class="date-range">${TemplateManager.getDateRangeText(0, 4, selectedWeekStart)}</p>` : ''}
+                </div>
         `;
 
         for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
@@ -2088,7 +2063,8 @@
         }
 
         html += `
-            <div class="print-footer">${settings.footer.text}</div>
+                <div class="print-footer">${settings.footer.text}</div>
+            </div>
         </body>
         </html>
         `;
