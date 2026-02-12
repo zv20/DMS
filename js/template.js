@@ -10,6 +10,7 @@
  * FIXED: Two-column layout for preset templates
  * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
  * NEW: Browser print dialog + background PDF archiving with date-based naming
+ * NEW: Print window auto-closes after print dialog is dismissed
  */
 
 (function(window) {
@@ -1417,7 +1418,7 @@
         grid.appendChild(templateSection);
     };
 
-    // RESTORED: Traditional browser print dialog + background PDF archiving
+    // RESTORED: Traditional browser print dialog + background PDF archiving + AUTO-CLOSE
     window.printWithTemplate = async function(id) {
         let settings;
         if (id === 'current') {
@@ -1531,6 +1532,12 @@
                     ${daysContainer}
                     <div style="margin-top:3px; border-top:1px solid #eee; padding-top:2px; text-align:center; color:${settings.footer.color}; font-size:6pt; line-height:1;">${settings.footer.text}</div>
                 </div>
+                <script>
+                    // Auto-close window after print dialog is dismissed
+                    window.onafterprint = function() {
+                        window.close();
+                    };
+                </script>
             </body>
             </html>
         `;
