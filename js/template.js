@@ -9,6 +9,7 @@
  * FIXED: Using IMG tag instead of CSS background for reliable printing
  * FIXED: Two-column layout for preset templates
  * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
+ * FIXED: Auto-centering for 2-3 day menus
  */
 
 (function(window) {
@@ -1475,10 +1476,25 @@
         const lastDay = daysWithMeals[daysWithMeals.length - 1];
         const dateRange = TemplateManager.getDateRangeText(firstDay, lastDay, weekStart);
 
-        // Wrap days in grid container if template uses two columns
-        const daysContainer = isDoubleColumn 
-            ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 10px;">${daysHtml}</div>`
-            : daysHtml;
+        // Determine if days should be centered (2-3 days only)
+        const shouldCenter = daysWithMeals.length >= 2 && daysWithMeals.length <= 3;
+
+        // Wrap days in appropriate container
+        let daysContainer;
+        if (shouldCenter) {
+            // Center days on page
+            daysContainer = `<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <div style="width: ${isDoubleColumn ? '100%' : '70%'}; max-width: 600px;">
+                    ${daysHtml}
+                </div>
+            </div>`;
+        } else if (isDoubleColumn) {
+            // Use two-column grid
+            daysContainer = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 10px;">${daysHtml}</div>`;
+        } else {
+            // Standard single column
+            daysContainer = daysHtml;
+        }
 
         // ALL TEMPLATES NOW USE COMPACT A4 SIZING FOR 5-DAY FIT
         const pageMargin = '8mm';
