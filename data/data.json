@@ -769,6 +769,16 @@
         }
       ],
       "manualAllergens": []
+    },
+    {
+      "id": "rcp_1770916017759",
+      "name": "Пилешка супа с фиде",
+      "category": "soup",
+      "portionSize": "",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
