@@ -1838,9 +1838,18 @@
             return;
         }
 
+        // Load and validate background image
         let bgImageUrl = '';
         if (settings.backgroundImage) {
+            console.log('🖼️ Loading background image:', settings.backgroundImage);
             bgImageUrl = await window.loadImageFile(settings.backgroundImage);
+            console.log('🖼️ Background image loaded, length:', bgImageUrl ? bgImageUrl.length : 0);
+            
+            // Verify it's a valid data URL
+            if (bgImageUrl && !bgImageUrl.startsWith('data:')) {
+                console.warn('⚠️ Background image is not a data URL');
+                bgImageUrl = '';
+            }
         }
 
         let logoUrl = '';
@@ -1863,6 +1872,7 @@
                     font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
                     margin: 0;
                     padding: 0;
+                    position: relative;
                     ${settings.pageBorder.enabled ? `
                         border: ${settings.pageBorder.width}px ${settings.pageBorder.style} ${settings.pageBorder.color};
                         border-radius: ${settings.pageBorder.radius}px;
@@ -1877,17 +1887,20 @@
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background-image: url('${bgImageUrl}');
+                    background-image: url("${bgImageUrl}");
                     background-size: cover;
                     background-position: ${settings.background.position};
                     background-repeat: no-repeat;
                     opacity: ${settings.background.opacity};
                     z-index: -1;
+                    pointer-events: none;
                 }
                 ` : ''}
                 .print-header {
                     text-align: ${settings.header.textAlign};
                     margin-bottom: 12px;
+                    position: relative;
+                    z-index: 1;
                     ${settings.separators.headerEnabled ? `border-bottom: ${settings.separators.headerWidth}px ${settings.separators.headerStyle} ${settings.separators.headerColor}; padding-bottom: 6px;` : ''}
                 }
                 .print-header h1 {
@@ -1910,6 +1923,8 @@
                     border-radius: ${settings.dayBlock.borderRadius};
                     padding: 10px 12px;
                     margin-bottom: ${settings.layout.dayBlockSpacing}px;
+                    position: relative;
+                    z-index: 1;
                     ${(() => {
                         const w = settings.dayBlock.borderWidth;
                         const s = settings.dayBlock.borderStyle;
@@ -1960,6 +1975,8 @@
                     font-size: ${settings.footer.fontSize};
                     color: ${settings.footer.color};
                     margin-top: 12px;
+                    position: relative;
+                    z-index: 1;
                     ${settings.separators.footerEnabled ? `border-top: ${settings.separators.footerWidth}px ${settings.separators.footerStyle} ${settings.separators.footerColor}; padding-top: 6px;` : ''}
                 }
             </style>
