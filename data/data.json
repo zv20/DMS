@@ -779,6 +779,32 @@
       "instructions": "",
       "ingredients": [],
       "manualAllergens": []
+    },
+    {
+      "id": "rcp_1770926215425",
+      "name": "Супа Пиле",
+      "category": "soup",
+      "portionSize": "200",
+      "calories": 220,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_001"
+        },
+        {
+          "id": "ing_007"
+        },
+        {
+          "id": "ing_015"
+        },
+        {
+          "id": "ing_006"
+        },
+        {
+          "id": "ing_1770926238876"
+        }
+      ],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
@@ -1068,6 +1094,13 @@
       "id": "ing_050",
       "name": "Chickpeas",
       "allergens": []
+    },
+    {
+      "id": "ing_1770926238876",
+      "name": "кисело мляко ",
+      "allergens": [
+        "alg_1770926228307"
+      ]
     }
   ],
   "allergens": [
@@ -1154,6 +1187,11 @@
       "name": "Molluscs",
       "color": "#ff922b",
       "isSystem": true
+    },
+    {
+      "id": "alg_1770926228307",
+      "name": "мл.кисело",
+      "color": "#3498db"
     }
   ]
 }
