@@ -1,9 +1,12 @@
 /**
  * Advanced Template Manager
  * 20+ customization features with full rendering support
+ * Refactored to use centralized constants
  */
 
 (function(window) {
+    const CONST = window.DMS_CONSTANTS;
+    
     let activeTemplateId = null;
     let selectedWeekStart = null;
     let presetsExpanded = false;
@@ -56,10 +59,10 @@
 
             this.presets.forEach(preset => {
                 const card = document.createElement('div');
-                card.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 10px; margin-bottom: 8px; background: white; cursor: pointer; transition: all 0.2s;';
+                card.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: ${CONST.UI.CARD_PADDING}px; margin-bottom: ${CONST.UI.CARD_MARGIN}px; background: white; cursor: pointer; transition: all 0.2s;`;
                 
                 card.onmouseenter = () => card.style.borderColor = 'var(--color-primary)';
-                card.onmouseleave = () => card.style.borderColor = '#dee2e6';
+                card.onmouseleave = () => card.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
 
                 const title = document.createElement('div');
                 title.style.cssText = 'font-weight: 600; font-size: 0.9rem; color: #333;';
@@ -95,19 +98,19 @@
                             <div class="tb-grid-2">
                                 <div>
                                     <label class="tb-label-sm">Top</label>
-                                    <input type="number" id="marginTop" value="8" min="0" max="30" class="form-control tb-input-sm">
+                                    <input type="number" id="marginTop" value="${CONST.LAYOUT.DEFAULT_MARGIN_TOP}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_MARGIN}" class="form-control tb-input-sm">
                                 </div>
                                 <div>
                                     <label class="tb-label-sm">Bottom</label>
-                                    <input type="number" id="marginBottom" value="8" min="0" max="30" class="form-control tb-input-sm">
+                                    <input type="number" id="marginBottom" value="${CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_MARGIN}" class="form-control tb-input-sm">
                                 </div>
                                 <div>
                                     <label class="tb-label-sm">Left</label>
-                                    <input type="number" id="marginLeft" value="8" min="0" max="30" class="form-control tb-input-sm">
+                                    <input type="number" id="marginLeft" value="${CONST.LAYOUT.DEFAULT_MARGIN_LEFT}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_MARGIN}" class="form-control tb-input-sm">
                                 </div>
                                 <div>
                                     <label class="tb-label-sm">Right</label>
-                                    <input type="number" id="marginRight" value="8" min="0" max="30" class="form-control tb-input-sm">
+                                    <input type="number" id="marginRight" value="${CONST.LAYOUT.DEFAULT_MARGIN_RIGHT}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_MARGIN}" class="form-control tb-input-sm">
                                 </div>
                             </div>
                         </div>
@@ -115,11 +118,11 @@
                         <div class="tb-grid-2 tb-mb-8">
                             <div>
                                 <label class="tb-label">Day Block Spacing (px)</label>
-                                <input type="number" id="dayBlockSpacing" value="6" min="0" max="20" class="form-control tb-input-sm">
+                                <input type="number" id="dayBlockSpacing" value="${CONST.LAYOUT.DEFAULT_DAY_BLOCK_SPACING}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_SPACING}" class="form-control tb-input-sm">
                             </div>
                             <div>
                                 <label class="tb-label">Column Gap (px)</label>
-                                <input type="number" id="columnGap" value="10" min="0" max="30" class="form-control tb-input-sm">
+                                <input type="number" id="columnGap" value="${CONST.LAYOUT.DEFAULT_COLUMN_GAP}" min="${CONST.LAYOUT.MIN_MARGIN}" max="${CONST.LAYOUT.MAX_COLUMN_GAP}" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -136,7 +139,7 @@
                         <div class="tb-grid-3 tb-mt-8">
                             <div>
                                 <label class="tb-label-sm">Opacity</label>
-                                <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="1" class="tb-range">
+                                <input type="range" id="bgOpacity" min="${CONST.BACKGROUND.MIN_OPACITY}" max="${CONST.BACKGROUND.MAX_OPACITY}" step="${CONST.BACKGROUND.OPACITY_STEP}" value="${CONST.BACKGROUND.DEFAULT_OPACITY}" class="tb-range">
                                 <small id="bgOpacityValue" class="tb-range-value">100%</small>
                             </div>
                             <div>
@@ -151,12 +154,12 @@
                             </div>
                             <div>
                                 <label class="tb-label-sm">Overlay</label>
-                                <input type="color" id="bgOverlay" value="#000000" class="tb-color">
+                                <input type="color" id="bgOverlay" value="${CONST.COLORS.DEFAULT_OVERLAY}" class="tb-color">
                             </div>
                         </div>
                         <div class="tb-mt-4">
                             <label class="tb-label-sm">Overlay Opacity</label>
-                            <input type="range" id="bgOverlayOpacity" min="0" max="1" step="0.1" value="0" class="tb-range">
+                            <input type="range" id="bgOverlayOpacity" min="${CONST.BACKGROUND.MIN_OPACITY}" max="${CONST.BACKGROUND.MAX_OPACITY}" step="${CONST.BACKGROUND.OPACITY_STEP}" value="${CONST.BACKGROUND.DEFAULT_OVERLAY_OPACITY}" class="tb-range">
                             <small id="bgOverlayOpacityValue" class="tb-range-value">0%</small>
                         </div>
                     `
@@ -182,11 +185,11 @@
                             </div>
                             <div>
                                 <label class="tb-label-sm">Width (px)</label>
-                                <input type="number" id="logoWidth" value="80" min="20" max="200" class="form-control tb-input-sm">
+                                <input type="number" id="logoWidth" value="${CONST.BRANDING.DEFAULT_LOGO_WIDTH}" min="${CONST.BRANDING.MIN_LOGO_SIZE}" max="${CONST.BRANDING.MAX_LOGO_SIZE}" class="form-control tb-input-sm">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Height (px)</label>
-                                <input type="number" id="logoHeight" value="80" min="20" max="200" class="form-control tb-input-sm">
+                                <input type="number" id="logoHeight" value="${CONST.BRANDING.DEFAULT_LOGO_HEIGHT}" min="${CONST.BRANDING.MIN_LOGO_SIZE}" max="${CONST.BRANDING.MAX_LOGO_SIZE}" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -198,23 +201,23 @@
                     titleKey: 'Header',
                     html: `
                         <label class="tb-label">${window.t('label_title')}</label>
-                        <input type="text" id="headerText" class="form-control tb-input tb-mb-8" value="Weekly Menu">
+                        <input type="text" id="headerText" class="form-control tb-input tb-mb-8" value="${CONST.TEXT.DEFAULT_HEADER}">
                         
                         <div class="tb-grid-3 tb-mb-8">
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="headerColor" value="#fd7e14" class="tb-color">
+                                <input type="color" id="headerColor" value="${CONST.COLORS.HEADER_COLOR}" class="tb-color">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="headerSize" class="form-control tb-input-sm" value="20pt">
+                                <input type="text" id="headerSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.HEADER_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Weight</label>
                                 <select id="headerWeight" class="form-control tb-input-sm">
                                     <option value="normal">Normal</option>
                                     <option value="600">Semibold</option>
-                                    <option value="bold" selected>Bold</option>
+                                    <option value="${CONST.TYPOGRAPHY.HEADER_FONT_WEIGHT}" selected>Bold</option>
                                 </select>
                             </div>
                         </div>
@@ -223,7 +226,7 @@
                             <div>
                                 <label class="tb-label-sm">Font</label>
                                 <select id="headerFont" class="form-control tb-input-sm">
-                                    <option value="Segoe UI" selected>Segoe UI</option>
+                                    <option value="${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}" selected>Segoe UI</option>
                                     <option value="Arial">Arial</option>
                                     <option value="Georgia">Georgia</option>
                                     <option value="Times New Roman">Times</option>
@@ -234,14 +237,14 @@
                                 <label class="tb-label-sm">Align</label>
                                 <select id="headerAlign" class="form-control tb-input-sm">
                                     <option value="left">Left</option>
-                                    <option value="center" selected>Center</option>
+                                    <option value="${CONST.TYPOGRAPHY.HEADER_ALIGN}" selected>Center</option>
                                     <option value="right">Right</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="tb-label-sm">Transform</label>
                                 <select id="headerTransform" class="form-control tb-input-sm">
-                                    <option value="none" selected>None</option>
+                                    <option value="${CONST.TYPOGRAPHY.HEADER_TRANSFORM}" selected>None</option>
                                     <option value="uppercase">UPPERCASE</option>
                                     <option value="lowercase">lowercase</option>
                                     <option value="capitalize">Capitalize</option>
@@ -263,16 +266,16 @@
                         <div class="tb-grid-3">
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="dateRangeSize" class="form-control tb-input-sm" value="9pt">
+                                <input type="text" id="dateRangeSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.DATE_RANGE_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="dateRangeColor" value="#7f8c8d" class="tb-color">
+                                <input type="color" id="dateRangeColor" value="${CONST.COLORS.DATE_RANGE_COLOR}" class="tb-color">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Weight</label>
                                 <select id="dateRangeWeight" class="form-control tb-input-sm">
-                                    <option value="normal" selected>Normal</option>
+                                    <option value="${CONST.TYPOGRAPHY.DATE_RANGE_FONT_WEIGHT}" selected>Normal</option>
                                     <option value="600">Semibold</option>
                                     <option value="bold">Bold</option>
                                 </select>
@@ -287,21 +290,21 @@
                     titleKey: 'Day Block',
                     html: `
                         <label class="tb-label">Background Color</label>
-                        <input type="color" id="dayBg" value="#ffffff" class="tb-color-lg tb-mb-8">
+                        <input type="color" id="dayBg" value="${CONST.COLORS.WHITE}" class="tb-color-lg tb-mb-8">
                         
                         <div class="tb-grid-3 tb-mb-8">
                             <div>
                                 <label class="tb-label-sm">Border Radius</label>
-                                <input type="number" id="dayRadius" value="8" class="form-control tb-input-sm">
+                                <input type="number" id="dayRadius" value="${CONST.BORDERS.DAY_BORDER_RADIUS}" class="form-control tb-input-sm">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Border Width</label>
-                                <input type="number" id="dayBorderWidth" value="2" min="0" max="10" class="form-control tb-input-sm">
+                                <input type="number" id="dayBorderWidth" value="${CONST.BORDERS.DEFAULT_WIDTH}" min="${CONST.BORDERS.MIN_WIDTH}" max="${CONST.BORDERS.MAX_WIDTH}" class="form-control tb-input-sm">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Border Style</label>
                                 <select id="dayBorderStyle" class="form-control tb-input-sm">
-                                    <option value="solid">Solid</option>
+                                    <option value="${CONST.BORDERS.DEFAULT_STYLE}">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                     <option value="double">Double</option>
@@ -312,27 +315,27 @@
                         <div class="tb-mb-8">
                             <label class="tb-label-sm">Border Sides</label>
                             <select id="dayBorderSides" class="form-control tb-input-sm">
-                                <option value="all" selected>All</option>
-                                <option value="top">Top Only</option>
-                                <option value="bottom">Bottom Only</option>
-                                <option value="left-right">Left & Right</option>
-                                <option value="top-bottom">Top & Bottom</option>
-                                <option value="none">None</option>
+                                <option value="${CONST.BORDER_SIDES.ALL}" selected>All</option>
+                                <option value="${CONST.BORDER_SIDES.TOP}">Top Only</option>
+                                <option value="${CONST.BORDER_SIDES.BOTTOM}">Bottom Only</option>
+                                <option value="${CONST.BORDER_SIDES.LEFT_RIGHT}">Left & Right</option>
+                                <option value="${CONST.BORDER_SIDES.TOP_BOTTOM}">Top & Bottom</option>
+                                <option value="${CONST.BORDER_SIDES.NONE}">None</option>
                             </select>
                         </div>
                         
                         <div class="tb-grid-2">
                             <div>
                                 <label class="tb-label-sm">Border Color</label>
-                                <input type="color" id="dayBorderColor" value="#e0e0e0" class="tb-color">
+                                <input type="color" id="dayBorderColor" value="${CONST.COLORS.DAY_BORDER_COLOR}" class="tb-color">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Shadow</label>
                                 <select id="dayShadow" class="form-control tb-input-sm">
-                                    <option value="none" selected>None</option>
-                                    <option value="light">Light</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="strong">Strong</option>
+                                    <option value="${CONST.SHADOW_OPTIONS.NONE}" selected>None</option>
+                                    <option value="${CONST.SHADOW_OPTIONS.LIGHT}">Light</option>
+                                    <option value="${CONST.SHADOW_OPTIONS.MEDIUM}">Medium</option>
+                                    <option value="${CONST.SHADOW_OPTIONS.STRONG}">Strong</option>
                                 </select>
                             </div>
                         </div>
@@ -347,18 +350,18 @@
                         <div class="tb-grid-2 tb-mb-6">
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="dayNameSize" class="form-control tb-input-sm" value="11pt">
+                                <input type="text" id="dayNameSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.DAY_NAME_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="dayNameColor" value="#2c3e50" class="tb-color">
+                                <input type="color" id="dayNameColor" value="${CONST.COLORS.DAY_NAME_COLOR}" class="tb-color">
                             </div>
                         </div>
                         <label class="tb-label-sm">Weight</label>
                         <select id="dayNameWeight" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
                             <option value="500">Medium</option>
-                            <option value="600" selected>Semibold</option>
+                            <option value="${CONST.TYPOGRAPHY.DAY_NAME_FONT_WEIGHT}" selected>Semibold</option>
                             <option value="bold">Bold</option>
                         </select>
                     `
@@ -370,18 +373,18 @@
                         <div class="tb-grid-2 tb-mb-6">
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="mealTitleSize" class="form-control tb-input-sm" value="9pt">
+                                <input type="text" id="mealTitleSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.MEAL_TITLE_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="mealTitleColor" value="#333333" class="tb-color">
+                                <input type="color" id="mealTitleColor" value="${CONST.COLORS.MEAL_TITLE_COLOR}" class="tb-color">
                             </div>
                         </div>
                         <label class="tb-label-sm">Weight</label>
                         <select id="mealTitleWeight" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
                             <option value="500">Medium</option>
-                            <option value="600" selected>Semibold</option>
+                            <option value="${CONST.TYPOGRAPHY.MEAL_TITLE_FONT_WEIGHT}" selected>Semibold</option>
                             <option value="bold">Bold</option>
                         </select>
                     `
@@ -394,11 +397,11 @@
                     html: `
                         <label class="tb-label tb-mb-6">Numbering Style</label>
                         <select id="mealNumberStyle" class="form-control tb-input tb-mb-8">
-                            <option value="numbers" selected>Numbers (1. 2. 3. 4.)</option>
-                            <option value="bullets">Bullets (•)</option>
-                            <option value="letters">Letters (A. B. C. D.)</option>
-                            <option value="roman">Roman (I. II. III. IV.)</option>
-                            <option value="none">None</option>
+                            <option value="${CONST.NUMBERING.NUMBERS}" selected>Numbers (1. 2. 3. 4.)</option>
+                            <option value="${CONST.NUMBERING.BULLETS}">Bullets (•)</option>
+                            <option value="${CONST.NUMBERING.LETTERS}">Letters (A. B. C. D.)</option>
+                            <option value="${CONST.NUMBERING.ROMAN}">Roman (I. II. III. IV.)</option>
+                            <option value="${CONST.NUMBERING.NONE}">None</option>
                         </select>
                         
                         <div class="tb-grid-2">
@@ -408,7 +411,7 @@
                             </div>
                             <div>
                                 <label class="tb-label-sm">Suffix</label>
-                                <input type="text" id="mealNumberSuffix" class="form-control tb-input-sm" value="." placeholder="e.g., )">
+                                <input type="text" id="mealNumberSuffix" class="form-control tb-input-sm" value="${CONST.TEXT.DEFAULT_MEAL_NUMBER_SUFFIX}" placeholder="e.g., )">
                             </div>
                         </div>
                     `
@@ -425,12 +428,12 @@
                             </label>
                             <div class="tb-grid-3-sm">
                                 <select id="headerSepStyle" class="form-control tb-input-xs">
-                                    <option value="solid">Solid</option>
+                                    <option value="${CONST.BORDERS.DEFAULT_STYLE}">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                 </select>
-                                <input type="color" id="headerSepColor" value="#ddd" class="tb-color-xs">
-                                <input type="number" id="headerSepWidth" value="1" min="1" max="5" class="form-control tb-input-xs">
+                                <input type="color" id="headerSepColor" value="${CONST.COLORS.HEADER_SEPARATOR_COLOR}" class="tb-color-xs">
+                                <input type="number" id="headerSepWidth" value="${CONST.BORDERS.SEPARATOR_WIDTH}" min="${CONST.BORDERS.MIN_SEPARATOR_WIDTH}" max="${CONST.BORDERS.MAX_SEPARATOR_WIDTH}" class="form-control tb-input-xs">
                             </div>
                         </div>
                         
@@ -440,12 +443,12 @@
                             </label>
                             <div class="tb-grid-3-sm">
                                 <select id="footerSepStyle" class="form-control tb-input-xs">
-                                    <option value="solid">Solid</option>
+                                    <option value="${CONST.BORDERS.DEFAULT_STYLE}">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                 </select>
-                                <input type="color" id="footerSepColor" value="#eee" class="tb-color-xs">
-                                <input type="number" id="footerSepWidth" value="1" min="1" max="5" class="form-control tb-input-xs">
+                                <input type="color" id="footerSepColor" value="${CONST.COLORS.FOOTER_SEPARATOR_COLOR}" class="tb-color-xs">
+                                <input type="number" id="footerSepWidth" value="${CONST.BORDERS.SEPARATOR_WIDTH}" min="${CONST.BORDERS.MIN_SEPARATOR_WIDTH}" max="${CONST.BORDERS.MAX_SEPARATOR_WIDTH}" class="form-control tb-input-xs">
                             </div>
                         </div>
                     `
@@ -458,17 +461,17 @@
                         <div class="tb-grid-2 tb-mb-6">
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="ingredientsSize" class="form-control tb-input-sm" value="7.5pt">
+                                <input type="text" id="ingredientsSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.INGREDIENTS_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="ingredientsColor" value="#555555" class="tb-color">
+                                <input type="color" id="ingredientsColor" value="${CONST.COLORS.INGREDIENTS_COLOR}" class="tb-color">
                             </div>
                         </div>
                         <label class="tb-label-sm">Style</label>
                         <select id="ingredientsStyle" class="form-control tb-input-sm">
                             <option value="normal">Normal</option>
-                            <option value="italic" selected>Italic</option>
+                            <option value="${CONST.TYPOGRAPHY.INGREDIENTS_FONT_STYLE}" selected>Italic</option>
                         </select>
                     `
                 },
@@ -515,11 +518,11 @@
                         <div class="tb-grid-2 tb-mb-6">
                             <div>
                                 <label class="tb-label-sm">Width</label>
-                                <input type="number" id="pageBorderWidth" value="1" min="1" max="10" class="form-control tb-input-sm">
+                                <input type="number" id="pageBorderWidth" value="${CONST.BORDERS.PAGE_BORDER_WIDTH}" min="${CONST.BORDERS.MIN_SEPARATOR_WIDTH}" max="${CONST.BORDERS.MAX_WIDTH}" class="form-control tb-input-sm">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="pageBorderColor" value="#000000" class="tb-color">
+                                <input type="color" id="pageBorderColor" value="${CONST.COLORS.BLACK}" class="tb-color">
                             </div>
                         </div>
                         
@@ -527,7 +530,7 @@
                             <div>
                                 <label class="tb-label-sm">Style</label>
                                 <select id="pageBorderStyle" class="form-control tb-input-sm">
-                                    <option value="solid">Solid</option>
+                                    <option value="${CONST.BORDERS.DEFAULT_STYLE}">Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                     <option value="double">Double</option>
@@ -535,7 +538,7 @@
                             </div>
                             <div>
                                 <label class="tb-label-sm">Corner Radius</label>
-                                <input type="number" id="pageBorderRadius" value="0" min="0" max="20" class="form-control tb-input-sm">
+                                <input type="number" id="pageBorderRadius" value="${CONST.BORDERS.PAGE_BORDER_RADIUS}" min="0" max="20" class="form-control tb-input-sm">
                             </div>
                         </div>
                     `
@@ -546,16 +549,16 @@
                     titleKey: 'Footer',
                     html: `
                         <label class="tb-label">Text</label>
-                        <textarea id="footerText" class="form-control tb-textarea" rows="2" placeholder="Additional notes...">Prepared with care by KitchenPro</textarea>
+                        <textarea id="footerText" class="form-control tb-textarea" rows="2" placeholder="Additional notes...">${CONST.TEXT.DEFAULT_FOOTER}</textarea>
                         
                         <div class="tb-grid-2">
                             <div>
                                 <label class="tb-label-sm">Size</label>
-                                <input type="text" id="footerSize" class="form-control tb-input-sm" value="8pt">
+                                <input type="text" id="footerSize" class="form-control tb-input-sm" value="${CONST.TYPOGRAPHY.FOOTER_FONT_SIZE}">
                             </div>
                             <div>
                                 <label class="tb-label-sm">Color</label>
-                                <input type="color" id="footerColor" value="#7f8c8d" class="tb-color">
+                                <input type="color" id="footerColor" value="${CONST.COLORS.FOOTER_COLOR}" class="tb-color">
                             </div>
                         </div>
                     `
@@ -573,21 +576,21 @@
 
         createCollapsibleSection: function(section) {
             const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'margin-bottom: 10px;';
+            wrapper.style.cssText = `margin-bottom: ${CONST.UI.SECTION_MARGIN}px;`;
             
             const header = document.createElement('div');
             header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--color-background); border-radius: 5px; cursor: pointer; transition: background 0.2s;';
-            header.onmouseenter = () => header.style.background = '#e9ecef';
+            header.onmouseenter = () => header.style.background = CONST.COLORS.HOVER_BACKGROUND;
             header.onmouseleave = () => header.style.background = 'var(--color-background)';
             
             const title = document.createElement('h4');
             title.textContent = section.titleKey;
-            title.style.cssText = 'margin: 0; color: #495057; font-size: 9.5pt; font-weight: 600;';
+            title.style.cssText = `margin: 0; color: #495057; font-size: ${CONST.TYPOGRAPHY.SECTION_TITLE_SIZE}; font-weight: 600;`;
             
             const toggleIcon = document.createElement('span');
             const isExpanded = sectionStates[section.id] !== undefined ? sectionStates[section.id] : false;
             toggleIcon.textContent = isExpanded ? '▼' : '▶';
-            toggleIcon.style.cssText = 'font-size: 9pt; color: #6c757d;';
+            toggleIcon.style.cssText = `font-size: 9pt; color: ${CONST.COLORS.TEXT_MUTED};`;
             
             header.appendChild(title);
             header.appendChild(toggleIcon);
@@ -596,10 +599,10 @@
             const content = document.createElement('div');
             content.innerHTML = section.html;
             content.style.cssText = `
-                max-height: ${isExpanded ? '2000px' : '0'};
+                max-height: ${isExpanded ? CONST.TIMING.COLLAPSIBLE_MAX_HEIGHT + 'px' : '0'};
                 overflow: hidden;
-                transition: max-height 0.3s ease;
-                padding: ${isExpanded ? '10px' : '0'} 10px;
+                transition: max-height ${CONST.TIMING.ANIMATION_DURATION}ms ease;
+                padding: ${isExpanded ? CONST.UI.COLLAPSIBLE_PADDING : '0'}px ${CONST.UI.COLLAPSIBLE_PADDING}px;
             `;
             
             wrapper.appendChild(content);
@@ -607,8 +610,8 @@
             header.onclick = () => {
                 sectionStates[section.id] = !sectionStates[section.id];
                 toggleIcon.textContent = sectionStates[section.id] ? '▼' : '▶';
-                content.style.maxHeight = sectionStates[section.id] ? '2000px' : '0';
-                content.style.padding = sectionStates[section.id] ? '10px' : '0 10px';
+                content.style.maxHeight = sectionStates[section.id] ? CONST.TIMING.COLLAPSIBLE_MAX_HEIGHT + 'px' : '0';
+                content.style.padding = sectionStates[section.id] ? `${CONST.UI.COLLAPSIBLE_PADDING}px` : `0 ${CONST.UI.COLLAPSIBLE_PADDING}px`;
             };
             
             return wrapper;
@@ -645,7 +648,7 @@
             uploadBtn.style.marginTop = '6px';
             uploadBtn.style.width = '100%';
             uploadBtn.style.fontSize = '0.8rem';
-            uploadBtn.style.height = '32px';
+            uploadBtn.style.height = CONST.UI.BUTTON_HEIGHT_SM + 'px';
             
             uploadBtn.onclick = () => this.uploadBackgroundImage();
             bgInput.parentNode.insertBefore(uploadBtn, bgInput.nextSibling);
@@ -664,7 +667,7 @@
             uploadBtn.style.marginTop = '6px';
             uploadBtn.style.width = '100%';
             uploadBtn.style.fontSize = '0.8rem';
-            uploadBtn.style.height = '32px';
+            uploadBtn.style.height = CONST.UI.BUTTON_HEIGHT_SM + 'px';
             
             uploadBtn.onclick = () => this.uploadLogo();
             logoInput.parentNode.insertBefore(uploadBtn, logoInput.nextSibling);
@@ -680,7 +683,7 @@
                 if (!file) return;
                 
                 const timestamp = Date.now();
-                const filename = `logo_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const filename = `${CONST.FILE.LOGO_PREFIX}${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 
                 const filepath = await window.saveImageFile(file, filename);
                 if (!filepath) {
@@ -721,7 +724,7 @@
                 if (!file) return;
                 
                 const timestamp = Date.now();
-                const filename = `bg_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const filename = `${CONST.FILE.BACKGROUND_PREFIX}${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 
                 const filepath = await window.saveImageFile(file, filename);
                 if (!filepath) {
@@ -761,10 +764,10 @@
             
             const gallery = document.createElement('div');
             gallery.id = 'uploadsGallery';
-            gallery.style.cssText = 'margin-top: 8px; padding: 6px; background: #f8f9fa; border-radius: 4px;';
+            gallery.style.cssText = `margin-top: 8px; padding: 6px; background: ${CONST.COLORS.BACKGROUND_COLOR}; border-radius: 4px;`;
             
             if (!window.imageUploads || window.imageUploads.length === 0) {
-                gallery.innerHTML = `<small style="color: #6c757d; font-size: 0.75rem;">${window.t('text_no_uploads')}</small>`;
+                gallery.innerHTML = `<small style="color: ${CONST.COLORS.TEXT_MUTED}; font-size: 0.75rem;">${window.t('text_no_uploads')}</small>`;
             } else {
                 const header = document.createElement('div');
                 header.style.cssText = 'font-weight: 600; margin-bottom: 4px; font-size: 0.75rem; color: #495057;';
@@ -777,11 +780,11 @@
                     const imageUrl = await window.loadImageFile(img.filename);
                     
                     const imgCard = document.createElement('div');
-                    imgCard.style.cssText = 'display: flex; align-items: center; gap: 5px; padding: 3px; background: white; border-radius: 3px; margin-bottom: 3px; border: 1px solid #dee2e6;';
+                    imgCard.style.cssText = `display: flex; align-items: center; gap: 5px; padding: 3px; background: white; border-radius: 3px; margin-bottom: 3px; border: 1px solid ${CONST.COLORS.CARD_BORDER_COLOR};`;
                     
                     const thumbnail = document.createElement('img');
                     thumbnail.src = imageUrl || '';
-                    thumbnail.style.cssText = 'width: 28px; height: 28px; object-fit: cover; border-radius: 2px;';
+                    thumbnail.style.cssText = `width: ${CONST.UI.THUMBNAIL_SIZE}px; height: ${CONST.UI.THUMBNAIL_SIZE}px; object-fit: cover; border-radius: 2px;`;
                     
                     const info = document.createElement('div');
                     info.style.flex = '1';
@@ -792,7 +795,7 @@
                     useBtn.className = 'btn btn-small btn-primary';
                     useBtn.textContent = window.t('btn_use');
                     useBtn.style.fontSize = '0.65rem';
-                    useBtn.style.height = '22px';
+                    useBtn.style.height = CONST.UI.BUTTON_HEIGHT_XXS + 'px';
                     useBtn.style.padding = '0 6px';
                     useBtn.onclick = async () => {
                         const url = await window.loadImageFile(img.filename);
@@ -805,8 +808,8 @@
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'icon-btn delete';
                     deleteBtn.textContent = '🗑️';
-                    deleteBtn.style.width = '22px';
-                    deleteBtn.style.height = '22px';
+                    deleteBtn.style.width = CONST.UI.ICON_BTN_SIZE + 'px';
+                    deleteBtn.style.height = CONST.UI.ICON_BTN_SIZE + 'px';
                     deleteBtn.style.fontSize = '0.8rem';
                     deleteBtn.onclick = async () => {
                         if (confirm(`${window.t('alert_delete_image')} "${img.name}"?`)) {
@@ -849,84 +852,98 @@
         applyDefaultSettings: function() {
             activeTemplateId = 'default';
             
-            this.setVal('marginTop', 8);
-            this.setVal('marginBottom', 8);
-            this.setVal('marginLeft', 8);
-            this.setVal('marginRight', 8);
-            this.setVal('dayBlockSpacing', 6);
-            this.setVal('columnGap', 10);
+            // Layout defaults
+            this.setVal('marginTop', CONST.LAYOUT.DEFAULT_MARGIN_TOP);
+            this.setVal('marginBottom', CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM);
+            this.setVal('marginLeft', CONST.LAYOUT.DEFAULT_MARGIN_LEFT);
+            this.setVal('marginRight', CONST.LAYOUT.DEFAULT_MARGIN_RIGHT);
+            this.setVal('dayBlockSpacing', CONST.LAYOUT.DEFAULT_DAY_BLOCK_SPACING);
+            this.setVal('columnGap', CONST.LAYOUT.DEFAULT_COLUMN_GAP);
             
-            this.setVal('headerText', 'Weekly Menu');
-            this.setVal('headerColor', '#fd7e14');
-            this.setVal('headerSize', '20pt');
-            this.setVal('headerWeight', 'bold');
-            this.setVal('headerFont', 'Segoe UI');
-            this.setVal('headerAlign', 'center');
-            this.setVal('headerTransform', 'none');
+            // Header defaults
+            this.setVal('headerText', CONST.TEXT.DEFAULT_HEADER);
+            this.setVal('headerColor', CONST.COLORS.HEADER_COLOR);
+            this.setVal('headerSize', CONST.TYPOGRAPHY.HEADER_FONT_SIZE);
+            this.setVal('headerWeight', CONST.TYPOGRAPHY.HEADER_FONT_WEIGHT);
+            this.setVal('headerFont', CONST.TYPOGRAPHY.HEADER_FONT_FAMILY);
+            this.setVal('headerAlign', CONST.TYPOGRAPHY.HEADER_ALIGN);
+            this.setVal('headerTransform', CONST.TYPOGRAPHY.HEADER_TRANSFORM);
             
+            // Date range defaults
             this.setChecked('showDateRange', true);
-            this.setVal('dateRangeSize', '9pt');
-            this.setVal('dateRangeColor', '#7f8c8d');
-            this.setVal('dateRangeWeight', 'normal');
+            this.setVal('dateRangeSize', CONST.TYPOGRAPHY.DATE_RANGE_FONT_SIZE);
+            this.setVal('dateRangeColor', CONST.COLORS.DATE_RANGE_COLOR);
+            this.setVal('dateRangeWeight', CONST.TYPOGRAPHY.DATE_RANGE_FONT_WEIGHT);
             
-            this.setVal('dayBg', '#ffffff');
-            this.setVal('dayRadius', 8);
-            this.setVal('dayBorderWidth', 2);
-            this.setVal('dayBorderColor', '#e0e0e0');
-            this.setVal('dayBorderStyle', 'solid');
-            this.setVal('dayBorderSides', 'all');
-            this.setVal('dayShadow', 'none');
+            // Day block defaults
+            this.setVal('dayBg', CONST.COLORS.WHITE);
+            this.setVal('dayRadius', CONST.BORDERS.DAY_BORDER_RADIUS);
+            this.setVal('dayBorderWidth', CONST.BORDERS.DEFAULT_WIDTH);
+            this.setVal('dayBorderColor', CONST.COLORS.DAY_BORDER_COLOR);
+            this.setVal('dayBorderStyle', CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('dayBorderSides', CONST.BORDER_SIDES.ALL);
+            this.setVal('dayShadow', CONST.SHADOW_OPTIONS.NONE);
             
-            this.setVal('dayNameSize', '11pt');
-            this.setVal('dayNameColor', '#2c3e50');
-            this.setVal('dayNameWeight', '600');
+            // Day name defaults
+            this.setVal('dayNameSize', CONST.TYPOGRAPHY.DAY_NAME_FONT_SIZE);
+            this.setVal('dayNameColor', CONST.COLORS.DAY_NAME_COLOR);
+            this.setVal('dayNameWeight', CONST.TYPOGRAPHY.DAY_NAME_FONT_WEIGHT);
             
-            this.setVal('mealTitleSize', '9pt');
-            this.setVal('mealTitleColor', '#333333');
-            this.setVal('mealTitleWeight', '600');
+            // Meal title defaults
+            this.setVal('mealTitleSize', CONST.TYPOGRAPHY.MEAL_TITLE_FONT_SIZE);
+            this.setVal('mealTitleColor', CONST.COLORS.MEAL_TITLE_COLOR);
+            this.setVal('mealTitleWeight', CONST.TYPOGRAPHY.MEAL_TITLE_FONT_WEIGHT);
             
-            this.setVal('mealNumberStyle', 'numbers');
+            // Meal numbering defaults
+            this.setVal('mealNumberStyle', CONST.NUMBERING.NUMBERS);
             this.setVal('mealNumberPrefix', '');
-            this.setVal('mealNumberSuffix', '.');
+            this.setVal('mealNumberSuffix', CONST.TEXT.DEFAULT_MEAL_NUMBER_SUFFIX);
             
-            this.setVal('ingredientsSize', '7.5pt');
-            this.setVal('ingredientsColor', '#555555');
-            this.setVal('ingredientsStyle', 'italic');
+            // Ingredients defaults
+            this.setVal('ingredientsSize', CONST.TYPOGRAPHY.INGREDIENTS_FONT_SIZE);
+            this.setVal('ingredientsColor', CONST.COLORS.INGREDIENTS_COLOR);
+            this.setVal('ingredientsStyle', CONST.TYPOGRAPHY.INGREDIENTS_FONT_STYLE);
             
+            // Separator defaults
             this.setChecked('headerSepEnabled', false);
-            this.setVal('headerSepStyle', 'solid');
-            this.setVal('headerSepColor', '#ddd');
-            this.setVal('headerSepWidth', 1);
+            this.setVal('headerSepStyle', CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('headerSepColor', CONST.COLORS.HEADER_SEPARATOR_COLOR);
+            this.setVal('headerSepWidth', CONST.BORDERS.SEPARATOR_WIDTH);
             this.setChecked('footerSepEnabled', true);
-            this.setVal('footerSepStyle', 'solid');
-            this.setVal('footerSepColor', '#eee');
-            this.setVal('footerSepWidth', 1);
+            this.setVal('footerSepStyle', CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('footerSepColor', CONST.COLORS.FOOTER_SEPARATOR_COLOR);
+            this.setVal('footerSepWidth', CONST.BORDERS.SEPARATOR_WIDTH);
             
-            this.setVal('footerSize', '8pt');
-            this.setVal('footerColor', '#7f8c8d');
-            this.setVal('footerText', 'Prepared with care by KitchenPro');
+            // Footer defaults
+            this.setVal('footerSize', CONST.TYPOGRAPHY.FOOTER_FONT_SIZE);
+            this.setVal('footerColor', CONST.COLORS.FOOTER_COLOR);
+            this.setVal('footerText', CONST.TEXT.DEFAULT_FOOTER);
             
+            // Background defaults
             this.setVal('backgroundImage', '');
-            this.setVal('bgOpacity', 1);
-            this.setVal('bgPosition', 'center');
-            this.setVal('bgOverlay', '#000000');
-            this.setVal('bgOverlayOpacity', 0);
+            this.setVal('bgOpacity', CONST.BACKGROUND.DEFAULT_OPACITY);
+            this.setVal('bgPosition', CONST.BACKGROUND.DEFAULT_POSITION);
+            this.setVal('bgOverlay', CONST.COLORS.DEFAULT_OVERLAY);
+            this.setVal('bgOverlayOpacity', CONST.BACKGROUND.DEFAULT_OVERLAY_OPACITY);
             
+            // Logo defaults
             this.setVal('logoImage', '');
-            this.setVal('logoPosition', 'top-right');
-            this.setVal('logoWidth', 80);
-            this.setVal('logoHeight', 80);
+            this.setVal('logoPosition', CONST.BRANDING.DEFAULT_LOGO_POSITION);
+            this.setVal('logoWidth', CONST.BRANDING.DEFAULT_LOGO_WIDTH);
+            this.setVal('logoHeight', CONST.BRANDING.DEFAULT_LOGO_HEIGHT);
             
+            // Page border defaults
             this.setChecked('pageBorderEnabled', false);
-            this.setVal('pageBorderWidth', 1);
-            this.setVal('pageBorderColor', '#000000');
-            this.setVal('pageBorderStyle', 'solid');
-            this.setVal('pageBorderRadius', 0);
+            this.setVal('pageBorderWidth', CONST.BORDERS.PAGE_BORDER_WIDTH);
+            this.setVal('pageBorderColor', CONST.COLORS.BLACK);
+            this.setVal('pageBorderStyle', CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('pageBorderRadius', CONST.BORDERS.PAGE_BORDER_RADIUS);
             
             const bgInput = document.getElementById('backgroundImage');
             if (bgInput) bgInput.dataset.filename = '';
             
-            for (let i = 1; i <= 4; i++) {
+            // Slot visibility defaults
+            for (let i = 1; i <= CONST.SLOTS.COUNT; i++) {
                 this.setChecked(`slot${i}_showIngredients`, true);
                 this.setChecked(`slot${i}_showCalories`, true);
                 this.setChecked(`slot${i}_showAllergens`, true);
@@ -934,61 +951,62 @@
         },
 
         applyTemplateToUI: async function(template) {
-            this.setVal('headerText', template.header?.text || 'Weekly Menu');
-            this.setVal('headerColor', template.header?.color || '#fd7e14');
-            this.setVal('headerSize', template.header?.fontSize || '20pt');
-            this.setVal('headerWeight', template.header?.fontWeight || 'bold');
-            this.setVal('headerFont', template.header?.fontFamily || 'Segoe UI');
-            this.setVal('headerAlign', template.header?.textAlign || 'center');
-            this.setVal('headerTransform', template.header?.textTransform || 'none');
+            // Apply all template values with fallbacks to constants
+            this.setVal('headerText', template.header?.text || CONST.TEXT.DEFAULT_HEADER);
+            this.setVal('headerColor', template.header?.color || CONST.COLORS.HEADER_COLOR);
+            this.setVal('headerSize', template.header?.fontSize || CONST.TYPOGRAPHY.HEADER_FONT_SIZE);
+            this.setVal('headerWeight', template.header?.fontWeight || CONST.TYPOGRAPHY.HEADER_FONT_WEIGHT);
+            this.setVal('headerFont', template.header?.fontFamily || CONST.TYPOGRAPHY.HEADER_FONT_FAMILY);
+            this.setVal('headerAlign', template.header?.textAlign || CONST.TYPOGRAPHY.HEADER_ALIGN);
+            this.setVal('headerTransform', template.header?.textTransform || CONST.TYPOGRAPHY.HEADER_TRANSFORM);
             
             this.setChecked('showDateRange', template.dateRange?.show !== false);
-            this.setVal('dateRangeSize', template.dateRange?.fontSize || '9pt');
-            this.setVal('dateRangeColor', template.dateRange?.color || '#7f8c8d');
-            this.setVal('dateRangeWeight', template.dateRange?.fontWeight || 'normal');
+            this.setVal('dateRangeSize', template.dateRange?.fontSize || CONST.TYPOGRAPHY.DATE_RANGE_FONT_SIZE);
+            this.setVal('dateRangeColor', template.dateRange?.color || CONST.COLORS.DATE_RANGE_COLOR);
+            this.setVal('dateRangeWeight', template.dateRange?.fontWeight || CONST.TYPOGRAPHY.DATE_RANGE_FONT_WEIGHT);
             
-            this.setVal('dayBg', template.dayBlock?.bg || '#ffffff');
-            this.setVal('dayRadius', parseInt(template.dayBlock?.borderRadius) || 8);
-            this.setVal('dayBorderWidth', parseInt(template.dayBlock?.borderWidth) || 2);
-            this.setVal('dayBorderColor', template.dayBlock?.borderColor || '#e0e0e0');
-            this.setVal('dayBorderStyle', template.dayBlock?.borderStyle || 'solid');
-            this.setVal('dayBorderSides', template.dayBlock?.borderSides || 'all');
-            this.setVal('dayShadow', template.dayBlock?.shadow || 'none');
+            this.setVal('dayBg', template.dayBlock?.bg || CONST.COLORS.WHITE);
+            this.setVal('dayRadius', parseInt(template.dayBlock?.borderRadius) || CONST.BORDERS.DAY_BORDER_RADIUS);
+            this.setVal('dayBorderWidth', parseInt(template.dayBlock?.borderWidth) || CONST.BORDERS.DEFAULT_WIDTH);
+            this.setVal('dayBorderColor', template.dayBlock?.borderColor || CONST.COLORS.DAY_BORDER_COLOR);
+            this.setVal('dayBorderStyle', template.dayBlock?.borderStyle || CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('dayBorderSides', template.dayBlock?.borderSides || CONST.BORDER_SIDES.ALL);
+            this.setVal('dayShadow', template.dayBlock?.shadow || CONST.SHADOW_OPTIONS.NONE);
             
-            this.setVal('marginTop', template.layout?.marginTop || 8);
-            this.setVal('marginBottom', template.layout?.marginBottom || 8);
-            this.setVal('marginLeft', template.layout?.marginLeft || 8);
-            this.setVal('marginRight', template.layout?.marginRight || 8);
-            this.setVal('dayBlockSpacing', template.layout?.dayBlockSpacing || 6);
-            this.setVal('columnGap', template.layout?.columnGap || 10);
+            this.setVal('marginTop', template.layout?.marginTop || CONST.LAYOUT.DEFAULT_MARGIN_TOP);
+            this.setVal('marginBottom', template.layout?.marginBottom || CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM);
+            this.setVal('marginLeft', template.layout?.marginLeft || CONST.LAYOUT.DEFAULT_MARGIN_LEFT);
+            this.setVal('marginRight', template.layout?.marginRight || CONST.LAYOUT.DEFAULT_MARGIN_RIGHT);
+            this.setVal('dayBlockSpacing', template.layout?.dayBlockSpacing || CONST.LAYOUT.DEFAULT_DAY_BLOCK_SPACING);
+            this.setVal('columnGap', template.layout?.columnGap || CONST.LAYOUT.DEFAULT_COLUMN_GAP);
             
-            this.setVal('dayNameSize', template.dayName?.fontSize || '11pt');
-            this.setVal('dayNameColor', template.dayName?.color || '#2c3e50');
-            this.setVal('dayNameWeight', template.dayName?.fontWeight || '600');
+            this.setVal('dayNameSize', template.dayName?.fontSize || CONST.TYPOGRAPHY.DAY_NAME_FONT_SIZE);
+            this.setVal('dayNameColor', template.dayName?.color || CONST.COLORS.DAY_NAME_COLOR);
+            this.setVal('dayNameWeight', template.dayName?.fontWeight || CONST.TYPOGRAPHY.DAY_NAME_FONT_WEIGHT);
             
-            this.setVal('mealTitleSize', template.mealTitle?.fontSize || '9pt');
-            this.setVal('mealTitleColor', template.mealTitle?.color || '#333333');
-            this.setVal('mealTitleWeight', template.mealTitle?.fontWeight || '600');
+            this.setVal('mealTitleSize', template.mealTitle?.fontSize || CONST.TYPOGRAPHY.MEAL_TITLE_FONT_SIZE);
+            this.setVal('mealTitleColor', template.mealTitle?.color || CONST.COLORS.MEAL_TITLE_COLOR);
+            this.setVal('mealTitleWeight', template.mealTitle?.fontWeight || CONST.TYPOGRAPHY.MEAL_TITLE_FONT_WEIGHT);
             
-            this.setVal('mealNumberStyle', template.mealNumbering?.style || 'numbers');
+            this.setVal('mealNumberStyle', template.mealNumbering?.style || CONST.NUMBERING.NUMBERS);
             this.setVal('mealNumberPrefix', template.mealNumbering?.prefix || '');
-            this.setVal('mealNumberSuffix', template.mealNumbering?.suffix || '.');
+            this.setVal('mealNumberSuffix', template.mealNumbering?.suffix || CONST.TEXT.DEFAULT_MEAL_NUMBER_SUFFIX);
             
-            this.setVal('ingredientsSize', template.ingredients?.fontSize || '7.5pt');
-            this.setVal('ingredientsColor', template.ingredients?.color || '#555555');
-            this.setVal('ingredientsStyle', template.ingredients?.fontStyle || 'italic');
+            this.setVal('ingredientsSize', template.ingredients?.fontSize || CONST.TYPOGRAPHY.INGREDIENTS_FONT_SIZE);
+            this.setVal('ingredientsColor', template.ingredients?.color || CONST.COLORS.INGREDIENTS_COLOR);
+            this.setVal('ingredientsStyle', template.ingredients?.fontStyle || CONST.TYPOGRAPHY.INGREDIENTS_FONT_STYLE);
             
             this.setChecked('headerSepEnabled', template.separators?.headerEnabled || false);
-            this.setVal('headerSepStyle', template.separators?.headerStyle || 'solid');
-            this.setVal('headerSepColor', template.separators?.headerColor || '#ddd');
-            this.setVal('headerSepWidth', template.separators?.headerWidth || 1);
+            this.setVal('headerSepStyle', template.separators?.headerStyle || CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('headerSepColor', template.separators?.headerColor || CONST.COLORS.HEADER_SEPARATOR_COLOR);
+            this.setVal('headerSepWidth', template.separators?.headerWidth || CONST.BORDERS.SEPARATOR_WIDTH);
             this.setChecked('footerSepEnabled', template.separators?.footerEnabled !== false);
-            this.setVal('footerSepStyle', template.separators?.footerStyle || 'solid');
-            this.setVal('footerSepColor', template.separators?.footerColor || '#eee');
-            this.setVal('footerSepWidth', template.separators?.footerWidth || 1);
+            this.setVal('footerSepStyle', template.separators?.footerStyle || CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('footerSepColor', template.separators?.footerColor || CONST.COLORS.FOOTER_SEPARATOR_COLOR);
+            this.setVal('footerSepWidth', template.separators?.footerWidth || CONST.BORDERS.SEPARATOR_WIDTH);
             
-            this.setVal('footerSize', template.footer?.fontSize || '8pt');
-            this.setVal('footerColor', template.footer?.color || '#7f8c8d');
+            this.setVal('footerSize', template.footer?.fontSize || CONST.TYPOGRAPHY.FOOTER_FONT_SIZE);
+            this.setVal('footerColor', template.footer?.color || CONST.COLORS.FOOTER_COLOR);
             this.setVal('footerText', template.footer?.text || '');
             
             const bgInput = document.getElementById('backgroundImage');
@@ -1013,10 +1031,10 @@
                 }
             }
             
-            this.setVal('bgOpacity', template.background?.opacity || 1);
-            this.setVal('bgPosition', template.background?.position || 'center');
-            this.setVal('bgOverlay', template.background?.overlay || '#000000');
-            this.setVal('bgOverlayOpacity', template.background?.overlayOpacity || 0);
+            this.setVal('bgOpacity', template.background?.opacity || CONST.BACKGROUND.DEFAULT_OPACITY);
+            this.setVal('bgPosition', template.background?.position || CONST.BACKGROUND.DEFAULT_POSITION);
+            this.setVal('bgOverlay', template.background?.overlay || CONST.COLORS.DEFAULT_OVERLAY);
+            this.setVal('bgOverlayOpacity', template.background?.overlayOpacity || CONST.BACKGROUND.DEFAULT_OVERLAY_OPACITY);
             
             const logoInput = document.getElementById('logoImage');
             if (template.branding?.logo) {
@@ -1039,17 +1057,17 @@
                     logoInput.dataset.filename = '';
                 }
             }
-            this.setVal('logoPosition', template.branding?.logoPosition || 'top-right');
-            this.setVal('logoWidth', template.branding?.logoWidth || 80);
-            this.setVal('logoHeight', template.branding?.logoHeight || 80);
+            this.setVal('logoPosition', template.branding?.logoPosition || CONST.BRANDING.DEFAULT_LOGO_POSITION);
+            this.setVal('logoWidth', template.branding?.logoWidth || CONST.BRANDING.DEFAULT_LOGO_WIDTH);
+            this.setVal('logoHeight', template.branding?.logoHeight || CONST.BRANDING.DEFAULT_LOGO_HEIGHT);
             
             this.setChecked('pageBorderEnabled', template.pageBorder?.enabled || false);
-            this.setVal('pageBorderWidth', template.pageBorder?.width || 1);
-            this.setVal('pageBorderColor', template.pageBorder?.color || '#000000');
-            this.setVal('pageBorderStyle', template.pageBorder?.style || 'solid');
-            this.setVal('pageBorderRadius', template.pageBorder?.radius || 0);
+            this.setVal('pageBorderWidth', template.pageBorder?.width || CONST.BORDERS.PAGE_BORDER_WIDTH);
+            this.setVal('pageBorderColor', template.pageBorder?.color || CONST.COLORS.BLACK);
+            this.setVal('pageBorderStyle', template.pageBorder?.style || CONST.BORDERS.DEFAULT_STYLE);
+            this.setVal('pageBorderRadius', template.pageBorder?.radius || CONST.BORDERS.PAGE_BORDER_RADIUS);
             
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= CONST.SLOTS.COUNT; i++) {
                 const slot = template.slotSettings?.[`slot${i}`];
                 this.setChecked(`slot${i}_showIngredients`, slot?.showIngredients !== false);
                 this.setChecked(`slot${i}_showCalories`, slot?.showCalories !== false);
@@ -1086,7 +1104,7 @@
                 if (el) el.addEventListener('change', () => this.refreshPreview());
             });
 
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= CONST.SLOTS.COUNT; i++) {
                 ['showIngredients', 'showCalories', 'showAllergens'].forEach(setting => {
                     const el = document.getElementById(`slot${i}_${setting}`);
                     if (el) el.addEventListener('change', () => this.refreshPreview());
@@ -1106,7 +1124,7 @@
 
         getSettingsFromUI: function() {
             const slotSettings = {};
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= CONST.SLOTS.COUNT; i++) {
                 slotSettings[`slot${i}`] = {
                     showIngredients: document.getElementById(`slot${i}_showIngredients`)?.checked || false,
                     showCalories: document.getElementById(`slot${i}_showCalories`)?.checked || false,
@@ -1122,91 +1140,91 @@
 
             return {
                 layout: {
-                    marginTop: document.getElementById('marginTop')?.value || 8,
-                    marginBottom: document.getElementById('marginBottom')?.value || 8,
-                    marginLeft: document.getElementById('marginLeft')?.value || 8,
-                    marginRight: document.getElementById('marginRight')?.value || 8,
-                    dayBlockSpacing: document.getElementById('dayBlockSpacing')?.value || 6,
-                    columnGap: document.getElementById('columnGap')?.value || 10
+                    marginTop: document.getElementById('marginTop')?.value || CONST.LAYOUT.DEFAULT_MARGIN_TOP,
+                    marginBottom: document.getElementById('marginBottom')?.value || CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM,
+                    marginLeft: document.getElementById('marginLeft')?.value || CONST.LAYOUT.DEFAULT_MARGIN_LEFT,
+                    marginRight: document.getElementById('marginRight')?.value || CONST.LAYOUT.DEFAULT_MARGIN_RIGHT,
+                    dayBlockSpacing: document.getElementById('dayBlockSpacing')?.value || CONST.LAYOUT.DEFAULT_DAY_BLOCK_SPACING,
+                    columnGap: document.getElementById('columnGap')?.value || CONST.LAYOUT.DEFAULT_COLUMN_GAP
                 },
                 header: { 
-                    text: document.getElementById('headerText')?.value || 'Weekly Menu',
-                    color: document.getElementById('headerColor')?.value || '#fd7e14',
-                    fontSize: document.getElementById('headerSize')?.value || '20pt',
-                    fontWeight: document.getElementById('headerWeight')?.value || 'bold',
-                    fontFamily: document.getElementById('headerFont')?.value || 'Segoe UI',
-                    textAlign: document.getElementById('headerAlign')?.value || 'center',
-                    textTransform: document.getElementById('headerTransform')?.value || 'none'
+                    text: document.getElementById('headerText')?.value || CONST.TEXT.DEFAULT_HEADER,
+                    color: document.getElementById('headerColor')?.value || CONST.COLORS.HEADER_COLOR,
+                    fontSize: document.getElementById('headerSize')?.value || CONST.TYPOGRAPHY.HEADER_FONT_SIZE,
+                    fontWeight: document.getElementById('headerWeight')?.value || CONST.TYPOGRAPHY.HEADER_FONT_WEIGHT,
+                    fontFamily: document.getElementById('headerFont')?.value || CONST.TYPOGRAPHY.HEADER_FONT_FAMILY,
+                    textAlign: document.getElementById('headerAlign')?.value || CONST.TYPOGRAPHY.HEADER_ALIGN,
+                    textTransform: document.getElementById('headerTransform')?.value || CONST.TYPOGRAPHY.HEADER_TRANSFORM
                 },
                 dateRange: {
                     show: document.getElementById('showDateRange')?.checked || true,
-                    fontSize: document.getElementById('dateRangeSize')?.value || '9pt',
-                    color: document.getElementById('dateRangeColor')?.value || '#7f8c8d',
-                    fontWeight: document.getElementById('dateRangeWeight')?.value || 'normal',
+                    fontSize: document.getElementById('dateRangeSize')?.value || CONST.TYPOGRAPHY.DATE_RANGE_FONT_SIZE,
+                    color: document.getElementById('dateRangeColor')?.value || CONST.COLORS.DATE_RANGE_COLOR,
+                    fontWeight: document.getElementById('dateRangeWeight')?.value || CONST.TYPOGRAPHY.DATE_RANGE_FONT_WEIGHT,
                     textAlign: 'center'
                 },
                 dayBlock: {
-                    bg: document.getElementById('dayBg')?.value || '#ffffff',
-                    borderRadius: (document.getElementById('dayRadius')?.value || '8') + 'px',
-                    borderWidth: document.getElementById('dayBorderWidth')?.value || '2',
-                    borderColor: document.getElementById('dayBorderColor')?.value || '#e0e0e0',
-                    borderStyle: document.getElementById('dayBorderStyle')?.value || 'solid',
-                    borderSides: document.getElementById('dayBorderSides')?.value || 'all',
-                    shadow: document.getElementById('dayShadow')?.value || 'none'
+                    bg: document.getElementById('dayBg')?.value || CONST.COLORS.WHITE,
+                    borderRadius: (document.getElementById('dayRadius')?.value || CONST.BORDERS.DAY_BORDER_RADIUS) + 'px',
+                    borderWidth: document.getElementById('dayBorderWidth')?.value || CONST.BORDERS.DEFAULT_WIDTH,
+                    borderColor: document.getElementById('dayBorderColor')?.value || CONST.COLORS.DAY_BORDER_COLOR,
+                    borderStyle: document.getElementById('dayBorderStyle')?.value || CONST.BORDERS.DEFAULT_STYLE,
+                    borderSides: document.getElementById('dayBorderSides')?.value || CONST.BORDER_SIDES.ALL,
+                    shadow: document.getElementById('dayShadow')?.value || CONST.SHADOW_OPTIONS.NONE
                 },
                 dayName: {
-                    fontSize: document.getElementById('dayNameSize')?.value || '11pt',
-                    color: document.getElementById('dayNameColor')?.value || '#2c3e50',
-                    fontWeight: document.getElementById('dayNameWeight')?.value || '600'
+                    fontSize: document.getElementById('dayNameSize')?.value || CONST.TYPOGRAPHY.DAY_NAME_FONT_SIZE,
+                    color: document.getElementById('dayNameColor')?.value || CONST.COLORS.DAY_NAME_COLOR,
+                    fontWeight: document.getElementById('dayNameWeight')?.value || CONST.TYPOGRAPHY.DAY_NAME_FONT_WEIGHT
                 },
                 mealTitle: {
-                    fontSize: document.getElementById('mealTitleSize')?.value || '9pt',
-                    color: document.getElementById('mealTitleColor')?.value || '#333333',
-                    fontWeight: document.getElementById('mealTitleWeight')?.value || '600'
+                    fontSize: document.getElementById('mealTitleSize')?.value || CONST.TYPOGRAPHY.MEAL_TITLE_FONT_SIZE,
+                    color: document.getElementById('mealTitleColor')?.value || CONST.COLORS.MEAL_TITLE_COLOR,
+                    fontWeight: document.getElementById('mealTitleWeight')?.value || CONST.TYPOGRAPHY.MEAL_TITLE_FONT_WEIGHT
                 },
                 mealNumbering: {
-                    style: document.getElementById('mealNumberStyle')?.value || 'numbers',
+                    style: document.getElementById('mealNumberStyle')?.value || CONST.NUMBERING.NUMBERS,
                     prefix: document.getElementById('mealNumberPrefix')?.value || '',
-                    suffix: document.getElementById('mealNumberSuffix')?.value || '.'
+                    suffix: document.getElementById('mealNumberSuffix')?.value || CONST.TEXT.DEFAULT_MEAL_NUMBER_SUFFIX
                 },
                 ingredients: {
-                    fontSize: document.getElementById('ingredientsSize')?.value || '7.5pt',
-                    color: document.getElementById('ingredientsColor')?.value || '#555555',
-                    fontStyle: document.getElementById('ingredientsStyle')?.value || 'italic'
+                    fontSize: document.getElementById('ingredientsSize')?.value || CONST.TYPOGRAPHY.INGREDIENTS_FONT_SIZE,
+                    color: document.getElementById('ingredientsColor')?.value || CONST.COLORS.INGREDIENTS_COLOR,
+                    fontStyle: document.getElementById('ingredientsStyle')?.value || CONST.TYPOGRAPHY.INGREDIENTS_FONT_STYLE
                 },
                 separators: {
                     headerEnabled: document.getElementById('headerSepEnabled')?.checked || false,
-                    headerStyle: document.getElementById('headerSepStyle')?.value || 'solid',
-                    headerColor: document.getElementById('headerSepColor')?.value || '#ddd',
-                    headerWidth: document.getElementById('headerSepWidth')?.value || 1,
+                    headerStyle: document.getElementById('headerSepStyle')?.value || CONST.BORDERS.DEFAULT_STYLE,
+                    headerColor: document.getElementById('headerSepColor')?.value || CONST.COLORS.HEADER_SEPARATOR_COLOR,
+                    headerWidth: document.getElementById('headerSepWidth')?.value || CONST.BORDERS.SEPARATOR_WIDTH,
                     footerEnabled: document.getElementById('footerSepEnabled')?.checked || true,
-                    footerStyle: document.getElementById('footerSepStyle')?.value || 'solid',
-                    footerColor: document.getElementById('footerSepColor')?.value || '#eee',
-                    footerWidth: document.getElementById('footerSepWidth')?.value || 1
+                    footerStyle: document.getElementById('footerSepStyle')?.value || CONST.BORDERS.DEFAULT_STYLE,
+                    footerColor: document.getElementById('footerSepColor')?.value || CONST.COLORS.FOOTER_SEPARATOR_COLOR,
+                    footerWidth: document.getElementById('footerSepWidth')?.value || CONST.BORDERS.SEPARATOR_WIDTH
                 },
                 footer: {
                     text: document.getElementById('footerText')?.value || '',
-                    fontSize: document.getElementById('footerSize')?.value || '8pt',
-                    color: document.getElementById('footerColor')?.value || '#7f8c8d'
+                    fontSize: document.getElementById('footerSize')?.value || CONST.TYPOGRAPHY.FOOTER_FONT_SIZE,
+                    color: document.getElementById('footerColor')?.value || CONST.COLORS.FOOTER_COLOR
                 },
                 background: {
-                    opacity: document.getElementById('bgOpacity')?.value || 1,
-                    position: document.getElementById('bgPosition')?.value || 'center',
-                    overlay: document.getElementById('bgOverlay')?.value || '#000000',
-                    overlayOpacity: document.getElementById('bgOverlayOpacity')?.value || 0
+                    opacity: document.getElementById('bgOpacity')?.value || CONST.BACKGROUND.DEFAULT_OPACITY,
+                    position: document.getElementById('bgPosition')?.value || CONST.BACKGROUND.DEFAULT_POSITION,
+                    overlay: document.getElementById('bgOverlay')?.value || CONST.COLORS.DEFAULT_OVERLAY,
+                    overlayOpacity: document.getElementById('bgOverlayOpacity')?.value || CONST.BACKGROUND.DEFAULT_OVERLAY_OPACITY
                 },
                 branding: {
                     logo: logoFilename,
-                    logoPosition: document.getElementById('logoPosition')?.value || 'top-right',
-                    logoWidth: document.getElementById('logoWidth')?.value || 80,
-                    logoHeight: document.getElementById('logoHeight')?.value || 80
+                    logoPosition: document.getElementById('logoPosition')?.value || CONST.BRANDING.DEFAULT_LOGO_POSITION,
+                    logoWidth: document.getElementById('logoWidth')?.value || CONST.BRANDING.DEFAULT_LOGO_WIDTH,
+                    logoHeight: document.getElementById('logoHeight')?.value || CONST.BRANDING.DEFAULT_LOGO_HEIGHT
                 },
                 pageBorder: {
                     enabled: document.getElementById('pageBorderEnabled')?.checked || false,
-                    width: document.getElementById('pageBorderWidth')?.value || 1,
-                    color: document.getElementById('pageBorderColor')?.value || '#000000',
-                    style: document.getElementById('pageBorderStyle')?.value || 'solid',
-                    radius: document.getElementById('pageBorderRadius')?.value || 0
+                    width: document.getElementById('pageBorderWidth')?.value || CONST.BORDERS.PAGE_BORDER_WIDTH,
+                    color: document.getElementById('pageBorderColor')?.value || CONST.COLORS.BLACK,
+                    style: document.getElementById('pageBorderStyle')?.value || CONST.BORDERS.DEFAULT_STYLE,
+                    radius: document.getElementById('pageBorderRadius')?.value || CONST.BORDERS.PAGE_BORDER_RADIUS
                 },
                 backgroundImage: backgroundImage,
                 slotSettings: slotSettings
@@ -1215,29 +1233,6 @@
 
         refreshPreview: async function() {
             const settings = this.getSettingsFromUI();
-            
-            const getShadowStyle = (shadow) => {
-                switch(shadow) {
-                    case 'light': return '0 1px 3px rgba(0,0,0,0.12)';
-                    case 'medium': return '0 2px 6px rgba(0,0,0,0.16)';
-                    case 'strong': return '0 4px 12px rgba(0,0,0,0.24)';
-                    default: return 'none';
-                }
-            };
-            
-            const getBorderStyle = (width, style, color, sides) => {
-                if (sides === 'none') return 'none';
-                if (sides === 'all') return `${width}px ${style} ${color}`;
-                
-                const borders = {
-                    top: sides.includes('top') ? `${width}px ${style} ${color}` : 'none',
-                    bottom: sides.includes('bottom') ? `${width}px ${style} ${color}` : 'none',
-                    left: sides.includes('left') || sides.includes('left-right') ? `${width}px ${style} ${color}` : 'none',
-                    right: sides.includes('right') || sides.includes('left-right') ? `${width}px ${style} ${color}` : 'none'
-                };
-                
-                return `${borders.top} ${borders.right} ${borders.bottom} ${borders.left}`.trim();
-            };
             
             const sheet = document.getElementById('livePreviewSheet');
             if (sheet && settings.backgroundImage) {
@@ -1269,7 +1264,7 @@
                 list.innerHTML = '';
                 const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
                 
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
                     const day = new Date(weekStart);
                     day.setDate(weekStart.getDate() + i);
                     const dateStr = day.toISOString().split('T')[0];
@@ -1296,29 +1291,20 @@
             const block = document.createElement('div');
             block.className = 'print-day-block';
             
-            const getShadowStyle = (shadow) => {
-                switch(shadow) {
-                    case 'light': return '0 1px 3px rgba(0,0,0,0.12)';
-                    case 'medium': return '0 2px 6px rgba(0,0,0,0.16)';
-                    case 'strong': return '0 4px 12px rgba(0,0,0,0.24)';
-                    default: return 'none';
-                }
-            };
-            
             const getBorderStyles = () => {
                 const width = settings.dayBlock.borderWidth;
                 const style = settings.dayBlock.borderStyle;
                 const color = settings.dayBlock.borderColor;
                 const sides = settings.dayBlock.borderSides;
                 
-                if (sides === 'none') return 'border: none;';
-                if (sides === 'all') return `border: ${width}px ${style} ${color};`;
+                if (sides === CONST.BORDER_SIDES.NONE) return 'border: none;';
+                if (sides === CONST.BORDER_SIDES.ALL) return `border: ${width}px ${style} ${color};`;
                 
                 let css = '';
-                if (sides === 'top') css += `border-top: ${width}px ${style} ${color};`;
-                else if (sides === 'bottom') css += `border-bottom: ${width}px ${style} ${color};`;
-                else if (sides === 'left-right') css += `border-left: ${width}px ${style} ${color}; border-right: ${width}px ${style} ${color};`;
-                else if (sides === 'top-bottom') css += `border-top: ${width}px ${style} ${color}; border-bottom: ${width}px ${style} ${color};`;
+                if (sides === CONST.BORDER_SIDES.TOP) css += `border-top: ${width}px ${style} ${color};`;
+                else if (sides === CONST.BORDER_SIDES.BOTTOM) css += `border-bottom: ${width}px ${style} ${color};`;
+                else if (sides === CONST.BORDER_SIDES.LEFT_RIGHT) css += `border-left: ${width}px ${style} ${color}; border-right: ${width}px ${style} ${color};`;
+                else if (sides === CONST.BORDER_SIDES.TOP_BOTTOM) css += `border-top: ${width}px ${style} ${color}; border-bottom: ${width}px ${style} ${color};`;
                 
                 return css;
             };
@@ -1329,38 +1315,40 @@
                 padding: 10px 12px;
                 margin-bottom: ${settings.layout.dayBlockSpacing}px;
                 ${getBorderStyles()}
-                box-shadow: ${getShadowStyle(settings.dayBlock.shadow)};
+                box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                 page-break-inside: avoid;
             `;
 
             let contentHtml = `
-                <div style="border-bottom:1px solid #d0d0d0; margin-bottom:6px; padding-bottom:3px;">
+                <div style="border-bottom:1px solid ${CONST.COLORS.DAY_SEPARATOR_COLOR}; margin-bottom:6px; padding-bottom:3px;">
                     <h2 style="margin:0; font-size:${settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
                 </div>
             `;
 
             if (dayMenu) {
                 const slots = [
-                    { id: 'slot1', type: 'soup', label: window.t('slot_soup') },
-                    { id: 'slot2', type: 'main', label: window.t('slot_main') },
-                    { id: 'slot3', type: 'dessert', label: window.t('slot_dessert') },
-                    { id: 'slot4', type: 'other', label: window.t('slot_other') }
+                    { id: CONST.SLOTS.SLOT_1, type: 'soup', label: window.t('slot_soup') },
+                    { id: CONST.SLOTS.SLOT_2, type: 'main', label: window.t('slot_main') },
+                    { id: CONST.SLOTS.SLOT_3, type: 'dessert', label: window.t('slot_dessert') },
+                    { id: CONST.SLOTS.SLOT_4, type: 'other', label: window.t('slot_other') }
                 ];
 
-                slots.forEach((slotConfig, index) => {
+                let mealIndex = 1;
+                slots.forEach((slotConfig) => {
                     const slot = dayMenu[slotConfig.id];
                     if (slot && slot.recipe) {
                         const recipe = window.recipes.find(r => r.id === slot.recipe);
                         if (recipe) {
                             const slotSettings = settings.slotSettings[slotConfig.id];
-                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, settings, index + 1);
+                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, settings, mealIndex);
+                            mealIndex++;
                         }
                     }
                 });
             }
 
             if (!this.hasMeals(dayMenu)) {
-                contentHtml += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; font-size:8pt; margin:0; line-height:1;">${window.t('empty_day')}</p>`;
+                contentHtml += `<p style="color:${CONST.COLORS.EMPTY_DAY_COLOR}; font-style:italic; text-align:center; padding:8px 0; font-size:8pt; margin:0; line-height:1;">${window.t('empty_day')}</p>`;
             }
 
             block.innerHTML = contentHtml;
@@ -1371,23 +1359,7 @@
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
-            const getMealNumber = (idx, style, prefix, suffix) => {
-                let num = '';
-                switch(style) {
-                    case 'numbers': num = idx.toString(); break;
-                    case 'bullets': return '•';
-                    case 'letters': num = String.fromCharCode(64 + idx); break;
-                    case 'roman': 
-                        const romans = ['I', 'II', 'III', 'IV'];
-                        num = romans[idx - 1] || idx.toString();
-                        break;
-                    case 'none': return '';
-                    default: num = idx.toString();
-                }
-                return `${prefix}${num}${suffix}`;
-            };
-            
-            const numberStr = getMealNumber(index, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
+            const numberStr = window.getMealNumber(index, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
             
             let html = `<div style="margin-bottom:5px;">`;
             
@@ -1403,7 +1375,7 @@
                 const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
                 metadata.push(`${recipe.calories} ${calorieUnit}`);
             }
-            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:#666; font-size:8pt;">(${metadata.join(', ')})</span>`;
+            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:8pt;">(${metadata.join(', ')})</span>`;
             
             titleLine += `</div>`;
             html += titleLine;
@@ -1419,7 +1391,7 @@
                     const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
                     
                     if (slotSettings.showAllergens && hasAllergen) {
-                        return `<span style="color:#dc3545; text-decoration:underline; font-weight:500;">${fullIng.name}</span>`;
+                        return `<span style="color:${CONST.COLORS.ALLERGEN_COLOR}; text-decoration:underline; font-weight:500;">${fullIng.name}</span>`;
                     }
                     return fullIng.name;
                 }).filter(n => n).join(', ');
@@ -1509,13 +1481,13 @@
             container.innerHTML = '';
 
             if (!window.savedTemplates || window.savedTemplates.length === 0) {
-                container.innerHTML = `<p style="color: #6c757d; font-size: 0.85rem; text-align: center; padding: 10px;">${window.t('text_no_templates')}</p>`;
+                container.innerHTML = `<p style="color: ${CONST.COLORS.TEXT_MUTED}; font-size: 0.85rem; text-align: center; padding: 10px;">${window.t('text_no_templates')}</p>`;
                 return;
             }
 
             window.savedTemplates.forEach(tmpl => {
                 const card = document.createElement('div');
-                card.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 10px; margin-bottom: 8px; background: white; transition: all 0.2s;';
+                card.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: ${CONST.UI.CARD_PADDING}px; margin-bottom: ${CONST.UI.CARD_MARGIN}px; background: white; transition: all 0.2s;`;
                 
                 if (activeTemplateId === tmpl.id) {
                     card.style.borderColor = 'var(--color-primary)';
@@ -1536,15 +1508,15 @@
                 loadBtn.className = 'btn btn-small btn-primary';
                 loadBtn.textContent = window.t('btn_load');
                 loadBtn.style.fontSize = '0.75rem';
-                loadBtn.style.height = '26px';
+                loadBtn.style.height = CONST.UI.BUTTON_HEIGHT_XS + 'px';
                 loadBtn.style.padding = '0 8px';
                 loadBtn.onclick = () => this.loadTemplate(tmpl.id);
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'icon-btn delete';
                 deleteBtn.textContent = '🗑️';
-                deleteBtn.style.width = '26px';
-                deleteBtn.style.height = '26px';
+                deleteBtn.style.width = CONST.UI.BUTTON_HEIGHT_XS + 'px';
+                deleteBtn.style.height = CONST.UI.BUTTON_HEIGHT_XS + 'px';
                 deleteBtn.onclick = () => this.deleteTemplate(tmpl.id);
 
                 actions.appendChild(loadBtn);
@@ -1600,7 +1572,7 @@
         
         const settings = TemplateManager.getSettingsFromUI();
         settings.name = name;
-        settings.id = 'tmpl_' + Date.now();
+        settings.id = CONST.FILE.TEMPLATE_PREFIX + Date.now();
         
         window.savedTemplates.push(settings);
         window.saveSettings();
@@ -1642,7 +1614,7 @@
         const weekList = document.getElementById('weekSelectList');
         weeks.forEach((week, index) => {
             const weekCard = document.createElement('div');
-            weekCard.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;';
+            weekCard.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;`;
             weekCard.innerHTML = `
                 <div style="font-weight: 600; font-size: 0.9rem; color: #333;">${week.label}</div>
                 <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">${week.dateCount} ${window.t('text_days_with_meals')}</div>
@@ -1650,7 +1622,7 @@
 
             weekCard.onclick = () => {
                 document.querySelectorAll('#weekSelectList > div').forEach(card => {
-                    card.style.borderColor = '#dee2e6';
+                    card.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
                     card.style.background = 'white';
                 });
                 weekCard.style.borderColor = 'var(--color-primary)';
@@ -1724,7 +1696,7 @@
                     margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
                 }
                 body {
-                    font-family: 'Segoe UI', Arial, sans-serif;
+                    font-family: '${CONST.TYPOGRAPHY.HEADER_FONT_FAMILY}', Arial, sans-serif;
                     margin: 0;
                     padding: 0;
                     ${settings.pageBorder.enabled ? `
@@ -1779,30 +1751,23 @@
                         const s = settings.dayBlock.borderStyle;
                         const c = settings.dayBlock.borderColor;
                         const sides = settings.dayBlock.borderSides;
-                        if (sides === 'none') return '';
-                        if (sides === 'all') return `border: ${w}px ${s} ${c};`;
+                        if (sides === CONST.BORDER_SIDES.NONE) return '';
+                        if (sides === CONST.BORDER_SIDES.ALL) return `border: ${w}px ${s} ${c};`;
                         let css = '';
-                        if (sides === 'top') css = `border-top: ${w}px ${s} ${c};`;
-                        else if (sides === 'bottom') css = `border-bottom: ${w}px ${s} ${c};`;
-                        else if (sides === 'left-right') css = `border-left: ${w}px ${s} ${c}; border-right: ${w}px ${s} ${c};`;
-                        else if (sides === 'top-bottom') css = `border-top: ${w}px ${s} ${c}; border-bottom: ${w}px ${s} ${c};`;
+                        if (sides === CONST.BORDER_SIDES.TOP) css = `border-top: ${w}px ${s} ${c};`;
+                        else if (sides === CONST.BORDER_SIDES.BOTTOM) css = `border-bottom: ${w}px ${s} ${c};`;
+                        else if (sides === CONST.BORDER_SIDES.LEFT_RIGHT) css = `border-left: ${w}px ${s} ${c}; border-right: ${w}px ${s} ${c};`;
+                        else if (sides === CONST.BORDER_SIDES.TOP_BOTTOM) css = `border-top: ${w}px ${s} ${c}; border-bottom: ${w}px ${s} ${c};`;
                         return css;
                     })()}
-                    ${(() => {
-                        switch(settings.dayBlock.shadow) {
-                            case 'light': return 'box-shadow: 0 1px 3px rgba(0,0,0,0.12);';
-                            case 'medium': return 'box-shadow: 0 2px 6px rgba(0,0,0,0.16);';
-                            case 'strong': return 'box-shadow: 0 4px 12px rgba(0,0,0,0.24);';
-                            default: return '';
-                        }
-                    })()}
+                    box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                     page-break-inside: avoid;
                 }
                 .day-name {
                     font-size: ${settings.dayName.fontSize};
                     color: ${settings.dayName.color};
                     font-weight: ${settings.dayName.fontWeight};
-                    border-bottom: 1px solid #d0d0d0;
+                    border-bottom: 1px solid ${CONST.COLORS.DAY_SEPARATOR_COLOR};
                     margin-bottom: 6px;
                     padding-bottom: 3px;
                 }
@@ -1822,7 +1787,7 @@
                     margin-left: 10px;
                 }
                 .allergen-highlight {
-                    color: #dc3545;
+                    color: ${CONST.COLORS.ALLERGEN_COLOR};
                     text-decoration: underline;
                     font-weight: 500;
                 }
@@ -1842,7 +1807,7 @@
             </div>
         `;
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
             const day = new Date(selectedWeekStart);
             day.setDate(selectedWeekStart.getDate() + i);
             const dateStr = day.toISOString().split('T')[0];
@@ -1854,10 +1819,10 @@
 
             if (dayMenu && TemplateManager.hasMeals(dayMenu)) {
                 const slots = [
-                    { id: 'slot1', type: 'soup' },
-                    { id: 'slot2', type: 'main' },
-                    { id: 'slot3', type: 'dessert' },
-                    { id: 'slot4', type: 'other' }
+                    { id: CONST.SLOTS.SLOT_1, type: 'soup' },
+                    { id: CONST.SLOTS.SLOT_2, type: 'main' },
+                    { id: CONST.SLOTS.SLOT_3, type: 'dessert' },
+                    { id: CONST.SLOTS.SLOT_4, type: 'other' }
                 ];
 
                 let mealIndex = 1;
@@ -1870,21 +1835,7 @@
                             const lang = window.getCurrentLanguage();
                             const isBulgarian = lang === 'bg';
 
-                            let numberStr = '';
-                            const style = settings.mealNumbering.style;
-                            const prefix = settings.mealNumbering.prefix;
-                            const suffix = settings.mealNumbering.suffix;
-                            
-                            switch(style) {
-                                case 'numbers': numberStr = `${prefix}${mealIndex}${suffix}`; break;
-                                case 'bullets': numberStr = '•'; break;
-                                case 'letters': numberStr = `${prefix}${String.fromCharCode(64 + mealIndex)}${suffix}`; break;
-                                case 'roman': 
-                                    const romans = ['I', 'II', 'III', 'IV'];
-                                    numberStr = `${prefix}${romans[mealIndex - 1]}${suffix}`;
-                                    break;
-                                case 'none': numberStr = ''; break;
-                            }
+                            const numberStr = window.getMealNumber(mealIndex, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
 
                             html += `<div class="meal-item">`;
                             html += `<div class="meal-title">${numberStr} ${recipe.name}`;
@@ -1900,7 +1851,7 @@
                                 metadata.push(`${recipe.calories} ${calorieUnit}`);
                             }
                             if (metadata.length) {
-                                html += ` <span style="font-weight:normal; color:#666; font-size:8pt;">(${metadata.join(', ')})</span>`;
+                                html += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:8pt;">(${metadata.join(', ')})</span>`;
                             }
                             html += `</div>`;
 
@@ -1931,7 +1882,7 @@
                     }
                 });
             } else {
-                html += `<p style="color:#aaa; font-style:italic; text-align:center; padding:8px 0; margin:0;">${window.t('empty_day')}</p>`;
+                html += `<p style="color:${CONST.COLORS.EMPTY_DAY_COLOR}; font-style:italic; text-align:center; padding:8px 0; margin:0;">${window.t('empty_day')}</p>`;
             }
 
             html += `</div>`;
@@ -1949,14 +1900,14 @@
         printWindow.onload = () => {
             setTimeout(() => {
                 printWindow.print();
-            }, 500);
+            }, CONST.TIMING.PRINT_DELAY);
         };
     };
 
     window.getWeekStart = window.getWeekStart || function(date) {
         const d = new Date(date);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const diff = d.getDate() - day + (day === CONST.WEEK.SUNDAY ? -6 : CONST.WEEK.START_DAY);
         d.setDate(diff);
         d.setHours(0, 0, 0, 0);
         return d;
