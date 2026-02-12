@@ -37,7 +37,6 @@
 
     const TemplateManager = {
         presets: [
-            // Keep existing presets but add default values for new properties
             {
                 id: 'preset_classic',
                 nameKey: 'preset_classic',
@@ -68,6 +67,7 @@
             console.log('🎪 Enhanced Template Manager init()');
             
             this.loadActiveTemplate();
+            this.renderPresetTemplates();  // ✅ NEW: Render presets
             this.renderCollapsibleSections();
             this.bindImageUpload();
             this.bindLogoUpload();
@@ -81,6 +81,39 @@
             });
         },
 
+        // ✅ NEW: Render preset templates in the builder menu
+        renderPresetTemplates: function() {
+            const container = document.getElementById('presetTemplatesContainer');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            this.presets.forEach(preset => {
+                const card = document.createElement('div');
+                card.style.cssText = 'border: 2px solid #dee2e6; border-radius: 6px; padding: 10px; margin-bottom: 8px; background: white; cursor: pointer; transition: all 0.2s;';
+                
+                card.onmouseenter = () => card.style.borderColor = 'var(--color-primary)';
+                card.onmouseleave = () => card.style.borderColor = '#dee2e6';
+
+                const title = document.createElement('div');
+                title.style.cssText = 'font-weight: 600; font-size: 0.9rem; color: #333;';
+                title.textContent = window.t(preset.nameKey) || 'Classic Template';
+
+                card.appendChild(title);
+                card.onclick = () => this.applyPresetTemplate(preset);
+                container.appendChild(card);
+            });
+        },
+
+        applyPresetTemplate: async function(preset) {
+            console.log('🎨 Applying preset template:', preset.nameKey);
+            await this.applyTemplateToUI(preset);
+            activeTemplateId = 'default';
+            localStorage.setItem('activeTemplateId', 'default');
+            this.renderTemplateLibrary();
+            alert(window.t('alert_preset_loaded') || 'Preset template loaded!');
+        },
+
         renderCollapsibleSections: function() {
             const container = document.getElementById('collapsibleSections');
             if (!container) return;
@@ -89,7 +122,7 @@
                 // LAYOUT SECTION
                 {
                     id: 'layout',
-                    titleKey: 'Layout & Spacing',
+                    titleKey: 'Layout & Spacing',  // ✅ Using plain English (will be displayed as-is)
                     html: `
                         <div style="margin-bottom:8px;">
                             <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Page Margins (mm)</label>
@@ -129,7 +162,7 @@
                 // BACKGROUND SECTION (Enhanced)
                 {
                     id: 'background',
-                    titleKey: 'section_background',
+                    titleKey: 'Background',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Background Image</label>
                         <input type="text" id="backgroundImage" class="form-control" placeholder="https://..." style="font-size:0.85rem; height:32px;" data-filename="">
@@ -166,7 +199,7 @@
                 // BRANDING SECTION (Logo)
                 {
                     id: 'branding',
-                    titleKey: 'Branding & Logo',
+                    titleKey: 'Branding & Logo',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Logo Image</label>
                         <input type="text" id="logoImage" class="form-control" placeholder="Upload logo..." style="font-size:0.85rem; height:32px;" data-filename="" readonly>
@@ -196,7 +229,7 @@
                 // HEADER SECTION (Enhanced)
                 {
                     id: 'header',
-                    titleKey: 'section_header',
+                    titleKey: 'Header',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">${window.t('label_title')}</label>
                         <input type="text" id="headerText" class="form-control" value="Weekly Menu" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
@@ -255,7 +288,7 @@
                 // DATE RANGE SECTION
                 {
                     id: 'dateRange',
-                    titleKey: 'Date Range',
+                    titleKey: 'Date Range',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
                             <input type="checkbox" id="showDateRange" checked> Show Date Range
@@ -285,7 +318,7 @@
                 // DAY BLOCK SECTION (Enhanced)
                 {
                     id: 'dayBlock',
-                    titleKey: 'section_day_block',
+                    titleKey: 'Day Block',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Background Color</label>
                         <input type="color" id="dayBg" value="#ffffff" style="width:100%; height:32px; margin-bottom:8px;">
@@ -340,10 +373,10 @@
                     `
                 },
                 
-                // DAY NAME, MEAL TITLE, INGREDIENTS, MEAL VISIBILITY sections (keeping existing)
+                // DAY NAME, MEAL TITLE, INGREDIENTS, MEAL VISIBILITY sections
                 {
                     id: 'dayName',
-                    titleKey: 'section_day_name',
+                    titleKey: 'Day Name',  // ✅ Plain English
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -366,7 +399,7 @@
                 },
                 {
                     id: 'mealTitle',
-                    titleKey: 'section_meal_title',
+                    titleKey: 'Meal Title',  // ✅ Plain English
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -388,10 +421,10 @@
                     `
                 },
                 
-                // MEAL NUMBERING SECTION (NEW)
+                // MEAL NUMBERING SECTION
                 {
                     id: 'mealNumbering',
-                    titleKey: 'Meal Numbering',
+                    titleKey: 'Meal Numbering',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:4px; display:block;">Numbering Style</label>
                         <select id="mealNumberStyle" class="form-control" style="font-size:0.85rem; height:32px; margin-bottom:8px;">
@@ -415,10 +448,10 @@
                     `
                 },
                 
-                // SEPARATORS SECTION (NEW)
+                // SEPARATORS SECTION
                 {
                     id: 'separators',
-                    titleKey: 'Separators',
+                    titleKey: 'Separators',  // ✅ Plain English
                     html: `
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:8px; background:#fafafa;">
                             <label style="font-size:0.8rem; display:block; margin-bottom:6px;">
@@ -454,7 +487,7 @@
                 
                 {
                     id: 'ingredients',
-                    titleKey: 'section_ingredients',
+                    titleKey: 'Ingredients',  // ✅ Plain English
                     html: `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                             <div>
@@ -475,7 +508,7 @@
                 },
                 {
                     id: 'mealVisibility',
-                    titleKey: 'section_meal_visibility',
+                    titleKey: 'Meal Visibility',  // ✅ Plain English
                     html: `
                         <div style="border:1px solid #ddd; padding:8px; border-radius:4px; margin-bottom:6px; background:#fafafa;">
                             <h4 style="margin:0 0 6px 0; color:#fd7e14; font-size:9pt; font-weight:600;">${window.t('slot_1_label')}</h4>
@@ -504,10 +537,10 @@
                     `
                 },
                 
-                // PAGE BORDER SECTION (NEW)
+                // PAGE BORDER SECTION
                 {
                     id: 'pageBorder',
-                    titleKey: 'Page Border',
+                    titleKey: 'Page Border',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.8rem; display:block; margin-bottom:8px;">
                             <input type="checkbox" id="pageBorderEnabled"> Enable Page Border
@@ -544,7 +577,7 @@
                 
                 {
                     id: 'footer',
-                    titleKey: 'section_footer',
+                    titleKey: 'Footer',  // ✅ Plain English
                     html: `
                         <label style="font-size:0.85rem; margin-bottom:3px; display:block;">Text</label>
                         <textarea id="footerText" class="form-control" rows="2" placeholder="Additional notes..." style="font-size:0.85rem; margin-bottom:8px;">Prepared with care by KitchenPro</textarea>
@@ -582,7 +615,7 @@
             header.onmouseleave = () => header.style.background = 'var(--color-background)';
             
             const title = document.createElement('h4');
-            title.textContent = section.titleKey;
+            title.textContent = section.titleKey;  // ✅ Using titleKey directly (plain English)
             title.style.cssText = 'margin: 0; color: #495057; font-size: 9.5pt; font-weight: 600;';
             
             const toggleIcon = document.createElement('span');
@@ -1010,13 +1043,21 @@
             this.setVal('footerColor', template.footer?.color || '#7f8c8d');
             this.setVal('footerText', template.footer?.text || '');
             
-            // Background
+            // Background - ✅ FIXED: Better image loading
             const bgInput = document.getElementById('backgroundImage');
             if (template.backgroundImage) {
-                const imageUrl = await window.loadImageFile(template.backgroundImage);
-                if (bgInput) {
-                    bgInput.value = imageUrl || '';
-                    bgInput.dataset.filename = template.backgroundImage;
+                try {
+                    const imageUrl = await window.loadImageFile(template.backgroundImage);
+                    if (bgInput && imageUrl) {
+                        bgInput.value = imageUrl;
+                        bgInput.dataset.filename = template.backgroundImage;
+                    }
+                } catch (err) {
+                    console.error('Error loading background image:', err);
+                    if (bgInput) {
+                        bgInput.value = '';
+                        bgInput.dataset.filename = '';
+                    }
                 }
             } else {
                 if (bgInput) {
@@ -1030,13 +1071,21 @@
             this.setVal('bgOverlay', template.background?.overlay || '#000000');
             this.setVal('bgOverlayOpacity', template.background?.overlayOpacity || 0);
             
-            // Branding
+            // Branding - ✅ FIXED: Better logo loading
             const logoInput = document.getElementById('logoImage');
             if (template.branding?.logo) {
-                const logoUrl = await window.loadImageFile(template.branding.logo);
-                if (logoInput) {
-                    logoInput.value = logoUrl || '';
-                    logoInput.dataset.filename = template.branding.logo;
+                try {
+                    const logoUrl = await window.loadImageFile(template.branding.logo);
+                    if (logoInput && logoUrl) {
+                        logoInput.value = logoUrl;
+                        logoInput.dataset.filename = template.branding.logo;
+                    }
+                } catch (err) {
+                    console.error('Error loading logo:', err);
+                    if (logoInput) {
+                        logoInput.value = '';
+                        logoInput.dataset.filename = '';
+                    }
                 }
             } else {
                 if (logoInput) {
@@ -1122,7 +1171,10 @@
             }
 
             const bgInput = document.getElementById('backgroundImage');
-            const backgroundImage = bgInput?.dataset.filename || bgInput?.value || '';
+            const backgroundImage = bgInput?.dataset.filename || '';  // ✅ FIXED: Always use filename
+
+            const logoInput = document.getElementById('logoImage');
+            const logoFilename = logoInput?.dataset.filename || '';  // ✅ FIXED: Always use filename
 
             return {
                 layout: {
@@ -1200,7 +1252,7 @@
                     overlayOpacity: document.getElementById('bgOverlayOpacity')?.value || 0
                 },
                 branding: {
-                    logo: document.getElementById('logoImage')?.dataset.filename || '',
+                    logo: logoFilename,  // ✅ FIXED: Use filename directly
                     logoPosition: document.getElementById('logoPosition')?.value || 'top-right',
                     logoWidth: document.getElementById('logoWidth')?.value || 80,
                     logoHeight: document.getElementById('logoHeight')?.value || 80
@@ -1212,7 +1264,7 @@
                     style: document.getElementById('pageBorderStyle')?.value || 'solid',
                     radius: document.getElementById('pageBorderRadius')?.value || 0
                 },
-                backgroundImage: backgroundImage,
+                backgroundImage: backgroundImage,  // ✅ FIXED: Use filename directly
                 slotSettings: slotSettings
             };
         },
@@ -1247,16 +1299,15 @@
             
             const sheet = document.getElementById('livePreviewSheet');
             if (sheet && settings.backgroundImage) {
-                let previewUrl = settings.backgroundImage;
-                if (!previewUrl.startsWith('http') && !previewUrl.startsWith('blob:')) {
-                    previewUrl = await window.loadImageFile(settings.backgroundImage);
-                }
+                let previewUrl = await window.loadImageFile(settings.backgroundImage);  // ✅ FIXED: Always load from file
                 if (previewUrl) {
                     sheet.style.backgroundImage = `url(${previewUrl})`;
                     sheet.style.backgroundSize = 'cover';
                     sheet.style.backgroundPosition = settings.background.position;
                     sheet.style.backgroundRepeat = 'no-repeat';
                     sheet.style.opacity = settings.background.opacity;
+                } else {
+                    sheet.style.backgroundImage = 'none';
                 }
             } else if (sheet) {
                 sheet.style.backgroundImage = 'none';
@@ -1723,6 +1774,18 @@
             return;
         }
 
+        // ✅ FIXED: Load background image properly
+        let bgImageUrl = '';
+        if (settings.backgroundImage) {
+            bgImageUrl = await window.loadImageFile(settings.backgroundImage);
+        }
+
+        // ✅ FIXED: Load logo properly
+        let logoUrl = '';
+        if (settings.branding?.logo) {
+            logoUrl = await window.loadImageFile(settings.branding.logo);
+        }
+
         // Generate full HTML with all template settings
         let html = `
         <!DOCTYPE html>
@@ -1745,7 +1808,7 @@
                         padding: 10mm;
                     ` : ''}
                 }
-                ${settings.backgroundImage ? `
+                ${bgImageUrl ? `
                 body::before {
                     content: '';
                     position: fixed;
@@ -1753,7 +1816,7 @@
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background-image: url('${await window.loadImageFile(settings.backgroundImage) || settings.backgroundImage}');
+                    background-image: url('${bgImageUrl}');
                     background-size: cover;
                     background-position: ${settings.background.position};
                     background-repeat: no-repeat;
