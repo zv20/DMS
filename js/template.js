@@ -1590,68 +1590,188 @@
             return;
         }
 
+        // Step 1: Template Selection Modal
         const modal = document.createElement('div');
         modal.id = 'templatePickerModal';
         modal.className = 'modal-overlay';
         modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
 
         const content = document.createElement('div');
-        content.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+        content.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
 
         content.innerHTML = `
-            <h3 style="margin: 0 0 15px 0; color: var(--color-primary);">📄 ${window.t('title_select_week')}</h3>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">${window.t('text_select_week_prompt')}</p>
-            <div id="weekSelectList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;"></div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="cancelPrintBtn" class="btn btn-secondary">${window.t('btn_cancel')}</button>
-                <button id="confirmPrintBtn" class="btn btn-primary" disabled>${window.t('btn_print')}</button>
+            <h3 style="margin: 0 0 15px 0; color: var(--color-primary);">🎨 Select Template</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Choose a template for your menu</p>
+            
+            <h4 style="margin: 15px 0 10px 0; font-size: 0.9rem; color: #495057;">📋 Preset Templates</h4>
+            <div id="presetTemplatesList" style="margin-bottom: 20px;"></div>
+            
+            <h4 style="margin: 15px 0 10px 0; font-size: 0.9rem; color: #495057;">💾 My Saved Templates</h4>
+            <div id="savedTemplatesList" style="margin-bottom: 20px;"></div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                <button id="cancelTemplateBtn" class="btn btn-secondary">${window.t('btn_cancel') || 'Cancel'}</button>
+                <button id="nextToWeekBtn" class="btn btn-primary" disabled>${window.t('btn_next') || 'Next'} →</button>
             </div>
         `;
 
         modal.appendChild(content);
         document.body.appendChild(modal);
 
-        const weekList = document.getElementById('weekSelectList');
-        weeks.forEach((week, index) => {
-            const weekCard = document.createElement('div');
-            weekCard.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;`;
-            weekCard.innerHTML = `
-                <div style="font-weight: 600; font-size: 0.9rem; color: #333;">${week.label}</div>
-                <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">${week.dateCount} ${window.t('text_days_with_meals')}</div>
-            `;
+        let selectedTemplateId = null;
 
-            weekCard.onclick = () => {
-                document.querySelectorAll('#weekSelectList > div').forEach(card => {
-                    card.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
-                    card.style.background = 'white';
-                });
-                weekCard.style.borderColor = 'var(--color-primary)';
-                weekCard.style.background = '#fff8f0';
-                selectedWeekStart = week.weekStart;
-                document.getElementById('confirmPrintBtn').disabled = false;
-            };
+        // Render Preset Templates
+        const presetsList = document.getElementById('presetTemplatesList');
+        if (TemplateManager.presets && TemplateManager.presets.length > 0) {
+            TemplateManager.presets.forEach(preset => {
+                const card = document.createElement('div');
+                card.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; background: white;`;
+                card.innerHTML = `
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #333;">🎨 ${preset.nameKey || 'Classic Template'}</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">${preset.description || 'Preset design template'}</div>
+                `;
 
-            weekList.appendChild(weekCard);
+                card.onclick = () => {
+                    document.querySelectorAll('#presetTemplatesList > div, #savedTemplatesList > div').forEach(c => {
+                        c.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
+                        c.style.background = 'white';
+                    });
+                    card.style.borderColor = 'var(--color-primary)';
+                    card.style.background = '#fff8f0';
+                    selectedTemplateId = 'preset_' + preset.nameKey;
+                    document.getElementById('nextToWeekBtn').disabled = false;
+                };
 
-            if (index === 0) {
-                weekCard.click();
-            }
-        });
+                presetsList.appendChild(card);
+            });
+        } else {
+            presetsList.innerHTML = '<p style="color: #999; font-size: 0.85rem; text-align: center; padding: 10px;">No preset templates available</p>';
+        }
 
-        document.getElementById('cancelPrintBtn').onclick = () => {
+        // Render Saved Templates
+        const savedList = document.getElementById('savedTemplatesList');
+        if (window.savedTemplates && window.savedTemplates.length > 0) {
+            window.savedTemplates.forEach(tmpl => {
+                const card = document.createElement('div');
+                card.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; background: white;`;
+                card.innerHTML = `
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #333;">💾 ${tmpl.name || 'Unnamed Template'}</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">Custom saved template</div>
+                `;
+
+                card.onclick = () => {
+                    document.querySelectorAll('#presetTemplatesList > div, #savedTemplatesList > div').forEach(c => {
+                        c.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
+                        c.style.background = 'white';
+                    });
+                    card.style.borderColor = 'var(--color-primary)';
+                    card.style.background = '#fff8f0';
+                    selectedTemplateId = tmpl.id;
+                    document.getElementById('nextToWeekBtn').disabled = false;
+                };
+
+                savedList.appendChild(card);
+            });
+        } else {
+            savedList.innerHTML = '<p style="color: #999; font-size: 0.85rem; text-align: center; padding: 10px;">No saved templates yet</p>';
+        }
+
+        document.getElementById('cancelTemplateBtn').onclick = () => {
             modal.remove();
         };
 
-        document.getElementById('confirmPrintBtn').onclick = () => {
+        document.getElementById('nextToWeekBtn').onclick = () => {
             modal.remove();
-            if (selectedWeekStart) {
-                window.printWithTemplate(activeTemplateId || 'default');
-            }
+            showWeekPicker(selectedTemplateId);
         };
 
         modal.onclick = (e) => {
             if (e.target === modal) modal.remove();
         };
+
+        // Step 2: Week Selection (called after template is chosen)
+        function showWeekPicker(templateId) {
+            const modal2 = document.createElement('div');
+            modal2.id = 'weekPickerModal';
+            modal2.className = 'modal-overlay';
+            modal2.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+
+            const content2 = document.createElement('div');
+            content2.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+
+            content2.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: var(--color-primary);">📅 ${window.t('title_select_week') || 'Select Week'}</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">${window.t('text_select_week_prompt') || 'Choose which week to print'}</p>
+                <div id="weekSelectList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;"></div>
+                <div style="display: flex; gap: 10px; justify-content: space-between;">
+                    <button id="backToTemplateBtn" class="btn btn-secondary">← ${window.t('btn_back') || 'Back'}</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="cancelPrintBtn" class="btn btn-secondary">${window.t('btn_cancel') || 'Cancel'}</button>
+                        <button id="confirmPrintBtn" class="btn btn-primary" disabled>${window.t('btn_print') || 'Print'}</button>
+                    </div>
+                </div>
+            `;
+
+            modal2.appendChild(content2);
+            document.body.appendChild(modal2);
+
+            const weekList = document.getElementById('weekSelectList');
+            weeks.forEach((week, index) => {
+                const weekCard = document.createElement('div');
+                weekCard.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;`;
+                weekCard.innerHTML = `
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #333;">${week.label}</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">${week.dateCount} ${window.t('text_days_with_meals') || 'days with meals'}</div>
+                `;
+
+                weekCard.onclick = () => {
+                    document.querySelectorAll('#weekSelectList > div').forEach(card => {
+                        card.style.borderColor = CONST.COLORS.CARD_BORDER_COLOR;
+                        card.style.background = 'white';
+                    });
+                    weekCard.style.borderColor = 'var(--color-primary)';
+                    weekCard.style.background = '#fff8f0';
+                    selectedWeekStart = week.weekStart;
+                    document.getElementById('confirmPrintBtn').disabled = false;
+                };
+
+                weekList.appendChild(weekCard);
+
+                if (index === 0) {
+                    weekCard.click();
+                }
+            });
+
+            document.getElementById('backToTemplateBtn').onclick = () => {
+                modal2.remove();
+                window.openTemplatePicker(); // Go back to template selection
+            };
+
+            document.getElementById('cancelPrintBtn').onclick = () => {
+                modal2.remove();
+            };
+
+            document.getElementById('confirmPrintBtn').onclick = async () => {
+                modal2.remove();
+                if (selectedWeekStart) {
+                    // Load the selected template before printing
+                    if (templateId.startsWith('preset_')) {
+                        const presetName = templateId.replace('preset_', '');
+                        const preset = TemplateManager.presets.find(p => p.nameKey === presetName);
+                        if (preset) {
+                            await TemplateManager.applyTemplateToUI(preset);
+                            window.printWithTemplate('default');
+                        }
+                    } else {
+                        window.printWithTemplate(templateId);
+                    }
+                }
+            };
+
+            modal2.onclick = (e) => {
+                if (e.target === modal2) modal2.remove();
+            };
+        }
     };
 
     window.printWithTemplate = async function(templateId) {
