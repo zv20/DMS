@@ -9,8 +9,7 @@
  * FIXED: Using IMG tag instead of CSS background for reliable printing
  * FIXED: Two-column layout for preset templates
  * FIXED: A4 page fitting - ALL templates now fit 5 days on single page
- * NEW: PDF generation with html2canvas + jsPDF - no print dialog!
- * NEW: Auto-save PDFs to archive/menus/ folder
+ * NEW: Browser print dialog + background PDF archiving with date-based naming
  */
 
 (function(window) {
@@ -1066,6 +1065,23 @@
             return `${startDay.toLocaleDateString(lang, options)} — ${endDay.toLocaleDateString(lang, options)}, ${endDay.getFullYear()}`;
         },
 
+        // Generate simple date-based filename for archiving: Feb3-Feb7_2026.pdf
+        getDateRangeFilename: function(weekStart) {
+            const startDay = new Date(weekStart);
+            const endDay = new Date(weekStart);
+            endDay.setDate(weekStart.getDate() + 4); // Friday
+            
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            const startMonth = startDay.toLocaleDateString(lang, { month: 'short' }).replace('.', '');
+            const endMonth = endDay.toLocaleDateString(lang, { month: 'short' }).replace('.', '');
+            const startDate = startDay.getDate();
+            const endDate = endDay.getDate();
+            const year = endDay.getFullYear();
+            
+            // Feb3-Feb7_2026.pdf
+            return `${startMonth}${startDate}-${endMonth}${endDate}_${year}.pdf`;
+        },
+
         getWeeksWithMeals: function() {
             const weeks = [];
             const dates = Object.keys(window.currentMenu).filter(dateStr => {
@@ -1401,7 +1417,7 @@
         grid.appendChild(templateSection);
     };
 
-    // NEW PDF GENERATION FUNCTION - Replaces old print dialog!
+    // RESTORED: Traditional browser print dialog + background PDF archiving
     window.printWithTemplate = async function(id) {
         let settings;
         if (id === 'current') {
@@ -1420,7 +1436,7 @@
 
         const weekStart = selectedWeekStart || window.getWeekStart(window.currentCalendarDate || new Date());
 
-        // Convert background image to base64
+        // Convert background image to base64 for printing
         console.log('🖼️ Converting background image to base64...');
         let backgroundImageTag = '';
         if (settings.backgroundImage) {
@@ -1484,6 +1500,9 @@
             <head>
                 <title>${window.t('modal_print_menu')}</title>
                 <style>
+                    @media print {
+                        @page { size: A4; margin: 8mm; }
+                    }
                     body { 
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                         padding: 8mm;
@@ -1516,56 +1535,67 @@
             </html>
         `;
 
-        // Create hidden container for PDF generation
-        const container = document.createElement('div');
-        container.innerHTML = html;
-        container.style.cssText = 'position:absolute; left:-9999px; width:210mm; min-height:297mm; background:white;';
-        document.body.appendChild(container);
+        // Open in new tab for printing
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(html);
+        printWindow.document.close();
+        
+        // Wait for images to load before triggering print dialog
+        printWindow.onload = () => {
+            printWindow.focus();
+            printWindow.print();
+            
+            // Generate filename: Feb3-Feb7_2026.pdf
+            const filename = TemplateManager.getDateRangeFilename(weekStart);
+            
+            // Background PDF archiving (async - doesn't block print dialog)
+            savePDFInBackground(html, filename);
+        };
+        
+        // Close template picker modal
+        document.getElementById('templatePickerModal').style.display = 'none';
+        selectedWeekStart = null;
+    };
 
+    // Background PDF archiving helper
+    async function savePDFInBackground(html, filename) {
         try {
-            console.log('📸 Capturing HTML as image...');
-            const canvas = await html2canvas(container.querySelector('body'), {
+            console.log('💾 Saving PDF to archive in background...');
+            
+            // Create hidden container
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            container.style.cssText = 'position:absolute; left:-9999px; width:210mm; min-height:297mm; background:white;';
+            document.body.appendChild(container);
+            
+            // Capture as canvas
+            const canvas = await html2canvas(container, {
                 scale: 2,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff'
             });
-
-            console.log('📄 Generating PDF...');
+            
+            // Generate PDF
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
-            
             const imgData = canvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-
-            // Generate filename
-            const timestamp = new Date().toISOString().split('T')[0];
-            const templateName = (settings.name || 'menu').replace(/[^a-z0-9]/gi, '_');
-            const filename = `menu_${timestamp}_${templateName}.pdf`;
-
-            // Save PDF
-            console.log('💾 Saving PDF...');
+            
+            // Save to archive (overwrites if same filename exists)
             const pdfBlob = pdf.output('blob');
-            const pdfUrl = await window.savePDFToArchive(pdfBlob, filename);
-
-            if (pdfUrl) {
-                // Open PDF in new tab
-                window.open(pdfUrl, '_blank');
-                alert(`✅ Menu saved to archive/menus/${filename}`);
-            } else {
-                alert('❌ Failed to save PDF. Please try again.');
-            }
-
-        } catch (error) {
-            console.error('❌ PDF generation error:', error);
-            alert('Failed to generate PDF: ' + error.message);
-        } finally {
+            await window.savePDFToArchive(pdfBlob, filename);
+            
+            console.log(`✅ PDF archived: ${filename}`);
+            
             // Cleanup
             document.body.removeChild(container);
-            document.getElementById('templatePickerModal').style.display = 'none';
-            selectedWeekStart = null;
+            
+        } catch (error) {
+            console.error('❌ Background PDF save failed:', error);
+            // Silent fail - don't interrupt user's print workflow
         }
-    };
+    }
 
     window.getWeekStart = window.getWeekStart || function(date) {
         const d = new Date(date);
