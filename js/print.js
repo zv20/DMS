@@ -15,8 +15,14 @@
         const templateChoice = await selectTemplateDialog();
         if (!templateChoice) return; // User cancelled
         
-        // Step 3: Generate meal plan data for selected week
+        // Step 3: Generate meal plan data for selected week (Mon-Fri only, only days with meals)
         const mealPlanData = generateMealPlanData(weekSelection.startDate, weekSelection.endDate);
+        
+        // Check if any meals exist
+        if (mealPlanData.days.length === 0) {
+            alert('No meals planned for the selected week!');
+            return;
+        }
         
         // Step 4: Render using selected template
         const html = renderWithTemplate(mealPlanData, templateChoice);
@@ -70,7 +76,7 @@
                         font-size: 15px;
                     ">
                         <strong>Last Week</strong><br>
-                        <small style="color: #666;">${formatDateRange(lastWeek[0], lastWeek[6])}</small>
+                        <small style="color: #666;">${formatDateRange(lastWeek[0], lastWeek[4])}</small>
                     </button>
                     <button class="week-option" data-week="current" style="
                         padding: 15px;
@@ -82,7 +88,7 @@
                         font-size: 15px;
                     ">
                         <strong>This Week</strong><br>
-                        <small style="color: #666;">${formatDateRange(currentWeek[0], currentWeek[6])}</small>
+                        <small style="color: #666;">${formatDateRange(currentWeek[0], currentWeek[4])}</small>
                     </button>
                     <button class="week-option" data-week="next" style="
                         padding: 15px;
@@ -94,7 +100,7 @@
                         font-size: 15px;
                     ">
                         <strong>Next Week</strong><br>
-                        <small style="color: #666;">${formatDateRange(nextWeek[0], nextWeek[6])}</small>
+                        <small style="color: #666;">${formatDateRange(nextWeek[0], nextWeek[4])}</small>
                     </button>
                 </div>
                 <button id="cancel-week" style="
@@ -135,7 +141,7 @@
                     document.body.removeChild(dialog);
                     resolve({
                         startDate: dates[0],
-                        endDate: dates[6]
+                        endDate: dates[4] // Friday only
                     });
                 });
             });
@@ -272,7 +278,7 @@
         });
     }
     
-    // Generate meal plan data from menu for date range
+    // Generate meal plan data from menu for date range (Monday-Friday only, only days with meals)
     function generateMealPlanData(startDate, endDate) {
         const days = [];
         const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -280,64 +286,63 @@
         let currentDate = new Date(startDate);
         let dayIndex = 0;
         
-        while (currentDate <= endDate) {
+        // Only loop Mon-Fri (5 days)
+        while (currentDate <= endDate && dayIndex < 5) {
             const dateStr = currentDate.toISOString().split('T')[0];
             const dayMenu = window.getMenuForDate(dateStr);
             
-            const meals = [];
-            
-            // Build meals from slots 1-4
-            ['slot1', 'slot2', 'slot3', 'slot4'].forEach((slotId, mealNum) => {
+            // Check if this day has any meals
+            const hasMeals = ['slot1', 'slot2', 'slot3', 'slot4'].some(slotId => {
                 const slot = dayMenu[slotId];
-                const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
+                return slot && slot.recipe;
+            });
+            
+            // Only include days with meals
+            if (hasMeals) {
+                const meals = [];
                 
-                if (recipe) {
-                    // Get ingredients with allergen info
-                    const ingredients = (recipe.ingredients || []).map(ingId => {
-                        const ing = window.ingredients.find(i => i.id === ingId);
-                        return ing ? ing.name : '';
-                    }).filter(Boolean);
+                // Build meals from slots 1-4
+                ['slot1', 'slot2', 'slot3', 'slot4'].forEach((slotId, mealNum) => {
+                    const slot = dayMenu[slotId];
+                    const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
                     
-                    // Get allergens for this recipe
-                    const allergens = [];
-                    (recipe.ingredients || []).forEach(ingId => {
-                        const ing = window.ingredients.find(i => i.id === ingId);
-                        if (ing && ing.allergens && ing.allergens.length > 0) {
-                            ing.allergens.forEach(allergenId => {
-                                const allergen = window.allergens.find(a => a.id === allergenId);
-                                if (allergen && !allergens.includes(ing.name)) {
-                                    allergens.push(ing.name);
-                                }
-                            });
-                        }
-                    });
-                    
-                    meals.push({
-                        title: String(mealNum + 1),
-                        name: recipe.name,
-                        portion: recipe.portionSize || '',
-                        calories: recipe.calories || null,
-                        ingredients: ingredients,
-                        allergens: allergens
-                    });
-                } else {
-                    // Empty slot
-                    meals.push({
-                        title: String(mealNum + 1),
-                        name: '—',
-                        portion: '',
-                        calories: null,
-                        ingredients: [],
-                        allergens: []
+                    if (recipe) {
+                        // Get ingredients
+                        const ingredients = (recipe.ingredients || []).map(ingId => {
+                            const ing = window.ingredients.find(i => i.id === ingId);
+                            return ing ? ing.name : '';
+                        }).filter(Boolean);
+                        
+                        // Get allergens - ingredients that have allergens
+                        const allergens = [];
+                        (recipe.ingredients || []).forEach(ingId => {
+                            const ing = window.ingredients.find(i => i.id === ingId);
+                            if (ing && ing.allergens && ing.allergens.length > 0) {
+                                // This ingredient has allergens, add it to the list
+                                allergens.push(ing.name);
+                            }
+                        });
+                        
+                        meals.push({
+                            title: String(mealNum + 1),
+                            name: recipe.name,
+                            portion: recipe.portionSize || '',
+                            calories: recipe.calories || null,
+                            ingredients: ingredients,
+                            allergens: allergens
+                        });
+                    }
+                });
+                
+                // Only add day if it has at least one meal
+                if (meals.length > 0) {
+                    days.push({
+                        date: dateStr,
+                        dayName: dayNames[dayIndex],
+                        meals: meals
                     });
                 }
-            });
-            
-            days.push({
-                date: dateStr,
-                dayName: dayNames[dayIndex % 7],
-                meals: meals
-            });
+            }
             
             currentDate.setDate(currentDate.getDate() + 1);
             dayIndex++;
@@ -356,7 +361,7 @@
         
         let settings;
         if (templateChoice.type === 'default') {
-            // Use default elegant template
+            // Use default elegant template with ingredients shown and allergens underlined
             settings = {
                 layoutStyle: 'elegant-single',
                 showHeader: true,
@@ -385,8 +390,8 @@
                 pageBorder: false
             };
         } else {
-            // Use saved template settings
-            settings = templateChoice.settings;
+            // Use saved template settings, but force ingredients to show
+            settings = { ...templateChoice.settings, showIngredients: true };
         }
         
         return renderer.render(settings, mealPlanData);
@@ -437,7 +442,8 @@
         const monday = new Date(currentDate.setDate(diff));
         const dates = [];
         
-        for (let i = 0; i < 7; i++) {
+        // Only get Monday through Friday (5 days)
+        for (let i = 0; i < 5; i++) {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
             dates.push(d);
