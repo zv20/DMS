@@ -367,6 +367,11 @@
         window.CalendarManager.navigate(offset);
     };
 
+    // Expose getWeekStart as global function for backward compatibility
+    window.getWeekStart = function(date) {
+        return window.CalendarManager.getWeekStart(date);
+    };
+
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('calendar')) {
