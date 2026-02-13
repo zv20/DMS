@@ -5,6 +5,7 @@
  * FIXED: Background images now print using IMG tag instead of CSS
  * NEW: Single-page A4 print constraint with auto-scaling
  * NEW: Skip empty days in print output (only print days with meals)
+ * NEW: Center days with fixed size instead of stretching
  */
 
 (function(window) {
@@ -1955,7 +1956,9 @@
                     flex: 1;
                     display: flex;
                     flex-direction: column;
-                    justify-content: space-between;
+                    justify-content: center;
+                    align-items: stretch;
+                    gap: ${settings.layout.dayBlockSpacing}px;
                     overflow: hidden;
                 }
                 
@@ -1979,9 +1982,6 @@
                     })()}
                     box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                     page-break-inside: avoid;
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
                 }
                 .day-name {
                     font-size: ${settings.dayName.fontSize};
