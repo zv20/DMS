@@ -1,44 +1,128 @@
 /**
  * Template Sections Module
- * Handles rendering of collapsible configuration sections
+ * Handles rendering of TABBED configuration sections
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
 
     const TemplateSections = {
+        currentTab: 'layout',
+        
         render: function(sectionStates, manager) {
             const container = document.getElementById('collapsibleSections');
             if (!container) return;
             
-            const sections = this.getSectionDefinitions();
-
-            sections.forEach(section => {
-                const sectionDiv = this.createCollapsibleSection(section, sectionStates);
-                container.appendChild(sectionDiv);
-            });
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create tab navigation
+            const tabNav = this.createTabNavigation();
+            container.appendChild(tabNav);
+            
+            // Create tab content container
+            const tabContent = document.createElement('div');
+            tabContent.id = 'tabContent';
+            tabContent.style.cssText = 'margin-top: 12px;';
+            container.appendChild(tabContent);
+            
+            // Render the active tab
+            this.renderTab(this.currentTab, tabContent, sectionStates);
             
             manager.bindUI();
             this.setupOpacitySliders(manager);
         },
 
-        getSectionDefinitions: function() {
-            return [
-                this.getLayoutSection(),
-                this.getBackgroundSection(),
-                this.getBrandingSection(),
-                this.getHeaderSection(),
-                this.getDateRangeSection(),
-                this.getDayBlockSection(),
-                this.getDayNameSection(),
-                this.getMealTitleSection(),
-                this.getMealNumberingSection(),
-                this.getSeparatorsSection(),
-                this.getIngredientsSection(),
-                this.getMealVisibilitySection(),
-                this.getPageBorderSection(),
-                this.getFooterSection()
+        createTabNavigation: function() {
+            const nav = document.createElement('div');
+            nav.style.cssText = 'display: flex; gap: 4px; border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0;';
+            
+            const tabs = [
+                { id: 'layout', label: '📏 Layout & Content', icon: '📏' },
+                { id: 'styling', label: '🎨 Styling', icon: '🎨' },
+                { id: 'advanced', label: '⚙️ Advanced', icon: '⚙️' }
             ];
+            
+            tabs.forEach(tab => {
+                const btn = document.createElement('button');
+                btn.textContent = tab.label;
+                btn.style.cssText = `
+                    padding: 8px 16px;
+                    border: none;
+                    background: ${this.currentTab === tab.id ? 'var(--color-primary)' : 'var(--color-background)'};
+                    color: ${this.currentTab === tab.id ? 'white' : '#495057'};
+                    cursor: pointer;
+                    font-size: 10pt;
+                    font-weight: ${this.currentTab === tab.id ? '600' : 'normal'};
+                    border-radius: 5px 5px 0 0;
+                    transition: all 0.2s;
+                    flex: 1;
+                `;
+                
+                btn.onmouseenter = () => {
+                    if (this.currentTab !== tab.id) {
+                        btn.style.background = '#e9ecef';
+                    }
+                };
+                btn.onmouseleave = () => {
+                    if (this.currentTab !== tab.id) {
+                        btn.style.background = 'var(--color-background)';
+                    }
+                };
+                
+                btn.onclick = () => {
+                    this.currentTab = tab.id;
+                    const container = document.getElementById('collapsibleSections');
+                    if (container) {
+                        this.render({}, window.templateBuilderManager);
+                    }
+                };
+                
+                nav.appendChild(btn);
+            });
+            
+            return nav;
+        },
+
+        renderTab: function(tabId, container, sectionStates) {
+            container.innerHTML = '';
+            let sections = [];
+            
+            switch(tabId) {
+                case 'layout':
+                    sections = [
+                        this.getLayoutSection(),
+                        this.getHeaderSection(),
+                        this.getDateRangeSection(),
+                        this.getFooterSection()
+                    ];
+                    break;
+                
+                case 'styling':
+                    sections = [
+                        this.getDayBlockSection(),
+                        this.getDayNameSection(),
+                        this.getMealTitleSection(),
+                        this.getMealNumberingSection(),
+                        this.getIngredientsSection()
+                    ];
+                    break;
+                
+                case 'advanced':
+                    sections = [
+                        this.getBackgroundSection(),
+                        this.getBrandingSection(),
+                        this.getSeparatorsSection(),
+                        this.getPageBorderSection(),
+                        this.getMealVisibilitySection()
+                    ];
+                    break;
+            }
+            
+            sections.forEach(section => {
+                const sectionDiv = this.createCollapsibleSection(section, sectionStates);
+                container.appendChild(sectionDiv);
+            });
         },
 
         getLayoutSection: function() {
@@ -559,7 +643,7 @@
             title.style.cssText = `margin: 0; color: #495057; font-size: ${CONST.TYPOGRAPHY.SECTION_TITLE_SIZE}; font-weight: 600;`;
             
             const toggleIcon = document.createElement('span');
-            const isExpanded = sectionStates[section.id] !== undefined ? sectionStates[section.id] : false;
+            const isExpanded = sectionStates[section.id] !== undefined ? sectionStates[section.id] : true; // Default expanded
             toggleIcon.textContent = isExpanded ? '▼' : '▶';
             toggleIcon.style.cssText = `font-size: 9pt; color: ${CONST.COLORS.TEXT_MUTED};`;
             
