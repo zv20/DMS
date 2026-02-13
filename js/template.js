@@ -4,6 +4,7 @@
  * Refactored to use centralized constants
  * FIXED: Background images now print using IMG tag instead of CSS
  * NEW: Single-page A4 print constraint with auto-scaling
+ * NEW: Skip empty days in print output (only print days with meals)
  */
 
 (function(window) {
@@ -1741,7 +1742,7 @@
                     padding-left: 10px;
                 `;
 
-                // Render weeks for this month
+                // Render weeks for this month (FILTER OUT EMPTY WEEKS)
                 monthData.weeks.forEach((week, weekIndex) => {
                     const weekCard = document.createElement('div');
                     weekCard.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 10px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s;`;
@@ -1862,6 +1863,25 @@
         let logoUrl = '';
         if (settings.branding?.logo) {
             logoUrl = await window.loadImageFile(settings.branding.logo);
+        }
+
+        // ✨ NEW: Build array of only days with meals
+        const daysWithMeals = [];
+        for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
+            const day = new Date(selectedWeekStart);
+            day.setDate(selectedWeekStart.getDate() + i);
+            const dateStr = day.toISOString().split('T')[0];
+            const dayMenu = window.currentMenu[dateStr];
+            
+            // Only include if day has meals
+            if (TemplateManager.hasMeals(dayMenu)) {
+                daysWithMeals.push({
+                    date: day,
+                    dateStr: dateStr,
+                    dayName: day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' }),
+                    dayMenu: dayMenu
+                });
+            }
         }
 
         let html = `
@@ -2032,86 +2052,77 @@
                 <div id="days-container">
         `;
 
-        for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
-            const day = new Date(selectedWeekStart);
-            day.setDate(selectedWeekStart.getDate() + i);
-            const dateStr = day.toISOString().split('T')[0];
-            const dayMenu = window.currentMenu[dateStr];
-            const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
-
+        // ✨ NEW: Loop through only days with meals
+        daysWithMeals.forEach(dayData => {
             html += `<div class="print-day-block">`;
-            html += `<div class="day-name">${dayName}</div>`;
+            html += `<div class="day-name">${dayData.dayName}</div>`;
 
-            if (dayMenu && TemplateManager.hasMeals(dayMenu)) {
-                const slots = [
-                    { id: CONST.SLOTS.SLOT_1, type: 'soup' },
-                    { id: CONST.SLOTS.SLOT_2, type: 'main' },
-                    { id: CONST.SLOTS.SLOT_3, type: 'dessert' },
-                    { id: CONST.SLOTS.SLOT_4, type: 'other' }
-                ];
+            const slots = [
+                { id: CONST.SLOTS.SLOT_1, type: 'soup' },
+                { id: CONST.SLOTS.SLOT_2, type: 'main' },
+                { id: CONST.SLOTS.SLOT_3, type: 'dessert' },
+                { id: CONST.SLOTS.SLOT_4, type: 'other' }
+            ];
 
-                let mealIndex = 1;
-                slots.forEach(slotConfig => {
-                    const slot = dayMenu[slotConfig.id];
-                    if (slot && slot.recipe) {
-                        const recipe = window.recipes.find(r => r.id === slot.recipe);
-                        if (recipe) {
-                            const slotSettings = settings.slotSettings[slotConfig.id];
-                            const lang = window.getCurrentLanguage();
-                            const isBulgarian = lang === 'bg';
+            let mealIndex = 1;
+            slots.forEach(slotConfig => {
+                const slot = dayData.dayMenu[slotConfig.id];
+                if (slot && slot.recipe) {
+                    const recipe = window.recipes.find(r => r.id === slot.recipe);
+                    if (recipe) {
+                        const slotSettings = settings.slotSettings[slotConfig.id];
+                        const lang = window.getCurrentLanguage();
+                        const isBulgarian = lang === 'bg';
 
-                            const numberStr = window.getMealNumber(mealIndex, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
+                        const numberStr = window.getMealNumber(mealIndex, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
 
-                            html += `<div class="meal-item">`;
-                            html += `<div class="meal-title">${numberStr} ${recipe.name}`;
-                            
-                            let metadata = [];
-                            if (recipe.portionSize) {
-                                const portionUnit = isBulgarian ? 'гр' : 'g';
-                                const portionValue = recipe.portionSize.replace(/g|gr|гр/gi, '').trim();
-                                metadata.push(`${portionValue}${portionUnit}`);
-                            }
-                            if (slotSettings.showCalories && recipe.calories) {
-                                const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
-                                metadata.push(`${recipe.calories} ${calorieUnit}`);
-                            }
-                            if (metadata.length) {
-                                html += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:7pt;">(${metadata.join(', ')})</span>`;
-                            }
-                            html += `</div>`;
-
-                            if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
-                                const recipeAllergens = window.getRecipeAllergens(recipe);
-                                const allergenIds = new Set(recipeAllergens.map(a => a.id));
-                                
-                                const ingredientsList = recipe.ingredients.map(ing => {
-                                    const fullIng = window.ingredients.find(i => i.id === ing.id);
-                                    if (!fullIng) return '';
-                                    
-                                    const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
-                                    
-                                    if (slotSettings.showAllergens && hasAllergen) {
-                                        return `<span class="allergen-highlight">${fullIng.name}</span>`;
-                                    }
-                                    return fullIng.name;
-                                }).filter(n => n).join(', ');
-                                
-                                if (ingredientsList) {
-                                    html += `<div class="ingredients"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
-                                }
-                            }
-
-                            html += `</div>`;
-                            mealIndex++;
+                        html += `<div class="meal-item">`;
+                        html += `<div class="meal-title">${numberStr} ${recipe.name}`;
+                        
+                        let metadata = [];
+                        if (recipe.portionSize) {
+                            const portionUnit = isBulgarian ? 'гр' : 'g';
+                            const portionValue = recipe.portionSize.replace(/g|gr|гр/gi, '').trim();
+                            metadata.push(`${portionValue}${portionUnit}`);
                         }
+                        if (slotSettings.showCalories && recipe.calories) {
+                            const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
+                            metadata.push(`${recipe.calories} ${calorieUnit}`);
+                        }
+                        if (metadata.length) {
+                            html += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:7pt;">(${metadata.join(', ')})</span>`;
+                        }
+                        html += `</div>`;
+
+                        if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
+                            const recipeAllergens = window.getRecipeAllergens(recipe);
+                            const allergenIds = new Set(recipeAllergens.map(a => a.id));
+                            
+                            const ingredientsList = recipe.ingredients.map(ing => {
+                                const fullIng = window.ingredients.find(i => i.id === ing.id);
+                                if (!fullIng) return '';
+                                
+                                const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
+                                
+                                if (slotSettings.showAllergens && hasAllergen) {
+                                    return `<span class="allergen-highlight">${fullIng.name}</span>`;
+                                }
+                                return fullIng.name;
+                            }).filter(n => n).join(', ');
+                            
+                            if (ingredientsList) {
+                                html += `<div class="ingredients"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
+                            }
+                        }
+
+                        html += `</div>`;
+                        mealIndex++;
                     }
-                });
-            } else {
-                html += `<p style="color:${CONST.COLORS.EMPTY_DAY_COLOR}; font-style:italic; text-align:center; padding:6px 0; margin:0; font-size:7pt;">${window.t('empty_day')}</p>`;
-            }
+                }
+            });
 
             html += `</div>`;
-        }
+        });
 
         html += `
                 </div>
