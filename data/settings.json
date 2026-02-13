@@ -2,578 +2,6 @@
   "templates": [
     {
       "layout": {
-        "marginTop": "15",
-        "marginBottom": "15",
-        "marginLeft": "15",
-        "marginRight": "15",
-        "dayBlockSpacing": "8",
-        "columnGap": "12"
-      },
-      "header": {
-        "text": "The Weekly Menu",
-        "color": "#2c2c2c",
-        "fontSize": "28pt",
-        "fontWeight": "bold",
-        "fontFamily": "Times New Roman",
-        "textAlign": "center",
-        "textTransform": "capitalize"
-      },
-      "dateRange": {
-        "show": true,
-        "fontSize": "9pt",
-        "color": "#5a5a5a",
-        "fontWeight": "normal",
-        "textAlign": "center"
-      },
-      "dayBlock": {
-        "bg": "#faf8f3",
-        "borderRadius": "8px",
-        "borderWidth": "2",
-        "borderColor": "#8b8b8b",
-        "borderStyle": "double",
-        "borderSides": "all",
-        "shadow": "none"
-      },
-      "dayName": {
-        "fontSize": "12pt",
-        "color": "#2c2c2c",
-        "fontWeight": "bold"
-      },
-      "mealTitle": {
-        "fontSize": "9.5pt",
-        "color": "#3c3c3c",
-        "fontWeight": "600"
-      },
-      "mealNumbering": {
-        "style": "numbers",
-        "prefix": "",
-        "suffix": "."
-      },
-      "ingredients": {
-        "fontSize": "8pt",
-        "color": "#6a6a6a",
-        "fontStyle": "italic"
-      },
-      "separators": {
-        "headerEnabled": true,
-        "headerStyle": "solid",
-        "headerColor": "#8b8b8b",
-        "headerWidth": "2",
-        "footerEnabled": true,
-        "footerStyle": "solid",
-        "footerColor": "#8b8b8b",
-        "footerWidth": "2"
-      },
-      "footer": {
-        "text": "Established 2024 • Family Recipes",
-        "fontSize": "8.5pt",
-        "color": "#5a5a5a"
-      },
-      "background": {
-        "opacity": "1",
-        "position": "center",
-        "overlay": "#f5f5dc",
-        "overlayOpacity": "0.3"
-      },
-      "branding": {
-        "logo": "",
-        "logoPosition": "top-center",
-        "logoWidth": "80",
-        "logoHeight": "80"
-      },
-      "pageBorder": {
-        "enabled": true,
-        "width": "3",
-        "color": "#2c2c2c",
-        "style": "double",
-        "radius": "0"
-      },
-      "backgroundImage": "bg_1770849935255_images21.jpg",
-      "slotSettings": {
-        "slot1": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot2": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot3": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot4": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        }
-      },
-      "name": "Мой Шаблон 1",
-      "id": "tmpl_1770928169808"
-    },
-    {
-      "layout": {
-        "marginTop": "15",
-        "marginBottom": "15",
-        "marginLeft": "15",
-        "marginRight": "15",
-        "dayBlockSpacing": "8",
-        "columnGap": "12"
-      },
-      "header": {
-        "text": "The Weekly Menu",
-        "color": "#2c2c2c",
-        "fontSize": "28pt",
-        "fontWeight": "bold",
-        "fontFamily": "Times New Roman",
-        "textAlign": "center",
-        "textTransform": "capitalize"
-      },
-      "dateRange": {
-        "show": true,
-        "fontSize": "9pt",
-        "color": "#5a5a5a",
-        "fontWeight": "normal",
-        "textAlign": "center"
-      },
-      "dayBlock": {
-        "bg": "#faf8f3",
-        "borderRadius": "8px",
-        "borderWidth": "2",
-        "borderColor": "#8b8b8b",
-        "borderStyle": "double",
-        "borderSides": "all",
-        "shadow": "none"
-      },
-      "dayName": {
-        "fontSize": "12pt",
-        "color": "#2c2c2c",
-        "fontWeight": "bold"
-      },
-      "mealTitle": {
-        "fontSize": "9.5pt",
-        "color": "#3c3c3c",
-        "fontWeight": "600"
-      },
-      "mealNumbering": {
-        "style": "numbers",
-        "prefix": "",
-        "suffix": "."
-      },
-      "ingredients": {
-        "fontSize": "8pt",
-        "color": "#6a6a6a",
-        "fontStyle": "italic"
-      },
-      "separators": {
-        "headerEnabled": true,
-        "headerStyle": "solid",
-        "headerColor": "#8b8b8b",
-        "headerWidth": "2",
-        "footerEnabled": true,
-        "footerStyle": "solid",
-        "footerColor": "#8b8b8b",
-        "footerWidth": "2"
-      },
-      "footer": {
-        "text": "Established 2024 • Family Recipes",
-        "fontSize": "8.5pt",
-        "color": "#5a5a5a"
-      },
-      "background": {
-        "opacity": "1",
-        "position": "center",
-        "overlay": "#f5f5dc",
-        "overlayOpacity": "0.3"
-      },
-      "branding": {
-        "logo": "",
-        "logoPosition": "top-center",
-        "logoWidth": "80",
-        "logoHeight": "80"
-      },
-      "pageBorder": {
-        "enabled": true,
-        "width": "3",
-        "color": "#2c2c2c",
-        "style": "double",
-        "radius": "0"
-      },
-      "backgroundImage": "bg_1770849935255_images21.jpg",
-      "slotSettings": {
-        "slot1": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot2": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot3": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot4": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        }
-      },
-      "name": "Мой Шаблон 2",
-      "id": "tmpl_1770929521561"
-    },
-    {
-      "layout": {
-        "marginTop": "15",
-        "marginBottom": "15",
-        "marginLeft": "15",
-        "marginRight": "15",
-        "dayBlockSpacing": "8",
-        "columnGap": "12"
-      },
-      "header": {
-        "text": "The Weekly Menu",
-        "color": "#2c2c2c",
-        "fontSize": "28pt",
-        "fontWeight": "bold",
-        "fontFamily": "Times New Roman",
-        "textAlign": "center",
-        "textTransform": "capitalize"
-      },
-      "dateRange": {
-        "show": true,
-        "fontSize": "9pt",
-        "color": "#5a5a5a",
-        "fontWeight": "normal",
-        "textAlign": "center"
-      },
-      "dayBlock": {
-        "bg": "#faf8f3",
-        "borderRadius": "8px",
-        "borderWidth": "2",
-        "borderColor": "#8b8b8b",
-        "borderStyle": "double",
-        "borderSides": "all",
-        "shadow": "none"
-      },
-      "dayName": {
-        "fontSize": "12pt",
-        "color": "#2c2c2c",
-        "fontWeight": "bold"
-      },
-      "mealTitle": {
-        "fontSize": "9.5pt",
-        "color": "#3c3c3c",
-        "fontWeight": "600"
-      },
-      "mealNumbering": {
-        "style": "numbers",
-        "prefix": "",
-        "suffix": "."
-      },
-      "ingredients": {
-        "fontSize": "8pt",
-        "color": "#6a6a6a",
-        "fontStyle": "italic"
-      },
-      "separators": {
-        "headerEnabled": true,
-        "headerStyle": "solid",
-        "headerColor": "#8b8b8b",
-        "headerWidth": "2",
-        "footerEnabled": true,
-        "footerStyle": "solid",
-        "footerColor": "#8b8b8b",
-        "footerWidth": "2"
-      },
-      "footer": {
-        "text": "Established 2024 • Family Recipes",
-        "fontSize": "8.5pt",
-        "color": "#5a5a5a"
-      },
-      "background": {
-        "opacity": "1",
-        "position": "center",
-        "overlay": "#f5f5dc",
-        "overlayOpacity": "0.3"
-      },
-      "branding": {
-        "logo": "",
-        "logoPosition": "top-center",
-        "logoWidth": "80",
-        "logoHeight": "80"
-      },
-      "pageBorder": {
-        "enabled": true,
-        "width": "3",
-        "color": "#2c2c2c",
-        "style": "double",
-        "radius": "0"
-      },
-      "backgroundImage": "bg_1770849935255_images21.jpg",
-      "slotSettings": {
-        "slot1": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot2": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot3": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot4": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        }
-      },
-      "name": "Мой Шаблон 3",
-      "id": "tmpl_1770929957250"
-    },
-    {
-      "layout": {
-        "style": "single-column",
-        "marginTop": "15",
-        "marginBottom": "15",
-        "marginLeft": "15",
-        "marginRight": "15",
-        "dayBlockSpacing": "8",
-        "columnGap": "12"
-      },
-      "header": {
-        "text": "The Weekly Menu",
-        "color": "#2c2c2c",
-        "fontSize": "28pt",
-        "fontWeight": "bold",
-        "fontFamily": "Times New Roman",
-        "textAlign": "center",
-        "textTransform": "capitalize"
-      },
-      "dateRange": {
-        "show": true,
-        "fontSize": "9pt",
-        "color": "#5a5a5a",
-        "fontWeight": "normal",
-        "textAlign": "center"
-      },
-      "dayBlock": {
-        "bg": "#faf8f3",
-        "borderRadius": "8px",
-        "borderWidth": "2",
-        "borderColor": "#8b8b8b",
-        "borderStyle": "double",
-        "borderSides": "all",
-        "shadow": "none"
-      },
-      "dayName": {
-        "fontSize": "12pt",
-        "color": "#2c2c2c",
-        "fontWeight": "bold"
-      },
-      "mealTitle": {
-        "fontSize": "9.5pt",
-        "color": "#3c3c3c",
-        "fontWeight": "600"
-      },
-      "mealNumbering": {
-        "style": "numbers",
-        "prefix": "",
-        "suffix": "."
-      },
-      "ingredients": {
-        "fontSize": "8pt",
-        "color": "#6a6a6a",
-        "fontStyle": "italic"
-      },
-      "separators": {
-        "headerEnabled": true,
-        "headerStyle": "solid",
-        "headerColor": "#8b8b8b",
-        "headerWidth": "2",
-        "footerEnabled": true,
-        "footerStyle": "solid",
-        "footerColor": "#8b8b8b",
-        "footerWidth": "2"
-      },
-      "footer": {
-        "text": "Established 2024 • Family Recipes",
-        "fontSize": "8.5pt",
-        "color": "#5a5a5a"
-      },
-      "background": {
-        "opacity": "1",
-        "position": "center",
-        "overlay": "#f5f5dc",
-        "overlayOpacity": "0.3"
-      },
-      "branding": {
-        "logo": "",
-        "logoPosition": "top-center",
-        "logoWidth": "80",
-        "logoHeight": "80"
-      },
-      "pageBorder": {
-        "enabled": true,
-        "width": "3",
-        "color": "#2c2c2c",
-        "style": "double",
-        "radius": "0"
-      },
-      "backgroundImage": "bg_1770849935255_images21.jpg",
-      "slotSettings": {
-        "slot1": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot2": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot3": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot4": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        }
-      },
-      "name": "Мой Шаблон 4",
-      "id": "tmpl_1770997669869"
-    },
-    {
-      "layout": {
-        "style": "single-column",
-        "marginTop": "15",
-        "marginBottom": "15",
-        "marginLeft": "15",
-        "marginRight": "15",
-        "dayBlockSpacing": "8",
-        "columnGap": "12"
-      },
-      "header": {
-        "text": "The Weekly Menu",
-        "color": "#2c2c2c",
-        "fontSize": "28pt",
-        "fontWeight": "bold",
-        "fontFamily": "Times New Roman",
-        "textAlign": "center",
-        "textTransform": "capitalize"
-      },
-      "dateRange": {
-        "show": true,
-        "fontSize": "9pt",
-        "color": "#5a5a5a",
-        "fontWeight": "normal",
-        "textAlign": "center"
-      },
-      "dayBlock": {
-        "bg": "#faf8f3",
-        "borderRadius": "8px",
-        "borderWidth": "2",
-        "borderColor": "#8b8b8b",
-        "borderStyle": "double",
-        "borderSides": "all",
-        "shadow": "none"
-      },
-      "dayName": {
-        "fontSize": "12pt",
-        "color": "#2c2c2c",
-        "fontWeight": "bold"
-      },
-      "mealTitle": {
-        "fontSize": "9.5pt",
-        "color": "#3c3c3c",
-        "fontWeight": "600"
-      },
-      "mealNumbering": {
-        "style": "numbers",
-        "prefix": "",
-        "suffix": "."
-      },
-      "ingredients": {
-        "fontSize": "8pt",
-        "color": "#6a6a6a",
-        "fontStyle": "italic"
-      },
-      "separators": {
-        "headerEnabled": true,
-        "headerStyle": "solid",
-        "headerColor": "#8b8b8b",
-        "headerWidth": "2",
-        "footerEnabled": true,
-        "footerStyle": "solid",
-        "footerColor": "#8b8b8b",
-        "footerWidth": "2"
-      },
-      "footer": {
-        "text": "Established 2024 • Family Recipes",
-        "fontSize": "8.5pt",
-        "color": "#5a5a5a"
-      },
-      "background": {
-        "opacity": "1",
-        "position": "center",
-        "overlay": "#f5f5dc",
-        "overlayOpacity": "0.3"
-      },
-      "branding": {
-        "logo": "",
-        "logoPosition": "top-center",
-        "logoWidth": "80",
-        "logoHeight": "80"
-      },
-      "pageBorder": {
-        "enabled": true,
-        "width": "3",
-        "color": "#2c2c2c",
-        "style": "double",
-        "radius": "0"
-      },
-      "backgroundImage": "bg_1770849921918_5rer.jpg",
-      "slotSettings": {
-        "slot1": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot2": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot3": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        },
-        "slot4": {
-          "showIngredients": true,
-          "showCalories": false,
-          "showAllergens": true
-        }
-      },
-      "name": "Мой Шаблон 5",
-      "id": "tmpl_1770997720852"
-    },
-    {
-      "layout": {
         "style": "two-column",
         "marginTop": "8",
         "marginBottom": "8",
@@ -686,6 +114,121 @@
       },
       "name": "Мой Шаблон 6",
       "id": "tmpl_1770998602869"
+    },
+    {
+      "layout": {
+        "style": "single-column",
+        "marginTop": 8,
+        "marginBottom": 8,
+        "marginLeft": 8,
+        "marginRight": 8,
+        "dayBlockSpacing": 6,
+        "columnGap": 10
+      },
+      "header": {
+        "text": "Weekly Menu",
+        "color": "#fd7e14",
+        "fontSize": "20pt",
+        "fontWeight": "bold",
+        "fontFamily": "Segoe UI",
+        "textAlign": "center",
+        "textTransform": "none"
+      },
+      "dateRange": {
+        "show": true,
+        "fontSize": "9pt",
+        "color": "#7f8c8d",
+        "fontWeight": "normal",
+        "textAlign": "center"
+      },
+      "dayBlock": {
+        "bg": "#ffffff",
+        "borderRadius": "8px",
+        "borderWidth": 2,
+        "borderColor": "#e0e0e0",
+        "borderStyle": "solid",
+        "borderSides": "all",
+        "shadow": "none"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "mealNumbering": {
+        "style": "numbers",
+        "prefix": "",
+        "suffix": "."
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
+      },
+      "separators": {
+        "headerEnabled": false,
+        "headerStyle": "solid",
+        "headerColor": "#dddddd",
+        "headerWidth": "1",
+        "footerEnabled": true,
+        "footerStyle": "solid",
+        "footerColor": "#eeeeee",
+        "footerWidth": "1"
+      },
+      "footer": {
+        "text": "",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
+      },
+      "background": {
+        "opacity": "1",
+        "position": "center",
+        "overlay": "#000000",
+        "overlayOpacity": "0"
+      },
+      "branding": {
+        "logo": "",
+        "logoPosition": "top-left",
+        "logoWidth": "80",
+        "logoHeight": "80"
+      },
+      "pageBorder": {
+        "enabled": true,
+        "width": "7",
+        "color": "#e10e0e",
+        "style": "solid",
+        "radius": "0"
+      },
+      "backgroundImage": "",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Мой Шаблон 2",
+      "id": "tmpl_1770998986890"
     }
   ],
   "imageUploads": [
