@@ -8,6 +8,7 @@
 
     const TemplateSections = {
         currentTab: 'layout',
+        isInitialized: false,
         
         render: function(sectionStates, manager) {
             const container = document.getElementById('collapsibleSections');
@@ -29,8 +30,12 @@
             // Render the active tab
             this.renderTab(this.currentTab, tabContent, sectionStates);
             
-            manager.bindUI();
-            this.setupOpacitySliders(manager);
+            // FIXED: Only bind UI listeners ONCE on initial render
+            if (!this.isInitialized) {
+                manager.bindUI();
+                this.setupOpacitySliders(manager);
+                this.isInitialized = true;
+            }
         },
 
         createTabNavigation: function() {
@@ -72,6 +77,7 @@
                 
                 btn.onclick = () => {
                     this.currentTab = tab.id;
+                    // FIXED: Just re-render tabs without re-binding UI
                     const container = document.getElementById('collapsibleSections');
                     if (container) {
                         this.render({}, window.templateBuilderManager);
