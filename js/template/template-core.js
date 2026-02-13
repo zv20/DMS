@@ -185,6 +185,43 @@
         hasMeals: function(dayMenu) {
             if (!dayMenu) return false;
             return Object.values(dayMenu).some(slot => slot.recipe !== null);
+        },
+
+        getWeeksWithMeals: function() {
+            const weeks = [];
+            const dates = Object.keys(window.currentMenu).filter(dateStr => {
+                return this.hasMeals(window.currentMenu[dateStr]);
+            });
+
+            if (dates.length === 0) return [];
+
+            const weekMap = new Map();
+            dates.forEach(dateStr => {
+                const parts = dateStr.split('-');
+                const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                
+                const weekStart = window.getWeekStart(date);
+                const weekKey = weekStart.toISOString().split('T')[0];
+                
+                if (!weekMap.has(weekKey)) {
+                    weekMap.set(weekKey, {
+                        weekStart: weekStart,
+                        dates: []
+                    });
+                }
+                weekMap.get(weekKey).dates.push(dateStr);
+            });
+
+            weekMap.forEach((value, key) => {
+                weeks.push({
+                    weekStart: value.weekStart,
+                    label: this.getDateRangeText(0, 4, value.weekStart),
+                    dateCount: value.dates.length
+                });
+            });
+
+            weeks.sort((a, b) => b.weekStart - a.weekStart);
+            return weeks;
         }
     };
 
