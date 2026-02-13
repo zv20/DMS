@@ -44,10 +44,11 @@ class TemplateRenderer {
     }
     
     renderHeader(settings, data) {
+        const marginBottom = settings.isPrint ? '10px' : '20px';
         const style = `
             text-align: ${settings.headerAlignment};
             font-size: ${settings.headerSize}px;
-            margin-bottom: ${settings.isPrint ? '15px' : '20px'};
+            margin-bottom: ${marginBottom};
             font-weight: bold;
             color: #fd7e14;
         `;
@@ -61,13 +62,14 @@ class TemplateRenderer {
         
         const dateStr = `${start.toLocaleDateString('en-US', { month: format, day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: format, day: 'numeric', year: 'numeric' })}`;
         
-        const marginBottom = settings.isPrint ? '20px' : '30px';
-        return `<div class="date-range" style="text-align: center; margin-bottom: ${marginBottom}; color: #666; font-size: 15px;">${dateStr}</div>`;
+        const marginBottom = settings.isPrint ? '12px' : '30px';
+        const fontSize = settings.isPrint ? '12px' : '15px';
+        return `<div class="date-range" style="text-align: center; margin-bottom: ${marginBottom}; color: #666; font-size: ${fontSize};">${dateStr}</div>`;
     }
     
     renderFooter(settings) {
-        const marginTop = settings.isPrint ? '25px' : '40px';
-        return `<div class="meal-plan-footer" style="text-align: center; margin-top: ${marginTop}; font-size: 11px; color: #999;">${settings.footerText}</div>`;
+        const marginTop = settings.isPrint ? '15px' : '40px';
+        return `<div class="meal-plan-footer" style="text-align: center; margin-top: ${marginTop}; font-size: 10px; color: #999;">${settings.footerText}</div>`;
     }
     
     // Helper to format meal meta info (calories + portion)
@@ -78,18 +80,23 @@ class TemplateRenderer {
         return parts.length > 0 ? ` (${parts.join(', ')})` : '';
     }
     
-    // ELEGANT SINGLE PAGE LAYOUT - Optimized for A4 print
+    // ELEGANT SINGLE PAGE LAYOUT - Ultra-compact for A4 print
     renderElegantSingle(settings, data) {
         const isPrint = settings.isPrint || false;
         
-        // Compact spacing for print
-        const dayMarginBottom = isPrint ? '18px' : '30px';
-        const dayPaddingBottom = isPrint ? '15px' : '25px';
-        const mealMarginBottom = isPrint ? '10px' : '15px';
-        const mealNumberSize = isPrint ? '36px' : '42px';
-        const dayNameSize = isPrint ? '18px' : '20px';
-        const mealNameSize = isPrint ? '14px' : '15px';
-        const ingredientSize = isPrint ? '12px' : '13px';
+        // Ultra-compact spacing for print
+        const dayMarginBottom = isPrint ? '10px' : '30px';
+        const dayPaddingBottom = isPrint ? '10px' : '25px';
+        const mealMarginBottom = isPrint ? '6px' : '15px';
+        const mealNumberSize = isPrint ? '30px' : '42px';
+        const dayNameSize = isPrint ? '15px' : '20px';
+        const mealNameSize = isPrint ? '12px' : '15px';
+        const ingredientSize = isPrint ? '10px' : '13px';
+        const gridGap = isPrint ? '10px' : '15px';
+        const gridCols = isPrint ? '45px 100px 1fr' : '60px 120px 1fr';
+        const numberPadding = isPrint ? '2px' : '5px';
+        const dayPadding = isPrint ? '5px' : '10px';
+        const detailsPadding = isPrint ? '4px' : '8px';
         
         let html = '<div class="elegant-single-layout" style="max-width: 800px; margin: 0 auto;">';
         
@@ -105,8 +112,8 @@ class TemplateRenderer {
             day.meals.forEach((meal, mealIndex) => {
                 html += `<div class="elegant-meal" style="
                     display: grid;
-                    grid-template-columns: 50px 110px 1fr;
-                    gap: 12px;
+                    grid-template-columns: ${gridCols};
+                    gap: ${gridGap};
                     margin-bottom: ${mealMarginBottom};
                     align-items: start;
                 ">`;
@@ -117,7 +124,7 @@ class TemplateRenderer {
                     font-weight: 600;
                     color: #fd7e14;
                     line-height: 1;
-                    padding-top: 3px;
+                    padding-top: ${numberPadding};
                 ">${meal.title}</div>`;
                 
                 // Day name (only show on first meal)
@@ -126,14 +133,14 @@ class TemplateRenderer {
                         font-size: ${dayNameSize};
                         font-weight: bold;
                         color: #333;
-                        padding-top: 8px;
+                        padding-top: ${dayPadding};
                     ">${day.dayName}</div>`;
                 } else {
                     html += `<div></div>`; // Empty cell for grid alignment
                 }
                 
                 // Meal details (name + portion/cal + ingredients)
-                html += `<div class="meal-details" style="padding-top: 6px;">`;
+                html += `<div class="meal-details" style="padding-top: ${detailsPadding};">`;
                 
                 // Meal name with portion and calories
                 const mealMeta = this.formatMealMeta(meal);
@@ -141,9 +148,9 @@ class TemplateRenderer {
                     font-size: ${mealNameSize};
                     font-weight: 500;
                     color: #333;
-                    margin-bottom: 4px;
-                    line-height: 1.3;
-                ">${meal.name}<span style="font-size: 12px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
+                    margin-bottom: 3px;
+                    line-height: 1.2;
+                ">${meal.name}<span style="font-size: 11px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
                 
                 // Ingredients with allergen underlining
                 if (settings.showIngredients && meal.ingredients && meal.ingredients.length > 0) {
@@ -151,7 +158,7 @@ class TemplateRenderer {
                         font-size: ${ingredientSize};
                         color: #888;
                         font-style: italic;
-                        line-height: 1.4;
+                        line-height: 1.3;
                     ">`;
                     
                     // Render each ingredient, underline allergens in red
