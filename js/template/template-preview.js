@@ -38,6 +38,11 @@
             const list = document.getElementById('previewDaysList');
             if (list) {
                 list.innerHTML = '';
+                
+                // FIXED: Apply layout style to container
+                const layoutStyle = settings.layout?.style || 'single-column';
+                this.applyLayoutStyle(list, layoutStyle, settings);
+                
                 const weekStart = window.getWeekStart(window.currentCalendarDate || new Date());
                 
                 for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
@@ -47,7 +52,7 @@
                     const dayMenu = window.currentMenu[dateStr];
                     
                     const dayName = day.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { weekday: 'long' });
-                    const block = this.createDetailedDayBlock(dayName, dayMenu, settings, dateStr, manager);
+                    const block = this.createDetailedDayBlock(dayName, dayMenu, settings, dateStr, manager, layoutStyle);
                     
                     if (!manager.hasMeals(dayMenu)) {
                         block.style.opacity = '0.4';
@@ -63,7 +68,40 @@
             }
         },
 
-        createDetailedDayBlock: function(dayName, dayMenu, settings, dateStr, manager) {
+        applyLayoutStyle: function(container, layoutStyle, settings) {
+            // Reset styles
+            container.style.display = '';
+            container.style.gridTemplateColumns = '';
+            container.style.gap = '';
+            
+            switch(layoutStyle) {
+                case 'two-column':
+                    container.style.display = 'grid';
+                    container.style.gridTemplateColumns = '1fr 1fr';
+                    container.style.gap = `${settings.layout.columnGap}px`;
+                    break;
+                
+                case 'table':
+                    container.style.display = 'table';
+                    container.style.width = '100%';
+                    container.style.borderCollapse = 'collapse';
+                    break;
+                
+                case 'compact-cards':
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.gap = `${Math.floor(settings.layout.dayBlockSpacing / 2)}px`;
+                    break;
+                
+                default: // single-column
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.gap = `${settings.layout.dayBlockSpacing}px`;
+                    break;
+            }
+        },
+
+        createDetailedDayBlock: function(dayName, dayMenu, settings, dateStr, manager, layoutStyle) {
             const block = document.createElement('div');
             block.className = 'print-day-block';
             
@@ -85,19 +123,24 @@
                 return css;
             };
             
+            // Adjust styles for compact layout
+            const isCompact = layoutStyle === 'compact-cards';
+            const padding = isCompact ? '6px 8px' : '10px 12px';
+            const marginBottom = layoutStyle === 'two-column' ? '0' : `${settings.layout.dayBlockSpacing}px`;
+            
             block.style.cssText = `
                 background: ${settings.dayBlock.bg};
                 border-radius: ${settings.dayBlock.borderRadius};
-                padding: 10px 12px;
-                margin-bottom: ${settings.layout.dayBlockSpacing}px;
+                padding: ${padding};
+                margin-bottom: ${marginBottom};
                 ${getBorderStyles()}
                 box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                 page-break-inside: avoid;
             `;
 
             let contentHtml = `
-                <div style="border-bottom:1px solid ${CONST.COLORS.DAY_SEPARATOR_COLOR}; margin-bottom:6px; padding-bottom:3px;">
-                    <h2 style="margin:0; font-size:${settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
+                <div style="border-bottom:1px solid ${CONST.COLORS.DAY_SEPARATOR_COLOR}; margin-bottom:${isCompact ? '3px' : '6px'}; padding-bottom:${isCompact ? '2px' : '3px'};">
+                    <h2 style="margin:0; font-size:${isCompact ? '9pt' : settings.dayName.fontSize}; color:${settings.dayName.color}; font-weight:${settings.dayName.fontWeight}; line-height:1.2;">${dayName}</h2>
                 </div>
             `;
 
@@ -116,7 +159,7 @@
                         const recipe = window.recipes.find(r => r.id === slot.recipe);
                         if (recipe) {
                             const slotSettings = settings.slotSettings[slotConfig.id];
-                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, settings, mealIndex);
+                            contentHtml += this.createMealBlock(recipe, slotConfig, slotSettings, settings, mealIndex, isCompact);
                             mealIndex++;
                         }
                     }
@@ -131,15 +174,18 @@
             return block;
         },
 
-        createMealBlock: function(recipe, slotConfig, slotSettings, settings, index) {
+        createMealBlock: function(recipe, slotConfig, slotSettings, settings, index, isCompact) {
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
             
             const numberStr = window.getMealNumber(index, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
             
-            let html = `<div style="margin-bottom:5px;">`;
+            const mealTitleSize = isCompact ? '8pt' : settings.mealTitle.fontSize;
+            const ingredientsSize = isCompact ? '7pt' : settings.ingredients.fontSize;
             
-            let titleLine = `<div style="font-size:${settings.mealTitle.fontSize}; font-weight:${settings.mealTitle.fontWeight}; color:${settings.mealTitle.color}; margin-bottom:2px; line-height:1.2;">${numberStr} ${recipe.name}`;
+            let html = `<div style="margin-bottom:${isCompact ? '3px' : '5px'};">`;
+            
+            let titleLine = `<div style="font-size:${mealTitleSize}; font-weight:${settings.mealTitle.fontWeight}; color:${settings.mealTitle.color}; margin-bottom:2px; line-height:1.2;">${numberStr} ${recipe.name}`;
             
             let metadata = [];
             if (recipe.portionSize) {
@@ -151,7 +197,7 @@
                 const calorieUnit = isBulgarian ? 'ККАЛ' : 'kcal';
                 metadata.push(`${recipe.calories} ${calorieUnit}`);
             }
-            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:8pt;">(${metadata.join(', ')})</span>`;
+            if (metadata.length) titleLine += ` <span style="font-weight:normal; color:${CONST.COLORS.METADATA_COLOR}; font-size:${isCompact ? '7pt' : '8pt'};">(${metadata.join(', ')})</span>`;
             
             titleLine += `</div>`;
             html += titleLine;
@@ -173,7 +219,7 @@
                 }).filter(n => n).join(', ');
                 
                 if (ingredientsList) {
-                    html += `<div style="font-size:${settings.ingredients.fontSize}; color:${settings.ingredients.color}; font-style:${settings.ingredients.fontStyle}; margin-top:1px; margin-left:10px; line-height:1.2;"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
+                    html += `<div style="font-size:${ingredientsSize}; color:${settings.ingredients.color}; font-style:${settings.ingredients.fontStyle}; margin-top:1px; margin-left:10px; line-height:1.2;"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
                 }
             }
 
