@@ -250,7 +250,7 @@ class TemplateBuilder {
     }
     
     getSampleData() {
-        // Sample meal plan data for preview with ALLERGEN data
+        // Sample meal plan data with ALLERGEN data, PORTIONS, and CALORIES
         return {
             startDate: '2026-02-10',
             endDate: '2026-02-16',
@@ -262,25 +262,33 @@ class TemplateBuilder {
                         { 
                             title: '1', 
                             name: 'Oatmeal with berries', 
+                            portion: '250g',
+                            calories: 320,
                             ingredients: ['Oats', 'Blueberries', 'Honey', 'Milk'],
-                            allergens: ['Milk'] // Milk is an allergen
+                            allergens: ['Milk']
                         },
                         { 
                             title: '2', 
-                            name: 'Grilled chicken salad', 
+                            name: 'Grilled chicken salad',
+                            portion: '350g',
+                            calories: 420,
                             ingredients: ['Chicken', 'Lettuce', 'Tomatoes', 'Olive oil'] 
                         },
                         { 
                             title: '3', 
-                            name: 'Pasta primavera', 
+                            name: 'Pasta primavera',
+                            portion: '400g',
+                            calories: 580,
                             ingredients: ['Pasta', 'Vegetables', 'Olive oil', 'Parmesan'],
-                            allergens: ['Pasta', 'Parmesan'] // Contains gluten and dairy
+                            allergens: ['Pasta', 'Parmesan']
                         },
                         { 
                             title: '4', 
-                            name: 'Greek yogurt parfait', 
+                            name: 'Greek yogurt parfait',
+                            portion: '200g',
+                            calories: 280,
                             ingredients: ['Yogurt', 'Granola', 'Berries', 'Almonds'],
-                            allergens: ['Yogurt', 'Granola', 'Almonds'] // Dairy and nuts
+                            allergens: ['Yogurt', 'Granola', 'Almonds']
                         }
                     ]
                 },
@@ -290,27 +298,35 @@ class TemplateBuilder {
                     meals: [
                         { 
                             title: '1', 
-                            name: 'Scrambled eggs with toast', 
+                            name: 'Scrambled eggs with toast',
+                            portion: '220g',
+                            calories: 380,
                             ingredients: ['Eggs', 'Butter', 'Bread', 'Salt'],
-                            allergens: ['Eggs', 'Butter', 'Bread'] // Eggs, dairy, gluten
+                            allergens: ['Eggs', 'Butter', 'Bread']
                         },
                         { 
                             title: '2', 
-                            name: 'Turkey sandwich', 
+                            name: 'Turkey sandwich',
+                            portion: '300g',
+                            calories: 450,
                             ingredients: ['Bread', 'Turkey', 'Lettuce', 'Mayo'],
-                            allergens: ['Bread', 'Mayo'] // Gluten and eggs
+                            allergens: ['Bread', 'Mayo']
                         },
                         { 
                             title: '3', 
-                            name: 'Baked salmon with rice', 
+                            name: 'Baked salmon with rice',
+                            portion: '380g',
+                            calories: 520,
                             ingredients: ['Salmon', 'Rice', 'Lemon', 'Herbs'],
-                            allergens: ['Salmon'] // Fish allergen
+                            allergens: ['Salmon']
                         },
                         { 
                             title: '4', 
-                            name: 'Fruit smoothie', 
+                            name: 'Fruit smoothie',
+                            portion: '350ml',
+                            calories: 240,
                             ingredients: ['Banana', 'Berries', 'Milk', 'Protein powder'],
-                            allergens: ['Milk'] // Dairy
+                            allergens: ['Milk']
                         }
                     ]
                 }
