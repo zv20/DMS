@@ -1,7 +1,7 @@
 /**
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
- * Optimized for A4 paper (5 weekdays fit on one page)
+ * Ultra-compact layout optimized for A4 paper (5 weekdays fit on one page)
  */
 
 (function(window) {
@@ -368,28 +368,28 @@
                 showHeader: true,
                 headerText: 'Weekly Meal Plan',
                 headerAlignment: 'center',
-                headerSize: '24', // Slightly smaller for print
+                headerSize: '20', // Smaller for print
                 showDateRange: true,
                 dateFormat: 'long',
                 dayBlockBg: '#ffffff',
                 dayBlockBorder: '#e0e0e0',
-                dayBlockPadding: '12', // Compact for print
-                dayNameSize: '16',
+                dayBlockPadding: '8',
+                dayNameSize: '15',
                 dayNameColor: '#333333',
                 dayNameWeight: 'bold',
-                showMealTitles: true,
-                mealTitleSize: '13',
+                showMealTitles: false,
+                mealTitleSize: '12',
                 mealTitleColor: '#666666',
                 showIngredients: true,
                 ingredientLayout: 'list',
                 numberingStyle: 'none',
-                showFooter: true,
-                footerText: 'Meal plan created with DMS',
+                showFooter: false, // No footer to save space
+                footerText: '',
                 backgroundColor: '#ffffff',
-                showBranding: true,
-                separatorStyle: 'line',
+                showBranding: false,
+                separatorStyle: 'none',
                 pageBorder: false,
-                isPrint: true // Flag for compact print layout
+                isPrint: true // Flag for ultra-compact print layout
             };
         } else {
             settings = { ...templateChoice.settings, showIngredients: true, isPrint: true };
@@ -398,7 +398,7 @@
         return renderer.render(settings, mealPlanData);
     }
     
-    // Open print window with HTML (A4 optimized)
+    // Open print window with HTML (A4 optimized with ultra-compact spacing)
     function openPrintWindow(html, mealPlanData) {
         const printWindow = window.open('', '_blank');
         const dateRange = `${mealPlanData.startDate}_to_${mealPlanData.endDate}`;
@@ -414,16 +414,16 @@
                     
                     body { 
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                        font-size: 14px;
-                        line-height: 1.4;
+                        font-size: 12px;
+                        line-height: 1.3;
                         color: #333;
                         background: white;
                     }
                     
-                    /* A4 Page Setup */
+                    /* A4 Page Setup with minimal margins */
                     @page {
                         size: A4 portrait;
-                        margin: 15mm 15mm 12mm 15mm;
+                        margin: 12mm 12mm 10mm 12mm;
                     }
                     
                     @media print {
@@ -432,37 +432,55 @@
                             min-height: 297mm;
                         }
                         
-                        /* Prevent page breaks inside day blocks */
+                        /* Prevent page breaks */
                         .elegant-day {
                             page-break-inside: avoid;
                         }
                         
-                        /* Compact spacing for print */
+                        /* Ultra-compact spacing */
                         .elegant-day {
-                            margin-bottom: 15px !important;
-                            padding-bottom: 12px !important;
+                            margin-bottom: 8px !important;
+                            padding-bottom: 8px !important;
                         }
                         
                         .elegant-meal {
-                            margin-bottom: 8px !important;
+                            margin-bottom: 5px !important;
                         }
                         
                         .meal-plan-header {
-                            margin-bottom: 12px !important;
+                            margin-bottom: 8px !important;
+                            font-size: 18px !important;
                         }
                         
                         .date-range {
-                            margin-bottom: 18px !important;
+                            margin-bottom: 10px !important;
+                            font-size: 11px !important;
                         }
                         
-                        .meal-plan-footer {
-                            margin-top: 20px !important;
+                        .meal-number {
+                            font-size: 28px !important;
+                        }
+                        
+                        .day-name {
+                            font-size: 14px !important;
+                            padding-top: 5px !important;
+                        }
+                        
+                        .meal-name {
+                            font-size: 12px !important;
+                            margin-bottom: 2px !important;
+                            line-height: 1.2 !important;
+                        }
+                        
+                        .ingredients {
+                            font-size: 10px !important;
+                            line-height: 1.3 !important;
                         }
                     }
                     
                     @media screen {
                         body {
-                            padding: 20mm;
+                            padding: 15mm;
                             max-width: 210mm;
                             margin: 0 auto;
                         }
