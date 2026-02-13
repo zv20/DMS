@@ -8,7 +8,7 @@ class TemplateBuilder {
         // Single state object - all settings in one place
         this.state = {
             // Layout
-            layoutStyle: 'single-column', // single-column, two-column, table, compact-cards
+            layoutStyle: 'elegant-single', // single-column, two-column, table, compact-cards, elegant-single
             
             // Header
             showHeader: true,
@@ -93,6 +93,7 @@ class TemplateBuilder {
                     <div class="control-group">
                         <label>Layout Style</label>
                         <select id="layoutStyle" data-setting="layoutStyle">
+                            <option value="elegant-single">Elegant Single Page</option>
                             <option value="single-column">Single Column</option>
                             <option value="two-column">Two Column</option>
                             <option value="table">Table</option>
@@ -249,7 +250,7 @@ class TemplateBuilder {
     }
     
     getSampleData() {
-        // Sample meal plan data for preview - UPDATED TO USE NUMBERED MEALS
+        // Sample meal plan data for preview with ALLERGEN data
         return {
             startDate: '2026-02-10',
             endDate: '2026-02-16',
@@ -258,20 +259,59 @@ class TemplateBuilder {
                     date: '2026-02-10',
                     dayName: 'Monday',
                     meals: [
-                        { title: '1', name: 'Oatmeal with berries', ingredients: ['Oats', 'Blueberries', 'Honey'] },
-                        { title: '2', name: 'Grilled chicken salad', ingredients: ['Chicken', 'Lettuce', 'Tomatoes'] },
-                        { title: '3', name: 'Pasta primavera', ingredients: ['Pasta', 'Vegetables', 'Olive oil'] },
-                        { title: '4', name: 'Greek yogurt with granola', ingredients: ['Yogurt', 'Granola', 'Berries'] }
+                        { 
+                            title: '1', 
+                            name: 'Oatmeal with berries', 
+                            ingredients: ['Oats', 'Blueberries', 'Honey', 'Milk'],
+                            allergens: ['Milk'] // Milk is an allergen
+                        },
+                        { 
+                            title: '2', 
+                            name: 'Grilled chicken salad', 
+                            ingredients: ['Chicken', 'Lettuce', 'Tomatoes', 'Olive oil'] 
+                        },
+                        { 
+                            title: '3', 
+                            name: 'Pasta primavera', 
+                            ingredients: ['Pasta', 'Vegetables', 'Olive oil', 'Parmesan'],
+                            allergens: ['Pasta', 'Parmesan'] // Contains gluten and dairy
+                        },
+                        { 
+                            title: '4', 
+                            name: 'Greek yogurt parfait', 
+                            ingredients: ['Yogurt', 'Granola', 'Berries', 'Almonds'],
+                            allergens: ['Yogurt', 'Granola', 'Almonds'] // Dairy and nuts
+                        }
                     ]
                 },
                 {
                     date: '2026-02-11',
                     dayName: 'Tuesday',
                     meals: [
-                        { title: '1', name: 'Scrambled eggs', ingredients: ['Eggs', 'Butter', 'Salt'] },
-                        { title: '2', name: 'Turkey sandwich', ingredients: ['Bread', 'Turkey', 'Lettuce'] },
-                        { title: '3', name: 'Baked salmon', ingredients: ['Salmon', 'Lemon', 'Herbs'] },
-                        { title: '4', name: 'Fruit smoothie', ingredients: ['Banana', 'Berries', 'Milk'] }
+                        { 
+                            title: '1', 
+                            name: 'Scrambled eggs with toast', 
+                            ingredients: ['Eggs', 'Butter', 'Bread', 'Salt'],
+                            allergens: ['Eggs', 'Butter', 'Bread'] // Eggs, dairy, gluten
+                        },
+                        { 
+                            title: '2', 
+                            name: 'Turkey sandwich', 
+                            ingredients: ['Bread', 'Turkey', 'Lettuce', 'Mayo'],
+                            allergens: ['Bread', 'Mayo'] // Gluten and eggs
+                        },
+                        { 
+                            title: '3', 
+                            name: 'Baked salmon with rice', 
+                            ingredients: ['Salmon', 'Rice', 'Lemon', 'Herbs'],
+                            allergens: ['Salmon'] // Fish allergen
+                        },
+                        { 
+                            title: '4', 
+                            name: 'Fruit smoothie', 
+                            ingredients: ['Banana', 'Berries', 'Milk', 'Protein powder'],
+                            allergens: ['Milk'] // Dairy
+                        }
                     ]
                 }
             ]
