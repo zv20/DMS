@@ -29,26 +29,35 @@ class StorageAdapter {
     
     async initFileSystem() {
         // Check if user has previously selected a folder
+        console.log('🔎 Checking for previous folder...');
         const handle = await this.getStoredDirectoryHandle();
         
         if (handle) {
-            console.log('📁 Found previous folder handle');
+            console.log('📁 Found previous folder handle, checking type:', typeof handle, handle);
             
-            // Check permission (will auto-request if needed)
-            try {
-                const permission = await this.verifyPermission(handle);
-                if (permission) {
-                    console.log('✅ Permission granted, loading data...');
-                    window.directoryHandle = handle;
-                    await this.loadFromFileSystem();
-                    return true;
-                } else {
-                    console.log('❌ Permission denied');
-                    // Clear the stored handle since permission was denied
+            // Verify it's actually a FileSystemDirectoryHandle
+            if (handle && typeof handle === 'object' && 'queryPermission' in handle) {
+                console.log('✅ Handle is valid FileSystemDirectoryHandle');
+                
+                // Check permission (will auto-request if needed)
+                try {
+                    const permission = await this.verifyPermission(handle);
+                    if (permission) {
+                        console.log('✅ Permission granted, loading data...');
+                        window.directoryHandle = handle;
+                        await this.loadFromFileSystem();
+                        return true;
+                    } else {
+                        console.log('❌ Permission denied');
+                        // Clear the stored handle since permission was denied
+                        await this.clearStoredDirectoryHandle();
+                    }
+                } catch (err) {
+                    console.log('❌ Error verifying permission:', err);
                     await this.clearStoredDirectoryHandle();
                 }
-            } catch (err) {
-                console.log('❌ Error verifying permission:', err);
+            } else {
+                console.log('⚠️ Handle is not a valid FileSystemDirectoryHandle, clearing...');
                 await this.clearStoredDirectoryHandle();
             }
         } else {
@@ -69,6 +78,8 @@ class StorageAdapter {
                 mode: 'readwrite',
                 startIn: 'documents'
             });
+            
+            console.log('📁 Selected folder:', dirHandle.name, 'Type:', typeof dirHandle);
             
             window.directoryHandle = dirHandle;
             await this.storeDirectoryHandle(dirHandle);
@@ -235,6 +246,7 @@ class StorageAdapter {
     
     async storeDirectoryHandle(dirHandle) {
         try {
+            console.log('💾 Attempting to save handle to IndexedDB...');
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readwrite');
             const store = tx.objectStore('handles');
@@ -253,6 +265,21 @@ class StorageAdapter {
                     reject(tx.error);
                 };
             });
+            
+            // Verify it was saved by reading it back
+            const verifyTx = db.transaction('handles', 'readonly');
+            const verifyStore = verifyTx.objectStore('handles');
+            const verifyResult = await new Promise((resolve) => {
+                const req = verifyStore.get('rootDirectory');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+            
+            if (verifyResult) {
+                console.log('✅ Verified handle was saved, type:', typeof verifyResult);
+            } else {
+                console.log('⚠️ Warning: Could not verify saved handle');
+            }
         } catch (err) {
             console.error('❌ Error storing handle:', err);
         }
@@ -260,6 +287,7 @@ class StorageAdapter {
     
     async getStoredDirectoryHandle() {
         try {
+            console.log('💾 Attempting to retrieve handle from IndexedDB...');
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readonly');
             const store = tx.objectStore('handles');
@@ -267,13 +295,25 @@ class StorageAdapter {
             const handle = await new Promise((resolve, reject) => {
                 const request = store.get('rootDirectory');
                 request.onsuccess = () => {
-                    if (request.result) {
-                        console.log('✅ Retrieved folder handle from IndexedDB');
+                    const result = request.result;
+                    console.log('💾 IndexedDB returned:', result ? `Object of type ${typeof result}` : 'null');
+                    if (result) {
+                        console.log('💾 Result keys:', Object.keys(result));
+                        console.log('💾 Has queryPermission?', 'queryPermission' in result);
                     }
-                    resolve(request.result);
+                    resolve(result);
                 };
-                request.onerror = () => reject(request.error);
+                request.onerror = () => {
+                    console.error('❌ Error reading from IndexedDB:', request.error);
+                    reject(request.error);
+                };
             });
+            
+            if (handle) {
+                console.log('✅ Retrieved folder handle from IndexedDB');
+            } else {
+                console.log('⚠️ No handle found in IndexedDB');
+            }
             
             return handle;
         } catch (err) {
