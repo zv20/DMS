@@ -30,6 +30,8 @@
             manager.setVal('dayBorderSides', template.dayBlock?.borderSides || CONST.BORDER_SIDES.ALL);
             manager.setVal('dayShadow', template.dayBlock?.shadow || CONST.SHADOW_OPTIONS.NONE);
             
+            // FIXED: Load layoutStyle
+            manager.setVal('layoutStyle', template.layout?.style || 'single-column');
             manager.setVal('marginTop', template.layout?.marginTop || CONST.LAYOUT.DEFAULT_MARGIN_TOP);
             manager.setVal('marginBottom', template.layout?.marginBottom || CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM);
             manager.setVal('marginLeft', template.layout?.marginLeft || CONST.LAYOUT.DEFAULT_MARGIN_LEFT);
