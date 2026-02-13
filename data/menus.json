@@ -6,7 +6,7 @@
     },
     "slot1": {
       "category": "soup",
-      "recipe": "rcp_bg_004"
+      "recipe": "rcp_bg_001"
     },
     "slot3": {
       "category": "dessert",
@@ -142,5 +142,6 @@
       "category": "other",
       "recipe": "rcp_bg_011"
     }
-  }
+  },
+  "2026-02-14": {}
 }
