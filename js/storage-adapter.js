@@ -13,7 +13,7 @@ class StorageAdapter {
         this.dbVersion = 1;
         this.db = null;
         
-        console.log(`💾 Storage Mode: ${this.useFileSystem ? 'File System API' : 'IndexedDB'}`);
+        console.log(`📦 Storage Mode: ${this.useFileSystem ? 'File System API' : 'IndexedDB'}`);
     }
     
     // Initialize storage based on browser capabilities
@@ -148,6 +148,17 @@ class StorageAdapter {
                 }
             }
             
+            // Load settings.json
+            try {
+                const settingsFile = await dataDir.getFileHandle('settings.json');
+                const settingsData = await settingsFile.getFile();
+                window.appSettings = JSON.parse(await settingsData.text());
+                console.log('✅ Loaded settings:', window.appSettings);
+            } catch (e) {
+                window.appSettings = { language: 'en' };
+                console.log('ℹ️ No settings.json found, using defaults');
+            }
+            
             console.log('✅ File System data loaded successfully!');
         } catch (err) {
             console.error('❌ Error loading from file system:', err);
@@ -182,6 +193,13 @@ class StorageAdapter {
                 await writable.close();
                 
                 console.log('✅ Saved menu to menus.json');
+            } else if (type === 'appSettings') {
+                const fileHandle = await dataDir.getFileHandle('settings.json', { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(data, null, 2));
+                await writable.close();
+                
+                console.log('✅ Saved settings to settings.json:', data);
             }
         } catch (err) {
             console.error(`❌ Error saving ${type}:`, err);
@@ -287,6 +305,9 @@ class StorageAdapter {
                 if (!db.objectStoreNames.contains('menu')) {
                     db.createObjectStore('menu');
                 }
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings');
+                }
                 if (!db.objectStoreNames.contains('handles')) {
                     db.createObjectStore('handles');
                 }
@@ -334,13 +355,24 @@ class StorageAdapter {
                 menuRequest.onerror = () => resolve({});
             });
             
+            // Load settings
+            const settingsTx = db.transaction('settings', 'readonly');
+            const settingsStore = settingsTx.objectStore('settings');
+            const settingsRequest = settingsStore.get('appSettings');
+            window.appSettings = await new Promise((resolve) => {
+                settingsRequest.onsuccess = () => resolve(settingsRequest.result || { language: 'en' });
+                settingsRequest.onerror = () => resolve({ language: 'en' });
+            });
+            
             console.log('✅ IndexedDB data loaded');
+            console.log('✅ Settings loaded:', window.appSettings);
         } catch (err) {
             console.error('Error loading from IndexedDB:', err);
             window.recipes = [];
             window.ingredients = [];
             window.allergens = [];
             window.currentMenu = {};
+            window.appSettings = { language: 'en' };
         }
     }
     
@@ -360,6 +392,11 @@ class StorageAdapter {
                 const tx = db.transaction('menu', 'readwrite');
                 const store = tx.objectStore('menu');
                 await store.put(data, 'currentMenu');
+            } else if (type === 'appSettings') {
+                const tx = db.transaction('settings', 'readwrite');
+                const store = tx.objectStore('settings');
+                await store.put(data, 'appSettings');
+                console.log('✅ Settings saved to IndexedDB:', data);
             }
             
             console.log(`✅ ${type} saved to IndexedDB`);
@@ -413,11 +450,13 @@ class StorageAdapter {
         window.ingredients = sampleIngredients;
         window.recipes = sampleRecipes;
         window.currentMenu = {};
+        window.appSettings = { language: 'en' };
         
         await this.saveToIndexedDB('allergens', sampleAllergens);
         await this.saveToIndexedDB('ingredients', sampleIngredients);
         await this.saveToIndexedDB('recipes', sampleRecipes);
         await this.saveToIndexedDB('currentMenu', {});
+        await this.saveToIndexedDB('appSettings', { language: 'en' });
         
         console.log('✅ Sample data populated!');
     }
@@ -438,6 +477,7 @@ class StorageAdapter {
             ingredients: window.ingredients,
             allergens: window.allergens,
             currentMenu: window.currentMenu,
+            appSettings: window.appSettings,
             exportDate: new Date().toISOString()
         };
         
@@ -459,11 +499,13 @@ class StorageAdapter {
             if (data.ingredients) window.ingredients = data.ingredients;
             if (data.allergens) window.allergens = data.allergens;
             if (data.currentMenu) window.currentMenu = data.currentMenu;
+            if (data.appSettings) window.appSettings = data.appSettings;
             
             await this.save('recipes', window.recipes);
             await this.save('ingredients', window.ingredients);
             await this.save('allergens', window.allergens);
             await this.save('currentMenu', window.currentMenu);
+            await this.save('appSettings', window.appSettings);
             
             return true;
         } catch (err) {
