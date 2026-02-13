@@ -34,9 +34,9 @@ class StorageAdapter {
         if (handle) {
             console.log('📁 Found previous folder handle');
             
-            // IMPORTANT: Request permission again (Chrome loses permission when all tabs close)
+            // Check permission (will auto-request if needed)
             try {
-                const permission = await this.verifyPermission(handle, true); // Force request
+                const permission = await this.verifyPermission(handle);
                 if (permission) {
                     console.log('✅ Permission granted, loading data...');
                     window.directoryHandle = handle;
@@ -274,19 +274,27 @@ class StorageAdapter {
         }
     }
     
-    async verifyPermission(handle, forceRequest = false) {
+    async verifyPermission(handle) {
         const opts = { mode: 'readwrite' };
         
         // Check if we already have permission
-        if (!forceRequest && (await handle.queryPermission(opts)) === 'granted') {
+        const currentPermission = await handle.queryPermission(opts);
+        
+        if (currentPermission === 'granted') {
+            console.log('✅ Permission already granted (no prompt needed)');
             return true;
         }
         
-        // Request permission (this shows "Allow this time" or "Allow on every visit" prompt)
-        if ((await handle.requestPermission(opts)) === 'granted') {
+        // Only request if not already granted
+        console.log('🔐 Requesting folder permission...');
+        const requestedPermission = await handle.requestPermission(opts);
+        
+        if (requestedPermission === 'granted') {
+            console.log('✅ Permission granted by user');
             return true;
         }
         
+        console.log('❌ Permission denied by user');
         return false;
     }
     
