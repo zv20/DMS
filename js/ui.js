@@ -33,6 +33,36 @@
                 window.navigateTo(btn.dataset.page);
             });
         });
+        
+        // Setup click-outside-to-close for hamburger menu
+        const navOverlay = document.getElementById('navOverlay');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const navContent = document.querySelector('.nav-content');
+        
+        if (navOverlay && hamburgerBtn && navContent) {
+            // Hamburger button opens/closes the menu
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.toggleNav();
+            });
+            
+            // Click outside the nav content closes it
+            document.addEventListener('click', (e) => {
+                if (!navOverlay.classList.contains('active')) return;
+                
+                const clickedInsideNav = navContent.contains(e.target);
+                const clickedHamburger = hamburgerBtn.contains(e.target);
+                
+                if (!clickedInsideNav && !clickedHamburger) {
+                    navOverlay.classList.remove('active');
+                }
+            });
+            
+            // Prevent clicks inside nav content from closing it
+            navContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     };
 
     // --- Theme ---
