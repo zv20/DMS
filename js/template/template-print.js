@@ -1,12 +1,12 @@
 /**
- * Template Print Module  
- * Handles PDF generation and printing
+ * Template Print Module
+ * Handles PDF generation and printing with templates
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
-
-    window.TemplatePrint = {
+    
+    const TemplatePrint = {
         print: async function(templateId, selectedWeekStart, manager) {
             if (!selectedWeekStart) {
                 alert(window.t('alert_no_week_selected'));
@@ -27,6 +27,7 @@
                 return;
             }
 
+            // Convert background image to base64 for printing
             console.log('🖼️ Converting background image for printing...');
             let backgroundImageTag = '';
             if (settings.backgroundImage) {
@@ -44,6 +45,12 @@
                 }
             }
 
+            let logoUrl = '';
+            if (settings.branding?.logo) {
+                logoUrl = await window.loadImageFile(settings.branding.logo);
+            }
+
+            // Build array of only days with meals
             const daysWithMeals = [];
             for (let i = 0; i < CONST.WEEK.DAYS_COUNT; i++) {
                 const day = new Date(selectedWeekStart);
@@ -51,6 +58,7 @@
                 const dateStr = day.toISOString().split('T')[0];
                 const dayMenu = window.currentMenu[dateStr];
                 
+                // Only include if day has meals
                 if (manager.hasMeals(dayMenu)) {
                     daysWithMeals.push({
                         date: day,
@@ -61,7 +69,7 @@
                 }
             }
 
-            let html = this.generateHTML(settings, selectedWeekStart, backgroundImageTag, daysWithMeals, manager);
+            let html = this.generatePrintHTML(settings, selectedWeekStart, backgroundImageTag, daysWithMeals, manager);
 
             printWindow.document.write(html);
             printWindow.document.close();
@@ -73,35 +81,24 @@
             };
         },
 
-        generateHTML: function(settings, selectedWeekStart, backgroundImageTag, daysWithMeals, manager) {
-            const getBorderStyles = () => {
-                const w = settings.dayBlock.borderWidth;
-                const s = settings.dayBlock.borderStyle;
-                const c = settings.dayBlock.borderColor;
-                const sides = settings.dayBlock.borderSides;
-                if (sides === CONST.BORDER_SIDES.NONE) return '';
-                if (sides === CONST.BORDER_SIDES.ALL) return `border: ${w}px ${s} ${c};`;
-                let css = '';
-                if (sides === CONST.BORDER_SIDES.TOP) css = `border-top: ${w}px ${s} ${c};`;
-                else if (sides === CONST.BORDER_SIDES.BOTTOM) css = `border-bottom: ${w}px ${s} ${c};`;
-                else if (sides === CONST.BORDER_SIDES.LEFT_RIGHT) css = `border-left: ${w}px ${s} ${c}; border-right: ${w}px ${s} ${c};`;
-                else if (sides === CONST.BORDER_SIDES.TOP_BOTTOM) css = `border-top: ${w}px ${s} ${c}; border-bottom: ${w}px ${s} ${c};`;
-                return css;
-            };
-
+        generatePrintHTML: function(settings, selectedWeekStart, backgroundImageTag, daysWithMeals, manager) {
+            const dateRange = manager.getDateRangeText(0, 4, selectedWeekStart);
+            
             let html = `
             <!DOCTYPE html>
             <html lang="${window.getCurrentLanguage()}">
             <head>
                 <meta charset="UTF-8">
-                <title>${settings.header.text} - ${manager.getDateRangeText(0, 4, selectedWeekStart)}</title>
+                <title>${settings.header.text} - ${dateRange}</title>
                 <style>
                     @page {
                         size: A4;
                         margin: ${settings.layout.marginTop}mm ${settings.layout.marginRight}mm ${settings.layout.marginBottom}mm ${settings.layout.marginLeft}mm;
                     }
                     
-                    * { box-sizing: border-box; }
+                    * {
+                        box-sizing: border-box;
+                    }
                     
                     html, body {
                         width: 210mm;
@@ -168,7 +165,7 @@
                         background: ${settings.dayBlock.bg};
                         border-radius: ${settings.dayBlock.borderRadius};
                         padding: 6px 8px;
-                        ${getBorderStyles()}
+                        ${this.getBorderStylesCSS(settings)}
                         box-shadow: ${window.getShadowCSS(settings.dayBlock.shadow)};
                         page-break-inside: avoid;
                     }
@@ -181,7 +178,9 @@
                         padding-bottom: 2px;
                         line-height: 1.1;
                     }
-                    .meal-item { margin-bottom: 3px; }
+                    .meal-item {
+                        margin-bottom: 3px;
+                    }
                     .meal-title {
                         font-size: ${settings.mealTitle.fontSize};
                         color: ${settings.mealTitle.color};
@@ -210,6 +209,22 @@
                         line-height: 1;
                         ${settings.separators.footerEnabled ? `border-top: ${settings.separators.footerWidth}px ${settings.separators.footerStyle} ${settings.separators.footerColor}; padding-top: 4px;` : ''}
                     }
+                    
+                    @media print {
+                        html, body {
+                            width: 210mm;
+                            height: 297mm;
+                        }
+                        
+                        #page-container {
+                            page-break-after: avoid;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .print-day-block {
+                            page-break-inside: avoid;
+                        }
+                    }
                 </style>
             </head>
             <body>
@@ -217,12 +232,13 @@
                 <div id="page-container">
                     <div class="print-header">
                         <h1>${settings.header.text}</h1>
-                        ${settings.dateRange.show ? `<p class="date-range">${manager.getDateRangeText(0, 4, selectedWeekStart)}</p>` : ''}
+                        ${settings.dateRange.show ? `<p class="date-range">${dateRange}</p>` : ''}
                     </div>
                     
                     <div id="days-container">
             `;
 
+            // Loop through only days with meals
             daysWithMeals.forEach(dayData => {
                 html += `<div class="print-day-block">`;
                 html += `<div class="day-name">${dayData.dayName}</div>`;
@@ -241,7 +257,7 @@
                         const recipe = window.recipes.find(r => r.id === slot.recipe);
                         if (recipe) {
                             const slotSettings = settings.slotSettings[slotConfig.id];
-                            html += this.createMealHTML(recipe, slotSettings, settings, mealIndex);
+                            html += this.generateMealHTML(recipe, slotSettings, settings, mealIndex);
                             mealIndex++;
                         }
                     }
@@ -262,14 +278,33 @@
             return html;
         },
 
-        createMealHTML: function(recipe, slotSettings, settings, index) {
+        getBorderStylesCSS: function(settings) {
+            const w = settings.dayBlock.borderWidth;
+            const s = settings.dayBlock.borderStyle;
+            const c = settings.dayBlock.borderColor;
+            const sides = settings.dayBlock.borderSides;
+            
+            if (sides === CONST.BORDER_SIDES.NONE) return '';
+            if (sides === CONST.BORDER_SIDES.ALL) return `border: ${w}px ${s} ${c};`;
+            
+            let css = '';
+            if (sides === CONST.BORDER_SIDES.TOP) css = `border-top: ${w}px ${s} ${c};`;
+            else if (sides === CONST.BORDER_SIDES.BOTTOM) css = `border-bottom: ${w}px ${s} ${c};`;
+            else if (sides === CONST.BORDER_SIDES.LEFT_RIGHT) css = `border-left: ${w}px ${s} ${c}; border-right: ${w}px ${s} ${c};`;
+            else if (sides === CONST.BORDER_SIDES.TOP_BOTTOM) css = `border-top: ${w}px ${s} ${c}; border-bottom: ${w}px ${s} ${c};`;
+            
+            return css;
+        },
+
+        generateMealHTML: function(recipe, slotSettings, settings, index) {
             const lang = window.getCurrentLanguage();
             const isBulgarian = lang === 'bg';
+
             const numberStr = window.getMealNumber(index, settings.mealNumbering.style, settings.mealNumbering.prefix, settings.mealNumbering.suffix);
 
             let html = `<div class="meal-item">`;
             html += `<div class="meal-title">${numberStr} ${recipe.name}`;
-            
+
             let metadata = [];
             if (recipe.portionSize) {
                 const portionUnit = isBulgarian ? 'гр' : 'g';
@@ -288,19 +323,19 @@
             if (slotSettings.showIngredients && recipe.ingredients && recipe.ingredients.length) {
                 const recipeAllergens = window.getRecipeAllergens(recipe);
                 const allergenIds = new Set(recipeAllergens.map(a => a.id));
-                
+
                 const ingredientsList = recipe.ingredients.map(ing => {
                     const fullIng = window.ingredients.find(i => i.id === ing.id);
                     if (!fullIng) return '';
-                    
+
                     const hasAllergen = fullIng.allergens && fullIng.allergens.some(aid => allergenIds.has(aid));
-                    
+
                     if (slotSettings.showAllergens && hasAllergen) {
                         return `<span class="allergen-highlight">${fullIng.name}</span>`;
                     }
                     return fullIng.name;
                 }).filter(n => n).join(', ');
-                
+
                 if (ingredientsList) {
                     html += `<div class="ingredients"><em>${window.t('text_ingredients_prefix')}</em> ${ingredientsList}</div>`;
                 }
@@ -310,5 +345,7 @@
             return html;
         }
     };
+
+    window.TemplatePrint = TemplatePrint;
 
 })(window);
