@@ -195,7 +195,6 @@ class TemplateBuilder {
                 <!-- ACTION BUTTONS -->
                 <div class="action-buttons">
                     <button id="btn-preview-real" class="btn btn-primary">📋 Preview My Meals</button>
-                    <button id="btn-print" class="btn btn-primary">🖨️ Print/Export</button>
                     <button id="btn-save-template" class="btn btn-secondary">Save Template</button>
                     <button id="btn-load-template" class="btn btn-secondary">Load Template</button>
                     <button id="btn-reset" class="btn btn-secondary">Reset to Default</button>
@@ -205,7 +204,6 @@ class TemplateBuilder {
         
         // Bind button actions
         document.getElementById('btn-preview-real')?.addEventListener('click', () => this.previewRealData());
-        document.getElementById('btn-print')?.addEventListener('click', () => this.printMealPlan());
         document.getElementById('btn-save-template')?.addEventListener('click', () => this.saveTemplate());
         document.getElementById('btn-load-template')?.addEventListener('click', () => this.loadTemplate());
         document.getElementById('btn-reset')?.addEventListener('click', () => this.reset());
@@ -289,29 +287,26 @@ class TemplateBuilder {
                 
                 if (recipe) {
                     // Get ingredients with allergen info
-                    const ingredients = recipe.ingredients.map(ingId => {
+                    const ingredients = (recipe.ingredients || []).map(ingObj => {
+                        const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                         const ing = window.ingredients.find(i => i.id === ingId);
                         return ing ? ing.name : '';
                     }).filter(Boolean);
                     
                     // Get allergens for this recipe
                     const allergens = [];
-                    recipe.ingredients.forEach(ingId => {
+                    (recipe.ingredients || []).forEach(ingObj => {
+                        const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                         const ing = window.ingredients.find(i => i.id === ingId);
                         if (ing && ing.allergens && ing.allergens.length > 0) {
-                            ing.allergens.forEach(allergenId => {
-                                const allergen = window.allergens.find(a => a.id === allergenId);
-                                if (allergen && !allergens.includes(ing.name)) {
-                                    allergens.push(ing.name);
-                                }
-                            });
+                            allergens.push(ing.name);
                         }
                     });
                     
                     meals.push({
                         title: String(mealNum + 1),
                         name: recipe.name,
-                        portion: recipe.portion ? `${recipe.portion}g` : '',
+                        portion: recipe.portionSize ? `${recipe.portionSize}` : '',
                         calories: recipe.calories || null,
                         ingredients: ingredients,
                         allergens: allergens
@@ -359,38 +354,6 @@ class TemplateBuilder {
         }
         
         return dates;
-    }
-    
-    // NEW: Print/Export meal plan
-    printMealPlan() {
-        const data = this.useRealData ? this.getRealMealPlanData() : this.getSampleData();
-        const html = this.renderer.render(this.state, data);
-        
-        // Create print window
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Meal Plan</title>
-                <style>
-                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                    @media print {
-                        body { padding: 0; }
-                    }
-                </style>
-            </head>
-            <body>
-                ${html}
-                <script>
-                    window.onload = function() {
-                        setTimeout(() => window.print(), 500);
-                    };
-                </script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
     }
     
     getSampleData() {
