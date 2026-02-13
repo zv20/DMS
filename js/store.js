@@ -1,629 +1,214 @@
-/**
- * Data Store Manager
- * Handles ALL data persistence with separate files:
- * - data.json: recipes, ingredients, allergens
- * - menus.json: all menu planning by date
- * - settings.json: templates and preferences (including language)
- * - pictures/: folder for uploaded images
- * - archive/menus/: folder for saved PDF menus
- * 
- * All files are stored in a "data" subfolder for better organization
- */
+// Data Store & Storage Adapter Integration
 
 (function(window) {
-    let saveLocation = null;
-    let dataFolder = null; // Subfolder for data files
-    let picturesFolder = null; // Subfolder for images
-    let autoSaveTimeout = null;
-    let db = null;
-
-    const DB_NAME = 'KitchenProDB';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'settings';
-    const HANDLE_KEY = 'directoryHandle';
-    const DATA_FOLDER_NAME = 'data'; // Subfolder name
-    const PICTURES_FOLDER_NAME = 'pictures'; // Pictures subfolder name
-
-    // Global data stores
+    // Global Data Arrays
     window.recipes = [];
     window.ingredients = [];
     window.allergens = [];
     window.currentMenu = {};
+    window.menuHistory = [];
+    window.directoryHandle = null;
     window.savedTemplates = [];
-    window.imageUploads = []; // Now stores { id, name, filename } instead of base64
-    window.appSettings = {
-        language: 'en'
-    };
-    window.currentCalendarDate = new Date();
-    window.currentViewMode = 'weekly';
+    window.imageUploads = [];
+    window.appSettings = { language: 'en' };
+    window.imageCache = {};
 
+    // Predefined allergens
     window.PREDEFINED_ALLERGENS = [
-        { id: 'alg_gluten', name: 'Gluten', color: '#f59f00', name_bg: 'Глутен' },
-        { id: 'alg_crustaceans', name: 'Crustaceans', color: '#ff6b6b', name_bg: 'Ракообразни' },
-        { id: 'alg_eggs', name: 'Eggs', color: '#ffd43b', name_bg: 'Яйца' },
-        { id: 'alg_fish', name: 'Fish', color: '#339af0', name_bg: 'Риба' },
-        { id: 'alg_peanuts', name: 'Peanuts', color: '#d9480f', name_bg: 'Фъстъци' },
-        { id: 'alg_soybeans', name: 'Soybeans', color: '#5c940d', name_bg: 'Соя' },
-        { id: 'alg_milk', name: 'Milk', color: '#74c0fc', name_bg: 'Мляко' },
-        { id: 'alg_nuts', name: 'Nuts', color: '#e67700', name_bg: 'Ядки' },
-        { id: 'alg_celery', name: 'Celery', color: '#82c91e', name_bg: 'Целина' },
-        { id: 'alg_mustard', name: 'Mustard', color: '#fcc419', name_bg: 'Горчица' },
-        { id: 'alg_sesame', name: 'Sesame', color: '#adb5bd', name_bg: 'Сусам' },
-        { id: 'alg_sulphites', name: 'Sulphites', color: '#868e96', name_bg: 'Сулфити' },
-        { id: 'alg_lupin', name: 'Lupin', color: '#ffec99', name_bg: 'Лупина' },
-        { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели' }
+        { id: 'alg_gluten', name: 'Gluten', color: '#f59f00', name_bg: 'Глутен', isSystem: true },
+        { id: 'alg_crustaceans', name: 'Crustaceans', color: '#ff6b6b', name_bg: 'Ракообразни', isSystem: true },
+        { id: 'alg_eggs', name: 'Eggs', color: '#ffd43b', name_bg: 'Яйца', isSystem: true },
+        { id: 'alg_fish', name: 'Fish', color: '#339af0', name_bg: 'Риба', isSystem: true },
+        { id: 'alg_peanuts', name: 'Peanuts', color: '#d9480f', name_bg: 'Фъстъци', isSystem: true },
+        { id: 'alg_soybeans', name: 'Soybeans', color: '#5c940d', name_bg: 'Соя', isSystem: true },
+        { id: 'alg_milk', name: 'Milk', color: '#74c0fc', name_bg: 'Мляко', isSystem: true },
+        { id: 'alg_nuts', name: 'Nuts', color: '#e67700', name_bg: 'Ядки', isSystem: true },
+        { id: 'alg_celery', name: 'Celery', color: '#82c91e', name_bg: 'Целина', isSystem: true },
+        { id: 'alg_mustard', name: 'Mustard', color: '#fcc419', name_bg: 'Горчица', isSystem: true },
+        { id: 'alg_sesame', name: 'Sesame', color: '#adb5bd', name_bg: 'Сусам', isSystem: true },
+        { id: 'alg_sulphites', name: 'Sulphites', color: '#868e96', name_bg: 'Сулфити', isSystem: true },
+        { id: 'alg_lupin', name: 'Lupin', color: '#ffec99', name_bg: 'Лупина', isSystem: true },
+        { id: 'alg_molluscs', name: 'Molluscs', color: '#ff922b', name_bg: 'Мекотели', isSystem: true }
     ];
 
-    // Initialize IndexedDB
-    window.initDB = async function() {
-        if (db) return db;
-        
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                db = request.result;
-                resolve(db);
-            };
-            
-            request.onupgradeneeded = (event) => {
-                const database = event.target.result;
-                if (!database.objectStoreNames.contains(STORE_NAME)) {
-                    database.createObjectStore(STORE_NAME);
-                }
-            };
-        });
-    };
-
-    // Save directory handle to IndexedDB
-    async function saveDirectoryHandle(handle) {
-        try {
-            await window.initDB();
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            store.put(handle, HANDLE_KEY);
-            
-            return new Promise((resolve, reject) => {
-                transaction.oncomplete = () => resolve();
-                transaction.onerror = () => reject(transaction.error);
-            });
-        } catch (err) {
-            console.error('Error saving directory handle:', err);
-        }
-    }
-
-    // Get directory handle from IndexedDB
-    async function getDirectoryHandle() {
-        try {
-            await window.initDB();
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.get(HANDLE_KEY);
-            
-            return new Promise((resolve, reject) => {
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        } catch (err) {
-            console.error('Error getting directory handle:', err);
-            return null;
-        }
-    }
-
-    // Check if user has previously selected a folder
+    // ==================== INITIALIZATION ====================
+    
     window.checkPreviousFolder = async function() {
-        const handle = await getDirectoryHandle();
-        return !!handle;
-    };
-
-    // Get or create the data subfolder
-    async function getDataFolder(parentHandle) {
-        try {
-            return await parentHandle.getDirectoryHandle(DATA_FOLDER_NAME, { create: true });
-        } catch (err) {
-            console.error('Error creating data folder:', err);
-            throw err;
-        }
-    }
-
-    // Get or create the pictures subfolder inside data folder
-    async function getPicturesFolder(dataFolderHandle) {
-        try {
-            return await dataFolderHandle.getDirectoryHandle(PICTURES_FOLDER_NAME, { create: true });
-        } catch (err) {
-            console.error('Error creating pictures folder:', err);
-            throw err;
-        }
-    }
-
-    // Select folder and save handle
-    window.selectSaveLocation = async function() {
-        try {
-            const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-            saveLocation = dirHandle;
-            
-            // Create/get the data subfolder
-            dataFolder = await getDataFolder(dirHandle);
-            console.log('✅ dataFolder set:', dataFolder);
-            
-            // Create/get the pictures subfolder inside data folder
-            picturesFolder = await getPicturesFolder(dataFolder);
-            console.log('✅ picturesFolder set:', picturesFolder);
-            
-            // Save handle to IndexedDB for persistence
-            await saveDirectoryHandle(dirHandle);
-            
-            // Check if files exist, if not create them
-            await window.ensureFilesExist();
-            await window.loadAllData();
-            
-            return true;
-        } catch (err) {
-            if (err.name !== 'AbortError') {
-                console.error('File system access denied:', err);
-            }
-            return false;
-        }
-    };
-
-    // Auto-load from previously selected folder
-    window.autoLoadFromFolder = async function() {
-        try {
-            const handle = await getDirectoryHandle();
-            if (!handle) {
-                return false;
-            }
-
-            // Verify permission
-            const permission = await handle.queryPermission({ mode: 'readwrite' });
-            
-            if (permission === 'granted') {
-                saveLocation = handle;
-                dataFolder = await getDataFolder(handle);
-                picturesFolder = await getPicturesFolder(dataFolder);
-                console.log('✅ dataFolder set (auto-load):', dataFolder);
-                console.log('✅ picturesFolder set (auto-load):', picturesFolder);
-                await window.loadAllData();
-                return true;
-            } else {
-                // Request permission
-                const newPermission = await handle.requestPermission({ mode: 'readwrite' });
-                
-                if (newPermission === 'granted') {
-                    saveLocation = handle;
-                    dataFolder = await getDataFolder(handle);
-                    picturesFolder = await getPicturesFolder(dataFolder);
-                    console.log('✅ dataFolder set (after permission):', dataFolder);
-                    console.log('✅ picturesFolder set (after permission):', picturesFolder);
-                    await window.loadAllData();
-                    return true;
-                } else {
-                    console.log('Permission denied');
-                    return false;
-                }
-            }
-        } catch (err) {
-            console.error('Could not access previous folder:', err);
-            return false;
-        }
-    };
-
-    // Ensure all data files exist (create if missing) in the data subfolder
-    window.ensureFilesExist = async function() {
-        if (!dataFolder) return;
-
-        try {
-            // Check/create data.json
-            const dataExists = await window.fileExists(dataFolder, 'data.json');
-            if (!dataExists) {
-                await window.writeFile(dataFolder, 'data.json', JSON.stringify({
-                    recipes: [],
-                    ingredients: [],
-                    allergens: []
-                }, null, 2));
-            }
-
-            // Check/create menus.json
-            const menusExists = await window.fileExists(dataFolder, 'menus.json');
-            if (!menusExists) {
-                await window.writeFile(dataFolder, 'menus.json', JSON.stringify({}, null, 2));
-            }
-
-            // Check/create settings.json
-            const settingsExists = await window.fileExists(dataFolder, 'settings.json');
-            if (!settingsExists) {
-                await window.writeFile(dataFolder, 'settings.json', JSON.stringify({
-                    templates: [],
-                    imageUploads: [],
-                    language: 'en'
-                }, null, 2));
-            }
-        } catch (err) {
-            console.error('Error ensuring files exist:', err);
-        }
-    };
-
-    // Check if file exists
-    window.fileExists = async function(dirHandle, filename) {
-        try {
-            await dirHandle.getFileHandle(filename);
-            return true;
-        } catch (err) {
-            return false;
-        }
-    };
-
-    // Save image file to pictures folder
-    window.saveImageFile = async function(blob, filename) {
-        if (!picturesFolder) {
-            console.error('Pictures folder not initialized');
-            return null;
-        }
-
-        try {
-            const fileHandle = await picturesFolder.getFileHandle(filename, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-            console.log('✅ Image saved:', filename);
-            return `pictures/${filename}`;
-        } catch (err) {
-            console.error('Error saving image file:', err);
-            return null;
-        }
-    };
-
-    // Load image file from pictures folder
-    window.loadImageFile = async function(filename) {
-        if (!picturesFolder) {
-            console.error('Pictures folder not initialized');
-            return null;
-        }
-
-        try {
-            const fileHandle = await picturesFolder.getFileHandle(filename);
-            const file = await fileHandle.getFile();
-            return URL.createObjectURL(file);
-        } catch (err) {
-            console.error('Error loading image file:', err);
-            return null;
-        }
-    };
-
-    // Convert image file to base64 data URL (for printing)
-    window.convertImageFileToBase64 = async function(filename) {
-        if (!picturesFolder) {
-            console.error('Pictures folder not initialized');
-            return null;
-        }
-
-        try {
-            const fileHandle = await picturesFolder.getFileHandle(filename);
-            const file = await fileHandle.getFile();
-            
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        } catch (err) {
-            console.error('Error converting image file to base64:', err);
-            return null;
-        }
-    };
-
-    // Delete image file from pictures folder
-    window.deleteImageFile = async function(filename) {
-        if (!picturesFolder) {
-            console.error('Pictures folder not initialized');
-            return false;
-        }
-
-        try {
-            await picturesFolder.removeEntry(filename);
-            console.log('✅ Image deleted:', filename);
-            return true;
-        } catch (err) {
-            console.error('Error deleting image file:', err);
-            return false;
-        }
-    };
-
-    // Load all images from pictures folder
-    window.loadAllImages = async function() {
-        if (!picturesFolder) return {};
-
-        const images = {};
-        try {
-            for await (const entry of picturesFolder.values()) {
-                if (entry.kind === 'file') {
-                    const file = await entry.getFile();
-                    images[entry.name] = URL.createObjectURL(file);
-                }
-            }
-            console.log('✅ Loaded images:', Object.keys(images).length);
-        } catch (err) {
-            console.error('Error loading images:', err);
-        }
-        return images;
-    };
-
-    // Save PDF to archive/menus folder
-    window.savePDFToArchive = async function(pdfBlob, filename) {
-        if (!dataFolder) {
-            console.error('Data folder not initialized');
-            return null;
-        }
-
-        try {
-            // Get or create archive/menus folder structure
-            const archiveFolder = await dataFolder.getDirectoryHandle('archive', { create: true });
-            const menusFolder = await archiveFolder.getDirectoryHandle('menus', { create: true });
-            
-            // Save PDF file
-            const fileHandle = await menusFolder.getFileHandle(filename, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(pdfBlob);
-            await writable.close();
-            
-            console.log('✅ PDF saved to archive:', filename);
-            
-            // Return blob URL to open in new tab
-            return URL.createObjectURL(pdfBlob);
-        } catch (err) {
-            console.error('Error saving PDF to archive:', err);
-            return null;
-        }
-    };
-
-    // Open archive folder (for user reference)
-    window.openArchiveFolder = async function() {
-        if (!dataFolder) {
-            alert('Please select a storage folder first!');
-            return;
+        const initialized = await window.storageAdapter.init();
+        
+        // Populate default allergens if empty
+        if (initialized && window.allergens.length === 0) {
+            window.populateDefaultAllergens();
+            await window.storageAdapter.save('allergens', window.allergens);
         }
         
-        try {
-            const archiveFolder = await dataFolder.getDirectoryHandle('archive', { create: true });
-            await archiveFolder.getDirectoryHandle('menus', { create: true });
-            alert('Archive folder created at: data/archive/menus/\n\nAll printed menus are automatically saved there!');
-        } catch (err) {
-            console.error('Error accessing archive folder:', err);
-            alert('Error accessing archive folder. Please check console.');
-        }
+        return initialized;
     };
 
-    // Load all data from files in data subfolder
-    window.loadAllData = async function() {
-        if (!dataFolder) return;
+    window.autoLoadFromFolder = async function() {
+        // Storage adapter handles this in init()
+        return true;
+    };
 
-        try {
-            // Load data.json (recipes, ingredients, allergens)
-            const dataContent = await window.readFile(dataFolder, 'data.json');
-            if (dataContent) {
-                const parsed = JSON.parse(dataContent);
-                window.recipes = parsed.recipes || [];
-                window.ingredients = parsed.ingredients || [];
-                window.allergens = parsed.allergens || [];
-            }
-
-            // Load menus.json (all menu planning by date)
-            const menusContent = await window.readFile(dataFolder, 'menus.json');
-            if (menusContent) {
-                window.currentMenu = JSON.parse(menusContent);
-            }
-
-            // Load settings.json (templates, preferences, image uploads)
-            const settingsContent = await window.readFile(dataFolder, 'settings.json');
-            if (settingsContent) {
-                const parsed = JSON.parse(settingsContent);
-                window.savedTemplates = parsed.templates || [];
-                window.imageUploads = parsed.imageUploads || [];
-                
-                console.log('📋 Loaded templates:', window.savedTemplates.length);
-                console.log('🖼️ Loaded image uploads:', window.imageUploads.length);
-                
-                // Load language preference
-                if (parsed.language) {
-                    window.appSettings.language = parsed.language;
-                    console.log('🌍 Loaded language from settings.json:', parsed.language);
-                    // Apply language
-                    if (typeof window.changeLanguage === 'function') {
-                        window.changeLanguage(parsed.language, false); // Don't save again
-                    }
-                    // Update language selector
-                    const langSelect = document.getElementById('languageSelect');
-                    if (langSelect) langSelect.value = parsed.language;
-                }
-            }
-
-            // Load all images from pictures folder
-            window.imageCache = await window.loadAllImages();
-
-            // Populate default allergens if empty
-            if (window.allergens.length === 0) {
+    window.selectSaveLocation = async function() {
+        if (window.storageAdapter.useFileSystem) {
+            // Chrome/Edge: Show folder picker
+            const success = await window.storageAdapter.selectFolder();
+            if (success && window.allergens.length === 0) {
                 window.populateDefaultAllergens();
-                window.saveData(); // Save defaults
+                await window.storageAdapter.save('allergens', window.allergens);
             }
-
-            console.log('✅ All data loaded successfully from "data" folder');
-            
-            // DISPATCH EVENT TO NOTIFY TEMPLATE BUILDER
-            window.dispatchEvent(new CustomEvent('dataLoaded', {
-                detail: {
-                    templates: window.savedTemplates,
-                    imageUploads: window.imageUploads
-                }
-            }));
-            
-        } catch (err) {
-            console.error('Error loading data:', err);
+            return success;
+        } else {
+            // Firefox/Safari: Already using IndexedDB, no folder needed
+            console.log('Using IndexedDB storage (no folder selection needed)');
+            return true;
         }
     };
 
     window.populateDefaultAllergens = function() {
         window.PREDEFINED_ALLERGENS.forEach(def => {
             if (!window.allergens.find(a => a.id === def.id)) {
-                window.allergens.push({ id: def.id, name: def.name, color: def.color, isSystem: true });
+                window.allergens.push({ ...def });
             }
         });
+        console.log('✅ Populated default allergens');
     };
 
-    // Save data.json (recipes, ingredients, allergens) to data subfolder
-    window.saveData = function() {
-        if (!dataFolder) return;
+    // ==================== SAVE FUNCTIONS ====================
 
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(async () => {
-            try {
-                const data = {
-                    recipes: window.recipes,
-                    ingredients: window.ingredients,
-                    allergens: window.allergens
-                };
-                await window.writeFile(dataFolder, 'data.json', JSON.stringify(data, null, 2));
-                window.showSyncIndicator();
-            } catch (err) {
-                console.error('Error saving data.json:', err);
-            }
-        }, 300);
-    };
-
-    // Save menus.json (all menu planning) to data subfolder
-    window.saveMenus = function() {
-        if (!dataFolder) return;
-
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(async () => {
-            try {
-                await window.writeFile(dataFolder, 'menus.json', JSON.stringify(window.currentMenu, null, 2));
-                window.showSyncIndicator();
-            } catch (err) {
-                console.error('Error saving menus.json:', err);
-            }
-        }, 300);
-    };
-
-    // Save settings.json (templates, language preference, image uploads) to data subfolder
-    window.saveSettings = function() {
-        console.log('💾 saveSettings() called. dataFolder exists:', !!dataFolder);
-        console.log('💾 Current language in appSettings:', window.appSettings.language);
-        
-        if (!dataFolder) {
-            console.error('❌ Cannot save settings: dataFolder is null! Please select a folder first.');
-            return;
-        }
-
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(async () => {
-            try {
-                const settings = {
-                    templates: window.savedTemplates,
-                    imageUploads: window.imageUploads || [],
-                    language: window.appSettings.language
-                };
-                console.log('💾 Writing settings to file:', settings);
-                await window.writeFile(dataFolder, 'settings.json', JSON.stringify(settings, null, 2));
-                console.log('✅ Settings saved successfully!');
-                window.showSyncIndicator();
-            } catch (err) {
-                console.error('❌ Error saving settings.json:', err);
-            }
-        }, 300);
-    };
-
-    // Wrapper functions for compatibility
-    window.updateRecipes = function(recipes) {
+    window.updateRecipes = async function(recipes) {
         window.recipes = recipes;
-        window.saveData();
+        await window.storageAdapter.save('recipes', recipes);
+        window.showSyncIndicator();
     };
 
-    window.updateIngredients = function(ingredients) {
+    window.updateIngredients = async function(ingredients) {
         window.ingredients = ingredients;
-        window.saveData();
+        await window.storageAdapter.save('ingredients', ingredients);
+        window.showSyncIndicator();
     };
 
-    window.updateAllergens = function(allergens) {
+    window.updateAllergens = async function(allergens) {
         window.allergens = allergens;
-        window.saveData();
+        await window.storageAdapter.save('allergens', allergens);
+        window.showSyncIndicator();
     };
 
-    // File I/O Helpers
-    window.readFile = async function(dirHandle, filename) {
-        try {
-            const fileHandle = await dirHandle.getFileHandle(filename);
-            const file = await fileHandle.getFile();
-            return await file.text();
-        } catch (err) {
-            if (err.name === 'NotFoundError') {
-                console.log(`${filename} not found, will create on save`);
-                return null;
-            }
-            throw err;
+    window.saveData = async function() {
+        await window.storageAdapter.save('currentMenu', window.currentMenu);
+        window.showSyncIndicator();
+    };
+    
+    // Legacy compatibility
+    window.saveMenus = window.saveData;
+
+    window.saveMenu = async function(name) {
+        const menu = {
+            id: window.generateId('menu'),
+            name: name,
+            date: new Date().toISOString(),
+            data: JSON.stringify(window.currentMenu)
+        };
+        window.menuHistory.push(menu);
+        await window.storageAdapter.save('menuHistory', window.menuHistory);
+        window.renderMenuHistory();
+    };
+
+    window.loadSavedMenu = function(id) {
+        const menu = window.menuHistory.find(m => m.id === id);
+        if (!menu) return;
+        window.currentMenu = JSON.parse(menu.data);
+        window.saveData();
+        window.renderCalendar(window.currentCalendarDate);
+    };
+
+    window.deleteSavedMenu = async function(id) {
+        if (!confirm(window.t('alert_delete_menu'))) return;
+        window.menuHistory = window.menuHistory.filter(m => m.id !== id);
+        await window.storageAdapter.save('menuHistory', window.menuHistory);
+        window.renderMenuHistory();
+    };
+
+    // ==================== IMPORT/EXPORT ====================
+    
+    window.exportAllData = async function() {
+        await window.storageAdapter.exportData();
+    };
+    
+    window.importData = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const success = await window.storageAdapter.importData(file);
+        if (success) {
+            alert('Data imported successfully!');
+            window.renderAll();
+        } else {
+            alert('Import failed. Please check the file format.');
         }
     };
 
-    window.writeFile = async function(dirHandle, filename, content) {
-        const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
-    };
+    // ==================== SYNC INDICATOR ====================
 
-    // Visual feedback for auto-save
     window.showSyncIndicator = function() {
         const indicator = document.getElementById('syncIndicator');
         if (!indicator) return;
-        
         indicator.classList.remove('sync-hidden');
-        indicator.classList.add('sync-visible', 'sync-success');
-        indicator.textContent = '✓';
-        
+        indicator.classList.add('sync-visible');
         setTimeout(() => {
-            indicator.classList.remove('sync-visible', 'sync-success');
+            indicator.classList.remove('sync-visible');
             indicator.classList.add('sync-hidden');
         }, 2000);
     };
 
-    // Update menu for specific date
+    // ==================== ARCHIVE FOLDER (Chrome/Edge only) ====================
+
+    window.openArchiveFolder = async function() {
+        if (!window.storageAdapter.useFileSystem) {
+            alert('Archive folder is only available in Chrome/Edge.\n\nUse Export Data to backup your meals.');
+            return;
+        }
+        
+        if (!window.directoryHandle) {
+            alert('No folder selected. Please select a storage folder first.');
+            return;
+        }
+        
+        try {
+            const archiveDir = await window.directoryHandle.getDirectoryHandle('archive', { create: true });
+            await archiveDir.getDirectoryHandle('menus', { create: true });
+            
+            alert('Archive folder opened!\n\nNote: Browser limitations prevent direct folder opening.\nYou can find your PDFs in the selected folder under:\narchive/menus/');
+        } catch (err) {
+            alert('Could not access archive folder.');
+        }
+    };
+
+    // ==================== MENU HELPERS ====================
+
+    window.getMenuForDate = function(dateStr) {
+        if (!window.currentMenu[dateStr]) {
+            window.currentMenu[dateStr] = {};
+        }
+        return window.currentMenu[dateStr];
+    };
+    
     window.updateMenuForDate = function(dateStr, slotId, category, recipeId) {
         if (!window.currentMenu[dateStr]) {
-            window.currentMenu[dateStr] = {
-                slot1: { category: 'soup', recipe: null },
-                slot2: { category: 'main', recipe: null },
-                slot3: { category: 'dessert', recipe: null },
-                slot4: { category: 'other', recipe: null }
-            };
+            window.currentMenu[dateStr] = {};
         }
-
         window.currentMenu[dateStr][slotId] = {
-            category: category,
+            type: category,
             recipe: recipeId
         };
-
-        window.saveMenus();
+        window.saveData();
     };
-
-    // Get menu for specific date
-    window.getMenuForDate = function(dateStr) {
-        return window.currentMenu[dateStr] || {
-            slot1: { category: 'soup', recipe: null },
-            slot2: { category: 'main', recipe: null },
-            slot3: { category: 'dessert', recipe: null },
-            slot4: { category: 'other', recipe: null }
-        };
-    };
-
-    // Check if date has any meals
+    
     window.dateHasMeals = function(dateStr) {
         const menu = window.currentMenu[dateStr];
         if (!menu) return false;
-        return Object.values(menu).some(slot => slot.recipe !== null);
+        return Object.values(menu).some(slot => slot && slot.recipe);
     };
-
-    // Cache for loaded images
-    window.imageCache = {};
 
 })(window);
