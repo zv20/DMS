@@ -1,6 +1,7 @@
 /**
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
+ * Optimized for A4 paper (5 weekdays fit on one page)
  */
 
 (function(window) {
@@ -307,32 +308,22 @@
                     const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
                     
                     if (recipe) {
-                        console.log('Recipe found:', recipe.name);
-                        console.log('Recipe ingredients array:', recipe.ingredients);
-                        
-                        // Get ingredients - recipe.ingredients is an array of objects like [{ id: 'ing_123' }]
+                        // Get ingredients
                         const ingredients = (recipe.ingredients || []).map(ingObj => {
-                            // Extract the id from the object
                             const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                             const ing = window.ingredients.find(i => i.id === ingId);
-                            console.log('Looking for ingredient:', ingId, 'Found:', ing);
                             return ing ? ing.name : null;
                         }).filter(Boolean);
                         
-                        console.log('Extracted ingredient names:', ingredients);
-                        
-                        // Get allergens - ingredients that have allergens
+                        // Get allergens
                         const allergens = [];
                         (recipe.ingredients || []).forEach(ingObj => {
                             const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                             const ing = window.ingredients.find(i => i.id === ingId);
                             if (ing && ing.allergens && ing.allergens.length > 0) {
-                                // This ingredient has allergens, add it to the list
                                 allergens.push(ing.name);
                             }
                         });
-                        
-                        console.log('Allergen ingredients:', allergens);
                         
                         meals.push({
                             title: String(mealNum + 1),
@@ -345,9 +336,7 @@
                     }
                 });
                 
-                // Only add day if it has at least one meal
                 if (meals.length > 0) {
-                    console.log(`Adding ${dayNames[dayIndex]} with ${meals.length} meals`);
                     days.push({
                         date: dateStr,
                         dayName: dayNames[dayIndex],
@@ -359,8 +348,6 @@
             currentDate.setDate(currentDate.getDate() + 1);
             dayIndex++;
         }
-        
-        console.log('Final meal plan data:', days);
         
         return {
             startDate: startDate.toISOString().split('T')[0],
@@ -375,43 +362,43 @@
         
         let settings;
         if (templateChoice.type === 'default') {
-            // Use default elegant template with ingredients shown and allergens underlined
+            // Use default elegant template optimized for A4 printing
             settings = {
                 layoutStyle: 'elegant-single',
                 showHeader: true,
                 headerText: 'Weekly Meal Plan',
                 headerAlignment: 'center',
-                headerSize: '28',
+                headerSize: '24', // Slightly smaller for print
                 showDateRange: true,
                 dateFormat: 'long',
                 dayBlockBg: '#ffffff',
                 dayBlockBorder: '#e0e0e0',
-                dayBlockPadding: '15',
-                dayNameSize: '18',
+                dayBlockPadding: '12', // Compact for print
+                dayNameSize: '16',
                 dayNameColor: '#333333',
                 dayNameWeight: 'bold',
                 showMealTitles: true,
-                mealTitleSize: '14',
+                mealTitleSize: '13',
                 mealTitleColor: '#666666',
                 showIngredients: true,
                 ingredientLayout: 'list',
                 numberingStyle: 'none',
                 showFooter: true,
                 footerText: 'Meal plan created with DMS',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#ffffff',
                 showBranding: true,
                 separatorStyle: 'line',
-                pageBorder: false
+                pageBorder: false,
+                isPrint: true // Flag for compact print layout
             };
         } else {
-            // Use saved template settings, but force ingredients to show
-            settings = { ...templateChoice.settings, showIngredients: true };
+            settings = { ...templateChoice.settings, showIngredients: true, isPrint: true };
         }
         
         return renderer.render(settings, mealPlanData);
     }
     
-    // Open print window with HTML
+    // Open print window with HTML (A4 optimized)
     function openPrintWindow(html, mealPlanData) {
         const printWindow = window.open('', '_blank');
         const dateRange = `${mealPlanData.startDate}_to_${mealPlanData.endDate}`;
@@ -423,14 +410,62 @@
                 <title>Meal Plan ${dateRange}</title>
                 <meta charset="UTF-8">
                 <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    
                     body { 
-                        margin: 0; 
-                        padding: 20px; 
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                        font-size: 14px;
+                        line-height: 1.4;
+                        color: #333;
+                        background: white;
                     }
+                    
+                    /* A4 Page Setup */
+                    @page {
+                        size: A4 portrait;
+                        margin: 15mm 15mm 12mm 15mm;
+                    }
+                    
                     @media print {
-                        body { padding: 0; }
-                        @page { margin: 1cm; }
+                        body {
+                            width: 210mm;
+                            min-height: 297mm;
+                        }
+                        
+                        /* Prevent page breaks inside day blocks */
+                        .elegant-day {
+                            page-break-inside: avoid;
+                        }
+                        
+                        /* Compact spacing for print */
+                        .elegant-day {
+                            margin-bottom: 15px !important;
+                            padding-bottom: 12px !important;
+                        }
+                        
+                        .elegant-meal {
+                            margin-bottom: 8px !important;
+                        }
+                        
+                        .meal-plan-header {
+                            margin-bottom: 12px !important;
+                        }
+                        
+                        .date-range {
+                            margin-bottom: 18px !important;
+                        }
+                        
+                        .meal-plan-footer {
+                            margin-top: 20px !important;
+                        }
+                    }
+                    
+                    @media screen {
+                        body {
+                            padding: 20mm;
+                            max-width: 210mm;
+                            margin: 0 auto;
+                        }
                     }
                 </style>
             </head>
@@ -451,12 +486,11 @@
     function getWeekDates(date) {
         const currentDate = new Date(date);
         const day = currentDate.getDay();
-        const diff = currentDate.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+        const diff = currentDate.getDate() - day + (day === 0 ? -6 : 1);
         
         const monday = new Date(currentDate.setDate(diff));
         const dates = [];
         
-        // Only get Monday through Friday (5 days)
         for (let i = 0; i < 5; i++) {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
