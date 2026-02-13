@@ -322,20 +322,21 @@ body {
 
 .sync-indicator {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     border: 2px solid #ccc;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
+    line-height: 1;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 .sync-indicator.sync-visible {
     opacity: 1 !important;
-    transform: scale(1.1);
 }
 .sync-indicator.sync-spin { animation: rotate 1s linear infinite; }
 .sync-indicator.sync-success { border-color: var(--color-success); color: var(--color-success); }
