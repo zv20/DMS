@@ -3,6 +3,7 @@
  * - Chrome/Edge: File System API
  * - Firefox/Safari: IndexedDB
  * - Auto-detects capabilities and uses best available method
+ * - Compatible with existing data.json file structure
  */
 
 class StorageAdapter {
@@ -12,7 +13,7 @@ class StorageAdapter {
         this.dbVersion = 1;
         this.db = null;
         
-        console.log(`Storage Mode: ${this.useFileSystem ? 'File System API' : 'IndexedDB'}`);
+        console.log(`💾 Storage Mode: ${this.useFileSystem ? 'File System API' : 'IndexedDB'}`);
     }
     
     // Initialize storage based on browser capabilities
@@ -31,13 +32,19 @@ class StorageAdapter {
         const handle = await this.getStoredDirectoryHandle();
         
         if (handle) {
+            console.log('📁 Found previous folder handle');
             // Verify we still have permission
             const permission = await this.verifyPermission(handle);
             if (permission) {
+                console.log('✅ Permission granted, loading data...');
                 window.directoryHandle = handle;
                 await this.loadFromFileSystem();
                 return true;
+            } else {
+                console.log('❌ Permission denied');
             }
+        } else {
+            console.log('ℹ️ No previous folder found');
         }
         
         return false; // Need user to select folder
@@ -57,7 +64,7 @@ class StorageAdapter {
             
             window.directoryHandle = dirHandle;
             await this.storeDirectoryHandle(dirHandle);
-            await this.createDataStructure();
+            await this.ensureDataFolderStructure();
             await this.loadFromFileSystem();
             return true;
         } catch (err) {
@@ -68,51 +75,82 @@ class StorageAdapter {
     
     async loadFromFileSystem() {
         try {
-            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: true });
-            
-            // Load recipes
+            // Try to get data subfolder
+            let dataDir;
             try {
-                const recipesFile = await dataDir.getFileHandle('recipes.json');
-                const recipesData = await recipesFile.getFile();
-                const recipesText = await recipesData.text();
-                window.recipes = JSON.parse(recipesText);
+                dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+                console.log('📂 Found data/ subfolder');
             } catch (e) {
-                window.recipes = [];
+                // No data subfolder, use root
+                dataDir = window.directoryHandle;
+                console.log('📂 Using root folder (no data/ subfolder)');
             }
             
-            // Load ingredients
+            // Try loading from data.json (old format)
             try {
-                const ingredientsFile = await dataDir.getFileHandle('ingredients.json');
-                const ingredientsData = await ingredientsFile.getFile();
-                const ingredientsText = await ingredientsData.text();
-                window.ingredients = JSON.parse(ingredientsText);
+                const dataFile = await dataDir.getFileHandle('data.json');
+                const fileData = await dataFile.getFile();
+                const fileText = await fileData.text();
+                const parsed = JSON.parse(fileText);
+                
+                window.recipes = parsed.recipes || [];
+                window.ingredients = parsed.ingredients || [];
+                window.allergens = parsed.allergens || [];
+                
+                console.log('✅ Loaded from data.json:', {
+                    recipes: window.recipes.length,
+                    ingredients: window.ingredients.length,
+                    allergens: window.allergens.length
+                });
             } catch (e) {
-                window.ingredients = [];
+                console.log('⚠️ data.json not found, trying separate files...');
+                
+                // Try separate files (new format)
+                try {
+                    const recipesFile = await dataDir.getFileHandle('recipes.json');
+                    const recipesData = await recipesFile.getFile();
+                    window.recipes = JSON.parse(await recipesData.text());
+                } catch (e2) {
+                    window.recipes = [];
+                }
+                
+                try {
+                    const ingredientsFile = await dataDir.getFileHandle('ingredients.json');
+                    const ingredientsData = await ingredientsFile.getFile();
+                    window.ingredients = JSON.parse(await ingredientsData.text());
+                } catch (e2) {
+                    window.ingredients = [];
+                }
+                
+                try {
+                    const allergensFile = await dataDir.getFileHandle('allergens.json');
+                    const allergensData = await allergensFile.getFile();
+                    window.allergens = JSON.parse(await allergensData.text());
+                } catch (e2) {
+                    window.allergens = [];
+                }
             }
             
-            // Load allergens
+            // Load menus.json or currentMenu.json
             try {
-                const allergensFile = await dataDir.getFileHandle('allergens.json');
-                const allergensData = await allergensFile.getFile();
-                const allergensText = await allergensData.text();
-                window.allergens = JSON.parse(allergensText);
-            } catch (e) {
-                window.allergens = [];
-            }
-            
-            // Load menu
-            try {
-                const menuFile = await dataDir.getFileHandle('currentMenu.json');
+                const menuFile = await dataDir.getFileHandle('menus.json');
                 const menuData = await menuFile.getFile();
-                const menuText = await menuData.text();
-                window.currentMenu = JSON.parse(menuText);
+                window.currentMenu = JSON.parse(await menuData.text());
+                console.log('✅ Loaded from menus.json');
             } catch (e) {
-                window.currentMenu = {};
+                try {
+                    const menuFile = await dataDir.getFileHandle('currentMenu.json');
+                    const menuData = await menuFile.getFile();
+                    window.currentMenu = JSON.parse(await menuData.text());
+                    console.log('✅ Loaded from currentMenu.json');
+                } catch (e2) {
+                    window.currentMenu = {};
+                }
             }
             
-            console.log('Data loaded from File System');
+            console.log('✅ File System data loaded successfully!');
         } catch (err) {
-            console.error('Error loading from file system:', err);
+            console.error('❌ Error loading from file system:', err);
         }
     }
     
@@ -120,27 +158,48 @@ class StorageAdapter {
         if (!window.directoryHandle) return;
         
         try {
+            // Get or create data subfolder
             const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: true });
-            const fileName = `${type}.json`;
-            const fileHandle = await dataDir.getFileHandle(fileName, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(JSON.stringify(data, null, 2));
-            await writable.close();
+            
+            // Save to data.json (combined format for compatibility)
+            if (type === 'recipes' || type === 'ingredients' || type === 'allergens') {
+                const combined = {
+                    recipes: type === 'recipes' ? data : window.recipes,
+                    ingredients: type === 'ingredients' ? data : window.ingredients,
+                    allergens: type === 'allergens' ? data : window.allergens
+                };
+                
+                const fileHandle = await dataDir.getFileHandle('data.json', { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(combined, null, 2));
+                await writable.close();
+                
+                console.log(`✅ Saved ${type} to data.json`);
+            } else if (type === 'currentMenu') {
+                const fileHandle = await dataDir.getFileHandle('menus.json', { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(data, null, 2));
+                await writable.close();
+                
+                console.log('✅ Saved menu to menus.json');
+            }
         } catch (err) {
-            console.error(`Error saving ${type}:`, err);
+            console.error(`❌ Error saving ${type}:`, err);
         }
     }
     
-    async createDataStructure() {
+    async ensureDataFolderStructure() {
         if (!window.directoryHandle) return;
         
         try {
             await window.directoryHandle.getDirectoryHandle('data', { create: true });
-            await window.directoryHandle.getDirectoryHandle('archive', { create: true });
-            await window.directoryHandle.getDirectoryHandle('archive/menus', { create: true });
-            console.log('Folder structure created');
+            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+            await dataDir.getDirectoryHandle('archive', { create: true });
+            const archiveDir = await dataDir.getDirectoryHandle('archive', { create: false });
+            await archiveDir.getDirectoryHandle('menus', { create: true });
+            console.log('✅ Folder structure created');
         } catch (err) {
-            console.error('Error creating structure:', err);
+            console.error('❌ Error creating structure:', err);
         }
     }
     
@@ -150,9 +209,9 @@ class StorageAdapter {
             const tx = db.transaction('handles', 'readwrite');
             const store = tx.objectStore('handles');
             await store.put(dirHandle, 'rootDirectory');
-            await tx.complete;
+            console.log('✅ Folder handle saved to IndexedDB');
         } catch (err) {
-            console.error('Error storing handle:', err);
+            console.error('❌ Error storing handle:', err);
         }
     }
     
@@ -161,8 +220,14 @@ class StorageAdapter {
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readonly');
             const store = tx.objectStore('handles');
-            return await store.get('rootDirectory');
+            const handle = await new Promise((resolve, reject) => {
+                const request = store.get('rootDirectory');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            return handle;
         } catch (err) {
+            console.error('❌ Error getting handle:', err);
             return null;
         }
     }
@@ -269,7 +334,7 @@ class StorageAdapter {
                 menuRequest.onerror = () => resolve({});
             });
             
-            console.log('Data loaded from IndexedDB');
+            console.log('✅ IndexedDB data loaded');
         } catch (err) {
             console.error('Error loading from IndexedDB:', err);
             window.recipes = [];
@@ -284,7 +349,6 @@ class StorageAdapter {
             const db = await this.openIDB();
             
             if (type === 'recipes' || type === 'ingredients' || type === 'allergens') {
-                // Clear and rewrite all items
                 const tx = db.transaction(type, 'readwrite');
                 const store = tx.objectStore(type);
                 await store.clear();
@@ -298,38 +362,30 @@ class StorageAdapter {
                 await store.put(data, 'currentMenu');
             }
             
-            console.log(`${type} saved to IndexedDB`);
+            console.log(`✅ ${type} saved to IndexedDB`);
         } catch (err) {
             console.error(`Error saving ${type} to IndexedDB:`, err);
         }
     }
     
     async prePopulateData() {
-        console.log('Pre-populating with sample data...');
+        console.log('🌱 Pre-populating with sample data...');
         
-        // Sample allergens
         const sampleAllergens = [
-            { id: 'alg_dairy', name: 'Dairy', color: '#ffd700' },
-            { id: 'alg_gluten', name: 'Gluten', color: '#ff6347' },
-            { id: 'alg_nuts', name: 'Nuts', color: '#8b4513' },
-            { id: 'alg_fish', name: 'Fish', color: '#4682b4' }
+            { id: 'alg_dairy', name: 'Dairy', color: '#ffd700', isSystem: true },
+            { id: 'alg_gluten', name: 'Gluten', color: '#ff6347', isSystem: true },
+            { id: 'alg_nuts', name: 'Nuts', color: '#8b4513', isSystem: true },
+            { id: 'alg_fish', name: 'Fish', color: '#4682b4', isSystem: true }
         ];
         
-        // Sample ingredients
         const sampleIngredients = [
             { id: 'ing_chicken', name: 'Chicken', allergens: [] },
             { id: 'ing_pasta', name: 'Pasta', allergens: ['alg_gluten'] },
             { id: 'ing_cheese', name: 'Cheese', allergens: ['alg_dairy'] },
             { id: 'ing_tomato', name: 'Tomato', allergens: [] },
-            { id: 'ing_lettuce', name: 'Lettuce', allergens: [] },
-            { id: 'ing_salmon', name: 'Salmon', allergens: ['alg_fish'] },
-            { id: 'ing_almonds', name: 'Almonds', allergens: ['alg_nuts'] },
-            { id: 'ing_rice', name: 'Rice', allergens: [] },
-            { id: 'ing_eggs', name: 'Eggs', allergens: [] },
-            { id: 'ing_milk', name: 'Milk', allergens: ['alg_dairy'] }
+            { id: 'ing_lettuce', name: 'Lettuce', allergens: [] }
         ];
         
-        // Sample recipes
         const sampleRecipes = [
             {
                 id: 'rcp_pasta',
@@ -350,16 +406,6 @@ class StorageAdapter {
                 ingredients: [{ id: 'ing_chicken' }, { id: 'ing_lettuce' }, { id: 'ing_tomato' }],
                 manualAllergens: [],
                 instructions: 'Grill chicken, mix with vegetables'
-            },
-            {
-                id: 'rcp_salmon',
-                name: 'Grilled Salmon with Rice',
-                category: 'main',
-                portionSize: '400g',
-                calories: 520,
-                ingredients: [{ id: 'ing_salmon' }, { id: 'ing_rice' }],
-                manualAllergens: [],
-                instructions: 'Grill salmon, serve with rice'
             }
         ];
         
@@ -373,7 +419,7 @@ class StorageAdapter {
         await this.saveToIndexedDB('recipes', sampleRecipes);
         await this.saveToIndexedDB('currentMenu', {});
         
-        console.log('Sample data populated!');
+        console.log('✅ Sample data populated!');
     }
     
     // ==================== UNIFIED API ====================
@@ -386,7 +432,6 @@ class StorageAdapter {
         }
     }
     
-    // Export data as JSON (for Firefox/Safari users to backup)
     async exportData() {
         const exportData = {
             recipes: window.recipes,
@@ -405,7 +450,6 @@ class StorageAdapter {
         URL.revokeObjectURL(url);
     }
     
-    // Import data from JSON
     async importData(file) {
         try {
             const text = await file.text();
