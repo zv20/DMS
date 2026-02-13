@@ -838,6 +838,20 @@
           "id": "alg_eggs"
         }
       ]
+    },
+    {
+      "id": "rcp_1771013470402_hp35qsp2l",
+      "name": "Pictures",
+      "category": "soup",
+      "portionSize": "259",
+      "calories": 22,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_002"
+        }
+      ],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
