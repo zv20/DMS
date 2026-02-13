@@ -68,6 +68,14 @@ class TemplateRenderer {
         return `<div class="meal-plan-footer" style="text-align: center; margin-top: 40px; font-size: 12px; color: #999;">${settings.footerText}</div>`;
     }
     
+    // Helper to format meal meta info (calories + portion)
+    formatMealMeta(meal) {
+        const parts = [];
+        if (meal.portion) parts.push(meal.portion);
+        if (meal.calories) parts.push(`${meal.calories} cal`);
+        return parts.length > 0 ? ` (${parts.join(', ')})` : '';
+    }
+    
     // NEW ELEGANT SINGLE PAGE LAYOUT (inspired by the user's image)
     renderElegantSingle(settings, data) {
         let html = '<div class="elegant-single-layout" style="max-width: 800px; margin: 0 auto;">';
@@ -111,16 +119,17 @@ class TemplateRenderer {
                     html += `<div></div>`; // Empty cell for grid alignment
                 }
                 
-                // Meal details (name + ingredients)
+                // Meal details (name + portion/cal + ingredients)
                 html += `<div class="meal-details" style="padding-top: 8px;">`;
                 
-                // Meal name
+                // Meal name with portion and calories
+                const mealMeta = this.formatMealMeta(meal);
                 html += `<div class="meal-name" style="
                     font-size: 15px;
                     font-weight: 500;
                     color: #333;
                     margin-bottom: 5px;
-                ">${meal.name}</div>`;
+                ">${meal.name}<span style="font-size: 13px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
                 
                 // Ingredients with allergen highlighting
                 if (settings.showIngredients && meal.ingredients) {
@@ -194,7 +203,10 @@ class TemplateRenderer {
             
             day.meals.forEach(meal => {
                 html += `<td style="border: 1px solid #ddd; padding: 10px; vertical-align: top;">`;
-                html += `<div style="font-weight: 500; margin-bottom: 5px;">${meal.name}</div>`;
+                
+                const mealMeta = this.formatMealMeta(meal);
+                html += `<div style="font-weight: 500; margin-bottom: 5px;">${meal.name}<span style="font-size: 11px; color: #666; font-weight: normal;">${mealMeta}</span></div>`;
+                
                 if (settings.showIngredients && meal.ingredients) {
                     html += `<div style="font-size: 12px; color: #666;">`;
                     
@@ -241,7 +253,8 @@ class TemplateRenderer {
             html += '<div class="meals-compact">';
             day.meals.forEach((meal, idx) => {
                 if (idx > 0) html += ' • ';
-                html += `<span style="font-size: 14px;">${meal.title}. ${meal.name}</span>`;
+                const mealMeta = this.formatMealMeta(meal);
+                html += `<span style="font-size: 14px;">${meal.title}. ${meal.name}${mealMeta}</span>`;
             });
             html += '</div>';
             
@@ -285,7 +298,8 @@ class TemplateRenderer {
                 ">${meal.title}</div>`;
             }
             
-            html += `<div class="meal-name" style="font-weight: 500; margin-bottom: 5px;">${meal.name}</div>`;
+            const mealMeta = this.formatMealMeta(meal);
+            html += `<div class="meal-name" style="font-weight: 500; margin-bottom: 5px;">${meal.name}<span style="font-size: 12px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
             
             if (settings.showIngredients && meal.ingredients) {
                 html += '<div class="ingredients" style="font-size: 13px; color: #666;">';
