@@ -143,5 +143,23 @@
       "recipe": "rcp_bg_011"
     }
   },
-  "2026-02-14": {}
+  "2026-02-14": {},
+  "2026-02-05": {
+    "slot1": {
+      "category": "soup",
+      "recipe": null
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": null
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": null
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": null
+    }
+  }
 }
