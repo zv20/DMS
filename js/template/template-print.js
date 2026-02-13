@@ -83,6 +83,10 @@
 
         generatePrintHTML: function(settings, selectedWeekStart, backgroundImageTag, daysWithMeals, manager) {
             const dateRange = manager.getDateRangeText(0, 4, selectedWeekStart);
+            const layoutStyle = settings.layout?.style || 'single-column';
+            
+            // Get layout-specific CSS
+            const layoutCSS = this.getLayoutCSS(layoutStyle, settings);
             
             let html = `
             <!DOCTYPE html>
@@ -151,15 +155,7 @@
                         line-height: 1;
                     }
                     
-                    #days-container {
-                        flex: 1;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: stretch;
-                        gap: ${settings.layout.dayBlockSpacing}px;
-                        overflow: hidden;
-                    }
+                    ${layoutCSS}
                     
                     .print-day-block {
                         background: ${settings.dayBlock.bg};
@@ -276,6 +272,87 @@
             `;
 
             return html;
+        },
+
+        getLayoutCSS: function(layoutStyle, settings) {
+            switch(layoutStyle) {
+                case 'two-column':
+                    return `
+                        #days-container {
+                            flex: 1;
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: ${settings.layout.columnGap}px;
+                            align-content: start;
+                        }
+                        .print-day-block {
+                            margin-bottom: 0;
+                        }
+                    `;
+                
+                case 'table':
+                    return `
+                        #days-container {
+                            flex: 1;
+                            display: table;
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        .print-day-block {
+                            display: table-row;
+                            margin-bottom: 0;
+                            border-radius: 0;
+                        }
+                        .day-name {
+                            display: table-cell;
+                            width: 20%;
+                            padding: 6px;
+                            border: 1px solid #ddd;
+                            vertical-align: top;
+                        }
+                        .meal-item {
+                            display: table-cell;
+                            padding: 6px;
+                            border: 1px solid #ddd;
+                        }
+                    `;
+                
+                case 'compact-cards':
+                    return `
+                        #days-container {
+                            flex: 1;
+                            display: flex;
+                            flex-direction: column;
+                            gap: ${Math.floor(settings.layout.dayBlockSpacing / 2)}px;
+                        }
+                        .print-day-block {
+                            padding: 4px 6px;
+                        }
+                        .day-name {
+                            font-size: 9pt;
+                            margin-bottom: 2px;
+                        }
+                        .meal-title {
+                            font-size: 8pt;
+                        }
+                        .ingredients {
+                            font-size: 7pt;
+                        }
+                    `;
+                
+                default: // single-column
+                    return `
+                        #days-container {
+                            flex: 1;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            align-items: stretch;
+                            gap: ${settings.layout.dayBlockSpacing}px;
+                            overflow: hidden;
+                        }
+                    `;
+            }
         },
 
         getBorderStylesCSS: function(settings) {
