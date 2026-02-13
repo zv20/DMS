@@ -368,7 +368,7 @@
                 showHeader: true,
                 headerText: 'Weekly Meal Plan',
                 headerAlignment: 'center',
-                headerSize: '20', // Smaller for print
+                headerSize: '20',
                 showDateRange: true,
                 dateFormat: 'long',
                 dayBlockBg: '#ffffff',
@@ -383,13 +383,13 @@
                 showIngredients: true,
                 ingredientLayout: 'list',
                 numberingStyle: 'none',
-                showFooter: false, // No footer to save space
-                footerText: '',
+                showFooter: true,
+                footerText: 'Meal plan created with DMS',
                 backgroundColor: '#ffffff',
-                showBranding: false,
+                showBranding: true,
                 separatorStyle: 'none',
                 pageBorder: false,
-                isPrint: true // Flag for ultra-compact print layout
+                isPrint: true
             };
         } else {
             settings = { ...templateChoice.settings, showIngredients: true, isPrint: true };
@@ -475,6 +475,11 @@
                         .ingredients {
                             font-size: 10px !important;
                             line-height: 1.3 !important;
+                        }
+                        
+                        .meal-plan-footer {
+                            margin-top: 15px !important;
+                            font-size: 9px !important;
                         }
                     }
                     
