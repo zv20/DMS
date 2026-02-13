@@ -47,7 +47,7 @@ class TemplateRenderer {
         const style = `
             text-align: ${settings.headerAlignment};
             font-size: ${settings.headerSize}px;
-            margin-bottom: 20px;
+            margin-bottom: ${settings.isPrint ? '15px' : '20px'};
             font-weight: bold;
             color: #fd7e14;
         `;
@@ -61,11 +61,13 @@ class TemplateRenderer {
         
         const dateStr = `${start.toLocaleDateString('en-US', { month: format, day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: format, day: 'numeric', year: 'numeric' })}`;
         
-        return `<div class="date-range" style="text-align: center; margin-bottom: 30px; color: #666; font-size: 16px;">${dateStr}</div>`;
+        const marginBottom = settings.isPrint ? '20px' : '30px';
+        return `<div class="date-range" style="text-align: center; margin-bottom: ${marginBottom}; color: #666; font-size: 15px;">${dateStr}</div>`;
     }
     
     renderFooter(settings) {
-        return `<div class="meal-plan-footer" style="text-align: center; margin-top: 40px; font-size: 12px; color: #999;">${settings.footerText}</div>`;
+        const marginTop = settings.isPrint ? '25px' : '40px';
+        return `<div class="meal-plan-footer" style="text-align: center; margin-top: ${marginTop}; font-size: 11px; color: #999;">${settings.footerText}</div>`;
     }
     
     // Helper to format meal meta info (calories + portion)
@@ -76,15 +78,26 @@ class TemplateRenderer {
         return parts.length > 0 ? ` (${parts.join(', ')})` : '';
     }
     
-    // NEW ELEGANT SINGLE PAGE LAYOUT (inspired by the user's image)
+    // ELEGANT SINGLE PAGE LAYOUT - Optimized for A4 print
     renderElegantSingle(settings, data) {
+        const isPrint = settings.isPrint || false;
+        
+        // Compact spacing for print
+        const dayMarginBottom = isPrint ? '18px' : '30px';
+        const dayPaddingBottom = isPrint ? '15px' : '25px';
+        const mealMarginBottom = isPrint ? '10px' : '15px';
+        const mealNumberSize = isPrint ? '36px' : '42px';
+        const dayNameSize = isPrint ? '18px' : '20px';
+        const mealNameSize = isPrint ? '14px' : '15px';
+        const ingredientSize = isPrint ? '12px' : '13px';
+        
         let html = '<div class="elegant-single-layout" style="max-width: 800px; margin: 0 auto;">';
         
         data.days.forEach((day, dayIndex) => {
             // Day container with divider line
             html += `<div class="elegant-day" style="
-                margin-bottom: 30px;
-                padding-bottom: 25px;
+                margin-bottom: ${dayMarginBottom};
+                padding-bottom: ${dayPaddingBottom};
                 border-bottom: ${dayIndex < data.days.length - 1 ? '1px solid #e0e0e0' : 'none'};
             ">`;
             
@@ -92,57 +105,57 @@ class TemplateRenderer {
             day.meals.forEach((meal, mealIndex) => {
                 html += `<div class="elegant-meal" style="
                     display: grid;
-                    grid-template-columns: 60px 120px 1fr;
-                    gap: 15px;
-                    margin-bottom: 15px;
+                    grid-template-columns: 50px 110px 1fr;
+                    gap: 12px;
+                    margin-bottom: ${mealMarginBottom};
                     align-items: start;
                 ">`;
                 
                 // Meal number (large orange)
                 html += `<div class="meal-number" style="
-                    font-size: 42px;
+                    font-size: ${mealNumberSize};
                     font-weight: 600;
                     color: #fd7e14;
                     line-height: 1;
-                    padding-top: 5px;
+                    padding-top: 3px;
                 ">${meal.title}</div>`;
                 
                 // Day name (only show on first meal)
                 if (mealIndex === 0) {
                     html += `<div class="day-name" style="
-                        font-size: 20px;
+                        font-size: ${dayNameSize};
                         font-weight: bold;
                         color: #333;
-                        padding-top: 10px;
+                        padding-top: 8px;
                     ">${day.dayName}</div>`;
                 } else {
                     html += `<div></div>`; // Empty cell for grid alignment
                 }
                 
                 // Meal details (name + portion/cal + ingredients)
-                html += `<div class="meal-details" style="padding-top: 8px;">`;
+                html += `<div class="meal-details" style="padding-top: 6px;">`;
                 
                 // Meal name with portion and calories
                 const mealMeta = this.formatMealMeta(meal);
                 html += `<div class="meal-name" style="
-                    font-size: 15px;
+                    font-size: ${mealNameSize};
                     font-weight: 500;
                     color: #333;
-                    margin-bottom: 5px;
-                ">${meal.name}<span style="font-size: 13px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
+                    margin-bottom: 4px;
+                    line-height: 1.3;
+                ">${meal.name}<span style="font-size: 12px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
                 
                 // Ingredients with allergen underlining
                 if (settings.showIngredients && meal.ingredients && meal.ingredients.length > 0) {
                     html += `<div class="ingredients" style="
-                        font-size: 13px;
+                        font-size: ${ingredientSize};
                         color: #888;
                         font-style: italic;
-                        line-height: 1.5;
+                        line-height: 1.4;
                     ">`;
                     
                     // Render each ingredient, underline allergens in red
                     const ingredientTexts = meal.ingredients.map(ing => {
-                        // Check if ingredient has allergens
                         const hasAllergen = meal.allergens && meal.allergens.includes(ing);
                         if (hasAllergen) {
                             return `<span style="text-decoration: underline; text-decoration-color: #dc3545; text-decoration-thickness: 2px;">${ing}</span>`;
