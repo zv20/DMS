@@ -9,9 +9,6 @@
     
     // --- Initialization ---
     async function init() {
-        // Hamburger menu is now handled in bindNavigation() in ui.js
-        // Removed duplicate event listener that was causing conflicts
-        
         const closeBtn = document.getElementById('closeNavBtn');
         if(closeBtn) closeBtn.addEventListener('click', window.toggleNav);
         
@@ -35,11 +32,11 @@
         const subtitle = splash.querySelector('.splash-subtitle');
         
         const loadingMessages = [
-            '🔍 Checking for data folder...',
-            '📂 Loading settings...',
-            '📋 Loading templates...',
+            '🔍 Detecting storage method...',
+            '📂 Loading your data...',
             '🥘 Loading recipes...',
-            '🧂 Loading ingredients...'
+            '🧂 Loading ingredients...',
+            '✅ Almost ready...'
         ];
         
         let messageIndex = 0;
@@ -55,39 +52,53 @@
         // Start message rotation
         actions.innerHTML = '<div class="loader-spinner"></div>';
         showNextMessage();
-        const messageInterval = setInterval(showNextMessage, 800);
+        const messageInterval = setInterval(showNextMessage, 600);
         
         try {
-            // Check if user has previously selected folder (AWAIT THIS)
-            const hasPreviousFolder = await window.checkPreviousFolder();
+            // Initialize storage adapter (auto-detects browser capabilities)
+            const initialized = await window.checkPreviousFolder();
             
-            if (hasPreviousFolder) {
-                // Try to auto-load from previous folder
-                const loaded = await window.autoLoadFromFolder();
+            if (initialized) {
+                // Successfully loaded data (either from File System or IndexedDB)
+                clearInterval(messageInterval);
                 
-                if (loaded) {
-                    // Successfully loaded
-                    clearInterval(messageInterval);
-                    subtitle.textContent = '✅ Ready!';
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                    hideSplash();
+                // Check which storage method is being used
+                if (window.storageAdapter.useFileSystem) {
+                    subtitle.textContent = '✅ Data loaded from folder!';
                 } else {
-                    // Failed to access previous folder, ask user
-                    clearInterval(messageInterval);
-                    askForFolder();
+                    subtitle.textContent = '✅ Data loaded from browser!';
                 }
+                
+                await new Promise(resolve => setTimeout(resolve, 800));
+                hideSplash();
             } else {
-                // First time user - ask for folder
+                // Only Chrome/Edge users who haven't selected a folder yet
                 clearInterval(messageInterval);
                 askForFolder();
             }
         } catch (err) {
             console.error('Loading error:', err);
             clearInterval(messageInterval);
-            askForFolder();
+            
+            // If using IndexedDB, still continue (error shouldn't stop the app)
+            if (!window.storageAdapter.useFileSystem) {
+                subtitle.textContent = '✅ Starting fresh!';
+                await new Promise(resolve => setTimeout(resolve, 500));
+                hideSplash();
+            } else {
+                askForFolder();
+            }
         }
         
         function askForFolder() {
+            // Only show folder selection for Chrome/Edge
+            if (window.storageAdapter && !window.storageAdapter.useFileSystem) {
+                // Firefox/Safari - no folder needed, just start
+                subtitle.textContent = '✅ Ready to go!';
+                setTimeout(hideSplash, 500);
+                return;
+            }
+            
             subtitle.textContent = 'Select a folder to store your data';
             actions.innerHTML = `
                 <button class="btn btn-primary" onclick="window.selectFolderAndStart()" style="min-width: 200px; height: 48px;">
@@ -102,7 +113,7 @@
             setTimeout(() => {
                 splash.style.display = 'none';
                 
-                // FIXED: Apply translations after settings are loaded
+                // Apply translations after settings are loaded
                 window.applyTranslations();
                 
                 window.initStyleBuilder();
