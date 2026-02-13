@@ -4,8 +4,8 @@
     
     // --- Initialization ---
     async function init() {
-        const hamburger = document.getElementById('hamburgerBtn');
-        if(hamburger) hamburger.addEventListener('click', window.toggleNav);
+        // Hamburger menu is now handled in bindNavigation() in ui.js
+        // Removed duplicate event listener that was causing conflicts
         
         const closeBtn = document.getElementById('closeNavBtn');
         if(closeBtn) closeBtn.addEventListener('click', window.toggleNav);
