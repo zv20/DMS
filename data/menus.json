@@ -92,7 +92,7 @@
   "2026-02-04": {
     "slot1": {
       "category": "main",
-      "recipe": null
+      "recipe": "rcp_en_005"
     },
     "slot2": {
       "category": "main",

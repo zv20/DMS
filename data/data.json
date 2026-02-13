@@ -805,6 +805,39 @@
         }
       ],
       "manualAllergens": []
+    },
+    {
+      "id": "rcp_1770997394540_87pnku2qo",
+      "name": "Poppy soup ",
+      "category": "soup",
+      "portionSize": "",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_002"
+        },
+        {
+          "id": "ing_006"
+        },
+        {
+          "id": "ing_005"
+        },
+        {
+          "id": "ing_1770926238876"
+        },
+        {
+          "id": "ing_001"
+        }
+      ],
+      "manualAllergens": [
+        {
+          "id": "alg_crustaceans"
+        },
+        {
+          "id": "alg_eggs"
+        }
+      ]
     }
   ],
   "ingredients": [
@@ -1101,6 +1134,14 @@
       "allergens": [
         "alg_1770926228307"
       ]
+    },
+    {
+      "id": "ing_1770997542373_4hvc01rgs",
+      "name": "milkoq",
+      "allergens": [
+        "alg_eggs",
+        "alg_milk"
+      ]
     }
   ],
   "allergens": [
@@ -1191,6 +1232,16 @@
     {
       "id": "alg_1770926228307",
       "name": "мл.кисело",
+      "color": "#3498db"
+    },
+    {
+      "id": "alg_1770997502719_wc1w8lbvu",
+      "name": "mlqko",
+      "color": "#2b5069"
+    },
+    {
+      "id": "alg_1770997527597_0afu86goh",
+      "name": "milko",
       "color": "#3498db"
     }
   ]
