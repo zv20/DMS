@@ -42,6 +42,11 @@
             await window.storageAdapter.save('allergens', window.allergens);
         }
         
+        // Initialize language from loaded settings
+        if (window.appSettings && window.appSettings.language) {
+            window.setCurrentLanguage(window.appSettings.language);
+        }
+        
         return initialized;
     };
 
@@ -98,6 +103,14 @@
     window.saveData = async function() {
         await window.storageAdapter.save('currentMenu', window.currentMenu);
         window.showSyncIndicator();
+    };
+    
+    // Save app settings (language, theme, etc.)
+    window.saveSettings = async function() {
+        console.log('💾 saveSettings called, saving:', window.appSettings);
+        await window.storageAdapter.save('appSettings', window.appSettings);
+        window.showSyncIndicator();
+        console.log('✅ Settings saved successfully');
     };
     
     // Legacy compatibility
