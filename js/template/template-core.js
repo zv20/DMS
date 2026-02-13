@@ -8,6 +8,7 @@
     
     let activeTemplateId = null;
     let selectedWeekStart = null;
+    let isBound = false; // Track if UI is already bound
     
     const sectionStates = {
         presets: false,
@@ -77,7 +78,16 @@
         },
 
         bindUI: function() {
-            const inputs = ['headerText', 'headerColor', 'headerSize', 'headerWeight', 'headerFont', 'headerAlign', 'headerTransform',
+            // FIXED: Only bind once to prevent duplicate listeners
+            if (isBound) {
+                console.log('⚠️ UI already bound, skipping');
+                return;
+            }
+            
+            console.log('🔗 Binding UI listeners (one-time)');
+            
+            // FIXED: Added layoutStyle to the list
+            const inputs = ['layoutStyle', 'headerText', 'headerColor', 'headerSize', 'headerWeight', 'headerFont', 'headerAlign', 'headerTransform',
                            'dayBg', 'dayRadius', 'dayBorderWidth', 'dayBorderColor', 'dayBorderStyle', 'dayBorderSides', 'dayShadow',
                            'dayNameSize', 'dayNameColor', 'dayNameWeight',
                            'mealTitleSize', 'mealTitleColor', 'mealTitleWeight',
@@ -94,7 +104,10 @@
             
             inputs.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.addEventListener('input', () => this.refreshPreview());
+                if (el) {
+                    el.addEventListener('input', () => this.refreshPreview());
+                    el.addEventListener('change', () => this.refreshPreview()); // Also listen to change for dropdowns
+                }
             });
 
             const checkboxes = ['showDateRange', 'headerSepEnabled', 'footerSepEnabled', 'pageBorderEnabled'];
@@ -109,6 +122,9 @@
                     if (el) el.addEventListener('change', () => this.refreshPreview());
                 });
             }
+            
+            isBound = true;
+            console.log('✅ UI binding complete');
         },
 
         setVal: function(id, val) {
@@ -269,6 +285,7 @@
     };
 
     window.TemplateManager = TemplateManager;
+    window.templateBuilderManager = TemplateManager; // FIXED: Make available globally for tab switching
     window.setSelectedWeekStart = function(weekStart) {
         selectedWeekStart = weekStart;
     };
