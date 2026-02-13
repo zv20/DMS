@@ -1,12 +1,12 @@
 /**
  * Template Loader Module
- * Handles loading and applying templates to UI
+ * Handles loading template settings into the UI
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
-
-    window.TemplateLoader = {
+    
+    const TemplateLoader = {
         applyToUI: async function(template, manager) {
             // Apply all template values with fallbacks to constants
             manager.setVal('headerText', template.header?.text || CONST.TEXT.DEFAULT_HEADER);
@@ -132,5 +132,7 @@
             }
         }
     };
+
+    window.TemplateLoader = TemplateLoader;
 
 })(window);
