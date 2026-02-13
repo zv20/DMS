@@ -1,6 +1,6 @@
 /**
  * Smart Storage Adapter
- * - Chrome/Edge: File System API
+ * - Chrome/Edge: File System API with persistent permission handling
  * - Firefox/Safari: IndexedDB
  * - Auto-detects capabilities and uses best available method
  * - Compatible with existing data.json file structure
@@ -33,15 +33,23 @@ class StorageAdapter {
         
         if (handle) {
             console.log('📁 Found previous folder handle');
-            // Verify we still have permission
-            const permission = await this.verifyPermission(handle);
-            if (permission) {
-                console.log('✅ Permission granted, loading data...');
-                window.directoryHandle = handle;
-                await this.loadFromFileSystem();
-                return true;
-            } else {
-                console.log('❌ Permission denied');
+            
+            // IMPORTANT: Request permission again (Chrome loses permission when all tabs close)
+            try {
+                const permission = await this.verifyPermission(handle, true); // Force request
+                if (permission) {
+                    console.log('✅ Permission granted, loading data...');
+                    window.directoryHandle = handle;
+                    await this.loadFromFileSystem();
+                    return true;
+                } else {
+                    console.log('❌ Permission denied');
+                    // Clear the stored handle since permission was denied
+                    await this.clearStoredDirectoryHandle();
+                }
+            } catch (err) {
+                console.log('❌ Error verifying permission:', err);
+                await this.clearStoredDirectoryHandle();
             }
         } else {
             console.log('ℹ️ No previous folder found');
@@ -68,7 +76,11 @@ class StorageAdapter {
             await this.loadFromFileSystem();
             return true;
         } catch (err) {
-            console.error('Folder selection cancelled or failed:', err);
+            if (err.name === 'AbortError') {
+                console.log('User cancelled folder selection');
+            } else {
+                console.error('Folder selection failed:', err);
+            }
             return false;
         }
     }
@@ -250,14 +262,31 @@ class StorageAdapter {
         }
     }
     
-    async verifyPermission(handle) {
+    async clearStoredDirectoryHandle() {
+        try {
+            const db = await this.openIDB();
+            const tx = db.transaction('handles', 'readwrite');
+            const store = tx.objectStore('handles');
+            await store.delete('rootDirectory');
+            console.log('🗑️ Cleared stored folder handle');
+        } catch (err) {
+            console.error('❌ Error clearing handle:', err);
+        }
+    }
+    
+    async verifyPermission(handle, forceRequest = false) {
         const opts = { mode: 'readwrite' };
-        if ((await handle.queryPermission(opts)) === 'granted') {
+        
+        // Check if we already have permission
+        if (!forceRequest && (await handle.queryPermission(opts)) === 'granted') {
             return true;
         }
+        
+        // Request permission (this shows "Allow this time" or "Allow on every visit" prompt)
         if ((await handle.requestPermission(opts)) === 'granted') {
             return true;
         }
+        
         return false;
     }
     
