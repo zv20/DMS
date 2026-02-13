@@ -192,9 +192,9 @@ class TemplateBuilder {
                 
                 <!-- ACTION BUTTONS -->
                 <div class="action-buttons">
-                    <button id="btn-save-template" class="btn-primary">Save Template</button>
-                    <button id="btn-load-template" class="btn-secondary">Load Template</button>
-                    <button id="btn-reset" class="btn-secondary">Reset to Default</button>
+                    <button id="btn-save-template" class="btn btn-primary">Save Template</button>
+                    <button id="btn-load-template" class="btn btn-secondary">Load Template</button>
+                    <button id="btn-reset" class="btn btn-secondary">Reset to Default</button>
                 </div>
             </div>
         `;
@@ -249,7 +249,7 @@ class TemplateBuilder {
     }
     
     getSampleData() {
-        // Sample meal plan data for preview
+        // Sample meal plan data for preview - UPDATED TO USE NUMBERED MEALS
         return {
             startDate: '2026-02-10',
             endDate: '2026-02-16',
@@ -258,18 +258,20 @@ class TemplateBuilder {
                     date: '2026-02-10',
                     dayName: 'Monday',
                     meals: [
-                        { title: 'Breakfast', name: 'Oatmeal with berries', ingredients: ['Oats', 'Blueberries', 'Honey'] },
-                        { title: 'Lunch', name: 'Grilled chicken salad', ingredients: ['Chicken', 'Lettuce', 'Tomatoes'] },
-                        { title: 'Dinner', name: 'Pasta primavera', ingredients: ['Pasta', 'Vegetables', 'Olive oil'] }
+                        { title: '1', name: 'Oatmeal with berries', ingredients: ['Oats', 'Blueberries', 'Honey'] },
+                        { title: '2', name: 'Grilled chicken salad', ingredients: ['Chicken', 'Lettuce', 'Tomatoes'] },
+                        { title: '3', name: 'Pasta primavera', ingredients: ['Pasta', 'Vegetables', 'Olive oil'] },
+                        { title: '4', name: 'Greek yogurt with granola', ingredients: ['Yogurt', 'Granola', 'Berries'] }
                     ]
                 },
                 {
                     date: '2026-02-11',
                     dayName: 'Tuesday',
                     meals: [
-                        { title: 'Breakfast', name: 'Scrambled eggs', ingredients: ['Eggs', 'Butter', 'Salt'] },
-                        { title: 'Lunch', name: 'Turkey sandwich', ingredients: ['Bread', 'Turkey', 'Lettuce'] },
-                        { title: 'Dinner', name: 'Baked salmon', ingredients: ['Salmon', 'Lemon', 'Herbs'] }
+                        { title: '1', name: 'Scrambled eggs', ingredients: ['Eggs', 'Butter', 'Salt'] },
+                        { title: '2', name: 'Turkey sandwich', ingredients: ['Bread', 'Turkey', 'Lettuce'] },
+                        { title: '3', name: 'Baked salmon', ingredients: ['Salmon', 'Lemon', 'Herbs'] },
+                        { title: '4', name: 'Fruit smoothie', ingredients: ['Banana', 'Berries', 'Milk'] }
                     ]
                 }
             ]
