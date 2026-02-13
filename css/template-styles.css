@@ -1,0 +1,108 @@
+/* Template Builder Styles */
+
+.template-controls {
+    padding: 20px;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.control-group input[type="text"],
+.control-group input[type="color"],
+.control-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.control-group input[type="range"] {
+    width: calc(100% - 50px);
+}
+
+.control-group .range-value {
+    display: inline-block;
+    width: 45px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* NOTE: .btn-primary and .btn-secondary styles are inherited from main styles.css */
+/* This ensures consistent orange theme and rounded buttons across the entire app */
+
+/* Preview Container */
+#template-preview {
+    padding: 30px;
+    background: var(--color-background);
+    min-height: 500px;
+}
+
+.meal-plan-container {
+    background: white;
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+.meal-plan-container.with-border {
+    border: 2px solid #333;
+}
+
+/* Layout Styles */
+.days-container.single-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.days-container.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.days-container.compact-cards .day-card {
+    /* Styles applied inline */
+}
+
+/* Table Layout */
+.meal-plan-table th {
+    background: var(--color-background);
+    font-weight: 600;
+}
+
+/* Print Styles */
+@media print {
+    #template-sidebar {
+        display: none;
+    }
+    
+    #template-preview {
+        padding: 0;
+        background: white;
+    }
+    
+    .meal-plan-container {
+        max-width: 100%;
+    }
+}

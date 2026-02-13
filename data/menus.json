@@ -56,7 +56,7 @@
   "2026-02-12": {
     "slot2": {
       "category": "main",
-      "recipe": "rcp_en_004"
+      "recipe": "rcp_en_006"
     },
     "slot1": {
       "category": "soup",
@@ -68,7 +68,7 @@
     },
     "slot3": {
       "category": "dessert",
-      "recipe": "rcp_en_011"
+      "recipe": "rcp_bg_015"
     }
   },
   "2026-02-13": {
@@ -92,7 +92,7 @@
   "2026-02-04": {
     "slot1": {
       "category": "main",
-      "recipe": null
+      "recipe": "rcp_en_005"
     },
     "slot2": {
       "category": "main",

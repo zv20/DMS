@@ -5,23 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KitchenPro DMS</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=11.0">
-  <link rel="stylesheet" href="css/template-builder.css?v=11.0">
+  <link rel="stylesheet" href="css/styles.css?v=13.0">
+  <link rel="stylesheet" href="css/template-styles.css?v=13.0">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
   <script src="js/libs/jspdf.umd.min.js"></script>
   
-  <script src="js/i18n.js?v=11.0"></script>
-  <script src="js/utils.js?v=11.0"></script>
-  <script src="js/constants.js?v=11.0"></script>
-  <script src="js/store.js?v=11.0"></script>
-  <script src="js/calendar.js?v=11.0"></script>
-  <script src="js/render.js?v=11.0"></script>
-  <script src="js/ui.js?v=11.0"></script>
+  <!-- Core Application Scripts -->
+  <script src="js/i18n.js?v=13.0"></script>
+  <script src="js/constants.js?v=13.0"></script>
+  
+  <!-- STORAGE ADAPTER (must load before store.js) -->
+  <script src="js/storage-adapter.js?v=13.0"></script>
+  <script src="js/store.js?v=13.0"></script>
+  
+  <script src="js/calendar.js?v=13.0"></script>
+  <script src="js/render.js?v=13.0"></script>
+  <script src="js/ui.js?v=13.0"></script>
   <script src="data/preset-templates.js"></script>
-  <script src="js/template.js?v=11.0"></script>
-  <script src="js/main.js?v=11.0"></script>
+  
+  <!-- NEW SIMPLIFIED TEMPLATE SYSTEM -->
+  <script src="js/template/template-renderer.js?v=13.0"></script>
+  <script src="js/template/template-builder.js?v=13.0"></script>
+  
+  <!-- PRINT FUNCTIONALITY -->
+  <script src="js/print.js?v=13.0"></script>
+  
+  <script src="js/main.js?v=13.0"></script>
 </head>
 <body data-theme="default">
 
@@ -83,7 +94,7 @@
           <h1 data-i18n="nav_menu">Menu Planning</h1>
           <div class="actions">
              <button class="btn btn-secondary" onclick="window.navigateTo('style-editor')" data-i18n="btn_customize">📝 Template Builder</button>
-             <button class="btn btn-primary" onclick="window.openTemplatePicker()" data-i18n="btn_print">🖨️ Print Menu</button>
+             <button class="btn btn-primary" onclick="window.printMenu()" data-i18n="btn_print">🖨️ Print Menu</button>
           </div>
         </div>
         
@@ -168,10 +179,21 @@
       <!-- SETTINGS PAGE -->
       <div id="settings" class="page">
           <div class="page-header"><h1 data-i18n="heading_settings">Settings</h1></div>
-          <div class="settings-card">
-              <h3 data-i18n="heading_data">💾 Data</h3>
-              <button class="btn btn-primary" onclick="window.selectSaveLocation()" data-i18n="btn_change_folder">Change Storage Folder</button>
+          
+          <!-- Storage Info Banner -->
+          <div id="storage-info" class="settings-card" style="background: #e3f2fd; border-left: 4px solid #2196f3;">
+              <h3>💾 Storage Method</h3>
+              <p id="storage-method-text" style="margin: 10px 0;">Loading...</p>
           </div>
+          
+          <div class="settings-card">
+              <h3 data-i18n="heading_data">📁 Data Management</h3>
+              <button id="btn-change-folder" class="btn btn-primary" onclick="window.selectSaveLocation()" data-i18n="btn_change_folder">Change Storage Folder</button>
+              <button id="btn-export" class="btn btn-secondary" onclick="window.exportAllData()" style="margin-top: 10px;">💾 Export Data (Backup)</button>
+              <input type="file" id="file-import" accept=".json" style="display:none;" onchange="window.importData(event)">
+              <button id="btn-import" class="btn btn-secondary" onclick="document.getElementById('file-import').click()" style="margin-top: 10px;">📂 Import Data</button>
+          </div>
+          
           <div class="settings-card">
               <h3>📁 PDF Archive</h3>
               <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Printed menus are automatically saved to: <code>archive/menus/</code></p>
@@ -179,51 +201,20 @@
           </div>
       </div>
 
-      <!-- TEMPLATE BUILDER PAGE -->
+      <!-- TEMPLATE BUILDER PAGE - NEW SIMPLIFIED VERSION -->
       <div id="style-editor" class="page">
         <div class="page-header">
           <button class="btn btn-secondary btn-small" onclick="window.navigateTo('menu')" data-i18n="btn_back_to_menu">← Back to Menu</button>
           <h1 data-i18n="nav_template_builder">Template Builder</h1>
-          <div class="actions">
-              <button class="btn btn-primary" onclick="window.saveCurrentTemplate()" data-i18n="btn_save_as_new">Save as New</button>
-          </div>
         </div>
         
-        <div class="builder-layout" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; min-height: calc(100vh - 150px);">
-             <!-- LEFT PANEL: Controls -->
-             <div class="builder-controls" style="overflow-y: auto; padding: 15px; background: white; border-radius: 8px; height: fit-content; max-height: calc(100vh - 180px);">
-                  
-                  <!-- Template Library Section -->
-                  <section class="control-section">
-                      <h3 style="margin: 0 0 10px 0; color: #495057; font-size: 11pt; font-weight: 600;" data-i18n="heading_template_library">📋 Template Library</h3>
-                      
-                      <!-- Preset Templates Container -->
-                      <div style="margin-bottom: 15px;">
-                          <h4 style="margin: 0 0 6px 0; color: #6c757d; font-size: 9pt; font-weight: 600;">Preset Templates</h4>
-                          <div id="presetTemplatesContainer"></div>
-                      </div>
-                      
-                      <!-- Saved Templates Container -->
-                      <div>
-                          <h4 style="margin: 0 0 6px 0; color: #6c757d; font-size: 9pt; font-weight: 600;">My Templates</h4>
-                          <div id="savedTemplatesLibrary"></div>
-                      </div>
-                  </section>
-
-                  <!-- Collapsible Sections -->
-                  <div id="collapsibleSections" style="margin-top: 15px;">
-                      <!-- Each section will be injected by JS -->
-                  </div>
-
-             </div>
+        <div class="builder-layout" style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; min-height: calc(100vh - 150px);">
+             <!-- LEFT PANEL: Controls (auto-generated by template-builder.js) -->
+             <div id="template-sidebar" style="overflow-y: auto; background: white; border-radius: 8px; height: fit-content; max-height: calc(100vh - 180px);"></div>
 
              <!-- RIGHT PANEL: Live Preview -->
-             <div class="builder-preview-area" style="background: #e9ecef; display: flex; justify-content: center; padding: 20px; overflow-y: auto;">
-                  <div id="livePreviewSheet" style="width: 210mm; min-height: 297mm; background: white; padding: 20mm; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                       <div id="previewHeader"></div>
-                       <div id="previewDaysList"></div>
-                       <div id="previewFooter"></div>
-                  </div>
+             <div style="background: #e9ecef; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto;">
+                  <div id="template-preview" style="width: 100%; max-width: 800px;"></div>
              </div>
         </div>
       </div>
@@ -232,14 +223,6 @@
   </div>
 
   <!-- MODALS -->
-  <div id="templatePickerModal" class="modal">
-      <div class="modal-content">
-          <span class="close" onclick="document.getElementById('templatePickerModal').style.display='none'">&times;</span>
-          <h2 data-i18n="modal_print_menu">Print Menu</h2>
-          <div id="templateGrid" style="margin-top:20px;"></div>
-      </div>
-  </div>
-
   <div id="recipeModal" class="modal">
       <div class="modal-content">
           <span class="close" onclick="window.closeRecipeModal()">&times;</span>
@@ -326,6 +309,25 @@
       </form>
     </div>
   </div>
+  
+  <script>
+    // Update storage info banner on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const storageInfo = document.getElementById('storage-method-text');
+        const btnChangeFolder = document.getElementById('btn-change-folder');
+        
+        if (window.storageAdapter && storageInfo) {
+          if (window.storageAdapter.useFileSystem) {
+            storageInfo.innerHTML = '<strong>File System API</strong><br>Your data is saved to a folder on your computer.';
+          } else {
+            storageInfo.innerHTML = '<strong>IndexedDB (Browser Database)</strong><br>Your data is stored in your browser. Use Export/Import buttons to backup your data.';
+            btnChangeFolder.style.display = 'none'; // Hide folder button for IndexedDB
+          }
+        }
+      }, 500);
+    });
+  </script>
 
 </body>
 </html>
