@@ -238,8 +238,21 @@ class StorageAdapter {
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readwrite');
             const store = tx.objectStore('handles');
-            await store.put(dirHandle, 'rootDirectory');
-            console.log('✅ Folder handle saved to IndexedDB');
+            
+            // Put the handle
+            store.put(dirHandle, 'rootDirectory');
+            
+            // Wait for transaction to complete
+            await new Promise((resolve, reject) => {
+                tx.oncomplete = () => {
+                    console.log('✅ Folder handle saved to IndexedDB');
+                    resolve();
+                };
+                tx.onerror = () => {
+                    console.error('❌ Failed to save handle:', tx.error);
+                    reject(tx.error);
+                };
+            });
         } catch (err) {
             console.error('❌ Error storing handle:', err);
         }
@@ -250,11 +263,18 @@ class StorageAdapter {
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readonly');
             const store = tx.objectStore('handles');
+            
             const handle = await new Promise((resolve, reject) => {
                 const request = store.get('rootDirectory');
-                request.onsuccess = () => resolve(request.result);
+                request.onsuccess = () => {
+                    if (request.result) {
+                        console.log('✅ Retrieved folder handle from IndexedDB');
+                    }
+                    resolve(request.result);
+                };
                 request.onerror = () => reject(request.error);
             });
+            
             return handle;
         } catch (err) {
             console.error('❌ Error getting handle:', err);
@@ -267,8 +287,16 @@ class StorageAdapter {
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readwrite');
             const store = tx.objectStore('handles');
-            await store.delete('rootDirectory');
-            console.log('🗑️ Cleared stored folder handle');
+            
+            store.delete('rootDirectory');
+            
+            await new Promise((resolve, reject) => {
+                tx.oncomplete = () => {
+                    console.log('🗑️ Cleared stored folder handle');
+                    resolve();
+                };
+                tx.onerror = () => reject(tx.error);
+            });
         } catch (err) {
             console.error('❌ Error clearing handle:', err);
         }
