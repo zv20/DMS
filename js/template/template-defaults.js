@@ -1,12 +1,12 @@
 /**
  * Template Defaults Module
- * Applies default values to template configuration
+ * Applies default template settings
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
 
-    const TemplateDefaults = {
+    window.TemplateDefaults = {
         apply: function(manager) {
             // Layout defaults
             manager.setVal('marginTop', CONST.LAYOUT.DEFAULT_MARGIN_TOP);
@@ -107,5 +107,4 @@
         }
     };
 
-    window.TemplateDefaults = TemplateDefaults;
 })(window);
