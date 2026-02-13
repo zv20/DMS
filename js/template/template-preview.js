@@ -1,12 +1,12 @@
 /**
  * Template Preview Module
- * Handles live preview rendering
+ * Handles live preview rendering in the template builder
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
-
-    window.TemplatePreview = {
+    
+    const TemplatePreview = {
         refresh: async function(manager) {
             const settings = manager.getSettingsFromUI();
             
@@ -181,5 +181,7 @@
             return html;
         }
     };
+
+    window.TemplatePreview = TemplatePreview;
 
 })(window);
