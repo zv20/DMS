@@ -1,23 +1,20 @@
 /**
  * Template Picker Module
- * Modal for selecting template and week to print
+ * Handles the modal UI for selecting templates and weeks to print
  */
 
 (function(window) {
     const CONST = window.DMS_CONSTANTS;
-
-    window.TemplatePicker = {
+    
+    const TemplatePicker = {
         open: function(manager) {
-            const weeks = manager.getWeeksWithMeals();
+            const weeks = this.getWeeksWithMeals(manager);
             if (weeks.length === 0) {
                 alert(window.t('alert_no_weeks'));
                 return;
             }
 
-            this.showTemplateSelection(manager, weeks);
-        },
-
-        showTemplateSelection: function(manager, weeks) {
+            // Step 1: Template Selection Modal (ONLY User Templates)
             const modal = document.createElement('div');
             modal.id = 'templatePickerModal';
             modal.className = 'modal-overlay';
@@ -44,6 +41,7 @@
 
             let selectedTemplateId = null;
 
+            // Render ONLY Saved Templates (No Presets)
             const savedList = document.getElementById('savedTemplatesList');
             if (window.savedTemplates && window.savedTemplates.length > 0) {
                 window.savedTemplates.forEach(tmpl => {
@@ -77,7 +75,7 @@
 
             document.getElementById('nextToWeekBtn').onclick = () => {
                 modal.remove();
-                this.showWeekSelection(selectedTemplateId, weeks, manager);
+                this.showWeekPicker(selectedTemplateId, weeks, manager);
             };
 
             modal.onclick = (e) => {
@@ -85,7 +83,8 @@
             };
         },
 
-        showWeekSelection: function(templateId, weeks, manager) {
+        showWeekPicker: function(templateId, weeks, manager) {
+            // Group weeks by month
             const weeksByMonth = {};
             weeks.forEach(week => {
                 const monthKey = week.weekStart.toLocaleDateString(window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US', { year: 'numeric', month: 'long' });
@@ -99,15 +98,16 @@
                 weeksByMonth[monthKey].weeks.push(week);
             });
 
+            // Sort months (newest first) and weeks within each month
             const sortedMonths = Object.values(weeksByMonth).sort((a, b) => b.timestamp - a.timestamp);
             
-            const modal = document.createElement('div');
-            modal.id = 'weekPickerModal';
-            modal.className = 'modal-overlay';
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+            const modal2 = document.createElement('div');
+            modal2.id = 'weekPickerModal';
+            modal2.className = 'modal-overlay';
+            modal2.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
 
-            const content = document.createElement('div');
-            content.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 500px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            const content2 = document.createElement('div');
+            content2.style.cssText = 'background: white; border-radius: 10px; padding: 20px; max-width: 500px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
 
             const header = document.createElement('div');
             header.innerHTML = `
@@ -122,9 +122,10 @@
             const monthStates = {};
             let selectedWeekStart = null;
 
+            // Render collapsible month sections
             sortedMonths.forEach((monthData, monthIndex) => {
                 const isFirstMonth = monthIndex === 0;
-                monthStates[monthData.label] = isFirstMonth;
+                monthStates[monthData.label] = isFirstMonth; // First month expanded by default
 
                 const monthSection = document.createElement('div');
                 monthSection.style.cssText = 'margin-bottom: 10px;';
@@ -163,6 +164,7 @@
                     padding-left: 10px;
                 `;
 
+                // Render weeks for this month
                 monthData.weeks.forEach((week, weekIndex) => {
                     const weekCard = document.createElement('div');
                     weekCard.style.cssText = `border: ${CONST.UI.CARD_BORDER_WIDTH}px solid ${CONST.COLORS.CARD_BORDER_COLOR}; border-radius: ${CONST.UI.CARD_BORDER_RADIUS}px; padding: 10px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s;`;
@@ -187,6 +189,7 @@
 
                     weeksContainer.appendChild(weekCard);
 
+                    // Auto-select first week of first month
                     if (monthIndex === 0 && weekIndex === 0) {
                         setTimeout(() => weekCard.click(), 100);
                     }
@@ -213,32 +216,71 @@
                 </div>
             `;
 
-            content.appendChild(header);
-            content.appendChild(weekListContainer);
-            content.appendChild(footer);
-            modal.appendChild(content);
-            document.body.appendChild(modal);
+            content2.appendChild(header);
+            content2.appendChild(weekListContainer);
+            content2.appendChild(footer);
+            modal2.appendChild(content2);
+            document.body.appendChild(modal2);
 
             document.getElementById('backToTemplateBtn').onclick = () => {
-                modal.remove();
-                this.open(manager);
+                modal2.remove();
+                window.openTemplatePicker();
             };
 
             document.getElementById('cancelPrintBtn').onclick = () => {
-                modal.remove();
+                modal2.remove();
             };
 
             document.getElementById('confirmPrintBtn').onclick = async () => {
-                modal.remove();
+                modal2.remove();
                 if (selectedWeekStart) {
                     window.printWithTemplate(templateId);
                 }
             };
 
-            modal.onclick = (e) => {
-                if (e.target === modal) modal.remove();
+            modal2.onclick = (e) => {
+                if (e.target === modal2) modal2.remove();
             };
+        },
+
+        getWeeksWithMeals: function(manager) {
+            const weeks = [];
+            const dates = Object.keys(window.currentMenu).filter(dateStr => {
+                return manager.hasMeals(window.currentMenu[dateStr]);
+            });
+
+            if (dates.length === 0) return [];
+
+            const weekMap = new Map();
+            dates.forEach(dateStr => {
+                const parts = dateStr.split('-');
+                const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                
+                const weekStart = window.getWeekStart(date);
+                const weekKey = weekStart.toISOString().split('T')[0];
+                
+                if (!weekMap.has(weekKey)) {
+                    weekMap.set(weekKey, {
+                        weekStart: weekStart,
+                        dates: []
+                    });
+                }
+                weekMap.get(weekKey).dates.push(dateStr);
+            });
+
+            weekMap.forEach((value, key) => {
+                weeks.push({
+                    weekStart: value.weekStart,
+                    label: manager.getDateRangeText(0, 4, value.weekStart),
+                    dateCount: value.dates.length
+                });
+            });
+
+            weeks.sort((a, b) => b.weekStart - a.weekStart);
+            return weeks;
         }
     };
+
+    window.TemplatePicker = TemplatePicker;
 
 })(window);
