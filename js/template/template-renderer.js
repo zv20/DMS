@@ -8,7 +8,8 @@ class TemplateRenderer {
             'single-column': this.renderSingleColumn.bind(this),
             'two-column': this.renderTwoColumn.bind(this),
             'table': this.renderTable.bind(this),
-            'compact-cards': this.renderCompactCards.bind(this)
+            'compact-cards': this.renderCompactCards.bind(this),
+            'elegant-single': this.renderElegantSingle.bind(this)
         };
     }
     
@@ -30,7 +31,7 @@ class TemplateRenderer {
         }
         
         // Days (using selected layout)
-        const layoutRenderer = this.layoutRenderers[settings.layoutStyle];
+        const layoutRenderer = this.layoutRenderers[settings.layoutStyle] || this.layoutRenderers['single-column'];
         html += layoutRenderer(settings, data);
         
         // Footer
@@ -48,6 +49,7 @@ class TemplateRenderer {
             font-size: ${settings.headerSize}px;
             margin-bottom: 20px;
             font-weight: bold;
+            color: #fd7e14;
         `;
         return `<div class="meal-plan-header" style="${style}">${settings.headerText}</div>`;
     }
@@ -59,11 +61,99 @@ class TemplateRenderer {
         
         const dateStr = `${start.toLocaleDateString('en-US', { month: format, day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: format, day: 'numeric', year: 'numeric' })}`;
         
-        return `<div class="date-range" style="text-align: center; margin-bottom: 20px; color: #666;">${dateStr}</div>`;
+        return `<div class="date-range" style="text-align: center; margin-bottom: 30px; color: #666; font-size: 16px;">${dateStr}</div>`;
     }
     
     renderFooter(settings) {
-        return `<div class="meal-plan-footer" style="text-align: center; margin-top: 30px; font-size: 12px; color: #999;">${settings.footerText}</div>`;
+        return `<div class="meal-plan-footer" style="text-align: center; margin-top: 40px; font-size: 12px; color: #999;">${settings.footerText}</div>`;
+    }
+    
+    // NEW ELEGANT SINGLE PAGE LAYOUT (inspired by the user's image)
+    renderElegantSingle(settings, data) {
+        let html = '<div class="elegant-single-layout" style="max-width: 800px; margin: 0 auto;">';
+        
+        data.days.forEach((day, dayIndex) => {
+            // Day container with divider line
+            html += `<div class="elegant-day" style="
+                margin-bottom: 30px;
+                padding-bottom: 25px;
+                border-bottom: ${dayIndex < data.days.length - 1 ? '1px solid #e0e0e0' : 'none'};
+            ">`;
+            
+            // Meals for this day
+            day.meals.forEach((meal, mealIndex) => {
+                html += `<div class="elegant-meal" style="
+                    display: grid;
+                    grid-template-columns: 60px 120px 1fr;
+                    gap: 15px;
+                    margin-bottom: 15px;
+                    align-items: start;
+                ">`;
+                
+                // Meal number (large orange)
+                html += `<div class="meal-number" style="
+                    font-size: 42px;
+                    font-weight: 600;
+                    color: #fd7e14;
+                    line-height: 1;
+                    padding-top: 5px;
+                ">${meal.title}</div>`;
+                
+                // Day name (only show on first meal)
+                if (mealIndex === 0) {
+                    html += `<div class="day-name" style="
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: #333;
+                        padding-top: 10px;
+                    ">${day.dayName}</div>`;
+                } else {
+                    html += `<div></div>`; // Empty cell for grid alignment
+                }
+                
+                // Meal details (name + ingredients)
+                html += `<div class="meal-details" style="padding-top: 8px;">`;
+                
+                // Meal name
+                html += `<div class="meal-name" style="
+                    font-size: 15px;
+                    font-weight: 500;
+                    color: #333;
+                    margin-bottom: 5px;
+                ">${meal.name}</div>`;
+                
+                // Ingredients with allergen highlighting
+                if (settings.showIngredients && meal.ingredients) {
+                    html += `<div class="ingredients" style="
+                        font-size: 13px;
+                        color: #888;
+                        font-style: italic;
+                        line-height: 1.5;
+                    ">`;
+                    
+                    // Render each ingredient, highlight allergens in red
+                    const ingredientTexts = meal.ingredients.map(ing => {
+                        // Check if ingredient has allergens
+                        const hasAllergen = meal.allergens && meal.allergens.includes(ing);
+                        if (hasAllergen) {
+                            return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                        }
+                        return ing;
+                    });
+                    
+                    html += ingredientTexts.join(', ');
+                    html += `</div>`;
+                }
+                
+                html += `</div>`; // Close meal-details
+                html += `</div>`; // Close elegant-meal
+            });
+            
+            html += `</div>`; // Close elegant-day
+        });
+        
+        html += '</div>';
+        return html;
     }
     
     renderSingleColumn(settings, data) {
@@ -91,10 +181,11 @@ class TemplateRenderer {
     renderTable(settings, data) {
         let html = '<table class="meal-plan-table" style="width: 100%; border-collapse: collapse;">';
         html += '<thead><tr>';
-        html += '<th style="border: 1px solid #ddd; padding: 10px;">Day</th>';
-        html += '<th style="border: 1px solid #ddd; padding: 10px;">Breakfast</th>';
-        html += '<th style="border: 1px solid #ddd; padding: 10px;">Lunch</th>';
-        html += '<th style="border: 1px solid #ddd; padding: 10px;">Dinner</th>';
+        html += '<th style="border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">Day</th>';
+        html += '<th style="border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">Meal 1</th>';
+        html += '<th style="border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">Meal 2</th>';
+        html += '<th style="border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">Meal 3</th>';
+        html += '<th style="border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">Meal 4</th>';
         html += '</tr></thead><tbody>';
         
         data.days.forEach(day => {
@@ -102,10 +193,21 @@ class TemplateRenderer {
             html += `<td style="border: 1px solid #ddd; padding: 10px; font-weight: bold;">${day.dayName}</td>`;
             
             day.meals.forEach(meal => {
-                html += `<td style="border: 1px solid #ddd; padding: 10px;">`;
-                html += `<div style="font-weight: 500;">${meal.name}</div>`;
-                if (settings.showIngredients) {
-                    html += `<div style="font-size: 12px; color: #666; margin-top: 5px;">${meal.ingredients.join(', ')}</div>`;
+                html += `<td style="border: 1px solid #ddd; padding: 10px; vertical-align: top;">`;
+                html += `<div style="font-weight: 500; margin-bottom: 5px;">${meal.name}</div>`;
+                if (settings.showIngredients && meal.ingredients) {
+                    html += `<div style="font-size: 12px; color: #666;">`;
+                    
+                    const ingredientTexts = meal.ingredients.map(ing => {
+                        const hasAllergen = meal.allergens && meal.allergens.includes(ing);
+                        if (hasAllergen) {
+                            return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                        }
+                        return ing;
+                    });
+                    
+                    html += ingredientTexts.join(', ');
+                    html += `</div>`;
                 }
                 html += `</td>`;
             });
@@ -139,7 +241,7 @@ class TemplateRenderer {
             html += '<div class="meals-compact">';
             day.meals.forEach((meal, idx) => {
                 if (idx > 0) html += ' • ';
-                html += `<span style="font-size: 14px;">${meal.name}</span>`;
+                html += `<span style="font-size: 14px;">${meal.title}. ${meal.name}</span>`;
             });
             html += '</div>';
             
@@ -187,7 +289,16 @@ class TemplateRenderer {
             
             if (settings.showIngredients && meal.ingredients) {
                 html += '<div class="ingredients" style="font-size: 13px; color: #666;">';
-                html += meal.ingredients.join(', ');
+                
+                const ingredientTexts = meal.ingredients.map(ing => {
+                    const hasAllergen = meal.allergens && meal.allergens.includes(ing);
+                    if (hasAllergen) {
+                        return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                    }
+                    return ing;
+                });
+                
+                html += ingredientTexts.join(', ');
                 html += '</div>';
             }
             
