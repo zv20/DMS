@@ -20,9 +20,11 @@
 .control-group select {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
     font-size: 14px;
+    background: var(--color-surface);
+    color: var(--color-text);
 }
 
 .control-group input[type="range"] {
@@ -34,7 +36,7 @@
     width: 45px;
     text-align: right;
     font-size: 12px;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .action-buttons {
@@ -44,38 +46,13 @@
     gap: 10px;
 }
 
-.btn-primary,
-.btn-secondary {
-    padding: 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.btn-primary {
-    background: #007bff;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #545b62;
-}
+/* NOTE: .btn-primary and .btn-secondary styles are inherited from main styles.css */
+/* This ensures consistent orange theme and rounded buttons across the entire app */
 
 /* Preview Container */
 #template-preview {
     padding: 30px;
-    background: #f8f9fa;
+    background: var(--color-background);
     min-height: 500px;
 }
 
@@ -84,6 +61,8 @@
     padding: 30px;
     max-width: 800px;
     margin: 0 auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
 }
 
 .meal-plan-container.with-border {
@@ -108,7 +87,7 @@
 
 /* Table Layout */
 .meal-plan-table th {
-    background: #f8f9fa;
+    background: var(--color-background);
     font-weight: 600;
 }
 
