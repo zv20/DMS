@@ -25,6 +25,7 @@
 
             return {
                 layout: {
+                    style: document.getElementById('layoutStyle')?.value || 'single-column',
                     marginTop: document.getElementById('marginTop')?.value || CONST.LAYOUT.DEFAULT_MARGIN_TOP,
                     marginBottom: document.getElementById('marginBottom')?.value || CONST.LAYOUT.DEFAULT_MARGIN_BOTTOM,
                     marginLeft: document.getElementById('marginLeft')?.value || CONST.LAYOUT.DEFAULT_MARGIN_LEFT,

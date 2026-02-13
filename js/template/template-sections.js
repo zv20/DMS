@@ -46,6 +46,14 @@
                 id: 'layout',
                 titleKey: 'Layout & Spacing',
                 html: `
+                    <label class="tb-label tb-mb-6">Layout Style</label>
+                    <select id="layoutStyle" class="form-control tb-input tb-mb-8">
+                        <option value="single-column" selected>Single Column</option>
+                        <option value="two-column">Two Column</option>
+                        <option value="table">Table Layout</option>
+                        <option value="compact-cards">Compact Cards</option>
+                    </select>
+                    
                     <div class="tb-margin-grid">
                         <label class="tb-margin-label">Page Margins (mm)</label>
                         <div class="tb-grid-2">
