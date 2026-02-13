@@ -54,6 +54,7 @@ class TemplateBuilder {
         };
         
         this.renderer = null;
+        this.useRealData = false; // Toggle between sample and real data
         this.init();
     }
     
@@ -193,7 +194,9 @@ class TemplateBuilder {
                 
                 <!-- ACTION BUTTONS -->
                 <div class="action-buttons">
-                    <button id="btn-save-template" class="btn btn-primary">Save Template</button>
+                    <button id="btn-preview-real" class="btn btn-primary">📋 Preview My Meals</button>
+                    <button id="btn-print" class="btn btn-primary">🖨️ Print/Export</button>
+                    <button id="btn-save-template" class="btn btn-secondary">Save Template</button>
                     <button id="btn-load-template" class="btn btn-secondary">Load Template</button>
                     <button id="btn-reset" class="btn btn-secondary">Reset to Default</button>
                 </div>
@@ -201,6 +204,8 @@ class TemplateBuilder {
         `;
         
         // Bind button actions
+        document.getElementById('btn-preview-real')?.addEventListener('click', () => this.previewRealData());
+        document.getElementById('btn-print')?.addEventListener('click', () => this.printMealPlan());
         document.getElementById('btn-save-template')?.addEventListener('click', () => this.saveTemplate());
         document.getElementById('btn-load-template')?.addEventListener('click', () => this.loadTemplate());
         document.getElementById('btn-reset')?.addEventListener('click', () => this.reset());
@@ -246,7 +251,146 @@ class TemplateBuilder {
         if (!previewContainer) return;
         
         // Render preview with current state
-        previewContainer.innerHTML = this.renderer.render(this.state, this.getSampleData());
+        const data = this.useRealData ? this.getRealMealPlanData() : this.getSampleData();
+        previewContainer.innerHTML = this.renderer.render(this.state, data);
+    }
+    
+    // NEW: Preview real meal plan data from the menu planner
+    previewRealData() {
+        this.useRealData = true;
+        this.updatePreview();
+        
+        const btn = document.getElementById('btn-preview-real');
+        if (btn) {
+            btn.textContent = '📋 Showing Your Meals';
+            btn.style.background = '#28a745';
+        }
+    }
+    
+    // NEW: Get real meal plan data from window.currentMenu
+    getRealMealPlanData() {
+        // Get current week dates from calendar
+        const currentDate = window.currentCalendarDate || new Date();
+        const weekDates = this.getWeekDates(currentDate);
+        
+        const days = [];
+        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        
+        weekDates.forEach((date, index) => {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayMenu = window.getMenuForDate(dateStr);
+            
+            const meals = [];
+            
+            // Build meals from slots 1-4
+            ['slot1', 'slot2', 'slot3', 'slot4'].forEach((slotId, mealNum) => {
+                const slot = dayMenu[slotId];
+                const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
+                
+                if (recipe) {
+                    // Get ingredients with allergen info
+                    const ingredients = recipe.ingredients.map(ingId => {
+                        const ing = window.ingredients.find(i => i.id === ingId);
+                        return ing ? ing.name : '';
+                    }).filter(Boolean);
+                    
+                    // Get allergens for this recipe
+                    const allergens = [];
+                    recipe.ingredients.forEach(ingId => {
+                        const ing = window.ingredients.find(i => i.id === ingId);
+                        if (ing && ing.allergens && ing.allergens.length > 0) {
+                            ing.allergens.forEach(allergenId => {
+                                const allergen = window.allergens.find(a => a.id === allergenId);
+                                if (allergen && !allergens.includes(ing.name)) {
+                                    allergens.push(ing.name);
+                                }
+                            });
+                        }
+                    });
+                    
+                    meals.push({
+                        title: String(mealNum + 1),
+                        name: recipe.name,
+                        portion: recipe.portion ? `${recipe.portion}g` : '',
+                        calories: recipe.calories || null,
+                        ingredients: ingredients,
+                        allergens: allergens
+                    });
+                } else {
+                    // Empty slot
+                    meals.push({
+                        title: String(mealNum + 1),
+                        name: '—',
+                        portion: '',
+                        calories: null,
+                        ingredients: [],
+                        allergens: []
+                    });
+                }
+            });
+            
+            days.push({
+                date: dateStr,
+                dayName: dayNames[index],
+                meals: meals
+            });
+        });
+        
+        return {
+            startDate: weekDates[0].toISOString().split('T')[0],
+            endDate: weekDates[6].toISOString().split('T')[0],
+            days: days
+        };
+    }
+    
+    // Helper to get week dates (Monday to Sunday)
+    getWeekDates(date) {
+        const currentDate = new Date(date);
+        const day = currentDate.getDay();
+        const diff = currentDate.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+        
+        const monday = new Date(currentDate.setDate(diff));
+        const dates = [];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            dates.push(date);
+        }
+        
+        return dates;
+    }
+    
+    // NEW: Print/Export meal plan
+    printMealPlan() {
+        const data = this.useRealData ? this.getRealMealPlanData() : this.getSampleData();
+        const html = this.renderer.render(this.state, data);
+        
+        // Create print window
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Meal Plan</title>
+                <style>
+                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                    @media print {
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${html}
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => window.print(), 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
     
     getSampleData() {
