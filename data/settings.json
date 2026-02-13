@@ -571,6 +571,121 @@
       },
       "name": "Мой Шаблон 5",
       "id": "tmpl_1770997720852"
+    },
+    {
+      "layout": {
+        "style": "two-column",
+        "marginTop": "8",
+        "marginBottom": "8",
+        "marginLeft": "8",
+        "marginRight": "8",
+        "dayBlockSpacing": "6",
+        "columnGap": "10"
+      },
+      "header": {
+        "text": "Weekly Menu",
+        "color": "#fd7e14",
+        "fontSize": "20pt",
+        "fontWeight": "bold",
+        "fontFamily": "Segoe UI",
+        "textAlign": "center",
+        "textTransform": "none"
+      },
+      "dateRange": {
+        "show": true,
+        "fontSize": "9pt",
+        "color": "#7f8c8d",
+        "fontWeight": "normal",
+        "textAlign": "center"
+      },
+      "dayBlock": {
+        "bg": "#ffffff",
+        "borderRadius": "8px",
+        "borderWidth": "2",
+        "borderColor": "#e0e0e0",
+        "borderStyle": "solid",
+        "borderSides": "all",
+        "shadow": "none"
+      },
+      "dayName": {
+        "fontSize": "11pt",
+        "color": "#2c3e50",
+        "fontWeight": "600"
+      },
+      "mealTitle": {
+        "fontSize": "9pt",
+        "color": "#333333",
+        "fontWeight": "600"
+      },
+      "mealNumbering": {
+        "style": "numbers",
+        "prefix": "",
+        "suffix": "."
+      },
+      "ingredients": {
+        "fontSize": "7.5pt",
+        "color": "#555555",
+        "fontStyle": "italic"
+      },
+      "separators": {
+        "headerEnabled": false,
+        "headerStyle": "solid",
+        "headerColor": "#dddddd",
+        "headerWidth": "1",
+        "footerEnabled": true,
+        "footerStyle": "solid",
+        "footerColor": "#eeeeee",
+        "footerWidth": "1"
+      },
+      "footer": {
+        "text": "Prepared with care by KitchenPro",
+        "fontSize": "8pt",
+        "color": "#7f8c8d"
+      },
+      "background": {
+        "opacity": "1",
+        "position": "center",
+        "overlay": "#000000",
+        "overlayOpacity": "0"
+      },
+      "branding": {
+        "logo": "",
+        "logoPosition": "top-right",
+        "logoWidth": "80",
+        "logoHeight": "80"
+      },
+      "pageBorder": {
+        "enabled": false,
+        "width": "1",
+        "color": "#000000",
+        "style": "solid",
+        "radius": "0"
+      },
+      "backgroundImage": "",
+      "slotSettings": {
+        "slot1": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot2": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot3": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        },
+        "slot4": {
+          "showIngredients": true,
+          "showCalories": true,
+          "showAllergens": true
+        }
+      },
+      "name": "Мой Шаблон 6",
+      "id": "tmpl_1770998602869"
     }
   ],
   "imageUploads": [
