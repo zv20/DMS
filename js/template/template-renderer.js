@@ -131,8 +131,8 @@ class TemplateRenderer {
                     margin-bottom: 5px;
                 ">${meal.name}<span style="font-size: 13px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
                 
-                // Ingredients with allergen highlighting
-                if (settings.showIngredients && meal.ingredients) {
+                // Ingredients with allergen underlining
+                if (settings.showIngredients && meal.ingredients && meal.ingredients.length > 0) {
                     html += `<div class="ingredients" style="
                         font-size: 13px;
                         color: #888;
@@ -140,12 +140,12 @@ class TemplateRenderer {
                         line-height: 1.5;
                     ">`;
                     
-                    // Render each ingredient, highlight allergens in red
+                    // Render each ingredient, underline allergens in red
                     const ingredientTexts = meal.ingredients.map(ing => {
                         // Check if ingredient has allergens
                         const hasAllergen = meal.allergens && meal.allergens.includes(ing);
                         if (hasAllergen) {
-                            return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                            return `<span style="text-decoration: underline; text-decoration-color: #dc3545; text-decoration-thickness: 2px;">${ing}</span>`;
                         }
                         return ing;
                     });
@@ -207,13 +207,13 @@ class TemplateRenderer {
                 const mealMeta = this.formatMealMeta(meal);
                 html += `<div style="font-weight: 500; margin-bottom: 5px;">${meal.name}<span style="font-size: 11px; color: #666; font-weight: normal;">${mealMeta}</span></div>`;
                 
-                if (settings.showIngredients && meal.ingredients) {
+                if (settings.showIngredients && meal.ingredients && meal.ingredients.length > 0) {
                     html += `<div style="font-size: 12px; color: #666;">`;
                     
                     const ingredientTexts = meal.ingredients.map(ing => {
                         const hasAllergen = meal.allergens && meal.allergens.includes(ing);
                         if (hasAllergen) {
-                            return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                            return `<span style="text-decoration: underline; text-decoration-color: #dc3545; text-decoration-thickness: 2px;">${ing}</span>`;
                         }
                         return ing;
                     });
@@ -301,13 +301,13 @@ class TemplateRenderer {
             const mealMeta = this.formatMealMeta(meal);
             html += `<div class="meal-name" style="font-weight: 500; margin-bottom: 5px;">${meal.name}<span style="font-size: 12px; color: #888; font-weight: normal;">${mealMeta}</span></div>`;
             
-            if (settings.showIngredients && meal.ingredients) {
+            if (settings.showIngredients && meal.ingredients && meal.ingredients.length > 0) {
                 html += '<div class="ingredients" style="font-size: 13px; color: #666;">';
                 
                 const ingredientTexts = meal.ingredients.map(ing => {
                     const hasAllergen = meal.allergens && meal.allergens.includes(ing);
                     if (hasAllergen) {
-                        return `<span style="color: #dc3545; font-weight: 600;">${ing}</span>`;
+                        return `<span style="text-decoration: underline; text-decoration-color: #dc3545; text-decoration-thickness: 2px;">${ing}</span>`;
                     }
                     return ing;
                 });
