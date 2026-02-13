@@ -307,21 +307,32 @@
                     const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
                     
                     if (recipe) {
-                        // Get ingredients
-                        const ingredients = (recipe.ingredients || []).map(ingId => {
+                        console.log('Recipe found:', recipe.name);
+                        console.log('Recipe ingredients array:', recipe.ingredients);
+                        
+                        // Get ingredients - recipe.ingredients is an array of objects like [{ id: 'ing_123' }]
+                        const ingredients = (recipe.ingredients || []).map(ingObj => {
+                            // Extract the id from the object
+                            const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                             const ing = window.ingredients.find(i => i.id === ingId);
-                            return ing ? ing.name : '';
+                            console.log('Looking for ingredient:', ingId, 'Found:', ing);
+                            return ing ? ing.name : null;
                         }).filter(Boolean);
+                        
+                        console.log('Extracted ingredient names:', ingredients);
                         
                         // Get allergens - ingredients that have allergens
                         const allergens = [];
-                        (recipe.ingredients || []).forEach(ingId => {
+                        (recipe.ingredients || []).forEach(ingObj => {
+                            const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                             const ing = window.ingredients.find(i => i.id === ingId);
                             if (ing && ing.allergens && ing.allergens.length > 0) {
                                 // This ingredient has allergens, add it to the list
                                 allergens.push(ing.name);
                             }
                         });
+                        
+                        console.log('Allergen ingredients:', allergens);
                         
                         meals.push({
                             title: String(mealNum + 1),
@@ -336,6 +347,7 @@
                 
                 // Only add day if it has at least one meal
                 if (meals.length > 0) {
+                    console.log(`Adding ${dayNames[dayIndex]} with ${meals.length} meals`);
                     days.push({
                         date: dateStr,
                         dayName: dayNames[dayIndex],
@@ -347,6 +359,8 @@
             currentDate.setDate(currentDate.getDate() + 1);
             dayIndex++;
         }
+        
+        console.log('Final meal plan data:', days);
         
         return {
             startDate: startDate.toISOString().split('T')[0],
