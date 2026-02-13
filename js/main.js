@@ -12,9 +12,9 @@
         const closeBtn = document.getElementById('closeNavBtn');
         if(closeBtn) closeBtn.addEventListener('click', window.toggleNav);
         
+        // Language dropdown will be set AFTER loading settings
         const langSel = document.getElementById('languageSelect');
         if (langSel) {
-            langSel.value = window.getCurrentLanguage();
             langSel.addEventListener('change', (e) => window.changeLanguage(e.target.value));
         }
 
@@ -112,6 +112,13 @@
             document.body.classList.add('app-loaded');
             setTimeout(() => {
                 splash.style.display = 'none';
+                
+                // Sync language dropdown with loaded settings
+                const langSel = document.getElementById('languageSelect');
+                if (langSel && window.appSettings && window.appSettings.language) {
+                    langSel.value = window.appSettings.language;
+                    console.log('🌍 Language dropdown synced to:', window.appSettings.language);
+                }
                 
                 // Apply translations after settings are loaded
                 window.applyTranslations();
