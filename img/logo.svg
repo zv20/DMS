@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#fd7e14" opacity="0.1"/>
+  
+  <!-- Main Plate Circle -->
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#fd7e14" stroke-width="4"/>
+  
+  <!-- Fork (Left) -->
+  <g transform="translate(45, 70)">
+    <!-- Fork Handle -->
+    <rect x="8" y="30" width="4" height="50" rx="2" fill="#fd7e14"/>
+    <!-- Fork Prongs -->
+    <rect x="2" y="20" width="2" height="20" rx="1" fill="#fd7e14"/>
+    <rect x="6" y="15" width="2" height="25" rx="1" fill="#fd7e14"/>
+    <rect x="10" y="15" width="2" height="25" rx="1" fill="#fd7e14"/>
+    <rect x="14" y="20" width="2" height="20" rx="1" fill="#fd7e14"/>
+  </g>
+  
+  <!-- Knife (Right) -->
+  <g transform="translate(135, 70)">
+    <!-- Knife Handle -->
+    <rect x="8" y="30" width="4" height="50" rx="2" fill="#fd7e14"/>
+    <!-- Knife Blade -->
+    <path d="M 10 10 L 10 35 L 8 35 L 6 20 L 8 10 Z" fill="#fd7e14"/>
+  </g>
+  
+  <!-- Spoon (Center) -->
+  <g transform="translate(90, 70)">
+    <!-- Spoon Handle -->
+    <rect x="8" y="35" width="4" height="45" rx="2" fill="#fd7e14"/>
+    <!-- Spoon Bowl -->
+    <ellipse cx="10" cy="20" rx="8" ry="12" fill="#fd7e14"/>
+    <ellipse cx="10" cy="18" rx="6" ry="9" fill="white" opacity="0.3"/>
+  </g>
+  
+  <!-- Decorative dots -->
+  <circle cx="100" cy="40" r="3" fill="#fd7e14" opacity="0.5"/>
+  <circle cx="85" cy="45" r="2" fill="#fd7e14" opacity="0.5"/>
+  <circle cx="115" cy="45" r="2" fill="#fd7e14" opacity="0.5"/>
+</svg>
