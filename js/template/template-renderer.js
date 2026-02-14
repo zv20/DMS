@@ -13,6 +13,15 @@ class TemplateRenderer {
         };
     }
     
+    // FIXED: Parse date string in local timezone (YYYY-MM-DD)
+    parseLocalDate(dateStr) {
+        const parts = dateStr.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+        const day = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+    }
+    
     render(settings, data) {
         const layoutClass = `layout-${settings.layoutStyle}`;
         const containerStyle = `background-color: ${settings.backgroundColor};`;
@@ -55,12 +64,20 @@ class TemplateRenderer {
         return `<div class="meal-plan-header" style="${style}">${settings.headerText}</div>`;
     }
     
+    // FIXED: Use local timezone parsing and respect language locale
     renderDateRange(settings, data) {
-        const start = new Date(data.startDate);
-        const end = new Date(data.endDate);
+        // Parse dates in LOCAL timezone to avoid date shifting
+        const start = this.parseLocalDate(data.startDate);
+        const end = this.parseLocalDate(data.endDate);
+        
+        // Use current language for date formatting
+        const lang = window.getCurrentLanguage ? 
+            (window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US') : 
+            'en-US';
+        
         const format = settings.dateFormat === 'short' ? 'short' : 'long';
         
-        const dateStr = `${start.toLocaleDateString('en-US', { month: format, day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: format, day: 'numeric', year: 'numeric' })}`;
+        const dateStr = `${start.toLocaleDateString(lang, { month: format, day: 'numeric' })} - ${end.toLocaleDateString(lang, { month: format, day: 'numeric', year: 'numeric' })}`;
         
         const marginBottom = settings.isPrint ? '12px' : '30px';
         const fontSize = settings.isPrint ? '12px' : '15px';
