@@ -2,9 +2,18 @@
  * Calendar Manager
  * Handles both Monthly and Weekly views
  * Supports flexible meal slot categories
+ * FIXED: Uses local timezone for all date operations
  */
 
 (function(window) {
+
+    // Helper function to convert Date object to local YYYY-MM-DD string
+    function getLocalDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     // Category definitions - now use translation keys
     window.MEAL_CATEGORIES = [
@@ -134,7 +143,7 @@
             // Days of month
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(date); // FIXED: Use local date
                 const dayOfWeek = date.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                 const isToday = this.isToday(date);
@@ -204,7 +213,7 @@
             for (let i = 0; i < 5; i++) {
                 const date = new Date(weekStart);
                 date.setDate(weekStart.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(date); // FIXED: Use local date
                 const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
                 const dayName = date.toLocaleDateString(lang, { weekday: 'long' });
                 const dayDate = date.toLocaleDateString(lang, { month: 'short', day: 'numeric' });
@@ -382,6 +391,9 @@
     window.getWeekStart = function(date) {
         return window.CalendarManager.getWeekStart(date);
     };
+
+    // Expose getLocalDateString as global utility
+    window.getLocalDateString = getLocalDateString;
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
