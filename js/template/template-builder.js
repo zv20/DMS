@@ -8,7 +8,7 @@ class TemplateBuilder {
         // Single state object - all settings in one place
         this.state = {
             // Layout
-            layoutStyle: 'elegant-single', // single-column, two-column, table, compact-cards, elegant-single
+            layoutStyle: 'elegant-single', // 11 different layouts available!
             
             // Header
             showHeader: true,
@@ -93,13 +93,24 @@ class TemplateBuilder {
                     
                     <div class="control-group">
                         <label>Layout Style</label>
-                        <select id="layoutStyle" data-setting="layoutStyle">
-                            <option value="elegant-single">Elegant Single Page</option>
-                            <option value="single-column">Single Column</option>
-                            <option value="two-column">Two Column</option>
-                            <option value="table">Table</option>
-                            <option value="compact-cards">Compact Cards</option>
+                        <select id="layoutStyle" data-setting="layoutStyle" style="font-size: 14px;">
+                            <optgroup label="Classic Layouts">
+                                <option value="elegant-single">✨ Elegant Single Page</option>
+                                <option value="single-column">📄 Single Column</option>
+                                <option value="two-column">📑 Two Column</option>
+                                <option value="table">📊 Table</option>
+                                <option value="compact-cards">🗂️ Compact Cards</option>
+                            </optgroup>
+                            <optgroup label="New Layouts">
+                                <option value="grid">🎨 Grid Cards</option>
+                                <option value="timeline">⏱️ Timeline</option>
+                                <option value="minimalist">⚪ Minimalist</option>
+                                <option value="magazine">📰 Magazine</option>
+                                <option value="bordered-cards">🎴 Bordered Cards</option>
+                                <option value="checklist">✅ Checklist</option>
+                            </optgroup>
                         </select>
+                        <small style="color: #666; display: block; margin-top: 5px;">11 professional layouts to choose from!</small>
                     </div>
                     
                     <div class="control-group">
@@ -195,9 +206,9 @@ class TemplateBuilder {
                 <!-- ACTION BUTTONS -->
                 <div class="action-buttons">
                     <button id="btn-preview-real" class="btn btn-primary">📋 Preview My Meals</button>
-                    <button id="btn-save-template" class="btn btn-secondary">Save Template</button>
-                    <button id="btn-load-template" class="btn btn-secondary">Load Template</button>
-                    <button id="btn-reset" class="btn btn-secondary">Reset to Default</button>
+                    <button id="btn-save-template" class="btn btn-secondary">💾 Save Template</button>
+                    <button id="btn-load-template" class="btn btn-secondary">📂 Load Template</button>
+                    <button id="btn-reset" class="btn btn-secondary">🔄 Reset to Default</button>
                 </div>
             </div>
         `;
@@ -260,7 +271,7 @@ class TemplateBuilder {
         
         const btn = document.getElementById('btn-preview-real');
         if (btn) {
-            btn.textContent = '📋 Showing Your Meals';
+            btn.textContent = '✅ Showing Your Meals';
             btn.style.background = '#28a745';
         }
     }
