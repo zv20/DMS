@@ -1,6 +1,6 @@
 /**
  * Smart Storage Adapter
- * - Chrome/Edge: File System API with persistent permission handling
+ * - Chrome/Edge: File System API with LocalStorage folder hints
  * - Firefox/Safari: IndexedDB
  * - Auto-detects capabilities and uses best available method
  * - Compatible with existing data.json file structure
@@ -45,11 +45,14 @@ class StorageAdapter {
                     if (permission) {
                         console.log('✅ Permission granted, loading data...');
                         window.directoryHandle = handle;
+                        
+                        // Save folder name hint to LocalStorage
+                        this.saveFolderHint(handle.name);
+                        
                         await this.loadFromFileSystem();
                         return true;
                     } else {
                         console.log('❌ Permission denied');
-                        // Clear the stored handle since permission was denied
                         await this.clearStoredDirectoryHandle();
                     }
                 } catch (err) {
@@ -74,6 +77,9 @@ class StorageAdapter {
         }
         
         try {
+            // Get folder hint if available
+            const lastFolder = this.getFolderHint();
+            
             const dirHandle = await window.showDirectoryPicker({
                 mode: 'readwrite',
                 startIn: 'documents'
@@ -82,6 +88,10 @@ class StorageAdapter {
             console.log('📁 Selected folder:', dirHandle.name, 'Type:', typeof dirHandle);
             
             window.directoryHandle = dirHandle;
+            
+            // Save folder name to LocalStorage (this WILL persist!)
+            this.saveFolderHint(dirHandle.name);
+            
             await this.storeDirectoryHandle(dirHandle);
             await this.ensureDataFolderStructure();
             await this.loadFromFileSystem();
@@ -93,6 +103,24 @@ class StorageAdapter {
                 console.error('Folder selection failed:', err);
             }
             return false;
+        }
+    }
+    
+    // LocalStorage methods for folder hints (persists in file:// protocol!)
+    saveFolderHint(folderName) {
+        try {
+            localStorage.setItem('kitchenpro_last_folder', folderName);
+            console.log('💾 Saved folder hint to LocalStorage:', folderName);
+        } catch (err) {
+            console.error('Failed to save folder hint:', err);
+        }
+    }
+    
+    getFolderHint() {
+        try {
+            return localStorage.getItem('kitchenpro_last_folder');
+        } catch (err) {
+            return null;
         }
     }
     
@@ -257,7 +285,7 @@ class StorageAdapter {
             // Wait for transaction to complete
             await new Promise((resolve, reject) => {
                 tx.oncomplete = () => {
-                    console.log('✅ Folder handle saved to IndexedDB');
+                    console.log('✅ Folder handle saved to IndexedDB (may not persist in file://)'); 
                     resolve();
                 };
                 tx.onerror = () => {
@@ -265,21 +293,6 @@ class StorageAdapter {
                     reject(tx.error);
                 };
             });
-            
-            // Verify it was saved by reading it back
-            const verifyTx = db.transaction('handles', 'readonly');
-            const verifyStore = verifyTx.objectStore('handles');
-            const verifyResult = await new Promise((resolve) => {
-                const req = verifyStore.get('rootDirectory');
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => resolve(null);
-            });
-            
-            if (verifyResult) {
-                console.log('✅ Verified handle was saved, type:', typeof verifyResult);
-            } else {
-                console.log('⚠️ Warning: Could not verify saved handle');
-            }
         } catch (err) {
             console.error('❌ Error storing handle:', err);
         }
@@ -287,35 +300,17 @@ class StorageAdapter {
     
     async getStoredDirectoryHandle() {
         try {
-            console.log('💾 Attempting to retrieve handle from IndexedDB...');
             const db = await this.openIDB();
             const tx = db.transaction('handles', 'readonly');
             const store = tx.objectStore('handles');
             
             const handle = await new Promise((resolve, reject) => {
                 const request = store.get('rootDirectory');
-                request.onsuccess = () => {
-                    const result = request.result;
-                    console.log('💾 IndexedDB returned:', result ? `Object of type ${typeof result}` : 'null');
-                    if (result) {
-                        console.log('💾 Result keys:', Object.keys(result));
-                        console.log('💾 Has queryPermission?', 'queryPermission' in result);
-                    }
-                    resolve(result);
-                };
-                request.onerror = () => {
-                    console.error('❌ Error reading from IndexedDB:', request.error);
-                    reject(request.error);
-                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
             });
             
-            if (handle) {
-                console.log('✅ Retrieved folder handle from IndexedDB');
-            } else {
-                console.log('⚠️ No handle found in IndexedDB');
-            }
-            
-            return handle;
+            return handle || null;
         } catch (err) {
             console.error('❌ Error getting handle:', err);
             return null;
