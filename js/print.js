@@ -12,12 +12,19 @@
         const weekSelection = await selectWeekDialog();
         if (!weekSelection) return; // User cancelled
         
+        console.log('🗓️ Selected week:', {
+            start: weekSelection.startDate.toISOString().split('T')[0],
+            end: weekSelection.endDate.toISOString().split('T')[0]
+        });
+        
         // Step 2: Ask user which template to use
         const templateChoice = await selectTemplateDialog();
         if (!templateChoice) return; // User cancelled
         
         // Step 3: Generate meal plan data for selected week (Mon-Fri only, only days with meals)
         const mealPlanData = generateMealPlanData(weekSelection.startDate, weekSelection.endDate);
+        
+        console.log('📝 Generated meal plan:', mealPlanData);
         
         // Check if any meals exist
         if (mealPlanData.days.length === 0) {
@@ -279,17 +286,27 @@
         });
     }
     
-    // Generate meal plan data from menu for date range (Monday-Friday only, only days with meals)
+    // FIXED: Generate meal plan data from menu for date range (Monday-Friday only, only days with meals)
     function generateMealPlanData(startDate, endDate) {
         const days = [];
-        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         
-        let currentDate = new Date(startDate);
-        let dayIndex = 0;
+        // Don't create new Date objects - use the ones passed in directly
+        console.log('🔍 generateMealPlanData starting from:', startDate.toLocaleDateString());
         
-        // Only loop Mon-Fri (5 days)
-        while (currentDate <= endDate && dayIndex < 5) {
-            const dateStr = currentDate.toISOString().split('T')[0];
+        // Loop through 5 days starting from startDate
+        for (let i = 0; i < 5; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            
+            // Use local date string conversion to avoid timezone issues
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            console.log(`  Day ${i + 1}: ${dateStr} (${dayNames[i]})`);
+            
             const dayMenu = window.getMenuForDate(dateStr);
             
             // Check if this day has any meals
@@ -339,19 +356,27 @@
                 if (meals.length > 0) {
                     days.push({
                         date: dateStr,
-                        dayName: dayNames[dayIndex],
+                        dayName: dayNames[i],
                         meals: meals
                     });
                 }
             }
-            
-            currentDate.setDate(currentDate.getDate() + 1);
-            dayIndex++;
         }
         
+        // Convert dates to proper format for display
+        const startYear = startDate.getFullYear();
+        const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+        const startDay = String(startDate.getDate()).padStart(2, '0');
+        const startStr = `${startYear}-${startMonth}-${startDay}`;
+        
+        const endYear = endDate.getFullYear();
+        const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+        const endDay = String(endDate.getDate()).padStart(2, '0');
+        const endStr = `${endYear}-${endMonth}-${endDay}`;
+        
         return {
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0],
+            startDate: startStr,
+            endDate: endStr,
             days: days
         };
     }
