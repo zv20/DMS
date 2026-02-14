@@ -99,7 +99,15 @@
                 return;
             }
             
-            subtitle.textContent = 'Select a folder to store your data';
+            // Check if we have a folder hint
+            const lastFolder = window.storageAdapter.getFolderHint();
+            
+            if (lastFolder) {
+                subtitle.innerHTML = `Select a folder to store your data<br><small style="color: #666; font-size: 0.85em;">📁 Last used: <strong>${lastFolder}</strong></small>`;
+            } else {
+                subtitle.textContent = 'Select a folder to store your data';
+            }
+            
             actions.innerHTML = `
                 <button class="btn btn-primary" onclick="window.selectFolderAndStart()" style="min-width: 200px; height: 48px;">
                     <span>📁</span> Select Folder
@@ -134,7 +142,7 @@
         // Global function for folder selection button
         window.selectFolderAndStart = async function() {
             actions.innerHTML = '<div class="loader-spinner"></div>';
-            subtitle.textContent = '⏳ Setting up your workspace...';
+            subtitle.textContent = '⌛ Setting up your workspace...';
             
             const selected = await window.selectSaveLocation();
             
