@@ -505,15 +505,28 @@
         printWindow.document.close();
     }
     
-    // Helper functions
+    // FIXED: Helper function to get Monday-Friday of a week
     function getWeekDates(date) {
         const currentDate = new Date(date);
-        const day = currentDate.getDay();
-        const diff = currentDate.getDate() - day + (day === 0 ? -6 : 1);
+        const day = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
         
-        const monday = new Date(currentDate.setDate(diff));
+        // Calculate offset to Monday
+        let diff;
+        if (day === 0) {
+            // Sunday: go forward 1 day to Monday
+            diff = 1;
+        } else {
+            // Mon-Sat: go back to Monday
+            diff = -(day - 1);
+        }
+        
+        const monday = new Date(currentDate);
+        monday.setDate(currentDate.getDate() + diff);
+        monday.setHours(0, 0, 0, 0);
+        
         const dates = [];
         
+        // Generate Mon-Fri (5 days)
         for (let i = 0; i < 5; i++) {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
