@@ -207,12 +207,13 @@
         return window.currentMenu[dateStr];
     };
     
+    // FIXED: Use 'category' instead of 'type' to match calendar.js expectations
     window.updateMenuForDate = function(dateStr, slotId, category, recipeId) {
         if (!window.currentMenu[dateStr]) {
             window.currentMenu[dateStr] = {};
         }
         window.currentMenu[dateStr][slotId] = {
-            type: category,
+            category: category,  // Changed from 'type' to 'category'
             recipe: recipeId
         };
         window.saveData();
