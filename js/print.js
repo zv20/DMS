@@ -6,6 +6,14 @@
 
 (function(window) {
     
+    // Helper to get local date string (YYYY-MM-DD) without timezone issues
+    function getLocalDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
     // Main print menu function
     window.printMenu = async function() {
         // Step 1: Ask user which week to print
@@ -13,8 +21,8 @@
         if (!weekSelection) return; // User cancelled
         
         console.log('🗓️ Selected week:', {
-            start: weekSelection.startDate.toISOString().split('T')[0],
-            end: weekSelection.endDate.toISOString().split('T')[0]
+            start: getLocalDateString(weekSelection.startDate),
+            end: getLocalDateString(weekSelection.endDate)
         });
         
         // Step 2: Ask user which template to use
@@ -291,7 +299,6 @@
         const days = [];
         const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         
-        // Don't create new Date objects - use the ones passed in directly
         console.log('🔍 generateMealPlanData starting from:', startDate.toLocaleDateString());
         
         // Loop through 5 days starting from startDate
@@ -300,10 +307,7 @@
             currentDate.setDate(startDate.getDate() + i);
             
             // Use local date string conversion to avoid timezone issues
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const day = String(currentDate.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
+            const dateStr = getLocalDateString(currentDate);
             
             console.log(`  Day ${i + 1}: ${dateStr} (${dayNames[i]})`);
             
@@ -363,20 +367,9 @@
             }
         }
         
-        // Convert dates to proper format for display
-        const startYear = startDate.getFullYear();
-        const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
-        const startDay = String(startDate.getDate()).padStart(2, '0');
-        const startStr = `${startYear}-${startMonth}-${startDay}`;
-        
-        const endYear = endDate.getFullYear();
-        const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
-        const endDay = String(endDate.getDate()).padStart(2, '0');
-        const endStr = `${endYear}-${endMonth}-${endDay}`;
-        
         return {
-            startDate: startStr,
-            endDate: endStr,
+            startDate: getLocalDateString(startDate),
+            endDate: getLocalDateString(endDate),
             days: days
         };
     }
@@ -567,10 +560,16 @@
         return result;
     }
     
+    // FIXED: Respect locale for date range formatting
     function formatDateRange(startDate, endDate) {
+        // Use current language for date formatting
+        const lang = window.getCurrentLanguage ? 
+            (window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US') : 
+            'en-US';
+        
         const options = { month: 'short', day: 'numeric' };
-        const start = startDate.toLocaleDateString('en-US', options);
-        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const start = startDate.toLocaleDateString(lang, options);
+        const end = endDate.toLocaleDateString(lang, { month: 'short', day: 'numeric', year: 'numeric' });
         return `${start} - ${end}`;
     }
     
