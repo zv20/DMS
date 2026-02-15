@@ -7,6 +7,7 @@
  * Phase 5: Theme presets and typography
  * Phase 6: Content options
  * Phase 7: Preview & Save final step
+ * Phase 8: Preset Template Gallery
  */
 
 /* Mode Switcher */
@@ -639,6 +640,96 @@
     background: #fff5f5;
 }
 
+/* Preset Template Gallery - Phase 8 */
+.preset-gallery {
+    padding: 20px;
+}
+
+.preset-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.preset-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.preset-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-color: #ff6b35;
+}
+
+.preset-card.selected {
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.2);
+}
+
+.preset-preview {
+    height: 200px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.preset-info {
+    padding: 15px;
+    background: #f8f9fa;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.preset-name {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.preset-description {
+    margin: 0 0 15px 0;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.preset-use-btn {
+    width: 100%;
+    padding: 10px;
+    background: #ff6b35;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preset-use-btn:hover {
+    background: #ff5722;
+    transform: scale(1.02);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .wizard-wrapper {
@@ -697,6 +788,15 @@
     .template-preview-container.desktop-mode,
     .template-preview-container.tablet-mode {
         max-width: 100%;
+    }
+    
+    .preset-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .preset-preview {
+        height: 180px;
     }
 }
 
