@@ -1,86 +1,51 @@
 /**
- * Template Wizard - Step-by-Step Template Builder
+ * Template Wizard - Main Controller
  * Phase 1: Core Wizard Structure
+ * 
+ * Manages the step-by-step wizard for creating meal plan templates
+ * Provides navigation, validation, and progress tracking
  */
 
 class TemplateWizard {
     constructor() {
         this.currentStep = 1;
         this.totalSteps = 6;
-        
-        // Wizard data - collected settings that match template-builder.js format
-        this.wizardData = {
-            // Layout (Step 1)
-            layoutStyle: 'elegant-single',
-            
-            // Week Styling (Step 2)
-            dayBlockBg: '#ffffff',
-            dayBlockBorder: '#e0e0e0',
-            dayBlockPadding: '15',
-            dayNameSize: '18',
-            dayNameColor: '#333333',
-            dayNameWeight: 'bold',
-            
-            // Meal Display (Step 3)
-            showMealTitles: true,
-            mealTitleSize: '14',
-            mealTitleColor: '#666666',
-            showIngredients: true,
-            ingredientLayout: 'list',
-            numberingStyle: 'none',
-            
-            // Typography & Colors (Step 4)
-            backgroundColor: '#f5f5f5',
-            separatorStyle: 'line',
-            
-            // Content Options (Step 5)
+        this.wizardData = this.loadProgress() || {
+            layoutStyle: 'grid',
             showHeader: true,
             headerText: 'Weekly Meal Plan',
-            headerAlignment: 'center',
-            headerSize: '28',
+            showWeekNumber: false,
+            dayHeaderSize: '1.2em',
+            dayBlockBg: '#ffffff',
+            dayBlockBorder: '1px solid #ddd',
+            showMealTitles: true,
+            showIngredients: 'list',
+            showPortions: true,
+            showCalories: false,
+            highlightAllergens: true,
+            primaryColor: '#ff6b35',
+            backgroundColor: '#ffffff',
+            textColor: '#333333',
+            headerFontSize: '2em',
+            mealFontSize: '1em',
             showDateRange: true,
-            dateFormat: 'long',
-            showFooter: true,
-            footerText: 'Meal plan created with DMS',
-            pageBorder: false,
-            
-            // Advanced
-            showBranding: true
+            dateFormat: 'MM/DD/YYYY',
+            showFooter: false,
+            footerText: '',
+            showBorder: true
         };
         
-        this.steps = null; // Will be loaded from wizard-steps.js
-        this.renderer = null;
         this.init();
     }
     
     init() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.setup());
-        } else {
-            this.setup();
-        }
+        this.renderWizard();
+        this.attachEventListeners();
+        this.showStep(this.currentStep);
+        this.updateProgress();
     }
     
-    setup() {
-        // Initialize renderer for preview
-        this.renderer = new TemplateRenderer();
-        
-        // Load steps from wizard-steps.js
-        if (window.WizardSteps) {
-            this.steps = window.WizardSteps;
-        }
-        
-        // Try to restore saved progress
-        this.loadProgress();
-        
-        // Build wizard UI
-        this.buildWizardUI();
-        
-        // Show first step
-        this.goToStep(this.currentStep);
-    }
-    
-    buildWizardUI() {
+    renderWizard() {
         const container = document.getElementById('wizard-container');
         if (!container) return;
         
@@ -88,174 +53,126 @@ class TemplateWizard {
             <div class="wizard-wrapper">
                 <!-- Progress Bar -->
                 <div class="wizard-progress">
-                    <div class="wizard-progress-bar">
-                        <div class="wizard-progress-fill" id="wizard-progress-fill"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <div class="wizard-progress-text" id="wizard-progress-text">
-                        Step <span id="wizard-current-step">1</span> of ${this.totalSteps}
-                    </div>
+                    <div class="progress-text" id="progressText">Step 1 of 6</div>
                 </div>
                 
                 <!-- Step Container -->
-                <div class="wizard-step-container" id="wizard-step-container">
-                    <!-- Step content will be injected here -->
+                <div class="wizard-steps" id="wizardSteps">
+                    <!-- Steps will be dynamically loaded here -->
                 </div>
                 
-                <!-- Navigation Buttons -->
+                <!-- Navigation -->
                 <div class="wizard-navigation">
-                    <button class="wizard-btn wizard-btn-secondary" id="wizard-prev-btn">
+                    <button class="btn btn-secondary" id="prevBtn" style="visibility: hidden;">
                         ← Previous
                     </button>
-                    <button class="wizard-btn wizard-btn-primary" id="wizard-next-btn">
+                    <button class="btn btn-primary" id="nextBtn">
                         Next Step →
                     </button>
                 </div>
             </div>
         `;
-        
-        // Bind navigation buttons
-        document.getElementById('wizard-prev-btn')?.addEventListener('click', () => this.previousStep());
-        document.getElementById('wizard-next-btn')?.addEventListener('click', () => this.nextStep());
     }
     
-    goToStep(stepNumber) {
-        // Validate step number
-        if (stepNumber < 1 || stepNumber > this.totalSteps) return;
-        
-        this.currentStep = stepNumber;
-        
-        // Update progress bar
-        this.updateProgressBar();
-        
-        // Load step content
-        this.loadStepContent();
-        
-        // Update navigation buttons
-        this.updateNavigationButtons();
-        
-        // Save progress
-        this.saveProgress();
-        
-        // Smooth scroll to top of wizard
-        document.getElementById('wizard-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    
-    loadStepContent() {
-        const container = document.getElementById('wizard-step-container');
-        if (!container) return;
-        
-        // Add fade-out animation
-        container.classList.add('wizard-step-fade-out');
-        
-        setTimeout(() => {
-            // Get step definition
-            const step = this.steps ? this.steps[this.currentStep - 1] : null;
-            
-            if (step) {
-                // Render step content
-                container.innerHTML = `
-                    <div class="wizard-step-header">
-                        <h2 class="wizard-step-title">${step.title}</h2>
-                        <p class="wizard-step-description">${step.description}</p>
-                    </div>
-                    <div class="wizard-step-body" id="wizard-step-body">
-                        ${step.render(this.wizardData)}
-                    </div>
-                `;
-                
-                // Bind step-specific event listeners
-                if (step.bind) {
-                    step.bind(this.wizardData, (data) => this.updateWizardData(data));
-                }
-            } else {
-                // Placeholder if steps not loaded
-                container.innerHTML = `
-                    <div class="wizard-step-header">
-                        <h2 class="wizard-step-title">Step ${this.currentStep}</h2>
-                        <p class="wizard-step-description">Placeholder for step ${this.currentStep}</p>
-                    </div>
-                    <div class="wizard-step-body">
-                        <p style="text-align: center; color: #666; padding: 40px;">
-                            Step content will be implemented in Phase ${this.currentStep + 1}
-                        </p>
-                    </div>
-                `;
-            }
-            
-            // Add fade-in animation
-            container.classList.remove('wizard-step-fade-out');
-            container.classList.add('wizard-step-fade-in');
-            
-            setTimeout(() => {
-                container.classList.remove('wizard-step-fade-in');
-            }, 300);
-        }, 150);
-    }
-    
-    updateProgressBar() {
-        const progressFill = document.getElementById('wizard-progress-fill');
-        const currentStepSpan = document.getElementById('wizard-current-step');
-        
-        if (progressFill) {
-            const percentage = (this.currentStep / this.totalSteps) * 100;
-            progressFill.style.width = `${percentage}%`;
-        }
-        
-        if (currentStepSpan) {
-            currentStepSpan.textContent = this.currentStep;
-        }
-    }
-    
-    updateNavigationButtons() {
-        const prevBtn = document.getElementById('wizard-prev-btn');
-        const nextBtn = document.getElementById('wizard-next-btn');
+    attachEventListeners() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
         
         if (prevBtn) {
-            // Disable previous button on first step
-            prevBtn.disabled = this.currentStep === 1;
-            prevBtn.style.opacity = this.currentStep === 1 ? '0.5' : '1';
-            prevBtn.style.cursor = this.currentStep === 1 ? 'not-allowed' : 'pointer';
+            prevBtn.addEventListener('click', () => this.previousStep());
         }
         
         if (nextBtn) {
-            // Change text on last step
-            if (this.currentStep === this.totalSteps) {
-                nextBtn.innerHTML = '✓ Complete & Preview';
-                nextBtn.classList.add('wizard-btn-success');
-            } else {
-                nextBtn.innerHTML = 'Next Step →';
-                nextBtn.classList.remove('wizard-btn-success');
-            }
+            nextBtn.addEventListener('click', () => this.nextStep());
         }
     }
     
+    showStep(stepNumber) {
+        const stepsContainer = document.getElementById('wizardSteps');
+        if (!stepsContainer) return;
+        
+        // Get step definition from wizard-steps.js
+        const stepDef = window.WizardSteps ? window.WizardSteps.getStep(stepNumber) : null;
+        
+        if (!stepDef) {
+            stepsContainer.innerHTML = `
+                <div class="wizard-step active">
+                    <h2>Step ${stepNumber}</h2>
+                    <p>Step content will be implemented in Phase ${stepNumber + 1}</p>
+                </div>
+            `;
+        } else {
+            stepsContainer.innerHTML = `
+                <div class="wizard-step active">
+                    <div class="step-header">
+                        <h2>${stepDef.title}</h2>
+                        <p class="step-description">${stepDef.description}</p>
+                    </div>
+                    <div class="step-content">
+                        ${stepDef.renderContent(this.wizardData)}
+                    </div>
+                </div>
+            `;
+            
+            // Attach step-specific event listeners
+            if (stepDef.attachListeners) {
+                stepDef.attachListeners(this);
+            }
+        }
+        
+        this.updateNavigationButtons();
+        this.animateStepTransition();
+    }
+    
     nextStep() {
-        // Validate current step before proceeding
+        // Validate current step
         if (!this.validateStep()) {
             return;
         }
         
+        // Save current step data
+        this.saveStepData();
+        
         if (this.currentStep < this.totalSteps) {
-            this.goToStep(this.currentStep + 1);
+            this.currentStep++;
+            this.showStep(this.currentStep);
+            this.updateProgress();
+            this.saveProgress();
         } else {
-            // Last step - complete wizard
-            this.completeWizard();
+            // Final step - save template
+            this.saveTemplate();
         }
     }
     
     previousStep() {
         if (this.currentStep > 1) {
-            this.goToStep(this.currentStep - 1);
+            this.saveStepData();
+            this.currentStep--;
+            this.showStep(this.currentStep);
+            this.updateProgress();
+            this.saveProgress();
+        }
+    }
+    
+    goToStep(stepNumber) {
+        if (stepNumber >= 1 && stepNumber <= this.totalSteps) {
+            this.saveStepData();
+            this.currentStep = stepNumber;
+            this.showStep(this.currentStep);
+            this.updateProgress();
+            this.saveProgress();
         }
     }
     
     validateStep() {
-        // Get current step validation rules
-        const step = this.steps ? this.steps[this.currentStep - 1] : null;
+        // Get step-specific validation from wizard-steps.js
+        const stepDef = window.WizardSteps ? window.WizardSteps.getStep(this.currentStep) : null;
         
-        if (step && step.validate) {
-            const validation = step.validate(this.wizardData);
-            
+        if (stepDef && stepDef.validate) {
+            const validation = stepDef.validate(this.wizardData);
             if (!validation.valid) {
                 alert(validation.message || 'Please complete all required fields.');
                 return false;
@@ -265,116 +182,150 @@ class TemplateWizard {
         return true;
     }
     
-    updateWizardData(data) {
-        // Update wizard data with new values
-        this.wizardData = { ...this.wizardData, ...data };
+    saveStepData() {
+        // Collect data from current step and merge into wizardData
+        const stepDef = window.WizardSteps ? window.WizardSteps.getStep(this.currentStep) : null;
         
-        // Auto-save progress
-        this.saveProgress();
+        if (stepDef && stepDef.collectData) {
+            const stepData = stepDef.collectData();
+            this.wizardData = { ...this.wizardData, ...stepData };
+        }
+    }
+    
+    updateProgress() {
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        const percentage = (this.currentStep / this.totalSteps) * 100;
+        
+        if (progressFill) {
+            progressFill.style.width = `${percentage}%`;
+        }
+        
+        if (progressText) {
+            progressText.textContent = `Step ${this.currentStep} of ${this.totalSteps}`;
+        }
+    }
+    
+    updateNavigationButtons() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        if (prevBtn) {
+            prevBtn.style.visibility = this.currentStep === 1 ? 'hidden' : 'visible';
+        }
+        
+        if (nextBtn) {
+            if (this.currentStep === this.totalSteps) {
+                nextBtn.innerHTML = '💾 Save Template';
+                nextBtn.className = 'btn btn-success';
+            } else {
+                nextBtn.innerHTML = 'Next Step →';
+                nextBtn.className = 'btn btn-primary';
+            }
+        }
+    }
+    
+    animateStepTransition() {
+        const stepElement = document.querySelector('.wizard-step');
+        if (stepElement) {
+            stepElement.style.opacity = '0';
+            stepElement.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                stepElement.style.transition = 'all 0.3s ease';
+                stepElement.style.opacity = '1';
+                stepElement.style.transform = 'translateX(0)';
+            }, 10);
+        }
     }
     
     saveProgress() {
-        // Save to localStorage
+        // Auto-save to localStorage
         try {
-            const progress = {
+            localStorage.setItem('wizardProgress', JSON.stringify({
                 currentStep: this.currentStep,
                 wizardData: this.wizardData,
                 timestamp: new Date().toISOString()
-            };
-            localStorage.setItem('wizard-progress', JSON.stringify(progress));
-        } catch (error) {
-            console.warn('Failed to save wizard progress:', error);
+            }));
+        } catch (e) {
+            console.warn('Could not save wizard progress:', e);
         }
     }
     
     loadProgress() {
-        // Load from localStorage
         try {
-            const saved = localStorage.getItem('wizard-progress');
+            const saved = localStorage.getItem('wizardProgress');
             if (saved) {
-                const progress = JSON.parse(saved);
-                
-                // Only restore if saved recently (within 7 days)
-                const savedTime = new Date(progress.timestamp);
-                const now = new Date();
-                const daysDiff = (now - savedTime) / (1000 * 60 * 60 * 24);
-                
-                if (daysDiff < 7) {
-                    this.currentStep = progress.currentStep || 1;
-                    this.wizardData = { ...this.wizardData, ...progress.wizardData };
-                    return true;
-                }
+                const data = JSON.parse(saved);
+                this.currentStep = data.currentStep || 1;
+                return data.wizardData;
             }
-        } catch (error) {
-            console.warn('Failed to load wizard progress:', error);
+        } catch (e) {
+            console.warn('Could not load wizard progress:', e);
         }
-        return false;
+        return null;
     }
     
     clearProgress() {
-        localStorage.removeItem('wizard-progress');
-    }
-    
-    completeWizard() {
-        // Wizard complete - switch to preview mode
-        this.clearProgress();
-        
-        // Show completion message
-        const confirmed = confirm(
-            'Wizard complete! Your template is ready.\n\n' +
-            'Click OK to preview your template, or Cancel to review your settings.'
-        );
-        
-        if (confirmed) {
-            // Switch to preview/advanced mode
-            this.switchToAdvancedMode();
+        try {
+            localStorage.removeItem('wizardProgress');
+        } catch (e) {
+            console.warn('Could not clear wizard progress:', e);
         }
     }
     
-    switchToAdvancedMode() {
-        // Transfer wizard data to template builder
-        if (window.templateBuilder) {
-            window.templateBuilder.state = { ...window.templateBuilder.state, ...this.wizardData };
-            window.templateBuilder.updatePreview();
-        }
+    saveTemplate() {
+        // Generate template name with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const templateName = prompt('Enter a name for your template:', `My Template ${timestamp}`);
         
-        // Switch mode
-        const wizardBtn = document.getElementById('mode-wizard-btn');
-        const advancedBtn = document.getElementById('mode-advanced-btn');
+        if (!templateName) return;
         
-        if (wizardBtn && advancedBtn) {
-            wizardBtn.classList.remove('active');
-            advancedBtn.classList.add('active');
+        // Save template using existing template system
+        const template = {
+            name: templateName,
+            settings: this.wizardData,
+            createdAt: new Date().toISOString(),
+            createdWith: 'wizard'
+        };
+        
+        // Use store.js to save
+        if (window.store && window.store.saveCustomTemplate) {
+            window.store.saveCustomTemplate(template);
+            alert(`Template "${templateName}" saved successfully!`);
             
-            document.getElementById('wizard-mode-container')?.classList.add('hidden');
-            document.getElementById('advanced-mode-container')?.classList.remove('hidden');
+            // Clear wizard progress
+            this.clearProgress();
+            
+            // Navigate back to template builder or menu
+            if (confirm('Would you like to preview your template?')) {
+                // Load template in renderer
+                if (window.TemplateRenderer) {
+                    window.TemplateRenderer.loadTemplate(template.settings);
+                }
+                window.navigateTo('menu');
+            } else {
+                window.navigateTo('menu');
+            }
+        } else {
+            console.error('Template storage not available');
+            alert('Error: Could not save template. Please try again.');
         }
     }
     
-    reset() {
-        if (!confirm('Start over? This will reset all your wizard progress.')) return;
-        
-        // Reset to defaults
-        this.currentStep = 1;
-        this.wizardData = new TemplateWizard().wizardData;
-        this.clearProgress();
-        
-        // Reload first step
-        this.goToStep(1);
-    }
-    
-    // Public API
-    getSettings() {
-        return { ...this.wizardData };
+    resetWizard() {
+        if (confirm('Are you sure you want to start over? All progress will be lost.')) {
+            this.currentStep = 1;
+            this.wizardData = {};
+            this.clearProgress();
+            this.showStep(1);
+            this.updateProgress();
+        }
     }
 }
 
-// Global instance
-window.templateWizard = null;
-
-// Initialize when wizard mode is active
-function initializeWizard() {
-    if (!window.templateWizard) {
-        window.templateWizard = new TemplateWizard();
-    }
+// Initialize wizard when DOM is ready
+if (typeof window !== 'undefined') {
+    window.TemplateWizard = TemplateWizard;
 }

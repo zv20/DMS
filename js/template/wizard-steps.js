@@ -1,215 +1,180 @@
 /**
  * Wizard Steps Definitions
- * Phase 1: Step structure with placeholders
+ * Phase 1: Placeholder step definitions
  * 
- * Each step has:
- * - title: Step title
- * - description: Brief description
- * - render(wizardData): Returns HTML for step content
- * - bind(wizardData, updateCallback): Binds event listeners
- * - validate(wizardData): Returns {valid: boolean, message: string}
+ * Each step will be fully implemented in subsequent phases
+ * This file defines the structure and validation for each step
  */
 
-window.WizardSteps = [
-    // STEP 1: Layout Selection
-    {
-        title: 'Choose Your Layout',
-        description: 'Select a layout style for your meal plan template',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">📐</div>
-                    <h3>Layout Picker</h3>
-                    <p>Visual layout selection will be implemented in Phase 2</p>
-                    <div class="wizard-placeholder-preview">
-                        <p><strong>Current Selection:</strong> ${wizardData.layoutStyle}</p>
-                        <small>Choose from 11 professional layouts</small>
+window.WizardSteps = {
+    steps: [
+        {
+            id: 1,
+            title: '📐 Choose Your Layout',
+            description: 'Select how you want your meal plan to be displayed',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Layout selection will be implemented in Phase 2</p>
+                        <p class="text-muted">You'll be able to choose from 11 different layout styles:</p>
+                        <ul>
+                            <li>Grid Cards</li>
+                            <li>Timeline Style</li>
+                            <li>Minimal Clean</li>
+                            <li>And more...</li>
+                        </ul>
+                        <p class="text-muted">Current selection: <strong>${data.layoutStyle}</strong></p>
                     </div>
-                </div>
-            `;
-        },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind layout selection in Phase 2
-        },
-        
-        validate(wizardData) {
-            // Layout is required
-            if (!wizardData.layoutStyle) {
-                return { valid: false, message: 'Please select a layout style.' };
+                `;
+            },
+            validate: (data) => {
+                return { valid: true };
+            },
+            collectData: () => {
+                // Placeholder - will collect layout selection
+                return {};
             }
-            return { valid: true };
-        }
-    },
-    
-    // STEP 2: Week Styling
-    {
-        title: 'Week Styling',
-        description: 'Customize how days of the week appear in your template',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">🗓️</div>
-                    <h3>Day & Week Customization</h3>
-                    <p>Day styling options will be implemented in Phase 3</p>
-                    <div class="wizard-placeholder-preview">
-                        <p><strong>Current Settings:</strong></p>
-                        <ul style="text-align: left; display: inline-block;">
-                            <li>Day name size: ${wizardData.dayNameSize}px</li>
-                            <li>Day block background: ${wizardData.dayBlockBg}</li>
-                            <li>Day block padding: ${wizardData.dayBlockPadding}px</li>
+        },
+        {
+            id: 2,
+            title: '🗓️ Week Styling',
+            description: 'Customize how days of the week appear',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Week styling options will be implemented in Phase 3</p>
+                        <p class="text-muted">You'll be able to customize:</p>
+                        <ul>
+                            <li>Day header font size and color</li>
+                            <li>Day block background and borders</li>
+                            <li>Spacing between days</li>
+                            <li>Apply to all days or customize individually</li>
                         </ul>
                     </div>
-                </div>
-            `;
+                `;
+            },
+            validate: (data) => {
+                return { valid: true };
+            },
+            collectData: () => {
+                return {};
+            }
         },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind styling controls in Phase 3
-        },
-        
-        validate(wizardData) {
-            return { valid: true };
-        }
-    },
-    
-    // STEP 3: Meal Display Options
-    {
-        title: 'Meal Display Options',
-        description: 'Choose what meal information to show and how to display it',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">🍽️</div>
-                    <h3>Meal Information Display</h3>
-                    <p>Meal display options will be implemented in Phase 4</p>
-                    <div class="wizard-placeholder-preview">
-                        <p><strong>Current Settings:</strong></p>
-                        <ul style="text-align: left; display: inline-block;">
-                            <li>Show meal titles: ${wizardData.showMealTitles ? 'Yes' : 'No'}</li>
-                            <li>Show ingredients: ${wizardData.showIngredients ? 'Yes' : 'No'}</li>
-                            <li>Ingredient layout: ${wizardData.ingredientLayout}</li>
+        {
+            id: 3,
+            title: '🍽️ Meal Display Options',
+            description: 'Choose what meal information to show',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Meal display options will be implemented in Phase 4</p>
+                        <p class="text-muted">You'll be able to toggle:</p>
+                        <ul>
+                            <li>Show/hide meal titles</li>
+                            <li>Ingredient display (list, inline, hidden)</li>
+                            <li>Portion sizes visibility</li>
+                            <li>Calorie display</li>
+                            <li>Allergen highlighting</li>
                         </ul>
                     </div>
-                </div>
-            `;
+                `;
+            },
+            validate: (data) => {
+                return { valid: true };
+            },
+            collectData: () => {
+                return {};
+            }
         },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind meal display controls in Phase 4
-        },
-        
-        validate(wizardData) {
-            return { valid: true };
-        }
-    },
-    
-    // STEP 4: Typography & Colors
-    {
-        title: 'Typography & Colors',
-        description: 'Customize fonts, sizes, and color scheme',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">🎨</div>
-                    <h3>Design & Colors</h3>
-                    <p>Typography and color options will be implemented in Phase 5</p>
-                    <div class="wizard-placeholder-preview">
-                        <p><strong>Current Settings:</strong></p>
-                        <ul style="text-align: left; display: inline-block;">
-                            <li>Background color: ${wizardData.backgroundColor}</li>
-                            <li>Header size: ${wizardData.headerSize}px</li>
-                            <li>Meal title color: ${wizardData.mealTitleColor}</li>
+        {
+            id: 4,
+            title: '🎨 Typography & Colors',
+            description: 'Customize fonts and color scheme',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Typography and color customization will be implemented in Phase 5</p>
+                        <p class="text-muted">You'll be able to adjust:</p>
+                        <ul>
+                            <li>Font sizes (headers, day names, meal text)</li>
+                            <li>Color pickers for primary, background, text, borders</li>
+                            <li>Theme presets (Orange, Teal, Dark, etc.)</li>
                         </ul>
                     </div>
-                </div>
-            `;
+                `;
+            },
+            validate: (data) => {
+                return { valid: true };
+            },
+            collectData: () => {
+                return {};
+            }
         },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind typography controls in Phase 5
-        },
-        
-        validate(wizardData) {
-            return { valid: true };
-        }
-    },
-    
-    // STEP 5: Content Options
-    {
-        title: 'Content Options',
-        description: 'Configure header, footer, and additional content',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">✔️</div>
-                    <h3>Header & Footer Content</h3>
-                    <p>Content options will be implemented in Phase 6</p>
-                    <div class="wizard-placeholder-preview">
-                        <p><strong>Current Settings:</strong></p>
-                        <ul style="text-align: left; display: inline-block;">
-                            <li>Show header: ${wizardData.showHeader ? 'Yes' : 'No'}</li>
-                            <li>Header text: "${wizardData.headerText}"</li>
-                            <li>Show footer: ${wizardData.showFooter ? 'Yes' : 'No'}</li>
-                            <li>Show date range: ${wizardData.showDateRange ? 'Yes' : 'No'}</li>
+        {
+            id: 5,
+            title: '✅ Content Options',
+            description: 'Header, footer, and additional content settings',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Content options will be implemented in Phase 6</p>
+                        <p class="text-muted">You'll be able to configure:</p>
+                        <ul>
+                            <li>Show/hide header with custom text</li>
+                            <li>Header alignment (left, center, right)</li>
+                            <li>Show/hide date range</li>
+                            <li>Date format options</li>
+                            <li>Show/hide footer with custom text</li>
+                            <li>Page border toggle</li>
                         </ul>
                     </div>
-                </div>
-            `;
+                `;
+            },
+            validate: (data) => {
+                return { valid: true };
+            },
+            collectData: () => {
+                return {};
+            }
         },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind content controls in Phase 6
-        },
-        
-        validate(wizardData) {
-            return { valid: true };
-        }
-    },
-    
-    // STEP 6: Preview & Save
-    {
-        title: 'Preview & Save',
-        description: 'Review your template and save it for use',
-        
-        render(wizardData) {
-            return `
-                <div class="wizard-placeholder">
-                    <div class="wizard-placeholder-icon">👀</div>
-                    <h3>Final Preview</h3>
-                    <p>Preview and save functionality will be implemented in Phase 7</p>
-                    <div class="wizard-placeholder-preview">
-                        <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="margin-top: 0;">Your Template Summary:</h4>
-                            <p><strong>Layout:</strong> ${wizardData.layoutStyle}</p>
-                            <p><strong>Header:</strong> "${wizardData.headerText}"</p>
-                            <p><strong>Background:</strong> ${wizardData.backgroundColor}</p>
-                            <p><strong>Features:</strong></p>
-                            <ul style="text-align: left; display: inline-block; margin: 10px 0;">
-                                <li>Meal titles: ${wizardData.showMealTitles ? '✓' : '✗'}</li>
-                                <li>Ingredients: ${wizardData.showIngredients ? '✓' : '✗'}</li>
-                                <li>Date range: ${wizardData.showDateRange ? '✓' : '✗'}</li>
-                                <li>Footer: ${wizardData.showFooter ? '✓' : '✗'}</li>
-                            </ul>
+        {
+            id: 6,
+            title: '👀 Preview & Save',
+            description: 'Review your template and save it',
+            renderContent: (data) => {
+                return `
+                    <div class="step-placeholder">
+                        <p>🎨 Preview and save functionality will be implemented in Phase 7</p>
+                        <p class="text-muted">You'll be able to:</p>
+                        <ul>
+                            <li>See a full-size preview with real meal data</li>
+                            <li>Test with your actual meals</li>
+                            <li>Name and save your template</li>
+                            <li>Export options (PDF, Print)</li>
+                            <li>Start over or switch to Advanced Mode</li>
+                        </ul>
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <h4>📋 Your Template Settings:</h4>
+                            <pre style="background: white; padding: 10px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
                         </div>
-                        <p><em>Click "Complete & Preview" to finish!</em></p>
                     </div>
-                </div>
-            `;
-        },
-        
-        bind(wizardData, updateCallback) {
-            // Placeholder - will bind preview controls in Phase 7
-        },
-        
-        validate(wizardData) {
-            // All steps complete
-            return { valid: true };
+                `;
+            },
+            validate: (data) => {
+                // Could add template name validation here
+                return { valid: true };
+            },
+            collectData: () => {
+                return {};
+            }
         }
+    ],
+    
+    getStep(stepNumber) {
+        return this.steps.find(step => step.id === stepNumber) || null;
+    },
+    
+    getAllSteps() {
+        return this.steps;
     }
-];
+};

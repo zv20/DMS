@@ -1,0 +1,375 @@
+/**
+ * Template Wizard Styles
+ * Phase 1: Core wizard structure styling
+ */
+
+/* Mode Switcher */
+.mode-switcher {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    justify-content: center;
+}
+
+.mode-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-btn:hover {
+    border-color: #ff6b35;
+    background: #fff5f2;
+}
+
+.mode-btn.active {
+    border-color: #ff6b35;
+    background: #ff6b35;
+    color: white;
+    font-weight: 600;
+}
+
+/* Wizard Wrapper */
+.wizard-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Progress Bar */
+.wizard-progress {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b35 0%, #ff8c5a 100%);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Wizard Steps Container */
+.wizard-steps {
+    min-height: 400px;
+    margin-bottom: 30px;
+}
+
+.wizard-step {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.wizard-step.active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.3s ease;
+}
+
+/* Step Header */
+.step-header {
+    margin-bottom: 25px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+}
+
+.step-header h2 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+.step-description {
+    margin: 0;
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* Step Content */
+.step-content {
+    margin-top: 20px;
+}
+
+/* Step Placeholder (for unimplemented steps) */
+.step-placeholder {
+    padding: 20px;
+    text-align: center;
+}
+
+.step-placeholder p {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.step-placeholder ul {
+    text-align: left;
+    max-width: 500px;
+    margin: 20px auto;
+    list-style-type: none;
+    padding: 0;
+}
+
+.step-placeholder li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.step-placeholder li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Wizard Navigation */
+.wizard-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.wizard-navigation .btn {
+    padding: 12px 30px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.wizard-navigation .btn-primary {
+    background: #ff6b35;
+    color: white;
+}
+
+.wizard-navigation .btn-primary:hover {
+    background: #ff5722;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.wizard-navigation .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.wizard-navigation .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.wizard-navigation .btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.wizard-navigation .btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .wizard-wrapper {
+        padding: 15px;
+    }
+    
+    .wizard-step {
+        padding: 20px;
+    }
+    
+    .step-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .wizard-navigation {
+        flex-direction: column;
+    }
+    
+    .wizard-navigation .btn {
+        width: 100%;
+    }
+    
+    .mode-switcher {
+        flex-direction: column;
+    }
+    
+    .mode-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.wizard-step {
+    animation: slideIn 0.3s ease;
+}
+
+/* Form Controls for Future Steps */
+.wizard-form-group {
+    margin-bottom: 20px;
+}
+
+.wizard-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.wizard-input,
+.wizard-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.wizard-input:focus,
+.wizard-select:focus {
+    outline: none;
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+/* Layout Preview Cards (for Phase 2) */
+.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.layout-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.layout-card:hover {
+    border-color: #ff6b35;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.layout-card.selected {
+    border-color: #ff6b35;
+    background: #fff5f2;
+}
+
+.layout-preview {
+    width: 100%;
+    height: 120px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.layout-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Color Picker Styles (for Phase 5) */
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.color-picker-group label {
+    min-width: 120px;
+}
+
+.color-picker-group input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Preview Panel (for Phase 7) */
+.preview-panel {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.preview-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.preview-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 400px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
