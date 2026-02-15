@@ -1,6 +1,7 @@
 /**
  * Template Wizard Styles
  * Phase 1: Core wizard structure styling
+ * Phase 2: Layout selection cards
  */
 
 /* Mode Switcher */
@@ -209,6 +210,83 @@
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
+/* Layout Selection - Phase 2 */
+.layout-category {
+    margin-bottom: 25px;
+}
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.layout-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    background: white;
+}
+
+.layout-card:hover {
+    border-color: #ff6b35;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.layout-card.selected {
+    border-color: #ff6b35;
+    background: #fff5f2;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.layout-preview {
+    width: 100%;
+    height: 120px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.layout-card:hover .layout-preview {
+    background: #fff5f2;
+}
+
+.layout-card.selected .layout-preview {
+    background: #ffe8dd;
+}
+
+.layout-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.layout-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+/* Current Selection Display */
+.current-selection {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #ff6b35;
+    font-size: 1rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .wizard-wrapper {
@@ -238,6 +316,16 @@
     .mode-btn {
         width: 100%;
         justify-content: center;
+    }
+    
+    .layout-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .layout-preview {
+        height: 100px;
+        font-size: 2.5rem;
     }
 }
 
@@ -284,51 +372,6 @@
     outline: none;
     border-color: #ff6b35;
     box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-}
-
-/* Layout Preview Cards (for Phase 2) */
-.layout-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.layout-card {
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-}
-
-.layout-card:hover {
-    border-color: #ff6b35;
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.layout-card.selected {
-    border-color: #ff6b35;
-    background: #fff5f2;
-}
-
-.layout-preview {
-    width: 100%;
-    height: 120px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-}
-
-.layout-name {
-    font-weight: 600;
-    color: #2c3e50;
 }
 
 /* Color Picker Styles (for Phase 5) */
