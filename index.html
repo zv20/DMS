@@ -8,10 +8,14 @@
   <link rel="stylesheet" href="css/styles.css?v=14.2">
   <link rel="stylesheet" href="css/template-styles.css?v=14.2">
   <link rel="stylesheet" href="css/wizard-styles.css?v=1.0">
+  <link rel="stylesheet" href="css/visual-editor.css?v=1.0">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
   <script src="js/libs/jspdf.umd.min.js"></script>
+  
+  <!-- Interact.js for Drag & Drop -->
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
   
   <!-- Core Application Scripts -->
   <script src="js/i18n.js?v=14.2"></script>
@@ -39,6 +43,9 @@
   
   <!-- PRESET TEMPLATE GALLERY -->
   <script src="js/template/preset-template-gallery.js?v=1.0"></script>
+  
+  <!-- VISUAL DRAG & DROP EDITOR -->
+  <script src="js/template/visual-editor.js?v=1.0"></script>
   
   <!-- PRINT FUNCTIONALITY -->
   <script src="js/print.js?v=14.2"></script>
@@ -217,24 +224,32 @@
           </div>
       </div>
 
-      <!-- TEMPLATE BUILDER PAGE - WITH 3 MODES -->
+      <!-- TEMPLATE BUILDER PAGE - WITH 4 MODES -->
       <div id="style-editor" class="page">
         <div class="page-header">
           <button class="btn btn-secondary btn-small" onclick="window.navigateTo('menu')" data-i18n="btn_back_to_menu">← Back to Menu</button>
           <h1 data-i18n="nav_template_builder">Template Builder</h1>
         </div>
         
-        <!-- Mode Switcher - 3 TABS -->
+        <!-- Mode Switcher - 4 TABS -->
         <div class="mode-switcher">
-          <button class="mode-btn" id="presetModeBtn" onclick="window.switchToPresetMode()">
-            🎨 Preset Templates
+          <button class="mode-btn active" id="visualModeBtn" onclick="window.switchToVisualMode()">
+            🎨 Visual Builder
           </button>
-          <button class="mode-btn active" id="wizardModeBtn" onclick="window.switchToWizardMode()">
-            🧙 Wizard Mode
+          <button class="mode-btn" id="presetModeBtn" onclick="window.switchToPresetMode()">
+            📚 Presets
+          </button>
+          <button class="mode-btn" id="wizardModeBtn" onclick="window.switchToWizardMode()">
+            🧙 Wizard
           </button>
           <button class="mode-btn" id="advancedModeBtn" onclick="window.switchToAdvancedMode()">
-            ⚙️ Advanced Mode
+            ⚙️ Advanced
           </button>
+        </div>
+        
+        <!-- Visual Editor Mode Container (DEFAULT) -->
+        <div id="visual-mode" style="display: block;">
+          <div id="visual-editor-container"></div>
         </div>
         
         <!-- Preset Templates Mode Container -->
@@ -243,7 +258,7 @@
         </div>
         
         <!-- Wizard Mode Container -->
-        <div id="wizard-mode" style="display: block;">
+        <div id="wizard-mode" style="display: none;">
           <div id="wizard-container"></div>
         </div>
         
@@ -264,7 +279,7 @@
     </main>
   </div>
 
-  <!-- MODALS (same as before, keeping them as is) -->
+  <!-- MODALS -->
   <div id="recipeModal" class="modal">
       <div class="modal-content">
           <span class="close" onclick="window.closeRecipeModal()">&times;</span>
@@ -358,14 +373,33 @@
       }, 500);
     });
     
-    // Template Builder Mode Switching (3 MODES)
+    // Template Builder Mode Switching (4 MODES)
     let wizardInstance = null;
     let presetGalleryInitialized = false;
+    let visualEditorInstance = null;
+    
+    window.switchToVisualMode = function() {
+      document.getElementById('visual-mode').style.display = 'block';
+      document.getElementById('preset-mode').style.display = 'none';
+      document.getElementById('wizard-mode').style.display = 'none';
+      document.getElementById('advanced-mode').style.display = 'none';
+      document.getElementById('visualModeBtn').classList.add('active');
+      document.getElementById('presetModeBtn').classList.remove('active');
+      document.getElementById('wizardModeBtn').classList.remove('active');
+      document.getElementById('advancedModeBtn').classList.remove('active');
+      
+      // Initialize visual editor if not done
+      if (!visualEditorInstance && window.VisualTemplateEditor) {
+        visualEditorInstance = new window.VisualTemplateEditor('visual-editor-container');
+      }
+    };
     
     window.switchToPresetMode = function() {
+      document.getElementById('visual-mode').style.display = 'none';
       document.getElementById('preset-mode').style.display = 'block';
       document.getElementById('wizard-mode').style.display = 'none';
       document.getElementById('advanced-mode').style.display = 'none';
+      document.getElementById('visualModeBtn').classList.remove('active');
       document.getElementById('presetModeBtn').classList.add('active');
       document.getElementById('wizardModeBtn').classList.remove('active');
       document.getElementById('advancedModeBtn').classList.remove('active');
@@ -386,9 +420,11 @@
     };
     
     window.switchToWizardMode = function() {
+      document.getElementById('visual-mode').style.display = 'none';
       document.getElementById('preset-mode').style.display = 'none';
       document.getElementById('wizard-mode').style.display = 'block';
       document.getElementById('advanced-mode').style.display = 'none';
+      document.getElementById('visualModeBtn').classList.remove('active');
       document.getElementById('presetModeBtn').classList.remove('active');
       document.getElementById('wizardModeBtn').classList.add('active');
       document.getElementById('advancedModeBtn').classList.remove('active');
@@ -399,22 +435,24 @@
     };
     
     window.switchToAdvancedMode = function() {
+      document.getElementById('visual-mode').style.display = 'none';
       document.getElementById('preset-mode').style.display = 'none';
       document.getElementById('wizard-mode').style.display = 'none';
       document.getElementById('advanced-mode').style.display = 'block';
+      document.getElementById('visualModeBtn').classList.remove('active');
       document.getElementById('presetModeBtn').classList.remove('active');
       document.getElementById('wizardModeBtn').classList.remove('active');
       document.getElementById('advancedModeBtn').classList.add('active');
     };
     
-    // Initialize wizard when template builder page is shown
+    // Initialize visual editor when template builder page is shown
     const originalNavigateTo = window.navigateTo;
     if (originalNavigateTo) {
       window.navigateTo = function(page) {
         originalNavigateTo(page);
-        if (page === 'style-editor' && !wizardInstance) {
+        if (page === 'style-editor' && !visualEditorInstance) {
           setTimeout(() => {
-            wizardInstance = new window.TemplateWizard();
+            visualEditorInstance = new window.VisualTemplateEditor('visual-editor-container');
           }, 100);
         }
       };
