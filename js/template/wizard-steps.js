@@ -1,6 +1,7 @@
 /**
  * Wizard Steps Definitions
  * Phase 2: Step 1 - Layout Selection (IMPLEMENTED)
+ * Phase 3: Step 2 - Week Styling (IMPLEMENTED)
  * 
  * Each step defines the structure and validation
  */
@@ -193,23 +194,193 @@ window.WizardSteps = {
             title: '🗓️ Week Styling',
             description: 'Customize how days of the week appear',
             renderContent: (data) => {
+                // Set defaults if not present
+                const dayHeaderSize = data.dayHeaderSize || '1.2em';
+                const dayHeaderColor = data.dayHeaderColor || '#333333';
+                const dayBlockBg = data.dayBlockBg || '#ffffff';
+                const dayBlockBorder = data.dayBlockBorder || '#ddd';
+                const dayBlockPadding = data.dayBlockPadding || 15;
+                const daySpacing = data.daySpacing || 15;
+                
+                let html = '<div class="week-styling">';
+                
+                // Day Header Styling
+                html += '<div class="style-section">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">';
+                html += '📝 Day Header</h3>';
+                
+                // Font Size
+                html += '<div class="wizard-form-group">';
+                html += '<label for="dayHeaderSize">Font Size</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="range" id="dayHeaderSize" class="wizard-range" min="0.8" max="2" step="0.1" value="${parseFloat(dayHeaderSize)}" style="flex: 1;">`;
+                html += `<span id="dayHeaderSizeValue" style="min-width: 50px; font-weight: 600;">${dayHeaderSize}</span>`;
+                html += '</div></div>';
+                
+                // Color
+                html += '<div class="wizard-form-group">';
+                html += '<label for="dayHeaderColor">Color</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="color" id="dayHeaderColor" value="${dayHeaderColor}" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">`;
+                html += `<input type="text" id="dayHeaderColorHex" value="${dayHeaderColor}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px;" readonly>`;
+                html += '</div></div>';
+                
+                html += '</div>';
+                
+                // Day Block Styling
+                html += '<div class="style-section" style="margin-top: 25px;">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">';
+                html += '📦 Day Block</h3>';
+                
+                // Background Color
+                html += '<div class="wizard-form-group">';
+                html += '<label for="dayBlockBg">Background Color</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="color" id="dayBlockBg" value="${dayBlockBg}" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">`;
+                html += `<input type="text" id="dayBlockBgHex" value="${dayBlockBg}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px;" readonly>`;
+                html += '</div></div>';
+                
+                // Border Color
+                html += '<div class="wizard-form-group">';
+                html += '<label for="dayBlockBorder">Border Color</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="color" id="dayBlockBorder" value="${dayBlockBorder}" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">`;
+                html += `<input type="text" id="dayBlockBorderHex" value="${dayBlockBorder}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px;" readonly>`;
+                html += '</div></div>';
+                
+                // Padding
+                html += '<div class="wizard-form-group">';
+                html += '<label for="dayBlockPadding">Padding (px)</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="range" id="dayBlockPadding" class="wizard-range" min="5" max="30" step="1" value="${dayBlockPadding}" style="flex: 1;">`;
+                html += `<span id="dayBlockPaddingValue" style="min-width: 50px; font-weight: 600;">${dayBlockPadding}px</span>`;
+                html += '</div></div>';
+                
+                // Spacing
+                html += '<div class="wizard-form-group">';
+                html += '<label for="daySpacing">Spacing Between Days (px)</label>';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += `<input type="range" id="daySpacing" class="wizard-range" min="5" max="40" step="5" value="${daySpacing}" style="flex: 1;">`;
+                html += `<span id="daySpacingValue" style="min-width: 50px; font-weight: 600;">${daySpacing}px</span>`;
+                html += '</div></div>';
+                
+                html += '</div>';
+                
+                // Live Preview
+                html += '<div class="style-section" style="margin-top: 25px;">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">';
+                html += '👁️ Preview</h3>';
+                html += '<div id="dayPreview" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">';
+                html += this.renderDayPreview(data);
+                html += '</div></div>';
+                
+                html += '</div>';
+                return html;
+            },
+            renderDayPreview: (data) => {
+                const dayHeaderSize = data.dayHeaderSize || '1.2em';
+                const dayHeaderColor = data.dayHeaderColor || '#333333';
+                const dayBlockBg = data.dayBlockBg || '#ffffff';
+                const dayBlockBorder = data.dayBlockBorder || '#ddd';
+                const dayBlockPadding = data.dayBlockPadding || 15;
+                
                 return `
-                    <div class="step-placeholder">
-                        <p>🎨 Week styling options will be implemented in Phase 3</p>
-                        <p class="text-muted">You'll be able to customize:</p>
-                        <ul>
-                            <li>Day header font size and color</li>
-                            <li>Day block background and borders</li>
-                            <li>Spacing between days</li>
-                            <li>Apply to all days or customize individually</li>
-                        </ul>
+                    <div style="
+                        background: ${dayBlockBg};
+                        border: 2px solid ${dayBlockBorder};
+                        padding: ${dayBlockPadding}px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    ">
+                        <div style="
+                            font-size: ${dayHeaderSize};
+                            color: ${dayHeaderColor};
+                            font-weight: bold;
+                            margin-bottom: 12px;
+                        ">Monday</div>
+                        <div style="color: #666; font-size: 0.95em;">
+                            <div style="margin-bottom: 8px;">1. Breakfast - Oatmeal with berries</div>
+                            <div style="margin-bottom: 8px;">2. Lunch - Grilled chicken salad</div>
+                            <div>3. Dinner - Pasta with vegetables</div>
+                        </div>
                     </div>
                 `;
+            },
+            attachListeners: (wizard) => {
+                // Day Header Size
+                const dayHeaderSize = document.getElementById('dayHeaderSize');
+                const dayHeaderSizeValue = document.getElementById('dayHeaderSizeValue');
+                if (dayHeaderSize && dayHeaderSizeValue) {
+                    dayHeaderSize.addEventListener('input', function() {
+                        const value = this.value + 'em';
+                        dayHeaderSizeValue.textContent = value;
+                        wizard.wizardData.dayHeaderSize = value;
+                        window.WizardSteps.updatePreview(wizard);
+                    });
+                }
+                
+                // Day Header Color
+                const dayHeaderColor = document.getElementById('dayHeaderColor');
+                const dayHeaderColorHex = document.getElementById('dayHeaderColorHex');
+                if (dayHeaderColor && dayHeaderColorHex) {
+                    dayHeaderColor.addEventListener('input', function() {
+                        dayHeaderColorHex.value = this.value;
+                        wizard.wizardData.dayHeaderColor = this.value;
+                        window.WizardSteps.updatePreview(wizard);
+                    });
+                }
+                
+                // Day Block Background
+                const dayBlockBg = document.getElementById('dayBlockBg');
+                const dayBlockBgHex = document.getElementById('dayBlockBgHex');
+                if (dayBlockBg && dayBlockBgHex) {
+                    dayBlockBg.addEventListener('input', function() {
+                        dayBlockBgHex.value = this.value;
+                        wizard.wizardData.dayBlockBg = this.value;
+                        window.WizardSteps.updatePreview(wizard);
+                    });
+                }
+                
+                // Day Block Border
+                const dayBlockBorder = document.getElementById('dayBlockBorder');
+                const dayBlockBorderHex = document.getElementById('dayBlockBorderHex');
+                if (dayBlockBorder && dayBlockBorderHex) {
+                    dayBlockBorder.addEventListener('input', function() {
+                        dayBlockBorderHex.value = this.value;
+                        wizard.wizardData.dayBlockBorder = this.value;
+                        window.WizardSteps.updatePreview(wizard);
+                    });
+                }
+                
+                // Day Block Padding
+                const dayBlockPadding = document.getElementById('dayBlockPadding');
+                const dayBlockPaddingValue = document.getElementById('dayBlockPaddingValue');
+                if (dayBlockPadding && dayBlockPaddingValue) {
+                    dayBlockPadding.addEventListener('input', function() {
+                        const value = this.value;
+                        dayBlockPaddingValue.textContent = value + 'px';
+                        wizard.wizardData.dayBlockPadding = parseInt(value);
+                        window.WizardSteps.updatePreview(wizard);
+                    });
+                }
+                
+                // Day Spacing
+                const daySpacing = document.getElementById('daySpacing');
+                const daySpacingValue = document.getElementById('daySpacingValue');
+                if (daySpacing && daySpacingValue) {
+                    daySpacing.addEventListener('input', function() {
+                        const value = this.value;
+                        daySpacingValue.textContent = value + 'px';
+                        wizard.wizardData.daySpacing = parseInt(value);
+                        // Spacing affects layout, not just preview
+                    });
+                }
             },
             validate: (data) => {
                 return { valid: true };
             },
             collectData: () => {
+                // Data is already collected via input listeners
                 return {};
             }
         },
@@ -322,6 +493,16 @@ window.WizardSteps = {
             }
         }
     ],
+    
+    updatePreview: function(wizard) {
+        const previewDiv = document.getElementById('dayPreview');
+        if (previewDiv && wizard.wizardData) {
+            const step = this.getStep(2);
+            if (step && step.renderDayPreview) {
+                previewDiv.innerHTML = step.renderDayPreview(wizard.wizardData);
+            }
+        }
+    },
     
     getStep(stepNumber) {
         return this.steps.find(step => step.id === stepNumber) || null;
