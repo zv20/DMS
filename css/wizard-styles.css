@@ -4,6 +4,7 @@
  * Phase 2: Layout selection cards
  * Phase 3: Week styling controls
  * Phase 4: Meal display checkboxes and radios
+ * Phase 5: Theme presets and typography
  */
 
 /* Mode Switcher */
@@ -445,6 +446,50 @@
     color: #333;
 }
 
+/* Theme Preset Cards - Phase 5 */
+.theme-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.theme-preset-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.theme-preset-card:hover {
+    border-color: #ff6b35;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.theme-preset-card.selected {
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.theme-preview-colors {
+    height: 50px;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-preset-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .wizard-wrapper {
@@ -489,6 +534,11 @@
     .style-section {
         padding: 15px;
     }
+    
+    .theme-preset-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
 }
 
 /* Animations */
@@ -507,7 +557,7 @@
     animation: slideIn 0.3s ease;
 }
 
-/* Color Picker Styles (for Phase 5) */
+/* Color Picker Styles */
 .color-picker-group {
     display: flex;
     align-items: center;
@@ -527,7 +577,7 @@
     cursor: pointer;
 }
 
-/* Preview Panel (for Phase 7) */
+/* Preview Panel */
 .preview-panel {
     background: #f8f9fa;
     border-radius: 8px;
