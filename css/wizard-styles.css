@@ -5,6 +5,8 @@
  * Phase 3: Week styling controls
  * Phase 4: Meal display checkboxes and radios
  * Phase 5: Theme presets and typography
+ * Phase 6: Content options
+ * Phase 7: Preview & Save final step
  */
 
 /* Mode Switcher */
@@ -490,6 +492,153 @@
     text-align: center;
 }
 
+/* Preview & Save - Phase 7 */
+.preview-mode-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.preview-mode-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.preview-mode-btn:hover {
+    border-color: #ff6b35;
+    background: #fff5f2;
+}
+
+.preview-mode-btn.active {
+    border-color: #ff6b35;
+    background: #ff6b35;
+    color: white;
+    font-weight: 600;
+}
+
+/* Template Preview Container */
+.template-preview-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    transition: all 0.3s ease;
+}
+
+.template-preview-container.desktop-mode {
+    max-width: 100%;
+}
+
+.template-preview-container.tablet-mode {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.template-preview-container.mobile-mode {
+    max-width: 375px;
+    margin: 0 auto;
+}
+
+/* Settings Summary */
+.settings-summary {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.summary-item {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #ff6b35;
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Action Buttons Grid */
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn-icon {
+    font-size: 2rem;
+}
+
+.action-btn-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.action-btn-desc {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.save-btn:hover {
+    border-color: #28a745;
+    background: #f0f9f4;
+}
+
+.export-btn:hover {
+    border-color: #0d6efd;
+    background: #f0f5ff;
+}
+
+.print-btn:hover {
+    border-color: #6c757d;
+    background: #f8f9fa;
+}
+
+.restart-btn:hover {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .wizard-wrapper {
@@ -538,6 +687,16 @@
     .theme-preset-grid {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         gap: 10px;
+    }
+    
+    .summary-grid,
+    .action-buttons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .template-preview-container.desktop-mode,
+    .template-preview-container.tablet-mode {
+        max-width: 100%;
     }
 }
 
