@@ -37,6 +37,9 @@
   <script src="js/template/wizard-step6.js?v=1.0"></script>
   <script src="js/template/template-wizard.js?v=1.0"></script>
   
+  <!-- PRESET TEMPLATE GALLERY -->
+  <script src="js/template/preset-template-gallery.js?v=1.0"></script>
+  
   <!-- PRINT FUNCTIONALITY -->
   <script src="js/print.js?v=14.2"></script>
   
@@ -214,21 +217,29 @@
           </div>
       </div>
 
-      <!-- TEMPLATE BUILDER PAGE - WITH WIZARD MODE -->
+      <!-- TEMPLATE BUILDER PAGE - WITH 3 MODES -->
       <div id="style-editor" class="page">
         <div class="page-header">
           <button class="btn btn-secondary btn-small" onclick="window.navigateTo('menu')" data-i18n="btn_back_to_menu">← Back to Menu</button>
           <h1 data-i18n="nav_template_builder">Template Builder</h1>
         </div>
         
-        <!-- Mode Switcher -->
+        <!-- Mode Switcher - 3 TABS -->
         <div class="mode-switcher">
+          <button class="mode-btn" id="presetModeBtn" onclick="window.switchToPresetMode()">
+            🎨 Preset Templates
+          </button>
           <button class="mode-btn active" id="wizardModeBtn" onclick="window.switchToWizardMode()">
             🧙 Wizard Mode
           </button>
           <button class="mode-btn" id="advancedModeBtn" onclick="window.switchToAdvancedMode()">
             ⚙️ Advanced Mode
           </button>
+        </div>
+        
+        <!-- Preset Templates Mode Container -->
+        <div id="preset-mode" style="display: none;">
+          <div id="preset-gallery-container"></div>
         </div>
         
         <!-- Wizard Mode Container -->
@@ -253,7 +264,7 @@
     </main>
   </div>
 
-  <!-- MODALS -->
+  <!-- MODALS (same as before, keeping them as is) -->
   <div id="recipeModal" class="modal">
       <div class="modal-content">
           <span class="close" onclick="window.closeRecipeModal()">&times;</span>
@@ -261,36 +272,28 @@
           <form id="recipeForm" onsubmit="window.saveRecipe(event)">
               <label data-i18n="label_recipe_name">Recipe Name</label>
               <input type="text" id="recipeName" class="form-control" required placeholder="Recipe Name">
-              
               <label data-i18n="label_category">Category</label>
               <select id="recipeCategory" class="form-control"></select>
-              
               <label data-i18n="label_portion_size">Portion Size</label>
               <input type="text" id="recipePortionSize" class="form-control" placeholder="e.g., 250g">
-              
               <label data-i18n="label_calories">Calories (optional)</label>
               <input type="number" id="recipeCalories" class="form-control" placeholder="e.g., 220">
-              
               <label data-i18n="label_ingredients">Ingredients</label>
               <div style="display:flex; gap:5px; margin-bottom:10px;">
                   <select id="ingredientSelect" class="form-control" style="flex:1;"></select>
                   <button type="button" class="btn btn-secondary" onclick="window.addIngredientFromSelect()" data-i18n="btn_add">Add</button>
               </div>
               <div id="recipeIngredients" class="tag-container" style="margin-bottom:15px;"></div>
-              
               <label data-i18n="label_auto_allergens">Auto-detected Allergens</label>
               <div id="recipeAutoAllergens" style="margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:4px; min-height:30px;">-</div>
-              
               <label data-i18n="label_manual_allergens">Manual Allergens</label>
               <div style="display:flex; gap:5px; margin-bottom:10px;">
                   <select id="allergenSelect" class="form-control" style="flex:1;"></select>
                   <button type="button" class="btn btn-secondary" onclick="window.addAllergenFromSelect()" data-i18n="btn_add">Add</button>
               </div>
               <div id="recipeManualAllergens" class="tag-container" style="margin-bottom:15px;"></div>
-              
               <label data-i18n="label_instructions">Instructions</label>
               <textarea id="recipeInstructions" class="form-control" rows="4" placeholder="Cooking instructions..."></textarea>
-              
               <div style="margin-top:20px;">
                   <button type="submit" class="btn btn-primary" data-i18n="btn_save_recipe">Save Recipe</button>
                   <button type="button" class="btn btn-secondary" onclick="window.closeRecipeModal()" data-i18n="btn_cancel">Cancel</button>
@@ -306,14 +309,12 @@
       <form id="ingredientForm" onsubmit="window.saveIngredient(event)">
         <label data-i18n="label_ingredient_name">Ingredient Name</label>
         <input type="text" id="ingredientName" class="form-control" required placeholder="Ingredient Name">
-        
         <label data-i18n="label_allergens">Allergens</label>
         <div style="display:flex; gap:5px; margin-bottom:10px;">
             <select id="ingredientAllergenSelect" class="form-control" style="flex:1;"></select>
             <button type="button" class="btn btn-secondary" onclick="window.addIngredientAllergenFromSelect()" data-i18n="btn_add">Add</button>
         </div>
         <div id="ingredientLinkedAllergens" class="tag-container" style="margin-bottom:15px;"></div>
-        
         <div style="margin-top:20px;">
             <button type="submit" class="btn btn-primary" data-i18n="btn_save_ingredient">Save Ingredient</button>
             <button type="button" class="btn btn-secondary" onclick="window.closeIngredientModal()" data-i18n="btn_cancel">Cancel</button>
@@ -329,10 +330,8 @@
       <form id="allergenForm" onsubmit="window.saveAllergen(event)">
         <label data-i18n="label_allergen_name">Allergen Name</label>
         <input type="text" id="allergenName" class="form-control" required placeholder="Allergen Name">
-        
         <label data-i18n="label_color">Color</label>
         <input type="color" id="allergenColor" class="form-control" value="#3498db">
-        
         <div style="margin-top:20px;">
             <button type="submit" class="btn btn-primary" data-i18n="btn_save_allergen">Save Allergen</button>
             <button type="button" class="btn btn-secondary" onclick="window.closeAllergenModal()" data-i18n="btn_cancel">Cancel</button>
@@ -353,30 +352,57 @@
             storageInfo.innerHTML = '<strong>File System API</strong><br>Your data is saved to a folder on your computer.';
           } else {
             storageInfo.innerHTML = '<strong>IndexedDB (Browser Database)</strong><br>Your data is stored in your browser. Use Export/Import buttons to backup your data.';
-            btnChangeFolder.style.display = 'none'; // Hide folder button for IndexedDB
+            btnChangeFolder.style.display = 'none';
           }
         }
       }, 500);
     });
     
-    // Template Builder Mode Switching
+    // Template Builder Mode Switching (3 MODES)
     let wizardInstance = null;
+    let presetGalleryInitialized = false;
+    
+    window.switchToPresetMode = function() {
+      document.getElementById('preset-mode').style.display = 'block';
+      document.getElementById('wizard-mode').style.display = 'none';
+      document.getElementById('advanced-mode').style.display = 'none';
+      document.getElementById('presetModeBtn').classList.add('active');
+      document.getElementById('wizardModeBtn').classList.remove('active');
+      document.getElementById('advancedModeBtn').classList.remove('active');
+      
+      // Initialize preset gallery if not done
+      if (!presetGalleryInitialized && window.PresetTemplateGallery) {
+        const container = document.getElementById('preset-gallery-container');
+        container.innerHTML = window.PresetTemplateGallery.renderGallery();
+        window.PresetTemplateGallery.attachListeners(function(presetId) {
+          const preset = window.PresetTemplateGallery.getPreset(presetId);
+          if (preset) {
+            alert('🎉 Template "' + preset.name + '" selected!\n\nThis will apply the preset configuration to your template builder.\n\n(Full integration coming soon!)');
+            console.log('Selected preset:', preset);
+          }
+        });
+        presetGalleryInitialized = true;
+      }
+    };
     
     window.switchToWizardMode = function() {
+      document.getElementById('preset-mode').style.display = 'none';
       document.getElementById('wizard-mode').style.display = 'block';
       document.getElementById('advanced-mode').style.display = 'none';
+      document.getElementById('presetModeBtn').classList.remove('active');
       document.getElementById('wizardModeBtn').classList.add('active');
       document.getElementById('advancedModeBtn').classList.remove('active');
       
-      // Initialize wizard if not already done
       if (!wizardInstance) {
         wizardInstance = new window.TemplateWizard();
       }
     };
     
     window.switchToAdvancedMode = function() {
+      document.getElementById('preset-mode').style.display = 'none';
       document.getElementById('wizard-mode').style.display = 'none';
       document.getElementById('advanced-mode').style.display = 'block';
+      document.getElementById('presetModeBtn').classList.remove('active');
       document.getElementById('wizardModeBtn').classList.remove('active');
       document.getElementById('advancedModeBtn').classList.add('active');
     };
