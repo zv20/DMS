@@ -2,6 +2,7 @@
  * Wizard Steps Definitions
  * Phase 2: Step 1 - Layout Selection (IMPLEMENTED)
  * Phase 3: Step 2 - Week Styling (IMPLEMENTED)
+ * Phase 4: Step 3 - Meal Display Options (IMPLEMENTED)
  * 
  * Each step defines the structure and validation
  */
@@ -389,19 +390,255 @@ window.WizardSteps = {
             title: '🍽️ Meal Display Options',
             description: 'Choose what meal information to show',
             renderContent: (data) => {
-                return `
-                    <div class="step-placeholder">
-                        <p>🎨 Meal display options will be implemented in Phase 4</p>
-                        <p class="text-muted">You'll be able to toggle:</p>
-                        <ul>
-                            <li>Show/hide meal titles</li>
-                            <li>Ingredient display (list, inline, hidden)</li>
-                            <li>Portion sizes visibility</li>
-                            <li>Calorie display</li>
-                            <li>Allergen highlighting</li>
-                        </ul>
-                    </div>
-                `;
+                // Set defaults
+                const showMealTitles = data.showMealTitles !== undefined ? data.showMealTitles : true;
+                const showIngredients = data.showIngredients !== undefined ? data.showIngredients : true;
+                const ingredientDisplay = data.ingredientDisplay || 'list';
+                const showPortions = data.showPortions !== undefined ? data.showPortions : true;
+                const showCalories = data.showCalories !== undefined ? data.showCalories : false;
+                const highlightAllergens = data.highlightAllergens !== undefined ? data.highlightAllergens : true;
+                const allergenStyle = data.allergenStyle || 'underline';
+                
+                let html = '<div class="meal-display-options">';
+                
+                // Basic Display Options
+                html += '<div class="style-section">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px;">✅ What to Display</h3>';
+                
+                // Show Meal Titles
+                html += '<div class="wizard-checkbox-group">';
+                html += '<label class="wizard-checkbox-label">';
+                html += `<input type="checkbox" id="showMealTitles" ${showMealTitles ? 'checked' : ''}>`;
+                html += '<span>Show meal titles (Breakfast, Lunch, Dinner)</span>';
+                html += '</label></div>';
+                
+                // Show Ingredients
+                html += '<div class="wizard-checkbox-group">';
+                html += '<label class="wizard-checkbox-label">';
+                html += `<input type="checkbox" id="showIngredients" ${showIngredients ? 'checked' : ''}>`;
+                html += '<span>Show ingredients</span>';
+                html += '</label></div>';
+                
+                // Ingredient Display Style (conditional)
+                if (showIngredients) {
+                    html += '<div class="wizard-radio-group" style="margin-left: 30px; margin-top: 10px;">';
+                    html += '<label style="display: block; margin-bottom: 5px; font-size: 0.9rem; color: #666;">Ingredient display style:</label>';
+                    
+                    html += '<label class="wizard-radio-label">';
+                    html += `<input type="radio" name="ingredientDisplay" value="list" ${ingredientDisplay === 'list' ? 'checked' : ''}>`;
+                    html += '<span>List (comma-separated)</span>';
+                    html += '</label>';
+                    
+                    html += '<label class="wizard-radio-label">';
+                    html += `<input type="radio" name="ingredientDisplay" value="inline" ${ingredientDisplay === 'inline' ? 'checked' : ''}>`;
+                    html += '<span>Inline (brief)</span>';
+                    html += '</label>';
+                    
+                    html += '</div>';
+                }
+                
+                // Show Portions
+                html += '<div class="wizard-checkbox-group">';
+                html += '<label class="wizard-checkbox-label">';
+                html += `<input type="checkbox" id="showPortions" ${showPortions ? 'checked' : ''}>`;
+                html += '<span>Show portion sizes (e.g., 250g)</span>';
+                html += '</label></div>';
+                
+                // Show Calories
+                html += '<div class="wizard-checkbox-group">';
+                html += '<label class="wizard-checkbox-label">';
+                html += `<input type="checkbox" id="showCalories" ${showCalories ? 'checked' : ''}>`;
+                html += '<span>Show calories</span>';
+                html += '</label></div>';
+                
+                html += '</div>';
+                
+                // Allergen Highlighting
+                html += '<div class="style-section" style="margin-top: 25px;">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px;">⚠️ Allergen Highlighting</h3>';
+                
+                html += '<div class="wizard-checkbox-group">';
+                html += '<label class="wizard-checkbox-label">';
+                html += `<input type="checkbox" id="highlightAllergens" ${highlightAllergens ? 'checked' : ''}>`;
+                html += '<span>Highlight allergens in ingredients</span>';
+                html += '</label></div>';
+                
+                // Allergen Style (conditional)
+                if (highlightAllergens) {
+                    html += '<div class="wizard-radio-group" style="margin-left: 30px; margin-top: 10px;">';
+                    html += '<label style="display: block; margin-bottom: 5px; font-size: 0.9rem; color: #666;">Highlight style:</label>';
+                    
+                    html += '<label class="wizard-radio-label">';
+                    html += `<input type="radio" name="allergenStyle" value="underline" ${allergenStyle === 'underline' ? 'checked' : ''}>`;
+                    html += '<span>Underline (subtle)</span>';
+                    html += '</label>';
+                    
+                    html += '<label class="wizard-radio-label">';
+                    html += `<input type="radio" name="allergenStyle" value="bold" ${allergenStyle === 'bold' ? 'checked' : ''}>`;
+                    html += '<span>Bold text</span>';
+                    html += '</label>';
+                    
+                    html += '<label class="wizard-radio-label">';
+                    html += `<input type="radio" name="allergenStyle" value="background" ${allergenStyle === 'background' ? 'checked' : ''}>`;
+                    html += '<span>Background highlight</span>';
+                    html += '</label>';
+                    
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                
+                // Preview
+                html += '<div class="style-section" style="margin-top: 25px;">';
+                html += '<h3 style="font-size: 1.1rem; color: #333; margin-bottom: 15px;">👁️ Preview</h3>';
+                html += '<div id="mealDisplayPreview" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">';
+                html += this.renderMealPreview(data);
+                html += '</div></div>';
+                
+                html += '</div>';
+                return html;
+            },
+            renderMealPreview: (data) => {
+                const showMealTitles = data.showMealTitles !== undefined ? data.showMealTitles : true;
+                const showIngredients = data.showIngredients !== undefined ? data.showIngredients : true;
+                const showPortions = data.showPortions !== undefined ? data.showPortions : true;
+                const showCalories = data.showCalories !== undefined ? data.showCalories : false;
+                const highlightAllergens = data.highlightAllergens !== undefined ? data.highlightAllergens : true;
+                const allergenStyle = data.allergenStyle || 'underline';
+                
+                let html = '<div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+                
+                // Meal 1
+                if (showMealTitles) {
+                    html += '<div style="font-weight: bold; color: #ff6b35; margin-bottom: 8px;">1. Breakfast</div>';
+                }
+                html += '<div style="font-size: 1rem; font-weight: 500; color: #333;">';
+                html += 'Oatmeal with Mixed Berries';
+                if (showPortions || showCalories) {
+                    html += '<span style="font-size: 0.85rem; color: #888; font-weight: normal;"> (';
+                    const parts = [];
+                    if (showPortions) parts.push('250g');
+                    if (showCalories) parts.push('320 cal');
+                    html += parts.join(', ');
+                    html += ')</span>';
+                }
+                html += '</div>';
+                
+                if (showIngredients) {
+                    html += '<div style="font-size: 0.9rem; color: #666; margin-top: 5px; margin-bottom: 15px;">';
+                    
+                    // Sample ingredients with one allergen
+                    const ingredients = ['Oats', 'Blueberries', 'Strawberries', 'Milk', 'Honey'];
+                    const allergenIngredient = 'Milk';
+                    
+                    html += ingredients.map(ing => {
+                        if (highlightAllergens && ing === allergenIngredient) {
+                            if (allergenStyle === 'underline') {
+                                return `<span style="text-decoration: underline; text-decoration-color: #dc3545; text-decoration-thickness: 2px;">${ing}</span>`;
+                            } else if (allergenStyle === 'bold') {
+                                return `<strong style="color: #dc3545;">${ing}</strong>`;
+                            } else if (allergenStyle === 'background') {
+                                return `<span style="background: #ffe5e5; padding: 2px 4px; border-radius: 3px; color: #dc3545;">${ing}</span>`;
+                            }
+                        }
+                        return ing;
+                    }).join(', ');
+                    
+                    html += '</div>';
+                } else {
+                    html += '<div style="height: 10px;"></div>';
+                }
+                
+                // Meal 2
+                if (showMealTitles) {
+                    html += '<div style="font-weight: bold; color: #ff6b35; margin-bottom: 8px;">2. Lunch</div>';
+                }
+                html += '<div style="font-size: 1rem; font-weight: 500; color: #333;">';
+                html += 'Grilled Chicken Salad';
+                if (showPortions || showCalories) {
+                    html += '<span style="font-size: 0.85rem; color: #888; font-weight: normal;"> (';
+                    const parts = [];
+                    if (showPortions) parts.push('300g');
+                    if (showCalories) parts.push('450 cal');
+                    html += parts.join(', ');
+                    html += ')</span>';
+                }
+                html += '</div>';
+                
+                if (showIngredients) {
+                    html += '<div style="font-size: 0.9rem; color: #666; margin-top: 5px;">';
+                    html += 'Chicken breast, Mixed greens, Cherry tomatoes, Olive oil';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                return html;
+            },
+            attachListeners: (wizard) => {
+                // Show Meal Titles
+                const showMealTitles = document.getElementById('showMealTitles');
+                if (showMealTitles) {
+                    showMealTitles.addEventListener('change', function() {
+                        wizard.wizardData.showMealTitles = this.checked;
+                        window.WizardSteps.updateMealPreview(wizard);
+                    });
+                }
+                
+                // Show Ingredients
+                const showIngredients = document.getElementById('showIngredients');
+                if (showIngredients) {
+                    showIngredients.addEventListener('change', function() {
+                        wizard.wizardData.showIngredients = this.checked;
+                        // Re-render to show/hide ingredient display options
+                        wizard.showStep(wizard.currentStep);
+                    });
+                }
+                
+                // Ingredient Display Style
+                const ingredientRadios = document.querySelectorAll('input[name="ingredientDisplay"]');
+                ingredientRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        wizard.wizardData.ingredientDisplay = this.value;
+                        window.WizardSteps.updateMealPreview(wizard);
+                    });
+                });
+                
+                // Show Portions
+                const showPortions = document.getElementById('showPortions');
+                if (showPortions) {
+                    showPortions.addEventListener('change', function() {
+                        wizard.wizardData.showPortions = this.checked;
+                        window.WizardSteps.updateMealPreview(wizard);
+                    });
+                }
+                
+                // Show Calories
+                const showCalories = document.getElementById('showCalories');
+                if (showCalories) {
+                    showCalories.addEventListener('change', function() {
+                        wizard.wizardData.showCalories = this.checked;
+                        window.WizardSteps.updateMealPreview(wizard);
+                    });
+                }
+                
+                // Highlight Allergens
+                const highlightAllergens = document.getElementById('highlightAllergens');
+                if (highlightAllergens) {
+                    highlightAllergens.addEventListener('change', function() {
+                        wizard.wizardData.highlightAllergens = this.checked;
+                        // Re-render to show/hide allergen style options
+                        wizard.showStep(wizard.currentStep);
+                    });
+                }
+                
+                // Allergen Style
+                const allergenRadios = document.querySelectorAll('input[name="allergenStyle"]');
+                allergenRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        wizard.wizardData.allergenStyle = this.value;
+                        window.WizardSteps.updateMealPreview(wizard);
+                    });
+                });
             },
             validate: (data) => {
                 return { valid: true };
@@ -500,6 +737,16 @@ window.WizardSteps = {
             const step = this.getStep(2);
             if (step && step.renderDayPreview) {
                 previewDiv.innerHTML = step.renderDayPreview(wizard.wizardData);
+            }
+        }
+    },
+    
+    updateMealPreview: function(wizard) {
+        const previewDiv = document.getElementById('mealDisplayPreview');
+        if (previewDiv && wizard.wizardData) {
+            const step = this.getStep(3);
+            if (step && step.renderMealPreview) {
+                previewDiv.innerHTML = step.renderMealPreview(wizard.wizardData);
             }
         }
     },
