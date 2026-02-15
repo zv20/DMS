@@ -33,7 +33,7 @@ window.WizardSteps = {
             id: 1,
             title: '🎴 Layout Selection',
             description: 'Choose a layout style for your meal plan',
-            renderContent: (data) => {
+            renderContent: function(data) {
                 const selectedLayout = data.layoutStyle || 'grid';
                 let html = '<div class="layout-selection">';
                 
@@ -66,7 +66,7 @@ window.WizardSteps = {
                 html += '</div>';
                 return html;
             },
-            attachListeners: (wizard) => {
+            attachListeners: function(wizard) {
                 document.querySelectorAll('.layout-card').forEach(card => {
                     card.addEventListener('click', function() {
                         document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('selected'));
@@ -86,7 +86,18 @@ window.WizardSteps = {
             id: 2,
             title: '🎨 Week Styling',
             description: 'Customize the appearance of your week layout',
-            renderContent: (data) => {
+            renderDayPreview: function(data) {
+                const dayHeaderSize = data.dayHeaderSize || '1.2em';
+                const dayHeaderColor = data.dayHeaderColor || '#333333';
+                const dayBlockBg = data.dayBlockBg || '#ffffff';
+                const dayBlockBorder = data.dayBlockBorder || '#ddd';
+                const dayBlockPadding = data.dayBlockPadding || 15;
+                
+                return `<div style="background: ${dayBlockBg}; border: 2px solid ${dayBlockBorder}; padding: ${dayBlockPadding}px; border-radius: 8px;">
+                    <div style="font-size: ${dayHeaderSize}; color: ${dayHeaderColor}; font-weight: bold; margin-bottom: 10px;">Monday</div>
+                    <div>Breakfast: Oatmeal</div><div>Lunch: Salad</div><div>Dinner: Pasta</div></div>`;
+            },
+            renderContent: function(data) {
                 const dayHeaderSize = data.dayHeaderSize || '1.2em';
                 const dayHeaderColor = data.dayHeaderColor || '#333333';
                 const dayBlockBg = data.dayBlockBg || '#ffffff';
@@ -118,18 +129,7 @@ window.WizardSteps = {
                 html += '</div></div></div>';
                 return html;
             },
-            renderDayPreview: (data) => {
-                const dayHeaderSize = data.dayHeaderSize || '1.2em';
-                const dayHeaderColor = data.dayHeaderColor || '#333333';
-                const dayBlockBg = data.dayBlockBg || '#ffffff';
-                const dayBlockBorder = data.dayBlockBorder || '#ddd';
-                const dayBlockPadding = data.dayBlockPadding || 15;
-                
-                return `<div style="background: ${dayBlockBg}; border: 2px solid ${dayBlockBorder}; padding: ${dayBlockPadding}px; border-radius: 8px;">
-                    <div style="font-size: ${dayHeaderSize}; color: ${dayHeaderColor}; font-weight: bold; margin-bottom: 10px;">Monday</div>
-                    <div>Breakfast: Oatmeal</div><div>Lunch: Salad</div><div>Dinner: Pasta</div></div>`;
-            },
-            attachListeners: (wizard) => {
+            attachListeners: function(wizard) {
                 ['dayHeaderSize', 'dayBlockPadding', 'daySpacing'].forEach(id => {
                     const el = document.getElementById(id);
                     const val = document.getElementById(id + 'Value');
@@ -161,7 +161,26 @@ window.WizardSteps = {
             id: 3,
             title: '🍽️ Meal Display Options',
             description: 'Choose what information to show for each meal',
-            renderContent: (data) => {
+            renderMealPreview: function(data) {
+                const showMealTitles = data.showMealTitles !== false;
+                const showIngredients = data.showIngredients !== false;
+                const showPortions = data.showPortions !== false;
+                const showCalories = data.showCalories || false;
+                
+                let html = '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">';
+                html += showMealTitles ? '<div style="color: #ff6b35; font-weight: bold;">1. Breakfast</div>' : '';
+                html += '<div>Oatmeal with Berries';
+                if (showPortions || showCalories) {
+                    html += ' <span style="color: #888;">(250g';
+                    if (showCalories) html += ', 320 cal';
+                    html += ')</span>';
+                }
+                html += '</div>';
+                if (showIngredients) html += '<div style="font-size: 0.9em; color: #666;">Ingredients: Oats, blueberries, strawberries</div>';
+                html += '</div>';
+                return html;
+            },
+            renderContent: function(data) {
                 const showMealTitles = data.showMealTitles !== false;
                 const showIngredients = data.showIngredients !== false;
                 const ingredientDisplay = data.ingredientDisplay || 'list';
@@ -206,26 +225,7 @@ window.WizardSteps = {
                 html += '</div></div></div>';
                 return html;
             },
-            renderMealPreview: (data) => {
-                const showMealTitles = data.showMealTitles !== false;
-                const showIngredients = data.showIngredients !== false;
-                const showPortions = data.showPortions !== false;
-                const showCalories = data.showCalories || false;
-                
-                let html = '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">';
-                html += showMealTitles ? '<div style="color: #ff6b35; font-weight: bold;">1. Breakfast</div>' : '';
-                html += '<div>Oatmeal with Berries';
-                if (showPortions || showCalories) {
-                    html += ' <span style="color: #888;">(250g';
-                    if (showCalories) html += ', 320 cal';
-                    html += ')</span>';
-                }
-                html += '</div>';
-                if (showIngredients) html += '<div style="font-size: 0.9em; color: #666;">Ingredients: Oats, blueberries, strawberries</div>';
-                html += '</div>';
-                return html;
-            },
-            attachListeners: (wizard) => {
+            attachListeners: function(wizard) {
                 ['showMealTitles', 'showIngredients', 'showPortions', 'showCalories', 'highlightAllergens'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
@@ -248,12 +248,20 @@ window.WizardSteps = {
             collectData: () => ({})
         },
         
-        // STEP 4: Typography & Colors (keeping existing implementation)
+        // STEP 4: Typography & Colors
         {
             id: 4,
             title: '🎨 Typography & Colors',
             description: 'Customize fonts and color scheme',
-            renderContent: (data) => {
+            renderTypographyPreview: function(data) {
+                const headerFontSize = data.headerFontSize || 2;
+                const mealFontSize = data.mealFontSize || 1;
+                const primaryColor = data.primaryColor || '#ff6b35';
+                const backgroundColor = data.backgroundColor || '#ffffff';
+                const textColor = data.textColor || '#333333';
+                return `<div style="background: ${backgroundColor}; padding: 20px; border-radius: 8px;"><div style="font-size: ${headerFontSize}em; color: ${primaryColor}; font-weight: bold;">Weekly Meal Plan</div><div style="border: 2px solid ${primaryColor}; padding: 15px; margin-top: 15px; border-radius: 8px;"><div style="color: ${textColor}; font-weight: bold;">Monday</div><div style="color: ${primaryColor}; font-weight: 600; font-size: ${mealFontSize}em;">1. Breakfast</div><div style="color: ${textColor}; font-size: ${mealFontSize}em;">Oatmeal with berries</div></div></div>`;
+            },
+            renderContent: function(data) {
                 const headerFontSize = data.headerFontSize || 2;
                 const mealFontSize = data.mealFontSize || 1;
                 const primaryColor = data.primaryColor || '#ff6b35';
@@ -278,13 +286,7 @@ window.WizardSteps = {
                 html += '<div class="style-section"><h3>👁️ Preview</h3><div id="typographyPreview">' + this.renderTypographyPreview(data) + '</div></div></div>';
                 return html;
             },
-            renderTypographyPreview: (data) => {
-                const primaryColor = data.primaryColor || '#ff6b35';
-                const backgroundColor = data.backgroundColor || '#ffffff';
-                const textColor = data.textColor || '#333333';
-                return `<div style="background: ${backgroundColor}; padding: 20px; border-radius: 8px;"><div style="font-size: ${data.headerFontSize || 2}em; color: ${primaryColor}; font-weight: bold;">Weekly Meal Plan</div><div style="border: 2px solid ${primaryColor}; padding: 15px; margin-top: 15px; border-radius: 8px;"><div style="color: ${textColor}; font-weight: bold;">Monday</div><div style="color: ${primaryColor}; font-weight: 600;">1. Breakfast</div><div style="color: ${textColor};">Oatmeal with berries</div></div></div>`;
-            },
-            attachListeners: (wizard) => {
+            attachListeners: function(wizard) {
                 document.querySelectorAll('.theme-preset-card').forEach(card => {
                     card.addEventListener('click', function() {
                         const theme = window.WizardSteps.themes[this.getAttribute('data-theme-index')];
