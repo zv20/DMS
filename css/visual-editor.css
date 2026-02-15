@@ -1,0 +1,560 @@
+/**
+ * Visual Drag & Drop Template Editor Styles
+ * Beautiful, modern, and intuitive interface
+ */
+
+.visual-editor {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    background: #f5f7fa;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Toolbar */
+.visual-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: white;
+    border-bottom: 2px solid #e9ecef;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #333;
+}
+
+.toolbar-btn:hover {
+    border-color: #ff6b35;
+    background: #fff5f2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn-primary {
+    background: #ff6b35;
+    color: white;
+    border-color: #ff6b35;
+}
+
+.toolbar-btn-primary:hover {
+    background: #ff5722;
+    border-color: #ff5722;
+}
+
+/* Main Editor Layout */
+.visual-editor-main {
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.visual-sidebar {
+    background: white;
+    border-right: 2px solid #e9ecef;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.sidebar-section {
+    margin-bottom: 25px;
+}
+
+.sidebar-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #666;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.draggable-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: move;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.draggable-item:hover {
+    background: #fff5f2;
+    border-color: #ff6b35;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+}
+
+.draggable-item:active {
+    cursor: grabbing;
+    opacity: 0.8;
+}
+
+.day-template-preview {
+    font-size: 1.5rem;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Canvas Area */
+.visual-canvas-wrapper {
+    background: #e9ecef;
+    overflow: auto;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.visual-canvas {
+    width: 800px;
+    min-height: 1000px;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    position: relative;
+}
+
+.canvas-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #999;
+    pointer-events: none;
+}
+
+.placeholder-icon {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.canvas-placeholder h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    color: #666;
+}
+
+.canvas-placeholder p {
+    margin: 0;
+    font-size: 1rem;
+    color: #999;
+}
+
+/* Canvas Elements */
+.canvas-element {
+    position: absolute;
+    cursor: move;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s ease;
+    user-select: none;
+}
+
+.canvas-element:hover {
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3);
+}
+
+.canvas-element.selected {
+    box-shadow: 0 0 0 3px #ff6b35 !important;
+    z-index: 1000;
+}
+
+/* Day Block Element */
+.day-block {
+    background: white;
+    border: 2px solid #ff6b35;
+    border-radius: 10px;
+    padding: 15px;
+    width: 250px;
+    min-height: 150px;
+}
+
+.element-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.element-day-name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #ff6b35;
+}
+
+.element-delete {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #dc3545;
+    background: white;
+    color: #dc3545;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.element-delete:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+.element-content {
+    color: #333;
+}
+
+.meal-item {
+    margin: 8px 0;
+    font-size: 0.95rem;
+}
+
+.meal-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.meal-value {
+    color: #333;
+}
+
+/* Text Box Element */
+.text-box {
+    background: transparent;
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    width: 200px;
+    min-height: 50px;
+}
+
+.text-box.selected {
+    border-style: solid;
+    border-color: #ff6b35;
+}
+
+.text-content {
+    outline: none;
+    min-height: 30px;
+    font-size: 16px;
+    color: #333;
+}
+
+.text-content:empty:before {
+    content: 'Double click to edit';
+    color: #999;
+}
+
+/* Image Box Element */
+.image-box {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.image-placeholder:hover {
+    background: #e9ecef;
+}
+
+.image-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.image-placeholder p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Properties Panel */
+.visual-properties {
+    background: white;
+    border-left: 2px solid #e9ecef;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.properties-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.properties-content h3 {
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.property-group {
+    margin-bottom: 20px;
+}
+
+.property-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.property-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.property-input:focus {
+    outline: none;
+    border-color: #ff6b35;
+}
+
+.property-input[type="color"] {
+    height: 45px;
+    cursor: pointer;
+}
+
+.property-range {
+    width: 100%;
+    height: 6px;
+    border-radius: 5px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.property-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6b35;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.property-range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6b35;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-value {
+    display: inline-block;
+    margin-left: 10px;
+    font-weight: 600;
+    color: #ff6b35;
+    font-size: 0.9rem;
+}
+
+.property-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.property-btn {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.property-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.property-btn-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.property-btn-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Resize Handles (interact.js) */
+.resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ff6b35;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 1200px) {
+    .visual-editor-main {
+        grid-template-columns: 200px 1fr 250px;
+    }
+}
+
+@media (max-width: 968px) {
+    .visual-editor-main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .visual-sidebar {
+        border-right: none;
+        border-bottom: 2px solid #e9ecef;
+        max-height: 200px;
+    }
+    
+    .visual-properties {
+        display: none;
+    }
+    
+    .visual-canvas {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .visual-toolbar {
+        padding: 10px;
+    }
+    
+    .toolbar-btn span {
+        display: none;
+    }
+    
+    .toolbar-btn {
+        padding: 10px;
+        font-size: 1.2rem;
+    }
+    
+    .visual-canvas-wrapper {
+        padding: 15px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.canvas-element {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Print Styles */
+@media print {
+    .visual-toolbar,
+    .visual-sidebar,
+    .visual-properties,
+    .element-delete {
+        display: none !important;
+    }
+    
+    .visual-editor-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .visual-canvas {
+        box-shadow: none;
+    }
+}
