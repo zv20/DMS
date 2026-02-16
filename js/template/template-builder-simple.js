@@ -1,11 +1,14 @@
 /**
- * Simplified Template Builder
- * Clean, practical template customization matching real-world school menu format
+ * Simplified Template Builder with Dual Format Support
+ * Clean, practical template customization with two style options
  */
 
 class SimpleTemplateBuilder {
     constructor() {
         this.settings = {
+            // Template Style
+            templateStyle: 'compact', // 'compact' or 'detailed'
+            
             // Content visibility
             showDateRange: true,
             showIngredients: true,
@@ -66,6 +69,27 @@ class SimpleTemplateBuilder {
         sidebar.innerHTML = `
             <div class="simple-template-controls">
                 <h2 style="margin: 0 0 20px 0; font-size: 20px;">📝 Template Settings</h2>
+                
+                <!-- TEMPLATE STYLE SELECTOR -->
+                <div class="control-section" style="background: #e3f2fd; padding: 15px; border-radius: 8px;">
+                    <h3>🎨 Template Style</h3>
+                    
+                    <label class="radio-label">
+                        <input type="radio" name="templateStyle" value="compact" checked>
+                        <div>
+                            <strong>Compact (Bulgarian School)</strong>
+                            <div style="font-size: 11px; color: #666; margin-top: 3px;">Everything on one line, allergens in red</div>
+                        </div>
+                    </label>
+                    
+                    <label class="radio-label">
+                        <input type="radio" name="templateStyle" value="detailed">
+                        <div>
+                            <strong>Detailed (With Labels)</strong>
+                            <div style="font-size: 11px; color: #666; margin-top: 3px;">Ingredients on separate line with "Съставки:"</div>
+                        </div>
+                    </label>
+                </div>
                 
                 <!-- CONTENT SECTION -->
                 <div class="control-section">
@@ -220,6 +244,34 @@ class SimpleTemplateBuilder {
                 .checkbox-label span {
                     font-weight: normal;
                 }
+                
+                .radio-label {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    margin-bottom: 12px;
+                    padding: 10px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                
+                .radio-label:hover {
+                    background: #f8f9fa;
+                    border-color: #2196f3;
+                }
+                
+                .radio-label input[type="radio"] {
+                    margin-top: 3px;
+                    width: 18px;
+                    height: 18px;
+                    cursor: pointer;
+                }
+                
+                .radio-label input[type="radio"]:checked {
+                    accent-color: #2196f3;
+                }
             </style>
         `;
         
@@ -228,6 +280,15 @@ class SimpleTemplateBuilder {
     }
     
     bindEvents() {
+        // Template style radio buttons
+        document.querySelectorAll('input[name="templateStyle"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.settings.templateStyle = e.target.value;
+                console.log('📝 Template style changed to:', e.target.value);
+                this.updatePreview();
+            });
+        });
+        
         // Upload background button
         document.getElementById('uploadBackgroundBtn')?.addEventListener('click', () => {
             document.getElementById('backgroundImageUpload').click();
@@ -288,23 +349,18 @@ class SimpleTemplateBuilder {
         const file = event.target.files[0];
         if (!file) return;
         
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('Please select an image file.');
             return;
         }
         
         try {
-            // Save image to data/images/backgrounds/
             const success = await this.saveImageToFolder(file);
             
             if (success) {
                 this.settings.backgroundImage = file.name;
-                
-                // Show preview
                 document.getElementById('backgroundPreview').style.display = 'block';
                 document.getElementById('backgroundFileName').textContent = file.name;
-                
                 this.updatePreview();
                 alert('✅ Background image uploaded successfully!');
             }
@@ -321,16 +377,9 @@ class SimpleTemplateBuilder {
         }
         
         try {
-            // Get/create data folder
             const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: true });
-            
-            // Get/create images folder
             const imagesDir = await dataDir.getDirectoryHandle('images', { create: true });
-            
-            // Get/create backgrounds folder
             const backgroundsDir = await imagesDir.getDirectoryHandle('backgrounds', { create: true });
-            
-            // Create file
             const fileHandle = await backgroundsDir.getFileHandle(file.name, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(file);
@@ -351,7 +400,6 @@ class SimpleTemplateBuilder {
         this.updatePreview();
     }
     
-    // Load sample data for preview
     loadSampleData() {
         console.log('👀 Loading sample data...');
         const today = new Date();
@@ -443,7 +491,6 @@ class SimpleTemplateBuilder {
         console.log('✅ Sample data loaded:', this.previewData);
     }
     
-    // Load real data from menu planner
     loadRealData() {
         console.log('👀 Loading real menu data...');
         
@@ -458,7 +505,6 @@ class SimpleTemplateBuilder {
         const days = [];
         const dayNames = ['Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък'];
         
-        // Only Monday-Friday (5 days)
         for (let i = 0; i < 5; i++) {
             const date = weekDates[i];
             const dateStr = date.toISOString().split('T')[0];
@@ -466,13 +512,11 @@ class SimpleTemplateBuilder {
             
             const meals = [];
             
-            // Get 4 meals from slots
             ['slot1', 'slot2', 'slot3', 'slot4'].forEach((slotId, mealNum) => {
                 const slot = dayMenu[slotId];
                 const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
                 
                 if (recipe) {
-                    // Get ingredients
                     const ingredients = (recipe.ingredients || []).map(ingObj => {
                         const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                         const ing = window.ingredients.find(i => i.id === ingId);
@@ -489,7 +533,6 @@ class SimpleTemplateBuilder {
                 }
             });
             
-            // Always add the day even if no meals
             days.push({
                 name: dayNames[i],
                 meals: meals
@@ -510,7 +553,6 @@ class SimpleTemplateBuilder {
         console.log('✅ Real data loaded:', this.previewData);
         this.updatePreview();
         
-        // Update button
         const btn = document.getElementById('btnPreview');
         if (btn) {
             btn.textContent = '✅ Using Your Menu';
@@ -548,18 +590,22 @@ class SimpleTemplateBuilder {
             return;
         }
         
-        console.log('📝 Updating preview...');
-        container.innerHTML = this.renderMenu(this.previewData);
+        console.log('📝 Updating preview with style:', this.settings.templateStyle);
+        
+        // Choose rendering method based on template style
+        if (this.settings.templateStyle === 'compact') {
+            container.innerHTML = this.renderCompactMenu(this.previewData);
+        } else {
+            container.innerHTML = this.renderDetailedMenu(this.previewData);
+        }
     }
     
-    renderMenu(data) {
+    renderCompactMenu(data) {
         const { startDate, endDate, days } = data;
         const s = this.settings;
         
-        // Format date range
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        // Text size mapping
         const sizes = {
             small: { base: '10pt', title: '16pt', day: '12pt' },
             medium: { base: '12pt', title: '20pt', day: '14pt' },
@@ -581,43 +627,26 @@ class SimpleTemplateBuilder {
             ">
         `;
         
-        // Header
         if (s.showHeader) {
             html += `
                 <div style="text-align: center; margin-bottom: 10px;">
-                    <h1 style="
-                        margin: 0;
-                        font-size: ${size.title};
-                        color: #d2691e;
-                        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-                    ">${s.headerText}</h1>
+                    <h1 style="margin: 0; font-size: ${size.title}; color: #d2691e;">${s.headerText}</h1>
                 </div>
             `;
         }
         
-        // Date range
         if (s.showDateRange) {
-            html += `
-                <div style="text-align: center; margin-bottom: 20px; font-size: ${size.base};">
-                    ${dateRange}
-                </div>
-            `;
+            html += `<div style="text-align: center; margin-bottom: 20px;">${dateRange}</div>`;
         }
         
-        // Days
         days.forEach(day => {
-            if (day.meals.length === 0) return; // Skip days with no meals
+            if (day.meals.length === 0) return;
             
             html += `
                 <div style="margin-bottom: 15px;">
-                    <div style="
-                        font-size: ${size.day};
-                        font-weight: ${s.dayNameStyle};
-                        margin-bottom: 8px;
-                    ">${day.name}</div>
+                    <div style="font-size: ${size.day}; font-weight: ${s.dayNameStyle}; margin-bottom: 8px;">${day.name}</div>
             `;
             
-            // Meals
             day.meals.forEach(meal => {
                 html += `<div style="margin-bottom: 5px; margin-left: 10px;">`;
                 html += `${meal.number}. ${meal.name}`;
@@ -647,7 +676,91 @@ class SimpleTemplateBuilder {
         });
         
         html += `</div>`;
+        return html;
+    }
+    
+    renderDetailedMenu(data) {
+        const { startDate, endDate, days } = data;
+        const s = this.settings;
         
+        const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')} — ${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')}, ${startDate.getFullYear()}`;
+        
+        const sizes = {
+            small: { base: '10pt', title: '18pt', day: '13pt' },
+            medium: { base: '12pt', title: '22pt', day: '15pt' },
+            large: { base: '14pt', title: '26pt', day: '17pt' }
+        };
+        const size = sizes[s.textSize];
+        
+        let html = `
+            <div class="menu-preview" style="
+                background: ${s.backgroundColor};
+                ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''}
+                background-size: cover;
+                background-position: center;
+                padding: 25px;
+                min-height: 400px;
+                font-family: Arial, sans-serif;
+                font-size: ${size.base};
+                line-height: 1.6;
+            ">
+        `;
+        
+        if (s.showHeader) {
+            html += `
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <h1 style="margin: 0; font-size: ${size.title}; color: #d2691e;">${s.headerText}</h1>
+                </div>
+            `;
+        }
+        
+        if (s.showDateRange) {
+            html += `<div style="text-align: center; margin-bottom: 25px; font-size: ${size.base};">${dateRange}</div>`;
+        }
+        
+        days.forEach(day => {
+            if (day.meals.length === 0) return;
+            
+            html += `
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: ${size.day}; font-weight: ${s.dayNameStyle}; margin-bottom: 12px; color: #555;">${day.name}</div>
+            `;
+            
+            day.meals.forEach(meal => {
+                html += `<div style="margin-bottom: 12px; margin-left: 15px;">`;
+                html += `<div style="margin-bottom: 3px;">${meal.number}. ${meal.name}`;
+                
+                if (s.showPortions && meal.portion) {
+                    html += ` (${meal.portion}`;
+                    if (s.showCalories && meal.calories) {
+                        html += `, ${meal.calories} ККАЛ`;
+                    }
+                    html += `)`;
+                } else if (s.showCalories && meal.calories) {
+                    html += ` (${meal.calories} ККАЛ)`;
+                }
+                
+                html += `</div>`;
+                
+                if (s.showIngredients && meal.ingredients.length > 0) {
+                    html += `<div style="font-size: 0.95em; color: #666; margin-left: 15px;">`;
+                    html += `Съставки: `;
+                    html += meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            return `<span style="color: ${s.allergenColor}; font-weight: bold;">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ');
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            html += `</div>`;
+        });
+        
+        html += `</div>`;
         return html;
     }
     
@@ -656,7 +769,6 @@ class SimpleTemplateBuilder {
         if (!name) return;
         
         if (!window.menuTemplates) window.menuTemplates = {};
-        
         window.menuTemplates[name] = this.settings;
         
         if (window.storageAdapter) {
@@ -669,10 +781,9 @@ class SimpleTemplateBuilder {
     reset() {
         if (!confirm('Reset all settings to default?')) return;
         
-        // Reset settings
         this.settings = new SimpleTemplateBuilder().settings;
         
-        // Reset UI
+        document.querySelectorAll('input[name="templateStyle"]')[0].checked = true;
         document.getElementById('showDateRange').checked = true;
         document.getElementById('showIngredients').checked = true;
         document.getElementById('showCalories').checked = true;
@@ -687,21 +798,21 @@ class SimpleTemplateBuilder {
         document.getElementById('headerText').value = 'Седмично меню';
         
         this.removeBackground();
-        
-        // Reload sample data
         this.loadSampleData();
         this.updatePreview();
     }
     
-    // Public API for print system
     getSettings() {
         return { ...this.settings };
     }
     
     generatePrintHTML(data) {
-        return this.renderMenu(data);
+        if (this.settings.templateStyle === 'compact') {
+            return this.renderCompactMenu(data);
+        } else {
+            return this.renderDetailedMenu(data);
+        }
     }
 }
 
-// Global instance
 window.simpleTemplateBuilder = new SimpleTemplateBuilder();
