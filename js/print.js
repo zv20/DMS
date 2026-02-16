@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * Ultra-compact layout optimized for A4 paper (5 weekdays fit on one page)
- * UPDATED: Works with new StepTemplateBuilder
+ * UPDATED: Works with new StepTemplateBuilder + Compact vs Detailed styles
  */
 
 (function(window) {
@@ -21,7 +21,7 @@
         const weekSelection = await selectWeekDialog();
         if (!weekSelection) return; // User cancelled
         
-        console.log('🗓️ Selected week:', {
+        console.log('🗃️ Selected week:', {
             start: getLocalDateString(weekSelection.startDate),
             end: getLocalDateString(weekSelection.endDate)
         });
@@ -225,6 +225,8 @@
             
             // Saved templates
             templateNames.forEach(name => {
+                const template = savedTemplates[name];
+                const styleLabel = template.templateStyle === 'detailed' ? 'Detailed' : 'Compact';
                 optionsHTML += `
                     <button class="template-option" data-template="${name}" style="
                         padding: 15px;
@@ -238,7 +240,7 @@
                         width: 100%;
                     ">
                         <strong>📋 ${name}</strong><br>
-                        <small style="color: #666;">Your saved template</small>
+                        <small style="color: #666;">${styleLabel} style - Your saved template</small>
                     </button>
                 `;
             });
@@ -374,6 +376,7 @@
         if (templateChoice.type === 'default') {
             // Default template settings
             settings = {
+                templateStyle: 'compact',
                 backgroundImage: null,
                 backgroundColor: '#ffffff',
                 backgroundOpacity: 1.0,
@@ -408,9 +411,25 @@
         return renderMenuHTML(mealPlanData, settings);
     }
     
-    // NEW: Direct HTML rendering based on template settings
+    // NEW: Direct HTML rendering based on template settings (NOW WITH COMPACT/DETAILED SUPPORT)
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
+        
+        // COMPACT vs DETAILED style logic (matches template-builder-steps.js)
+        const isCompact = (s.templateStyle || 'compact') === 'compact';
+        const spacing = {
+            containerPadding: isCompact ? '12px' : '15px',
+            headerMargin: isCompact ? '8px' : '10px',
+            dateMargin: isCompact ? '10px' : '12px',
+            dayMargin: isCompact ? '8px' : '8px',
+            dayPadding: isCompact ? '6px' : '6px',
+            dayNameMargin: isCompact ? '4px' : '5px',
+            mealMargin: isCompact ? '3px' : '4px',
+            mealLeftMargin: isCompact ? '8px' : '8px',
+            footerMarginTop: isCompact ? '12px' : '15px',
+            footerPaddingTop: isCompact ? '10px' : '12px',
+            lineHeight: isCompact ? '1.2' : '1.3'
+        };
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
@@ -425,42 +444,69 @@
         const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '12pt';
         const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '10pt';
         
-        let html = `<div style="background: ${s.backgroundColor}; padding: 20px; min-height: 400px; font-family: Arial, sans-serif;">`;
+        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif;">`;
         
         // Header
         if (s.showHeader) {
-            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: 15px;"><span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span></div>`;
+            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: ${spacing.headerMargin};"><span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span></div>`;
         }
         
         if (s.showDateRange) {
-            html += `<div style="text-align: center; margin-bottom: 20px; font-size: 11pt;">${dateRange}</div>`;
+            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         }
         
         // Menu days
         days.forEach(day => {
-            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: 10px; margin-bottom: 15px; border-radius: 4px;`;
-            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: 8px;">${day.name}</div>`;
+            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
+            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
             
             day.meals.forEach(meal => {
-                html += `<div style="margin-bottom: 5px; margin-left: 10px; font-size: ${mealSize}; line-height: 1.4;"> ${meal.number}. ${meal.name}`;
-                
-                if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
-                
-                if (s.showIngredients && meal.ingredients.length) {
-                    html += `; ${meal.ingredients.map(ing => {
-                        if (ing.hasAllergen) {
-                            let style = `color: ${s.allergenColor};`;
-                            if (s.allergenBold) style += ' font-weight: bold;';
-                            if (s.allergenUnderline) style += ' text-decoration: underline;';
-                            return `<span style="${style}">${ing.name}</span>`;
-                        }
-                        return ing.name;
-                    }).join(', ')}`;
+                if (isCompact) {
+                    // COMPACT: Everything on one line
+                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
+                    
+                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    
+                    if (s.showIngredients && meal.ingredients.length) {
+                        html += `; ${meal.ingredients.map(ing => {
+                            if (ing.hasAllergen) {
+                                let style = `color: ${s.allergenColor};`;
+                                if (s.allergenBold) style += ' font-weight: bold;';
+                                if (s.allergenUnderline) style += ' text-decoration: underline;';
+                                return `<span style="${style}">${ing.name}</span>`;
+                            }
+                            return ing.name;
+                        }).join(', ')}`;
+                    }
+                    
+                    if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
+                    
+                    html += `</div>`;
+                } else {
+                    // DETAILED: Meal name on first line, ingredients on second line
+                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
+                    
+                    // Line 1: Meal number, name, portion, calories
+                    html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
+                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    if (s.showCalories && meal.calories) html += ` (ККАЛ ${meal.calories})`;
+                    html += `</div>`;
+                    
+                    // Line 2: Ingredients (if enabled and exist)
+                    if (s.showIngredients && meal.ingredients.length) {
+                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
+                            if (ing.hasAllergen) {
+                                let style = `color: ${s.allergenColor};`;
+                                if (s.allergenBold) style += ' font-weight: bold;';
+                                if (s.allergenUnderline) style += ' text-decoration: underline;';
+                                return `<span style="${style}">${ing.name}</span>`;
+                            }
+                            return ing.name;
+                        }).join(', ')}</div>`;
+                    }
+                    
+                    html += `</div>`;
                 }
-                
-                if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
-                
-                html += `</div>`;
             });
             
             html += `</div>`;
@@ -468,7 +514,7 @@
         
         // Footer
         if (s.showFooter) {
-            html += `<div style="text-align: ${s.footerAlignment}; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
+            html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
         }
         
         html += `</div>`;
