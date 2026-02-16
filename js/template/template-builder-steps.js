@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.4 - Detailed view: calories moved to ingredients row
+ * @version 2.5 - Portions and Calories always enabled
  */
 
 class StepTemplateBuilder {
@@ -28,8 +28,8 @@ class StepTemplateBuilder {
             // Weekly Menu
             showDateRange: true,
             showIngredients: true,
-            showCalories: true,
-            showPortions: true,
+            showCalories: true,      // Always true now
+            showPortions: true,      // Always true now
             
             // Day Block Styling
             dayBorder: false,
@@ -225,8 +225,7 @@ class StepTemplateBuilder {
                 <h4 style="margin-top: 15px;">📜 Content</h4>
                 <label class="checkbox-label"><input type="checkbox" id="showDateRange" checked><span>Date Range</span></label>
                 <label class="checkbox-label"><input type="checkbox" id="showIngredients" checked><span>Ingredients</span></label>
-                <label class="checkbox-label"><input type="checkbox" id="showCalories" checked><span>Calories</span></label>
-                <label class="checkbox-label"><input type="checkbox" id="showPortions" checked><span>Portions</span></label>
+                <p style="font-size: 11px; color: #666; margin: 10px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">ℹ️ Portions and Calories are always shown</p>
                 
                 <h4 style="margin-top: 15px;">📊 Day Block</h4>
                 <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span>Show Border</span></label>
@@ -380,11 +379,9 @@ class StepTemplateBuilder {
             });
         });
         
-        // Menu
+        // Menu (Portions and Calories removed - always true)
         this.bindCheckbox('showDateRange');
         this.bindCheckbox('showIngredients');
-        this.bindCheckbox('showCalories');
-        this.bindCheckbox('showPortions');
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
         this.bindColorInput('dayBackground');
@@ -595,9 +592,9 @@ class StepTemplateBuilder {
             
             day.meals.forEach(meal => {
                 if (isCompact) {
-                    // COMPACT: Everything on one line
+                    // COMPACT: Everything on one line (portions and calories always shown)
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
-                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    if (meal.portion) html += ` - ${meal.portion}`;
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `; ${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -609,18 +606,18 @@ class StepTemplateBuilder {
                             return ing.name;
                         }).join(', ')}`;
                     }
-                    if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
+                    if (meal.calories) html += ` ККАЛ ${meal.calories}`;
                     html += `</div>`;
                 } else {
                     // DETAILED: Meal name on first line, ingredients + calories on second line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
                     
-                    // Line 1: Meal number, name, portion (NO CALORIES)
+                    // Line 1: Meal number, name, portion (always shown)
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
-                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    if (meal.portion) html += ` - ${meal.portion}`;
                     html += `</div>`;
                     
-                    // Line 2: Ingredients + Calories (if enabled)
+                    // Line 2: Ingredients + Calories
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -632,13 +629,13 @@ class StepTemplateBuilder {
                             return ing.name;
                         }).join(', ')}`;
                         
-                        // Add calories AFTER ingredients on same line
-                        if (s.showCalories && meal.calories) {
+                        // Add calories AFTER ingredients on same line (always shown)
+                        if (meal.calories) {
                             html += ` - ККАЛ ${meal.calories}`;
                         }
                         html += `</div>`;
-                    } else if (s.showCalories && meal.calories) {
-                        // If no ingredients but calories exist
+                    } else if (meal.calories) {
+                        // If no ingredients but calories exist (always shown)
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                     }
                     
