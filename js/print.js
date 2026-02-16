@@ -2,6 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * Ultra-compact layout optimized for A4 paper (5 weekdays fit on one page)
+ * UPDATED: Works with new StepTemplateBuilder
  */
 
 (function(window) {
@@ -173,7 +174,7 @@
     // Dialog to select template
     function selectTemplateDialog() {
         return new Promise((resolve) => {
-            // UPDATED: Get templates from storage adapter instead of localStorage
+            // Get templates from global storage
             const savedTemplates = window.menuTemplates || {};
             const templateNames = Object.keys(savedTemplates);
             
@@ -295,10 +296,10 @@
         });
     }
     
-    // FIXED: Generate meal plan data from menu for date range (Monday-Friday only, only days with meals)
+    // Generate meal plan data from menu for date range (Monday-Friday only, only days with meals)
     function generateMealPlanData(startDate, endDate) {
         const days = [];
-        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const dayNames = ['Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък'];
         
         console.log('🔍 generateMealPlanData starting from:', startDate.toLocaleDateString());
         
@@ -307,9 +308,7 @@
             const currentDate = new Date(startDate);
             currentDate.setDate(startDate.getDate() + i);
             
-            // Use local date string conversion to avoid timezone issues
             const dateStr = getLocalDateString(currentDate);
-            
             console.log(`  Day ${i + 1}: ${dateStr} (${dayNames[i]})`);
             
             const dayMenu = window.getMenuForDate(dateStr);
@@ -330,38 +329,31 @@
                     const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
                     
                     if (recipe) {
-                        // Get ingredients
-                        const ingredients = (recipe.ingredients || []).map(ingObj => {
+                        // Get ingredients with allergen info
+                        const ingredientsData = (recipe.ingredients || []).map(ingObj => {
                             const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
                             const ing = window.ingredients.find(i => i.id === ingId);
-                            return ing ? ing.name : null;
+                            if (!ing) return null;
+                            
+                            return {
+                                name: ing.name,
+                                hasAllergen: ing.allergens && ing.allergens.length > 0
+                            };
                         }).filter(Boolean);
                         
-                        // Get allergens
-                        const allergens = [];
-                        (recipe.ingredients || []).forEach(ingObj => {
-                            const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
-                            const ing = window.ingredients.find(i => i.id === ingId);
-                            if (ing && ing.allergens && ing.allergens.length > 0) {
-                                allergens.push(ing.name);
-                            }
-                        });
-                        
                         meals.push({
-                            title: String(mealNum + 1),
+                            number: mealNum + 1,
                             name: recipe.name,
                             portion: recipe.portionSize || '',
                             calories: recipe.calories || null,
-                            ingredients: ingredients,
-                            allergens: allergens
+                            ingredients: ingredientsData
                         });
                     }
                 });
                 
                 if (meals.length > 0) {
                     days.push({
-                        date: dateStr,
-                        dayName: dayNames[i],
+                        name: dayNames[i],
                         meals: meals
                     });
                 }
@@ -369,64 +361,130 @@
         }
         
         return {
-            startDate: getLocalDateString(startDate),
-            endDate: getLocalDateString(endDate),
+            startDate: startDate,
+            endDate: endDate,
             days: days
         };
     }
     
-    // Render meal plan with selected template
+    // NEW: Render meal plan with selected template (works with new StepTemplateBuilder)
     function renderWithTemplate(mealPlanData, templateChoice) {
-        const renderer = new TemplateRenderer();
-        
         let settings;
+        
         if (templateChoice.type === 'default') {
-            // Use default elegant template optimized for A4 printing
+            // Default template settings
             settings = {
-                layoutStyle: 'elegant-single',
+                backgroundImage: null,
+                backgroundColor: '#ffffff',
+                backgroundOpacity: 1.0,
                 showHeader: true,
-                headerText: 'Weekly Meal Plan',
+                headerText: 'Седмично меню',
+                headerImage: null,
                 headerAlignment: 'center',
-                headerSize: '20',
+                headerFontSize: 'large',
+                headerColor: '#d2691e',
                 showDateRange: true,
-                dateFormat: 'long',
-                dayBlockBg: '#ffffff',
-                dayBlockBorder: '#e0e0e0',
-                dayBlockPadding: '8',
-                dayNameSize: '15',
+                showIngredients: true,
+                showCalories: true,
+                showPortions: true,
+                dayBorder: false,
+                dayBackground: 'transparent',
+                dayNameSize: 'medium',
                 dayNameColor: '#333333',
                 dayNameWeight: 'bold',
-                showMealTitles: false,
-                mealTitleSize: '12',
-                mealTitleColor: '#666666',
-                showIngredients: true,
-                ingredientLayout: 'list',
-                numberingStyle: 'none',
+                allergenColor: '#ff0000',
+                allergenBold: true,
                 showFooter: true,
-                footerText: 'Meal plan created with DMS',
-                backgroundColor: '#ffffff',
-                showBranding: true,
-                separatorStyle: 'none',
-                pageBorder: false,
-                isPrint: true
+                footerText: 'Prepared with care by KitchenPro',
+                footerImage: null,
+                footerAlignment: 'center',
+                footerFontSize: 'small'
             };
         } else {
-            settings = { ...templateChoice.settings, showIngredients: true, isPrint: true };
+            settings = templateChoice.settings;
         }
         
-        return renderer.render(settings, mealPlanData);
+        // Render HTML using template settings
+        return renderMenuHTML(mealPlanData, settings);
     }
     
-    // Open print window with HTML (A4 optimized with ultra-compact spacing)
+    // NEW: Direct HTML rendering based on template settings
+    function renderMenuHTML(data, s) {
+        const { startDate, endDate, days } = data;
+        
+        const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
+        
+        const sizeMaps = {
+            small: { header: '18pt', day: '12pt', meal: '10pt', footer: '9pt' },
+            medium: { header: '22pt', day: '14pt', meal: '12pt', footer: '10pt' },
+            large: { header: '26pt', day: '16pt', meal: '14pt', footer: '11pt' }
+        };
+        
+        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '22pt';
+        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '14pt';
+        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '12pt';
+        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '10pt';
+        
+        let html = `<div style="background: ${s.backgroundColor}; padding: 20px; min-height: 400px; font-family: Arial, sans-serif;">`;
+        
+        // Header
+        if (s.showHeader) {
+            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: 15px;"><span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span></div>`;
+        }
+        
+        if (s.showDateRange) {
+            html += `<div style="text-align: center; margin-bottom: 20px; font-size: 11pt;">${dateRange}</div>`;
+        }
+        
+        // Menu days
+        days.forEach(day => {
+            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: 10px; margin-bottom: 15px; border-radius: 4px;`;
+            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: 8px;">${day.name}</div>`;
+            
+            day.meals.forEach(meal => {
+                html += `<div style="margin-bottom: 5px; margin-left: 10px; font-size: ${mealSize}; line-height: 1.4;"> ${meal.number}. ${meal.name}`;
+                
+                if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                
+                if (s.showIngredients && meal.ingredients.length) {
+                    html += `; ${meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            let style = `color: ${s.allergenColor};`;
+                            if (s.allergenBold) style += ' font-weight: bold;';
+                            if (s.allergenUnderline) style += ' text-decoration: underline;';
+                            return `<span style="${style}">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ')}`;
+                }
+                
+                if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
+                
+                html += `</div>`;
+            });
+            
+            html += `</div>`;
+        });
+        
+        // Footer
+        if (s.showFooter) {
+            html += `<div style="text-align: ${s.footerAlignment}; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
+        }
+        
+        html += `</div>`;
+        return html;
+    }
+    
+    // Open print window with HTML (A4 optimized)
     function openPrintWindow(html, mealPlanData) {
         const printWindow = window.open('', '_blank');
-        const dateRange = `${mealPlanData.startDate}_to_${mealPlanData.endDate}`;
+        const dateStr = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth() + 1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth() + 1}.${mealPlanData.startDate.getFullYear()}`;
         
         printWindow.document.write(`
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Meal Plan ${dateRange}</title>
+                <title>Weekly Menu ${dateStr}</title>
                 <meta charset="UTF-8">
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -439,7 +497,6 @@
                         background: white;
                     }
                     
-                    /* A4 Page Setup with minimal margins */
                     @page {
                         size: A4 portrait;
                         margin: 12mm 12mm 10mm 12mm;
@@ -449,56 +506,6 @@
                         body {
                             width: 210mm;
                             min-height: 297mm;
-                        }
-                        
-                        /* Prevent page breaks */
-                        .elegant-day {
-                            page-break-inside: avoid;
-                        }
-                        
-                        /* Ultra-compact spacing */
-                        .elegant-day {
-                            margin-bottom: 8px !important;
-                            padding-bottom: 8px !important;
-                        }
-                        
-                        .elegant-meal {
-                            margin-bottom: 5px !important;
-                        }
-                        
-                        .meal-plan-header {
-                            margin-bottom: 8px !important;
-                            font-size: 18px !important;
-                        }
-                        
-                        .date-range {
-                            margin-bottom: 10px !important;
-                            font-size: 11px !important;
-                        }
-                        
-                        .meal-number {
-                            font-size: 28px !important;
-                        }
-                        
-                        .day-name {
-                            font-size: 14px !important;
-                            padding-top: 5px !important;
-                        }
-                        
-                        .meal-name {
-                            font-size: 12px !important;
-                            margin-bottom: 2px !important;
-                            line-height: 1.2 !important;
-                        }
-                        
-                        .ingredients {
-                            font-size: 10px !important;
-                            line-height: 1.3 !important;
-                        }
-                        
-                        .meal-plan-footer {
-                            margin-top: 15px !important;
-                            font-size: 9px !important;
                         }
                     }
                     
@@ -524,18 +531,15 @@
         printWindow.document.close();
     }
     
-    // FIXED: Helper function to get Monday-Friday of a week
+    // Helper function to get Monday-Friday of a week
     function getWeekDates(date) {
         const currentDate = new Date(date);
-        const day = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const day = currentDate.getDay();
         
-        // Calculate offset to Monday
         let diff;
         if (day === 0) {
-            // Sunday: go forward 1 day to Monday
             diff = 1;
         } else {
-            // Mon-Sat: go back to Monday
             diff = -(day - 1);
         }
         
@@ -544,8 +548,6 @@
         monday.setHours(0, 0, 0, 0);
         
         const dates = [];
-        
-        // Generate Mon-Fri (5 days)
         for (let i = 0; i < 5; i++) {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
@@ -561,12 +563,10 @@
         return result;
     }
     
-    // FIXED: Respect locale for date range formatting
     function formatDateRange(startDate, endDate) {
-        // Use current language for date formatting
         const lang = window.getCurrentLanguage ? 
             (window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US') : 
-            'en-US';
+            'bg-BG';
         
         const options = { month: 'short', day: 'numeric' };
         const start = startDate.toLocaleDateString(lang, options);
