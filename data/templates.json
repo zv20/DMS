@@ -1,0 +1,29 @@
+{
+  "Papers": {
+    "layoutStyle": "magazine",
+    "showHeader": true,
+    "headerText": "Weekly Meal Plan",
+    "headerAlignment": "center",
+    "headerSize": "28",
+    "showDateRange": true,
+    "dateFormat": "long",
+    "dayBlockBg": "#ffffff",
+    "dayBlockBorder": "#e0e0e0",
+    "dayBlockPadding": "15",
+    "dayNameSize": "18",
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "showMealTitles": true,
+    "mealTitleSize": "14",
+    "mealTitleColor": "#666666",
+    "showIngredients": true,
+    "ingredientLayout": "list",
+    "numberingStyle": "none",
+    "showFooter": true,
+    "footerText": "Meal plan created with DMS",
+    "backgroundColor": "#f5f5f5",
+    "showBranding": true,
+    "separatorStyle": "line",
+    "pageBorder": false
+  }
+}
