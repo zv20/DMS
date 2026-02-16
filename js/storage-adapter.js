@@ -10,7 +10,7 @@ class StorageAdapter {
     constructor() {
         this.useFileSystem = 'showDirectoryPicker' in window;
         this.dbName = 'KitchenProDB';
-        this.dbVersion = 1;
+        this.dbVersion = 2; // Bumped version to add templates store
         this.db = null;
         
         console.log(`📦 Storage Mode: ${this.useFileSystem ? 'File System API' : 'IndexedDB'}`);
@@ -210,6 +210,26 @@ class StorageAdapter {
                 console.log('ℹ️ No settings.json found, using defaults');
             }
             
+            // Load templates.json (NEW!)
+            try {
+                const templatesFile = await dataDir.getFileHandle('templates.json');
+                const templatesData = await templatesFile.getFile();
+                window.menuTemplates = JSON.parse(await templatesData.text());
+                console.log('✅ Loaded templates:', Object.keys(window.menuTemplates).length, 'templates');
+            } catch (e) {
+                // Try migrating from localStorage
+                const legacyTemplates = this.migrateLegacyTemplates();
+                window.menuTemplates = legacyTemplates;
+                
+                if (Object.keys(legacyTemplates).length > 0) {
+                    console.log('📦 Migrated', Object.keys(legacyTemplates).length, 'templates from localStorage');
+                    // Save migrated templates
+                    await this.saveToFileSystem('templates', legacyTemplates);
+                } else {
+                    console.log('ℹ️ No templates.json found, starting with empty templates');
+                }
+            }
+            
             console.log('✅ File System data loaded successfully!');
         } catch (err) {
             console.error('❌ Error loading from file system:', err);
@@ -251,6 +271,14 @@ class StorageAdapter {
                 await writable.close();
                 
                 console.log('✅ Saved settings to settings.json:', data);
+            } else if (type === 'templates') {
+                // NEW: Save templates to templates.json
+                const fileHandle = await dataDir.getFileHandle('templates.json', { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(data, null, 2));
+                await writable.close();
+                
+                console.log('✅ Saved templates to templates.json:', Object.keys(data).length, 'templates');
             }
         } catch (err) {
             console.error(`❌ Error saving ${type}:`, err);
@@ -411,6 +439,11 @@ class StorageAdapter {
                 if (!db.objectStoreNames.contains('handles')) {
                     db.createObjectStore('handles');
                 }
+                // NEW: Templates store
+                if (!db.objectStoreNames.contains('templates')) {
+                    db.createObjectStore('templates');
+                    console.log('📦 Created templates store in IndexedDB');
+                }
             };
         });
     }
@@ -464,8 +497,30 @@ class StorageAdapter {
                 settingsRequest.onerror = () => resolve({ language: 'en' });
             });
             
+            // Load templates (NEW!)
+            const templatesTx = db.transaction('templates', 'readonly');
+            const templatesStore = templatesTx.objectStore('templates');
+            const templatesRequest = templatesStore.get('menuTemplates');
+            let templates = await new Promise((resolve) => {
+                templatesRequest.onsuccess = () => resolve(templatesRequest.result || null);
+                templatesRequest.onerror = () => resolve(null);
+            });
+            
+            // If no templates in IndexedDB, try migrating from localStorage
+            if (!templates || Object.keys(templates).length === 0) {
+                templates = this.migrateLegacyTemplates();
+                if (Object.keys(templates).length > 0) {
+                    console.log('📦 Migrated', Object.keys(templates).length, 'templates from localStorage');
+                    // Save migrated templates to IndexedDB
+                    await this.saveToIndexedDB('templates', templates);
+                }
+            }
+            
+            window.menuTemplates = templates;
+            
             console.log('✅ IndexedDB data loaded');
             console.log('✅ Settings loaded:', window.appSettings);
+            console.log('✅ Templates loaded:', Object.keys(window.menuTemplates).length, 'templates');
         } catch (err) {
             console.error('Error loading from IndexedDB:', err);
             window.recipes = [];
@@ -473,6 +528,7 @@ class StorageAdapter {
             window.allergens = [];
             window.currentMenu = {};
             window.appSettings = { language: 'en' };
+            window.menuTemplates = {};
         }
     }
     
@@ -497,12 +553,33 @@ class StorageAdapter {
                 const store = tx.objectStore('settings');
                 await store.put(data, 'appSettings');
                 console.log('✅ Settings saved to IndexedDB:', data);
+            } else if (type === 'templates') {
+                // NEW: Save templates to IndexedDB
+                const tx = db.transaction('templates', 'readwrite');
+                const store = tx.objectStore('templates');
+                await store.put(data, 'menuTemplates');
+                console.log('✅ Templates saved to IndexedDB:', Object.keys(data).length, 'templates');
             }
             
             console.log(`✅ ${type} saved to IndexedDB`);
         } catch (err) {
             console.error(`Error saving ${type} to IndexedDB:`, err);
         }
+    }
+    
+    // NEW: Migrate legacy templates from localStorage
+    migrateLegacyTemplates() {
+        try {
+            const legacyTemplates = localStorage.getItem('meal-templates');
+            if (legacyTemplates) {
+                const templates = JSON.parse(legacyTemplates);
+                console.log('🔄 Found legacy templates in localStorage:', Object.keys(templates).length);
+                return templates;
+            }
+        } catch (err) {
+            console.error('Error migrating legacy templates:', err);
+        }
+        return {};
     }
     
     async prePopulateData() {
@@ -551,12 +628,14 @@ class StorageAdapter {
         window.recipes = sampleRecipes;
         window.currentMenu = {};
         window.appSettings = { language: 'en' };
+        window.menuTemplates = {};
         
         await this.saveToIndexedDB('allergens', sampleAllergens);
         await this.saveToIndexedDB('ingredients', sampleIngredients);
         await this.saveToIndexedDB('recipes', sampleRecipes);
         await this.saveToIndexedDB('currentMenu', {});
         await this.saveToIndexedDB('appSettings', { language: 'en' });
+        await this.saveToIndexedDB('templates', {});
         
         console.log('✅ Sample data populated!');
     }
@@ -578,6 +657,7 @@ class StorageAdapter {
             allergens: window.allergens,
             currentMenu: window.currentMenu,
             appSettings: window.appSettings,
+            templates: window.menuTemplates || {}, // NEW: Include templates in export
             exportDate: new Date().toISOString()
         };
         
@@ -600,12 +680,14 @@ class StorageAdapter {
             if (data.allergens) window.allergens = data.allergens;
             if (data.currentMenu) window.currentMenu = data.currentMenu;
             if (data.appSettings) window.appSettings = data.appSettings;
+            if (data.templates) window.menuTemplates = data.templates; // NEW: Import templates
             
             await this.save('recipes', window.recipes);
             await this.save('ingredients', window.ingredients);
             await this.save('allergens', window.allergens);
             await this.save('currentMenu', window.currentMenu);
             await this.save('appSettings', window.appSettings);
+            await this.save('templates', window.menuTemplates); // NEW: Save imported templates
             
             return true;
         } catch (err) {
