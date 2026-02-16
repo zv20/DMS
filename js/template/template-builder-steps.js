@@ -68,7 +68,7 @@ class StepTemplateBuilder {
         };
         
         this.previewData = null;
-        this.expandedSection = 'background'; // Track which section is expanded
+        this.expandedSection = 'background';
         this.init();
     }
     
@@ -91,22 +91,19 @@ class StepTemplateBuilder {
     
     buildUI() {
         const sidebar = document.getElementById('template-sidebar');
-        if (!sidebar) {
-            console.error('❌ template-sidebar not found!');
-            return;
-        }
+        if (!sidebar) return;
         
         sidebar.innerHTML = `
             <div class="step-template-controls">
-                <h2 style="margin: 0 0 20px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
-                <p style="margin: 0 0 20px 0; font-size: 13px; color: #666; text-align: center;">Click each step to customize</p>
+                <h2 style="margin: 0 0 10px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
+                <p style="margin: 0 0 20px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
                 
                 ${this.renderAccordionSection('background', '🇼 1. Background', this.renderBackgroundControls())}
                 ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
                 ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
                 ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
                 
-                <div class="action-buttons" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <div class="action-buttons" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                     <button id="btnLoadData" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
                         👁️ Load My Menu Data
                     </button>
@@ -146,15 +143,11 @@ class StepTemplateBuilder {
                 <label>Background Image</label>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <input type="file" id="bgImageUpload" accept="image/*" style="display: none;">
-                    <button id="uploadBgBtn" class="btn btn-secondary" style="flex: 1;">
-                        📄 Upload Image
-                    </button>
-                    <button id="removeBgBtn" class="btn btn-secondary" style="width: 40px;" title="Remove">
-                        🗑️
-                    </button>
+                    <button id="uploadBgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                    <button id="removeBgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
                 </div>
-                <div id="bgPreview" style="display: none; padding: 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 15px;">
-                    <small style="color: #666;">Current: <span id="bgFileName"></span></small>
+                <div id="bgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 15px;">
+                    <small>Current: <span id="bgFileName"></span></small>
                 </div>
                 
                 <label>Background Color</label>
@@ -170,11 +163,7 @@ class StepTemplateBuilder {
     renderHeaderControls() {
         return `
             <div class="control-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showHeader" checked>
-                    <span>Show Header</span>
-                </label>
-                
+                <label class="checkbox-label"><input type="checkbox" id="showHeader" checked><span>Show Header</span></label>
                 <label>Header Text</label>
                 <input type="text" id="headerText" value="Седмично меню" class="text-input">
                 
@@ -182,24 +171,18 @@ class StepTemplateBuilder {
                     <h4>🖼️ Header Image (Optional)</h4>
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                         <input type="file" id="headerImageUpload" accept="image/*" style="display: none;">
-                        <button id="uploadHeaderImgBtn" class="btn btn-secondary" style="flex: 1;">
-                            📄 Upload Logo/Image
-                        </button>
-                        <button id="removeHeaderImgBtn" class="btn btn-secondary" style="width: 40px;" title="Remove">
-                            🗑️
-                        </button>
+                        <button id="uploadHeaderImgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                        <button id="removeHeaderImgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
                     </div>
                     <div id="headerImgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                        <small style="color: #666;">Image: <span id="headerImgFileName"></span></small>
+                        <small>Image: <span id="headerImgFileName"></span></small>
                     </div>
-                    
                     <label>Image Position</label>
                     <select id="headerImagePosition" class="select-input">
                         <option value="left" selected>Left</option>
                         <option value="center">Center</option>
                         <option value="right">Right</option>
                     </select>
-                    
                     <label>Image Size</label>
                     <select id="headerImageSize" class="select-input">
                         <option value="small">Small (40px)</option>
@@ -214,14 +197,12 @@ class StepTemplateBuilder {
                     <option value="center" selected>Center</option>
                     <option value="right">Right</option>
                 </select>
-                
                 <label>Font Size</label>
                 <select id="headerFontSize" class="select-input">
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
                     <option value="large" selected>Large</option>
                 </select>
-                
                 <label>Text Color</label>
                 <input type="color" id="headerColor" value="#d2691e" class="color-input">
             </div>
@@ -232,103 +213,37 @@ class StepTemplateBuilder {
         return `
             <div class="control-group">
                 <h4>🎨 Template Style</h4>
-                <label class="radio-label">
-                    <input type="radio" name="templateStyle" value="compact" checked>
-                    <span>Compact (Bulgarian School)</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="templateStyle" value="detailed">
-                    <span>Detailed (With Labels)</span>
-                </label>
+                <label class="radio-label"><input type="radio" name="templateStyle" value="compact" checked><span>Compact</span></label>
+                <label class="radio-label"><input type="radio" name="templateStyle" value="detailed"><span>Detailed</span></label>
                 
-                <h4 style="margin-top: 20px;">📜 Content</h4>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showDateRange" checked>
-                    <span>Show Date Range</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showIngredients" checked>
-                    <span>Show Ingredients</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showCalories" checked>
-                    <span>Show Calories</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showPortions" checked>
-                    <span>Show Portions</span>
-                </label>
+                <h4 style="margin-top: 15px;">📜 Content</h4>
+                <label class="checkbox-label"><input type="checkbox" id="showDateRange" checked><span>Date Range</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="showIngredients" checked><span>Ingredients</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="showCalories" checked><span>Calories</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="showPortions" checked><span>Portions</span></label>
                 
-                <h4 style="margin-top: 20px;">📊 Day Block Styling</h4>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="dayBorder">
-                    <span>Show Day Border</span>
-                </label>
+                <h4 style="margin-top: 15px;">📊 Day Block</h4>
+                <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span>Show Border</span></label>
                 <label>Border Color</label>
                 <input type="color" id="dayBorderColor" value="#e0e0e0" class="color-input">
-                <label>Border Thickness</label>
-                <select id="dayBorderThickness" class="select-input">
-                    <option value="1px" selected>Thin (1px)</option>
-                    <option value="2px">Medium (2px)</option>
-                    <option value="3px">Thick (3px)</option>
-                </select>
-                <label>Day Background Color</label>
+                <label>Background</label>
                 <input type="color" id="dayBackground" value="#ffffff" class="color-input">
                 
-                <h4 style="margin-top: 20px;">📝 Day Name Styling</h4>
-                <label>Font Size</label>
+                <h4 style="margin-top: 15px;">📝 Day Name</h4>
+                <label>Size</label>
                 <select id="dayNameSize" class="select-input">
                     <option value="small">Small</option>
                     <option value="medium" selected>Medium</option>
                     <option value="large">Large</option>
                 </select>
-                <label>Font Color</label>
+                <label>Color</label>
                 <input type="color" id="dayNameColor" value="#333333" class="color-input">
-                <label>Font Weight</label>
-                <select id="dayNameWeight" class="select-input">
-                    <option value="normal">Normal</option>
-                    <option value="bold" selected>Bold</option>
-                </select>
                 
-                <h4 style="margin-top: 20px;">🍽️ Meal Styling</h4>
-                <label>Font Size</label>
-                <select id="mealFontSize" class="select-input">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
-                </select>
-                <label>Line Height</label>
-                <select id="mealLineHeight" class="select-input">
-                    <option value="1.2">Tight (1.2)</option>
-                    <option value="1.4" selected>Normal (1.4)</option>
-                    <option value="1.6">Loose (1.6)</option>
-                </select>
-                
-                <h4 style="margin-top: 20px;">🥬 Ingredients Styling</h4>
-                <label>Font Color</label>
-                <input type="color" id="ingredientColor" value="#333333" class="color-input">
-                <label>Font Size</label>
-                <select id="ingredientSize" class="select-input">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Same as meal</option>
-                    <option value="large">Large</option>
-                </select>
-                
-                <h4 style="margin-top: 20px;">⚠️ Allergen Styling</h4>
-                <label>Highlight Color</label>
+                <h4 style="margin-top: 15px;">⚠️ Allergens</h4>
+                <label>Color</label>
                 <input type="color" id="allergenColor" value="#ff0000" class="color-input">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="allergenUnderline">
-                    <span>Underline</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="allergenBold" checked>
-                    <span>Bold</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="allergenItalic">
-                    <span>Italic</span>
-                </label>
+                <label class="checkbox-label"><input type="checkbox" id="allergenUnderline"><span>Underline</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="allergenBold" checked><span>Bold</span></label>
             </div>
         `;
     }
@@ -336,11 +251,7 @@ class StepTemplateBuilder {
     renderFooterControls() {
         return `
             <div class="control-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showFooter" checked>
-                    <span>Show Footer</span>
-                </label>
-                
+                <label class="checkbox-label"><input type="checkbox" id="showFooter" checked><span>Show Footer</span></label>
                 <label>Footer Text</label>
                 <input type="text" id="footerText" value="Prepared with care by KitchenPro" class="text-input">
                 
@@ -348,29 +259,22 @@ class StepTemplateBuilder {
                     <h4>🖼️ Footer Image (Optional)</h4>
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                         <input type="file" id="footerImageUpload" accept="image/*" style="display: none;">
-                        <button id="uploadFooterImgBtn" class="btn btn-secondary" style="flex: 1;">
-                            📄 Upload Logo/Icon
-                        </button>
-                        <button id="removeFooterImgBtn" class="btn btn-secondary" style="width: 40px;" title="Remove">
-                            🗑️
-                        </button>
+                        <button id="uploadFooterImgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                        <button id="removeFooterImgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
                     </div>
                     <div id="footerImgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                        <small style="color: #666;">Image: <span id="footerImgFileName"></span></small>
+                        <small>Image: <span id="footerImgFileName"></span></small>
                     </div>
-                    
                     <label>Image Position</label>
                     <select id="footerImagePosition" class="select-input">
                         <option value="left">Left</option>
                         <option value="center">Center</option>
                         <option value="right" selected>Right</option>
                     </select>
-                    
                     <label>Image Size</label>
                     <select id="footerImageSize" class="select-input">
                         <option value="small" selected>Small (30px)</option>
                         <option value="medium">Medium (40px)</option>
-                        <option value="large">Large (50px)</option>
                     </select>
                 </div>
                 
@@ -380,7 +284,6 @@ class StepTemplateBuilder {
                     <option value="center" selected>Center</option>
                     <option value="right">Right</option>
                 </select>
-                
                 <label>Font Size</label>
                 <select id="footerFontSize" class="select-input">
                     <option value="small" selected>Small</option>
@@ -393,161 +296,29 @@ class StepTemplateBuilder {
     renderStyles() {
         return `
             <style>
-                .step-template-controls {
-                    padding: 20px;
-                    background: white;
-                    border-radius: 8px;
-                }
-                
-                .accordion-section {
-                    margin-bottom: 10px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 8px;
-                    overflow: hidden;
-                    transition: all 0.3s;
-                }
-                
-                .accordion-section.expanded {
-                    border-color: #2196f3;
-                }
-                
-                .accordion-header {
-                    padding: 15px;
-                    background: #f8f9fa;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-weight: 600;
-                    font-size: 15px;
-                    transition: background 0.2s;
-                }
-                
-                .accordion-header:hover {
-                    background: #e9ecef;
-                }
-                
-                .accordion-section.expanded .accordion-header {
-                    background: #e3f2fd;
-                    color: #1976d2;
-                }
-                
-                .accordion-icon {
-                    font-size: 12px;
-                    width: 15px;
-                }
-                
-                .accordion-content {
-                    padding: 20px;
-                    animation: slideDown 0.3s;
-                }
-                
-                @keyframes slideDown {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                
-                .control-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                
-                .control-group label {
-                    font-weight: 500;
-                    font-size: 13px;
-                    color: #555;
-                    margin-top: 8px;
-                }
-                
-                .control-group h4 {
-                    margin: 15px 0 8px 0;
-                    font-size: 14px;
-                    color: #333;
-                    border-bottom: 1px solid #e0e0e0;
-                    padding-bottom: 5px;
-                }
-                
-                .checkbox-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    cursor: pointer;
-                    margin-top: 0 !important;
-                }
-                
-                .checkbox-label input[type="checkbox"] {
-                    width: 18px;
-                    height: 18px;
-                    cursor: pointer;
-                }
-                
-                .checkbox-label span {
-                    font-weight: normal;
-                }
-                
-                .radio-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                
-                .radio-label:hover {
-                    background: #f8f9fa;
-                }
-                
-                .radio-label input[type="radio"] {
-                    cursor: pointer;
-                }
-                
-                .text-input, .select-input {
-                    padding: 8px 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    font-size: 14px;
-                    width: 100%;
-                }
-                
-                .color-input {
-                    width: 100%;
-                    height: 40px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    cursor: pointer;
-                }
-                
-                .slider {
-                    width: 100%;
-                    height: 6px;
-                    border-radius: 3px;
-                    outline: none;
-                }
-                
-                .slider-value {
-                    text-align: center;
-                    font-size: 13px;
-                    color: #666;
-                    margin-top: 5px;
-                }
-                
-                .subsection {
-                    background: #f8f9fa;
-                    padding: 15px;
-                    border-radius: 6px;
-                    margin: 10px 0;
-                }
-                
-                .subsection h4 {
-                    margin: 0 0 15px 0 !important;
-                    border-bottom: none !important;
-                    font-size: 13px !important;
-                    color: #555 !important;
-                }
+                .step-template-controls { padding: 20px; background: white; border-radius: 8px; }
+                .accordion-section { margin-bottom: 10px; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; transition: all 0.3s; }
+                .accordion-section.expanded { border-color: #2196f3; }
+                .accordion-header { padding: 12px 15px; background: #f8f9fa; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+                .accordion-header:hover { background: #e9ecef; }
+                .accordion-section.expanded .accordion-header { background: #e3f2fd; color: #1976d2; }
+                .accordion-icon { font-size: 11px; width: 15px; }
+                .accordion-content { padding: 15px; animation: slideDown 0.3s; }
+                @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+                .control-group { display: flex; flex-direction: column; gap: 10px; }
+                .control-group label { font-weight: 500; font-size: 12px; color: #555; margin-top: 5px; }
+                .control-group h4 { margin: 12px 0 8px 0; font-size: 13px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+                .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 0 !important; }
+                .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
+                .checkbox-label span { font-weight: normal; }
+                .radio-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+                .radio-label:hover { background: #f8f9fa; }
+                .text-input, .select-input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%; }
+                .color-input { width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+                .slider { width: 100%; height: 5px; border-radius: 3px; outline: none; }
+                .slider-value { text-align: center; font-size: 12px; color: #666; margin-top: 3px; }
+                .subsection { background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 8px 0; }
+                .subsection h4 { margin: 0 0 12px 0 !important; border-bottom: none !important; font-size: 12px !important; color: #555 !important; }
             </style>
         `;
     }
@@ -558,14 +329,12 @@ class StepTemplateBuilder {
                 const section = e.currentTarget.closest('.accordion-section');
                 const sectionId = section.dataset.section;
                 
-                // Close all sections
                 document.querySelectorAll('.accordion-section').forEach(s => {
                     s.classList.remove('expanded');
                     s.querySelector('.accordion-content').style.display = 'none';
                     s.querySelector('.accordion-icon').textContent = '▶';
                 });
                 
-                // Open clicked section
                 section.classList.add('expanded');
                 section.querySelector('.accordion-content').style.display = 'block';
                 section.querySelector('.accordion-icon').textContent = '▼';
@@ -578,10 +347,7 @@ class StepTemplateBuilder {
     bindControls() {
         // Background
         this.bindImageUpload('bgImageUpload', 'uploadBgBtn', 'removeBgBtn', 'backgroundImage', 'backgrounds', 'bgPreview', 'bgFileName');
-        document.getElementById('backgroundColor')?.addEventListener('input', (e) => {
-            this.settings.backgroundColor = e.target.value;
-            this.updatePreview();
-        });
+        this.bindColorInput('backgroundColor');
         document.getElementById('backgroundOpacity')?.addEventListener('input', (e) => {
             this.settings.backgroundOpacity = e.target.value / 100;
             document.getElementById('opacityValue').textContent = e.target.value;
@@ -606,36 +372,19 @@ class StepTemplateBuilder {
             });
         });
         
-        // Menu content
+        // Menu
         this.bindCheckbox('showDateRange');
         this.bindCheckbox('showIngredients');
         this.bindCheckbox('showCalories');
         this.bindCheckbox('showPortions');
-        
-        // Day block
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
-        this.bindSelect('dayBorderThickness');
         this.bindColorInput('dayBackground');
-        
-        // Day name
         this.bindSelect('dayNameSize');
         this.bindColorInput('dayNameColor');
-        this.bindSelect('dayNameWeight');
-        
-        // Meals
-        this.bindSelect('mealFontSize');
-        this.bindSelect('mealLineHeight');
-        
-        // Ingredients
-        this.bindColorInput('ingredientColor');
-        this.bindSelect('ingredientSize');
-        
-        // Allergens
         this.bindColorInput('allergenColor');
         this.bindCheckbox('allergenUnderline');
         this.bindCheckbox('allergenBold');
-        this.bindCheckbox('allergenItalic');
         
         // Footer
         this.bindCheckbox('showFooter');
@@ -718,11 +467,11 @@ class StepTemplateBuilder {
             await writable.write(file);
             await writable.close();
             
-            console.log(`✅ Image saved to data/images/${folder}/`, file.name);
+            console.log(`✅ Saved to data/images/${folder}/`, file.name);
             return true;
         } catch (err) {
-            console.error('Error saving image:', err);
-            alert('❌ Error uploading image.');
+            console.error('Error:', err);
+            alert('❌ Upload failed');
             return false;
         }
     }
@@ -742,59 +491,119 @@ class StepTemplateBuilder {
             startDate: today,
             endDate: nextFriday,
             days: [
-                {
-                    name: 'Понеделник',
-                    meals: [
-                        { number: 1, name: 'Супа топчета', portion: '150гр', calories: 129, ingredients: [
-                            { name: 'кайма', hasAllergen: false },
-                            { name: 'яйца', hasAllergen: true },
-                            { name: 'кис.мляко', hasAllergen: true }
-                        ]}
-                    ]
-                },
-                {
-                    name: 'Вторник',
-                    meals: [
-                        { number: 1, name: 'Таратор', portion: '150гр', calories: 100, ingredients: [
-                            { name: 'краставица', hasAllergen: false },
-                            { name: 'кис.мляко', hasAllergen: true }
-                        ]}
-                    ]
-                }
+                { name: 'Понеделник', meals: [
+                    { number: 1, name: 'Супа топчета', portion: '150гр', calories: 129, ingredients: [
+                        { name: 'кайма', hasAllergen: false },
+                        { name: 'яйца', hasAllergen: true }
+                    ]}
+                ]},
+                { name: 'Вторник', meals: [
+                    { number: 1, name: 'Таратор', portion: '150гр', calories: 100, ingredients: [
+                        { name: 'краставица', hasAllergen: false }
+                    ]}
+                ]}
             ]
         };
     }
     
     loadRealData() {
-        // Same as before - loads from window.recipes/ingredients
-        console.log('👀 Loading real menu data...');
-        // Implementation same as template-builder-simple.js
+        alert('⚠️ Load real data from menu planner - feature coming soon!');
     }
     
     updatePreview() {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
         
-        // Render based on template style - full implementation needed
-        container.innerHTML = '<div style="padding: 20px;">Preview rendering...</div>';
+        const s = this.settings;
+        const { startDate, endDate, days } = this.previewData;
+        
+        const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
+        
+        const sizeMaps = {
+            small: { header: '18pt', day: '12pt', meal: '10pt', footer: '9pt' },
+            medium: { header: '22pt', day: '14pt', meal: '12pt', footer: '10pt' },
+            large: { header: '26pt', day: '16pt', meal: '14pt', footer: '11pt' }
+        };
+        
+        const headerSize = sizeMaps[s.headerFontSize]?.header || '22pt';
+        const daySize = sizeMaps[s.dayNameSize]?.day || '14pt';
+        const mealSize = sizeMaps[s.mealFontSize]?.meal || '12pt';
+        const footerSize = sizeMaps[s.footerFontSize]?.footer || '10pt';
+        
+        const imgSizes = {
+            header: { small: '40px', medium: '60px', large: '80px' },
+            footer: { small: '30px', medium: '40px', large: '50px' }
+        };
+        
+        let html = `<div style="background: ${s.backgroundColor}; ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''} background-size: cover; background-position: center; padding: 20px; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
+        
+        // Header
+        if (s.showHeader) {
+            const headerImgHtml = s.headerImage ? `<img src="data/images/header/${s.headerImage}" style="height: ${imgSizes.header[s.headerImageSize]}; vertical-align: middle; margin-${s.headerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
+            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: 15px;">`;
+            if (s.headerImagePosition === 'left' && headerImgHtml) html += headerImgHtml;
+            html += `<span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span>`;
+            if (s.headerImagePosition === 'right' && headerImgHtml) html += headerImgHtml;
+            if (s.headerImagePosition === 'center' && headerImgHtml) html += `<br>${headerImgHtml}`;
+            html += `</div>`;
+        }
+        
+        if (s.showDateRange) {
+            html += `<div style="text-align: center; margin-bottom: 20px;">${dateRange}</div>`;
+        }
+        
+        // Menu
+        html += `<div style="flex: 1;">`;
+        days.forEach(day => {
+            if (!day.meals.length) return;
+            const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: 10px; margin-bottom: 15px; border-radius: 4px;`;
+            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: 8px;">${day.name}</div>`;
+            day.meals.forEach(meal => {
+                html += `<div style="margin-bottom: 5px; margin-left: 10px; font-size: ${mealSize}; line-height: ${s.mealLineHeight || '1.4'};"> ${meal.number}. ${meal.name}`;
+                if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                if (s.showIngredients && meal.ingredients.length) {
+                    html += `; ${meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            let style = `color: ${s.allergenColor};`;
+                            if (s.allergenBold) style += ' font-weight: bold;';
+                            if (s.allergenUnderline) style += ' text-decoration: underline;';
+                            return `<span style="${style}">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ')}`;
+                }
+                if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
+                html += `</div>`;
+            });
+            html += `</div>`;
+        });
+        html += `</div>`;
+        
+        // Footer
+        if (s.showFooter) {
+            const footerImgHtml = s.footerImage ? `<img src="data/images/footer/${s.footerImage}" style="height: ${imgSizes.footer[s.footerImageSize]}; vertical-align: middle; margin-${s.footerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
+            html += `<div style="text-align: ${s.footerAlignment}; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">`;
+            if (s.footerImagePosition === 'left' && footerImgHtml) html += footerImgHtml;
+            html += s.footerText;
+            if (s.footerImagePosition === 'right' && footerImgHtml) html += footerImgHtml;
+            html += `</div>`;
+        }
+        
+        html += `</div>`;
+        container.innerHTML = html;
     }
     
     async saveTemplate() {
         const name = prompt('Template name:');
         if (!name) return;
-        
         if (!window.menuTemplates) window.menuTemplates = {};
         window.menuTemplates[name] = this.settings;
-        
-        if (window.storageAdapter) {
-            await window.storageAdapter.save('templates', window.menuTemplates);
-        }
-        
+        if (window.storageAdapter) await window.storageAdapter.save('templates', window.menuTemplates);
         alert(`✅ Template "${name}" saved!`);
     }
     
     reset() {
-        if (!confirm('Reset all settings to default?')) return;
+        if (!confirm('Reset all settings?')) return;
         this.settings = new StepTemplateBuilder().settings;
         this.buildUI();
         this.bindAccordion();
