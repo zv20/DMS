@@ -27,7 +27,13 @@ class SimpleTemplateBuilder {
             
             // Header
             headerText: 'Седмично меню',
-            showHeader: true
+            showHeader: true,
+            
+            // Footer
+            footerText: 'Prepared with care by KitchenPro',
+            showFooter: true,
+            footerAlignment: 'center', // left, center, right
+            footerSize: 'small' // small, medium
         };
         
         this.previewData = null;
@@ -182,6 +188,32 @@ class SimpleTemplateBuilder {
                     <input type="text" id="headerText" value="Седмично меню" class="form-control" placeholder="Header text">
                 </div>
                 
+                <!-- FOOTER SECTION -->
+                <div class="control-section">
+                    <h3>📍 Footer</h3>
+                    
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showFooter" checked>
+                        <span>Show Footer</span>
+                    </label>
+                    
+                    <label style="margin-top: 10px;">Footer Text</label>
+                    <input type="text" id="footerText" value="Prepared with care by KitchenPro" class="form-control" placeholder="Footer text">
+                    
+                    <label style="margin-top: 15px;">Footer Alignment</label>
+                    <select id="footerAlignment" class="form-control">
+                        <option value="left">Left</option>
+                        <option value="center" selected>Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                    
+                    <label style="margin-top: 15px;">Footer Size</label>
+                    <select id="footerSize" class="form-control">
+                        <option value="small" selected>Small</option>
+                        <option value="medium">Medium</option>
+                    </select>
+                </div>
+                
                 <!-- ACTIONS -->
                 <div class="control-section" style="border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <button id="btnPreview" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
@@ -329,7 +361,11 @@ class SimpleTemplateBuilder {
             dayNameStyle: 'value',
             backgroundColor: 'value',
             showHeader: 'checkbox',
-            headerText: 'value'
+            headerText: 'value',
+            showFooter: 'checkbox',
+            footerText: 'value',
+            footerAlignment: 'value',
+            footerSize: 'value'
         };
         
         Object.keys(inputs).forEach(key => {
@@ -607,11 +643,16 @@ class SimpleTemplateBuilder {
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
         const sizes = {
-            small: { base: '10pt', title: '16pt', day: '12pt' },
-            medium: { base: '12pt', title: '20pt', day: '14pt' },
-            large: { base: '14pt', title: '24pt', day: '16pt' }
+            small: { base: '10pt', title: '16pt', day: '12pt', footer: '9pt' },
+            medium: { base: '12pt', title: '20pt', day: '14pt', footer: '10pt' },
+            large: { base: '14pt', title: '24pt', day: '16pt', footer: '11pt' }
         };
         const size = sizes[s.textSize];
+        
+        const footerSizes = {
+            small: size.footer,
+            medium: s.textSize === 'large' ? '13pt' : (s.textSize === 'medium' ? '11pt' : '10pt')
+        };
         
         let html = `
             <div class="menu-preview" style="
@@ -624,9 +665,12 @@ class SimpleTemplateBuilder {
                 font-family: Arial, sans-serif;
                 font-size: ${size.base};
                 line-height: 1.4;
+                display: flex;
+                flex-direction: column;
             ">
         `;
         
+        // Header
         if (s.showHeader) {
             html += `
                 <div style="text-align: center; margin-bottom: 10px;">
@@ -638,6 +682,9 @@ class SimpleTemplateBuilder {
         if (s.showDateRange) {
             html += `<div style="text-align: center; margin-bottom: 20px;">${dateRange}</div>`;
         }
+        
+        // Weekly menu block (flex-grow to push footer down)
+        html += `<div style="flex: 1;">`;
         
         days.forEach(day => {
             if (day.meals.length === 0) return;
@@ -675,6 +722,22 @@ class SimpleTemplateBuilder {
             html += `</div>`;
         });
         
+        html += `</div>`; // Close weekly menu block
+        
+        // Footer
+        if (s.showFooter) {
+            html += `
+                <div style="
+                    text-align: ${s.footerAlignment};
+                    margin-top: 20px;
+                    padding-top: 15px;
+                    border-top: 1px solid #ddd;
+                    font-size: ${footerSizes[s.footerSize]};
+                    color: #888;
+                ">${s.footerText}</div>
+            `;
+        }
+        
         html += `</div>`;
         return html;
     }
@@ -686,11 +749,16 @@ class SimpleTemplateBuilder {
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')} — ${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')}, ${startDate.getFullYear()}`;
         
         const sizes = {
-            small: { base: '10pt', title: '18pt', day: '13pt' },
-            medium: { base: '12pt', title: '22pt', day: '15pt' },
-            large: { base: '14pt', title: '26pt', day: '17pt' }
+            small: { base: '10pt', title: '18pt', day: '13pt', footer: '9pt' },
+            medium: { base: '12pt', title: '22pt', day: '15pt', footer: '10pt' },
+            large: { base: '14pt', title: '26pt', day: '17pt', footer: '11pt' }
         };
         const size = sizes[s.textSize];
+        
+        const footerSizes = {
+            small: size.footer,
+            medium: s.textSize === 'large' ? '13pt' : (s.textSize === 'medium' ? '11pt' : '10pt')
+        };
         
         let html = `
             <div class="menu-preview" style="
@@ -703,9 +771,12 @@ class SimpleTemplateBuilder {
                 font-family: Arial, sans-serif;
                 font-size: ${size.base};
                 line-height: 1.6;
+                display: flex;
+                flex-direction: column;
             ">
         `;
         
+        // Header
         if (s.showHeader) {
             html += `
                 <div style="text-align: center; margin-bottom: 15px;">
@@ -717,6 +788,9 @@ class SimpleTemplateBuilder {
         if (s.showDateRange) {
             html += `<div style="text-align: center; margin-bottom: 25px; font-size: ${size.base};">${dateRange}</div>`;
         }
+        
+        // Weekly menu block
+        html += `<div style="flex: 1;">`;
         
         days.forEach(day => {
             if (day.meals.length === 0) return;
@@ -760,6 +834,22 @@ class SimpleTemplateBuilder {
             html += `</div>`;
         });
         
+        html += `</div>`; // Close weekly menu block
+        
+        // Footer
+        if (s.showFooter) {
+            html += `
+                <div style="
+                    text-align: ${s.footerAlignment};
+                    margin-top: 20px;
+                    padding-top: 15px;
+                    border-top: 1px solid #ddd;
+                    font-size: ${footerSizes[s.footerSize]};
+                    color: #888;
+                ">${s.footerText}</div>
+            `;
+        }
+        
         html += `</div>`;
         return html;
     }
@@ -796,6 +886,10 @@ class SimpleTemplateBuilder {
         document.getElementById('opacityValue').textContent = '100';
         document.getElementById('showHeader').checked = true;
         document.getElementById('headerText').value = 'Седмично меню';
+        document.getElementById('showFooter').checked = true;
+        document.getElementById('footerText').value = 'Prepared with care by KitchenPro';
+        document.getElementById('footerAlignment').value = 'center';
+        document.getElementById('footerSize').value = 'small';
         
         this.removeBackground();
         this.loadSampleData();
