@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.0
+ * @version 2.1 - Compact vs Detailed styles now work!
  */
 
 class StepTemplateBuilder {
@@ -213,8 +213,14 @@ class StepTemplateBuilder {
         return `
             <div class="control-group">
                 <h4>🎨 Template Style</h4>
-                <label class="radio-label"><input type="radio" name="templateStyle" value="compact" checked><span>Compact</span></label>
-                <label class="radio-label"><input type="radio" name="templateStyle" value="detailed"><span>Detailed</span></label>
+                <label class="radio-label">
+                    <input type="radio" name="templateStyle" value="compact" checked>
+                    <span><strong>Compact</strong> - Tight spacing, fits 5 days on one page</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="templateStyle" value="detailed">
+                    <span><strong>Detailed</strong> - More spacing, easier to read</span>
+                </label>
                 
                 <h4 style="margin-top: 15px;">📜 Content</h4>
                 <label class="checkbox-label"><input type="checkbox" id="showDateRange" checked><span>Date Range</span></label>
@@ -311,8 +317,9 @@ class StepTemplateBuilder {
                 .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 0 !important; }
                 .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
                 .checkbox-label span { font-weight: normal; }
-                .radio-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+                .radio-label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
                 .radio-label:hover { background: #f8f9fa; }
+                .radio-label input[type="radio"]:checked { accent-color: #2196f3; }
                 .text-input, .select-input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%; }
                 .color-input { width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
                 .slider { width: 100%; height: 5px; border-radius: 3px; outline: none; }
@@ -368,6 +375,7 @@ class StepTemplateBuilder {
         document.querySelectorAll('input[name="templateStyle"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.settings.templateStyle = e.target.value;
+                console.log('📐 Template style changed to:', e.target.value);
                 this.updatePreview();
             });
         });
@@ -495,11 +503,21 @@ class StepTemplateBuilder {
                     { number: 1, name: 'Супа топчета', portion: '150гр', calories: 129, ingredients: [
                         { name: 'кайма', hasAllergen: false },
                         { name: 'яйца', hasAllergen: true }
+                    ]},
+                    { number: 2, name: 'Пържени картофи', portion: '200гр', calories: 250, ingredients: [
+                        { name: 'картофи', hasAllergen: false }
                     ]}
                 ]},
                 { name: 'Вторник', meals: [
                     { number: 1, name: 'Таратор', portion: '150гр', calories: 100, ingredients: [
-                        { name: 'краставица', hasAllergen: false }
+                        { name: 'краставица', hasAllergen: false },
+                        { name: 'кисело мляко', hasAllergen: true }
+                    ]}
+                ]},
+                { name: 'Сряда', meals: [
+                    { number: 1, name: 'Плодова салата', portion: '180гр', calories: 85, ingredients: [
+                        { name: 'ябълка', hasAllergen: false },
+                        { name: 'банан', hasAllergen: false }
                     ]}
                 ]}
             ]
@@ -516,6 +534,22 @@ class StepTemplateBuilder {
         
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
+        
+        // COMPACT vs DETAILED style settings
+        const isCompact = s.templateStyle === 'compact';
+        const spacing = {
+            containerPadding: isCompact ? '12px' : '20px',
+            headerMargin: isCompact ? '8px' : '15px',
+            dateMargin: isCompact ? '10px' : '20px',
+            dayMargin: isCompact ? '8px' : '15px',
+            dayPadding: isCompact ? '6px' : '10px',
+            dayNameMargin: isCompact ? '4px' : '8px',
+            mealMargin: isCompact ? '3px' : '5px',
+            mealLeftMargin: isCompact ? '8px' : '10px',
+            footerMarginTop: isCompact ? '12px' : '20px',
+            footerPaddingTop: isCompact ? '10px' : '15px',
+            lineHeight: isCompact ? '1.2' : '1.4'
+        };
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
@@ -535,12 +569,12 @@ class StepTemplateBuilder {
             footer: { small: '30px', medium: '40px', large: '50px' }
         };
         
-        let html = `<div style="background: ${s.backgroundColor}; ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''} background-size: cover; background-position: center; padding: 20px; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
+        let html = `<div style="background: ${s.backgroundColor}; ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''} background-size: cover; background-position: center; padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
         
         // Header
         if (s.showHeader) {
             const headerImgHtml = s.headerImage ? `<img src="data/images/header/${s.headerImage}" style="height: ${imgSizes.header[s.headerImageSize]}; vertical-align: middle; margin-${s.headerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
-            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: 15px;">`;
+            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: ${spacing.headerMargin};">`;
             if (s.headerImagePosition === 'left' && headerImgHtml) html += headerImgHtml;
             html += `<span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span>`;
             if (s.headerImagePosition === 'right' && headerImgHtml) html += headerImgHtml;
@@ -549,17 +583,17 @@ class StepTemplateBuilder {
         }
         
         if (s.showDateRange) {
-            html += `<div style="text-align: center; margin-bottom: 20px;">${dateRange}</div>`;
+            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         }
         
         // Menu
         html += `<div style="flex: 1;">`;
         days.forEach(day => {
             if (!day.meals.length) return;
-            const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: 10px; margin-bottom: 15px; border-radius: 4px;`;
-            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: 8px;">${day.name}</div>`;
+            const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
+            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
             day.meals.forEach(meal => {
-                html += `<div style="margin-bottom: 5px; margin-left: 10px; font-size: ${mealSize}; line-height: ${s.mealLineHeight || '1.4'};"> ${meal.number}. ${meal.name}`;
+                html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
                 if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
                 if (s.showIngredients && meal.ingredients.length) {
                     html += `; ${meal.ingredients.map(ing => {
@@ -582,7 +616,7 @@ class StepTemplateBuilder {
         // Footer
         if (s.showFooter) {
             const footerImgHtml = s.footerImage ? `<img src="data/images/footer/${s.footerImage}" style="height: ${imgSizes.footer[s.footerImageSize]}; vertical-align: middle; margin-${s.footerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
-            html += `<div style="text-align: ${s.footerAlignment}; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">`;
+            html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">`;
             if (s.footerImagePosition === 'left' && footerImgHtml) html += footerImgHtml;
             html += s.footerText;
             if (s.footerImagePosition === 'right' && footerImgHtml) html += footerImgHtml;
