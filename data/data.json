@@ -852,6 +852,16 @@
         }
       ],
       "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771252291678_fq6cu04iu",
+      "name": "Плод",
+      "category": "dessert",
+      "portionSize": "150-200",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
