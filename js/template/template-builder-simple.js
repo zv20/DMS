@@ -20,7 +20,7 @@ class SimpleTemplateBuilder {
             // Background
             backgroundImage: null, // filename or null
             backgroundColor: '#ffffff',
-            backgroundOpacity: 0.8,
+            backgroundOpacity: 1.0,
             
             // Header
             headerText: 'Седмично меню',
@@ -40,15 +40,28 @@ class SimpleTemplateBuilder {
     }
     
     setup() {
+        console.log('🚀 SimpleTemplateBuilder: Setting up...');
         this.buildUI();
         this.bindControls();
-        this.loadPreviewData();
+        
+        // Load sample data first, then try to load real data
+        this.loadSampleData();
         this.updatePreview();
+        
+        // Try loading real data after a delay
+        setTimeout(() => {
+            if (window.recipes && window.ingredients) {
+                console.log('👀 Real data available, can load it manually');
+            }
+        }, 1000);
     }
     
     buildUI() {
         const sidebar = document.getElementById('template-sidebar');
-        if (!sidebar) return;
+        if (!sidebar) {
+            console.error('❌ template-sidebar not found!');
+            return;
+        }
         
         sidebar.innerHTML = `
             <div class="simple-template-controls">
@@ -122,13 +135,13 @@ class SimpleTemplateBuilder {
                         <small style="color: #666;">Current: <span id="backgroundFileName"></span></small>
                     </div>
                     
-                    <label>Background Color (if no image)</label>
+                    <label>Background Color</label>
                     <input type="color" id="backgroundColor" value="#ffffff" style="width: 100%; height: 40px; margin-bottom: 15px;">
                     
                     <label>Background Opacity</label>
-                    <input type="range" id="backgroundOpacity" min="0" max="100" value="80" style="width: 100%;">
+                    <input type="range" id="backgroundOpacity" min="0" max="100" value="100" style="width: 100%;">
                     <div style="text-align: center; color: #666; font-size: 13px; margin-top: 5px;">
-                        <span id="opacityValue">80</span>%
+                        <span id="opacityValue">100</span>%
                     </div>
                 </div>
                 
@@ -148,7 +161,7 @@ class SimpleTemplateBuilder {
                 <!-- ACTIONS -->
                 <div class="control-section" style="border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <button id="btnPreview" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
-                        👁️ Preview My Menu
+                        👁️ Load My Menu Data
                     </button>
                     <button id="btnSaveTemplate" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
                         💾 Save Template
@@ -233,10 +246,12 @@ class SimpleTemplateBuilder {
         // Opacity slider
         document.getElementById('backgroundOpacity')?.addEventListener('input', (e) => {
             document.getElementById('opacityValue').textContent = e.target.value;
+            this.settings.backgroundOpacity = e.target.value / 100;
+            this.updatePreview();
         });
         
         // Action buttons
-        document.getElementById('btnPreview')?.addEventListener('click', () => this.loadPreviewData());
+        document.getElementById('btnPreview')?.addEventListener('click', () => this.loadRealData());
         document.getElementById('btnSaveTemplate')?.addEventListener('click', () => this.saveTemplate());
         document.getElementById('btnReset')?.addEventListener('click', () => this.reset());
     }
@@ -252,7 +267,6 @@ class SimpleTemplateBuilder {
             allergenColor: 'value',
             dayNameStyle: 'value',
             backgroundColor: 'value',
-            backgroundOpacity: 'value',
             showHeader: 'checkbox',
             headerText: 'value'
         };
@@ -337,8 +351,107 @@ class SimpleTemplateBuilder {
         this.updatePreview();
     }
     
-    loadPreviewData() {
-        // Get current week from calendar
+    // Load sample data for preview
+    loadSampleData() {
+        console.log('👀 Loading sample data...');
+        const today = new Date();
+        const nextFriday = new Date(today);
+        nextFriday.setDate(today.getDate() + 4);
+        
+        this.previewData = {
+            startDate: today,
+            endDate: nextFriday,
+            days: [
+                {
+                    name: 'Понеделник',
+                    meals: [
+                        {
+                            number: 1,
+                            name: 'Супа топчета',
+                            portion: '150гр',
+                            calories: 129,
+                            ingredients: [
+                                { name: 'кайма БДС', hasAllergen: false },
+                                { name: 'лук', hasAllergen: false },
+                                { name: 'морков', hasAllergen: false },
+                                { name: 'ориз', hasAllergen: false },
+                                { name: 'яйца', hasAllergen: true },
+                                { name: 'кис.мляко', hasAllergen: true }
+                            ]
+                        },
+                        {
+                            number: 2,
+                            name: 'Зрял боб яхния',
+                            portion: '150гр',
+                            calories: 175,
+                            ingredients: [
+                                { name: 'боб', hasAllergen: false },
+                                { name: 'лук', hasAllergen: false },
+                                { name: 'морков', hasAllergen: false },
+                                { name: 'джоджен', hasAllergen: false },
+                                { name: 'сл.олио', hasAllergen: false }
+                            ]
+                        },
+                        {
+                            number: 3,
+                            name: 'Плод',
+                            portion: '150-200гр',
+                            calories: null,
+                            ingredients: []
+                        },
+                        {
+                            number: 4,
+                            name: 'Филийки хляб по Утвърден стандарт',
+                            portion: '',
+                            calories: null,
+                            ingredients: [
+                                { name: 'глутен', hasAllergen: true }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: 'Вторник',
+                    meals: [
+                        {
+                            number: 1,
+                            name: 'Таратор',
+                            portion: '150гр',
+                            calories: 100,
+                            ingredients: [
+                                { name: 'краставица', hasAllergen: false },
+                                { name: 'кис.мляко', hasAllergen: true }
+                            ]
+                        },
+                        {
+                            number: 2,
+                            name: 'Мусака',
+                            portion: '150гр',
+                            calories: 236,
+                            ingredients: [
+                                { name: 'картофи', hasAllergen: false },
+                                { name: 'кайма БДС', hasAllergen: false },
+                                { name: 'прясно мляко', hasAllergen: true },
+                                { name: 'яйца', hasAllergen: true }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+        
+        console.log('✅ Sample data loaded:', this.previewData);
+    }
+    
+    // Load real data from menu planner
+    loadRealData() {
+        console.log('👀 Loading real menu data...');
+        
+        if (!window.recipes || !window.ingredients || !window.getMenuForDate) {
+            alert('⚠️ Menu data not loaded yet. Please go to Menu Planner first and add some recipes.');
+            return;
+        }
+        
         const currentDate = window.currentCalendarDate || new Date();
         const weekDates = this.getWeekDates(currentDate);
         
@@ -376,12 +489,16 @@ class SimpleTemplateBuilder {
                 }
             });
             
-            if (meals.length > 0) {
-                days.push({
-                    name: dayNames[i],
-                    meals: meals
-                });
-            }
+            // Always add the day even if no meals
+            days.push({
+                name: dayNames[i],
+                meals: meals
+            });
+        }
+        
+        if (days.every(day => day.meals.length === 0)) {
+            alert('⚠️ No meals found in your current week. Add some recipes to the menu planner first!');
+            return;
         }
         
         this.previewData = {
@@ -390,7 +507,15 @@ class SimpleTemplateBuilder {
             days: days
         };
         
+        console.log('✅ Real data loaded:', this.previewData);
         this.updatePreview();
+        
+        // Update button
+        const btn = document.getElementById('btnPreview');
+        if (btn) {
+            btn.textContent = '✅ Using Your Menu';
+            btn.style.background = '#28a745';
+        }
     }
     
     getWeekDates(date) {
@@ -412,8 +537,18 @@ class SimpleTemplateBuilder {
     
     updatePreview() {
         const container = document.getElementById('template-preview');
-        if (!container || !this.previewData) return;
+        if (!container) {
+            console.error('❌ template-preview container not found!');
+            return;
+        }
         
+        if (!this.previewData) {
+            console.error('❌ No preview data!');
+            container.innerHTML = '<p style="padding: 20px; color: #999;">No preview data available.</p>';
+            return;
+        }
+        
+        console.log('📝 Updating preview...');
         container.innerHTML = this.renderMenu(this.previewData);
     }
     
@@ -438,11 +573,8 @@ class SimpleTemplateBuilder {
                 ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''}
                 background-size: cover;
                 background-position: center;
-                opacity: ${s.backgroundOpacity / 100};
-                padding: 20mm;
-                min-height: 297mm;
-                max-width: 210mm;
-                margin: 0 auto;
+                padding: 20px;
+                min-height: 400px;
                 font-family: Arial, sans-serif;
                 font-size: ${size.base};
                 line-height: 1.4;
@@ -474,6 +606,8 @@ class SimpleTemplateBuilder {
         
         // Days
         days.forEach(day => {
+            if (day.meals.length === 0) return; // Skip days with no meals
+            
             html += `
                 <div style="margin-bottom: 15px;">
                     <div style="
@@ -547,12 +681,15 @@ class SimpleTemplateBuilder {
         document.getElementById('allergenColor').value = '#ff0000';
         document.getElementById('dayNameStyle').value = 'bold';
         document.getElementById('backgroundColor').value = '#ffffff';
-        document.getElementById('backgroundOpacity').value = '80';
-        document.getElementById('opacityValue').textContent = '80';
+        document.getElementById('backgroundOpacity').value = '100';
+        document.getElementById('opacityValue').textContent = '100';
         document.getElementById('showHeader').checked = true;
         document.getElementById('headerText').value = 'Седмично меню';
         
         this.removeBackground();
+        
+        // Reload sample data
+        this.loadSampleData();
         this.updatePreview();
     }
     
