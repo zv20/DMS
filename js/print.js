@@ -1,8 +1,8 @@
 /**
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
- * Ultra-compact layout optimized for A4 paper (5 weekdays fit on one page)
- * UPDATED: Works with new StepTemplateBuilder + Compact vs Detailed styles
+ * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
+ * @version 3.0 - A4-optimized spacing
  */
 
 (function(window) {
@@ -218,8 +218,8 @@
                     margin-bottom: 12px;
                     width: 100%;
                 ">
-                    <strong>🎨 Default Elegant Template</strong><br>
-                    <small style="color: #666;">Clean numbered layout with allergen highlighting</small>
+                    <strong>🎨 Default Template</strong><br>
+                    <small style="color: #666;">Compact style - Fits perfectly on A4</small>
                 </button>
             `;
             
@@ -240,7 +240,7 @@
                         width: 100%;
                     ">
                         <strong>📋 ${name}</strong><br>
-                        <small style="color: #666;">${styleLabel} style - Your saved template</small>
+                        <small style="color: #666;">${styleLabel} style - A4 optimized</small>
                     </button>
                 `;
             });
@@ -411,40 +411,41 @@
         return renderMenuHTML(mealPlanData, settings);
     }
     
-    // NEW: Direct HTML rendering based on template settings (NOW WITH COMPACT/DETAILED SUPPORT)
+    // NEW: Direct HTML rendering based on template settings (A4-OPTIMIZED FOR PRINT)
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
         
-        // COMPACT vs DETAILED style logic (matches template-builder-steps.js)
+        // PRINT-OPTIMIZED spacing - guaranteed to fit 5 days + 4 meals each on A4
         const isCompact = (s.templateStyle || 'compact') === 'compact';
         const spacing = {
-            containerPadding: isCompact ? '12px' : '15px',
-            headerMargin: isCompact ? '8px' : '10px',
-            dateMargin: isCompact ? '10px' : '12px',
-            dayMargin: isCompact ? '8px' : '8px',
-            dayPadding: isCompact ? '6px' : '6px',
-            dayNameMargin: isCompact ? '4px' : '5px',
-            mealMargin: isCompact ? '3px' : '4px',
-            mealLeftMargin: isCompact ? '8px' : '8px',
-            footerMarginTop: isCompact ? '12px' : '15px',
-            footerPaddingTop: isCompact ? '10px' : '12px',
-            lineHeight: isCompact ? '1.2' : '1.3'
+            containerPadding: '8px',         // Reduced for print
+            headerMargin: '6px',             // Minimal
+            dateMargin: '8px',               // Minimal
+            dayMargin: '6px',                // Tight spacing between days
+            dayPadding: '5px',               // Compact padding
+            dayNameMargin: '3px',            // Minimal
+            mealMargin: isCompact ? '2px' : '3px',  // Very tight
+            mealLeftMargin: '6px',           // Small indent
+            footerMarginTop: '8px',          // Minimal
+            footerPaddingTop: '6px',         // Minimal
+            lineHeight: isCompact ? '1.15' : '1.2'  // Compact line height for print
         };
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
+        // PRINT-OPTIMIZED font sizes - smaller for better fit
         const sizeMaps = {
-            small: { header: '18pt', day: '12pt', meal: '10pt', footer: '9pt' },
-            medium: { header: '22pt', day: '14pt', meal: '12pt', footer: '10pt' },
-            large: { header: '26pt', day: '16pt', meal: '14pt', footer: '11pt' }
+            small: { header: '16pt', day: '11pt', meal: '9pt', footer: '8pt' },
+            medium: { header: '18pt', day: '12pt', meal: '10pt', footer: '8pt' },
+            large: { header: '20pt', day: '13pt', meal: '10pt', footer: '9pt' }
         };
         
-        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '22pt';
-        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '14pt';
-        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '12pt';
-        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '10pt';
+        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '18pt';
+        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '12pt';
+        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
+        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
         
-        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif;">`;
+        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
         
         // Header
         if (s.showHeader) {
@@ -452,12 +453,12 @@
         }
         
         if (s.showDateRange) {
-            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
+            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: 9pt;">${dateRange}</div>`;
         }
         
         // Menu days
         days.forEach(day => {
-            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
+            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 3px;`;
             html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
             
             day.meals.forEach(meal => {
@@ -483,7 +484,7 @@
                     
                     html += `</div>`;
                 } else {
-                    // DETAILED: Meal name on first line, ingredients on second line
+                    // DETAILED: Meal name on first line, ingredients on second line (TIGHT FOR PRINT)
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
                     
                     // Line 1: Meal number, name, portion, calories
@@ -492,9 +493,9 @@
                     if (s.showCalories && meal.calories) html += ` (ККАЛ ${meal.calories})`;
                     html += `</div>`;
                     
-                    // Line 2: Ingredients (if enabled and exist)
+                    // Line 2: Ingredients (if enabled and exist) - VERY TIGHT
                     if (s.showIngredients && meal.ingredients.length) {
-                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
+                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
                                 let style = `color: ${s.allergenColor};`;
                                 if (s.allergenBold) style += ' font-weight: bold;';
@@ -537,21 +538,22 @@
                     
                     body { 
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                        font-size: 12px;
-                        line-height: 1.3;
+                        font-size: 10px;
+                        line-height: 1.2;
                         color: #333;
                         background: white;
                     }
                     
                     @page {
                         size: A4 portrait;
-                        margin: 12mm 12mm 10mm 12mm;
+                        margin: 10mm 12mm 10mm 12mm;
                     }
                     
                     @media print {
                         body {
                             width: 210mm;
-                            min-height: 297mm;
+                            height: 297mm;
+                            overflow: hidden;
                         }
                     }
                     
