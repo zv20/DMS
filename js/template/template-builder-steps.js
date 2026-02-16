@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.5 - Portions and Calories always enabled
+ * @version 2.6 - All content always shown (no toggles)
  */
 
 class StepTemplateBuilder {
@@ -25,11 +25,11 @@ class StepTemplateBuilder {
             headerFontSize: 'large',
             headerColor: '#d2691e',
             
-            // Weekly Menu
+            // Weekly Menu (all always true now)
             showDateRange: true,
             showIngredients: true,
-            showCalories: true,      // Always true now
-            showPortions: true,      // Always true now
+            showCalories: true,
+            showPortions: true,
             
             // Day Block Styling
             dayBorder: false,
@@ -222,10 +222,12 @@ class StepTemplateBuilder {
                     <span><strong>Detailed</strong> - Ingredients on separate line</span>
                 </label>
                 
-                <h4 style="margin-top: 15px;">📜 Content</h4>
-                <label class="checkbox-label"><input type="checkbox" id="showDateRange" checked><span>Date Range</span></label>
-                <label class="checkbox-label"><input type="checkbox" id="showIngredients" checked><span>Ingredients</span></label>
-                <p style="font-size: 11px; color: #666; margin: 10px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">ℹ️ Portions and Calories are always shown</p>
+                <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 12px; color: #2e7d32;">
+                        <strong>✅ Menu Content:</strong><br>
+                        Date range, ingredients, portions, and calories are always included in your menu.
+                    </p>
+                </div>
                 
                 <h4 style="margin-top: 15px;">📊 Day Block</h4>
                 <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span>Show Border</span></label>
@@ -379,9 +381,7 @@ class StepTemplateBuilder {
             });
         });
         
-        // Menu (Portions and Calories removed - always true)
-        this.bindCheckbox('showDateRange');
-        this.bindCheckbox('showIngredients');
+        // Menu (no content toggles - all styling only)
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
         this.bindColorInput('dayBackground');
@@ -579,9 +579,8 @@ class StepTemplateBuilder {
             html += `</div>`;
         }
         
-        if (s.showDateRange) {
-            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
-        }
+        // Date range (always shown)
+        html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         
         // Menu
         html += `<div style="flex: 1;">`;
@@ -592,10 +591,10 @@ class StepTemplateBuilder {
             
             day.meals.forEach(meal => {
                 if (isCompact) {
-                    // COMPACT: Everything on one line (portions and calories always shown)
+                    // COMPACT: Everything on one line (all always shown)
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
                     if (meal.portion) html += ` - ${meal.portion}`;
-                    if (s.showIngredients && meal.ingredients.length) {
+                    if (meal.ingredients.length) {
                         html += `; ${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
                                 let style = `color: ${s.allergenColor};`;
@@ -617,8 +616,8 @@ class StepTemplateBuilder {
                     if (meal.portion) html += ` - ${meal.portion}`;
                     html += `</div>`;
                     
-                    // Line 2: Ingredients + Calories
-                    if (s.showIngredients && meal.ingredients.length) {
+                    // Line 2: Ingredients + Calories (always shown)
+                    if (meal.ingredients.length) {
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
                                 let style = `color: ${s.allergenColor};`;
