@@ -173,7 +173,8 @@
     // Dialog to select template
     function selectTemplateDialog() {
         return new Promise((resolve) => {
-            const savedTemplates = JSON.parse(localStorage.getItem('meal-templates') || '{}');
+            // UPDATED: Get templates from storage adapter instead of localStorage
+            const savedTemplates = window.menuTemplates || {};
             const templateNames = Object.keys(savedTemplates);
             
             const dialog = document.createElement('div');
