@@ -452,20 +452,32 @@ class TemplateBuilder {
         };
     }
     
-    saveTemplate() {
+    // UPDATED: Save templates using storage adapter instead of localStorage
+    async saveTemplate() {
         const name = prompt('Template name:');
         if (!name) return;
         
-        // Save to localStorage
-        const templates = JSON.parse(localStorage.getItem('meal-templates') || '{}');
-        templates[name] = this.state;
-        localStorage.setItem('meal-templates', JSON.stringify(templates));
+        // Ensure window.menuTemplates exists
+        if (!window.menuTemplates) {
+            window.menuTemplates = {};
+        }
+        
+        // Save to global object
+        window.menuTemplates[name] = this.state;
+        
+        // Save to storage adapter (File System or IndexedDB)
+        if (window.storageAdapter) {
+            await window.storageAdapter.save('templates', window.menuTemplates);
+            console.log('✅ Template saved to storage adapter:', name);
+        }
         
         alert(`Template "${name}" saved!`);
     }
     
+    // UPDATED: Load templates from storage adapter instead of localStorage
     loadTemplate() {
-        const templates = JSON.parse(localStorage.getItem('meal-templates') || '{}');
+        // Get templates from global object (loaded by storage adapter)
+        const templates = window.menuTemplates || {};
         const names = Object.keys(templates);
         
         if (names.length === 0) {
