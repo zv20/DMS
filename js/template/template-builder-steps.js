@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.1 - Compact vs Detailed styles now work!
+ * @version 2.2 - Detailed style now shows ingredients on separate line!
  */
 
 class StepTemplateBuilder {
@@ -215,11 +215,11 @@ class StepTemplateBuilder {
                 <h4>🎨 Template Style</h4>
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="compact" checked>
-                    <span><strong>Compact</strong> - Tight spacing, fits 5 days on one page</span>
+                    <span><strong>Compact</strong> - All info on one line</span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="detailed">
-                    <span><strong>Detailed</strong> - More spacing, easier to read</span>
+                    <span><strong>Detailed</strong> - Ingredients on separate line</span>
                 </label>
                 
                 <h4 style="margin-top: 15px;">📜 Content</h4>
@@ -544,7 +544,7 @@ class StepTemplateBuilder {
             dayMargin: isCompact ? '8px' : '15px',
             dayPadding: isCompact ? '6px' : '10px',
             dayNameMargin: isCompact ? '4px' : '8px',
-            mealMargin: isCompact ? '3px' : '5px',
+            mealMargin: isCompact ? '3px' : '8px',
             mealLeftMargin: isCompact ? '8px' : '10px',
             footerMarginTop: isCompact ? '12px' : '20px',
             footerPaddingTop: isCompact ? '10px' : '15px',
@@ -592,22 +592,50 @@ class StepTemplateBuilder {
             if (!day.meals.length) return;
             const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
             html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
+            
             day.meals.forEach(meal => {
-                html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
-                if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
-                if (s.showIngredients && meal.ingredients.length) {
-                    html += `; ${meal.ingredients.map(ing => {
-                        if (ing.hasAllergen) {
-                            let style = `color: ${s.allergenColor};`;
-                            if (s.allergenBold) style += ' font-weight: bold;';
-                            if (s.allergenUnderline) style += ' text-decoration: underline;';
-                            return `<span style="${style}">${ing.name}</span>`;
-                        }
-                        return ing.name;
-                    }).join(', ')}`;
+                if (isCompact) {
+                    // COMPACT: Everything on one line
+                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
+                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    if (s.showIngredients && meal.ingredients.length) {
+                        html += `; ${meal.ingredients.map(ing => {
+                            if (ing.hasAllergen) {
+                                let style = `color: ${s.allergenColor};`;
+                                if (s.allergenBold) style += ' font-weight: bold;';
+                                if (s.allergenUnderline) style += ' text-decoration: underline;';
+                                return `<span style="${style}">${ing.name}</span>`;
+                            }
+                            return ing.name;
+                        }).join(', ')}`;
+                    }
+                    if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
+                    html += `</div>`;
+                } else {
+                    // DETAILED: Meal name on first line, ingredients on second line
+                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
+                    
+                    // Line 1: Meal number, name, portion, calories
+                    html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
+                    if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+                    if (s.showCalories && meal.calories) html += ` (ККАЛ ${meal.calories})`;
+                    html += `</div>`;
+                    
+                    // Line 2: Ingredients (if enabled and exist)
+                    if (s.showIngredients && meal.ingredients.length) {
+                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
+                            if (ing.hasAllergen) {
+                                let style = `color: ${s.allergenColor};`;
+                                if (s.allergenBold) style += ' font-weight: bold;';
+                                if (s.allergenUnderline) style += ' text-decoration: underline;';
+                                return `<span style="${style}">${ing.name}</span>`;
+                            }
+                            return ing.name;
+                        }).join(', ')}</div>`;
+                    }
+                    
+                    html += `</div>`;
                 }
-                if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
-                html += `</div>`;
             });
             html += `</div>`;
         });
