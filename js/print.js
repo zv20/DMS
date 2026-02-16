@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
- * @version 3.0 - A4-optimized spacing
+ * @version 3.1 - Calories on ingredients row in Detailed style
  */
 
 (function(window) {
@@ -418,17 +418,17 @@
         // PRINT-OPTIMIZED spacing - guaranteed to fit 5 days + 4 meals each on A4
         const isCompact = (s.templateStyle || 'compact') === 'compact';
         const spacing = {
-            containerPadding: '8px',         // Reduced for print
-            headerMargin: '6px',             // Minimal
-            dateMargin: '8px',               // Minimal
-            dayMargin: '6px',                // Tight spacing between days
-            dayPadding: '5px',               // Compact padding
-            dayNameMargin: '3px',            // Minimal
-            mealMargin: isCompact ? '2px' : '3px',  // Very tight
-            mealLeftMargin: '6px',           // Small indent
-            footerMarginTop: '8px',          // Minimal
-            footerPaddingTop: '6px',         // Minimal
-            lineHeight: isCompact ? '1.15' : '1.2'  // Compact line height for print
+            containerPadding: '8px',
+            headerMargin: '6px',
+            dateMargin: '8px',
+            dayMargin: '6px',
+            dayPadding: '5px',
+            dayNameMargin: '3px',
+            mealMargin: isCompact ? '2px' : '3px',
+            mealLeftMargin: '6px',
+            footerMarginTop: '8px',
+            footerPaddingTop: '6px',
+            lineHeight: isCompact ? '1.15' : '1.2'
         };
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
@@ -484,16 +484,15 @@
                     
                     html += `</div>`;
                 } else {
-                    // DETAILED: Meal name on first line, ingredients on second line (TIGHT FOR PRINT)
+                    // DETAILED: Meal name on first line, ingredients + calories on second line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
                     
-                    // Line 1: Meal number, name, portion, calories
+                    // Line 1: Meal number, name, portion (NO CALORIES)
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
-                    if (s.showCalories && meal.calories) html += ` (ККАЛ ${meal.calories})`;
                     html += `</div>`;
                     
-                    // Line 2: Ingredients (if enabled and exist) - VERY TIGHT
+                    // Line 2: Ingredients + Calories (if enabled)
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -503,7 +502,16 @@
                                 return `<span style="${style}">${ing.name}</span>`;
                             }
                             return ing.name;
-                        }).join(', ')}</div>`;
+                        }).join(', ')}`;
+                        
+                        // Add calories AFTER ingredients on same line
+                        if (s.showCalories && meal.calories) {
+                            html += ` - ККАЛ ${meal.calories}`;
+                        }
+                        html += `</div>`;
+                    } else if (s.showCalories && meal.calories) {
+                        // If no ingredients but calories exist
+                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                     }
                     
                     html += `</div>`;
