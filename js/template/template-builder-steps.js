@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.3 - Detailed view now has compact spacing!
+ * @version 2.4 - Detailed view: calories moved to ingredients row
  */
 
 class StepTemplateBuilder {
@@ -541,14 +541,14 @@ class StepTemplateBuilder {
             containerPadding: isCompact ? '12px' : '15px',
             headerMargin: isCompact ? '8px' : '10px',
             dateMargin: isCompact ? '10px' : '12px',
-            dayMargin: isCompact ? '8px' : '8px',        // Same tight spacing for both
-            dayPadding: isCompact ? '6px' : '6px',       // Same tight padding for both
+            dayMargin: isCompact ? '8px' : '8px',
+            dayPadding: isCompact ? '6px' : '6px',
             dayNameMargin: isCompact ? '4px' : '5px',
-            mealMargin: isCompact ? '3px' : '4px',       // Slightly more in detailed for 2-line
-            mealLeftMargin: isCompact ? '8px' : '8px',   // Same indentation
+            mealMargin: isCompact ? '3px' : '4px',
+            mealLeftMargin: isCompact ? '8px' : '8px',
             footerMarginTop: isCompact ? '12px' : '15px',
             footerPaddingTop: isCompact ? '10px' : '12px',
-            lineHeight: isCompact ? '1.2' : '1.3'        // Slightly more readable in detailed
+            lineHeight: isCompact ? '1.2' : '1.3'
         };
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
@@ -612,16 +612,15 @@ class StepTemplateBuilder {
                     if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
                     html += `</div>`;
                 } else {
-                    // DETAILED: Meal name on first line, ingredients on second line (COMPACT SPACING)
+                    // DETAILED: Meal name on first line, ingredients + calories on second line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
                     
-                    // Line 1: Meal number, name, portion, calories
+                    // Line 1: Meal number, name, portion (NO CALORIES)
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
-                    if (s.showCalories && meal.calories) html += ` (ККАЛ ${meal.calories})`;
                     html += `</div>`;
                     
-                    // Line 2: Ingredients (if enabled and exist) - NO extra margin
+                    // Line 2: Ingredients + Calories (if enabled)
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -631,7 +630,16 @@ class StepTemplateBuilder {
                                 return `<span style="${style}">${ing.name}</span>`;
                             }
                             return ing.name;
-                        }).join(', ')}</div>`;
+                        }).join(', ')}`;
+                        
+                        // Add calories AFTER ingredients on same line
+                        if (s.showCalories && meal.calories) {
+                            html += ` - ККАЛ ${meal.calories}`;
+                        }
+                        html += `</div>`;
+                    } else if (s.showCalories && meal.calories) {
+                        // If no ingredients but calories exist
+                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                     }
                     
                     html += `</div>`;
