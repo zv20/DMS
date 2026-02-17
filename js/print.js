@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
- * @version 3.3 - Fixed background images loading in print
+ * @version 3.4 - Improved background image loading with preload
  */
 
 (function(window) {
@@ -15,11 +15,12 @@
         return `${year}-${month}-${day}`;
     }
     
-    // NEW: Load background image from local storage and convert to base64
+    // Load background image from local storage and convert to base64
     async function loadBackgroundImageAsBase64(filename) {
         if (!filename || !window.directoryHandle) return null;
         
         try {
+            console.log('🖼️ Loading background image:', filename);
             const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
             const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
             const backgroundsDir = await imagesDir.getDirectoryHandle('backgrounds', { create: false });
@@ -29,8 +30,14 @@
             // Convert file to base64 data URL
             return new Promise((resolve) => {
                 const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = () => resolve(null);
+                reader.onloadend = () => {
+                    console.log('✅ Background image loaded successfully, size:', Math.round(reader.result.length / 1024), 'KB');
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    console.error('❌ Failed to read image file');
+                    resolve(null);
+                };
                 reader.readAsDataURL(file);
             });
         } catch (err) {
@@ -75,13 +82,11 @@
         
         // Load background image as base64
         if (settings.backgroundImage) {
-            console.log('🖼️ Loading background image:', settings.backgroundImage);
             const base64Image = await loadBackgroundImageAsBase64(settings.backgroundImage);
             if (base64Image) {
                 settings.backgroundImageData = base64Image;
-                console.log('✅ Background image loaded successfully');
             } else {
-                console.warn('❌ Background image failed to load');
+                console.warn('❌ Background image failed to load, printing without background');
             }
         }
         
@@ -489,11 +494,14 @@
         const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
         
         // Use base64 data if available, otherwise use color only
-        const bgStyle = s.backgroundImageData ? 
-            `background: ${s.backgroundColor} url('${s.backgroundImageData}') no-repeat center center; background-size: cover;` : 
-            `background: ${s.backgroundColor};`;
+        let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
+        if (s.backgroundImageData) {
+            containerStyle += ` background: url('${s.backgroundImageData}') ${s.backgroundColor} no-repeat center center / cover;`;
+        } else {
+            containerStyle += ` background: ${s.backgroundColor};`;
+        }
         
-        let html = `<div style="${bgStyle} padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
+        let html = `<div style="${containerStyle}">`;
         
         // Header
         if (s.showHeader) {
@@ -611,11 +619,14 @@
         const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
         
         // Use base64 data if available, otherwise use color only
-        const bgStyle = s.backgroundImageData ? 
-            `background: ${s.backgroundColor} url('${s.backgroundImageData}') no-repeat center center; background-size: cover;` : 
-            `background: ${s.backgroundColor};`;
+        let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
+        if (s.backgroundImageData) {
+            containerStyle += ` background: url('${s.backgroundImageData}') ${s.backgroundColor} no-repeat center center / cover;`;
+        } else {
+            containerStyle += ` background: ${s.backgroundColor};`;
+        }
         
-        let html = `<div style="${bgStyle} padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
+        let html = `<div style="${containerStyle}">`;
         
         // Header
         if (s.showHeader) {
@@ -729,6 +740,13 @@
                             height: 297mm;
                             overflow: hidden;
                         }
+                        
+                        /* Force backgrounds to print */
+                        * {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                        }
                     }
                     
                     @media screen {
@@ -744,7 +762,12 @@
                 ${html}
                 <script>
                     window.onload = function() {
-                        setTimeout(() => window.print(), 500);
+                        console.log('📝 Print window loaded, waiting 2s for images...');
+                        // Wait 2 seconds to ensure images are loaded
+                        setTimeout(() => {
+                            console.log('✅ Opening print dialog');
+                            window.print();
+                        }, 2000);
                     };
                 </script>
             </body>
