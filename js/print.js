@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
- * @version 3.2 - Added 2-column layout for detailed template
+ * @version 3.3 - Fixed background images loading in print
  */
 
 (function(window) {
@@ -13,6 +13,30 @@
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+    
+    // NEW: Load background image from local storage and convert to base64
+    async function loadBackgroundImageAsBase64(filename) {
+        if (!filename || !window.directoryHandle) return null;
+        
+        try {
+            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+            const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
+            const backgroundsDir = await imagesDir.getDirectoryHandle('backgrounds', { create: false });
+            const fileHandle = await backgroundsDir.getFileHandle(filename);
+            const file = await fileHandle.getFile();
+            
+            // Convert file to base64 data URL
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
+        } catch (err) {
+            console.warn('⚠️ Failed to load background image:', filename, err);
+            return null;
+        }
     }
     
     // Main print menu function
@@ -41,12 +65,64 @@
             return;
         }
         
-        // Step 4: Render using selected template
-        const html = renderWithTemplate(mealPlanData, templateChoice);
+        // Step 4: Load background image if present
+        let settings;
+        if (templateChoice.type === 'default') {
+            settings = getDefaultSettings();
+        } else {
+            settings = templateChoice.settings;
+        }
         
-        // Step 5: Open print window
+        // Load background image as base64
+        if (settings.backgroundImage) {
+            console.log('🖼️ Loading background image:', settings.backgroundImage);
+            const base64Image = await loadBackgroundImageAsBase64(settings.backgroundImage);
+            if (base64Image) {
+                settings.backgroundImageData = base64Image;
+                console.log('✅ Background image loaded successfully');
+            } else {
+                console.warn('❌ Background image failed to load');
+            }
+        }
+        
+        // Step 5: Render using selected template
+        const html = renderMenuHTML(mealPlanData, settings);
+        
+        // Step 6: Open print window
         openPrintWindow(html, mealPlanData);
     };
+    
+    // Default template settings
+    function getDefaultSettings() {
+        return {
+            templateStyle: 'compact',
+            backgroundImage: null,
+            backgroundColor: '#ffffff',
+            backgroundOpacity: 1.0,
+            showHeader: true,
+            headerText: 'Седмично меню',
+            headerImage: null,
+            headerAlignment: 'center',
+            headerFontSize: 'large',
+            headerColor: '#d2691e',
+            showDateRange: true,
+            showIngredients: true,
+            showCalories: true,
+            showPortions: true,
+            dayBorder: false,
+            dayBackground: 'transparent',
+            dayNameSize: 'medium',
+            dayNameColor: '#333333',
+            dayNameWeight: 'bold',
+            allergenColor: '#ff0000',
+            allergenBold: true,
+            showFooter: true,
+            footerText: 'Prepared with care by KitchenPro',
+            footerImage: null,
+            footerAlignment: 'center',
+            footerFontSize: 'small'
+        };
+    }
     
     // Dialog to select week
     function selectWeekDialog() {
@@ -372,49 +448,7 @@
         };
     }
     
-    // NEW: Render meal plan with selected template (works with new StepTemplateBuilder)
-    function renderWithTemplate(mealPlanData, templateChoice) {
-        let settings;
-        
-        if (templateChoice.type === 'default') {
-            // Default template settings
-            settings = {
-                templateStyle: 'compact',
-                backgroundImage: null,
-                backgroundColor: '#ffffff',
-                backgroundOpacity: 1.0,
-                showHeader: true,
-                headerText: 'Седмично меню',
-                headerImage: null,
-                headerAlignment: 'center',
-                headerFontSize: 'large',
-                headerColor: '#d2691e',
-                showDateRange: true,
-                showIngredients: true,
-                showCalories: true,
-                showPortions: true,
-                dayBorder: false,
-                dayBackground: 'transparent',
-                dayNameSize: 'medium',
-                dayNameColor: '#333333',
-                dayNameWeight: 'bold',
-                allergenColor: '#ff0000',
-                allergenBold: true,
-                showFooter: true,
-                footerText: 'Prepared with care by KitchenPro',
-                footerImage: null,
-                footerAlignment: 'center',
-                footerFontSize: 'small'
-            };
-        } else {
-            settings = templateChoice.settings;
-        }
-        
-        // Render HTML using template settings
-        return renderMenuHTML(mealPlanData, settings);
-    }
-    
-    // NEW: Direct HTML rendering based on template settings (A4-OPTIMIZED FOR PRINT)
+    // Direct HTML rendering based on template settings (A4-OPTIMIZED FOR PRINT)
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
         
@@ -454,7 +488,12 @@
         const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
         const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
         
-        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
+        // Use base64 data if available, otherwise use color only
+        const bgStyle = s.backgroundImageData ? 
+            `background: ${s.backgroundColor} url('${s.backgroundImageData}') no-repeat center center; background-size: cover;` : 
+            `background: ${s.backgroundColor};`;
+        
+        let html = `<div style="${bgStyle} padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
         
         // Header
         if (s.showHeader) {
@@ -539,7 +578,7 @@
         return html;
     }
     
-    // NEW: 2-column layout rendering (Monday-Tuesday | Wednesday-Thursday | Friday)
+    // 2-column layout rendering (Monday-Tuesday | Wednesday-Thursday | Friday)
     function renderMenuHTML2Column(data, s) {
         const { startDate, endDate, days } = data;
         
@@ -571,7 +610,12 @@
         const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
         const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
         
-        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
+        // Use base64 data if available, otherwise use color only
+        const bgStyle = s.backgroundImageData ? 
+            `background: ${s.backgroundColor} url('${s.backgroundImageData}') no-repeat center center; background-size: cover;` : 
+            `background: ${s.backgroundColor};`;
+        
+        let html = `<div style="${bgStyle} padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
         
         // Header
         if (s.showHeader) {
@@ -623,7 +667,6 @@
         };
         
         // Layout: Row 1 (Mon-Tue), Row 2 (Wed-Thu), Row 3 (Fri)
-        let rowIndex = 0;
         for (let i = 0; i < days.length; i += 2) {
             html += `<div style="display: flex; gap: ${spacing.columnGap}; margin-bottom: ${spacing.rowMargin};">`;
             
@@ -642,7 +685,6 @@
             html += `</div>`;
             
             html += `</div>`;
-            rowIndex++;
         }
         
         // Footer
