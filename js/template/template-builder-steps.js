@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow - Background images only
- * @version 5.2 - Tabs styled to match back button design
+ * @version 5.3 - Fixed tab injection to work with page-header
  */
 
 class StepTemplateBuilder {
@@ -96,62 +96,59 @@ class StepTemplateBuilder {
     }
     
     injectTabsIntoHeader() {
-        // Find the back button
-        const backButton = document.querySelector('a[href*="menu"], .back-button, .page-nav');
-        if (backButton) {
-            // Create tabs container with same style as back button
-            const tabsContainer = document.createElement('div');
-            tabsContainer.style.cssText = 'display: inline-flex; gap: 10px; margin-left: 15px; vertical-align: middle;';
-            
-            // Get the computed style from back button to match exactly
-            const backStyle = window.getComputedStyle(backButton);
-            const buttonBaseStyle = `
-                padding: ${backStyle.padding || '8px 16px'};
-                background: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                text-decoration: none;
-                display: inline-flex;
-                align-items: center;
-                gap: 5px;
-                transition: all 0.2s;
-                font-family: ${backStyle.fontFamily || 'inherit'};
-            `;
-            
-            tabsContainer.innerHTML = `
-                <button class="builder-tab-btn active" data-tab="builder" style="${buttonBaseStyle} background: #495057;">
-                    🔧 Builder
-                </button>
-                <button class="builder-tab-btn" data-tab="templates" style="${buttonBaseStyle}">
-                    📋 Templates
-                </button>
-                <button class="builder-tab-btn" data-tab="images" style="${buttonBaseStyle}">
-                    🖼️ Images
-                </button>
-            `;
-            
-            // Insert tabs after back button
-            backButton.parentNode.insertBefore(tabsContainer, backButton.nextSibling);
-            
-            // Add hover and active styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .builder-tab-btn:hover {
-                    background: #5a6268 !important;
-                    transform: translateY(-1px);
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                .builder-tab-btn.active {
-                    background: #495057 !important;
-                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-                }
-            `;
-            document.head.appendChild(style);
+        // Find the page header in style-editor page
+        const stylePage = document.getElementById('style-editor');
+        if (!stylePage) return;
+        
+        const pageHeader = stylePage.querySelector('.page-header');
+        if (!pageHeader) return;
+        
+        // Check if tabs already exist
+        if (document.querySelector('.builder-tab-btns')) {
+            console.log('Tabs already exist, skipping injection');
+            return;
         }
+        
+        // Create tabs container with same button style
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'builder-tab-btns';
+        tabsContainer.style.cssText = 'display: inline-flex; gap: 10px; margin-left: 15px;';
+        
+        tabsContainer.innerHTML = `
+            <button class="btn btn-secondary btn-small builder-tab-btn active" data-tab="builder" style="background: #495057;">
+                🔧 Builder
+            </button>
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="templates">
+                📋 Templates
+            </button>
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="images">
+                🖼️ Images
+            </button>
+        `;
+        
+        // Insert tabs after the first child (back button) in page-header
+        const backButton = pageHeader.querySelector('button');
+        if (backButton && backButton.parentNode) {
+            backButton.parentNode.insertBefore(tabsContainer, backButton.nextSibling);
+        } else {
+            pageHeader.appendChild(tabsContainer);
+        }
+        
+        // Add active state styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .builder-tab-btn:hover {
+                background: #5a6268 !important;
+                transform: translateY(-1px);
+            }
+            .builder-tab-btn.active {
+                background: #495057 !important;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('✅ Tabs injected successfully');
     }
     
     buildUI() {
@@ -251,7 +248,7 @@ class StepTemplateBuilder {
                 btn.style.background = '#495057';
             } else {
                 btn.classList.remove('active');
-                btn.style.background = '#6c757d';
+                btn.style.background = '';
             }
         });
         
