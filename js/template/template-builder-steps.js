@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 4.3 - Improved button styling and layout
+ * @version 4.4 - Unified button styling across all sections
  */
 
 class StepTemplateBuilder {
@@ -174,17 +174,11 @@ class StepTemplateBuilder {
             <div class="subsection" style="margin-bottom: 15px;">
                 <h4 style="margin: 0 0 12px 0 !important;">🖼️ ${title}</h4>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input type="file" id="bgImage${index}Upload" accept="image/*" style="display: none;">
-                    <button id="uploadBgImage${index}Btn" class="image-control-btn">
-                        <span style="font-size: 16px;">📄</span>
-                        <span>Upload</span>
-                    </button>
-                    <button id="browseBgImage${index}Btn" class="image-control-btn">
-                        <span style="font-size: 16px;">🖼️</span>
-                        <span>Library</span>
-                    </button>
-                    <button id="removeBgImage${index}Btn" class="image-delete-btn">🗑️</button>
+                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                    <button id="browseBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">🖼️ Library</button>
+                    <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
                 </div>
                 <div id="bgImage${index}Preview" style="display: ${slot.image ? 'block' : 'none'}; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
                     <small style="color: #555;">File: <strong id="bgImage${index}FileName">${slot.image || ''}</strong></small>
@@ -416,55 +410,6 @@ class StepTemplateBuilder {
                 .slider-value { text-align: center; font-size: 12px; color: #666; margin-top: 3px; }
                 .subsection { background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 8px 0; }
                 .subsection h4 { margin: 0 0 12px 0 !important; border-bottom: none !important; font-size: 12px !important; color: #555 !important; }
-                
-                /* NEW: Improved button styles */
-                .image-control-btn {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 3px;
-                    padding: 8px 4px;
-                    background: #2196f3;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 11px;
-                    font-weight: 500;
-                    transition: all 0.2s;
-                    min-height: 52px;
-                }
-                .image-control-btn:hover {
-                    background: #1976d2;
-                    transform: translateY(-1px);
-                    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-                }
-                .image-control-btn:active {
-                    transform: translateY(0);
-                }
-                .image-delete-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 8px;
-                    background: #f44336;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 18px;
-                    transition: all 0.2s;
-                    min-height: 52px;
-                }
-                .image-delete-btn:hover {
-                    background: #d32f2f;
-                    transform: translateY(-1px);
-                    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
-                }
-                .image-delete-btn:active {
-                    transform: translateY(0);
-                }
             </style>
         `;
     }
