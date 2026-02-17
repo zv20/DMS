@@ -42,6 +42,175 @@
             btn_save_recipe: 'Save Recipe',
             btn_save_ingredient: 'Save Ingredient',
             btn_save_allergen: 'Save Allergen',
+            btn_open_archive: 'Open Archive Folder',
+            
+            // Template Builder Tabs
+            tab_builder: '🔧 Builder',
+            tab_templates: '📋 Templates',
+            tab_images: '🖼️ Images',
+            
+            // Template Builder Buttons
+            btn_load_menu_data: '👁️ Load My Menu Data',
+            btn_reset_default: '🔄 Reset to Default',
+            btn_upload: '📄 Upload',
+            btn_library: '🖼️ Library',
+            btn_remove: '🗑️',
+            btn_close: 'Close',
+            
+            // Template Builder Sections
+            builder_title: '🎨 Menu Template Builder',
+            builder_subtitle: 'Click each step to customize',
+            section_background: '🌏 1. Background',
+            section_header: '📌 2. Header',
+            section_menu: '🍽️ 3. Weekly Menu',
+            section_footer: '📍 4. Footer',
+            
+            // Background Controls
+            label_background_color: 'Background Color',
+            label_background_info: '🇺🇫 5 Image Layers + Background',
+            label_background_desc: 'Position 5 images anywhere with precise size control!',
+            label_image_layer: '🖼️ Image Layer',
+            label_position: 'Position',
+            label_size: 'Size (% of page width)',
+            label_opacity: 'Opacity',
+            label_layer: 'Layer (Z-Index)',
+            
+            // Position Options
+            pos_center: 'Center (full page)',
+            pos_top_left: 'Top Left',
+            pos_top_center: 'Top Center',
+            pos_top_right: 'Top Right',
+            pos_center_left: 'Center Left',
+            pos_center_right: 'Center Right',
+            pos_bottom_left: 'Bottom Left',
+            pos_bottom_center: 'Bottom Center',
+            pos_bottom_right: 'Bottom Right',
+            
+            // Layer Options
+            layer_back: '1 - Back',
+            layer_2: '2',
+            layer_3: '3',
+            layer_4: '4',
+            layer_front: '5 - Front',
+            
+            // Header Controls
+            label_show_header: 'Show Header',
+            label_header_text: 'Header Text',
+            label_text_alignment: 'Text Alignment',
+            label_font_size_a4: 'Font Size (A4 optimized)',
+            label_text_color: 'Text Color',
+            
+            // Alignment Options
+            align_left: 'Left',
+            align_center: 'Center',
+            align_right: 'Right',
+            
+            // Font Size Options (Header)
+            size_14pt: '14pt - Minimal',
+            size_16pt: '16pt - Small',
+            size_18pt: '18pt - Medium',
+            size_20pt: '20pt - Large',
+            size_22pt: '22pt - Extra Large',
+            size_24pt: '24pt - Maximum',
+            
+            // Menu Controls
+            label_template_style: '🎨 Template Style',
+            style_compact: 'Compact',
+            style_compact_desc: 'All info on one line',
+            style_detailed: 'Detailed',
+            style_detailed_desc: 'Ingredients on separate line',
+            style_detailed_2col: 'Detailed (2 Columns)',
+            style_detailed_2col_desc: 'Side-by-side layout',
+            label_menu_content: '✅ Menu Content:',
+            menu_content_desc: 'Date range, ingredients, portions, and calories are always included in your menu.',
+            
+            label_day_block: '📊 Day Block',
+            label_show_border: 'Show Border',
+            label_border_color: 'Border Color',
+            label_border_style: 'Border Style',
+            label_border_thickness: 'Border Thickness',
+            label_background: 'Background',
+            
+            // Border Style Options
+            border_solid: 'Solid ────',
+            border_dashed: 'Dashed ─ ─ ─',
+            border_dotted: 'Dotted · · · ·',
+            border_double: 'Double ════',
+            
+            // Border Thickness Options
+            thickness_1px: '1px - Thin',
+            thickness_2px: '2px - Medium',
+            thickness_3px: '3px - Thick',
+            thickness_4px: '4px - Extra Thick',
+            
+            label_day_name: '📝 Day Name',
+            label_color: 'Color',
+            
+            // Font Size Options (Day Name)
+            size_10pt: '10pt - Small',
+            size_11pt: '11pt - Medium Small',
+            size_12pt: '12pt - Medium',
+            size_13pt: '13pt - Medium Large',
+            size_14pt: '14pt - Large',
+            
+            label_allergens: '⚠️ Allergens',
+            label_underline: 'Underline',
+            label_bold: 'Bold',
+            
+            // Footer Controls
+            label_show_footer: 'Show Footer',
+            label_footer_text: 'Footer Text',
+            
+            // Font Size Options (Footer)
+            size_7pt: '7pt - Minimal',
+            size_8pt: '8pt - Small',
+            size_9pt: '9pt - Medium',
+            size_10pt_footer: '10pt - Large',
+            size_11pt: '11pt - Maximum',
+            
+            // Templates Tab
+            templates_title: '📋 Saved Templates',
+            templates_subtitle: 'Manage your saved template designs',
+            templates_empty: '📂 No saved templates yet',
+            templates_empty_desc: 'Go to Builder tab to create and save your first template',
+            template_style_label: 'Style:',
+            template_header_label: 'Header:',
+            template_footer_label: 'Footer:',
+            template_yes: 'Yes',
+            template_no: 'No',
+            
+            // Images Tab
+            images_title: '🖼️ Image Library',
+            images_subtitle: 'Manage your background images',
+            images_bg_title: '🌏 Background Images',
+            images_empty: '📂 No images uploaded yet',
+            images_folder_missing: '📂 No images folder found',
+            images_select_folder: 'Please select data folder in Settings first',
+            
+            // Image Library Dialog
+            dialog_image_library: '🖼️ Image Library',
+            dialog_image_desc: 'Click image to select, or delete unused images',
+            
+            // Alerts
+            alert_load_real_data: '⚠️ Load real data from menu planner - feature coming soon!',
+            alert_template_name: 'Template name:',
+            alert_template_saved: '✅ Template saved!',
+            alert_template_not_found: '❌ Template not found',
+            alert_template_load_confirm: 'Load template "{name}"? This will replace your current settings.',
+            alert_template_loaded: '✅ Template loaded!',
+            alert_template_delete_confirm: 'Delete template "{name}"?',
+            alert_template_deleted: '✅ Template deleted!',
+            alert_image_delete_confirm: 'Delete "{name}"?',
+            alert_image_deleted: '✅ Image deleted!',
+            alert_image_delete_failed: '❌ Failed to delete image',
+            alert_reset_confirm: 'Reset all settings?',
+            alert_no_images: '📂 No images found in library. Upload some first!',
+            alert_image_library_failed: '❌ Failed to load image library',
+            alert_select_folder_first: 'Please select a data folder first in Settings.',
+            alert_upload_failed: '❌ Upload failed',
+            
+            // File Info
+            file_label: 'File:',
             
             // Modal Titles
             modal_add_recipe: 'Add Recipe',
@@ -61,7 +230,6 @@
             label_instructions: 'Instructions (optional)',
             label_ingredient_name: 'Ingredient Name',
             label_allergen_name: 'Allergen Name',
-            label_color: 'Color',
             label_auto_allergens: 'Auto-detected Allergens',
             label_manual_allergens: 'Additional Allergens',
             label_linked_allergens: 'Linked Allergens',
@@ -72,14 +240,10 @@
             label_app_theme: 'App Theme:',
             label_calories: 'Calories (optional)',
             label_title: 'Title',
-            label_font_size: 'Font Size',
             label_font_weight: 'Font Weight',
             label_font_style: 'Font Style',
-            label_background_color: 'Background Color',
             label_border_radius: 'Border Radius',
             label_border_width: 'Border Width',
-            label_border_color: 'Border Color',
-            label_border_style: 'Border Style',
             label_text: 'Text',
             label_image_url: 'Image URL (optional)',
             
@@ -119,7 +283,6 @@
             alert_delete_ingredient: 'Delete this ingredient?',
             alert_delete_allergen: 'Delete this allergen?',
             alert_delete_menu: 'Delete this saved menu?',
-            alert_delete_template: 'Delete this template?',
             alert_delete_image: 'Delete',
             alert_menu_saved: 'Menu saved successfully!',
             alert_menu_loaded: 'Menu loaded!',
@@ -131,9 +294,7 @@
             alert_file_api_unsupported: 'File System Access not supported. Use Export/Import.',
             alert_select_days: 'Please select at least one day to print',
             alert_no_print_data: 'No meals found for this week!',
-            alert_template_saved: 'Template saved!',
             alert_image_uploaded: 'Image uploaded successfully!',
-            alert_template_name_prompt: 'Template Name:',
             alert_no_meals_week: 'No meals planned for this week. Please add meals before printing.',
             
             // Headings
@@ -146,15 +307,12 @@
             heading_select_week: '📅 Select Week to Print:',
             heading_select_template: '📝 Select Template:',
             
-            // Template Builder Sections
-            section_background: '🖼️ Background',
-            section_header: '🔝 Header',
+            // Template Builder Sections (old)
             section_day_block: '📅 Day Block Style',
             section_day_name: '📌 Day Name Style',
             section_meal_title: '🍽️ Meal Title Style',
             section_ingredients: '🧂 Ingredients Style',
             section_meal_visibility: '🍲 Meal Visibility',
-            section_footer: '🔚 Footer',
             
             // Template Presets
             preset_classic: '🎨 Classic Orange',
@@ -185,10 +343,6 @@
             font_weight_bold: 'Bold',
             font_style_normal: 'Normal',
             font_style_italic: 'Italic',
-            border_style_solid: 'Solid',
-            border_style_dashed: 'Dashed',
-            border_style_dotted: 'Dotted',
-            border_style_double: 'Double',
             
             // Meal Slots
             slot_soup: '🥣 Soup',
@@ -283,6 +437,175 @@
             btn_save_recipe: 'Запази Рецепта',
             btn_save_ingredient: 'Запази Съставка',
             btn_save_allergen: 'Запази Алерген',
+            btn_open_archive: 'Отвори Архивна Папка',
+            
+            // Template Builder Tabs
+            tab_builder: '🔧 Дизайнер',
+            tab_templates: '📋 Шаблони',
+            tab_images: '🖼️ Изображения',
+            
+            // Template Builder Buttons
+            btn_load_menu_data: '👁️ Зареди Моите Данни',
+            btn_reset_default: '🔄 Нулирай',
+            btn_upload: '📄 Качи',
+            btn_library: '🖼️ Библиотека',
+            btn_remove: '🗑️',
+            btn_close: 'Затвори',
+            
+            // Template Builder Sections
+            builder_title: '🎨 Дизайнер на Меню Шаблон',
+            builder_subtitle: 'Кликнете всяка стъпка за настройка',
+            section_background: '🌏 1. Фон',
+            section_header: '📌 2. Заглавие',
+            section_menu: '🍽️ 3. Седмично Меню',
+            section_footer: '📍 4. Долен Колонтитул',
+            
+            // Background Controls
+            label_background_color: 'Цвят на Фона',
+            label_background_info: '🇺🇫 5 Слоя Изображения + Фон',
+            label_background_desc: 'Поставете 5 изображения навсякъде с прецизен контрол на размера!',
+            label_image_layer: '🖼️ Слой Изображение',
+            label_position: 'Позиция',
+            label_size: 'Размер (% от широчината на страницата)',
+            label_opacity: 'Прозрачност',
+            label_layer: 'Слой (Z-Index)',
+            
+            // Position Options
+            pos_center: 'Център (цяла страница)',
+            pos_top_left: 'Горе Ляво',
+            pos_top_center: 'Горе Център',
+            pos_top_right: 'Горе Дясно',
+            pos_center_left: 'Център Ляво',
+            pos_center_right: 'Център Дясно',
+            pos_bottom_left: 'Долу Ляво',
+            pos_bottom_center: 'Долу Център',
+            pos_bottom_right: 'Долу Дясно',
+            
+            // Layer Options
+            layer_back: '1 - Назад',
+            layer_2: '2',
+            layer_3: '3',
+            layer_4: '4',
+            layer_front: '5 - Отпред',
+            
+            // Header Controls
+            label_show_header: 'Покажи Заглавие',
+            label_header_text: 'Текст на Заглавие',
+            label_text_alignment: 'Подравняване на Текст',
+            label_font_size_a4: 'Размер на Шрифт (оптимизиран за A4)',
+            label_text_color: 'Цвят на Текст',
+            
+            // Alignment Options
+            align_left: 'Ляво',
+            align_center: 'Център',
+            align_right: 'Дясно',
+            
+            // Font Size Options (Header)
+            size_14pt: '14pt - Минимален',
+            size_16pt: '16pt - Малък',
+            size_18pt: '18pt - Среден',
+            size_20pt: '20pt - Голям',
+            size_22pt: '22pt - Много Голям',
+            size_24pt: '24pt - Максимален',
+            
+            // Menu Controls
+            label_template_style: '🎨 Стил на Шаблон',
+            style_compact: 'Компактен',
+            style_compact_desc: 'Всичка информация на един ред',
+            style_detailed: 'Детайлен',
+            style_detailed_desc: 'Съставки на отделен ред',
+            style_detailed_2col: 'Детайлен (2 Колони)',
+            style_detailed_2col_desc: 'Оформление една до друга',
+            label_menu_content: '✅ Съдържание на Меню:',
+            menu_content_desc: 'Датов диапазон, съставки, порции и калории винаги са включени във вашето меню.',
+            
+            label_day_block: '📊 Блок за Ден',
+            label_show_border: 'Покажи Рамка',
+            label_border_color: 'Цвят на Рамка',
+            label_border_style: 'Стил на Рамка',
+            label_border_thickness: 'Дебелина на Рамка',
+            label_background: 'Фон',
+            
+            // Border Style Options
+            border_solid: 'Плътна ────',
+            border_dashed: 'Прекъсната ─ ─ ─',
+            border_dotted: 'Точкирана · · · ·',
+            border_double: 'Двойна ════',
+            
+            // Border Thickness Options
+            thickness_1px: '1px - Тънка',
+            thickness_2px: '2px - Средна',
+            thickness_3px: '3px - Дебела',
+            thickness_4px: '4px - Много Дебела',
+            
+            label_day_name: '📝 Име на Ден',
+            label_color: 'Цвят',
+            
+            // Font Size Options (Day Name)
+            size_10pt: '10pt - Малък',
+            size_11pt: '11pt - Средно Малък',
+            size_12pt: '12pt - Среден',
+            size_13pt: '13pt - Средно Голям',
+            size_14pt: '14pt - Голям',
+            
+            label_allergens: '⚠️ Алергени',
+            label_underline: 'Подчертан',
+            label_bold: 'Удебелен',
+            
+            // Footer Controls
+            label_show_footer: 'Покажи Долен Колонтитул',
+            label_footer_text: 'Текст на Долен Колонтитул',
+            
+            // Font Size Options (Footer)
+            size_7pt: '7pt - Минимален',
+            size_8pt: '8pt - Малък',
+            size_9pt: '9pt - Среден',
+            size_10pt_footer: '10pt - Голям',
+            size_11pt: '11pt - Максимален',
+            
+            // Templates Tab
+            templates_title: '📋 Запазени Шаблони',
+            templates_subtitle: 'Управлявайте запазените дизайни на шаблони',
+            templates_empty: '📂 Все още няма запазени шаблони',
+            templates_empty_desc: 'Отидете на раздел Дизайнер, за да създадете и запазите първия си шаблон',
+            template_style_label: 'Стил:',
+            template_header_label: 'Заглавие:',
+            template_footer_label: 'Долен колонтитул:',
+            template_yes: 'Да',
+            template_no: 'Не',
+            
+            // Images Tab
+            images_title: '🖼️ Библиотека с Изображения',
+            images_subtitle: 'Управлявайте вашите фонови изображения',
+            images_bg_title: '🌏 Фонови Изображения',
+            images_empty: '📂 Все още няма качени изображения',
+            images_folder_missing: '📂 Не е намерена папка с изображения',
+            images_select_folder: 'Моля, първо изберете папка с данни в Настройки',
+            
+            // Image Library Dialog
+            dialog_image_library: '🖼️ Библиотека с Изображения',
+            dialog_image_desc: 'Кликнете върху изображение за избор или изтрийте неизползвани изображения',
+            
+            // Alerts
+            alert_load_real_data: '⚠️ Зареждане на реални данни от планиране на меню - функцията идва скоро!',
+            alert_template_name: 'Име на шаблон:',
+            alert_template_saved: '✅ Шаблонът е запазен!',
+            alert_template_not_found: '❌ Шаблонът не е намерен',
+            alert_template_load_confirm: 'Зареди шаблон "{name}"? Това ще замени текущите ви настройки.',
+            alert_template_loaded: '✅ Шаблонът е зареден!',
+            alert_template_delete_confirm: 'Изтрий шаблон "{name}"?',
+            alert_template_deleted: '✅ Шаблонът е изтрит!',
+            alert_image_delete_confirm: 'Изтрий "{name}"?',
+            alert_image_deleted: '✅ Изображението е изтрито!',
+            alert_image_delete_failed: '❌ Неуспешно изтриване на изображение',
+            alert_reset_confirm: 'Нулиране на всички настройки?',
+            alert_no_images: '📂 Не са намерени изображения в библиотеката. Качете първо!',
+            alert_image_library_failed: '❌ Неуспешно зареждане на библиотека с изображения',
+            alert_select_folder_first: 'Моля, първо изберете папка с данни в Настройки.',
+            alert_upload_failed: '❌ Качването е неуспешно',
+            
+            // File Info
+            file_label: 'Файл:',
             
             // Modal Titles
             modal_add_recipe: 'Добави Рецепта',
@@ -302,7 +625,6 @@
             label_instructions: 'Инструкции (опция)',
             label_ingredient_name: 'Име на Съставка',
             label_allergen_name: 'Име на Алерген',
-            label_color: 'Цвят',
             label_auto_allergens: 'Авто-алергени',
             label_manual_allergens: 'Допълнителни Алергени',
             label_linked_allergens: 'Съдържа Алергени',
@@ -313,14 +635,10 @@
             label_app_theme: 'Тема на приложението:',
             label_calories: 'Калории (опция)',
             label_title: 'Заглавие',
-            label_font_size: 'Размер на Шрифт',
             label_font_weight: 'Дебелина на Шрифт',
             label_font_style: 'Стил на Шрифт',
-            label_background_color: 'Цвят на Фона',
             label_border_radius: 'Закръгляне на Ръбовете',
             label_border_width: 'Дебелина на Рамката',
-            label_border_color: 'Цвят на Рамката',
-            label_border_style: 'Стил на Рамката',
             label_text: 'Текст',
             label_image_url: 'URL на Изображение (опция)',
             
@@ -360,7 +678,6 @@
             alert_delete_ingredient: 'Изтриване на тази съставка?',
             alert_delete_allergen: 'Изтриване на този алерген?',
             alert_delete_menu: 'Изтриване на това запазено меню?',
-            alert_delete_template: 'Изтриване на този шаблон?',
             alert_delete_image: 'Изтрий',
             alert_menu_saved: 'Менюто е запазено успешно!',
             alert_menu_loaded: 'Менюто е заредено!',
@@ -372,9 +689,7 @@
             alert_file_api_unsupported: 'Браузърът не поддържа директен запис. Използвайте Експорт/Импорт.',
             alert_select_days: 'Моля, изберете поне един ден за печат',
             alert_no_print_data: 'Няма данни за печат за тази седмица!',
-            alert_template_saved: 'Шаблонът е запазен!',
             alert_image_uploaded: 'Изображението е качено успешно!',
-            alert_template_name_prompt: 'Име на Шаблон:',
             alert_no_meals_week: 'Няма планирани ядения за тази седмица. Моля, добавете ядения преди печат.',
             
             // Headings
@@ -387,15 +702,12 @@
             heading_select_week: '📅 Изберете Седмица за Печат:',
             heading_select_template: '📝 Изберете Шаблон:',
             
-            // Template Builder Sections
-            section_background: '🖼️ Фон',
-            section_header: '🔝 Заглавие',
+            // Template Builder Sections (old)
             section_day_block: '📅 Стил на Ден',
             section_day_name: '📌 Стил на Име на Ден',
             section_meal_title: '🍽️ Стил на Заглавие на Ядене',
             section_ingredients: '🧂 Стил на Съставки',
             section_meal_visibility: '🍲 Видимост на Ядения',
-            section_footer: '🔚 Долен Колонтитул',
             
             // Template Presets
             preset_classic: '🎨 Класически Оранжев',
@@ -426,10 +738,6 @@
             font_weight_bold: 'Удебелен',
             font_style_normal: 'Нормален',
             font_style_italic: 'Курсив',
-            border_style_solid: 'Плътна',
-            border_style_dashed: 'Прекъсната',
-            border_style_dotted: 'Точкирана',
-            border_style_double: 'Двойна',
             
             // Meal Slots
             slot_soup: '🥣 Супа',
