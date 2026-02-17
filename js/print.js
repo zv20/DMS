@@ -863,25 +863,25 @@
             '  const pageHeight = 297 - ' + marginTop + ' - ' + marginBottom + ';' +
             '  const pageHeightPx = pageHeight * 3.7795;' +
             '  const contentHeight = content.offsetHeight;' +
-            '  console.log("\u📏 Content height:", contentHeight, "px");' +
-            '  console.log("\u📏 Available page height:", pageHeightPx.toFixed(0), "px (with ' + marginTop + 'mm/' + marginBottom + 'mm margins)");' +
+            '  console.log("📏 Content height:", contentHeight, "px");' +
+            '  console.log("📏 Available page height:", pageHeightPx.toFixed(0), "px (with ' + marginTop + 'mm/' + marginBottom + 'mm margins)");' +
             '  if (contentHeight > pageHeightPx) {' +
             '    const scaleFactor = pageHeightPx / contentHeight;' +
-            '    console.log("\u⚠️ Content too tall! Scaling down to", (scaleFactor * 100).toFixed(1) + "%");' +
+            '    console.log("⚠️ Content too tall! Scaling down to", (scaleFactor * 100).toFixed(1) + "%");' +
             '    content.style.transform = "scale(" + scaleFactor + ")";' +
             '    content.style.transformOrigin = "top left";' +
             '    content.style.width = (100 / scaleFactor) + "%";' +
             '  } else {' +
-            '    console.log("\u✅ Content fits perfectly!");' +
+            '    console.log("✅ Content fits perfectly!");' +
             '  }' +
             '}' +
             'window.onload = function() {' +
-            '  console.log("\u📝 Print window loaded");' +
-            '  console.log("\u📏 Margins:", "' + marginTop + 'mm / ' + marginRight + 'mm / ' + marginBottom + 'mm / ' + marginLeft + 'mm");' +
+            '  console.log("📝 Print window loaded");' +
+            '  console.log("📏 Margins:", "' + marginTop + 'mm / ' + marginRight + 'mm / ' + marginBottom + 'mm / ' + marginLeft + 'mm");' +
             '  setTimeout(function() {' +
             '    autoScaleContent();' +
             '    setTimeout(function() {' +
-            '      console.log("\u✅ Opening print dialog");' +
+            '      console.log("✅ Opening print dialog");' +
             '      window.print();' +
             '    }, 500);' +
             '  }, 2000);' +
