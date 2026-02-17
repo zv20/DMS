@@ -1,8 +1,8 @@
 /**
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
- * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
- * @version 3.4 - Improved background image loading with preload
+ * OPTIMIZED: Auto-scaling ensures content always fits perfectly on A4 single page
+ * @version 4.0 - Automatic scaling to prevent page overflow
  */
 
 (function(window) {
@@ -93,7 +93,7 @@
         // Step 5: Render using selected template
         const html = renderMenuHTML(mealPlanData, settings);
         
-        // Step 6: Open print window
+        // Step 6: Open print window with auto-scaling
         openPrintWindow(html, mealPlanData);
     };
     
@@ -108,24 +108,27 @@
             headerText: 'Седмично меню',
             headerImage: null,
             headerAlignment: 'center',
-            headerFontSize: 'large',
+            headerFontSize: '20pt',
             headerColor: '#d2691e',
             showDateRange: true,
             showIngredients: true,
             showCalories: true,
             showPortions: true,
             dayBorder: false,
+            dayBorderStyle: 'solid',
+            dayBorderColor: '#e0e0e0',
             dayBackground: 'transparent',
-            dayNameSize: 'medium',
+            dayNameSize: '12pt',
             dayNameColor: '#333333',
             dayNameWeight: 'bold',
+            mealFontSize: '10pt',
             allergenColor: '#ff0000',
             allergenBold: true,
             showFooter: true,
             footerText: 'Prepared with care by KitchenPro',
             footerImage: null,
             footerAlignment: 'center',
-            footerFontSize: 'small'
+            footerFontSize: '8pt'
         };
     }
     
@@ -300,7 +303,7 @@
                     width: 100%;
                 ">
                     <strong>🎨 Default Template</strong><br>
-                    <small style="color: #666;">Compact style - Fits perfectly on A4</small>
+                    <small style="color: #666;">Auto-scales to fit perfectly</small>
                 </button>
             `;
             
@@ -324,7 +327,7 @@
                         width: 100%;
                     ">
                         <strong>📋 ${name}</strong><br>
-                        <small style="color: #666;">${styleLabel} style - A4 optimized</small>
+                        <small style="color: #666;">${styleLabel} - Auto-scales to fit</small>
                     </button>
                 `;
             });
@@ -453,7 +456,7 @@
         };
     }
     
-    // Direct HTML rendering based on template settings (A4-OPTIMIZED FOR PRINT)
+    // Direct HTML rendering based on template settings
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
         
@@ -482,16 +485,11 @@
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        const sizeMaps = {
-            small: { header: '16pt', day: '11pt', meal: '9pt', footer: '8pt' },
-            medium: { header: '18pt', day: '12pt', meal: '10pt', footer: '8pt' },
-            large: { header: '20pt', day: '13pt', meal: '10pt', footer: '9pt' }
-        };
-        
-        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '18pt';
-        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '12pt';
-        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
-        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
+        // Parse font sizes (support both 'pt' and old format)
+        const headerSize = s.headerFontSize || '20pt';
+        const daySize = s.dayNameSize || '12pt';
+        const mealSize = s.mealFontSize || '10pt';
+        const footerSize = s.footerFontSize || '8pt';
         
         // Use base64 data if available, otherwise use color only
         let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
@@ -501,7 +499,7 @@
             containerStyle += ` background: ${s.backgroundColor};`;
         }
         
-        let html = `<div style="${containerStyle}">`;
+        let html = `<div id="menu-content" style="${containerStyle}">`;
         
         // Header
         if (s.showHeader) {
@@ -514,7 +512,8 @@
         
         // Menu days
         days.forEach(day => {
-            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 3px;`;
+            const borderStyle = s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} ${s.dayBorderStyle || 'solid'} ${s.dayBorderColor || '#e0e0e0'};` : '';
+            const dayStyle = `${borderStyle} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 3px;`;
             html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
             
             day.meals.forEach(meal => {
@@ -607,16 +606,11 @@
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        const sizeMaps = {
-            small: { header: '16pt', day: '11pt', meal: '9pt', footer: '8pt' },
-            medium: { header: '18pt', day: '12pt', meal: '10pt', footer: '8pt' },
-            large: { header: '20pt', day: '13pt', meal: '10pt', footer: '9pt' }
-        };
-        
-        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '18pt';
-        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '12pt';
-        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
-        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
+        // Parse font sizes (support both 'pt' and old format)
+        const headerSize = s.headerFontSize || '20pt';
+        const daySize = s.dayNameSize || '12pt';
+        const mealSize = s.mealFontSize || '10pt';
+        const footerSize = s.footerFontSize || '8pt';
         
         // Use base64 data if available, otherwise use color only
         let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
@@ -626,7 +620,7 @@
             containerStyle += ` background: ${s.backgroundColor};`;
         }
         
-        let html = `<div style="${containerStyle}">`;
+        let html = `<div id="menu-content" style="${containerStyle}">`;
         
         // Header
         if (s.showHeader) {
@@ -639,7 +633,8 @@
         
         // Helper function to render a single day
         const renderDay = (day) => {
-            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; border-radius: 3px; height: 100%;`;
+            const borderStyle = s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} ${s.dayBorderStyle || 'solid'} ${s.dayBorderColor || '#e0e0e0'};` : '';
+            const dayStyle = `${borderStyle} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; border-radius: 3px; height: 100%;`;
             let dayHTML = `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
             
             day.meals.forEach(meal => {
@@ -707,7 +702,7 @@
         return html;
     }
     
-    // Open print window with HTML (A4 optimized)
+    // Open print window with HTML (A4 optimized with AUTO-SCALING)
     function openPrintWindow(html, mealPlanData) {
         const printWindow = window.open('', '_blank');
         const dateStr = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth() + 1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth() + 1}.${mealPlanData.startDate.getFullYear()}`;
@@ -761,12 +756,47 @@
             <body>
                 ${html}
                 <script>
+                    // AUTO-SCALING: Ensures content always fits on one page
+                    function autoScaleContent() {
+                        const content = document.getElementById('menu-content');
+                        if (!content) return;
+                        
+                        // A4 page dimensions (minus margins)
+                        const pageHeight = 297 - 20; // 297mm - 20mm margins = 277mm
+                        const pageHeightPx = pageHeight * 3.7795; // Convert to pixels (1mm = 3.7795px)
+                        
+                        // Measure actual content height
+                        const contentHeight = content.offsetHeight;
+                        
+                        console.log('📏 Content height:', contentHeight, 'px');
+                        console.log('📏 Available page height:', pageHeightPx, 'px');
+                        
+                        // If content exceeds page height, scale it down
+                        if (contentHeight > pageHeightPx) {
+                            const scaleFactor = pageHeightPx / contentHeight;
+                            console.log('⚠️ Content too tall! Scaling down by', (scaleFactor * 100).toFixed(1) + '%');
+                            
+                            // Apply transform scale
+                            content.style.transform = `scale(${scaleFactor})`;
+                            content.style.transformOrigin = 'top left';
+                            content.style.width = (100 / scaleFactor) + '%';
+                        } else {
+                            console.log('✅ Content fits perfectly!');
+                        }
+                    }
+                    
                     window.onload = function() {
-                        console.log('📝 Print window loaded, waiting 2s for images...');
-                        // Wait 2 seconds to ensure images are loaded
+                        console.log('📝 Print window loaded');
+                        
+                        // Wait for images and fonts to load
                         setTimeout(() => {
-                            console.log('✅ Opening print dialog');
-                            window.print();
+                            autoScaleContent();
+                            
+                            // Wait a bit more, then print
+                            setTimeout(() => {
+                                console.log('✅ Opening print dialog');
+                                window.print();
+                            }, 500);
                         }, 2000);
                     };
                 </script>
