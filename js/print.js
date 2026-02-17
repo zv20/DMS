@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Auto-scaling + custom margins for any printer
- * @version 4.1 - Added margin selection for maximum page utilization
+ * @version 5.0 - Added multi-image background support
  */
 
 (function(window) {
@@ -76,7 +76,7 @@
             return;
         }
         
-        // Step 5: Load background image if present
+        // Step 5: Load settings and background images
         let settings;
         if (templateChoice.type === 'default') {
             settings = getDefaultSettings();
@@ -84,8 +84,24 @@
             settings = templateChoice.settings;
         }
         
-        // Load background image as base64
-        if (settings.backgroundImage) {
+        // NEW: Load multi-image backgrounds
+        if (settings.backgroundImages && Array.isArray(settings.backgroundImages)) {
+            console.log('🇺🇫 Loading multi-image backgrounds...');
+            for (let i = 0; i < settings.backgroundImages.length; i++) {
+                const imgSlot = settings.backgroundImages[i];
+                if (imgSlot.image) {
+                    const base64 = await loadBackgroundImageAsBase64(imgSlot.image);
+                    if (base64) {
+                        imgSlot.imageData = base64;
+                        console.log(`✅ Loaded image slot ${i + 1}:`, imgSlot.image);
+                    } else {
+                        console.warn(`⚠️ Failed to load image slot ${i + 1}:`, imgSlot.image);
+                    }
+                }
+            }
+        } else if (settings.backgroundImage) {
+            // Fallback: Old single image support
+            console.log('🖼️ Loading legacy single background image...');
             const base64Image = await loadBackgroundImageAsBase64(settings.backgroundImage);
             if (base64Image) {
                 settings.backgroundImageData = base64Image;
@@ -108,6 +124,12 @@
             backgroundImage: null,
             backgroundColor: '#ffffff',
             backgroundOpacity: 1.0,
+            backgroundImages: [
+                { image: null, position: 'center', size: 'cover', opacity: 1.0, zIndex: 1 },
+                { image: null, position: 'top-left', size: 'auto', opacity: 1.0, zIndex: 2 },
+                { image: null, position: 'top-right', size: 'auto', opacity: 1.0, zIndex: 3 },
+                { image: null, position: 'bottom-right', size: 'auto', opacity: 1.0, zIndex: 4 }
+            ],
             showHeader: true,
             headerText: 'Седмично меню',
             headerImage: null,
@@ -584,6 +606,22 @@
         };
     }
     
+    // Convert position name to CSS values
+    function getPositionCSS(position) {
+        const positions = {
+            'center': 'center center',
+            'top-left': 'top left',
+            'top-center': 'top center',
+            'top-right': 'top right',
+            'center-left': 'center left',
+            'center-right': 'center right',
+            'bottom-left': 'bottom left',
+            'bottom-center': 'bottom center',
+            'bottom-right': 'bottom right'
+        };
+        return positions[position] || 'center center';
+    }
+    
     // Direct HTML rendering based on template settings
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
@@ -613,21 +651,33 @@
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        // Parse font sizes (support both 'pt' and old format)
+        // Parse font sizes
         const headerSize = s.headerFontSize || '20pt';
         const daySize = s.dayNameSize || '12pt';
         const mealSize = s.mealFontSize || '10pt';
         const footerSize = s.footerFontSize || '8pt';
         
-        // Use base64 data if available, otherwise use color only
-        let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
-        if (s.backgroundImageData) {
-            containerStyle += ` background: url('${s.backgroundImageData}') ${s.backgroundColor} no-repeat center center / cover;`;
-        } else {
-            containerStyle += ` background: ${s.backgroundColor};`;
-        }
+        // Build container with multi-image backgrounds
+        let containerStyle = `background-color: ${s.backgroundColor}; position: relative; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
         
         let html = `<div id="menu-content" style="${containerStyle}">`;
+        
+        // NEW: Add multi-image background layers
+        if (s.backgroundImages && Array.isArray(s.backgroundImages)) {
+            const sortedImages = s.backgroundImages
+                .filter(img => img.image && img.imageData)
+                .sort((a, b) => a.zIndex - b.zIndex);
+            
+            sortedImages.forEach(img => {
+                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${img.size}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+            });
+        } else if (s.backgroundImageData) {
+            // Fallback: Legacy single background
+            html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${s.backgroundImageData}'); background-size: cover; background-position: center center; background-repeat: no-repeat; opacity: 1; z-index: 1; pointer-events: none;"></div>`;
+        }
+        
+        // Content wrapper with higher z-index
+        html += `<div style="position: relative; z-index: 10;">`;
         
         // Header
         if (s.showHeader) {
@@ -646,11 +696,8 @@
             
             day.meals.forEach(meal => {
                 if (isCompact) {
-                    // COMPACT: Everything on one line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
-                    
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
-                    
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `; ${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -662,20 +709,13 @@
                             return ing.name;
                         }).join(', ')}`;
                     }
-                    
                     if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
-                    
                     html += `</div>`;
                 } else {
-                    // DETAILED: Meal name on first line, ingredients + calories on second line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
-                    
-                    // Line 1: Meal number, name, portion (NO CALORIES)
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
                     html += `</div>`;
-                    
-                    // Line 2: Ingredients + Calories (if enabled)
                     if (s.showIngredients && meal.ingredients.length) {
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                             if (ing.hasAllergen) {
@@ -686,21 +726,14 @@
                             }
                             return ing.name;
                         }).join(', ')}`;
-                        
-                        // Add calories AFTER ingredients on same line
-                        if (s.showCalories && meal.calories) {
-                            html += ` - ККАЛ ${meal.calories}`;
-                        }
+                        if (s.showCalories && meal.calories) html += ` - ККАЛ ${meal.calories}`;
                         html += `</div>`;
                     } else if (s.showCalories && meal.calories) {
-                        // If no ingredients but calories exist
                         html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                     }
-                    
                     html += `</div>`;
                 }
             });
-            
             html += `</div>`;
         });
         
@@ -709,7 +742,7 @@
             html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
         }
         
-        html += `</div>`;
+        html += `</div></div>`;
         return html;
     }
     
@@ -734,21 +767,29 @@
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        // Parse font sizes (support both 'pt' and old format)
         const headerSize = s.headerFontSize || '20pt';
         const daySize = s.dayNameSize || '12pt';
         const mealSize = s.mealFontSize || '10pt';
         const footerSize = s.footerFontSize || '8pt';
         
-        // Use base64 data if available, otherwise use color only
-        let containerStyle = `padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
-        if (s.backgroundImageData) {
-            containerStyle += ` background: url('${s.backgroundImageData}') ${s.backgroundColor} no-repeat center center / cover;`;
-        } else {
-            containerStyle += ` background: ${s.backgroundColor};`;
-        }
+        let containerStyle = `background-color: ${s.backgroundColor}; position: relative; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;`;
         
         let html = `<div id="menu-content" style="${containerStyle}">`;
+        
+        // Add multi-image backgrounds
+        if (s.backgroundImages && Array.isArray(s.backgroundImages)) {
+            const sortedImages = s.backgroundImages
+                .filter(img => img.image && img.imageData)
+                .sort((a, b) => a.zIndex - b.zIndex);
+            
+            sortedImages.forEach(img => {
+                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${img.size}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+            });
+        } else if (s.backgroundImageData) {
+            html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${s.backgroundImageData}'); background-size: cover; background-position: center center; background-repeat: no-repeat; opacity: 1; z-index: 1; pointer-events: none;"></div>`;
+        }
+        
+        html += `<div style="position: relative; z-index: 10;">`;
         
         // Header
         if (s.showHeader) {
@@ -767,13 +808,9 @@
             
             day.meals.forEach(meal => {
                 dayHTML += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
-                
-                // Line 1: Meal number, name, portion
                 dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
                 if (s.showPortions && meal.portion) dayHTML += ` - ${meal.portion}`;
                 dayHTML += `</div>`;
-                
-                // Line 2: Ingredients + Calories
                 if (s.showIngredients && meal.ingredients.length) {
                     dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                         if (ing.hasAllergen) {
@@ -784,18 +821,13 @@
                         }
                         return ing.name;
                     }).join(', ')}`;
-                    
-                    if (s.showCalories && meal.calories) {
-                        dayHTML += ` - ККАЛ ${meal.calories}`;
-                    }
+                    if (s.showCalories && meal.calories) dayHTML += ` - ККАЛ ${meal.calories}`;
                     dayHTML += `</div>`;
                 } else if (s.showCalories && meal.calories) {
                     dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                 }
-                
                 dayHTML += `</div>`;
             });
-            
             dayHTML += `</div>`;
             return dayHTML;
         };
@@ -803,21 +835,12 @@
         // Layout: Row 1 (Mon-Tue), Row 2 (Wed-Thu), Row 3 (Fri)
         for (let i = 0; i < days.length; i += 2) {
             html += `<div style="display: flex; gap: ${spacing.columnGap}; margin-bottom: ${spacing.rowMargin};">`;
-            
-            // Left column
             html += `<div style="flex: 1;">`;
-            if (days[i]) {
-                html += renderDay(days[i]);
-            }
+            if (days[i]) html += renderDay(days[i]);
             html += `</div>`;
-            
-            // Right column
             html += `<div style="flex: 1;">`;
-            if (days[i + 1]) {
-                html += renderDay(days[i + 1]);
-            }
+            if (days[i + 1]) html += renderDay(days[i + 1]);
             html += `</div>`;
-            
             html += `</div>`;
         }
         
@@ -826,7 +849,7 @@
             html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
         }
         
-        html += `</div>`;
+        html += `</div></div>`;
         return html;
     }
     
@@ -835,7 +858,6 @@
         const printWindow = window.open('', '_blank');
         const dateStr = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth() + 1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth() + 1}.${mealPlanData.startDate.getFullYear()}`;
         
-        // Build the HTML page as a string without nested template literals
         const marginTop = margins.top;
         const marginRight = margins.right;
         const marginBottom = margins.bottom;
