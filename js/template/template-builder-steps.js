@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.9 - Specific font sizes instead of small/medium/large
+ * @version 3.0 - Added border style options for day blocks
  */
 
 class StepTemplateBuilder {
@@ -34,6 +34,7 @@ class StepTemplateBuilder {
             // Day Block Styling
             dayBorder: false,
             dayBorderColor: '#e0e0e0',
+            dayBorderStyle: 'solid', // NEW: solid, dashed, dotted, double
             dayBorderThickness: '1px',
             dayBackground: 'transparent',
             dayPadding: '0px',
@@ -240,6 +241,20 @@ class StepTemplateBuilder {
                 <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span>Show Border</span></label>
                 <label>Border Color</label>
                 <input type="color" id="dayBorderColor" value="#e0e0e0" class="color-input">
+                <label>Border Style</label>
+                <select id="dayBorderStyle" class="select-input">
+                    <option value="solid" selected>Solid ────</option>
+                    <option value="dashed">Dashed ─ ─ ─</option>
+                    <option value="dotted">Dotted · · · ·</option>
+                    <option value="double">Double ════</option>
+                </select>
+                <label>Border Thickness</label>
+                <select id="dayBorderThickness" class="select-input">
+                    <option value="1px" selected>1px - Thin</option>
+                    <option value="2px">2px - Medium</option>
+                    <option value="3px">3px - Thick</option>
+                    <option value="4px">4px - Extra Thick</option>
+                </select>
                 <label>Background</label>
                 <input type="color" id="dayBackground" value="#ffffff" class="color-input">
                 
@@ -396,6 +411,8 @@ class StepTemplateBuilder {
         // Menu (no content toggles - all styling only)
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
+        this.bindSelect('dayBorderStyle'); // NEW
+        this.bindSelect('dayBorderThickness'); // NEW
         this.bindColorInput('dayBackground');
         this.bindSelect('dayNameSize');
         this.bindColorInput('dayNameColor');
@@ -551,7 +568,8 @@ class StepTemplateBuilder {
     renderDayBlock(day, s, spacing, daySize, mealSize, isCompact) {
         if (!day || !day.meals.length) return '';
         
-        const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
+        // Use border style from settings
+        const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} ${s.dayBorderStyle || 'solid'} ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
         let html = `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
         
         day.meals.forEach(meal => {
