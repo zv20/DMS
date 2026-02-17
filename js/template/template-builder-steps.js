@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.8 - Preview now shows actual 2-column layout
+ * @version 2.9 - Specific font sizes instead of small/medium/large
  */
 
 class StepTemplateBuilder {
@@ -22,7 +22,7 @@ class StepTemplateBuilder {
             headerImagePosition: 'left', // left, center, right
             headerImageSize: 'medium', // small, medium, large
             headerAlignment: 'center',
-            headerFontSize: 'large',
+            headerFontSize: '20pt', // Now specific pt size
             headerColor: '#d2691e',
             
             // Weekly Menu (all always true now)
@@ -39,12 +39,12 @@ class StepTemplateBuilder {
             dayPadding: '0px',
             
             // Day Name Styling
-            dayNameSize: 'medium',
+            dayNameSize: '12pt', // Now specific pt size
             dayNameColor: '#333333',
             dayNameWeight: 'bold',
             
             // Meal Styling
-            mealFontSize: 'medium',
+            mealFontSize: '10pt', // Now specific pt size
             mealLineHeight: '1.4',
             
             // Ingredients Styling
@@ -64,7 +64,7 @@ class StepTemplateBuilder {
             footerImagePosition: 'right', // left, center, right
             footerImageSize: 'small', // small, medium, large
             footerAlignment: 'center',
-            footerFontSize: 'small'
+            footerFontSize: '8pt' // Now specific pt size
         };
         
         this.previewData = null;
@@ -98,7 +98,7 @@ class StepTemplateBuilder {
                 <h2 style="margin: 0 0 10px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
                 <p style="margin: 0 0 20px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
                 
-                ${this.renderAccordionSection('background', '🏳 1. Background', this.renderBackgroundControls())}
+                ${this.renderAccordionSection('background', '🏽 1. Background', this.renderBackgroundControls())}
                 ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
                 ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
                 ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
@@ -197,11 +197,14 @@ class StepTemplateBuilder {
                     <option value="center" selected>Center</option>
                     <option value="right">Right</option>
                 </select>
-                <label>Font Size</label>
+                <label>Font Size (A4 optimized)</label>
                 <select id="headerFontSize" class="select-input">
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large" selected>Large</option>
+                    <option value="14pt">14pt - Minimal</option>
+                    <option value="16pt">16pt - Small</option>
+                    <option value="18pt">18pt - Medium</option>
+                    <option value="20pt" selected>20pt - Large</option>
+                    <option value="22pt">22pt - Extra Large</option>
+                    <option value="24pt">24pt - Maximum</option>
                 </select>
                 <label>Text Color</label>
                 <input type="color" id="headerColor" value="#d2691e" class="color-input">
@@ -241,11 +244,13 @@ class StepTemplateBuilder {
                 <input type="color" id="dayBackground" value="#ffffff" class="color-input">
                 
                 <h4 style="margin-top: 15px;">📝 Day Name</h4>
-                <label>Size</label>
+                <label>Font Size (A4 optimized)</label>
                 <select id="dayNameSize" class="select-input">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
+                    <option value="10pt">10pt - Small</option>
+                    <option value="11pt">11pt - Medium Small</option>
+                    <option value="12pt" selected>12pt - Medium</option>
+                    <option value="13pt">13pt - Medium Large</option>
+                    <option value="14pt">14pt - Large</option>
                 </select>
                 <label>Color</label>
                 <input type="color" id="dayNameColor" value="#333333" class="color-input">
@@ -295,10 +300,13 @@ class StepTemplateBuilder {
                     <option value="center" selected>Center</option>
                     <option value="right">Right</option>
                 </select>
-                <label>Font Size</label>
+                <label>Font Size (A4 optimized)</label>
                 <select id="footerFontSize" class="select-input">
-                    <option value="small" selected>Small</option>
-                    <option value="medium">Medium</option>
+                    <option value="7pt">7pt - Minimal</option>
+                    <option value="8pt" selected>8pt - Small</option>
+                    <option value="9pt">9pt - Medium</option>
+                    <option value="10pt">10pt - Large</option>
+                    <option value="11pt">11pt - Maximum</option>
                 </select>
             </div>
         `;
@@ -627,16 +635,11 @@ class StepTemplateBuilder {
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        const sizeMaps = {
-            small: { header: '18pt', day: '12pt', meal: '10pt', footer: '9pt' },
-            medium: { header: '22pt', day: '14pt', meal: '12pt', footer: '10pt' },
-            large: { header: '26pt', day: '16pt', meal: '14pt', footer: '11pt' }
-        };
-        
-        const headerSize = sizeMaps[s.headerFontSize]?.header || '22pt';
-        const daySize = sizeMaps[s.dayNameSize]?.day || '14pt';
-        const mealSize = sizeMaps[s.mealFontSize]?.meal || '12pt';
-        const footerSize = sizeMaps[s.footerFontSize]?.footer || '10pt';
+        // Use direct point sizes from settings
+        const headerSize = s.headerFontSize || '20pt';
+        const daySize = s.dayNameSize || '12pt';
+        const mealSize = s.mealFontSize || '10pt';
+        const footerSize = s.footerFontSize || '8pt';
         
         const imgSizes = {
             header: { small: '40px', medium: '60px', large: '80px' },
