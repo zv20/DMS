@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow - Background images only
- * @version 5.3 - Fixed tab injection to work with page-header
+ * @version 5.4 - Added full i18n translation support
  */
 
 class StepTemplateBuilder {
@@ -115,14 +115,14 @@ class StepTemplateBuilder {
         tabsContainer.style.cssText = 'display: inline-flex; gap: 10px; margin-left: 15px;';
         
         tabsContainer.innerHTML = `
-            <button class="btn btn-secondary btn-small builder-tab-btn active" data-tab="builder" style="background: #495057;">
-                🔧 Builder
+            <button class="btn btn-secondary btn-small builder-tab-btn active" data-tab="builder" style="background: #495057;" data-i18n="tab_builder">
+                ${window.t('tab_builder')}
             </button>
-            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="templates">
-                📋 Templates
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="templates" data-i18n="tab_templates">
+                ${window.t('tab_templates')}
             </button>
-            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="images">
-                🖼️ Images
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="images" data-i18n="tab_images">
+                ${window.t('tab_images')}
             </button>
         `;
         
@@ -179,23 +179,23 @@ class StepTemplateBuilder {
     
     renderBuilderTab() {
         return `
-            <h2 style="margin: 0 0 10px 0; font-size: 18px;">🎨 Menu Template Builder</h2>
-            <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Click each step to customize</p>
+            <h2 style="margin: 0 0 10px 0; font-size: 18px;" data-i18n="builder_title">${window.t('builder_title')}</h2>
+            <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;" data-i18n="builder_subtitle">${window.t('builder_subtitle')}</p>
             
-            ${this.renderAccordionSection('background', '🌏 1. Background', this.renderBackgroundControls())}
-            ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
-            ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
-            ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
+            ${this.renderAccordionSection('background', window.t('section_background'), this.renderBackgroundControls())}
+            ${this.renderAccordionSection('header', window.t('section_header'), this.renderHeaderControls())}
+            ${this.renderAccordionSection('menu', window.t('section_menu'), this.renderMenuControls())}
+            ${this.renderAccordionSection('footer', window.t('section_footer'), this.renderFooterControls())}
             
             <div class="action-buttons" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                <button id="btnLoadData" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
-                    👁️ Load My Menu Data
+                <button id="btnLoadData" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" data-i18n="btn_load_menu_data">
+                    ${window.t('btn_load_menu_data')}
                 </button>
-                <button id="btnSaveTemplate" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
-                    💾 Save Template
+                <button id="btnSaveTemplate" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" data-i18n="btn_save_template">
+                    ${window.t('btn_save_template')}
                 </button>
-                <button id="btnReset" class="btn btn-secondary" style="width: 100%;">
-                    🔄 Reset to Default
+                <button id="btnReset" class="btn btn-secondary" style="width: 100%;" data-i18n="btn_reset_default">
+                    ${window.t('btn_reset_default')}
                 </button>
             </div>
         `;
@@ -204,8 +204,8 @@ class StepTemplateBuilder {
     renderTemplatesTab() {
         return `
             <div style="padding: 10px 0;">
-                <h2 style="margin: 0 0 10px 0; font-size: 18px;">📋 Saved Templates</h2>
-                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage your saved template designs</p>
+                <h2 style="margin: 0 0 10px 0; font-size: 18px;" data-i18n="templates_title">${window.t('templates_title')}</h2>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;" data-i18n="templates_subtitle">${window.t('templates_subtitle')}</p>
                 <div id="templates-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Templates will be loaded here -->
                 </div>
@@ -216,11 +216,11 @@ class StepTemplateBuilder {
     renderImagesTab() {
         return `
             <div style="padding: 10px 0;">
-                <h2 style="margin: 0 0 10px 0; font-size: 18px;">🖼️ Image Library</h2>
-                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage your background images</p>
+                <h2 style="margin: 0 0 10px 0; font-size: 18px;" data-i18n="images_title">${window.t('images_title')}</h2>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;" data-i18n="images_subtitle">${window.t('images_subtitle')}</p>
                 
                 <div class="subsection" style="margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">🌏 Background Images</h4>
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px;" data-i18n="images_bg_title">${window.t('images_bg_title')}</h4>
                     <div id="bg-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                         <!-- Background images will be loaded here -->
                     </div>
@@ -272,8 +272,8 @@ class StepTemplateBuilder {
         if (!window.menuTemplates || Object.keys(window.menuTemplates).length === 0) {
             container.innerHTML = `
                 <div style="padding: 30px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px;">
-                    <p style="margin: 0; font-size: 14px;">📂 No saved templates yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 12px;">Go to Builder tab to create and save your first template</p>
+                    <p style="margin: 0; font-size: 14px;" data-i18n="templates_empty">${window.t('templates_empty')}</p>
+                    <p style="margin: 5px 0 0 0; font-size: 12px;" data-i18n="templates_empty_desc">${window.t('templates_empty_desc')}</p>
                 </div>
             `;
             return;
@@ -286,14 +286,14 @@ class StepTemplateBuilder {
                     <div style="flex: 1;">
                         <div style="font-weight: 600; font-size: 14px; margin-bottom: 5px;">${name}</div>
                         <div style="font-size: 11px; color: #666;">
-                            Style: ${template.templateStyle || 'compact'} | 
-                            Header: ${template.showHeader ? 'Yes' : 'No'} | 
-                            Footer: ${template.showFooter ? 'Yes' : 'No'}
+                            <span data-i18n="template_style_label">${window.t('template_style_label')}</span> ${template.templateStyle || 'compact'} | 
+                            <span data-i18n="template_header_label">${window.t('template_header_label')}</span> ${template.showHeader ? window.t('template_yes') : window.t('template_no')} | 
+                            <span data-i18n="template_footer_label">${window.t('template_footer_label')}</span> ${template.showFooter ? window.t('template_yes') : window.t('template_no')}
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.loadTemplate('${name}')">📥 Load</button>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.deleteTemplate('${name}')">🗑️ Delete</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.loadTemplate('${name}')" data-i18n="btn_load">📥 ${window.t('btn_load')}</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.deleteTemplate('${name}')" data-i18n="btn_delete">🗑️ ${window.t('btn_delete')}</button>
                     </div>
                 </div>
             `;
@@ -304,11 +304,11 @@ class StepTemplateBuilder {
     
     async loadTemplate(name) {
         if (!window.menuTemplates || !window.menuTemplates[name]) {
-            alert('❌ Template not found');
+            alert(window.t('alert_template_not_found'));
             return;
         }
         
-        if (confirm(`Load template "${name}"? This will replace your current settings.`)) {
+        if (confirm(window.t('alert_template_load_confirm').replace('{name}', name))) {
             this.settings = { ...window.menuTemplates[name] };
             this.switchTab('builder');
             this.buildUI();
@@ -317,19 +317,19 @@ class StepTemplateBuilder {
             this.bindControls();
             this.bindActionButtons();
             this.updatePreview();
-            alert('✅ Template loaded!');
+            alert(window.t('alert_template_loaded'));
         }
     }
     
     async deleteTemplate(name) {
-        if (!confirm(`Delete template "${name}"?`)) return;
+        if (!confirm(window.t('alert_template_delete_confirm').replace('{name}', name))) return;
         
         delete window.menuTemplates[name];
         if (window.storageAdapter) {
             await window.storageAdapter.save('templates', window.menuTemplates);
         }
         await this.loadTemplates();
-        alert('✅ Template deleted!');
+        alert(window.t('alert_template_deleted'));
     }
     
     async loadImages() {
@@ -341,7 +341,7 @@ class StepTemplateBuilder {
         if (!container) return;
         
         if (!window.directoryHandle) {
-            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">Please select data folder in Settings first</div>`;
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;" data-i18n="images_select_folder">${window.t('images_select_folder')}</div>`;
             return;
         }
         
@@ -360,7 +360,7 @@ class StepTemplateBuilder {
             }
             
             if (images.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">📂 No images uploaded yet</div>`;
+                container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;" data-i18n="images_empty">${window.t('images_empty')}</div>`;
                 return;
             }
             
@@ -370,19 +370,19 @@ class StepTemplateBuilder {
                     <div class="image-card">
                         <img src="${img.url}" style="width: 100%; height: 80px; object-fit: contain; border-radius: 4px; margin-bottom: 5px; background: #f5f5f5;">
                         <div style="font-size: 10px; color: #666; margin-bottom: 5px; word-break: break-word;">${img.name}</div>
-                        <button class="btn btn-secondary" style="width: 100%; padding: 4px; font-size: 11px;" onclick="stepTemplateBuilder.deleteImage('${folder}', '${img.name}')">🗑️ Delete</button>
+                        <button class="btn btn-secondary" style="width: 100%; padding: 4px; font-size: 11px;" onclick="stepTemplateBuilder.deleteImage('${folder}', '${img.name}')" data-i18n="btn_delete">🗑️ ${window.t('btn_delete')}</button>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
         } catch (err) {
-            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">📂 No images folder found</div>`;
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;" data-i18n="images_folder_missing">${window.t('images_folder_missing')}</div>`;
         }
     }
     
     async deleteImage(folder, filename) {
-        if (!confirm(`Delete "${filename}"?`)) return;
+        if (!confirm(window.t('alert_image_delete_confirm').replace('{name}', filename))) return;
         
         try {
             const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
@@ -391,10 +391,10 @@ class StepTemplateBuilder {
             await folderDir.removeEntry(filename);
             
             await this.loadImages();
-            alert('✅ Image deleted!');
+            alert(window.t('alert_image_deleted'));
         } catch (err) {
             console.error('Delete failed:', err);
-            alert('❌ Failed to delete image');
+            alert(window.t('alert_image_delete_failed'));
         }
     }
     
@@ -416,19 +416,19 @@ class StepTemplateBuilder {
     renderBackgroundControls() {
         return `
             <div class="control-group">
-                <label>Background Color</label>
+                <label data-i18n="label_background_color">${window.t('label_background_color')}</label>
                 <input type="color" id="backgroundColor" value="#ffffff" class="color-input">
                 
                 <div style="margin: 20px 0; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
-                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #1565c0;">🇺🇫 5 Image Layers + Background</p>
-                    <p style="margin: 0; font-size: 11px; color: #1976d2;">Position 5 images anywhere with precise size control!</p>
+                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #1565c0;" data-i18n="label_background_info">${window.t('label_background_info')}</p>
+                    <p style="margin: 0; font-size: 11px; color: #1976d2;" data-i18n="label_background_desc">${window.t('label_background_desc')}</p>
                 </div>
                 
-                ${this.renderImageSlot(0, 'Image Layer 1')}
-                ${this.renderImageSlot(1, 'Image Layer 2')}
-                ${this.renderImageSlot(2, 'Image Layer 3')}
-                ${this.renderImageSlot(3, 'Image Layer 4')}
-                ${this.renderImageSlot(4, 'Image Layer 5')}
+                ${this.renderImageSlot(0, window.t('label_image_layer') + ' 1')}
+                ${this.renderImageSlot(1, window.t('label_image_layer') + ' 2')}
+                ${this.renderImageSlot(2, window.t('label_image_layer') + ' 3')}
+                ${this.renderImageSlot(3, window.t('label_image_layer') + ' 4')}
+                ${this.renderImageSlot(4, window.t('label_image_layer') + ' 5')}
             </div>
         `;
     }
@@ -437,46 +437,46 @@ class StepTemplateBuilder {
         const slot = this.settings.backgroundImages[index];
         return `
             <div class="subsection" style="margin-bottom: 15px;">
-                <h4 style="margin: 0 0 12px 0 !important;">🖼️ ${title}</h4>
+                <h4 style="margin: 0 0 12px 0 !important;">${title}</h4>
                 
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input type="file" id="bgImage${index}Upload" accept="image/*" style="display: none;">
-                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
-                    <button id="browseBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">🖼️ Library</button>
-                    <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
+                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;" data-i18n="btn_upload">${window.t('btn_upload')}</button>
+                    <button id="browseBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;" data-i18n="btn_library">${window.t('btn_library')}</button>
+                    <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;" data-i18n="btn_remove">${window.t('btn_remove')}</button>
                 </div>
                 <div id="bgImage${index}Preview" style="display: ${slot.image ? 'block' : 'none'}; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                    <small style="color: #555;">File: <strong id="bgImage${index}FileName">${slot.image || ''}</strong></small>
+                    <small style="color: #555;"><span data-i18n="file_label">${window.t('file_label')}</span> <strong id="bgImage${index}FileName">${slot.image || ''}</strong></small>
                 </div>
                 
-                <label>Position</label>
+                <label data-i18n="label_position">${window.t('label_position')}</label>
                 <select id="bgImage${index}Position" class="select-input">
-                    <option value="center" ${slot.position === 'center' ? 'selected' : ''}>Center (full page)</option>
-                    <option value="top-left" ${slot.position === 'top-left' ? 'selected' : ''}>Top Left</option>
-                    <option value="top-center" ${slot.position === 'top-center' ? 'selected' : ''}>Top Center</option>
-                    <option value="top-right" ${slot.position === 'top-right' ? 'selected' : ''}>Top Right</option>
-                    <option value="center-left" ${slot.position === 'center-left' ? 'selected' : ''}>Center Left</option>
-                    <option value="center-right" ${slot.position === 'center-right' ? 'selected' : ''}>Center Right</option>
-                    <option value="bottom-left" ${slot.position === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
-                    <option value="bottom-center" ${slot.position === 'bottom-center' ? 'selected' : ''}>Bottom Center</option>
-                    <option value="bottom-right" ${slot.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
+                    <option value="center" ${slot.position === 'center' ? 'selected' : ''} data-i18n="pos_center">${window.t('pos_center')}</option>
+                    <option value="top-left" ${slot.position === 'top-left' ? 'selected' : ''} data-i18n="pos_top_left">${window.t('pos_top_left')}</option>
+                    <option value="top-center" ${slot.position === 'top-center' ? 'selected' : ''} data-i18n="pos_top_center">${window.t('pos_top_center')}</option>
+                    <option value="top-right" ${slot.position === 'top-right' ? 'selected' : ''} data-i18n="pos_top_right">${window.t('pos_top_right')}</option>
+                    <option value="center-left" ${slot.position === 'center-left' ? 'selected' : ''} data-i18n="pos_center_left">${window.t('pos_center_left')}</option>
+                    <option value="center-right" ${slot.position === 'center-right' ? 'selected' : ''} data-i18n="pos_center_right">${window.t('pos_center_right')}</option>
+                    <option value="bottom-left" ${slot.position === 'bottom-left' ? 'selected' : ''} data-i18n="pos_bottom_left">${window.t('pos_bottom_left')}</option>
+                    <option value="bottom-center" ${slot.position === 'bottom-center' ? 'selected' : ''} data-i18n="pos_bottom_center">${window.t('pos_bottom_center')}</option>
+                    <option value="bottom-right" ${slot.position === 'bottom-right' ? 'selected' : ''} data-i18n="pos_bottom_right">${window.t('pos_bottom_right')}</option>
                 </select>
                 
-                <label>Size (% of page width)</label>
+                <label data-i18n="label_size">${window.t('label_size')}</label>
                 <input type="range" id="bgImage${index}Size" min="5" max="100" value="${slot.size}" class="slider">
                 <div class="slider-value"><span id="bgImage${index}SizeValue">${slot.size}</span>%</div>
                 
-                <label>Opacity</label>
+                <label data-i18n="label_opacity">${window.t('label_opacity')}</label>
                 <input type="range" id="bgImage${index}Opacity" min="0" max="100" value="${slot.opacity * 100}" class="slider">
                 <div class="slider-value"><span id="bgImage${index}OpacityValue">${Math.round(slot.opacity * 100)}</span>%</div>
                 
-                <label>Layer (Z-Index)</label>
+                <label data-i18n="label_layer">${window.t('label_layer')}</label>
                 <select id="bgImage${index}ZIndex" class="select-input">
-                    <option value="1" ${slot.zIndex === 1 ? 'selected' : ''}>1 - Back</option>
-                    <option value="2" ${slot.zIndex === 2 ? 'selected' : ''}>2</option>
-                    <option value="3" ${slot.zIndex === 3 ? 'selected' : ''}>3</option>
-                    <option value="4" ${slot.zIndex === 4 ? 'selected' : ''}>4</option>
-                    <option value="5" ${slot.zIndex === 5 ? 'selected' : ''}>5 - Front</option>
+                    <option value="1" ${slot.zIndex === 1 ? 'selected' : ''} data-i18n="layer_back">${window.t('layer_back')}</option>
+                    <option value="2" ${slot.zIndex === 2 ? 'selected' : ''} data-i18n="layer_2">${window.t('layer_2')}</option>
+                    <option value="3" ${slot.zIndex === 3 ? 'selected' : ''} data-i18n="layer_3">${window.t('layer_3')}</option>
+                    <option value="4" ${slot.zIndex === 4 ? 'selected' : ''} data-i18n="layer_4">${window.t('layer_4')}</option>
+                    <option value="5" ${slot.zIndex === 5 ? 'selected' : ''} data-i18n="layer_front">${window.t('layer_front')}</option>
                 </select>
             </div>
         `;
@@ -485,26 +485,26 @@ class StepTemplateBuilder {
     renderHeaderControls() {
         return `
             <div class="control-group">
-                <label class="checkbox-label"><input type="checkbox" id="showHeader" checked><span>Show Header</span></label>
-                <label>Header Text</label>
+                <label class="checkbox-label"><input type="checkbox" id="showHeader" checked><span data-i18n="label_show_header">${window.t('label_show_header')}</span></label>
+                <label data-i18n="label_header_text">${window.t('label_header_text')}</label>
                 <input type="text" id="headerText" value="Седмично меню" class="text-input">
                 
-                <label>Text Alignment</label>
+                <label data-i18n="label_text_alignment">${window.t('label_text_alignment')}</label>
                 <select id="headerAlignment" class="select-input">
-                    <option value="left">Left</option>
-                    <option value="center" selected>Center</option>
-                    <option value="right">Right</option>
+                    <option value="left" data-i18n="align_left">${window.t('align_left')}</option>
+                    <option value="center" selected data-i18n="align_center">${window.t('align_center')}</option>
+                    <option value="right" data-i18n="align_right">${window.t('align_right')}</option>
                 </select>
-                <label>Font Size (A4 optimized)</label>
+                <label data-i18n="label_font_size_a4">${window.t('label_font_size_a4')}</label>
                 <select id="headerFontSize" class="select-input">
-                    <option value="14pt">14pt - Minimal</option>
-                    <option value="16pt">16pt - Small</option>
-                    <option value="18pt">18pt - Medium</option>
-                    <option value="20pt" selected>20pt - Large</option>
-                    <option value="22pt">22pt - Extra Large</option>
-                    <option value="24pt">24pt - Maximum</option>
+                    <option value="14pt" data-i18n="size_14pt">${window.t('size_14pt')}</option>
+                    <option value="16pt" data-i18n="size_16pt">${window.t('size_16pt')}</option>
+                    <option value="18pt" data-i18n="size_18pt">${window.t('size_18pt')}</option>
+                    <option value="20pt" selected data-i18n="size_20pt">${window.t('size_20pt')}</option>
+                    <option value="22pt" data-i18n="size_22pt">${window.t('size_22pt')}</option>
+                    <option value="24pt" data-i18n="size_24pt">${window.t('size_24pt')}</option>
                 </select>
-                <label>Text Color</label>
+                <label data-i18n="label_text_color">${window.t('label_text_color')}</label>
                 <input type="color" id="headerColor" value="#d2691e" class="color-input">
             </div>
         `;
@@ -513,65 +513,65 @@ class StepTemplateBuilder {
     renderMenuControls() {
         return `
             <div class="control-group">
-                <h4>🎨 Template Style</h4>
+                <h4 data-i18n="label_template_style">${window.t('label_template_style')}</h4>
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="compact" checked>
-                    <span><strong>Compact</strong> - All info on one line</span>
+                    <span><strong data-i18n="style_compact">${window.t('style_compact')}</strong> - <span data-i18n="style_compact_desc">${window.t('style_compact_desc')}</span></span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="detailed">
-                    <span><strong>Detailed</strong> - Ingredients on separate line</span>
+                    <span><strong data-i18n="style_detailed">${window.t('style_detailed')}</strong> - <span data-i18n="style_detailed_desc">${window.t('style_detailed_desc')}</span></span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="detailed-2col">
-                    <span><strong>Detailed (2 Columns)</strong> - Side-by-side layout</span>
+                    <span><strong data-i18n="style_detailed_2col">${window.t('style_detailed_2col')}</strong> - <span data-i18n="style_detailed_2col_desc">${window.t('style_detailed_2col_desc')}</span></span>
                 </label>
                 
                 <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">
                     <p style="margin: 0; font-size: 12px; color: #2e7d32;">
-                        <strong>✅ Menu Content:</strong><br>
-                        Date range, ingredients, portions, and calories are always included in your menu.
+                        <strong data-i18n="label_menu_content">${window.t('label_menu_content')}</strong><br>
+                        <span data-i18n="menu_content_desc">${window.t('menu_content_desc')}</span>
                     </p>
                 </div>
                 
-                <h4 style="margin-top: 15px;">📊 Day Block</h4>
-                <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span>Show Border</span></label>
-                <label>Border Color</label>
+                <h4 style="margin-top: 15px;" data-i18n="label_day_block">${window.t('label_day_block')}</h4>
+                <label class="checkbox-label"><input type="checkbox" id="dayBorder"><span data-i18n="label_show_border">${window.t('label_show_border')}</span></label>
+                <label data-i18n="label_border_color">${window.t('label_border_color')}</label>
                 <input type="color" id="dayBorderColor" value="#e0e0e0" class="color-input">
-                <label>Border Style</label>
+                <label data-i18n="label_border_style">${window.t('label_border_style')}</label>
                 <select id="dayBorderStyle" class="select-input">
-                    <option value="solid" selected>Solid ────</option>
-                    <option value="dashed">Dashed ─ ─ ─</option>
-                    <option value="dotted">Dotted · · · ·</option>
-                    <option value="double">Double ════</option>
+                    <option value="solid" selected data-i18n="border_solid">${window.t('border_solid')}</option>
+                    <option value="dashed" data-i18n="border_dashed">${window.t('border_dashed')}</option>
+                    <option value="dotted" data-i18n="border_dotted">${window.t('border_dotted')}</option>
+                    <option value="double" data-i18n="border_double">${window.t('border_double')}</option>
                 </select>
-                <label>Border Thickness</label>
+                <label data-i18n="label_border_thickness">${window.t('label_border_thickness')}</label>
                 <select id="dayBorderThickness" class="select-input">
-                    <option value="1px" selected>1px - Thin</option>
-                    <option value="2px">2px - Medium</option>
-                    <option value="3px">3px - Thick</option>
-                    <option value="4px">4px - Extra Thick</option>
+                    <option value="1px" selected data-i18n="thickness_1px">${window.t('thickness_1px')}</option>
+                    <option value="2px" data-i18n="thickness_2px">${window.t('thickness_2px')}</option>
+                    <option value="3px" data-i18n="thickness_3px">${window.t('thickness_3px')}</option>
+                    <option value="4px" data-i18n="thickness_4px">${window.t('thickness_4px')}</option>
                 </select>
-                <label>Background</label>
+                <label data-i18n="label_background">${window.t('label_background')}</label>
                 <input type="color" id="dayBackground" value="#ffffff" class="color-input">
                 
-                <h4 style="margin-top: 15px;">📝 Day Name</h4>
-                <label>Font Size (A4 optimized)</label>
+                <h4 style="margin-top: 15px;" data-i18n="label_day_name">${window.t('label_day_name')}</h4>
+                <label data-i18n="label_font_size_a4">${window.t('label_font_size_a4')}</label>
                 <select id="dayNameSize" class="select-input">
-                    <option value="10pt">10pt - Small</option>
-                    <option value="11pt">11pt - Medium Small</option>
-                    <option value="12pt" selected>12pt - Medium</option>
-                    <option value="13pt">13pt - Medium Large</option>
-                    <option value="14pt">14pt - Large</option>
+                    <option value="10pt" data-i18n="size_10pt">${window.t('size_10pt')}</option>
+                    <option value="11pt" data-i18n="size_11pt">${window.t('size_11pt')}</option>
+                    <option value="12pt" selected data-i18n="size_12pt">${window.t('size_12pt')}</option>
+                    <option value="13pt" data-i18n="size_13pt">${window.t('size_13pt')}</option>
+                    <option value="14pt" data-i18n="size_14pt">${window.t('size_14pt')}</option>
                 </select>
-                <label>Color</label>
+                <label data-i18n="label_color">${window.t('label_color')}</label>
                 <input type="color" id="dayNameColor" value="#333333" class="color-input">
                 
-                <h4 style="margin-top: 15px;">⚠️ Allergens</h4>
-                <label>Color</label>
+                <h4 style="margin-top: 15px;" data-i18n="label_allergens">${window.t('label_allergens')}</h4>
+                <label data-i18n="label_color">${window.t('label_color')}</label>
                 <input type="color" id="allergenColor" value="#ff0000" class="color-input">
-                <label class="checkbox-label"><input type="checkbox" id="allergenUnderline"><span>Underline</span></label>
-                <label class="checkbox-label"><input type="checkbox" id="allergenBold" checked><span>Bold</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="allergenUnderline"><span data-i18n="label_underline">${window.t('label_underline')}</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="allergenBold" checked><span data-i18n="label_bold">${window.t('label_bold')}</span></label>
             </div>
         `;
     }
@@ -579,23 +579,23 @@ class StepTemplateBuilder {
     renderFooterControls() {
         return `
             <div class="control-group">
-                <label class="checkbox-label"><input type="checkbox" id="showFooter" checked><span>Show Footer</span></label>
-                <label>Footer Text</label>
+                <label class="checkbox-label"><input type="checkbox" id="showFooter" checked><span data-i18n="label_show_footer">${window.t('label_show_footer')}</span></label>
+                <label data-i18n="label_footer_text">${window.t('label_footer_text')}</label>
                 <input type="text" id="footerText" value="Prepared with care by KitchenPro" class="text-input">
                 
-                <label>Text Alignment</label>
+                <label data-i18n="label_text_alignment">${window.t('label_text_alignment')}</label>
                 <select id="footerAlignment" class="select-input">
-                    <option value="left">Left</option>
-                    <option value="center" selected>Center</option>
-                    <option value="right">Right</option>
+                    <option value="left" data-i18n="align_left">${window.t('align_left')}</option>
+                    <option value="center" selected data-i18n="align_center">${window.t('align_center')}</option>
+                    <option value="right" data-i18n="align_right">${window.t('align_right')}</option>
                 </select>
-                <label>Font Size (A4 optimized)</label>
+                <label data-i18n="label_font_size_a4">${window.t('label_font_size_a4')}</label>
                 <select id="footerFontSize" class="select-input">
-                    <option value="7pt">7pt - Minimal</option>
-                    <option value="8pt" selected>8pt - Small</option>
-                    <option value="9pt">9pt - Medium</option>
-                    <option value="10pt">10pt - Large</option>
-                    <option value="11pt">11pt - Maximum</option>
+                    <option value="7pt" data-i18n="size_7pt">${window.t('size_7pt')}</option>
+                    <option value="8pt" selected data-i18n="size_8pt">${window.t('size_8pt')}</option>
+                    <option value="9pt" data-i18n="size_9pt">${window.t('size_9pt')}</option>
+                    <option value="10pt" data-i18n="size_10pt_footer">${window.t('size_10pt_footer')}</option>
+                    <option value="11pt" data-i18n="size_11pt">${window.t('size_11pt')}</option>
                 </select>
             </div>
         `;
@@ -771,7 +771,7 @@ class StepTemplateBuilder {
     
     async openImageLibrary(folder, slotIndex) {
         if (!window.directoryHandle) {
-            alert('Please select a data folder first in Settings.');
+            alert(window.t('alert_select_folder_first'));
             return;
         }
         
@@ -790,14 +790,14 @@ class StepTemplateBuilder {
             }
             
             if (images.length === 0) {
-                alert('📂 No images found in library. Upload some first!');
+                alert(window.t('alert_no_images'));
                 return;
             }
             
             this.showImageLibraryDialog(images, folder, slotIndex);
         } catch (err) {
             console.error('Error loading images:', err);
-            alert('❌ Failed to load image library');
+            alert(window.t('alert_image_library_failed'));
         }
     }
     
@@ -851,13 +851,13 @@ class StepTemplateBuilder {
                     border-radius: 4px;
                     cursor: pointer;
                     font-size: 11px;
-                " onclick="event.stopPropagation();">🗑️ Delete</button>
+                " onclick="event.stopPropagation();" data-i18n="btn_delete">${window.t('btn_delete')}</button>
             </div>
         `).join('');
         
         dialog.innerHTML = `
-            <h2 style="margin: 0 0 15px 0;">🖼️ Image Library</h2>
-            <p style="margin: 0 0 20px 0; font-size: 13px; color: #666;">Click image to select, or delete unused images</p>
+            <h2 style="margin: 0 0 15px 0;" data-i18n="dialog_image_library">${window.t('dialog_image_library')}</h2>
+            <p style="margin: 0 0 20px 0; font-size: 13px; color: #666;" data-i18n="dialog_image_desc">${window.t('dialog_image_desc')}</p>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
                 ${imagesHTML}
             </div>
@@ -870,7 +870,7 @@ class StepTemplateBuilder {
                 border-radius: 6px;
                 cursor: pointer;
                 font-size: 14px;
-            ">Close</button>
+            " data-i18n="btn_close">${window.t('btn_close')}</button>
         `;
         
         overlay.appendChild(dialog);
@@ -890,7 +890,7 @@ class StepTemplateBuilder {
         dialog.querySelectorAll('.delete-img-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const imageName = btn.dataset.name;
-                if (confirm(`Delete "${imageName}"?`)) {
+                if (confirm(window.t('alert_image_delete_confirm').replace('{name}', imageName))) {
                     try {
                         const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
                         const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
@@ -898,10 +898,10 @@ class StepTemplateBuilder {
                         await folderDir.removeEntry(imageName);
                         
                         btn.closest('.library-image').remove();
-                        alert('✅ Image deleted!');
+                        alert(window.t('alert_image_deleted'));
                     } catch (err) {
                         console.error('Delete failed:', err);
-                        alert('❌ Failed to delete image');
+                        alert(window.t('alert_image_delete_failed'));
                     }
                 }
             });
@@ -948,7 +948,7 @@ class StepTemplateBuilder {
     
     async saveImage(file, folder) {
         if (!window.directoryHandle) {
-            alert('Please select a data folder first in Settings.');
+            alert(window.t('alert_select_folder_first'));
             return false;
         }
         
@@ -965,7 +965,7 @@ class StepTemplateBuilder {
             return true;
         } catch (err) {
             console.error('Error:', err);
-            alert('❌ Upload failed');
+            alert(window.t('alert_upload_failed'));
             return false;
         }
     }
@@ -1021,7 +1021,7 @@ class StepTemplateBuilder {
     }
     
     loadRealData() {
-        alert('⚠️ Load real data from menu planner - feature coming soon!');
+        alert(window.t('alert_load_real_data'));
     }
     
     renderDayBlock(day, s, spacing, daySize, mealSize, isCompact) {
@@ -1176,16 +1176,16 @@ class StepTemplateBuilder {
     }
     
     async saveTemplate() {
-        const name = prompt('Template name:');
+        const name = prompt(window.t('alert_template_name'));
         if (!name) return;
         if (!window.menuTemplates) window.menuTemplates = {};
         window.menuTemplates[name] = this.settings;
         if (window.storageAdapter) await window.storageAdapter.save('templates', window.menuTemplates);
-        alert(`✅ Template "${name}" saved!`);
+        alert(window.t('alert_template_saved'));
     }
     
     reset() {
-        if (!confirm('Reset all settings?')) return;
+        if (!confirm(window.t('alert_reset_confirm'))) return;
         this.settings = new StepTemplateBuilder().settings;
         this.buildUI();
         this.bindTabControls();
