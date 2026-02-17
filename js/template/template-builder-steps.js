@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * Clean, organized workflow with header/footer image personality
- * @version 5.0 - Added tabbed interface with Templates and Images management
+ * Clean, organized workflow - Background images only
+ * @version 5.1 - Removed header/footer images, tabs moved to page header
  */
 
 class StepTemplateBuilder {
@@ -10,12 +10,10 @@ class StepTemplateBuilder {
             // Template Style
             templateStyle: 'compact', // 'compact', 'detailed', or 'detailed-2col'
             
-            // Background - OLD SINGLE IMAGE (kept for backward compatibility)
-            backgroundImage: null,
+            // Background Color
             backgroundColor: '#ffffff',
-            backgroundOpacity: 1.0,
             
-            // NEW: Multi-Image Background System (5 image slots)
+            // Multi-Image Background System (5 image slots)
             backgroundImages: [
                 { image: null, position: 'center', size: 100, opacity: 1.0, zIndex: 1 },
                 { image: null, position: 'top-left', size: 20, opacity: 1.0, zIndex: 2 },
@@ -27,9 +25,6 @@ class StepTemplateBuilder {
             // Header
             showHeader: true,
             headerText: 'Седмично меню',
-            headerImage: null,
-            headerImagePosition: 'left', // left, center, right
-            headerImageSize: 'medium', // small, medium, large
             headerAlignment: 'center',
             headerFontSize: '20pt',
             headerColor: '#d2691e',
@@ -70,9 +65,6 @@ class StepTemplateBuilder {
             // Footer
             showFooter: true,
             footerText: 'Prepared with care by KitchenPro',
-            footerImage: null,
-            footerImagePosition: 'right',
-            footerImageSize: 'small',
             footerAlignment: 'center',
             footerFontSize: '8pt'
         };
@@ -80,7 +72,7 @@ class StepTemplateBuilder {
         this.previewData = null;
         this.expandedSection = 'background';
         this.currentImageSlot = null;
-        this.currentTab = 'builder'; // builder, templates, images
+        this.currentTab = 'builder';
         this.init();
     }
     
@@ -94,6 +86,7 @@ class StepTemplateBuilder {
     
     setup() {
         console.log('🚀 StepTemplateBuilder: Setting up...');
+        this.injectTabsIntoHeader();
         this.buildUI();
         this.bindTabControls();
         this.bindAccordion();
@@ -102,21 +95,39 @@ class StepTemplateBuilder {
         this.updatePreview();
     }
     
+    injectTabsIntoHeader() {
+        // Find the page header area where "← Обратно към Меню" button is
+        const backButton = document.querySelector('.page-nav, .back-button, a[href*="menu"]');
+        if (backButton && backButton.parentElement) {
+            const headerContainer = backButton.parentElement;
+            
+            // Create tabs container
+            const tabsHTML = `
+                <div class="builder-tabs" style="display: inline-flex; gap: 5px; margin-left: 20px; vertical-align: middle;">
+                    <button class="builder-tab-btn active" data-tab="builder" style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">🔧 Builder</button>
+                    <button class="builder-tab-btn" data-tab="templates" style="padding: 8px 16px; background: #f5f5f5; color: #666; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">📋 Templates</button>
+                    <button class="builder-tab-btn" data-tab="images" style="padding: 8px 16px; background: #f5f5f5; color: #666; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">🖼️ Images</button>
+                </div>
+            `;
+            
+            headerContainer.insertAdjacentHTML('beforeend', tabsHTML);
+            
+            // Add hover styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .builder-tab-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                .builder-tab-btn.active { background: #2196f3 !important; color: white !important; }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
     buildUI() {
         const sidebar = document.getElementById('template-sidebar');
         if (!sidebar) return;
         
         sidebar.innerHTML = `
             <div class="step-template-controls">
-                <h2 style="margin: 0 0 15px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
-                
-                <!-- TAB NAVIGATION -->
-                <div class="tab-navigation">
-                    <button class="tab-btn active" data-tab="builder">🔧 Builder</button>
-                    <button class="tab-btn" data-tab="templates">📋 Templates</button>
-                    <button class="tab-btn" data-tab="images">🖼️ Images</button>
-                </div>
-                
                 <!-- TAB CONTENTS -->
                 <div id="tab-builder" class="tab-content active">
                     ${this.renderBuilderTab()}
@@ -139,7 +150,8 @@ class StepTemplateBuilder {
     
     renderBuilderTab() {
         return `
-            <p style="margin: 0 0 15px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
+            <h2 style="margin: 0 0 10px 0; font-size: 18px;">🎨 Menu Template Builder</h2>
+            <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Click each step to customize</p>
             
             ${this.renderAccordionSection('background', '🌏 1. Background', this.renderBackgroundControls())}
             ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
@@ -163,7 +175,7 @@ class StepTemplateBuilder {
     renderTemplatesTab() {
         return `
             <div style="padding: 10px 0;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px;">📋 Saved Templates</h3>
+                <h2 style="margin: 0 0 10px 0; font-size: 18px;">📋 Saved Templates</h2>
                 <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage your saved template designs</p>
                 <div id="templates-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Templates will be loaded here -->
@@ -175,8 +187,8 @@ class StepTemplateBuilder {
     renderImagesTab() {
         return `
             <div style="padding: 10px 0;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px;">🖼️ Image Library</h3>
-                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage all your uploaded images</p>
+                <h2 style="margin: 0 0 10px 0; font-size: 18px;">🖼️ Image Library</h2>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage your background images</p>
                 
                 <div class="subsection" style="margin-bottom: 15px;">
                     <h4 style="margin: 0 0 10px 0; font-size: 13px;">🌏 Background Images</h4>
@@ -184,26 +196,12 @@ class StepTemplateBuilder {
                         <!-- Background images will be loaded here -->
                     </div>
                 </div>
-                
-                <div class="subsection" style="margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">📌 Header Images</h4>
-                    <div id="header-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <!-- Header images will be loaded here -->
-                    </div>
-                </div>
-                
-                <div class="subsection">
-                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">📍 Footer Images</h4>
-                    <div id="footer-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <!-- Footer images will be loaded here -->
-                    </div>
-                </div>
             </div>
         `;
     }
     
     bindTabControls() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        document.querySelectorAll('.builder-tab-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const tab = e.currentTarget.dataset.tab;
                 this.switchTab(tab);
@@ -214,9 +212,17 @@ class StepTemplateBuilder {
     async switchTab(tab) {
         this.currentTab = tab;
         
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
+        // Update header tab buttons
+        document.querySelectorAll('.builder-tab-btn').forEach(btn => {
+            if (btn.dataset.tab === tab) {
+                btn.classList.add('active');
+                btn.style.background = '#2196f3';
+                btn.style.color = 'white';
+            } else {
+                btn.classList.remove('active');
+                btn.style.background = '#f5f5f5';
+                btn.style.color = '#666';
+            }
         });
         
         // Update tab contents
@@ -301,8 +307,6 @@ class StepTemplateBuilder {
     
     async loadImages() {
         await this.loadImageFolder('backgrounds', 'bg-images-list');
-        await this.loadImageFolder('header', 'header-images-list');
-        await this.loadImageFolder('footer', 'footer-images-list');
     }
     
     async loadImageFolder(folder, containerId) {
@@ -458,30 +462,6 @@ class StepTemplateBuilder {
                 <label>Header Text</label>
                 <input type="text" id="headerText" value="Седмично меню" class="text-input">
                 
-                <div class="subsection">
-                    <h4>🖼️ Header Image (Optional)</h4>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <input type="file" id="headerImageUpload" accept="image/*" style="display: none;">
-                        <button id="uploadHeaderImgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
-                        <button id="removeHeaderImgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
-                    </div>
-                    <div id="headerImgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                        <small>Image: <span id="headerImgFileName"></span></small>
-                    </div>
-                    <label>Image Position</label>
-                    <select id="headerImagePosition" class="select-input">
-                        <option value="left" selected>Left</option>
-                        <option value="center">Center</option>
-                        <option value="right">Right</option>
-                    </select>
-                    <label>Image Size</label>
-                    <select id="headerImageSize" class="select-input">
-                        <option value="small">Small (40px)</option>
-                        <option value="medium" selected>Medium (60px)</option>
-                        <option value="large">Large (80px)</option>
-                    </select>
-                </div>
-                
                 <label>Text Alignment</label>
                 <select id="headerAlignment" class="select-input">
                     <option value="left">Left</option>
@@ -576,29 +556,6 @@ class StepTemplateBuilder {
                 <label>Footer Text</label>
                 <input type="text" id="footerText" value="Prepared with care by KitchenPro" class="text-input">
                 
-                <div class="subsection">
-                    <h4>🖼️ Footer Image (Optional)</h4>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <input type="file" id="footerImageUpload" accept="image/*" style="display: none;">
-                        <button id="uploadFooterImgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
-                        <button id="removeFooterImgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
-                    </div>
-                    <div id="footerImgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                        <small>Image: <span id="footerImgFileName"></span></small>
-                    </div>
-                    <label>Image Position</label>
-                    <select id="footerImagePosition" class="select-input">
-                        <option value="left">Left</option>
-                        <option value="center">Center</option>
-                        <option value="right" selected>Right</option>
-                    </select>
-                    <label>Image Size</label>
-                    <select id="footerImageSize" class="select-input">
-                        <option value="small" selected>Small (30px)</option>
-                        <option value="medium">Medium (40px)</option>
-                    </select>
-                </div>
-                
                 <label>Text Alignment</label>
                 <select id="footerAlignment" class="select-input">
                     <option value="left">Left</option>
@@ -622,11 +579,7 @@ class StepTemplateBuilder {
             <style>
                 .step-template-controls { padding: 20px; background: white; border-radius: 8px; }
                 
-                /* TAB NAVIGATION */
-                .tab-navigation { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
-                .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s; }
-                .tab-btn:hover { background: #f8f9fa; color: #333; }
-                .tab-btn.active { color: #2196f3; border-bottom-color: #2196f3; background: #e3f2fd; }
+                /* TAB CONTENTS */
                 .tab-content { display: none; }
                 .tab-content.active { display: block; animation: fadeIn 0.3s; }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -697,9 +650,6 @@ class StepTemplateBuilder {
         // Header
         this.bindCheckbox('showHeader');
         this.bindTextInput('headerText');
-        this.bindImageUpload('headerImageUpload', 'uploadHeaderImgBtn', 'removeHeaderImgBtn', 'headerImage', 'header', 'headerImgPreview', 'headerImgFileName');
-        this.bindSelect('headerImagePosition');
-        this.bindSelect('headerImageSize');
         this.bindSelect('headerAlignment');
         this.bindSelect('headerFontSize');
         this.bindColorInput('headerColor');
@@ -728,9 +678,6 @@ class StepTemplateBuilder {
         // Footer
         this.bindCheckbox('showFooter');
         this.bindTextInput('footerText');
-        this.bindImageUpload('footerImageUpload', 'uploadFooterImgBtn', 'removeFooterImgBtn', 'footerImage', 'footer', 'footerImgPreview', 'footerImgFileName');
-        this.bindSelect('footerImagePosition');
-        this.bindSelect('footerImageSize');
         this.bindSelect('footerAlignment');
         this.bindSelect('footerFontSize');
     }
@@ -972,34 +919,6 @@ class StepTemplateBuilder {
         });
     }
     
-    bindImageUpload(inputId, uploadBtnId, removeBtnId, settingKey, folder, previewId, fileNameId) {
-        const inputEl = document.getElementById(inputId);
-        const uploadBtn = document.getElementById(uploadBtnId);
-        const removeBtn = document.getElementById(removeBtnId);
-        
-        uploadBtn?.addEventListener('click', () => inputEl.click());
-        
-        inputEl?.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file || !file.type.startsWith('image/')) return;
-            
-            const success = await this.saveImage(file, folder);
-            if (success) {
-                this.settings[settingKey] = file.name;
-                document.getElementById(previewId).style.display = 'block';
-                document.getElementById(fileNameId).textContent = file.name;
-                this.updatePreview();
-            }
-        });
-        
-        removeBtn?.addEventListener('click', () => {
-            this.settings[settingKey] = null;
-            document.getElementById(previewId).style.display = 'none';
-            inputEl.value = '';
-            this.updatePreview();
-        });
-    }
-    
     async saveImage(file, folder) {
         if (!window.directoryHandle) {
             alert('Please select a data folder first in Settings.');
@@ -1175,11 +1094,6 @@ class StepTemplateBuilder {
         const mealSize = s.mealFontSize || '10pt';
         const footerSize = s.footerFontSize || '8pt';
         
-        const imgSizes = {
-            header: { small: '40px', medium: '60px', large: '80px' },
-            footer: { small: '30px', medium: '40px', large: '50px' }
-        };
-        
         let bgStyles = `background-color: ${s.backgroundColor}; position: relative;`;
         let bgLayers = '';
         
@@ -1198,12 +1112,8 @@ class StepTemplateBuilder {
         html += `<div style="position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;">`;
         
         if (s.showHeader) {
-            const headerImgHtml = s.headerImage ? `<img src="data/images/header/${s.headerImage}" style="height: ${imgSizes.header[s.headerImageSize]}; vertical-align: middle; margin-${s.headerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
             html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: ${spacing.headerMargin};">`;
-            if (s.headerImagePosition === 'left' && headerImgHtml) html += headerImgHtml;
             html += `<span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span>`;
-            if (s.headerImagePosition === 'right' && headerImgHtml) html += headerImgHtml;
-            if (s.headerImagePosition === 'center' && headerImgHtml) html += `<br>${headerImgHtml}`;
             html += `</div>`;
         }
         
@@ -1229,11 +1139,8 @@ class StepTemplateBuilder {
         html += `</div>`;
         
         if (s.showFooter) {
-            const footerImgHtml = s.footerImage ? `<img src="data/images/footer/${s.footerImage}" style="height: ${imgSizes.footer[s.footerImageSize]}; vertical-align: middle; margin-${s.footerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
             html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">`;
-            if (s.footerImagePosition === 'left' && footerImgHtml) html += footerImgHtml;
             html += s.footerText;
-            if (s.footerImagePosition === 'right' && footerImgHtml) html += footerImgHtml;
             html += `</div>`;
         }
         
