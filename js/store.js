@@ -10,7 +10,7 @@
     window.directoryHandle = null;
     window.savedTemplates = [];
     window.imageUploads = [];
-    window.appSettings = { language: 'en' };
+    window.appSettings = { language: 'bg' };  // Changed default from 'en' to 'bg'
     window.imageCache = {};
 
     // Predefined allergens
@@ -44,7 +44,8 @@
         
         // Initialize language from loaded settings
         if (window.appSettings && window.appSettings.language) {
-            window.setCurrentLanguage(window.appSettings.language);
+            console.log('🌍 Setting language from loaded settings:', window.appSettings.language);
+            window.changeLanguage(window.appSettings.language, false); // false = don't save again
         }
         
         return initialized;
