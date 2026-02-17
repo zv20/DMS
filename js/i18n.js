@@ -209,6 +209,21 @@
             alert_select_folder_first: 'Please select a data folder first in Settings.',
             alert_upload_failed: '❌ Upload failed',
             
+            // Loading Screen Messages
+            loading_detecting: '🔍 Detecting storage method...',
+            loading_data: '📂 Loading your data...',
+            loading_recipes: '🥘 Loading recipes...',
+            loading_ingredients: '🧂 Loading ingredients...',
+            loading_ready: '✅ Almost ready...',
+            loading_loaded_folder: '✅ Data loaded from folder!',
+            loading_loaded_browser: '✅ Data loaded from browser!',
+            loading_fresh: '✅ Starting fresh!',
+            loading_select_folder: 'Select a folder to store your data',
+            loading_last_folder: '📁 Last used:',
+            loading_setup: '⌛ Setting up your workspace...',
+            loading_complete: '✅ All set!',
+            loading_ready_go: '✅ Ready to go!',
+            
             // File Info
             file_label: 'File:',
             
@@ -603,6 +618,21 @@
             alert_image_library_failed: '❌ Неуспешно зареждане на библиотека с изображения',
             alert_select_folder_first: 'Моля, първо изберете папка с данни в Настройки.',
             alert_upload_failed: '❌ Качването е неуспешно',
+            
+            // Loading Screen Messages
+            loading_detecting: '🔍 Откриване на метод за съхранение...',
+            loading_data: '📂 Зареждане на вашите данни...',
+            loading_recipes: '🥘 Зареждане на рецепти...',
+            loading_ingredients: '🧂 Зареждане на съставки...',
+            loading_ready: '✅ Почти готово...',
+            loading_loaded_folder: '✅ Данните са заредени от папка!',
+            loading_loaded_browser: '✅ Данните са заредени от браузър!',
+            loading_fresh: '✅ Започваме отначало!',
+            loading_select_folder: 'Изберете папка за съхранение на данни',
+            loading_last_folder: '📁 Последно използвана:',
+            loading_setup: '⌛ Настройка на вашето работно пространство...',
+            loading_complete: '✅ Всичко е готово!',
+            loading_ready_go: '✅ Готови сме!',
             
             // File Info
             file_label: 'Файл:',
