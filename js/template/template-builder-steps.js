@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 3.0 - Added border style options for day blocks
+ * @version 4.0 - Added multi-image background system with position control
  */
 
 class StepTemplateBuilder {
@@ -10,10 +10,18 @@ class StepTemplateBuilder {
             // Template Style
             templateStyle: 'compact', // 'compact', 'detailed', or 'detailed-2col'
             
-            // Background
+            // Background - OLD SINGLE IMAGE (kept for backward compatibility)
             backgroundImage: null,
             backgroundColor: '#ffffff',
             backgroundOpacity: 1.0,
+            
+            // NEW: Multi-Image Background System (up to 4 images)
+            backgroundImages: [
+                { image: null, position: 'center', size: 'cover', opacity: 1.0, zIndex: 1 },
+                { image: null, position: 'top-left', size: 'auto', opacity: 1.0, zIndex: 2 },
+                { image: null, position: 'top-right', size: 'auto', opacity: 1.0, zIndex: 3 },
+                { image: null, position: 'bottom-right', size: 'auto', opacity: 1.0, zIndex: 4 }
+            ],
             
             // Header
             showHeader: true,
@@ -22,7 +30,7 @@ class StepTemplateBuilder {
             headerImagePosition: 'left', // left, center, right
             headerImageSize: 'medium', // small, medium, large
             headerAlignment: 'center',
-            headerFontSize: '20pt', // Now specific pt size
+            headerFontSize: '20pt',
             headerColor: '#d2691e',
             
             // Weekly Menu (all always true now)
@@ -34,18 +42,18 @@ class StepTemplateBuilder {
             // Day Block Styling
             dayBorder: false,
             dayBorderColor: '#e0e0e0',
-            dayBorderStyle: 'solid', // NEW: solid, dashed, dotted, double
+            dayBorderStyle: 'solid',
             dayBorderThickness: '1px',
             dayBackground: 'transparent',
             dayPadding: '0px',
             
             // Day Name Styling
-            dayNameSize: '12pt', // Now specific pt size
+            dayNameSize: '12pt',
             dayNameColor: '#333333',
             dayNameWeight: 'bold',
             
             // Meal Styling
-            mealFontSize: '10pt', // Now specific pt size
+            mealFontSize: '10pt',
             mealLineHeight: '1.4',
             
             // Ingredients Styling
@@ -62,10 +70,10 @@ class StepTemplateBuilder {
             showFooter: true,
             footerText: 'Prepared with care by KitchenPro',
             footerImage: null,
-            footerImagePosition: 'right', // left, center, right
-            footerImageSize: 'small', // small, medium, large
+            footerImagePosition: 'right',
+            footerImageSize: 'small',
             footerAlignment: 'center',
-            footerFontSize: '8pt' // Now specific pt size
+            footerFontSize: '8pt'
         };
         
         this.previewData = null;
@@ -99,7 +107,7 @@ class StepTemplateBuilder {
                 <h2 style="margin: 0 0 10px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
                 <p style="margin: 0 0 20px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
                 
-                ${this.renderAccordionSection('background', '🏽 1. Background', this.renderBackgroundControls())}
+                ${this.renderAccordionSection('background', '🌏 1. Background', this.renderBackgroundControls())}
                 ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
                 ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
                 ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
@@ -141,22 +149,71 @@ class StepTemplateBuilder {
     renderBackgroundControls() {
         return `
             <div class="control-group">
-                <label>Background Image</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="file" id="bgImageUpload" accept="image/*" style="display: none;">
-                    <button id="uploadBgBtn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
-                    <button id="removeBgBtn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
-                </div>
-                <div id="bgPreview" style="display: none; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 15px;">
-                    <small>Current: <span id="bgFileName"></span></small>
-                </div>
-                
                 <label>Background Color</label>
                 <input type="color" id="backgroundColor" value="#ffffff" class="color-input">
                 
+                <div style="margin: 20px 0; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
+                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #1565c0;">🇺🇫 Multi-Image Backgrounds</p>
+                    <p style="margin: 0; font-size: 11px; color: #1976d2;">Add up to 4 positioned images for creative layouts!</p>
+                </div>
+                
+                ${this.renderImageSlot(0, 'Main Background', true)}
+                ${this.renderImageSlot(1, 'Image Slot 2', false)}
+                ${this.renderImageSlot(2, 'Image Slot 3', false)}
+                ${this.renderImageSlot(3, 'Image Slot 4', false)}
+            </div>
+        `;
+    }
+    
+    renderImageSlot(index, title, isFirst) {
+        const slot = this.settings.backgroundImages[index];
+        return `
+            <div class="subsection" style="margin-bottom: 15px;">
+                <h4 style="margin: 0 0 12px 0 !important;">🖼️ ${title}</h4>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="file" id="bgImage${index}Upload" accept="image/*" style="display: none;">
+                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                    <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
+                </div>
+                <div id="bgImage${index}Preview" style="display: ${slot.image ? 'block' : 'none'}; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
+                    <small>File: <span id="bgImage${index}FileName">${slot.image || ''}</span></small>
+                </div>
+                
+                <label>Position</label>
+                <select id="bgImage${index}Position" class="select-input">
+                    <option value="center" ${slot.position === 'center' ? 'selected' : ''}>Center (full page)</option>
+                    <option value="top-left" ${slot.position === 'top-left' ? 'selected' : ''}>Top Left</option>
+                    <option value="top-center" ${slot.position === 'top-center' ? 'selected' : ''}>Top Center</option>
+                    <option value="top-right" ${slot.position === 'top-right' ? 'selected' : ''}>Top Right</option>
+                    <option value="center-left" ${slot.position === 'center-left' ? 'selected' : ''}>Center Left</option>
+                    <option value="center-right" ${slot.position === 'center-right' ? 'selected' : ''}>Center Right</option>
+                    <option value="bottom-left" ${slot.position === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
+                    <option value="bottom-center" ${slot.position === 'bottom-center' ? 'selected' : ''}>Bottom Center</option>
+                    <option value="bottom-right" ${slot.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
+                </select>
+                
+                <label>Size</label>
+                <select id="bgImage${index}Size" class="select-input">
+                    <option value="cover" ${slot.size === 'cover' ? 'selected' : ''}>Cover (fill page)</option>
+                    <option value="contain" ${slot.size === 'contain' ? 'selected' : ''}>Contain (fit inside)</option>
+                    <option value="auto" ${slot.size === 'auto' ? 'selected' : ''}>Original Size</option>
+                    <option value="50%" ${slot.size === '50%' ? 'selected' : ''}>50% of page</option>
+                    <option value="25%" ${slot.size === '25%' ? 'selected' : ''}>25% of page</option>
+                    <option value="15%" ${slot.size === '15%' ? 'selected' : ''}>15% (small logo)</option>
+                </select>
+                
                 <label>Opacity</label>
-                <input type="range" id="backgroundOpacity" min="0" max="100" value="100" class="slider">
-                <div class="slider-value"><span id="opacityValue">100</span>%</div>
+                <input type="range" id="bgImage${index}Opacity" min="0" max="100" value="${slot.opacity * 100}" class="slider">
+                <div class="slider-value"><span id="bgImage${index}OpacityValue">${Math.round(slot.opacity * 100)}</span>%</div>
+                
+                <label>Layer (Z-Index)</label>
+                <select id="bgImage${index}ZIndex" class="select-input">
+                    <option value="1" ${slot.zIndex === 1 ? 'selected' : ''}>1 - Back</option>
+                    <option value="2" ${slot.zIndex === 2 ? 'selected' : ''}>2</option>
+                    <option value="3" ${slot.zIndex === 3 ? 'selected' : ''}>3</option>
+                    <option value="4" ${slot.zIndex === 4 ? 'selected' : ''}>4 - Front</option>
+                </select>
             </div>
         `;
     }
@@ -380,14 +437,11 @@ class StepTemplateBuilder {
     }
     
     bindControls() {
-        // Background
-        this.bindImageUpload('bgImageUpload', 'uploadBgBtn', 'removeBgBtn', 'backgroundImage', 'backgrounds', 'bgPreview', 'bgFileName');
+        // Background - Multi-Image System
+        for (let i = 0; i < 4; i++) {
+            this.bindMultiImageSlot(i);
+        }
         this.bindColorInput('backgroundColor');
-        document.getElementById('backgroundOpacity')?.addEventListener('input', (e) => {
-            this.settings.backgroundOpacity = e.target.value / 100;
-            document.getElementById('opacityValue').textContent = e.target.value;
-            this.updatePreview();
-        });
         
         // Header
         this.bindCheckbox('showHeader');
@@ -408,11 +462,11 @@ class StepTemplateBuilder {
             });
         });
         
-        // Menu (no content toggles - all styling only)
+        // Menu
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
-        this.bindSelect('dayBorderStyle'); // NEW
-        this.bindSelect('dayBorderThickness'); // NEW
+        this.bindSelect('dayBorderStyle');
+        this.bindSelect('dayBorderThickness');
         this.bindColorInput('dayBackground');
         this.bindSelect('dayNameSize');
         this.bindColorInput('dayNameColor');
@@ -428,6 +482,59 @@ class StepTemplateBuilder {
         this.bindSelect('footerImageSize');
         this.bindSelect('footerAlignment');
         this.bindSelect('footerFontSize');
+    }
+    
+    bindMultiImageSlot(index) {
+        const inputEl = document.getElementById(`bgImage${index}Upload`);
+        const uploadBtn = document.getElementById(`uploadBgImage${index}Btn`);
+        const removeBtn = document.getElementById(`removeBgImage${index}Btn`);
+        const positionEl = document.getElementById(`bgImage${index}Position`);
+        const sizeEl = document.getElementById(`bgImage${index}Size`);
+        const opacityEl = document.getElementById(`bgImage${index}Opacity`);
+        const zIndexEl = document.getElementById(`bgImage${index}ZIndex`);
+        
+        uploadBtn?.addEventListener('click', () => inputEl.click());
+        
+        inputEl?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            
+            const success = await this.saveImage(file, 'backgrounds');
+            if (success) {
+                this.settings.backgroundImages[index].image = file.name;
+                document.getElementById(`bgImage${index}Preview`).style.display = 'block';
+                document.getElementById(`bgImage${index}FileName`).textContent = file.name;
+                this.updatePreview();
+            }
+        });
+        
+        removeBtn?.addEventListener('click', () => {
+            this.settings.backgroundImages[index].image = null;
+            document.getElementById(`bgImage${index}Preview`).style.display = 'none';
+            inputEl.value = '';
+            this.updatePreview();
+        });
+        
+        positionEl?.addEventListener('change', (e) => {
+            this.settings.backgroundImages[index].position = e.target.value;
+            this.updatePreview();
+        });
+        
+        sizeEl?.addEventListener('change', (e) => {
+            this.settings.backgroundImages[index].size = e.target.value;
+            this.updatePreview();
+        });
+        
+        opacityEl?.addEventListener('input', (e) => {
+            this.settings.backgroundImages[index].opacity = e.target.value / 100;
+            document.getElementById(`bgImage${index}OpacityValue`).textContent = e.target.value;
+            this.updatePreview();
+        });
+        
+        zIndexEl?.addEventListener('change', (e) => {
+            this.settings.backgroundImages[index].zIndex = parseInt(e.target.value);
+            this.updatePreview();
+        });
     }
     
     bindCheckbox(id) {
@@ -568,13 +675,11 @@ class StepTemplateBuilder {
     renderDayBlock(day, s, spacing, daySize, mealSize, isCompact) {
         if (!day || !day.meals.length) return '';
         
-        // Use border style from settings
         const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} ${s.dayBorderStyle || 'solid'} ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
         let html = `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
         
         day.meals.forEach(meal => {
             if (isCompact) {
-                // COMPACT: Everything on one line
                 html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
                 if (meal.portion) html += ` - ${meal.portion}`;
                 if (meal.ingredients.length) {
@@ -591,15 +696,10 @@ class StepTemplateBuilder {
                 if (meal.calories) html += ` ККАЛ ${meal.calories}`;
                 html += `</div>`;
             } else {
-                // DETAILED: Meal name on first line, ingredients + calories on second line
                 html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
-                
-                // Line 1: Meal number, name, portion
                 html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
                 if (meal.portion) html += ` - ${meal.portion}`;
                 html += `</div>`;
-                
-                // Line 2: Ingredients + Calories
                 if (meal.ingredients.length) {
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
                         if (ing.hasAllergen) {
@@ -610,20 +710,32 @@ class StepTemplateBuilder {
                         }
                         return ing.name;
                     }).join(', ')}`;
-                    
-                    if (meal.calories) {
-                        html += ` - ККАЛ ${meal.calories}`;
-                    }
+                    if (meal.calories) html += ` - ККАЛ ${meal.calories}`;
                     html += `</div>`;
                 } else if (meal.calories) {
                     html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
                 }
-                
                 html += `</div>`;
             }
         });
         html += `</div>`;
         return html;
+    }
+    
+    // Convert position name to CSS values
+    getPositionCSS(position) {
+        const positions = {
+            'center': 'center center',
+            'top-left': 'top left',
+            'top-center': 'top center',
+            'top-right': 'top right',
+            'center-left': 'center left',
+            'center-right': 'center right',
+            'bottom-left': 'bottom left',
+            'bottom-center': 'bottom center',
+            'bottom-right': 'bottom right'
+        };
+        return positions[position] || 'center center';
     }
     
     updatePreview() {
@@ -653,7 +765,6 @@ class StepTemplateBuilder {
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        // Use direct point sizes from settings
         const headerSize = s.headerFontSize || '20pt';
         const daySize = s.dayNameSize || '12pt';
         const mealSize = s.mealFontSize || '10pt';
@@ -664,7 +775,24 @@ class StepTemplateBuilder {
             footer: { small: '30px', medium: '40px', large: '50px' }
         };
         
-        let html = `<div style="background: ${s.backgroundColor}; ${s.backgroundImage ? `background-image: url('data/images/backgrounds/${s.backgroundImage}');` : ''} background-size: cover; background-position: center; padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
+        // BUILD MULTI-IMAGE BACKGROUND
+        let bgStyles = `background-color: ${s.backgroundColor}; position: relative;`;
+        let bgLayers = '';
+        
+        // Add positioned background images (sorted by z-index)
+        const sortedImages = s.backgroundImages
+            .map((img, idx) => ({ ...img, idx }))
+            .filter(img => img.image)
+            .sort((a, b) => a.zIndex - b.zIndex);
+        
+        sortedImages.forEach((img, layerNum) => {
+            const bgRepeat = img.size === 'cover' || img.size === 'contain' ? 'no-repeat' : 'no-repeat';
+            bgLayers += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data/images/backgrounds/${img.image}'); background-size: ${img.size}; background-position: ${this.getPositionCSS(img.position)}; background-repeat: ${bgRepeat}; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+        });
+        
+        let html = `<div style="${bgStyles} padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
+        html += bgLayers;
+        html += `<div style="position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;">`;
         
         // Header
         if (s.showHeader) {
@@ -680,31 +808,20 @@ class StepTemplateBuilder {
         // Date range
         html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         
-        // Menu - 2 column layout if selected
+        // Menu
         html += `<div style="flex: 1;">`;
         if (is2Col) {
-            // 2-COLUMN LAYOUT
             for (let i = 0; i < days.length; i += 2) {
                 html += `<div style="display: flex; gap: ${spacing.columnGap}; margin-bottom: ${spacing.rowMargin};">`;
-                
-                // Left column
                 html += `<div style="flex: 1;">`;
-                if (days[i]) {
-                    html += this.renderDayBlock(days[i], s, spacing, daySize, mealSize, isCompact);
-                }
+                if (days[i]) html += this.renderDayBlock(days[i], s, spacing, daySize, mealSize, isCompact);
                 html += `</div>`;
-                
-                // Right column
                 html += `<div style="flex: 1;">`;
-                if (days[i + 1]) {
-                    html += this.renderDayBlock(days[i + 1], s, spacing, daySize, mealSize, isCompact);
-                }
+                if (days[i + 1]) html += this.renderDayBlock(days[i + 1], s, spacing, daySize, mealSize, isCompact);
                 html += `</div>`;
-                
                 html += `</div>`;
             }
         } else {
-            // SINGLE COLUMN LAYOUT
             days.forEach(day => {
                 html += this.renderDayBlock(day, s, spacing, daySize, mealSize, isCompact);
             });
@@ -721,7 +838,7 @@ class StepTemplateBuilder {
             html += `</div>`;
         }
         
-        html += `</div>`;
+        html += `</div></div>`;
         container.innerHTML = html;
     }
     
