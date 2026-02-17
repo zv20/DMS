@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.7 - Added 2-column layout option
+ * @version 2.8 - Preview now shows actual 2-column layout
  */
 
 class StepTemplateBuilder {
@@ -520,6 +520,16 @@ class StepTemplateBuilder {
                         { name: 'ябълка', hasAllergen: false },
                         { name: 'банан', hasAllergen: false }
                     ]}
+                ]},
+                { name: 'Четвъртък', meals: [
+                    { number: 1, name: 'Пилешка супа', portion: '150гр', calories: 120, ingredients: [
+                        { name: 'пиле', hasAllergen: false }
+                    ]}
+                ]},
+                { name: 'Петък', meals: [
+                    { number: 1, name: 'Риба на фурна', portion: '180гр', calories: 200, ingredients: [
+                        { name: 'риба', hasAllergen: true }
+                    ]}
                 ]}
             ]
         };
@@ -529,6 +539,67 @@ class StepTemplateBuilder {
         alert('⚠️ Load real data from menu planner - feature coming soon!');
     }
     
+    // Helper function to render a single day block
+    renderDayBlock(day, s, spacing, daySize, mealSize, isCompact) {
+        if (!day || !day.meals.length) return '';
+        
+        const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
+        let html = `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
+        
+        day.meals.forEach(meal => {
+            if (isCompact) {
+                // COMPACT: Everything on one line
+                html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
+                if (meal.portion) html += ` - ${meal.portion}`;
+                if (meal.ingredients.length) {
+                    html += `; ${meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            let style = `color: ${s.allergenColor};`;
+                            if (s.allergenBold) style += ' font-weight: bold;';
+                            if (s.allergenUnderline) style += ' text-decoration: underline;';
+                            return `<span style="${style}">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ')}`;
+                }
+                if (meal.calories) html += ` ККАЛ ${meal.calories}`;
+                html += `</div>`;
+            } else {
+                // DETAILED: Meal name on first line, ingredients + calories on second line
+                html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
+                
+                // Line 1: Meal number, name, portion
+                html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
+                if (meal.portion) html += ` - ${meal.portion}`;
+                html += `</div>`;
+                
+                // Line 2: Ingredients + Calories
+                if (meal.ingredients.length) {
+                    html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            let style = `color: ${s.allergenColor};`;
+                            if (s.allergenBold) style += ' font-weight: bold;';
+                            if (s.allergenUnderline) style += ' text-decoration: underline;';
+                            return `<span style="${style}">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ')}`;
+                    
+                    if (meal.calories) {
+                        html += ` - ККАЛ ${meal.calories}`;
+                    }
+                    html += `</div>`;
+                } else if (meal.calories) {
+                    html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
+                }
+                
+                html += `</div>`;
+            }
+        });
+        html += `</div>`;
+        return html;
+    }
+    
     updatePreview() {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
@@ -536,13 +607,14 @@ class StepTemplateBuilder {
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
         
-        // Check for 2-column layout (preview only shows single column for simplicity)
         const is2Col = s.templateStyle === 'detailed-2col';
         const isCompact = s.templateStyle === 'compact';
         const spacing = {
             containerPadding: isCompact ? '12px' : '15px',
             headerMargin: isCompact ? '8px' : '10px',
             dateMargin: isCompact ? '10px' : '12px',
+            rowMargin: '6px',
+            columnGap: '10px',
             dayMargin: isCompact ? '8px' : '8px',
             dayPadding: isCompact ? '6px' : '6px',
             dayNameMargin: isCompact ? '4px' : '5px',
@@ -584,75 +656,38 @@ class StepTemplateBuilder {
             html += `</div>`;
         }
         
-        // Date range (always shown)
+        // Date range
         html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         
-        // Show 2-column notice in preview
-        if (is2Col) {
-            html += `<div style="text-align: center; margin-bottom: 10px; padding: 8px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 11pt; color: #856404;">ℹ️ Preview shows single column. Print will use 2-column layout.</div>`;
-        }
-        
-        // Menu
+        // Menu - 2 column layout if selected
         html += `<div style="flex: 1;">`;
-        days.forEach(day => {
-            if (!day.meals.length) return;
-            const dayStyle = `${s.dayBorder ? `border: ${s.dayBorderThickness || '1px'} solid ${s.dayBorderColor};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; margin-bottom: ${spacing.dayMargin}; border-radius: 4px;`;
-            html += `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
-            
-            day.meals.forEach(meal => {
-                if (isCompact) {
-                    // COMPACT: Everything on one line (all always shown)
-                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin}; font-size: ${mealSize}; line-height: ${spacing.lineHeight};"> ${meal.number}. ${meal.name}`;
-                    if (meal.portion) html += ` - ${meal.portion}`;
-                    if (meal.ingredients.length) {
-                        html += `; ${meal.ingredients.map(ing => {
-                            if (ing.hasAllergen) {
-                                let style = `color: ${s.allergenColor};`;
-                                if (s.allergenBold) style += ' font-weight: bold;';
-                                if (s.allergenUnderline) style += ' text-decoration: underline;';
-                                return `<span style="${style}">${ing.name}</span>`;
-                            }
-                            return ing.name;
-                        }).join(', ')}`;
-                    }
-                    if (meal.calories) html += ` ККАЛ ${meal.calories}`;
-                    html += `</div>`;
-                } else {
-                    // DETAILED or DETAILED-2COL: Meal name on first line, ingredients + calories on second line
-                    html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
-                    
-                    // Line 1: Meal number, name, portion (always shown)
-                    html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
-                    if (meal.portion) html += ` - ${meal.portion}`;
-                    html += `</div>`;
-                    
-                    // Line 2: Ingredients + Calories (always shown)
-                    if (meal.ingredients.length) {
-                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
-                            if (ing.hasAllergen) {
-                                let style = `color: ${s.allergenColor};`;
-                                if (s.allergenBold) style += ' font-weight: bold;';
-                                if (s.allergenUnderline) style += ' text-decoration: underline;';
-                                return `<span style="${style}">${ing.name}</span>`;
-                            }
-                            return ing.name;
-                        }).join(', ')}`;
-                        
-                        // Add calories AFTER ingredients on same line (always shown)
-                        if (meal.calories) {
-                            html += ` - ККАЛ ${meal.calories}`;
-                        }
-                        html += `</div>`;
-                    } else if (meal.calories) {
-                        // If no ingredients but calories exist (always shown)
-                        html += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 15px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
-                    }
-                    
-                    html += `</div>`;
+        if (is2Col) {
+            // 2-COLUMN LAYOUT
+            for (let i = 0; i < days.length; i += 2) {
+                html += `<div style="display: flex; gap: ${spacing.columnGap}; margin-bottom: ${spacing.rowMargin};">`;
+                
+                // Left column
+                html += `<div style="flex: 1;">`;
+                if (days[i]) {
+                    html += this.renderDayBlock(days[i], s, spacing, daySize, mealSize, isCompact);
                 }
+                html += `</div>`;
+                
+                // Right column
+                html += `<div style="flex: 1;">`;
+                if (days[i + 1]) {
+                    html += this.renderDayBlock(days[i + 1], s, spacing, daySize, mealSize, isCompact);
+                }
+                html += `</div>`;
+                
+                html += `</div>`;
+            }
+        } else {
+            // SINGLE COLUMN LAYOUT
+            days.forEach(day => {
+                html += this.renderDayBlock(day, s, spacing, daySize, mealSize, isCompact);
             });
-            html += `</div>`;
-        });
+        }
         html += `</div>`;
         
         // Footer
