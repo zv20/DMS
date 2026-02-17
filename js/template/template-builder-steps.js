@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 4.4 - Unified button styling across all sections
+ * @version 5.0 - Added tabbed interface with Templates and Images management
  */
 
 class StepTemplateBuilder {
@@ -79,7 +79,8 @@ class StepTemplateBuilder {
         
         this.previewData = null;
         this.expandedSection = 'background';
-        this.currentImageSlot = null; // Track which slot is being edited
+        this.currentImageSlot = null;
+        this.currentTab = 'builder'; // builder, templates, images
         this.init();
     }
     
@@ -94,6 +95,7 @@ class StepTemplateBuilder {
     setup() {
         console.log('🚀 StepTemplateBuilder: Setting up...');
         this.buildUI();
+        this.bindTabControls();
         this.bindAccordion();
         this.bindControls();
         this.loadSampleData();
@@ -106,24 +108,26 @@ class StepTemplateBuilder {
         
         sidebar.innerHTML = `
             <div class="step-template-controls">
-                <h2 style="margin: 0 0 10px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
-                <p style="margin: 0 0 20px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
+                <h2 style="margin: 0 0 15px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
                 
-                ${this.renderAccordionSection('background', '🌏 1. Background', this.renderBackgroundControls())}
-                ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
-                ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
-                ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
+                <!-- TAB NAVIGATION -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="builder">🔧 Builder</button>
+                    <button class="tab-btn" data-tab="templates">📋 Templates</button>
+                    <button class="tab-btn" data-tab="images">🖼️ Images</button>
+                </div>
                 
-                <div class="action-buttons" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                    <button id="btnLoadData" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
-                        👁️ Load My Menu Data
-                    </button>
-                    <button id="btnSaveTemplate" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
-                        💾 Save Template
-                    </button>
-                    <button id="btnReset" class="btn btn-secondary" style="width: 100%;">
-                        🔄 Reset to Default
-                    </button>
+                <!-- TAB CONTENTS -->
+                <div id="tab-builder" class="tab-content active">
+                    ${this.renderBuilderTab()}
+                </div>
+                
+                <div id="tab-templates" class="tab-content">
+                    ${this.renderTemplatesTab()}
+                </div>
+                
+                <div id="tab-images" class="tab-content">
+                    ${this.renderImagesTab()}
                 </div>
             </div>
             
@@ -131,6 +135,236 @@ class StepTemplateBuilder {
         `;
         
         this.bindActionButtons();
+    }
+    
+    renderBuilderTab() {
+        return `
+            <p style="margin: 0 0 15px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
+            
+            ${this.renderAccordionSection('background', '🌏 1. Background', this.renderBackgroundControls())}
+            ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
+            ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
+            ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
+            
+            <div class="action-buttons" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <button id="btnLoadData" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">
+                    👁️ Load My Menu Data
+                </button>
+                <button id="btnSaveTemplate" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
+                    💾 Save Template
+                </button>
+                <button id="btnReset" class="btn btn-secondary" style="width: 100%;">
+                    🔄 Reset to Default
+                </button>
+            </div>
+        `;
+    }
+    
+    renderTemplatesTab() {
+        return `
+            <div style="padding: 10px 0;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px;">📋 Saved Templates</h3>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage your saved template designs</p>
+                <div id="templates-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Templates will be loaded here -->
+                </div>
+            </div>
+        `;
+    }
+    
+    renderImagesTab() {
+        return `
+            <div style="padding: 10px 0;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px;">🖼️ Image Library</h3>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666;">Manage all your uploaded images</p>
+                
+                <div class="subsection" style="margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">🌏 Background Images</h4>
+                    <div id="bg-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <!-- Background images will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="subsection" style="margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">📌 Header Images</h4>
+                    <div id="header-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <!-- Header images will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px;">📍 Footer Images</h4>
+                    <div id="footer-images-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <!-- Footer images will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    bindTabControls() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const tab = e.currentTarget.dataset.tab;
+                this.switchTab(tab);
+            });
+        });
+    }
+    
+    async switchTab(tab) {
+        this.currentTab = tab;
+        
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        
+        // Update tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === `tab-${tab}`);
+        });
+        
+        // Load data for specific tabs
+        if (tab === 'templates') {
+            await this.loadTemplates();
+        } else if (tab === 'images') {
+            await this.loadImages();
+        }
+    }
+    
+    async loadTemplates() {
+        const container = document.getElementById('templates-list');
+        if (!container) return;
+        
+        if (!window.menuTemplates || Object.keys(window.menuTemplates).length === 0) {
+            container.innerHTML = `
+                <div style="padding: 30px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px;">
+                    <p style="margin: 0; font-size: 14px;">📂 No saved templates yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 12px;">Go to Builder tab to create and save your first template</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        for (const [name, template] of Object.entries(window.menuTemplates)) {
+            html += `
+                <div class="template-card">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 5px;">${name}</div>
+                        <div style="font-size: 11px; color: #666;">
+                            Style: ${template.templateStyle || 'compact'} | 
+                            Header: ${template.showHeader ? 'Yes' : 'No'} | 
+                            Footer: ${template.showFooter ? 'Yes' : 'No'}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.loadTemplate('${name}')">📥 Load</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="stepTemplateBuilder.deleteTemplate('${name}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    async loadTemplate(name) {
+        if (!window.menuTemplates || !window.menuTemplates[name]) {
+            alert('❌ Template not found');
+            return;
+        }
+        
+        if (confirm(`Load template "${name}"? This will replace your current settings.`)) {
+            this.settings = { ...window.menuTemplates[name] };
+            this.switchTab('builder');
+            this.buildUI();
+            this.bindTabControls();
+            this.bindAccordion();
+            this.bindControls();
+            this.bindActionButtons();
+            this.updatePreview();
+            alert('✅ Template loaded!');
+        }
+    }
+    
+    async deleteTemplate(name) {
+        if (!confirm(`Delete template "${name}"?`)) return;
+        
+        delete window.menuTemplates[name];
+        if (window.storageAdapter) {
+            await window.storageAdapter.save('templates', window.menuTemplates);
+        }
+        await this.loadTemplates();
+        alert('✅ Template deleted!');
+    }
+    
+    async loadImages() {
+        await this.loadImageFolder('backgrounds', 'bg-images-list');
+        await this.loadImageFolder('header', 'header-images-list');
+        await this.loadImageFolder('footer', 'footer-images-list');
+    }
+    
+    async loadImageFolder(folder, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        if (!window.directoryHandle) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">Please select data folder in Settings first</div>`;
+            return;
+        }
+        
+        try {
+            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+            const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
+            const folderDir = await imagesDir.getDirectoryHandle(folder, { create: false });
+            
+            const images = [];
+            for await (const entry of folderDir.values()) {
+                if (entry.kind === 'file' && entry.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+                    const file = await entry.getFile();
+                    const url = URL.createObjectURL(file);
+                    images.push({ name: entry.name, url: url, handle: entry });
+                }
+            }
+            
+            if (images.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">📂 No images uploaded yet</div>`;
+                return;
+            }
+            
+            let html = '';
+            images.forEach(img => {
+                html += `
+                    <div class="image-card">
+                        <img src="${img.url}" style="width: 100%; height: 80px; object-fit: contain; border-radius: 4px; margin-bottom: 5px; background: #f5f5f5;">
+                        <div style="font-size: 10px; color: #666; margin-bottom: 5px; word-break: break-word;">${img.name}</div>
+                        <button class="btn btn-secondary" style="width: 100%; padding: 4px; font-size: 11px;" onclick="stepTemplateBuilder.deleteImage('${folder}', '${img.name}')">🗑️ Delete</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999; border: 2px dashed #ddd; border-radius: 8px; font-size: 12px;">📂 No images folder found</div>`;
+        }
+    }
+    
+    async deleteImage(folder, filename) {
+        if (!confirm(`Delete "${filename}"?`)) return;
+        
+        try {
+            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+            const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
+            const folderDir = await imagesDir.getDirectoryHandle(folder, { create: false });
+            await folderDir.removeEntry(filename);
+            
+            await this.loadImages();
+            alert('✅ Image deleted!');
+        } catch (err) {
+            console.error('Delete failed:', err);
+            alert('❌ Failed to delete image');
+        }
     }
     
     renderAccordionSection(id, title, content) {
@@ -387,6 +621,24 @@ class StepTemplateBuilder {
         return `
             <style>
                 .step-template-controls { padding: 20px; background: white; border-radius: 8px; }
+                
+                /* TAB NAVIGATION */
+                .tab-navigation { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
+                .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s; }
+                .tab-btn:hover { background: #f8f9fa; color: #333; }
+                .tab-btn.active { color: #2196f3; border-bottom-color: #2196f3; background: #e3f2fd; }
+                .tab-content { display: none; }
+                .tab-content.active { display: block; animation: fadeIn 0.3s; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+                
+                /* TEMPLATE CARDS */
+                .template-card { display: flex; align-items: center; gap: 10px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.2s; }
+                .template-card:hover { border-color: #2196f3; background: #f8f9fa; }
+                
+                /* IMAGE CARDS */
+                .image-card { padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center; transition: all 0.2s; }
+                .image-card:hover { border-color: #2196f3; background: #f8f9fa; }
+                
                 .accordion-section { margin-bottom: 10px; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; transition: all 0.3s; }
                 .accordion-section.expanded { border-color: #2196f3; }
                 .accordion-header { padding: 12px 15px; background: #f8f9fa; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; transition: background 0.2s; }
@@ -1002,6 +1254,7 @@ class StepTemplateBuilder {
         if (!confirm('Reset all settings?')) return;
         this.settings = new StepTemplateBuilder().settings;
         this.buildUI();
+        this.bindTabControls();
         this.bindAccordion();
         this.bindControls();
         this.bindActionButtons();
