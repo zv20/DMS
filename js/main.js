@@ -108,9 +108,11 @@
                 subtitle.textContent = window.t('loading_select_folder');
             }
             
+            // Use translation for button text
+            const buttonText = window.getCurrentLanguage() === 'bg' ? 'Избери Папка' : 'Select Folder';
             actions.innerHTML = `
                 <button class="btn btn-primary" onclick="window.selectFolderAndStart()" style="min-width: 200px; height: 48px;">
-                    <span>📁</span> Select Folder
+                    <span>📁</span> ${buttonText}
                 </button>
             `;
         }
