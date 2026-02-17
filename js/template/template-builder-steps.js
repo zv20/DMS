@@ -1,14 +1,14 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 2.6 - All content always shown (no toggles)
+ * @version 2.7 - Added 2-column layout option
  */
 
 class StepTemplateBuilder {
     constructor() {
         this.settings = {
             // Template Style
-            templateStyle: 'compact', // 'compact' or 'detailed'
+            templateStyle: 'compact', // 'compact', 'detailed', or 'detailed-2col'
             
             // Background
             backgroundImage: null,
@@ -98,7 +98,7 @@ class StepTemplateBuilder {
                 <h2 style="margin: 0 0 10px 0; font-size: 20px; text-align: center;">🎨 Menu Template Builder</h2>
                 <p style="margin: 0 0 20px 0; font-size: 12px; color: #666; text-align: center;">Click each step to customize</p>
                 
-                ${this.renderAccordionSection('background', '🇼 1. Background', this.renderBackgroundControls())}
+                ${this.renderAccordionSection('background', '🏳 1. Background', this.renderBackgroundControls())}
                 ${this.renderAccordionSection('header', '📌 2. Header', this.renderHeaderControls())}
                 ${this.renderAccordionSection('menu', '🍽️ 3. Weekly Menu', this.renderMenuControls())}
                 ${this.renderAccordionSection('footer', '📍 4. Footer', this.renderFooterControls())}
@@ -220,6 +220,10 @@ class StepTemplateBuilder {
                 <label class="radio-label">
                     <input type="radio" name="templateStyle" value="detailed">
                     <span><strong>Detailed</strong> - Ingredients on separate line</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="templateStyle" value="detailed-2col">
+                    <span><strong>Detailed (2 Columns)</strong> - Side-by-side layout</span>
                 </label>
                 
                 <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">
@@ -532,7 +536,8 @@ class StepTemplateBuilder {
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
         
-        // COMPACT vs DETAILED style settings
+        // Check for 2-column layout (preview only shows single column for simplicity)
+        const is2Col = s.templateStyle === 'detailed-2col';
         const isCompact = s.templateStyle === 'compact';
         const spacing = {
             containerPadding: isCompact ? '12px' : '15px',
@@ -582,6 +587,11 @@ class StepTemplateBuilder {
         // Date range (always shown)
         html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         
+        // Show 2-column notice in preview
+        if (is2Col) {
+            html += `<div style="text-align: center; margin-bottom: 10px; padding: 8px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 11pt; color: #856404;">ℹ️ Preview shows single column. Print will use 2-column layout.</div>`;
+        }
+        
         // Menu
         html += `<div style="flex: 1;">`;
         days.forEach(day => {
@@ -608,7 +618,7 @@ class StepTemplateBuilder {
                     if (meal.calories) html += ` ККАЛ ${meal.calories}`;
                     html += `</div>`;
                 } else {
-                    // DETAILED: Meal name on first line, ingredients + calories on second line
+                    // DETAILED or DETAILED-2COL: Meal name on first line, ingredients + calories on second line
                     html += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
                     
                     // Line 1: Meal number, name, portion (always shown)
