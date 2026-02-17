@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Auto-scaling + custom margins for any printer
- * @version 5.0 - Added multi-image background support
+ * @version 5.1 - 5 image slots with percentage sizing
  */
 
 (function(window) {
@@ -84,7 +84,7 @@
             settings = templateChoice.settings;
         }
         
-        // NEW: Load multi-image backgrounds
+        // NEW: Load multi-image backgrounds (now supports 5 slots)
         if (settings.backgroundImages && Array.isArray(settings.backgroundImages)) {
             console.log('🇺🇫 Loading multi-image backgrounds...');
             for (let i = 0; i < settings.backgroundImages.length; i++) {
@@ -125,10 +125,11 @@
             backgroundColor: '#ffffff',
             backgroundOpacity: 1.0,
             backgroundImages: [
-                { image: null, position: 'center', size: 'cover', opacity: 1.0, zIndex: 1 },
-                { image: null, position: 'top-left', size: 'auto', opacity: 1.0, zIndex: 2 },
-                { image: null, position: 'top-right', size: 'auto', opacity: 1.0, zIndex: 3 },
-                { image: null, position: 'bottom-right', size: 'auto', opacity: 1.0, zIndex: 4 }
+                { image: null, position: 'center', size: 100, opacity: 1.0, zIndex: 1 },
+                { image: null, position: 'top-left', size: 20, opacity: 1.0, zIndex: 2 },
+                { image: null, position: 'top-right', size: 20, opacity: 1.0, zIndex: 3 },
+                { image: null, position: 'bottom-left', size: 20, opacity: 1.0, zIndex: 4 },
+                { image: null, position: 'bottom-right', size: 20, opacity: 1.0, zIndex: 5 }
             ],
             showHeader: true,
             headerText: 'Седмично меню',
@@ -622,6 +623,16 @@
         return positions[position] || 'center center';
     }
     
+    // Convert size (percentage) to CSS
+    function getSizeCSS(size) {
+        // size is now a number representing percentage of page width
+        if (typeof size === 'number') {
+            return `${size}% auto`;
+        }
+        // Fallback for old string formats
+        return size || 'cover';
+    }
+    
     // Direct HTML rendering based on template settings
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
@@ -662,14 +673,14 @@
         
         let html = `<div id="menu-content" style="${containerStyle}">`;
         
-        // NEW: Add multi-image background layers
+        // NEW: Add multi-image background layers (supports 5 slots)
         if (s.backgroundImages && Array.isArray(s.backgroundImages)) {
             const sortedImages = s.backgroundImages
                 .filter(img => img.image && img.imageData)
                 .sort((a, b) => a.zIndex - b.zIndex);
             
             sortedImages.forEach(img => {
-                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${img.size}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${getSizeCSS(img.size)}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
             });
         } else if (s.backgroundImageData) {
             // Fallback: Legacy single background
@@ -776,14 +787,14 @@
         
         let html = `<div id="menu-content" style="${containerStyle}">`;
         
-        // Add multi-image backgrounds
+        // Add multi-image backgrounds (5 slots)
         if (s.backgroundImages && Array.isArray(s.backgroundImages)) {
             const sortedImages = s.backgroundImages
                 .filter(img => img.image && img.imageData)
                 .sort((a, b) => a.zIndex - b.zIndex);
             
             sortedImages.forEach(img => {
-                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${img.size}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+                html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${img.imageData}'); background-size: ${getSizeCSS(img.size)}; background-position: ${getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
             });
         } else if (s.backgroundImageData) {
             html += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('${s.backgroundImageData}'); background-size: cover; background-position: center center; background-repeat: no-repeat; opacity: 1; z-index: 1; pointer-events: none;"></div>`;
