@@ -824,8 +824,8 @@
         }
     };
 
-    // Initialize from appSettings, fallback to 'en'
-    let currentLanguage = 'en';
+    // Initialize from appSettings, fallback to 'bg' (Bulgarian) as default
+    let currentLanguage = 'bg';
 
     window.t = function(key) {
         return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
