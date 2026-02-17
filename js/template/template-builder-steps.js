@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 4.0 - Added multi-image background system with position control
+ * @version 4.1 - 5 image slots with size slider control
  */
 
 class StepTemplateBuilder {
@@ -15,12 +15,13 @@ class StepTemplateBuilder {
             backgroundColor: '#ffffff',
             backgroundOpacity: 1.0,
             
-            // NEW: Multi-Image Background System (up to 4 images)
+            // NEW: Multi-Image Background System (5 image slots)
             backgroundImages: [
-                { image: null, position: 'center', size: 'cover', opacity: 1.0, zIndex: 1 },
-                { image: null, position: 'top-left', size: 'auto', opacity: 1.0, zIndex: 2 },
-                { image: null, position: 'top-right', size: 'auto', opacity: 1.0, zIndex: 3 },
-                { image: null, position: 'bottom-right', size: 'auto', opacity: 1.0, zIndex: 4 }
+                { image: null, position: 'center', size: 100, opacity: 1.0, zIndex: 1 },
+                { image: null, position: 'top-left', size: 20, opacity: 1.0, zIndex: 2 },
+                { image: null, position: 'top-right', size: 20, opacity: 1.0, zIndex: 3 },
+                { image: null, position: 'bottom-left', size: 20, opacity: 1.0, zIndex: 4 },
+                { image: null, position: 'bottom-right', size: 20, opacity: 1.0, zIndex: 5 }
             ],
             
             // Header
@@ -153,19 +154,20 @@ class StepTemplateBuilder {
                 <input type="color" id="backgroundColor" value="#ffffff" class="color-input">
                 
                 <div style="margin: 20px 0; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
-                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #1565c0;">🇺🇫 Multi-Image Backgrounds</p>
-                    <p style="margin: 0; font-size: 11px; color: #1976d2;">Add up to 4 positioned images for creative layouts!</p>
+                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #1565c0;">🇺🇫 5 Image Layers + Background</p>
+                    <p style="margin: 0; font-size: 11px; color: #1976d2;">Position 5 images anywhere with precise size control!</p>
                 </div>
                 
-                ${this.renderImageSlot(0, 'Main Background', true)}
-                ${this.renderImageSlot(1, 'Image Slot 2', false)}
-                ${this.renderImageSlot(2, 'Image Slot 3', false)}
-                ${this.renderImageSlot(3, 'Image Slot 4', false)}
+                ${this.renderImageSlot(0, 'Image Layer 1')}
+                ${this.renderImageSlot(1, 'Image Layer 2')}
+                ${this.renderImageSlot(2, 'Image Layer 3')}
+                ${this.renderImageSlot(3, 'Image Layer 4')}
+                ${this.renderImageSlot(4, 'Image Layer 5')}
             </div>
         `;
     }
     
-    renderImageSlot(index, title, isFirst) {
+    renderImageSlot(index, title) {
         const slot = this.settings.backgroundImages[index];
         return `
             <div class="subsection" style="margin-bottom: 15px;">
@@ -193,15 +195,9 @@ class StepTemplateBuilder {
                     <option value="bottom-right" ${slot.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
                 </select>
                 
-                <label>Size</label>
-                <select id="bgImage${index}Size" class="select-input">
-                    <option value="cover" ${slot.size === 'cover' ? 'selected' : ''}>Cover (fill page)</option>
-                    <option value="contain" ${slot.size === 'contain' ? 'selected' : ''}>Contain (fit inside)</option>
-                    <option value="auto" ${slot.size === 'auto' ? 'selected' : ''}>Original Size</option>
-                    <option value="50%" ${slot.size === '50%' ? 'selected' : ''}>50% of page</option>
-                    <option value="25%" ${slot.size === '25%' ? 'selected' : ''}>25% of page</option>
-                    <option value="15%" ${slot.size === '15%' ? 'selected' : ''}>15% (small logo)</option>
-                </select>
+                <label>Size (% of page width)</label>
+                <input type="range" id="bgImage${index}Size" min="5" max="100" value="${slot.size}" class="slider">
+                <div class="slider-value"><span id="bgImage${index}SizeValue">${slot.size}</span>%</div>
                 
                 <label>Opacity</label>
                 <input type="range" id="bgImage${index}Opacity" min="0" max="100" value="${slot.opacity * 100}" class="slider">
@@ -212,7 +208,8 @@ class StepTemplateBuilder {
                     <option value="1" ${slot.zIndex === 1 ? 'selected' : ''}>1 - Back</option>
                     <option value="2" ${slot.zIndex === 2 ? 'selected' : ''}>2</option>
                     <option value="3" ${slot.zIndex === 3 ? 'selected' : ''}>3</option>
-                    <option value="4" ${slot.zIndex === 4 ? 'selected' : ''}>4 - Front</option>
+                    <option value="4" ${slot.zIndex === 4 ? 'selected' : ''}>4</option>
+                    <option value="5" ${slot.zIndex === 5 ? 'selected' : ''}>5 - Front</option>
                 </select>
             </div>
         `;
@@ -437,8 +434,8 @@ class StepTemplateBuilder {
     }
     
     bindControls() {
-        // Background - Multi-Image System
-        for (let i = 0; i < 4; i++) {
+        // Background - Multi-Image System (5 slots)
+        for (let i = 0; i < 5; i++) {
             this.bindMultiImageSlot(i);
         }
         this.bindColorInput('backgroundColor');
@@ -520,8 +517,10 @@ class StepTemplateBuilder {
             this.updatePreview();
         });
         
-        sizeEl?.addEventListener('change', (e) => {
-            this.settings.backgroundImages[index].size = e.target.value;
+        // NEW: Size slider (percentage)
+        sizeEl?.addEventListener('input', (e) => {
+            this.settings.backgroundImages[index].size = parseInt(e.target.value);
+            document.getElementById(`bgImage${index}SizeValue`).textContent = e.target.value;
             this.updatePreview();
         });
         
@@ -785,9 +784,10 @@ class StepTemplateBuilder {
             .filter(img => img.image)
             .sort((a, b) => a.zIndex - b.zIndex);
         
-        sortedImages.forEach((img, layerNum) => {
-            const bgRepeat = img.size === 'cover' || img.size === 'contain' ? 'no-repeat' : 'no-repeat';
-            bgLayers += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data/images/backgrounds/${img.image}'); background-size: ${img.size}; background-position: ${this.getPositionCSS(img.position)}; background-repeat: ${bgRepeat}; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+        sortedImages.forEach((img) => {
+            // Convert percentage to CSS width
+            const sizeCSS = `${img.size}%`;
+            bgLayers += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data/images/backgrounds/${img.image}'); background-size: ${sizeCSS} auto; background-position: ${this.getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
         });
         
         let html = `<div style="${bgStyles} padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
