@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 4.2 - Image library browser with delete functionality
+ * @version 4.3 - Improved button styling and layout
  */
 
 class StepTemplateBuilder {
@@ -174,14 +174,20 @@ class StepTemplateBuilder {
             <div class="subsection" style="margin-bottom: 15px;">
                 <h4 style="margin: 0 0 12px 0 !important;">🖼️ ${title}</h4>
                 
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px;">
                     <input type="file" id="bgImage${index}Upload" accept="image/*" style="display: none;">
-                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload New</button>
-                    <button id="browseBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">🖼️ Browse Library</button>
-                    <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
+                    <button id="uploadBgImage${index}Btn" class="image-control-btn">
+                        <span style="font-size: 16px;">📄</span>
+                        <span>Upload</span>
+                    </button>
+                    <button id="browseBgImage${index}Btn" class="image-control-btn">
+                        <span style="font-size: 16px;">🖼️</span>
+                        <span>Library</span>
+                    </button>
+                    <button id="removeBgImage${index}Btn" class="image-delete-btn">🗑️</button>
                 </div>
                 <div id="bgImage${index}Preview" style="display: ${slot.image ? 'block' : 'none'}; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
-                    <small>File: <span id="bgImage${index}FileName">${slot.image || ''}</span></small>
+                    <small style="color: #555;">File: <strong id="bgImage${index}FileName">${slot.image || ''}</strong></small>
                 </div>
                 
                 <label>Position</label>
@@ -410,6 +416,55 @@ class StepTemplateBuilder {
                 .slider-value { text-align: center; font-size: 12px; color: #666; margin-top: 3px; }
                 .subsection { background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 8px 0; }
                 .subsection h4 { margin: 0 0 12px 0 !important; border-bottom: none !important; font-size: 12px !important; color: #555 !important; }
+                
+                /* NEW: Improved button styles */
+                .image-control-btn {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3px;
+                    padding: 8px 4px;
+                    background: #2196f3;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                    min-height: 52px;
+                }
+                .image-control-btn:hover {
+                    background: #1976d2;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+                }
+                .image-control-btn:active {
+                    transform: translateY(0);
+                }
+                .image-delete-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 8px;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 18px;
+                    transition: all 0.2s;
+                    min-height: 52px;
+                }
+                .image-delete-btn:hover {
+                    background: #d32f2f;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+                }
+                .image-delete-btn:active {
+                    transform: translateY(0);
+                }
             </style>
         `;
     }
@@ -495,7 +550,6 @@ class StepTemplateBuilder {
         
         uploadBtn?.addEventListener('click', () => inputEl.click());
         
-        // NEW: Browse library button
         browseBtn?.addEventListener('click', () => {
             this.currentImageSlot = index;
             this.openImageLibrary('backgrounds', index);
@@ -544,7 +598,6 @@ class StepTemplateBuilder {
         });
     }
     
-    // NEW: Open image library browser
     async openImageLibrary(folder, slotIndex) {
         if (!window.directoryHandle) {
             alert('Please select a data folder first in Settings.');
@@ -577,7 +630,6 @@ class StepTemplateBuilder {
         }
     }
     
-    // NEW: Show image library dialog
     showImageLibraryDialog(images, folder, slotIndex) {
         const overlay = document.createElement('div');
         overlay.style.cssText = `
@@ -653,7 +705,6 @@ class StepTemplateBuilder {
         overlay.appendChild(dialog);
         document.body.appendChild(overlay);
         
-        // Select image handler
         dialog.querySelectorAll('.library-image').forEach(imgDiv => {
             imgDiv.addEventListener('click', () => {
                 const imageName = imgDiv.dataset.name;
@@ -665,7 +716,6 @@ class StepTemplateBuilder {
             });
         });
         
-        // Delete image handlers
         dialog.querySelectorAll('.delete-img-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const imageName = btn.dataset.name;
@@ -676,7 +726,6 @@ class StepTemplateBuilder {
                         const folderDir = await imagesDir.getDirectoryHandle(folder, { create: false });
                         await folderDir.removeEntry(imageName);
                         
-                        // Remove from UI
                         btn.closest('.library-image').remove();
                         alert('✅ Image deleted!');
                     } catch (err) {
@@ -687,12 +736,10 @@ class StepTemplateBuilder {
             });
         });
         
-        // Close button
         document.getElementById('closeLibrary').addEventListener('click', () => {
             document.body.removeChild(overlay);
         });
         
-        // Close on overlay click
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 document.body.removeChild(overlay);
@@ -834,7 +881,6 @@ class StepTemplateBuilder {
         alert('⚠️ Load real data from menu planner - feature coming soon!');
     }
     
-    // Helper function to render a single day block
     renderDayBlock(day, s, spacing, daySize, mealSize, isCompact) {
         if (!day || !day.meals.length) return '';
         
@@ -885,7 +931,6 @@ class StepTemplateBuilder {
         return html;
     }
     
-    // Convert position name to CSS values
     getPositionCSS(position) {
         const positions = {
             'center': 'center center',
@@ -938,11 +983,9 @@ class StepTemplateBuilder {
             footer: { small: '30px', medium: '40px', large: '50px' }
         };
         
-        // BUILD MULTI-IMAGE BACKGROUND
         let bgStyles = `background-color: ${s.backgroundColor}; position: relative;`;
         let bgLayers = '';
         
-        // Add positioned background images (sorted by z-index)
         const sortedImages = s.backgroundImages
             .map((img, idx) => ({ ...img, idx }))
             .filter(img => img.image)
@@ -957,7 +1000,6 @@ class StepTemplateBuilder {
         html += bgLayers;
         html += `<div style="position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;">`;
         
-        // Header
         if (s.showHeader) {
             const headerImgHtml = s.headerImage ? `<img src="data/images/header/${s.headerImage}" style="height: ${imgSizes.header[s.headerImageSize]}; vertical-align: middle; margin-${s.headerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
             html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: ${spacing.headerMargin};">`;
@@ -968,10 +1010,8 @@ class StepTemplateBuilder {
             html += `</div>`;
         }
         
-        // Date range
         html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: ${isCompact ? '10pt' : '11pt'};">${dateRange}</div>`;
         
-        // Menu
         html += `<div style="flex: 1;">`;
         if (is2Col) {
             for (let i = 0; i < days.length; i += 2) {
@@ -991,7 +1031,6 @@ class StepTemplateBuilder {
         }
         html += `</div>`;
         
-        // Footer
         if (s.showFooter) {
             const footerImgHtml = s.footerImage ? `<img src="data/images/footer/${s.footerImage}" style="height: ${imgSizes.footer[s.footerImageSize]}; vertical-align: middle; margin-${s.footerImagePosition === 'left' ? 'right' : 'left'}: 10px;">` : '';
             html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">`;
