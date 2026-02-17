@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow with header/footer image personality
- * @version 4.1 - 5 image slots with size slider control
+ * @version 4.2 - Image library browser with delete functionality
  */
 
 class StepTemplateBuilder {
@@ -79,6 +79,7 @@ class StepTemplateBuilder {
         
         this.previewData = null;
         this.expandedSection = 'background';
+        this.currentImageSlot = null; // Track which slot is being edited
         this.init();
     }
     
@@ -175,7 +176,8 @@ class StepTemplateBuilder {
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <input type="file" id="bgImage${index}Upload" accept="image/*" style="display: none;">
-                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload</button>
+                    <button id="uploadBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">📄 Upload New</button>
+                    <button id="browseBgImage${index}Btn" class="btn btn-secondary" style="flex: 1;">🖼️ Browse Library</button>
                     <button id="removeBgImage${index}Btn" class="btn btn-secondary" style="width: 40px;">🗑️</button>
                 </div>
                 <div id="bgImage${index}Preview" style="display: ${slot.image ? 'block' : 'none'}; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
@@ -484,6 +486,7 @@ class StepTemplateBuilder {
     bindMultiImageSlot(index) {
         const inputEl = document.getElementById(`bgImage${index}Upload`);
         const uploadBtn = document.getElementById(`uploadBgImage${index}Btn`);
+        const browseBtn = document.getElementById(`browseBgImage${index}Btn`);
         const removeBtn = document.getElementById(`removeBgImage${index}Btn`);
         const positionEl = document.getElementById(`bgImage${index}Position`);
         const sizeEl = document.getElementById(`bgImage${index}Size`);
@@ -491,6 +494,12 @@ class StepTemplateBuilder {
         const zIndexEl = document.getElementById(`bgImage${index}ZIndex`);
         
         uploadBtn?.addEventListener('click', () => inputEl.click());
+        
+        // NEW: Browse library button
+        browseBtn?.addEventListener('click', () => {
+            this.currentImageSlot = index;
+            this.openImageLibrary('backgrounds', index);
+        });
         
         inputEl?.addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -517,7 +526,6 @@ class StepTemplateBuilder {
             this.updatePreview();
         });
         
-        // NEW: Size slider (percentage)
         sizeEl?.addEventListener('input', (e) => {
             this.settings.backgroundImages[index].size = parseInt(e.target.value);
             document.getElementById(`bgImage${index}SizeValue`).textContent = e.target.value;
@@ -533,6 +541,162 @@ class StepTemplateBuilder {
         zIndexEl?.addEventListener('change', (e) => {
             this.settings.backgroundImages[index].zIndex = parseInt(e.target.value);
             this.updatePreview();
+        });
+    }
+    
+    // NEW: Open image library browser
+    async openImageLibrary(folder, slotIndex) {
+        if (!window.directoryHandle) {
+            alert('Please select a data folder first in Settings.');
+            return;
+        }
+        
+        try {
+            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+            const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
+            const folderDir = await imagesDir.getDirectoryHandle(folder, { create: false });
+            
+            const images = [];
+            for await (const entry of folderDir.values()) {
+                if (entry.kind === 'file' && entry.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+                    const file = await entry.getFile();
+                    const url = URL.createObjectURL(file);
+                    images.push({ name: entry.name, url: url, handle: entry });
+                }
+            }
+            
+            if (images.length === 0) {
+                alert('📂 No images found in library. Upload some first!');
+                return;
+            }
+            
+            this.showImageLibraryDialog(images, folder, slotIndex);
+        } catch (err) {
+            console.error('Error loading images:', err);
+            alert('❌ Failed to load image library');
+        }
+    }
+    
+    // NEW: Show image library dialog
+    showImageLibraryDialog(images, folder, slotIndex) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        `;
+        
+        let imagesHTML = images.map(img => `
+            <div style="
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 10px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                background: white;
+            " 
+            class="library-image" 
+            data-name="${img.name}"
+            onmouseover="this.style.borderColor='#2196f3'; this.style.background='#e3f2fd';"
+            onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white';">
+                <img src="${img.url}" style="width: 100%; height: 120px; object-fit: contain; border-radius: 4px; margin-bottom: 8px;">
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px; word-break: break-word;">${img.name}</div>
+                <button class="delete-img-btn" data-name="${img.name}" style="
+                    padding: 4px 8px;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 11px;
+                " onclick="event.stopPropagation();">🗑️ Delete</button>
+            </div>
+        `).join('');
+        
+        dialog.innerHTML = `
+            <h2 style="margin: 0 0 15px 0;">🖼️ Image Library</h2>
+            <p style="margin: 0 0 20px 0; font-size: 13px; color: #666;">Click image to select, or delete unused images</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                ${imagesHTML}
+            </div>
+            <button id="closeLibrary" style="
+                width: 100%;
+                padding: 10px;
+                background: #9e9e9e;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+            ">Close</button>
+        `;
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        
+        // Select image handler
+        dialog.querySelectorAll('.library-image').forEach(imgDiv => {
+            imgDiv.addEventListener('click', () => {
+                const imageName = imgDiv.dataset.name;
+                this.settings.backgroundImages[slotIndex].image = imageName;
+                document.getElementById(`bgImage${slotIndex}Preview`).style.display = 'block';
+                document.getElementById(`bgImage${slotIndex}FileName`).textContent = imageName;
+                this.updatePreview();
+                document.body.removeChild(overlay);
+            });
+        });
+        
+        // Delete image handlers
+        dialog.querySelectorAll('.delete-img-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const imageName = btn.dataset.name;
+                if (confirm(`Delete "${imageName}"?`)) {
+                    try {
+                        const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
+                        const imagesDir = await dataDir.getDirectoryHandle('images', { create: false });
+                        const folderDir = await imagesDir.getDirectoryHandle(folder, { create: false });
+                        await folderDir.removeEntry(imageName);
+                        
+                        // Remove from UI
+                        btn.closest('.library-image').remove();
+                        alert('✅ Image deleted!');
+                    } catch (err) {
+                        console.error('Delete failed:', err);
+                        alert('❌ Failed to delete image');
+                    }
+                }
+            });
+        });
+        
+        // Close button
+        document.getElementById('closeLibrary').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
         });
     }
     
@@ -785,9 +949,8 @@ class StepTemplateBuilder {
             .sort((a, b) => a.zIndex - b.zIndex);
         
         sortedImages.forEach((img) => {
-            // Convert percentage to CSS width
-            const sizeCSS = `${img.size}%`;
-            bgLayers += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data/images/backgrounds/${img.image}'); background-size: ${sizeCSS} auto; background-position: ${this.getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
+            const sizeCSS = `${img.size}% auto`;
+            bgLayers += `<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data/images/backgrounds/${img.image}'); background-size: ${sizeCSS}; background-position: ${this.getPositionCSS(img.position)}; background-repeat: no-repeat; opacity: ${img.opacity}; z-index: ${img.zIndex}; pointer-events: none;"></div>`;
         });
         
         let html = `<div style="${bgStyles} padding: ${spacing.containerPadding}; min-height: 400px; font-family: Arial, sans-serif; display: flex; flex-direction: column;">`;
