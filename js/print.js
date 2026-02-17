@@ -835,103 +835,62 @@
         const printWindow = window.open('', '_blank');
         const dateStr = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth() + 1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth() + 1}.${mealPlanData.startDate.getFullYear()}`;
         
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Weekly Menu ${dateStr}</title>
-                <meta charset="UTF-8">
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    
-                    body { 
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                        font-size: 10px;
-                        line-height: 1.2;
-                        color: #333;
-                        background: white;
-                    }
-                    
-                    @page {
-                        size: A4 portrait;
-                        margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
-                    }
-                    
-                    @media print {
-                        body {
-                            width: 210mm;
-                            height: 297mm;
-                            overflow: hidden;
-                        }
-                        
-                        /* Force backgrounds to print */
-                        * {
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                            color-adjust: exact !important;
-                        }
-                    }
-                    
-                    @media screen {
-                        body {
-                            padding: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
-                            max-width: 210mm;
-                            margin: 0 auto;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                ${html}
-                <script>
-                    // AUTO-SCALING: Ensures content always fits on one page
-                    function autoScaleContent() {
-                        const content = document.getElementById('menu-content');
-                        if (!content) return;
-                        
-                        // A4 page dimensions (minus user-selected margins)
-                        const pageHeight = 297 - ${margins.top} - ${margins.bottom}; // Available height in mm
-                        const pageHeightPx = pageHeight * 3.7795; // Convert to pixels (1mm = 3.7795px)
-                        
-                        // Measure actual content height
-                        const contentHeight = content.offsetHeight;
-                        
-                        console.log('📏 Content height:', contentHeight, 'px');
-                        console.log('📏 Available page height:', pageHeightPx.toFixed(0), 'px (with ${margins.top}mm/${margins.bottom}mm margins)');
-                        
-                        // If content exceeds page height, scale it down
-                        if (contentHeight > pageHeightPx) {
-                            const scaleFactor = pageHeightPx / contentHeight;
-                            console.log('⚠️ Content too tall! Scaling down to', (scaleFactor * 100).toFixed(1) + '%');
-                            
-                            // Apply transform scale
-                            content.style.transform = `scale(${scaleFactor})`;
-                            content.style.transformOrigin = 'top left';
-                            content.style.width = (100 / scaleFactor) + '%';
-                        } else {
-                            console.log('✅ Content fits perfectly!');
-                        }
-                    }
-                    
-                    window.onload = function() {
-                        console.log('📝 Print window loaded');
-                        console.log('📏 Margins:', '${margins.top}mm / ${margins.right}mm / ${margins.bottom}mm / ${margins.left}mm');
-                        
-                        // Wait for images and fonts to load
-                        setTimeout(() => {
-                            autoScaleContent();
-                            
-                            // Wait a bit more, then print
-                            setTimeout(() => {
-                                console.log('✅ Opening print dialog');
-                                window.print();
-                            }, 500);
-                        }, 2000);
-                    };
-                </script>
-            </body>
-            </html>
-        `);
+        // Build the HTML page as a string without nested template literals
+        const marginTop = margins.top;
+        const marginRight = margins.right;
+        const marginBottom = margins.bottom;
+        const marginLeft = margins.left;
+        
+        const printHTML = '<!DOCTYPE html>' +
+            '<html>' +
+            '<head>' +
+            '<title>Weekly Menu ' + dateStr + '</title>' +
+            '<meta charset="UTF-8">' +
+            '<style>' +
+            '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+            'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 10px; line-height: 1.2; color: #333; background: white; }' +
+            '@page { size: A4 portrait; margin: ' + marginTop + 'mm ' + marginRight + 'mm ' + marginBottom + 'mm ' + marginLeft + 'mm; }' +
+            '@media print { body { width: 210mm; height: 297mm; overflow: hidden; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } }' +
+            '@media screen { body { padding: ' + marginTop + 'mm ' + marginRight + 'mm ' + marginBottom + 'mm ' + marginLeft + 'mm; max-width: 210mm; margin: 0 auto; } }' +
+            '</style>' +
+            '</head>' +
+            '<body>' +
+            html +
+            '<script>' +
+            'function autoScaleContent() {' +
+            '  const content = document.getElementById("menu-content");' +
+            '  if (!content) return;' +
+            '  const pageHeight = 297 - ' + marginTop + ' - ' + marginBottom + ';' +
+            '  const pageHeightPx = pageHeight * 3.7795;' +
+            '  const contentHeight = content.offsetHeight;' +
+            '  console.log("\u📏 Content height:", contentHeight, "px");' +
+            '  console.log("\u📏 Available page height:", pageHeightPx.toFixed(0), "px (with ' + marginTop + 'mm/' + marginBottom + 'mm margins)");' +
+            '  if (contentHeight > pageHeightPx) {' +
+            '    const scaleFactor = pageHeightPx / contentHeight;' +
+            '    console.log("\u⚠️ Content too tall! Scaling down to", (scaleFactor * 100).toFixed(1) + "%");' +
+            '    content.style.transform = "scale(" + scaleFactor + ")";' +
+            '    content.style.transformOrigin = "top left";' +
+            '    content.style.width = (100 / scaleFactor) + "%";' +
+            '  } else {' +
+            '    console.log("\u✅ Content fits perfectly!");' +
+            '  }' +
+            '}' +
+            'window.onload = function() {' +
+            '  console.log("\u📝 Print window loaded");' +
+            '  console.log("\u📏 Margins:", "' + marginTop + 'mm / ' + marginRight + 'mm / ' + marginBottom + 'mm / ' + marginLeft + 'mm");' +
+            '  setTimeout(function() {' +
+            '    autoScaleContent();' +
+            '    setTimeout(function() {' +
+            '      console.log("\u✅ Opening print dialog");' +
+            '      window.print();' +
+            '    }, 500);' +
+            '  }, 2000);' +
+            '};' +
+            '</script>' +
+            '</body>' +
+            '</html>';
+        
+        printWindow.document.write(printHTML);
         printWindow.document.close();
     }
     
