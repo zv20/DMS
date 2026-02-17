@@ -1,8 +1,8 @@
 /**
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
- * OPTIMIZED: Auto-scaling ensures content always fits perfectly on A4 single page
- * @version 4.0 - Automatic scaling to prevent page overflow
+ * OPTIMIZED: Auto-scaling + custom margins for any printer
+ * @version 4.1 - Added margin selection for maximum page utilization
  */
 
 (function(window) {
@@ -61,7 +61,11 @@
         const templateChoice = await selectTemplateDialog();
         if (!templateChoice) return; // User cancelled
         
-        // Step 3: Generate meal plan data for selected week (Mon-Fri only, only days with meals)
+        // Step 3: Ask user for margin preference
+        const marginChoice = await selectMarginDialog();
+        if (!marginChoice) return; // User cancelled
+        
+        // Step 4: Generate meal plan data for selected week (Mon-Fri only, only days with meals)
         const mealPlanData = generateMealPlanData(weekSelection.startDate, weekSelection.endDate);
         
         console.log('📝 Generated meal plan:', mealPlanData);
@@ -72,7 +76,7 @@
             return;
         }
         
-        // Step 4: Load background image if present
+        // Step 5: Load background image if present
         let settings;
         if (templateChoice.type === 'default') {
             settings = getDefaultSettings();
@@ -90,11 +94,11 @@
             }
         }
         
-        // Step 5: Render using selected template
+        // Step 6: Render using selected template
         const html = renderMenuHTML(mealPlanData, settings);
         
-        // Step 6: Open print window with auto-scaling
-        openPrintWindow(html, mealPlanData);
+        // Step 7: Open print window with auto-scaling and custom margins
+        openPrintWindow(html, mealPlanData, marginChoice);
     };
     
     // Default template settings
@@ -378,6 +382,130 @@
             });
             
             document.getElementById('cancel-template').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                document.body.removeChild(dialog);
+                resolve(null);
+            });
+        });
+    }
+    
+    // NEW: Dialog to select page margins
+    function selectMarginDialog() {
+        return new Promise((resolve) => {
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 10000;
+                min-width: 450px;
+            `;
+            
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            `;
+            
+            dialog.innerHTML = `
+                <h2 style="margin: 0 0 10px 0; color: #333;">📎 Page Margins</h2>
+                <p style="margin: 0 0 20px 0; font-size: 13px; color: #666;">Choose margins to maximize your printable area</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="margin-option" data-margin="minimal" style="
+                        padding: 15px;
+                        border: 2px solid #fd7e14;
+                        border-radius: 8px;
+                        background: #fff5f0;
+                        cursor: pointer;
+                        text-align: left;
+                        font-size: 15px;
+                    ">
+                        <strong>🟢 Minimal Margins (5mm)</strong><br>
+                        <small style="color: #666;">Maximum content space - Best for most printers</small>
+                    </button>
+                    <button class="margin-option" data-margin="normal" style="
+                        padding: 15px;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 8px;
+                        background: white;
+                        cursor: pointer;
+                        text-align: left;
+                        font-size: 15px;
+                    ">
+                        <strong>🟡 Normal Margins (10mm)</strong><br>
+                        <small style="color: #666;">Balanced spacing - Standard option</small>
+                    </button>
+                    <button class="margin-option" data-margin="comfortable" style="
+                        padding: 15px;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 8px;
+                        background: white;
+                        cursor: pointer;
+                        text-align: left;
+                        font-size: 15px;
+                    ">
+                        <strong>🔵 Comfortable Margins (15mm)</strong><br>
+                        <small style="color: #666;">More whitespace - For older printers</small>
+                    </button>
+                </div>
+                <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 12px; color: #1565c0;">
+                        <strong>💡 Tip:</strong> If your printer cuts off edges, try larger margins.
+                    </p>
+                </div>
+                <button id="cancel-margin" style="
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: #e0e0e0;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    width: 100%;
+                ">Cancel</button>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(dialog);
+            
+            // Margin presets
+            const marginPresets = {
+                minimal: { top: 5, right: 5, bottom: 5, left: 5 },
+                normal: { top: 10, right: 10, bottom: 10, left: 10 },
+                comfortable: { top: 15, right: 15, bottom: 15, left: 15 }
+            };
+            
+            // Add hover effects and click handlers
+            dialog.querySelectorAll('.margin-option').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.borderColor = '#fd7e14';
+                    btn.style.background = '#fff5f0';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    if (btn.dataset.margin !== 'minimal') {
+                        btn.style.borderColor = '#e0e0e0';
+                        btn.style.background = 'white';
+                    }
+                });
+                
+                btn.addEventListener('click', () => {
+                    const marginType = btn.dataset.margin;
+                    document.body.removeChild(overlay);
+                    document.body.removeChild(dialog);
+                    resolve(marginPresets[marginType]);
+                });
+            });
+            
+            document.getElementById('cancel-margin').addEventListener('click', () => {
                 document.body.removeChild(overlay);
                 document.body.removeChild(dialog);
                 resolve(null);
@@ -702,8 +830,8 @@
         return html;
     }
     
-    // Open print window with HTML (A4 optimized with AUTO-SCALING)
-    function openPrintWindow(html, mealPlanData) {
+    // Open print window with HTML (A4 optimized with AUTO-SCALING and CUSTOM MARGINS)
+    function openPrintWindow(html, mealPlanData, margins) {
         const printWindow = window.open('', '_blank');
         const dateStr = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth() + 1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth() + 1}.${mealPlanData.startDate.getFullYear()}`;
         
@@ -726,7 +854,7 @@
                     
                     @page {
                         size: A4 portrait;
-                        margin: 10mm 12mm 10mm 12mm;
+                        margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
                     }
                     
                     @media print {
@@ -746,7 +874,7 @@
                     
                     @media screen {
                         body {
-                            padding: 15mm;
+                            padding: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
                             max-width: 210mm;
                             margin: 0 auto;
                         }
@@ -761,20 +889,20 @@
                         const content = document.getElementById('menu-content');
                         if (!content) return;
                         
-                        // A4 page dimensions (minus margins)
-                        const pageHeight = 297 - 20; // 297mm - 20mm margins = 277mm
+                        // A4 page dimensions (minus user-selected margins)
+                        const pageHeight = 297 - ${margins.top} - ${margins.bottom}; // Available height in mm
                         const pageHeightPx = pageHeight * 3.7795; // Convert to pixels (1mm = 3.7795px)
                         
                         // Measure actual content height
                         const contentHeight = content.offsetHeight;
                         
                         console.log('📏 Content height:', contentHeight, 'px');
-                        console.log('📏 Available page height:', pageHeightPx, 'px');
+                        console.log('📏 Available page height:', pageHeightPx.toFixed(0), 'px (with ${margins.top}mm/${margins.bottom}mm margins)');
                         
                         // If content exceeds page height, scale it down
                         if (contentHeight > pageHeightPx) {
                             const scaleFactor = pageHeightPx / contentHeight;
-                            console.log('⚠️ Content too tall! Scaling down by', (scaleFactor * 100).toFixed(1) + '%');
+                            console.log('⚠️ Content too tall! Scaling down to', (scaleFactor * 100).toFixed(1) + '%');
                             
                             // Apply transform scale
                             content.style.transform = `scale(${scaleFactor})`;
@@ -787,6 +915,7 @@
                     
                     window.onload = function() {
                         console.log('📝 Print window loaded');
+                        console.log('📏 Margins:', '${margins.top}mm / ${margins.right}mm / ${margins.bottom}mm / ${margins.left}mm');
                         
                         // Wait for images and fonts to load
                         setTimeout(() => {
