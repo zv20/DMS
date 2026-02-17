@@ -32,11 +32,11 @@
         const subtitle = splash.querySelector('.splash-subtitle');
         
         const loadingMessages = [
-            '🔍 Detecting storage method...',
-            '📂 Loading your data...',
-            '🥘 Loading recipes...',
-            '🧂 Loading ingredients...',
-            '✅ Almost ready...'
+            window.t('loading_detecting'),
+            window.t('loading_data'),
+            window.t('loading_recipes'),
+            window.t('loading_ingredients'),
+            window.t('loading_ready')
         ];
         
         let messageIndex = 0;
@@ -64,9 +64,9 @@
                 
                 // Check which storage method is being used
                 if (window.storageAdapter.useFileSystem) {
-                    subtitle.textContent = '✅ Data loaded from folder!';
+                    subtitle.textContent = window.t('loading_loaded_folder');
                 } else {
-                    subtitle.textContent = '✅ Data loaded from browser!';
+                    subtitle.textContent = window.t('loading_loaded_browser');
                 }
                 
                 await new Promise(resolve => setTimeout(resolve, 800));
@@ -82,7 +82,7 @@
             
             // If using IndexedDB, still continue (error shouldn't stop the app)
             if (!window.storageAdapter.useFileSystem) {
-                subtitle.textContent = '✅ Starting fresh!';
+                subtitle.textContent = window.t('loading_fresh');
                 await new Promise(resolve => setTimeout(resolve, 500));
                 hideSplash();
             } else {
@@ -94,7 +94,7 @@
             // Only show folder selection for Chrome/Edge
             if (window.storageAdapter && !window.storageAdapter.useFileSystem) {
                 // Firefox/Safari - no folder needed, just start
-                subtitle.textContent = '✅ Ready to go!';
+                subtitle.textContent = window.t('loading_ready_go');
                 setTimeout(hideSplash, 500);
                 return;
             }
@@ -103,9 +103,9 @@
             const lastFolder = window.storageAdapter.getFolderHint();
             
             if (lastFolder) {
-                subtitle.innerHTML = `Select a folder to store your data<br><small style="color: #666; font-size: 0.85em;">📁 Last used: <strong>${lastFolder}</strong></small>`;
+                subtitle.innerHTML = `${window.t('loading_select_folder')}<br><small style="color: #666; font-size: 0.85em;">${window.t('loading_last_folder')} <strong>${lastFolder}</strong></small>`;
             } else {
-                subtitle.textContent = 'Select a folder to store your data';
+                subtitle.textContent = window.t('loading_select_folder');
             }
             
             actions.innerHTML = `
@@ -142,12 +142,12 @@
         // Global function for folder selection button
         window.selectFolderAndStart = async function() {
             actions.innerHTML = '<div class="loader-spinner"></div>';
-            subtitle.textContent = '⌛ Setting up your workspace...';
+            subtitle.textContent = window.t('loading_setup');
             
             const selected = await window.selectSaveLocation();
             
             if (selected) {
-                subtitle.textContent = '✅ All set!';
+                subtitle.textContent = window.t('loading_complete');
                 await new Promise(resolve => setTimeout(resolve, 500));
                 hideSplash();
             } else {
