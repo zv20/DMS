@@ -2,7 +2,7 @@
  * Print Menu Function
  * Allows user to select week and template, then prints/exports meal plan
  * OPTIMIZED: Both Compact and Detailed styles guaranteed to fit on A4 single page
- * @version 3.1 - Calories on ingredients row in Detailed style
+ * @version 3.2 - Added 2-column layout for detailed template
  */
 
 (function(window) {
@@ -226,7 +226,10 @@
             // Saved templates
             templateNames.forEach(name => {
                 const template = savedTemplates[name];
-                const styleLabel = template.templateStyle === 'detailed' ? 'Detailed' : 'Compact';
+                let styleLabel = 'Compact';
+                if (template.templateStyle === 'detailed') styleLabel = 'Detailed';
+                else if (template.templateStyle === 'detailed-2col') styleLabel = 'Detailed (2 columns)';
+                
                 optionsHTML += `
                     <button class="template-option" data-template="${name}" style="
                         padding: 15px;
@@ -415,7 +418,14 @@
     function renderMenuHTML(data, s) {
         const { startDate, endDate, days } = data;
         
-        // PRINT-OPTIMIZED spacing - guaranteed to fit 5 days + 4 meals each on A4
+        // Check if using 2-column layout
+        const is2Column = (s.templateStyle || 'compact') === 'detailed-2col';
+        
+        if (is2Column) {
+            return renderMenuHTML2Column(data, s);
+        }
+        
+        // Original single-column rendering
         const isCompact = (s.templateStyle || 'compact') === 'compact';
         const spacing = {
             containerPadding: '8px',
@@ -433,7 +443,6 @@
         
         const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
         
-        // PRINT-OPTIMIZED font sizes - smaller for better fit
         const sizeMaps = {
             small: { header: '16pt', day: '11pt', meal: '9pt', footer: '8pt' },
             medium: { header: '18pt', day: '12pt', meal: '10pt', footer: '8pt' },
@@ -520,6 +529,121 @@
             
             html += `</div>`;
         });
+        
+        // Footer
+        if (s.showFooter) {
+            html += `<div style="text-align: ${s.footerAlignment}; margin-top: ${spacing.footerMarginTop}; padding-top: ${spacing.footerPaddingTop}; border-top: 1px solid #ddd; font-size: ${footerSize}; color: #888;">${s.footerText}</div>`;
+        }
+        
+        html += `</div>`;
+        return html;
+    }
+    
+    // NEW: 2-column layout rendering (Monday-Tuesday | Wednesday-Thursday | Friday)
+    function renderMenuHTML2Column(data, s) {
+        const { startDate, endDate, days } = data;
+        
+        const spacing = {
+            containerPadding: '8px',
+            headerMargin: '6px',
+            dateMargin: '8px',
+            rowMargin: '6px',
+            columnGap: '10px',
+            dayPadding: '5px',
+            dayNameMargin: '3px',
+            mealMargin: '3px',
+            mealLeftMargin: '6px',
+            footerMarginTop: '8px',
+            footerPaddingTop: '6px',
+            lineHeight: '1.2'
+        };
+        
+        const dateRange = `${startDate.getDate().toString().padStart(2, '0')}.${(startDate.getMonth() + 1).toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')} ${startDate.getFullYear()}г.`;
+        
+        const sizeMaps = {
+            small: { header: '16pt', day: '11pt', meal: '9pt', footer: '8pt' },
+            medium: { header: '18pt', day: '12pt', meal: '10pt', footer: '8pt' },
+            large: { header: '20pt', day: '13pt', meal: '10pt', footer: '9pt' }
+        };
+        
+        const headerSize = sizeMaps[s.headerFontSize || 'large']?.header || '18pt';
+        const daySize = sizeMaps[s.dayNameSize || 'medium']?.day || '12pt';
+        const mealSize = sizeMaps[s.mealFontSize || 'medium']?.meal || '10pt';
+        const footerSize = sizeMaps[s.footerFontSize || 'small']?.footer || '8pt';
+        
+        let html = `<div style="background: ${s.backgroundColor}; padding: ${spacing.containerPadding}; font-family: Arial, sans-serif;">`;
+        
+        // Header
+        if (s.showHeader) {
+            html += `<div style="text-align: ${s.headerAlignment}; margin-bottom: ${spacing.headerMargin};"><span style="font-size: ${headerSize}; color: ${s.headerColor}; font-weight: bold;">${s.headerText}</span></div>`;
+        }
+        
+        if (s.showDateRange) {
+            html += `<div style="text-align: center; margin-bottom: ${spacing.dateMargin}; font-size: 9pt;">${dateRange}</div>`;
+        }
+        
+        // Helper function to render a single day
+        const renderDay = (day) => {
+            const dayStyle = `${s.dayBorder ? `border: 1px solid ${s.dayBorderColor || '#e0e0e0'};` : ''} ${s.dayBackground !== 'transparent' ? `background: ${s.dayBackground};` : ''} padding: ${spacing.dayPadding}; border-radius: 3px; height: 100%;`;
+            let dayHTML = `<div style="${dayStyle}"><div style="font-size: ${daySize}; color: ${s.dayNameColor}; font-weight: ${s.dayNameWeight || 'bold'}; margin-bottom: ${spacing.dayNameMargin};">${day.name}</div>`;
+            
+            day.meals.forEach(meal => {
+                dayHTML += `<div style="margin-bottom: ${spacing.mealMargin}; margin-left: ${spacing.mealLeftMargin};">`;
+                
+                // Line 1: Meal number, name, portion
+                dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; font-weight: 500;"> ${meal.number}. ${meal.name}`;
+                if (s.showPortions && meal.portion) dayHTML += ` - ${meal.portion}`;
+                dayHTML += `</div>`;
+                
+                // Line 2: Ingredients + Calories
+                if (s.showIngredients && meal.ingredients.length) {
+                    dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">${meal.ingredients.map(ing => {
+                        if (ing.hasAllergen) {
+                            let style = `color: ${s.allergenColor};`;
+                            if (s.allergenBold) style += ' font-weight: bold;';
+                            if (s.allergenUnderline) style += ' text-decoration: underline;';
+                            return `<span style="${style}">${ing.name}</span>`;
+                        }
+                        return ing.name;
+                    }).join(', ')}`;
+                    
+                    if (s.showCalories && meal.calories) {
+                        dayHTML += ` - ККАЛ ${meal.calories}`;
+                    }
+                    dayHTML += `</div>`;
+                } else if (s.showCalories && meal.calories) {
+                    dayHTML += `<div style="font-size: ${mealSize}; line-height: ${spacing.lineHeight}; margin-left: 12px; color: #666; font-style: italic;">ККАЛ ${meal.calories}</div>`;
+                }
+                
+                dayHTML += `</div>`;
+            });
+            
+            dayHTML += `</div>`;
+            return dayHTML;
+        };
+        
+        // Layout: Row 1 (Mon-Tue), Row 2 (Wed-Thu), Row 3 (Fri)
+        let rowIndex = 0;
+        for (let i = 0; i < days.length; i += 2) {
+            html += `<div style="display: flex; gap: ${spacing.columnGap}; margin-bottom: ${spacing.rowMargin};">`;
+            
+            // Left column
+            html += `<div style="flex: 1;">`;
+            if (days[i]) {
+                html += renderDay(days[i]);
+            }
+            html += `</div>`;
+            
+            // Right column
+            html += `<div style="flex: 1;">`;
+            if (days[i + 1]) {
+                html += renderDay(days[i + 1]);
+            }
+            html += `</div>`;
+            
+            html += `</div>`;
+            rowIndex++;
+        }
         
         // Footer
         if (s.showFooter) {
