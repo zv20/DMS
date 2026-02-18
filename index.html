@@ -5,34 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KitchenPro DMS</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=14.4">
-  <link rel="stylesheet" href="css/template-styles.css?v=14.4">
+  <link rel="stylesheet" href="css/styles.css?v=14.5">
+  <link rel="stylesheet" href="css/template-styles.css?v=14.5">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
   <script src="js/libs/jspdf.umd.min.js"></script>
   
   <!-- Core Application Scripts -->
-  <script src="js/i18n.js?v=14.4"></script>
-  <script src="js/constants.js?v=14.4"></script>
+  <script src="js/i18n.js?v=14.5"></script>
+  <script src="js/constants.js?v=14.5"></script>
   
   <!-- STORAGE ADAPTER (must load before store.js) -->
-  <script src="js/storage-adapter.js?v=14.4"></script>
-  <script src="js/store.js?v=14.4"></script>
+  <script src="js/storage-adapter.js?v=14.5"></script>
+  <script src="js/store.js?v=14.5"></script>
   
-  <script src="js/calendar.js?v=14.4"></script>
-  <script src="js/render.js?v=14.4"></script>
-  <script src="js/ui.js?v=14.4"></script>
-  <script src="js/clock.js?v=14.4"></script>
+  <script src="js/calendar.js?v=14.5"></script>
+  <script src="js/render.js?v=14.5"></script>
+  <script src="js/ui.js?v=14.5"></script>
+  <script src="js/clock.js?v=14.5"></script>
   <script src="data/preset-templates.js"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER (Accordion UI with Header/Footer Images) -->
-  <script src="js/template/template-builder-steps.js?v=14.4"></script>
+  <script src="js/template/template-builder-steps.js?v=14.5"></script>
   
   <!-- PRINT FUNCTIONALITY -->
-  <script src="js/print.js?v=14.4"></script>
+  <script src="js/print.js?v=14.5"></script>
   
-  <script src="js/main.js?v=14.4"></script>
+  <script src="js/main.js?v=14.5"></script>
 </head>
 <body data-theme="default">
 
@@ -41,7 +41,7 @@
       <div class="splash-content">
           <img src="img/logo.png" alt="KitchenPro Logo" class="splash-logo" style="width: 200px; height: 200px; object-fit: contain; display: block; margin: 0 auto 20px;">
           <h1 class="splash-title" data-i18n="splash_title">KitchenPro</h1>
-          <p class="splash-subtitle" data-i18n="splash_subtitle">Your personal recipe manager & menu planner</p>
+          <p class="splash-subtitle" data-i18n="splash_subtitle">Your personal recipe manager &amp; menu planner</p>
           <div id="splashActions" class="splash-actions">
               <div class="loader-spinner"></div>
           </div>
@@ -127,13 +127,16 @@
         </div>
         <div class="filters-row" style="display:flex; gap:10px; margin-bottom:15px;">
             <input type="text" id="recipeSearch" class="form-control" style="max-width:300px;"
-                data-i18n-placeholder="filter_search_placeholder" placeholder="Search recipes...">
-            <select id="recipeCategoryFilter" class="form-control" style="max-width:200px;">
+                data-i18n-placeholder="filter_search_placeholder"
+                placeholder="Search recipes..."
+                oninput="window.renderRecipes()">
+            <select id="recipeCategoryFilter" class="form-control" style="max-width:200px;"
+                onchange="window.renderRecipes()">
                 <option value="" data-i18n="filter_all_categories">All Categories</option>
-                <option value="soup" data-i18n="category_soup">Soup</option>
-                <option value="main" data-i18n="category_main">Main</option>
-                <option value="dessert" data-i18n="category_dessert">Dessert</option>
-                <option value="other" data-i18n="category_other">Other</option>
+                <option value="soup" data-i18n="category_soup">🥣 Soup</option>
+                <option value="main" data-i18n="category_main">🍽️ Main</option>
+                <option value="dessert" data-i18n="category_dessert">🍰 Dessert</option>
+                <option value="other" data-i18n="category_other">➕ Other</option>
             </select>
         </div>
         <div class="table-responsive">
@@ -203,7 +206,7 @@
           </div>
           
           <div class="settings-card">
-              <h3 data-i18n="heading_data">📁 Data Management</h3>
+              <h3 data-i18n="heading_data">💾 Data Management</h3>
               <button id="btn-change-folder" class="btn btn-primary" onclick="window.selectSaveLocation()" data-i18n="btn_change_folder">Change Storage Folder</button>
               <button id="btn-export" class="btn btn-secondary" onclick="window.exportAllData()" style="margin-top: 10px;" data-i18n="btn_export_backup">💾 Export Data (Backup)</button>
               <input type="file" id="file-import" accept=".json" style="display:none;" onchange="window.importData(event)">
