@@ -1,9 +1,74 @@
 {
-  "2026-02-16": {},
-  "2026-02-17": {},
-  "2026-02-18": {},
-  "2026-02-19": {},
-  "2026-02-20": {},
+  "2026-02-16": {
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_veg_soup"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_crispy_chicken_fillet"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_fruit"
+    },
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bread_slices"
+    }
+  },
+  "2026-02-17": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bread_slices"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_tarator"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_kremche"
+    }
+  },
+  "2026-02-18": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bread_slices"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_potato_cream_soup"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_fruit"
+    }
+  },
+  "2026-02-19": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bread_slices"
+    },
+    "slot2": {
+      "category": "main",
+      "recipe": "rcp_lentil_stew"
+    }
+  },
+  "2026-02-20": {
+    "slot4": {
+      "category": "other",
+      "recipe": "rcp_bread_slices"
+    },
+    "slot3": {
+      "category": "dessert",
+      "recipe": "rcp_fruit"
+    },
+    "slot1": {
+      "category": "soup",
+      "recipe": "rcp_tarator"
+    }
+  },
   "2026-01-26": {},
   "2026-01-27": {},
   "2026-01-28": {},
