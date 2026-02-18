@@ -13,7 +13,7 @@
     window.appSettings = { language: 'bg' };  // Changed default from 'en' to 'bg'
     window.imageCache = {};
 
-    // Predefined allergens
+    // Predefined allergens (only used for initial population on brand new installs)
     window.PREDEFINED_ALLERGENS = [
         { id: 'alg_gluten', name: 'Gluten', color: '#f59f00', name_bg: 'Глутен', isSystem: true },
         { id: 'alg_crustaceans', name: 'Crustaceans', color: '#ff6b6b', name_bg: 'Ракообразни', isSystem: true },
@@ -36,12 +36,6 @@
     window.checkPreviousFolder = async function() {
         const initialized = await window.storageAdapter.init();
         
-        // Populate default allergens if empty
-        if (initialized && window.allergens.length === 0) {
-            window.populateDefaultAllergens();
-            await window.storageAdapter.save('allergens', window.allergens);
-        }
-        
         // Initialize language from loaded settings
         if (window.appSettings && window.appSettings.language) {
             console.log('🌍 Setting language from loaded settings:', window.appSettings.language);
@@ -60,10 +54,6 @@
         if (window.storageAdapter.useFileSystem) {
             // Chrome/Edge: Show folder picker
             const success = await window.storageAdapter.selectFolder();
-            if (success && window.allergens.length === 0) {
-                window.populateDefaultAllergens();
-                await window.storageAdapter.save('allergens', window.allergens);
-            }
             return success;
         } else {
             // Firefox/Safari: Already using IndexedDB, no folder needed
