@@ -1,0 +1,104 @@
+{
+  "recipes": [],
+  "ingredients": [],
+  "allergens": [
+    {
+      "id": "alg_gluten",
+      "name": "Gluten",
+      "color": "#f59f00",
+      "name_bg": "Глутен",
+      "isSystem": true
+    },
+    {
+      "id": "alg_crustaceans",
+      "name": "Crustaceans",
+      "color": "#ff6b6b",
+      "name_bg": "Ракообразни",
+      "isSystem": true
+    },
+    {
+      "id": "alg_eggs",
+      "name": "Eggs",
+      "color": "#ffd43b",
+      "name_bg": "Яйца",
+      "isSystem": true
+    },
+    {
+      "id": "alg_fish",
+      "name": "Fish",
+      "color": "#339af0",
+      "name_bg": "Риба",
+      "isSystem": true
+    },
+    {
+      "id": "alg_peanuts",
+      "name": "Peanuts",
+      "color": "#d9480f",
+      "name_bg": "Фъстъци",
+      "isSystem": true
+    },
+    {
+      "id": "alg_soybeans",
+      "name": "Soybeans",
+      "color": "#5c940d",
+      "name_bg": "Соя",
+      "isSystem": true
+    },
+    {
+      "id": "alg_milk",
+      "name": "Milk",
+      "color": "#74c0fc",
+      "name_bg": "Мляко",
+      "isSystem": true
+    },
+    {
+      "id": "alg_nuts",
+      "name": "Nuts",
+      "color": "#e67700",
+      "name_bg": "Ядки",
+      "isSystem": true
+    },
+    {
+      "id": "alg_celery",
+      "name": "Celery",
+      "color": "#82c91e",
+      "name_bg": "Целина",
+      "isSystem": true
+    },
+    {
+      "id": "alg_mustard",
+      "name": "Mustard",
+      "color": "#fcc419",
+      "name_bg": "Горчица",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sesame",
+      "name": "Sesame",
+      "color": "#adb5bd",
+      "name_bg": "Сусам",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sulphites",
+      "name": "Sulphites",
+      "color": "#868e96",
+      "name_bg": "Сулфити",
+      "isSystem": true
+    },
+    {
+      "id": "alg_lupin",
+      "name": "Lupin",
+      "color": "#ffec99",
+      "name_bg": "Лупина",
+      "isSystem": true
+    },
+    {
+      "id": "alg_molluscs",
+      "name": "Molluscs",
+      "color": "#ff922b",
+      "name_bg": "Мекотели",
+      "isSystem": true
+    }
+  ]
+}
