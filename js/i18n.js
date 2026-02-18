@@ -413,8 +413,8 @@
             day_sunday: 'Sunday',
             
             // Splash Screen
-            splash_title: 'KitchenPro',
-            splash_subtitle: 'Your personal recipe manager & menu planner',
+            splash_title: 'Child Menu',
+            splash_subtitle: '',
             
             // Sync Status
             sync_connected: '🟢 Synced',
@@ -649,7 +649,7 @@
             loading_last_folder: '📁 Последно използвана:',
             loading_setup: '⌛ Настройка на вашето работно пространство...',
             loading_complete: '✅ Всичко е готово!',
-            loading_ready_go: '✅ Готови сме!',
+            loading_ready_go: '✅ Готеви сме!',
             
             // File Info
             file_label: 'Файл:',
@@ -703,7 +703,7 @@
             category_select: 'Избери категория',
             category_soup: '🥣 Супа',
             category_main: '🍽️ Основно',
-            category_dessert: '🍰 Десерт',
+            category_dessert: '🍰 Десетт',
             category_other: '➕ Друго',
             
             // Filters
@@ -838,8 +838,8 @@
             day_sunday: 'Неделя',
             
             // Splash Screen
-            splash_title: 'KitchenPro',
-            splash_subtitle: 'Вашият личен мениджър на рецепти и планиране на меню',
+            splash_title: 'Детско меню',
+            splash_subtitle: '',
             
             // Sync Status
             sync_connected: '🟢 Синхронизиран',
