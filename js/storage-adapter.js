@@ -206,8 +206,9 @@ class StorageAdapter {
                 window.appSettings = JSON.parse(await settingsData.text());
                 console.log('✅ Loaded settings:', window.appSettings);
             } catch (e) {
-                window.appSettings = { language: 'en' };
-                console.log('ℹ️ No settings.json found, using defaults');
+                // FIX: default to 'bg' — this is a Bulgarian kitchen app
+                window.appSettings = { language: 'bg' };
+                console.log('ℹ️ No settings.json found, defaulting to Bulgarian');
             }
             
             // Load templates.json (NEW!)
@@ -492,9 +493,10 @@ class StorageAdapter {
             const settingsTx = db.transaction('settings', 'readonly');
             const settingsStore = settingsTx.objectStore('settings');
             const settingsRequest = settingsStore.get('appSettings');
+            // FIX: default to 'bg' — this is a Bulgarian kitchen app
             window.appSettings = await new Promise((resolve) => {
-                settingsRequest.onsuccess = () => resolve(settingsRequest.result || { language: 'en' });
-                settingsRequest.onerror = () => resolve({ language: 'en' });
+                settingsRequest.onsuccess = () => resolve(settingsRequest.result || { language: 'bg' });
+                settingsRequest.onerror = () => resolve({ language: 'bg' });
             });
             
             // Load templates (NEW!)
@@ -527,7 +529,8 @@ class StorageAdapter {
             window.ingredients = [];
             window.allergens = [];
             window.currentMenu = {};
-            window.appSettings = { language: 'en' };
+            // FIX: default to 'bg' — this is a Bulgarian kitchen app
+            window.appSettings = { language: 'bg' };
             window.menuTemplates = {};
         }
     }
@@ -627,14 +630,15 @@ class StorageAdapter {
         window.ingredients = sampleIngredients;
         window.recipes = sampleRecipes;
         window.currentMenu = {};
-        window.appSettings = { language: 'en' };
+        // FIX: default to 'bg' — this is a Bulgarian kitchen app
+        window.appSettings = { language: 'bg' };
         window.menuTemplates = {};
         
         await this.saveToIndexedDB('allergens', sampleAllergens);
         await this.saveToIndexedDB('ingredients', sampleIngredients);
         await this.saveToIndexedDB('recipes', sampleRecipes);
         await this.saveToIndexedDB('currentMenu', {});
-        await this.saveToIndexedDB('appSettings', { language: 'en' });
+        await this.saveToIndexedDB('appSettings', { language: 'bg' });
         await this.saveToIndexedDB('templates', {});
         
         console.log('✅ Sample data populated!');
