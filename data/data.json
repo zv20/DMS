@@ -80,24 +80,10 @@
       "isSystem": true
     },
     {
-      "id": "alg_sulphites",
-      "name": "Sulphites",
-      "color": "#868e96",
-      "name_bg": "Сулфити",
-      "isSystem": true
-    },
-    {
       "id": "alg_lupin",
       "name": "Lupin",
       "color": "#ffec99",
       "name_bg": "Лупина",
-      "isSystem": true
-    },
-    {
-      "id": "alg_molluscs",
-      "name": "Molluscs",
-      "color": "#ff922b",
-      "name_bg": "Мекотели",
       "isSystem": true
     }
   ]
