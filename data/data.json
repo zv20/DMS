@@ -1,83 +1,4 @@
 {
-  "allergens": [
-    { "id": "alg_gluten",      "name": "Глутен",        "color": "#f59f00", "isSystem": true },
-    { "id": "alg_crustaceans", "name": "Ракообразни",   "color": "#ff6b6b", "isSystem": true },
-    { "id": "alg_eggs",        "name": "Яйца",          "color": "#ffd43b", "isSystem": true },
-    { "id": "alg_fish",        "name": "Риба",          "color": "#339af0", "isSystem": true },
-    { "id": "alg_peanuts",     "name": "Фъстъци",       "color": "#d9480f", "isSystem": true },
-    { "id": "alg_soybeans",    "name": "Соя",           "color": "#5c940d", "isSystem": true },
-    { "id": "alg_milk",        "name": "Мляко",         "color": "#74c0fc", "isSystem": true },
-    { "id": "alg_nuts",        "name": "Ядки",          "color": "#e67700", "isSystem": true },
-    { "id": "alg_celery",      "name": "Целина",        "color": "#82c91e", "isSystem": true },
-    { "id": "alg_mustard",     "name": "Горчица",       "color": "#fcc419", "isSystem": true },
-    { "id": "alg_sesame",      "name": "Сусам",         "color": "#adb5bd", "isSystem": true },
-    { "id": "alg_lupin",       "name": "Лупина",        "color": "#ffec99", "isSystem": true }
-  ],
-  "ingredients": [
-    { "id": "ing_veal",              "name": "Телешко месо",              "allergens": [] },
-    { "id": "ing_pork",              "name": "Свинско месо",              "allergens": [] },
-    { "id": "ing_chicken",           "name": "Пилешко месо",              "allergens": [] },
-    { "id": "ing_chicken_fillet",    "name": "Пилешко филе",              "allergens": [] },
-    { "id": "ing_chicken_thigh",     "name": "Пилешко обезкостено бутче", "allergens": [] },
-    { "id": "ing_turkey",            "name": "Пуешко обезкостено бутче",  "allergens": [] },
-    { "id": "ing_minced_meat",       "name": "Кайма БДС",                 "allergens": [] },
-    { "id": "ing_veal_minced",       "name": "Телешко мляно месо",         "allergens": [] },
-    { "id": "ing_pork_boneless",     "name": "Свинско месо без кост",       "allergens": [] },
-    { "id": "ing_fish_fillet",       "name": "Рибно филе",                "allergens": ["alg_fish"] },
-    { "id": "ing_vermicelli",        "name": "Фиде",                      "allergens": ["alg_gluten"] },
-    { "id": "ing_flour",             "name": "Брашно",                    "allergens": ["alg_gluten"] },
-    { "id": "ing_panko",             "name": "Панко галета",              "allergens": ["alg_gluten"] },
-    { "id": "ing_bread",             "name": "Хляб по утвърден стандарт", "allergens": ["alg_gluten"] },
-    { "id": "ing_pasta",             "name": "Пълнозърнести макарони",       "allergens": ["alg_gluten"] },
-    { "id": "ing_rice",              "name": "Ориз",                      "allergens": [] },
-    { "id": "ing_onion",             "name": "Лук",                       "allergens": [] },
-    { "id": "ing_spring_onion",      "name": "Пресен лук",                "allergens": [] },
-    { "id": "ing_leek",              "name": "Праз лук",                 "allergens": [] },
-    { "id": "ing_carrot",            "name": "Морков",                    "allergens": [] },
-    { "id": "ing_potato",            "name": "Картофи",                   "allergens": [] },
-    { "id": "ing_tomato_sterilised", "name": "Домати стерилизирани",      "allergens": [] },
-    { "id": "ing_tomato",            "name": "Домати",                    "allergens": [] },
-    { "id": "ing_tomato_puree",      "name": "Доматено пюре",            "allergens": [] },
-    { "id": "ing_pepper",            "name": "Чушка",                     "allergens": [] },
-    { "id": "ing_pepper_fresh",      "name": "Пресни пиперки",            "allergens": [] },
-    { "id": "ing_pepper_puree",      "name": "Пюре от пипер",             "allergens": [] },
-    { "id": "ing_cucumber",          "name": "Краставица",                "allergens": [] },
-    { "id": "ing_spinach",           "name": "Спанак",                    "allergens": [] },
-    { "id": "ing_cabbage_fresh",     "name": "Прясно зеле",               "allergens": [] },
-    { "id": "ing_pumpkin",           "name": "Тиква цигулка",             "allergens": [] },
-    { "id": "ing_lentil",            "name": "Леща",                      "allergens": [] },
-    { "id": "ing_beans",             "name": "Зрял боб",                  "allergens": [] },
-    { "id": "ing_peas_frozen",       "name": "Замразен грах",             "allergens": [] },
-    { "id": "ing_green_beans_frozen","name": "Замразен зелен фасул",       "allergens": [] },
-    { "id": "ing_corn",              "name": "Царевица",                  "allergens": [] },
-    { "id": "ing_peas_dried",        "name": "Грах",                      "allergens": [] },
-    { "id": "ing_lettuce",           "name": "Марула",                    "allergens": [] },
-    { "id": "ing_garlic",            "name": "Чесън",                     "allergens": [] },
-    { "id": "ing_savory",            "name": "Чубрица",                   "allergens": [] },
-    { "id": "ing_parsley",           "name": "Магданоз",                  "allergens": [] },
-    { "id": "ing_celery",            "name": "Целина",                    "allergens": ["alg_celery"] },
-    { "id": "ing_spearmint",         "name": "Джоджен",                   "allergens": [] },
-    { "id": "ing_black_pepper",      "name": "Черен пипер",               "allergens": [] },
-    { "id": "ing_cumin",             "name": "Кимион",                    "allergens": [] },
-    { "id": "ing_bay_leaf",          "name": "Дафинов лист",              "allergens": [] },
-    { "id": "ing_coriander",         "name": "Копър",                     "allergens": [] },
-    { "id": "ing_sunflower_oil",     "name": "Слънчогледово олио",        "allergens": [] },
-    { "id": "ing_butter",            "name": "Краве масло",               "allergens": ["alg_milk"] },
-    { "id": "ing_vinegar",           "name": "Оцет",                      "allergens": [] },
-    { "id": "ing_salt",              "name": "Сол",                       "allergens": [] },
-    { "id": "ing_sugar",             "name": "Захар",                     "allergens": [] },
-    { "id": "ing_vanilla",           "name": "Ванилия",                   "allergens": [] },
-    { "id": "ing_lemon",             "name": "Лимон",                     "allergens": [] },
-    { "id": "ing_starch",            "name": "Нишесте",                   "allergens": [] },
-    { "id": "ing_yoghurt",           "name": "Кисело мляко",              "allergens": ["alg_milk"] },
-    { "id": "ing_milk_fresh",        "name": "Прясно мляко",              "allergens": ["alg_milk"] },
-    { "id": "ing_milk",              "name": "Мляко",                     "allergens": ["alg_milk"] },
-    { "id": "ing_cream_cheese",      "name": "Кремче",                    "allergens": ["alg_milk"] },
-    { "id": "ing_cheese_white",      "name": "Сирене БДС",                "allergens": ["alg_milk"] },
-    { "id": "ing_cheese_yellow",     "name": "Кашкавал БДС",               "allergens": ["alg_milk"] },
-    { "id": "ing_eggs",              "name": "Яйца",                      "allergens": ["alg_eggs"] },
-    { "id": "ing_fruit",             "name": "Плод",                      "allergens": [] }
-  ],
   "recipes": [
     {
       "id": "rcp_tarator",
@@ -86,8 +7,18 @@
       "portionSize": "150г",
       "calories": 100,
       "ingredients": [
-        { "id": "ing_cucumber" }, { "id": "ing_yoghurt" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_cucumber"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -98,8 +29,24 @@
       "portionSize": "150г",
       "calories": 129,
       "ingredients": [
-        { "id": "ing_minced_meat" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_rice" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        }
       ],
       "manualAllergens": []
     },
@@ -110,10 +57,39 @@
       "portionSize": "150г",
       "calories": 96,
       "ingredients": [
-        { "id": "ing_chicken_thigh" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
-        { "id": "ing_flour" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+        {
+          "id": "ing_chicken_thigh"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        }
       ],
       "manualAllergens": []
     },
@@ -124,10 +100,39 @@
       "portionSize": "150г",
       "calories": 155,
       "ingredients": [
-        { "id": "ing_veal" }, { "id": "ing_vermicelli" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
-        { "id": "ing_flour" }, { "id": "ing_salt" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+        {
+          "id": "ing_veal"
+        },
+        {
+          "id": "ing_vermicelli"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        }
       ],
       "manualAllergens": []
     },
@@ -138,10 +143,45 @@
       "portionSize": "150г",
       "calories": 115,
       "ingredients": [
-        { "id": "ing_veal_minced" }, { "id": "ing_butter" }, { "id": "ing_carrot" },
-        { "id": "ing_celery" }, { "id": "ing_onion" }, { "id": "ing_tomato" },
-        { "id": "ing_tomato_sterilised" }, { "id": "ing_vermicelli" }, { "id": "ing_flour" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
+        {
+          "id": "ing_veal_minced"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_tomato"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_vermicelli"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -152,9 +192,36 @@
       "portionSize": "150г",
       "calories": 189,
       "ingredients": [
-        { "id": "ing_cabbage_fresh" }, { "id": "ing_sunflower_oil" }, { "id": "ing_carrot" },
-        { "id": "ing_potato" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_flour" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+        {
+          "id": "ing_cabbage_fresh"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_parsley"
+        }
       ],
       "manualAllergens": []
     },
@@ -165,10 +232,36 @@
       "portionSize": "150г",
       "calories": 195,
       "ingredients": [
-        { "id": "ing_pumpkin" }, { "id": "ing_potato" }, { "id": "ing_carrot" },
-        { "id": "ing_onion" }, { "id": "ing_celery" }, { "id": "ing_eggs" },
-        { "id": "ing_flour" }, { "id": "ing_yoghurt" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_pumpkin"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -179,9 +272,33 @@
       "portionSize": "150г",
       "calories": 85,
       "ingredients": [
-        { "id": "ing_tomato_sterilised" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_parsley" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" }
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -192,8 +309,27 @@
       "portionSize": "150г",
       "calories": 235,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_butter" }, { "id": "ing_yoghurt" },
-        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" }, { "id": "ing_bread" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_bread"
+        }
       ],
       "manualAllergens": []
     },
@@ -204,9 +340,30 @@
       "portionSize": "150г",
       "calories": 162,
       "ingredients": [
-        { "id": "ing_veal" }, { "id": "ing_potato" }, { "id": "ing_butter" },
-        { "id": "ing_milk" }, { "id": "ing_eggs" }, { "id": "ing_flour" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_veal"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -217,9 +374,33 @@
       "portionSize": "150г",
       "calories": 198,
       "ingredients": [
-        { "id": "ing_spinach" }, { "id": "ing_potato" }, { "id": "ing_butter" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_bread" }
+        {
+          "id": "ing_spinach"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_bread"
+        }
       ],
       "manualAllergens": []
     },
@@ -230,10 +411,42 @@
       "portionSize": "150г",
       "calories": 110,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_chicken" }, { "id": "ing_rice" },
-        { "id": "ing_vermicelli" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
+        {
+          "id": "ing_pork"
+        },
+        {
+          "id": "ing_chicken"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_vermicelli"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -244,10 +457,39 @@
       "portionSize": "150г",
       "calories": 96,
       "ingredients": [
-        { "id": "ing_turkey" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
-        { "id": "ing_flour" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+        {
+          "id": "ing_turkey"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        }
       ],
       "manualAllergens": []
     },
@@ -258,8 +500,27 @@
       "portionSize": "150г",
       "calories": 235,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_cheese_white" }, { "id": "ing_butter" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_cheese_white"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -270,10 +531,39 @@
       "portionSize": "150г",
       "calories": 216,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_carrot" }, { "id": "ing_celery" },
-        { "id": "ing_peas_dried" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_butter" },
-        { "id": "ing_yoghurt" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_parsley" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_peas_dried"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -284,11 +574,45 @@
       "portionSize": "150г",
       "calories": 88,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_carrot" }, { "id": "ing_celery" },
-        { "id": "ing_onion" }, { "id": "ing_peas_dried" }, { "id": "ing_corn" },
-        { "id": "ing_vermicelli" }, { "id": "ing_flour" }, { "id": "ing_yoghurt" },
-        { "id": "ing_eggs" }, { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_peas_dried"
+        },
+        {
+          "id": "ing_corn"
+        },
+        {
+          "id": "ing_vermicelli"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -299,10 +623,36 @@
       "portionSize": "150г",
       "calories": 82,
       "ingredients": [
-        { "id": "ing_vermicelli" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
-        { "id": "ing_celery" }, { "id": "ing_parsley" }, { "id": "ing_yoghurt" },
-        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_vermicelli"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -313,10 +663,36 @@
       "portionSize": "150г",
       "calories": 133,
       "ingredients": [
-        { "id": "ing_pork_boneless" }, { "id": "ing_potato" }, { "id": "ing_carrot" },
-        { "id": "ing_onion" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_yoghurt" }, { "id": "ing_vinegar" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_pork_boneless"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_vinegar"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -327,9 +703,30 @@
       "portionSize": "150г",
       "calories": 131,
       "ingredients": [
-        { "id": "ing_chicken_thigh" }, { "id": "ing_potato" }, { "id": "ing_butter" },
-        { "id": "ing_milk" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_chicken_thigh"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -340,9 +737,30 @@
       "portionSize": "150г",
       "calories": 116,
       "ingredients": [
-        { "id": "ing_lentil" }, { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" },
-        { "id": "ing_savory" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_vinegar" }, { "id": "ing_salt" }
+        {
+          "id": "ing_lentil"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_savory"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_vinegar"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -353,9 +771,27 @@
       "portionSize": "150г",
       "calories": 175,
       "ingredients": [
-        { "id": "ing_beans" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_spearmint" }, { "id": "ing_sunflower_oil" }, { "id": "ing_flour" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_beans"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_spearmint"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -366,9 +802,30 @@
       "portionSize": "150г",
       "calories": 116,
       "ingredients": [
-        { "id": "ing_lentil" }, { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" },
-        { "id": "ing_savory" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_vinegar" }, { "id": "ing_salt" }
+        {
+          "id": "ing_lentil"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_savory"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_vinegar"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -379,9 +836,27 @@
       "portionSize": "150г",
       "calories": 175,
       "ingredients": [
-        { "id": "ing_beans" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_spearmint" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_flour" }
+        {
+          "id": "ing_beans"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_spearmint"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_flour"
+        }
       ],
       "manualAllergens": []
     },
@@ -392,10 +867,36 @@
       "portionSize": "150г",
       "calories": 132,
       "ingredients": [
-        { "id": "ing_peas_frozen" }, { "id": "ing_potato" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_coriander" },
-        { "id": "ing_garlic" }, { "id": "ing_sunflower_oil" }, { "id": "ing_black_pepper" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_peas_frozen"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_coriander"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_black_pepper"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -406,10 +907,36 @@
       "portionSize": "150г",
       "calories": 132,
       "ingredients": [
-        { "id": "ing_peas_frozen" }, { "id": "ing_potato" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_coriander" },
-        { "id": "ing_garlic" }, { "id": "ing_sunflower_oil" }, { "id": "ing_black_pepper" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_peas_frozen"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_coriander"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_black_pepper"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -420,8 +947,21 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_minced_meat" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_onion" }, { "id": "ing_salt" }
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -432,8 +972,24 @@
       "portionSize": "150г",
       "calories": 174,
       "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_peas_dried" }, { "id": "ing_corn" },
-        { "id": "ing_carrot" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_peas_dried"
+        },
+        {
+          "id": "ing_corn"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -444,11 +1000,31 @@
       "portionSize": "150г",
       "calories": 212,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_flour" }, { "id": "ing_milk" },
-        { "id": "ing_eggs" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_eggs"
+        }
       ],
-      "manualAllergens": ["alg_gluten"]
+      "manualAllergens": [
+        "alg_gluten"
+      ]
     },
     {
       "id": "rcp_potato_minced_pie",
@@ -457,11 +1033,37 @@
       "portionSize": "150г",
       "calories": 212,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_flour" }, { "id": "ing_milk" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
-      "manualAllergens": ["alg_gluten"]
+      "manualAllergens": [
+        "alg_gluten"
+      ]
     },
     {
       "id": "rcp_potato_minced_pie_2",
@@ -470,11 +1072,37 @@
       "portionSize": "150г",
       "calories": 190,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
-        { "id": "ing_butter" }, { "id": "ing_milk_fresh" }, { "id": "ing_yoghurt" },
-        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_milk_fresh"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
-      "manualAllergens": ["alg_gluten"]
+      "manualAllergens": [
+        "alg_gluten"
+      ]
     },
     {
       "id": "rcp_spinach_potato_pie",
@@ -483,10 +1111,36 @@
       "portionSize": "150г",
       "calories": 236,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_spinach" }, { "id": "ing_onion" },
-        { "id": "ing_milk_fresh" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_yoghurt" }, { "id": "ing_parsley" }, { "id": "ing_salt" },
-        { "id": "ing_sunflower_oil" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_spinach"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_milk_fresh"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        }
       ],
       "manualAllergens": []
     },
@@ -497,9 +1151,27 @@
       "portionSize": "150г",
       "calories": 210,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_cheese_white" }, { "id": "ing_cheese_yellow" },
-        { "id": "ing_milk" }, { "id": "ing_eggs" }, { "id": "ing_salt" },
-        { "id": "ing_sunflower_oil" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_cheese_white"
+        },
+        {
+          "id": "ing_cheese_yellow"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        }
       ],
       "manualAllergens": []
     },
@@ -510,9 +1182,30 @@
       "portionSize": "150г",
       "calories": 198,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_butter" }, { "id": "ing_cheese_yellow" },
-        { "id": "ing_cheese_white" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_milk" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_cheese_yellow"
+        },
+        {
+          "id": "ing_cheese_white"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -523,8 +1216,21 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_chicken_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_chicken_fillet"
+        },
+        {
+          "id": "ing_panko"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -535,9 +1241,30 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_fish_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_cabbage_fresh" }, { "id": "ing_carrot" }, { "id": "ing_vinegar" }
+        {
+          "id": "ing_fish_fillet"
+        },
+        {
+          "id": "ing_panko"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_cabbage_fresh"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_vinegar"
+        }
       ],
       "manualAllergens": []
     },
@@ -548,8 +1275,24 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_chicken_thigh" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+        {
+          "id": "ing_chicken_thigh"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_parsley"
+        }
       ],
       "manualAllergens": []
     },
@@ -560,8 +1303,24 @@
       "portionSize": "150г",
       "calories": 246,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+        {
+          "id": "ing_pork"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_parsley"
+        }
       ],
       "manualAllergens": []
     },
@@ -572,8 +1331,24 @@
       "portionSize": "150г",
       "calories": 246,
       "ingredients": [
-        { "id": "ing_turkey" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+        {
+          "id": "ing_turkey"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_parsley"
+        }
       ],
       "manualAllergens": []
     },
@@ -584,8 +1359,21 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_pork"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -596,9 +1384,27 @@
       "portionSize": "150г",
       "calories": 249,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_cabbage_fresh" }, { "id": "ing_rice" },
-        { "id": "ing_onion" }, { "id": "ing_carrot" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_pork"
+        },
+        {
+          "id": "ing_cabbage_fresh"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -609,9 +1415,27 @@
       "portionSize": "150г",
       "calories": 188,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_tomato_sterilised" }, { "id": "ing_parsley" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -622,9 +1446,30 @@
       "portionSize": "150г",
       "calories": 145,
       "ingredients": [
-        { "id": "ing_spinach" }, { "id": "ing_rice" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_onion" }, { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" },
-        { "id": "ing_parsley" }, { "id": "ing_salt" }
+        {
+          "id": "ing_spinach"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -635,11 +1480,45 @@
       "portionSize": "150г",
       "calories": 186,
       "ingredients": [
-        { "id": "ing_lentil" }, { "id": "ing_sunflower_oil" }, { "id": "ing_carrot" },
-        { "id": "ing_celery" }, { "id": "ing_onion" }, { "id": "ing_tomato_sterilised" },
-        { "id": "ing_flour" }, { "id": "ing_pepper_fresh" }, { "id": "ing_leek" },
-        { "id": "ing_garlic" }, { "id": "ing_savory" }, { "id": "ing_lemon" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_lentil"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_pepper_fresh"
+        },
+        {
+          "id": "ing_leek"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_savory"
+        },
+        {
+          "id": "ing_lemon"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -650,10 +1529,33 @@
       "portionSize": "150г",
       "calories": 158,
       "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
-        { "id": "ing_peas_frozen" }, { "id": "ing_green_beans_frozen" },
-        { "id": "ing_tomato_sterilised" }, { "id": "ing_spearmint" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_peas_frozen"
+        },
+        {
+          "id": "ing_green_beans_frozen"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_spearmint"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -664,9 +1566,33 @@
       "portionSize": "150г",
       "calories": 236,
       "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_turkey" }, { "id": "ing_onion" },
-        { "id": "ing_milk_fresh" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_parsley" }, { "id": "ing_salt" }, { "id": "ing_sunflower_oil" }
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_turkey"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_milk_fresh"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        }
       ],
       "manualAllergens": []
     },
@@ -677,9 +1603,33 @@
       "portionSize": "150г",
       "calories": 176,
       "ingredients": [
-        { "id": "ing_pork_boneless" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_tomato_puree" }, { "id": "ing_flour" }, { "id": "ing_black_pepper" },
-        { "id": "ing_parsley" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_pork_boneless"
+        },
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_tomato_puree"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_black_pepper"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -690,8 +1640,21 @@
       "portionSize": "90г",
       "calories": 234,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_salt" }, { "id": "ing_black_pepper" },
-        { "id": "ing_cumin" }, { "id": "ing_onion" }
+        {
+          "id": "ing_pork"
+        },
+        {
+          "id": "ing_salt"
+        },
+        {
+          "id": "ing_black_pepper"
+        },
+        {
+          "id": "ing_cumin"
+        },
+        {
+          "id": "ing_onion"
+        }
       ],
       "manualAllergens": []
     },
@@ -702,11 +1665,45 @@
       "portionSize": "150г",
       "calories": 171,
       "ingredients": [
-        { "id": "ing_veal_minced" }, { "id": "ing_onion" }, { "id": "ing_leek" },
-        { "id": "ing_parsley" }, { "id": "ing_flour" }, { "id": "ing_carrot" },
-        { "id": "ing_celery" }, { "id": "ing_tomato_puree" }, { "id": "ing_pepper_puree" },
-        { "id": "ing_garlic" }, { "id": "ing_bay_leaf" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
+        {
+          "id": "ing_veal_minced"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_leek"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_celery"
+        },
+        {
+          "id": "ing_tomato_puree"
+        },
+        {
+          "id": "ing_pepper_puree"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_bay_leaf"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -717,10 +1714,42 @@
       "portionSize": "150г",
       "calories": 238,
       "ingredients": [
-        { "id": "ing_minced_meat" }, { "id": "ing_potato" }, { "id": "ing_peas_frozen" },
-        { "id": "ing_green_beans_frozen" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
-        { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_pepper_puree" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_potato"
+        },
+        {
+          "id": "ing_peas_frozen"
+        },
+        {
+          "id": "ing_green_beans_frozen"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_garlic"
+        },
+        {
+          "id": "ing_tomato_sterilised"
+        },
+        {
+          "id": "ing_pepper_puree"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_parsley"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -731,9 +1760,33 @@
       "portionSize": "150г",
       "calories": 218,
       "ingredients": [
-        { "id": "ing_pasta" }, { "id": "ing_butter" }, { "id": "ing_minced_meat" },
-        { "id": "ing_cheese_yellow" }, { "id": "ing_onion" }, { "id": "ing_eggs" },
-        { "id": "ing_milk_fresh" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_pasta"
+        },
+        {
+          "id": "ing_butter"
+        },
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_cheese_yellow"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_milk_fresh"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -744,9 +1797,33 @@
       "portionSize": "150г",
       "calories": 208,
       "ingredients": [
-        { "id": "ing_minced_meat" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" },
-        { "id": "ing_lemon" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        {
+          "id": "ing_minced_meat"
+        },
+        {
+          "id": "ing_onion"
+        },
+        {
+          "id": "ing_carrot"
+        },
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_yoghurt"
+        },
+        {
+          "id": "ing_lemon"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        },
+        {
+          "id": "ing_salt"
+        }
       ],
       "manualAllergens": []
     },
@@ -757,8 +1834,18 @@
       "portionSize": "150г",
       "calories": 150,
       "ingredients": [
-        { "id": "ing_cream_cheese" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
-        { "id": "ing_starch" }
+        {
+          "id": "ing_cream_cheese"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_sugar"
+        },
+        {
+          "id": "ing_starch"
+        }
       ],
       "manualAllergens": []
     },
@@ -769,8 +1856,18 @@
       "portionSize": "150г",
       "calories": 162,
       "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
-        { "id": "ing_vanilla" }
+        {
+          "id": "ing_rice"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_sugar"
+        },
+        {
+          "id": "ing_vanilla"
+        }
       ],
       "manualAllergens": []
     },
@@ -781,8 +1878,24 @@
       "portionSize": "60г",
       "calories": 157,
       "ingredients": [
-        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_milk" },
-        { "id": "ing_sugar" }, { "id": "ing_lemon" }, { "id": "ing_sunflower_oil" }
+        {
+          "id": "ing_flour"
+        },
+        {
+          "id": "ing_eggs"
+        },
+        {
+          "id": "ing_milk"
+        },
+        {
+          "id": "ing_sugar"
+        },
+        {
+          "id": "ing_lemon"
+        },
+        {
+          "id": "ing_sunflower_oil"
+        }
       ],
       "manualAllergens": []
     },
@@ -792,17 +1905,447 @@
       "category": "dessert",
       "portionSize": "150-200г",
       "calories": null,
-      "ingredients": [ { "id": "ing_fruit" } ],
+      "ingredients": [
+        {
+          "id": "ing_fruit"
+        }
+      ],
       "manualAllergens": []
     },
     {
       "id": "rcp_bread_slices",
       "name": "Филийки хляб по утвърден стандарт",
-      "category": "side",
-      "portionSize": null,
+      "category": "other",
+      "portionSize": "",
       "calories": null,
-      "ingredients": [ { "id": "ing_bread" } ],
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_bread"
+        }
+      ],
       "manualAllergens": []
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "ing_veal",
+      "name": "Телешко месо",
+      "allergens": []
+    },
+    {
+      "id": "ing_pork",
+      "name": "Свинско месо",
+      "allergens": []
+    },
+    {
+      "id": "ing_chicken",
+      "name": "Пилешко месо",
+      "allergens": []
+    },
+    {
+      "id": "ing_chicken_fillet",
+      "name": "Пилешко филе",
+      "allergens": []
+    },
+    {
+      "id": "ing_chicken_thigh",
+      "name": "Пилешко обезкостено бутче",
+      "allergens": []
+    },
+    {
+      "id": "ing_turkey",
+      "name": "Пуешко обезкостено бутче",
+      "allergens": []
+    },
+    {
+      "id": "ing_minced_meat",
+      "name": "Кайма БДС",
+      "allergens": []
+    },
+    {
+      "id": "ing_veal_minced",
+      "name": "Телешко мляно месо",
+      "allergens": []
+    },
+    {
+      "id": "ing_pork_boneless",
+      "name": "Свинско месо без кост",
+      "allergens": []
+    },
+    {
+      "id": "ing_fish_fillet",
+      "name": "Рибно филе",
+      "allergens": [
+        "alg_fish"
+      ]
+    },
+    {
+      "id": "ing_vermicelli",
+      "name": "Фиде",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_flour",
+      "name": "Брашно",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_panko",
+      "name": "Панко галета",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_bread",
+      "name": "Хляб по утвърден стандарт",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_pasta",
+      "name": "Пълнозърнести макарони",
+      "allergens": [
+        "alg_gluten"
+      ]
+    },
+    {
+      "id": "ing_rice",
+      "name": "Ориз",
+      "allergens": []
+    },
+    {
+      "id": "ing_onion",
+      "name": "Лук",
+      "allergens": []
+    },
+    {
+      "id": "ing_spring_onion",
+      "name": "Пресен лук",
+      "allergens": []
+    },
+    {
+      "id": "ing_leek",
+      "name": "Праз лук",
+      "allergens": []
+    },
+    {
+      "id": "ing_carrot",
+      "name": "Морков",
+      "allergens": []
+    },
+    {
+      "id": "ing_potato",
+      "name": "Картофи",
+      "allergens": []
+    },
+    {
+      "id": "ing_tomato_sterilised",
+      "name": "Домати стерилизирани",
+      "allergens": []
+    },
+    {
+      "id": "ing_tomato",
+      "name": "Домати",
+      "allergens": []
+    },
+    {
+      "id": "ing_tomato_puree",
+      "name": "Доматено пюре",
+      "allergens": []
+    },
+    {
+      "id": "ing_pepper",
+      "name": "Чушка",
+      "allergens": []
+    },
+    {
+      "id": "ing_pepper_fresh",
+      "name": "Пресни пиперки",
+      "allergens": []
+    },
+    {
+      "id": "ing_pepper_puree",
+      "name": "Пюре от пипер",
+      "allergens": []
+    },
+    {
+      "id": "ing_cucumber",
+      "name": "Краставица",
+      "allergens": []
+    },
+    {
+      "id": "ing_spinach",
+      "name": "Спанак",
+      "allergens": []
+    },
+    {
+      "id": "ing_cabbage_fresh",
+      "name": "Прясно зеле",
+      "allergens": []
+    },
+    {
+      "id": "ing_pumpkin",
+      "name": "Тиква цигулка",
+      "allergens": []
+    },
+    {
+      "id": "ing_lentil",
+      "name": "Леща",
+      "allergens": []
+    },
+    {
+      "id": "ing_beans",
+      "name": "Зрял боб",
+      "allergens": []
+    },
+    {
+      "id": "ing_peas_frozen",
+      "name": "Замразен грах",
+      "allergens": []
+    },
+    {
+      "id": "ing_green_beans_frozen",
+      "name": "Замразен зелен фасул",
+      "allergens": []
+    },
+    {
+      "id": "ing_corn",
+      "name": "Царевица",
+      "allergens": []
+    },
+    {
+      "id": "ing_peas_dried",
+      "name": "Грах",
+      "allergens": []
+    },
+    {
+      "id": "ing_lettuce",
+      "name": "Марула",
+      "allergens": []
+    },
+    {
+      "id": "ing_garlic",
+      "name": "Чесън",
+      "allergens": []
+    },
+    {
+      "id": "ing_savory",
+      "name": "Чубрица",
+      "allergens": []
+    },
+    {
+      "id": "ing_parsley",
+      "name": "Магданоз",
+      "allergens": []
+    },
+    {
+      "id": "ing_celery",
+      "name": "Целина",
+      "allergens": [
+        "alg_celery"
+      ]
+    },
+    {
+      "id": "ing_spearmint",
+      "name": "Джоджен",
+      "allergens": []
+    },
+    {
+      "id": "ing_black_pepper",
+      "name": "Черен пипер",
+      "allergens": []
+    },
+    {
+      "id": "ing_cumin",
+      "name": "Кимион",
+      "allergens": []
+    },
+    {
+      "id": "ing_bay_leaf",
+      "name": "Дафинов лист",
+      "allergens": []
+    },
+    {
+      "id": "ing_coriander",
+      "name": "Копър",
+      "allergens": []
+    },
+    {
+      "id": "ing_sunflower_oil",
+      "name": "Слънчогледово олио",
+      "allergens": []
+    },
+    {
+      "id": "ing_butter",
+      "name": "Краве масло",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_vinegar",
+      "name": "Оцет",
+      "allergens": []
+    },
+    {
+      "id": "ing_salt",
+      "name": "Сол",
+      "allergens": []
+    },
+    {
+      "id": "ing_sugar",
+      "name": "Захар",
+      "allergens": []
+    },
+    {
+      "id": "ing_vanilla",
+      "name": "Ванилия",
+      "allergens": []
+    },
+    {
+      "id": "ing_lemon",
+      "name": "Лимон",
+      "allergens": []
+    },
+    {
+      "id": "ing_starch",
+      "name": "Нишесте",
+      "allergens": []
+    },
+    {
+      "id": "ing_yoghurt",
+      "name": "Кисело мляко",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_milk_fresh",
+      "name": "Прясно мляко",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_milk",
+      "name": "Мляко",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_cream_cheese",
+      "name": "Кремче",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_cheese_white",
+      "name": "Сирене БДС",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_cheese_yellow",
+      "name": "Кашкавал БДС",
+      "allergens": [
+        "alg_milk"
+      ]
+    },
+    {
+      "id": "ing_eggs",
+      "name": "Яйца",
+      "allergens": [
+        "alg_eggs"
+      ]
+    },
+    {
+      "id": "ing_fruit",
+      "name": "Плод",
+      "allergens": []
+    }
+  ],
+  "allergens": [
+    {
+      "id": "alg_gluten",
+      "name": "Глутен",
+      "color": "#f59f00",
+      "isSystem": true
+    },
+    {
+      "id": "alg_crustaceans",
+      "name": "Ракообразни",
+      "color": "#ff6b6b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_eggs",
+      "name": "Яйца",
+      "color": "#ffd43b",
+      "isSystem": true
+    },
+    {
+      "id": "alg_fish",
+      "name": "Риба",
+      "color": "#339af0",
+      "isSystem": true
+    },
+    {
+      "id": "alg_peanuts",
+      "name": "Фъстъци",
+      "color": "#d9480f",
+      "isSystem": true
+    },
+    {
+      "id": "alg_soybeans",
+      "name": "Соя",
+      "color": "#5c940d",
+      "isSystem": true
+    },
+    {
+      "id": "alg_milk",
+      "name": "Мляко",
+      "color": "#74c0fc",
+      "isSystem": true
+    },
+    {
+      "id": "alg_nuts",
+      "name": "Ядки",
+      "color": "#e67700",
+      "isSystem": true
+    },
+    {
+      "id": "alg_celery",
+      "name": "Целина",
+      "color": "#82c91e",
+      "isSystem": true
+    },
+    {
+      "id": "alg_mustard",
+      "name": "Горчица",
+      "color": "#fcc419",
+      "isSystem": true
+    },
+    {
+      "id": "alg_sesame",
+      "name": "Сусам",
+      "color": "#adb5bd",
+      "isSystem": true
+    },
+    {
+      "id": "alg_lupin",
+      "name": "Лупина",
+      "color": "#ffec99",
+      "isSystem": true
     }
   ]
 }

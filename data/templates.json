@@ -1,0 +1,73 @@
+{
+  "tythis": {
+    "templateStyle": "detailed",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": "clouds.jpg",
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": "CHEF.png",
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": "20pt",
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayPadding": "0px",
+    "dayNameSize": "12pt",
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": "10pt",
+    "mealLineHeight": "1.4",
+    "ingredientColor": "#333333",
+    "ingredientSize": "medium",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "allergenItalic": false,
+    "showFooter": true,
+    "footerText": "Prepared with care by KitchenPro",
+    "footerAlignment": "center",
+    "footerFontSize": "8pt"
+  }
+}
