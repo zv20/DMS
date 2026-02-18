@@ -1,77 +1,125 @@
 {
   "allergens": [
-    { "id": "alg_gluten",      "name": "Gluten",      "name_bg": "Глутен",        "color": "#f59f00", "isSystem": true },
-    { "id": "alg_crustaceans", "name": "Crustaceans", "name_bg": "Ракообразни",   "color": "#ff6b6b", "isSystem": true },
-    { "id": "alg_eggs",        "name": "Eggs",        "name_bg": "Яйца",          "color": "#ffd43b", "isSystem": true },
-    { "id": "alg_fish",        "name": "Fish",        "name_bg": "Риба",          "color": "#339af0", "isSystem": true },
-    { "id": "alg_peanuts",     "name": "Peanuts",     "name_bg": "Фъстъци",       "color": "#d9480f", "isSystem": true },
-    { "id": "alg_soybeans",    "name": "Soybeans",    "name_bg": "Соя",           "color": "#5c940d", "isSystem": true },
-    { "id": "alg_milk",        "name": "Milk",        "name_bg": "Мляко",         "color": "#74c0fc", "isSystem": true },
-    { "id": "alg_nuts",        "name": "Nuts",        "name_bg": "Ядки",          "color": "#e67700", "isSystem": true },
-    { "id": "alg_celery",      "name": "Celery",      "name_bg": "Целина",        "color": "#82c91e", "isSystem": true },
-    { "id": "alg_mustard",     "name": "Mustard",     "name_bg": "Горчица",       "color": "#fcc419", "isSystem": true },
-    { "id": "alg_sesame",      "name": "Sesame",      "name_bg": "Сусам",         "color": "#adb5bd", "isSystem": true },
-    { "id": "alg_lupin",       "name": "Lupin",       "name_bg": "Лупина",        "color": "#ffec99", "isSystem": true }
+    { "id": "alg_gluten",      "name": "Глутен",        "color": "#f59f00", "isSystem": true },
+    { "id": "alg_crustaceans", "name": "Ракообразни",   "color": "#ff6b6b", "isSystem": true },
+    { "id": "alg_eggs",        "name": "Яйца",          "color": "#ffd43b", "isSystem": true },
+    { "id": "alg_fish",        "name": "Риба",          "color": "#339af0", "isSystem": true },
+    { "id": "alg_peanuts",     "name": "Фъстъци",       "color": "#d9480f", "isSystem": true },
+    { "id": "alg_soybeans",    "name": "Соя",           "color": "#5c940d", "isSystem": true },
+    { "id": "alg_milk",        "name": "Мляко",         "color": "#74c0fc", "isSystem": true },
+    { "id": "alg_nuts",        "name": "Ядки",          "color": "#e67700", "isSystem": true },
+    { "id": "alg_celery",      "name": "Целина",        "color": "#82c91e", "isSystem": true },
+    { "id": "alg_mustard",     "name": "Горчица",       "color": "#fcc419", "isSystem": true },
+    { "id": "alg_sesame",      "name": "Сусам",         "color": "#adb5bd", "isSystem": true },
+    { "id": "alg_lupin",       "name": "Лупина",        "color": "#ffec99", "isSystem": true }
   ],
   "ingredients": [
-    { "id": "ing_veal",              "name": "Veal",                    "name_bg": "Телешко месо",             "allergens": [] },
-    { "id": "ing_pork",              "name": "Pork",                    "name_bg": "Свинско месо",             "allergens": [] },
-    { "id": "ing_chicken",           "name": "Chicken",                 "name_bg": "Пилешко месо",             "allergens": [] },
-    { "id": "ing_chicken_fillet",    "name": "Chicken fillet",          "name_bg": "Пилешко филе",             "allergens": [] },
-    { "id": "ing_chicken_thigh",     "name": "Chicken thigh boneless",  "name_bg": "Пилешко обезкостено бутче","allergens": [] },
-    { "id": "ing_turkey",            "name": "Turkey boneless thigh",   "name_bg": "Пуешко обезкостено бутче", "allergens": [] },
-    { "id": "ing_minced_meat",       "name": "Minced meat BDS",         "name_bg": "Кайма БДС",                "allergens": [] },
-    { "id": "ing_fish_fillet",       "name": "Fish fillet",             "name_bg": "Рибно филе",               "allergens": ["alg_fish"] },
-    { "id": "ing_vermicelli",        "name": "Vermicelli",              "name_bg": "Фиде",                     "allergens": ["alg_gluten"] },
-    { "id": "ing_flour",             "name": "Flour",                   "name_bg": "Брашно",                   "allergens": ["alg_gluten"] },
-    { "id": "ing_panko",             "name": "Panko breadcrumbs",       "name_bg": "Панко галета",             "allergens": ["alg_gluten"] },
-    { "id": "ing_bread",             "name": "Bread (standard)",        "name_bg": "Хляб по утвърден стандарт","allergens": ["alg_gluten"] },
-    { "id": "ing_rice",              "name": "Rice",                    "name_bg": "Ориз",                     "allergens": [] },
-    { "id": "ing_onion",             "name": "Onion",                   "name_bg": "Лук",                      "allergens": [] },
-    { "id": "ing_spring_onion",      "name": "Spring onion",            "name_bg": "Пресен лук",               "allergens": [] },
-    { "id": "ing_carrot",            "name": "Carrot",                  "name_bg": "Морков",                   "allergens": [] },
-    { "id": "ing_potato",            "name": "Potato",                  "name_bg": "Картофи",                  "allergens": [] },
-    { "id": "ing_tomato_sterilised", "name": "Sterilised tomatoes",     "name_bg": "Домати стерилизирани",     "allergens": [] },
-    { "id": "ing_tomato",            "name": "Tomato",                  "name_bg": "Домати",                   "allergens": [] },
-    { "id": "ing_pepper",            "name": "Bell pepper",             "name_bg": "Чушка",                    "allergens": [] },
-    { "id": "ing_cucumber",          "name": "Cucumber",                "name_bg": "Краставица",               "allergens": [] },
-    { "id": "ing_spinach",           "name": "Spinach",                 "name_bg": "Спанак",                   "allergens": [] },
-    { "id": "ing_cabbage_fresh",     "name": "Fresh cabbage",           "name_bg": "Прясно зеле",              "allergens": [] },
-    { "id": "ing_pumpkin",           "name": "Pumpkin (squash)",        "name_bg": "Тиква цигулка",            "allergens": [] },
-    { "id": "ing_lentil",            "name": "Lentil",                  "name_bg": "Леща",                     "allergens": [] },
-    { "id": "ing_beans",             "name": "Dried beans",             "name_bg": "Зрял боб",                 "allergens": [] },
-    { "id": "ing_peas_frozen",       "name": "Frozen peas",             "name_bg": "Замразен грах",            "allergens": [] },
-    { "id": "ing_corn",              "name": "Corn",                    "name_bg": "Царевица",                 "allergens": [] },
-    { "id": "ing_peas_dried",        "name": "Dried peas",              "name_bg": "Грах",                     "allergens": [] },
-    { "id": "ing_lettuce",           "name": "Lettuce",                 "name_bg": "Марула",                   "allergens": [] },
-    { "id": "ing_garlic",            "name": "Garlic",                  "name_bg": "Чесън",                    "allergens": [] },
-    { "id": "ing_savory",            "name": "Savory (herb)",           "name_bg": "Чубрица",                  "allergens": [] },
-    { "id": "ing_parsley",           "name": "Parsley",                 "name_bg": "Магданоз",                 "allergens": [] },
-    { "id": "ing_celery",            "name": "Celery",                  "name_bg": "Целина",                   "allergens": ["alg_celery"] },
-    { "id": "ing_spearmint",         "name": "Spearmint / Jodjin",      "name_bg": "Джоджен",                  "allergens": [] },
-    { "id": "ing_black_pepper",      "name": "Black pepper",            "name_bg": "Черен пипер",              "allergens": [] },
-    { "id": "ing_coriander",         "name": "Coriander / Kopat",       "name_bg": "Копър",                    "allergens": [] },
-    { "id": "ing_sunflower_oil",     "name": "Sunflower oil",           "name_bg": "Слънчогледово олио",       "allergens": [] },
-    { "id": "ing_butter",            "name": "Butter",                  "name_bg": "Краве масло",              "allergens": ["alg_milk"] },
-    { "id": "ing_vinegar",           "name": "Vinegar",                 "name_bg": "Оцет",                     "allergens": [] },
-    { "id": "ing_salt",              "name": "Salt",                    "name_bg": "Сол",                      "allergens": [] },
-    { "id": "ing_sugar",             "name": "Sugar",                   "name_bg": "Захар",                    "allergens": [] },
-    { "id": "ing_vanilla",           "name": "Vanilla",                 "name_bg": "Ванилия",                  "allergens": [] },
-    { "id": "ing_starch",            "name": "Starch",                  "name_bg": "Нишесте",                  "allergens": [] },
-    { "id": "ing_yoghurt",           "name": "Yoghurt (sour milk)",     "name_bg": "Кисело мляко",             "allergens": ["alg_milk"] },
-    { "id": "ing_milk_fresh",        "name": "Fresh milk",              "name_bg": "Прясно мляко",             "allergens": ["alg_milk"] },
-    { "id": "ing_milk",              "name": "Milk",                    "name_bg": "Мляко",                    "allergens": ["alg_milk"] },
-    { "id": "ing_cream_cheese",      "name": "Cream cheese (kremche)",  "name_bg": "Кремче",                   "allergens": ["alg_milk"] },
-    { "id": "ing_cheese_white",      "name": "White cheese (sirene)",   "name_bg": "Сирене",                   "allergens": ["alg_milk"] },
-    { "id": "ing_cheese_yellow",     "name": "Yellow cheese (kashkaval)","name_bg": "Кашкавал",                "allergens": ["alg_milk"] },
-    { "id": "ing_eggs",              "name": "Eggs",                    "name_bg": "Яйца",                     "allergens": ["alg_eggs"] },
-    { "id": "ing_fruit",             "name": "Fruit (seasonal)",        "name_bg": "Плод",                     "allergens": [] }
+    { "id": "ing_veal",              "name": "Телешко месо",              "allergens": [] },
+    { "id": "ing_pork",              "name": "Свинско месо",              "allergens": [] },
+    { "id": "ing_chicken",           "name": "Пилешко месо",              "allergens": [] },
+    { "id": "ing_chicken_fillet",    "name": "Пилешко филе",              "allergens": [] },
+    { "id": "ing_chicken_thigh",     "name": "Пилешко обезкостено бутче", "allergens": [] },
+    { "id": "ing_turkey",            "name": "Пуешко обезкостено бутче",  "allergens": [] },
+    { "id": "ing_minced_meat",       "name": "Кайма БДС",                 "allergens": [] },
+    { "id": "ing_veal_minced",       "name": "Телешко мляно месо",         "allergens": [] },
+    { "id": "ing_pork_boneless",     "name": "Свинско месо без кост",       "allergens": [] },
+    { "id": "ing_fish_fillet",       "name": "Рибно филе",                "allergens": ["alg_fish"] },
+    { "id": "ing_vermicelli",        "name": "Фиде",                      "allergens": ["alg_gluten"] },
+    { "id": "ing_flour",             "name": "Брашно",                    "allergens": ["alg_gluten"] },
+    { "id": "ing_panko",             "name": "Панко галета",              "allergens": ["alg_gluten"] },
+    { "id": "ing_bread",             "name": "Хляб по утвърден стандарт", "allergens": ["alg_gluten"] },
+    { "id": "ing_pasta",             "name": "Пълнозърнести макарони",       "allergens": ["alg_gluten"] },
+    { "id": "ing_rice",              "name": "Ориз",                      "allergens": [] },
+    { "id": "ing_onion",             "name": "Лук",                       "allergens": [] },
+    { "id": "ing_spring_onion",      "name": "Пресен лук",                "allergens": [] },
+    { "id": "ing_leek",              "name": "Праз лук",                 "allergens": [] },
+    { "id": "ing_carrot",            "name": "Морков",                    "allergens": [] },
+    { "id": "ing_potato",            "name": "Картофи",                   "allergens": [] },
+    { "id": "ing_tomato_sterilised", "name": "Домати стерилизирани",      "allergens": [] },
+    { "id": "ing_tomato",            "name": "Домати",                    "allergens": [] },
+    { "id": "ing_tomato_puree",      "name": "Доматено пюре",            "allergens": [] },
+    { "id": "ing_pepper",            "name": "Чушка",                     "allergens": [] },
+    { "id": "ing_pepper_fresh",      "name": "Пресни пиперки",            "allergens": [] },
+    { "id": "ing_pepper_puree",      "name": "Пюре от пипер",             "allergens": [] },
+    { "id": "ing_cucumber",          "name": "Краставица",                "allergens": [] },
+    { "id": "ing_spinach",           "name": "Спанак",                    "allergens": [] },
+    { "id": "ing_cabbage_fresh",     "name": "Прясно зеле",               "allergens": [] },
+    { "id": "ing_pumpkin",           "name": "Тиква цигулка",             "allergens": [] },
+    { "id": "ing_lentil",            "name": "Леща",                      "allergens": [] },
+    { "id": "ing_beans",             "name": "Зрял боб",                  "allergens": [] },
+    { "id": "ing_peas_frozen",       "name": "Замразен грах",             "allergens": [] },
+    { "id": "ing_green_beans_frozen","name": "Замразен зелен фасул",       "allergens": [] },
+    { "id": "ing_corn",              "name": "Царевица",                  "allergens": [] },
+    { "id": "ing_peas_dried",        "name": "Грах",                      "allergens": [] },
+    { "id": "ing_lettuce",           "name": "Марула",                    "allergens": [] },
+    { "id": "ing_garlic",            "name": "Чесън",                     "allergens": [] },
+    { "id": "ing_savory",            "name": "Чубрица",                   "allergens": [] },
+    { "id": "ing_parsley",           "name": "Магданоз",                  "allergens": [] },
+    { "id": "ing_celery",            "name": "Целина",                    "allergens": ["alg_celery"] },
+    { "id": "ing_spearmint",         "name": "Джоджен",                   "allergens": [] },
+    { "id": "ing_black_pepper",      "name": "Черен пипер",               "allergens": [] },
+    { "id": "ing_cumin",             "name": "Кимион",                    "allergens": [] },
+    { "id": "ing_bay_leaf",          "name": "Дафинов лист",              "allergens": [] },
+    { "id": "ing_coriander",         "name": "Копър",                     "allergens": [] },
+    { "id": "ing_sunflower_oil",     "name": "Слънчогледово олио",        "allergens": [] },
+    { "id": "ing_butter",            "name": "Краве масло",               "allergens": ["alg_milk"] },
+    { "id": "ing_vinegar",           "name": "Оцет",                      "allergens": [] },
+    { "id": "ing_salt",              "name": "Сол",                       "allergens": [] },
+    { "id": "ing_sugar",             "name": "Захар",                     "allergens": [] },
+    { "id": "ing_vanilla",           "name": "Ванилия",                   "allergens": [] },
+    { "id": "ing_lemon",             "name": "Лимон",                     "allergens": [] },
+    { "id": "ing_starch",            "name": "Нишесте",                   "allergens": [] },
+    { "id": "ing_yoghurt",           "name": "Кисело мляко",              "allergens": ["alg_milk"] },
+    { "id": "ing_milk_fresh",        "name": "Прясно мляко",              "allergens": ["alg_milk"] },
+    { "id": "ing_milk",              "name": "Мляко",                     "allergens": ["alg_milk"] },
+    { "id": "ing_cream_cheese",      "name": "Кремче",                    "allergens": ["alg_milk"] },
+    { "id": "ing_cheese_white",      "name": "Сирене БДС",                "allergens": ["alg_milk"] },
+    { "id": "ing_cheese_yellow",     "name": "Кашкавал БДС",               "allergens": ["alg_milk"] },
+    { "id": "ing_eggs",              "name": "Яйца",                      "allergens": ["alg_eggs"] },
+    { "id": "ing_fruit",             "name": "Плод",                      "allergens": [] }
   ],
   "recipes": [
     {
-      "id": "rcp_veal_soup_vermicelli",
+      "id": "rcp_tarator",
+      "name": "Таратор",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 100,
+      "ingredients": [
+        { "id": "ing_cucumber" }, { "id": "ing_yoghurt" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_meatball_soup",
+      "name": "Супа топчета",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 129,
+      "ingredients": [
+        { "id": "ing_minced_meat" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_rice" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_meat_soup",
+      "name": "Пилешка супа",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 96,
+      "ingredients": [
+        { "id": "ing_chicken_thigh" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
+        { "id": "ing_flour" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
+        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_veal_soup",
       "name": "Телешка супа със застройка",
-      "name_en": "Veal soup with egg-yoghurt thickener",
       "category": "soup",
       "portionSize": "150г",
       "calories": 155,
@@ -84,36 +132,22 @@
       "manualAllergens": []
     },
     {
-      "id": "rcp_lentil_stew",
-      "name": "Леща яхния",
-      "name_en": "Lentil stew",
-      "category": "main",
+      "id": "rcp_veal_soup_minced",
+      "name": "Телешка супа с мляно месо",
+      "category": "soup",
       "portionSize": "150г",
-      "calories": 116,
+      "calories": 115,
       "ingredients": [
-        { "id": "ing_lentil" }, { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" },
-        { "id": "ing_savory" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_vinegar" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_crispy_chicken_fillet",
-      "name": "Хрупкаво пилешко филе на фурна с гарнитура",
-      "name_en": "Crispy baked chicken fillet with garnish",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 249,
-      "ingredients": [
-        { "id": "ing_chicken_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+        { "id": "ing_veal_minced" }, { "id": "ing_butter" }, { "id": "ing_carrot" },
+        { "id": "ing_celery" }, { "id": "ing_onion" }, { "id": "ing_tomato" },
+        { "id": "ing_tomato_sterilised" }, { "id": "ing_vermicelli" }, { "id": "ing_flour" },
+        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
       ],
       "manualAllergens": []
     },
     {
       "id": "rcp_cabbage_soup",
       "name": "Супа от прясно зеле",
-      "name_en": "Fresh cabbage soup",
       "category": "soup",
       "portionSize": "150г",
       "calories": 189,
@@ -125,124 +159,8 @@
       "manualAllergens": []
     },
     {
-      "id": "rcp_meatball_soup",
-      "name": "Супа топчета",
-      "name_en": "Meatball soup",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 129,
-      "ingredients": [
-        { "id": "ing_minced_meat" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_rice" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_bean_stew",
-      "name": "Зрял боб яхния",
-      "name_en": "Dried bean stew",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 175,
-      "ingredients": [
-        { "id": "ing_beans" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_spearmint" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_flour" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_tarator",
-      "name": "Таратор",
-      "name_en": "Cold cucumber yoghurt soup (tarator)",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 100,
-      "ingredients": [
-        { "id": "ing_cucumber" }, { "id": "ing_yoghurt" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_risotto_minced",
-      "name": "Ризото с кайма",
-      "name_en": "Risotto with minced meat",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 249,
-      "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_minced_meat" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_onion" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_fruit",
-      "name": "Плод",
-      "name_en": "Seasonal fruit",
-      "category": "dessert",
-      "portionSize": "150-200г",
-      "calories": null,
-      "ingredients": [ { "id": "ing_fruit" } ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_bread_slices",
-      "name": "Филийки хляб по утвърден стандарт",
-      "name_en": "Bread slices (standard)",
-      "category": "side",
-      "portionSize": null,
-      "calories": null,
-      "ingredients": [ { "id": "ing_bread" } ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_meat_soup",
-      "name": "Супа с месо",
-      "name_en": "Meat soup with chicken",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 96,
-      "ingredients": [
-        { "id": "ing_chicken_thigh" }, { "id": "ing_vermicelli" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
-        { "id": "ing_flour" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_zucchini_risotto",
-      "name": "Зеленчуково ризото",
-      "name_en": "Vegetable risotto",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 174,
-      "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_peas_dried" }, { "id": "ing_corn" },
-        { "id": "ing_carrot" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_moussaka",
-      "name": "Мусака",
-      "name_en": "Moussaka",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 212,
-      "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_flour" }, { "id": "ing_milk" },
-        { "id": "ing_eggs" }
-      ],
-      "manualAllergens": ["alg_gluten"]
-    },
-    {
       "id": "rcp_pumpkin_cream_soup",
       "name": "Крем супа от тиква",
-      "name_en": "Pumpkin cream soup",
       "category": "soup",
       "portionSize": "150г",
       "calories": 195,
@@ -255,171 +173,8 @@
       "manualAllergens": []
     },
     {
-      "id": "rcp_crispy_chicken_carrots",
-      "name": "Хрупкаво пилешко филе на фурна с гарнитура зеле с моркови",
-      "name_en": "Crispy baked chicken with cabbage and carrot garnish",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 249,
-      "ingredients": [
-        { "id": "ing_chicken_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_potato_veal_soup",
-      "name": "Картофена супа с телешко месо",
-      "name_en": "Potato soup with veal",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 162,
-      "ingredients": [
-        { "id": "ing_veal" }, { "id": "ing_potato" }, { "id": "ing_butter" },
-        { "id": "ing_milk" }, { "id": "ing_eggs" }, { "id": "ing_flour" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_pork_rice",
-      "name": "Месо с ориз (свинско)",
-      "name_en": "Pork with rice",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 246,
-      "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_potato_cream_soup_croutons",
-      "name": "Картофена крем супа с крутони",
-      "name_en": "Potato cream soup with croutons",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 235,
-      "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_butter" }, { "id": "ing_yoghurt" },
-        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" },
-        { "id": "ing_bread" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_crispy_chicken_fillet_2",
-      "name": "Хрупкаво пилешко филе на фурна с гарнитура (вариант 2)",
-      "name_en": "Crispy baked chicken fillet with garnish (variant 2)",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 279,
-      "ingredients": [
-        { "id": "ing_chicken_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_turkey_rice",
-      "name": "Пуешко месо с ориз",
-      "name_en": "Turkey with rice",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": null,
-      "ingredients": [
-        { "id": "ing_turkey" }, { "id": "ing_rice" }, { "id": "ing_sunflower_oil" },
-        { "id": "ing_onion" }, { "id": "ing_carrot" }, { "id": "ing_parsley" },
-        { "id": "ing_salt" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_chicken_rice",
-      "name": "Месо с ориз (пилешко)",
-      "name_en": "Chicken with rice",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 246,
-      "ingredients": [
-        { "id": "ing_chicken" }, { "id": "ing_rice" }, { "id": "ing_onion" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_kremche",
-      "name": "Кремче",
-      "name_en": "Cream cheese dessert",
-      "category": "dessert",
-      "portionSize": "150г",
-      "calories": 150,
-      "ingredients": [
-        { "id": "ing_cream_cheese" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
-        { "id": "ing_starch" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_fish_fillet_baked",
-      "name": "Рибно филе на фурна с гарнитура",
-      "name_en": "Baked fish fillet with garnish",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 249,
-      "ingredients": [
-        { "id": "ing_fish_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
-        { "id": "ing_lettuce" }, { "id": "ing_spring_onion" }, { "id": "ing_vinegar" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_spinach_potato_pie",
-      "name": "Картофен пай със спанак",
-      "name_en": "Potato and spinach pie",
-      "category": "main",
-      "portionSize": "150г",
-      "calories": 236,
-      "ingredients": [
-        { "id": "ing_potato" }, { "id": "ing_spinach" }, { "id": "ing_onion" },
-        { "id": "ing_milk_fresh" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
-        { "id": "ing_parsley" }, { "id": "ing_salt" }, { "id": "ing_sunflower_oil" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_milk_rice",
-      "name": "Мляко с ориз",
-      "name_en": "Rice pudding with milk",
-      "category": "dessert",
-      "portionSize": "150г",
-      "calories": 162,
-      "ingredients": [
-        { "id": "ing_rice" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
-        { "id": "ing_vanilla" }
-      ],
-      "manualAllergens": []
-    },
-    {
-      "id": "rcp_spinach_cream_soup",
-      "name": "Спаначена крем супа с крутони",
-      "name_en": "Spinach cream soup with croutons",
-      "category": "soup",
-      "portionSize": "150г",
-      "calories": 198,
-      "ingredients": [
-        { "id": "ing_spinach" }, { "id": "ing_potato" }, { "id": "ing_butter" },
-        { "id": "ing_sunflower_oil" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
-        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_bread" }
-      ],
-      "manualAllergens": []
-    },
-    {
       "id": "rcp_tomato_soup",
       "name": "Доматена супа",
-      "name_en": "Tomato soup",
       "category": "soup",
       "portionSize": "150г",
       "calories": 85,
@@ -431,9 +186,313 @@
       "manualAllergens": []
     },
     {
+      "id": "rcp_potato_cream_soup",
+      "name": "Картофена крем супа с крутони",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 235,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_butter" }, { "id": "ing_yoghurt" },
+        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" }, { "id": "ing_bread" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_potato_veal_soup",
+      "name": "Картофена супа с телешко месо",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 162,
+      "ingredients": [
+        { "id": "ing_veal" }, { "id": "ing_potato" }, { "id": "ing_butter" },
+        { "id": "ing_milk" }, { "id": "ing_eggs" }, { "id": "ing_flour" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_spinach_cream_soup",
+      "name": "Спаначена крем супа с крутони",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 198,
+      "ingredients": [
+        { "id": "ing_spinach" }, { "id": "ing_potato" }, { "id": "ing_butter" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_bread" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_village_soup",
+      "name": "Супа по селски с месо",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 110,
+      "ingredients": [
+        { "id": "ing_pork" }, { "id": "ing_chicken" }, { "id": "ing_rice" },
+        { "id": "ing_vermicelli" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_turkey_soup",
+      "name": "Супа с пуешко месо",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 96,
+      "ingredients": [
+        { "id": "ing_turkey" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_celery" }, { "id": "ing_parsley" },
+        { "id": "ing_flour" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
+        { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_cream_cheese_soup",
+      "name": "Крем супа със сирене",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 235,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_cheese_white" }, { "id": "ing_butter" },
+        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_veg_cream_soup",
+      "name": "Зеленчукова крем супа",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 216,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_carrot" }, { "id": "ing_celery" },
+        { "id": "ing_peas_dried" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_butter" },
+        { "id": "ing_yoghurt" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
+        { "id": "ing_parsley" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_veg_soup",
+      "name": "Зеленчукова супа",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 88,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_carrot" }, { "id": "ing_celery" },
+        { "id": "ing_onion" }, { "id": "ing_peas_dried" }, { "id": "ing_corn" },
+        { "id": "ing_vermicelli" }, { "id": "ing_flour" }, { "id": "ing_yoghurt" },
+        { "id": "ing_eggs" }, { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_milk_soup",
+      "name": "Млечна супа с фиде",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 82,
+      "ingredients": [
+        { "id": "ing_vermicelli" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
+        { "id": "ing_celery" }, { "id": "ing_parsley" }, { "id": "ing_yoghurt" },
+        { "id": "ing_eggs" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_meat_potato_soup",
+      "name": "Супа от месо и картофи",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 133,
+      "ingredients": [
+        { "id": "ing_pork_boneless" }, { "id": "ing_potato" }, { "id": "ing_carrot" },
+        { "id": "ing_onion" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
+        { "id": "ing_yoghurt" }, { "id": "ing_vinegar" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_chicken_soup_cream",
+      "name": "Крем супа с пилешко месо",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 131,
+      "ingredients": [
+        { "id": "ing_chicken_thigh" }, { "id": "ing_potato" }, { "id": "ing_butter" },
+        { "id": "ing_milk" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_lentil_monastery",
+      "name": "Супа от леща по манастирски",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 116,
+      "ingredients": [
+        { "id": "ing_lentil" }, { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" },
+        { "id": "ing_savory" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_vinegar" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_bean_chorba",
+      "name": "Боб чорба",
+      "category": "soup",
+      "portionSize": "150г",
+      "calories": 175,
+      "ingredients": [
+        { "id": "ing_beans" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_spearmint" }, { "id": "ing_sunflower_oil" }, { "id": "ing_flour" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_lentil_stew",
+      "name": "Леща яхния",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 116,
+      "ingredients": [
+        { "id": "ing_lentil" }, { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" },
+        { "id": "ing_savory" }, { "id": "ing_flour" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_vinegar" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_bean_stew",
+      "name": "Зрял боб яхния",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 175,
+      "ingredients": [
+        { "id": "ing_beans" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_spearmint" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
+        { "id": "ing_flour" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_peas_stew",
+      "name": "Грах яхния",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 132,
+      "ingredients": [
+        { "id": "ing_peas_frozen" }, { "id": "ing_potato" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_coriander" },
+        { "id": "ing_garlic" }, { "id": "ing_sunflower_oil" }, { "id": "ing_black_pepper" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_peas_oven",
+      "name": "Грах яхния на фурна",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 132,
+      "ingredients": [
+        { "id": "ing_peas_frozen" }, { "id": "ing_potato" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_coriander" },
+        { "id": "ing_garlic" }, { "id": "ing_sunflower_oil" }, { "id": "ing_black_pepper" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_risotto_minced",
+      "name": "Ризото с кайма",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_rice" }, { "id": "ing_minced_meat" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_onion" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_zucchini_risotto",
+      "name": "Зеленчуково ризото",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 174,
+      "ingredients": [
+        { "id": "ing_rice" }, { "id": "ing_peas_dried" }, { "id": "ing_corn" },
+        { "id": "ing_carrot" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_moussaka",
+      "name": "Мусака",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 212,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_flour" }, { "id": "ing_milk" },
+        { "id": "ing_eggs" }
+      ],
+      "manualAllergens": ["alg_gluten"]
+    },
+    {
+      "id": "rcp_potato_minced_pie",
+      "name": "Картофен пай с кайма",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 212,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
+        { "id": "ing_carrot" }, { "id": "ing_flour" }, { "id": "ing_milk" },
+        { "id": "ing_yoghurt" }, { "id": "ing_eggs" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": ["alg_gluten"]
+    },
+    {
+      "id": "rcp_potato_minced_pie_2",
+      "name": "Картофен пай с кайма (вариант)",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 190,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_minced_meat" }, { "id": "ing_onion" },
+        { "id": "ing_butter" }, { "id": "ing_milk_fresh" }, { "id": "ing_yoghurt" },
+        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": ["alg_gluten"]
+    },
+    {
+      "id": "rcp_spinach_potato_pie",
+      "name": "Картофен пай със спанак",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 236,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_spinach" }, { "id": "ing_onion" },
+        { "id": "ing_milk_fresh" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
+        { "id": "ing_yoghurt" }, { "id": "ing_parsley" }, { "id": "ing_salt" },
+        { "id": "ing_sunflower_oil" }
+      ],
+      "manualAllergens": []
+    },
+    {
       "id": "rcp_potato_cheese_pie",
       "name": "Картофен пай със сирене и кашкавал",
-      "name_en": "Potato pie with white and yellow cheese",
       "category": "main",
       "portionSize": "150г",
       "calories": 210,
@@ -445,23 +504,120 @@
       "manualAllergens": []
     },
     {
-      "id": "rcp_village_soup",
-      "name": "Супа по селски с месо",
-      "name_en": "Country-style meat soup",
-      "category": "soup",
+      "id": "rcp_cheese_gratin",
+      "name": "Огретен със сирене и кашкавал",
+      "category": "main",
       "portionSize": "150г",
-      "calories": 110,
+      "calories": 198,
       "ingredients": [
-        { "id": "ing_pork" }, { "id": "ing_potato" }, { "id": "ing_vermicelli" },
-        { "id": "ing_onion" }, { "id": "ing_carrot" }, { "id": "ing_pepper" },
-        { "id": "ing_celery" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" }
+        { "id": "ing_potato" }, { "id": "ing_butter" }, { "id": "ing_cheese_yellow" },
+        { "id": "ing_cheese_white" }, { "id": "ing_flour" }, { "id": "ing_eggs" },
+        { "id": "ing_milk" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_crispy_chicken_fillet",
+      "name": "Хрупкаво пилешко филе на фурна с гарнитура",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_chicken_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_fish_fillet_baked",
+      "name": "Филе от бяла риба на фурна с гарнитура",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_fish_fillet" }, { "id": "ing_panko" }, { "id": "ing_eggs" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" },
+        { "id": "ing_cabbage_fresh" }, { "id": "ing_carrot" }, { "id": "ing_vinegar" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_chicken_rice",
+      "name": "Пиле с бял ориз",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_chicken_thigh" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_pork_rice",
+      "name": "Месо с ориз (свинско)",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 246,
+      "ingredients": [
+        { "id": "ing_pork" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_turkey_rice",
+      "name": "Пуешко месо с ориз",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 246,
+      "ingredients": [
+        { "id": "ing_turkey" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }, { "id": "ing_parsley" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_pork_minced_rice",
+      "name": "Месо с ориз (мляно месо)",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_pork" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_cabbage_pork_rice",
+      "name": "Прясно зеле с ориз и месо",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "ingredients": [
+        { "id": "ing_pork" }, { "id": "ing_cabbage_fresh" }, { "id": "ing_rice" },
+        { "id": "ing_onion" }, { "id": "ing_carrot" }, { "id": "ing_sunflower_oil" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_potato_rice_oven",
+      "name": "Картофи с ориз на фурна",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 188,
+      "ingredients": [
+        { "id": "ing_potato" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_tomato_sterilised" }, { "id": "ing_parsley" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
       ],
       "manualAllergens": []
     },
     {
       "id": "rcp_spinach_rice",
       "name": "Спанак с ориз",
-      "name_en": "Spinach with rice",
       "category": "main",
       "portionSize": "150г",
       "calories": 145,
@@ -473,9 +629,37 @@
       "manualAllergens": []
     },
     {
+      "id": "rcp_lentil_plakia",
+      "name": "Плакия от леща",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 186,
+      "ingredients": [
+        { "id": "ing_lentil" }, { "id": "ing_sunflower_oil" }, { "id": "ing_carrot" },
+        { "id": "ing_celery" }, { "id": "ing_onion" }, { "id": "ing_tomato_sterilised" },
+        { "id": "ing_flour" }, { "id": "ing_pepper_fresh" }, { "id": "ing_leek" },
+        { "id": "ing_garlic" }, { "id": "ing_savory" }, { "id": "ing_lemon" },
+        { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_veg_sarma",
+      "name": "Вегетарианска дроб сарма",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 158,
+      "ingredients": [
+        { "id": "ing_rice" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
+        { "id": "ing_peas_frozen" }, { "id": "ing_green_beans_frozen" },
+        { "id": "ing_tomato_sterilised" }, { "id": "ing_spearmint" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
       "id": "rcp_turkey_gratin",
       "name": "Огретен с пуешко месо",
-      "name_en": "Turkey gratin",
       "category": "main",
       "portionSize": "150г",
       "calories": 236,
@@ -487,18 +671,137 @@
       "manualAllergens": []
     },
     {
-      "id": "rcp_peas_stew",
-      "name": "Грах яхния",
-      "name_en": "Pea stew",
+      "id": "rcp_kebab_rice",
+      "name": "Кебап върху ориз",
       "category": "main",
       "portionSize": "150г",
-      "calories": 132,
+      "calories": 176,
       "ingredients": [
-        { "id": "ing_peas_frozen" }, { "id": "ing_potato" }, { "id": "ing_onion" },
-        { "id": "ing_carrot" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_coriander" },
-        { "id": "ing_garlic" }, { "id": "ing_sunflower_oil" }, { "id": "ing_black_pepper" },
+        { "id": "ing_pork_boneless" }, { "id": "ing_rice" }, { "id": "ing_onion" },
+        { "id": "ing_tomato_puree" }, { "id": "ing_flour" }, { "id": "ing_black_pepper" },
+        { "id": "ing_parsley" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_kebapche_skara",
+      "name": "Кебапче/кюфте на скара",
+      "category": "main",
+      "portionSize": "90г",
+      "calories": 234,
+      "ingredients": [
+        { "id": "ing_pork" }, { "id": "ing_salt" }, { "id": "ing_black_pepper" },
+        { "id": "ing_cumin" }, { "id": "ing_onion" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_kyufte_marinade",
+      "name": "Кюфтета с маринован сос",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 171,
+      "ingredients": [
+        { "id": "ing_veal_minced" }, { "id": "ing_onion" }, { "id": "ing_leek" },
+        { "id": "ing_parsley" }, { "id": "ing_flour" }, { "id": "ing_carrot" },
+        { "id": "ing_celery" }, { "id": "ing_tomato_puree" }, { "id": "ing_pepper_puree" },
+        { "id": "ing_garlic" }, { "id": "ing_bay_leaf" }, { "id": "ing_sunflower_oil" },
         { "id": "ing_salt" }
       ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_kyufte_garden",
+      "name": "Кюфтета по градинарски",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 238,
+      "ingredients": [
+        { "id": "ing_minced_meat" }, { "id": "ing_potato" }, { "id": "ing_peas_frozen" },
+        { "id": "ing_green_beans_frozen" }, { "id": "ing_carrot" }, { "id": "ing_onion" },
+        { "id": "ing_garlic" }, { "id": "ing_tomato_sterilised" }, { "id": "ing_pepper_puree" },
+        { "id": "ing_sunflower_oil" }, { "id": "ing_parsley" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_pasta_sicilian",
+      "name": "Макарони по Сицилиански",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 218,
+      "ingredients": [
+        { "id": "ing_pasta" }, { "id": "ing_butter" }, { "id": "ing_minced_meat" },
+        { "id": "ing_cheese_yellow" }, { "id": "ing_onion" }, { "id": "ing_eggs" },
+        { "id": "ing_milk_fresh" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_kyufte_white_sauce",
+      "name": "Кюфтета с бял сос",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 208,
+      "ingredients": [
+        { "id": "ing_minced_meat" }, { "id": "ing_onion" }, { "id": "ing_carrot" },
+        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_yoghurt" },
+        { "id": "ing_lemon" }, { "id": "ing_sunflower_oil" }, { "id": "ing_salt" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_kremche",
+      "name": "Кремче",
+      "category": "dessert",
+      "portionSize": "150г",
+      "calories": 150,
+      "ingredients": [
+        { "id": "ing_cream_cheese" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
+        { "id": "ing_starch" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_milk_rice",
+      "name": "Мляко с ориз",
+      "category": "dessert",
+      "portionSize": "150г",
+      "calories": 162,
+      "ingredients": [
+        { "id": "ing_rice" }, { "id": "ing_milk" }, { "id": "ing_sugar" },
+        { "id": "ing_vanilla" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_muffin",
+      "name": "Мъфин/Кексче",
+      "category": "dessert",
+      "portionSize": "60г",
+      "calories": 157,
+      "ingredients": [
+        { "id": "ing_flour" }, { "id": "ing_eggs" }, { "id": "ing_milk" },
+        { "id": "ing_sugar" }, { "id": "ing_lemon" }, { "id": "ing_sunflower_oil" }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_fruit",
+      "name": "Плод",
+      "category": "dessert",
+      "portionSize": "150-200г",
+      "calories": null,
+      "ingredients": [ { "id": "ing_fruit" } ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_bread_slices",
+      "name": "Филийки хляб по утвърден стандарт",
+      "category": "side",
+      "portionSize": null,
+      "calories": null,
+      "ingredients": [ { "id": "ing_bread" } ],
       "manualAllergens": []
     }
   ]
