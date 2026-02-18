@@ -123,15 +123,17 @@
             setTimeout(() => {
                 splash.style.display = 'none';
                 
-                // Sync language dropdown with loaded settings
-                const langSel = document.getElementById('languageSelect');
-                if (langSel && window.appSettings && window.appSettings.language) {
-                    langSel.value = window.appSettings.language;
-                    console.log('🌍 Language dropdown synced to:', window.appSettings.language);
+                // FIX: Apply language from loaded settings.json using changeLanguage()
+                // This updates currentLanguage, the dropdown, AND re-renders all data-i18n elements
+                // in the correct order — AFTER settings.json has been loaded from the folder.
+                // shouldSave=false prevents unnecessarily re-writing settings.json on every load.
+                if (window.appSettings && window.appSettings.language) {
+                    console.log('🌍 Applying language from settings:', window.appSettings.language);
+                    window.changeLanguage(window.appSettings.language, false);
+                } else {
+                    // No settings loaded — apply translations with current language (localStorage hint)
+                    window.applyTranslations();
                 }
-                
-                // Apply translations after settings are loaded
-                window.applyTranslations();
                 
                 window.initStyleBuilder();
                 window.renderAll();
