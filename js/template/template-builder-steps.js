@@ -1,7 +1,7 @@
 /**
  * Step-Based Template Builder with Accordion UI
  * Clean, organized workflow - Background images only
- * @version 5.5 - loadRealData() fully implemented
+ * @version 5.6 - Only weeks with meal data shown in Load Menu Data picker
  */
 
 class StepTemplateBuilder {
@@ -288,11 +288,13 @@ class StepTemplateBuilder {
         const lang  = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
         const isBg  = lang === 'bg';
 
-        // Build week options (same approach as print.js)
+        // Build week options — only weeks that actually have meals
         const weekEntries = this._buildWeekOptions(isBg);
 
         if (!weekEntries.length) {
-            alert(isBg ? 'Няма планирани ястия в менюто.' : 'No meals found in the menu.');
+            alert(isBg
+                ? 'Няма планирани ястия в менюто. Добавете ястия, за да заредите данни тук.'
+                : 'No meals found in the menu. Add meals first to load data here.');
             return;
         }
 
@@ -313,8 +315,9 @@ class StepTemplateBuilder {
         const selectStyle = 'width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;background:#fafafa;cursor:pointer;outline:none;';
         const labelStyle  = 'display:block;font-weight:600;margin-bottom:6px;color:#555;font-size:0.9rem;';
 
+        const currentEntry = weekEntries.find(e => e.isCurrent) || weekEntries[0];
         const weekOptionsHTML = weekEntries
-            .map(e => `<option value="${e.mondayStr}"${e.isCurrent?' selected':''}>${e.label}</option>`)
+            .map(e => `<option value="${e.mondayStr}"${e.mondayStr === currentEntry.mondayStr ? ' selected' : ''}>${e.label}</option>`)
             .join('');
 
         dialog.innerHTML = `
@@ -328,8 +331,8 @@ class StepTemplateBuilder {
             </div>
             <div style="font-size:12px;color:#888;margin-bottom:20px;">
                 ${isBg
-                    ? '🍽️ Обозначава седмици с планирани ястия. Избраните данни ще заменят примерното меню в прегледа.'
-                    : '🍽️ Marks weeks with planned meals. Loaded data replaces the sample menu in the preview.'}
+                    ? '🍽️ Показани са само седмици с планирани ястия.'
+                    : '🍽️ Only weeks with planned meals are shown.'}
             </div>
             <div style="display:flex;gap:10px;">
                 <button id="lrd-load"   style="flex:1;padding:11px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;">
@@ -360,11 +363,10 @@ class StepTemplateBuilder {
         overlay.addEventListener('click', close);
     }
 
-    // Build week-option list from live currentMenu (mirrors print.js logic)
+    // Build week-option list from live currentMenu.
+    // Only returns weeks that have at least one meal planned — never pads
+    // with empty current/next week entries.
     _buildWeekOptions(isBg) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
         const _getMonday = (d) => {
             const x   = new Date(d);
             const day = x.getDay();
@@ -376,8 +378,10 @@ class StepTemplateBuilder {
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         };
 
-        const currentMonday = _getMonday(today);
-        const nextMonday    = _getMonday(new Date(today.getTime() + 7*86400000));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentStr = _str(_getMonday(today));
+        const nextStr    = _str(_getMonday(new Date(today.getTime() + 7*86400000)));
 
         const mondaySet = new Set();
         const menu = window.currentMenu || {};
@@ -385,33 +389,26 @@ class StepTemplateBuilder {
             const hasMeals = Object.values(menu[dateStr] || {}).some(s => s && s.recipe);
             if (hasMeals) mondaySet.add(_str(_getMonday(new Date(dateStr + 'T00:00:00'))));
         });
-        mondaySet.add(_str(currentMonday));
-        mondaySet.add(_str(nextMonday));
 
-        const currentStr = _str(currentMonday);
-        const nextStr    = _str(nextMonday);
-        const locale     = isBg ? 'bg-BG' : 'en-US';
+        // No meals at all → return empty so caller shows the friendly alert
+        if (!mondaySet.size) return [];
+
+        const locale = isBg ? 'bg-BG' : 'en-US';
 
         return Array.from(mondaySet).sort().map(mondayStr => {
             const monday = new Date(mondayStr + 'T00:00:00');
             const friday = new Date(monday);
             friday.setDate(monday.getDate() + 4);
 
-            // check if any day in this week has meals
-            const hasMeals = Array.from({length:5},(_,i)=>{
-                const d = new Date(monday); d.setDate(monday.getDate()+i);
-                return _str(d);
-            }).some(ds => Object.values(menu[ds]||{}).some(s => s && s.recipe));
-
+            // All entries in this list have meals, so icon is always 🍽️
             const dateRange = monday.toLocaleDateString(locale,{month:'short',day:'numeric'})
                 + ' – '
                 + friday.toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'});
 
-            const icon  = hasMeals ? '🍽️' : '⬜';
-            let   label;
-            if      (mondayStr === currentStr) label = `${icon} ${isBg?'Тази седмица':'This Week'} — ${dateRange}`;
-            else if (mondayStr === nextStr)    label = `${icon} ${isBg?'Следваща седмица':'Next Week'} — ${dateRange}`;
-            else                               label = `${icon} ${dateRange}`;
+            let label;
+            if      (mondayStr === currentStr) label = `🍽️ ${isBg?'Тази седмица':'This Week'} — ${dateRange}`;
+            else if (mondayStr === nextStr)    label = `🍽️ ${isBg?'Следваща седмица':'Next Week'} — ${dateRange}`;
+            else                               label = `🍽️ ${dateRange}`;
 
             return { mondayStr, monday, friday, label, isCurrent: mondayStr === currentStr };
         });
@@ -419,7 +416,6 @@ class StepTemplateBuilder {
 
     // Pull recipes/ingredients for chosen week and set this.previewData
     _applyWeekData(startDate, endDate, isBg) {
-        const lang     = isBg ? 'bg' : 'en';
         const dayNames = isBg
             ? ['Понеделник','Вторник','Сряда','Четвъртък','Петък']
             : ['Monday','Tuesday','Wednesday','Thursday','Friday'];
@@ -480,7 +476,7 @@ class StepTemplateBuilder {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // UI RENDERING HELPERS (unchanged from v5.4)
+    // UI RENDERING HELPERS
     // ─────────────────────────────────────────────────────────────────────────
     renderAccordionSection(id, title, content) {
         const isExpanded = this.expandedSection === id;

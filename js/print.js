@@ -1,7 +1,7 @@
 /**
  * Print Menu Function
  * Single-dialog: week + template + margin all in one modal
- * @version 6.1 - All weeks with data shown in dropdown
+ * @version 6.2 - Only weeks with meal data shown in dropdown
  */
 
 (function(window) {
@@ -35,12 +35,22 @@
 
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
     window.printMenu = async function() {
-        const choice = await showPrintDialog();
+        const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
+        const isBg = lang === 'bg';
+
+        const weekEntries = buildWeekOptions(isBg);
+
+        if (!weekEntries.length) {
+            alert(isBg
+                ? 'Няма планирани ястия. Добавете ястия в менюто, за да използвате печат.'
+                : 'No meals planned. Add meals to the menu before printing.');
+            return;
+        }
+
+        const choice = await showPrintDialog(weekEntries, isBg);
         if (!choice) return;
 
         const mealPlanData = generateMealPlanData(choice.startDate, choice.endDate);
-        const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
-        const isBg = lang === 'bg';
 
         if (mealPlanData.days.length === 0) {
             alert(isBg ? 'Няма планирани ястия за избраната седмица!' : 'No meals planned for the selected week!');
@@ -65,21 +75,15 @@
         openPrintWindow(html, mealPlanData, choice.margins);
     };
 
-    // ─── BUILD ALL-WEEKS DROPDOWN OPTIONS ────────────────────────────────────
-    // Scans window.currentMenu for every date that has at least one meal,
-    // groups them by their Monday, then returns sorted unique week entries.
-    // Current week and next week are always included even if empty.
+    // ─── BUILD WEEK DROPDOWN OPTIONS ─────────────────────────────────────────
+    // Only includes weeks that have at least one meal planned.
+    // If no meals exist anywhere, returns an empty array.
     function buildWeekOptions(isBg) {
         const lang = isBg ? 'bg-BG' : 'en-US';
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const currentMonday = getWeekDates(today)[0];
-        const nextMonday    = getWeekDates(addDays(today, 7))[0];
+        const menu = window.currentMenu || {};
 
         // Collect mondays that have meal data
         const mondaySet = new Set();
-        const menu = window.currentMenu || {};
         Object.keys(menu).forEach(dateStr => {
             const dayData = menu[dateStr];
             const hasMeals = dayData && Object.values(dayData).some(slot => slot && slot.recipe);
@@ -90,15 +94,15 @@
             }
         });
 
-        // Always ensure current + next week appear
-        mondaySet.add(getLocalDateString(currentMonday));
-        mondaySet.add(getLocalDateString(nextMonday));
+        if (!mondaySet.size) return [];
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentMondayStr = getLocalDateString(getWeekDates(today)[0]);
+        const nextMondayStr    = getLocalDateString(getWeekDates(addDays(today, 7))[0]);
 
         // Sort all mondays chronologically
         const sortedMondays = Array.from(mondaySet).sort();
-
-        const currentMondayStr = getLocalDateString(currentMonday);
-        const nextMondayStr    = getLocalDateString(nextMonday);
 
         return sortedMondays.map(mondayStr => {
             const monday  = new Date(mondayStr + 'T00:00:00');
@@ -131,13 +135,8 @@
     }
 
     // ─── UNIFIED PRINT DIALOG ────────────────────────────────────────────────
-    function showPrintDialog() {
+    function showPrintDialog(weekEntries, isBg) {
         return new Promise((resolve) => {
-            const lang   = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
-            const isBg   = lang === 'bg';
-
-            const weekEntries = buildWeekOptions(isBg);
-
             // Template options
             const savedTemplates = window.menuTemplates || {};
             const templateNames  = Object.keys(savedTemplates);
@@ -152,8 +151,10 @@
             });
 
             // Build week <option> elements
+            // Pre-select current week if it appears, otherwise the first entry
+            const currentEntry = weekEntries.find(e => e.isCurrent) || weekEntries[0];
             let weekOptionsHTML = weekEntries.map(e =>
-                `<option value="${e.mondayStr}"${e.isCurrent ? ' selected' : ''}>${e.label}</option>`
+                `<option value="${e.mondayStr}"${e.mondayStr === currentEntry.mondayStr ? ' selected' : ''}>${e.label}</option>`
             ).join('');
 
             // Overlay
