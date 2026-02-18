@@ -30,6 +30,8 @@
             btn_load: 'Load',
             btn_export: 'Export',
             btn_import: 'Import',
+            btn_export_backup: '💾 Export Data (Backup)',
+            btn_import_data: '📂 Import Data',
             btn_week_view: '📅 Weekly',
             btn_month_view: '📆 Monthly',
             btn_populate_allergens: '↻ Reset Default Allergens',
@@ -315,12 +317,17 @@
             // Headings
             heading_past_menus: 'Past Menus',
             heading_settings: 'Settings',
-            heading_data: '💾 Data',
+            heading_data: '💾 Data Management',
             heading_template_library: '📋 Template Library',
             heading_preset_templates: '🎨 Preset Templates',
             heading_my_templates: '📝 My Templates',
             heading_select_week: '📅 Select Week to Print:',
             heading_select_template: '📝 Select Template:',
+            
+            // Settings Page
+            settings_storage_title: '💾 Storage Method',
+            settings_archive_title: '📁 PDF Archive',
+            settings_archive_desc: 'Printed menus are automatically saved to: archive/menus/',
             
             // Template Builder Sections (old)
             section_day_block: '📅 Day Block Style',
@@ -378,6 +385,14 @@
             select_ingredient: 'Select ingredient',
             select_allergen: 'Select allergen',
             select_recipe: 'Select recipe',
+            
+            // Input Placeholders
+            placeholder_recipe_name: 'Recipe Name',
+            placeholder_ingredient_name: 'Ingredient Name',
+            placeholder_allergen_name: 'Allergen Name',
+            placeholder_portion_size: 'e.g., 250g',
+            placeholder_calories: 'e.g., 220',
+            placeholder_instructions: 'Cooking instructions...',
             
             // Day Names (Short)
             day_sun_short: 'Sun',
@@ -440,6 +455,8 @@
             btn_load: 'Зареди',
             btn_export: 'Експорт',
             btn_import: 'Импорт',
+            btn_export_backup: '💾 Експорт на Данни (Резервно)',
+            btn_import_data: '📂 Импорт на Данни',
             btn_week_view: '📅 Седмичен',
             btn_month_view: '📆 Месечен',
             btn_populate_allergens: '↻ Възстанови Алергени',
@@ -725,12 +742,17 @@
             // Headings
             heading_past_menus: 'История на Менюта',
             heading_settings: 'Настройки',
-            heading_data: '💾 Данни',
+            heading_data: '💾 Управление на Данни',
             heading_template_library: '📋 Библиотека с Шаблони',
             heading_preset_templates: '🎨 Готови Шаблони',
             heading_my_templates: '📝 Моите Шаблони',
             heading_select_week: '📅 Изберете Седмица за Печат:',
             heading_select_template: '📝 Изберете Шаблон:',
+            
+            // Settings Page
+            settings_storage_title: '💾 Метод на Съхранение',
+            settings_archive_title: '📁 PDF Архив',
+            settings_archive_desc: 'Отпечатаните менюта се запазват автоматично в: archive/menus/',
             
             // Template Builder Sections (old)
             section_day_block: '📅 Стил на Ден',
@@ -788,6 +810,14 @@
             select_ingredient: 'Избери съставка',
             select_allergen: 'Избери алерген',
             select_recipe: 'Избери рецепта',
+            
+            // Input Placeholders
+            placeholder_recipe_name: 'Име на Рецепта',
+            placeholder_ingredient_name: 'Име на Съставка',
+            placeholder_allergen_name: 'Име на Алерген',
+            placeholder_portion_size: 'напр. 250г',
+            placeholder_calories: 'напр. 220',
+            placeholder_instructions: 'Инструкции за приготвяне...',
             
             // Day Names (Short)
             day_sun_short: 'Нед',
@@ -848,6 +878,11 @@
         // Apply translations to all elements
         window.applyTranslations();
         
+        // Re-render dynamic content that uses window.t() at render time
+        if (typeof window.updateSelects === 'function') window.updateSelects();
+        if (typeof window.renderRecipes === 'function') window.renderRecipes();
+        if (typeof window.renderCalendar === 'function') window.renderCalendar(window.currentCalendarDate);
+        
         // Save to settings.json if shouldSave is true
         if (shouldSave) {
             console.log('💾 Attempting to save language. appSettings exists:', !!window.appSettings);
@@ -875,11 +910,9 @@
         document.querySelectorAll('[data-i18n]').forEach(el => {
             el.textContent = window.t(el.dataset.i18n);
         });
-        if(document.querySelector('[data-i18n-placeholder]')) {
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                el.placeholder = window.t(el.dataset.i18nPlaceholder);
-            });
-        }
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = window.t(el.dataset.i18nPlaceholder);
+        });
     };
 
     window.getCurrentLanguage = function() {
