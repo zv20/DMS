@@ -170,7 +170,6 @@
     min-height: 110px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     padding: 12px;
     border: 2px solid #e9ecef;
     border-radius: 10px;
@@ -179,6 +178,8 @@
     transition: all 0.2s ease;
     overflow: hidden;
     box-sizing: border-box;
+    /* Remove justify-content:space-between so meals sit just below the number */
+    gap: 4px;
 }
 
 .day-cell:hover {
@@ -194,7 +195,6 @@
     opacity: 0.45;
 }
 
-/* Subtle hover — still clickable to navigate there */
 .day-cell.other-month:hover {
     opacity: 0.75;
     border-color: #fd7e14;
@@ -202,7 +202,6 @@
     transform: translateY(-1px);
 }
 
-/* Day number in overflow cells looks lighter */
 .day-cell.other-month .day-number {
     color: #adb5bd;
 }
@@ -237,17 +236,39 @@
     font-weight: 700;
     color: #212529;
     line-height: 1;
-    margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
-/* Meal indicators */
+/* Meal name list container */
 .meal-indicators {
-    font-size: 15pt;
-    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;   /* allow children to shrink inside flex */
+    overflow: hidden;
+}
+
+/* ── Single meal name line: truncate + tooltip ── */
+.meal-name-line {
+    font-size: 0.68rem;
+    font-weight: 600;
     color: #fd7e14;
-    letter-spacing: 4px;
-    text-align: center;
-    line-height: 1.2;
+    line-height: 1.3;
+
+    /* Truncate with ellipsis */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+
+    /* Cursor hint that there's more info on hover */
+    cursor: default;
+}
+
+/* Slightly darken on hover so user notices the tooltip is available */
+.meal-name-line:hover {
+    color: #c45e00;
 }
 
 /* ===========================
@@ -255,12 +276,12 @@
    =========================== */
 
 @media (max-width: 1024px) {
-    .week-view      { gap: 14px; }
-    .day-column     { padding: 14px; min-height: 360px; }
-    .meal-slot      { padding: 10px; }
+    .week-view        { gap: 14px; }
+    .day-column       { padding: 14px; min-height: 360px; }
+    .meal-slot        { padding: 10px; }
     .monthly-calendar { padding: 20px; }
     .month-grid,
-    .month-header   { gap: 10px; }
+    .month-header     { gap: 10px; }
 }
 
 @media (max-width: 768px) {
@@ -279,13 +300,13 @@
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    .day-column     { padding: 16px; min-height: auto; }
+    .day-column       { padding: 16px; min-height: auto; }
     .monthly-calendar { padding: 16px; }
     .month-grid,
-    .month-header   { gap: 6px; }
-    .day-cell       { min-height: 80px; padding: 8px; }
-    .day-number     { font-size: 13pt; }
-    .meal-indicators { font-size: 11pt; letter-spacing: 2px; }
+    .month-header     { gap: 6px; }
+    .day-cell         { min-height: 80px; padding: 8px; }
+    .day-number       { font-size: 13pt; }
+    .meal-name-line   { font-size: 0.6rem; }
 }
 
 @media (max-width: 480px) {
@@ -295,6 +316,6 @@
     .month-header       { gap: 4px; }
     .day-cell           { min-height: 60px; padding: 6px; }
     .day-number         { font-size: 11pt; }
-    .meal-indicators    { font-size: 9pt; letter-spacing: 1px; }
+    .meal-name-line     { font-size: 0.55rem; }
     .day-header         { font-size: 9pt; padding: 8px 4px; }
 }

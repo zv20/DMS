@@ -82,7 +82,6 @@
             const year  = this.currentDate.getFullYear();
             const month = this.currentDate.getMonth();
 
-            // Update month header
             const header = document.getElementById('currentMonth');
             if (header) {
                 const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
@@ -92,7 +91,6 @@
             const monthlyCalendar = document.createElement('div');
             monthlyCalendar.className = 'monthly-calendar';
 
-            // Day-of-week header row
             const monthHeader = document.createElement('div');
             monthHeader.className = 'month-header';
             const dayKeys = ['day_mon_short','day_tue_short','day_wed_short','day_thu_short','day_fri_short','day_sat_short','day_sun_short'];
@@ -107,29 +105,25 @@
             const monthGrid = document.createElement('div');
             monthGrid.className = 'month-grid';
 
-            // How many leading days from the previous month?
             const firstDay    = new Date(year, month, 1);
-            let   startDow    = firstDay.getDay();          // 0=Sun
-            startDow          = startDow === 0 ? 6 : startDow - 1; // Mon=0 … Sun=6
+            let   startDow    = firstDay.getDay();
+            startDow          = startDow === 0 ? 6 : startDow - 1;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const daysInPrev  = new Date(year, month, 0).getDate();
 
-            // ── Leading days from PREVIOUS month ──
             for (let i = startDow - 1; i >= 0; i--) {
-                const d   = new Date(year, month - 1, daysInPrev - i);
+                const d = new Date(year, month - 1, daysInPrev - i);
                 monthGrid.appendChild(this.createDayCell(d, true));
             }
 
-            // ── Days of the CURRENT month ──
             for (let day = 1; day <= daysInMonth; day++) {
                 const d = new Date(year, month, day);
                 monthGrid.appendChild(this.createDayCell(d, false));
             }
 
-            // ── Trailing days from NEXT month (fill last row to 7) ──
-            const totalCells  = startDow + daysInMonth;
-            const remainder   = totalCells % 7;
+            const totalCells   = startDow + daysInMonth;
+            const remainder    = totalCells % 7;
             const trailingDays = remainder === 0 ? 0 : 7 - remainder;
             for (let i = 1; i <= trailingDays; i++) {
                 const d = new Date(year, month + 1, i);
@@ -142,19 +136,19 @@
 
         // Build a single day cell — otherMonth = dimmed style
         createDayCell: function(date, otherMonth) {
-            const dateStr  = getLocalDateString(date);
-            const dow      = date.getDay();
+            const dateStr   = getLocalDateString(date);
+            const dow       = date.getDay();
             const isWeekend = dow === 0 || dow === 6;
-            const isToday  = this.isToday(date);
+            const isToday   = this.isToday(date);
 
             const menu      = window.getMenuForDate(dateStr);
             const mealNames = this.getMealNames(menu);
 
             const dayCell = document.createElement('div');
             dayCell.className = 'day-cell';
-            if (isWeekend)   dayCell.classList.add('weekend');
-            if (isToday)     dayCell.classList.add('today');
-            if (otherMonth)  dayCell.classList.add('other-month');
+            if (isWeekend)  dayCell.classList.add('weekend');
+            if (isToday)    dayCell.classList.add('today');
+            if (otherMonth) dayCell.classList.add('other-month');
 
             dayCell.addEventListener('click', () => this.gotoWeek(dateStr));
 
@@ -166,13 +160,15 @@
             if (mealNames.length > 0 && !isWeekend) {
                 const mealIndicators = document.createElement('div');
                 mealIndicators.className = 'meal-indicators';
+
                 mealNames.forEach(mealText => {
                     const mealLine = document.createElement('div');
-                    mealLine.style.fontSize   = '0.7rem';
-                    mealLine.style.marginTop  = '2px';
-                    mealLine.textContent      = mealText;
+                    mealLine.className   = 'meal-name-line';  // CSS handles truncation
+                    mealLine.textContent = mealText;           // visible (truncated) text
+                    mealLine.title       = mealText;           // full name on hover tooltip
                     mealIndicators.appendChild(mealLine);
                 });
+
                 dayCell.appendChild(mealIndicators);
             }
 
@@ -207,7 +203,7 @@
                 const menu = window.getMenuForDate(dateStr);
 
                 const dayColumn = document.createElement('div');
-                dayColumn.className  = 'day-column';
+                dayColumn.className    = 'day-column';
                 dayColumn.dataset.date = dateStr;
 
                 const dayHeader = document.createElement('div');
@@ -304,8 +300,8 @@
         },
 
         getWeekStart: function(date) {
-            const d   = new Date(date);
-            const day = d.getDay();
+            const d    = new Date(date);
+            const day  = d.getDay();
             const diff = day === 0 ? 1 : -(day - 1);
             d.setDate(d.getDate() + diff);
             d.setHours(0, 0, 0, 0);
