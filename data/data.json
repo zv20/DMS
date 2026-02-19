@@ -1,5 +1,568 @@
 {
-  "recipes": [],
-  "ingredients": [],
-  "allergens": []
+  "recipes": [
+    {
+      "id": "rcp_1771456356559_9l0vcanc5",
+      "name": "Зеленчукова супа ",
+      "category": "soup",
+      "portionSize": "150",
+      "calories": 129,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771438210805_2fkbs6jry"
+        },
+        {
+          "id": "ing_1771455680431_10ii5j0si"
+        },
+        {
+          "id": "ing_1771455696498_4f3z7dk4r"
+        },
+        {
+          "id": "ing_1771455710514_81ab30tv0"
+        },
+        {
+          "id": "ing_1771455718074_54uyf4uh7"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455833978_46cszr0i6"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771456427842_qbwdhvgdt",
+      "name": "Хрупкаво пилешко филе на фурна с гарнитура",
+      "category": "main",
+      "portionSize": "150г",
+      "calories": 249,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771455846632_h7mdwikjq"
+        },
+        {
+          "id": "ing_1771455859911_qrt9rd5ob"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455941164_31fwlzfjj"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771456446477_clj3gnz5p",
+      "name": "Плод",
+      "category": "dessert",
+      "portionSize": "150-200гр",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771456490771_d3f7ucgcu",
+      "name": "Филийки хляб по Утвърден стандарт ",
+      "category": "other",
+      "portionSize": "",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": [
+        {
+          "id": "alg_1771455731813_zrz67a2nl"
+        }
+      ]
+    },
+    {
+      "id": "rcp_1771456524466_dqwgoob46",
+      "name": "Таратор",
+      "category": "soup",
+      "portionSize": "150",
+      "calories": 100,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771455962594_hj0g3jhtg"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771456590490_5xekkaflp",
+      "name": "Свинско месо с ориз",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 249,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771455993388_1e9teugen"
+        },
+        {
+          "id": "ing_1771456006976_u7cwz3spm"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771456011673_pbagbvzf0"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771455833978_46cszr0i6"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506408202_iaajaghfm",
+      "name": "Кремче",
+      "category": "dessert",
+      "portionSize": "150гр",
+      "calories": 150,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771456075226_p0ptl5eh7"
+        },
+        {
+          "id": "ing_1771456093894_bd6g2mb1l"
+        },
+        {
+          "id": "ing_1771456143897_egjk1bif5"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506474997_umzxl2hza",
+      "name": "Картофена крем супа с крутони",
+      "category": "soup",
+      "portionSize": "150гр",
+      "calories": 195,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771438210805_2fkbs6jry"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506531376_6bnk7erag",
+      "name": "Риба хек на фурна с гарнитура ",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 249,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771456169186_vjeu1kx8v"
+        },
+        {
+          "id": "ing_1771455859911_qrt9rd5ob"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455941164_31fwlzfjj"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506635667_83jf4pihb",
+      "name": "Супа със свинско месо",
+      "category": "soup",
+      "portionSize": "150гр",
+      "calories": 155,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771455993388_1e9teugen"
+        },
+        {
+          "id": "ing_1771456221980_5fmrk5cr8"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771456006976_u7cwz3spm"
+        },
+        {
+          "id": "ing_1771455718074_54uyf4uh7"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771456243944_1pz1kbx6u"
+        },
+        {
+          "id": "ing_1771455833978_46cszr0i6"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506702282_e4cedoozf",
+      "name": "Леща яхния",
+      "category": "soup",
+      "portionSize": "150гр",
+      "calories": 116,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771456262140_dfflub3ds"
+        },
+        {
+          "id": "ing_1771456255185_e8b3r8fi4"
+        },
+        {
+          "id": "ing_1771456279208_59tgvnrgw"
+        },
+        {
+          "id": "ing_1771456286468_epzn861mw"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506722671_0zozeaxyp",
+      "name": "Десерт",
+      "category": "dessert",
+      "portionSize": "",
+      "calories": null,
+      "instructions": "",
+      "ingredients": [],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771506757793_lujcp5flg",
+      "name": "Огретен с яйца и сирене",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 144,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771506767345_uhjk6sq13"
+        },
+        {
+          "id": "ing_1771455680431_10ii5j0si"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455833978_46cszr0i6"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        },
+        {
+          "id": "ing_1771506779501_7t5ccs9ws"
+        }
+      ],
+      "manualAllergens": []
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "ing_1771438196607_dlcmku6y3",
+      "name": "картоф",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771438203292_4kawzcbf6",
+      "name": "морков",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771438210805_2fkbs6jry",
+      "name": "целина",
+      "allergens": [
+        "alg_1771438235515_yilopikro"
+      ]
+    },
+    {
+      "id": "ing_1771455680431_10ii5j0si",
+      "name": "лук",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455696498_4f3z7dk4r",
+      "name": "грах",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455710514_81ab30tv0",
+      "name": "царевица",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455718074_54uyf4uh7",
+      "name": "фиде",
+      "allergens": [
+        "alg_1771455731813_zrz67a2nl"
+      ]
+    },
+    {
+      "id": "ing_1771455750407_mecs49pmh",
+      "name": "брашно",
+      "allergens": [
+        "alg_1771455731813_zrz67a2nl"
+      ]
+    },
+    {
+      "id": "ing_1771455762201_sjs6jwvny",
+      "name": "кис.мляко ЗНП",
+      "allergens": [
+        "alg_1771456034476_g7qf0f9d7"
+      ]
+    },
+    {
+      "id": "ing_1771455820385_elmi86q63",
+      "name": "сл.олио",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455827144_gry4koh3o",
+      "name": "сол",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455833978_46cszr0i6",
+      "name": "магданоз",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455846632_h7mdwikjq",
+      "name": "пил.филе",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455859911_qrt9rd5ob",
+      "name": "панко галета",
+      "allergens": [
+        "alg_1771455731813_zrz67a2nl"
+      ]
+    },
+    {
+      "id": "ing_1771455874658_rgy1o5rw0",
+      "name": "яйца",
+      "allergens": [
+        "alg_1771455880580_114bg9hni"
+      ]
+    },
+    {
+      "id": "ing_1771455941164_31fwlzfjj",
+      "name": "олио",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455962594_hj0g3jhtg",
+      "name": "краставица",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771455993388_1e9teugen",
+      "name": "свинско месо без кости и видими мазнини-охладено",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456006976_u7cwz3spm",
+      "name": "лук-кромид",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456011673_pbagbvzf0",
+      "name": "ориз",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456075226_p0ptl5eh7",
+      "name": "мляко",
+      "allergens": [
+        "alg_1771456034476_g7qf0f9d7"
+      ]
+    },
+    {
+      "id": "ing_1771456093894_bd6g2mb1l",
+      "name": "захар",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456143897_egjk1bif5",
+      "name": "нишесте",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456169186_vjeu1kx8v",
+      "name": "риба",
+      "allergens": [
+        "alg_1771456175408_zgyjv70sn"
+      ]
+    },
+    {
+      "id": "ing_1771456221980_5fmrk5cr8",
+      "name": "сл.масло",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456243944_1pz1kbx6u",
+      "name": "оцет",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456255185_e8b3r8fi4",
+      "name": "чесън",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456262140_dfflub3ds",
+      "name": "леща",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456279208_59tgvnrgw",
+      "name": "домати стерилизирани",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771456286468_epzn861mw",
+      "name": "чубрица",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771506767345_uhjk6sq13",
+      "name": "сурене",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771506779501_7t5ccs9ws",
+      "name": "прясно мляко",
+      "allergens": [
+        "alg_1771456034476_g7qf0f9d7"
+      ]
+    }
+  ],
+  "allergens": [
+    {
+      "id": "alg_1771438235515_yilopikro",
+      "name": "целина",
+      "color": "#ff0000"
+    },
+    {
+      "id": "alg_1771455731813_zrz67a2nl",
+      "name": "глутен",
+      "color": "#ff0000"
+    },
+    {
+      "id": "alg_1771455880580_114bg9hni",
+      "name": "яйца",
+      "color": "#ff0000"
+    },
+    {
+      "id": "alg_1771456034476_g7qf0f9d7",
+      "name": "мляко",
+      "color": "#ff0000"
+    },
+    {
+      "id": "alg_1771456175408_zgyjv70sn",
+      "name": "риба",
+      "color": "#ff0000"
+    }
+  ]
 }
