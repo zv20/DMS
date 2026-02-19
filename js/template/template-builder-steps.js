@@ -1,6 +1,6 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.1 - Full preview restored: portions, calories, allergens + font family at top
+ * @version 6.2 - Fix: transparent dayBackground handled via checkbox, not color input
  */
 
 class StepTemplateBuilder {
@@ -120,7 +120,7 @@ class StepTemplateBuilder {
 
             <!-- ── Font Family always visible at top ── -->
             <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;">
-                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🖋️ Page Font Family</label>
+                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🗻️ Page Font Family</label>
                 <select id="fontFamily" class="select-input">
                     <option value="Arial, sans-serif"            ${this.settings.fontFamily.includes('Arial')  ?'selected':''}>Arial</option>
                     <option value="'Times New Roman', serif"     ${this.settings.fontFamily.includes('Times')  ?'selected':''}>Times New Roman</option>
@@ -198,8 +198,8 @@ class StepTemplateBuilder {
                     <div style="font-size:11px;color:#666;">${t.templateStyle||'compact'} | H:${t.showHeader?'✓':'✗'} F:${t.showFooter?'✓':'✗'}</div>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="stepTemplateBuilder.loadTemplate('${name}')">📥</button>
-                    <button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="stepTemplateBuilder.deleteTemplate('${name}')">🗑️</button>
+                    <button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="stepTemplateBuilder.loadTemplate('${name}')">&#128229;</button>
+                    <button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="stepTemplateBuilder.deleteTemplate('${name}')">&#128465;</button>
                 </div>
             </div>`).join('');
     }
@@ -250,7 +250,7 @@ class StepTemplateBuilder {
                 <div class="image-card">
                     <img src="${img.url}" style="width:100%;height:80px;object-fit:contain;border-radius:4px;margin-bottom:5px;background:#f5f5f5;">
                     <div style="font-size:10px;color:#666;margin-bottom:5px;word-break:break-word;">${img.name}</div>
-                    <button class="btn btn-secondary" style="width:100%;padding:4px;font-size:11px;" onclick="stepTemplateBuilder.deleteImage('${folder}','${img.name}')">🗑️</button>
+                    <button class="btn btn-secondary" style="width:100%;padding:4px;font-size:11px;" onclick="stepTemplateBuilder.deleteImage('${folder}','${img.name}')">&#128465;</button>
                 </div>`).join('');
         } catch { container.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:#999;border:2px dashed #ddd;border-radius:8px;font-size:12px;">${window.t('images_folder_missing')}</div>`; }
     }
@@ -276,12 +276,12 @@ class StepTemplateBuilder {
         const dialog = document.createElement('div');
         dialog.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:28px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:10000;min-width:340px;';
         dialog.innerHTML = `
-            <h2 style="margin:0 0 16px 0;">📅 ${isBg?'Зареди данни':'Load Menu Data'}</h2>
+            <h2 style="margin:0 0 16px 0;">&#128197; ${isBg?'Зареди данни':'Load Menu Data'}</h2>
             <select id="lrd-week" style="width:100%;padding:10px;border-radius:8px;margin-bottom:20px;">
                 ${weeks.map(e=>`<option value="${e.mondayStr}">${e.label}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;">
-                <button id="lrd-load"   style="flex:1;padding:11px;background:#fd7e14;color:white;border:none;border-radius:8px;font-weight:600;">${isBg?'✅ Зареди':'✅ Load'}</button>
+                <button id="lrd-load"   style="flex:1;padding:11px;background:#fd7e14;color:white;border:none;border-radius:8px;font-weight:600;">${isBg?'&#9989; Зареди':'&#9989; Load'}</button>
                 <button id="lrd-cancel" style="padding:11px 18px;background:#e9ecef;border:none;border-radius:8px;">${isBg?'Отказ':'Cancel'}</button>
             </div>`;
         document.body.appendChild(overlay); document.body.appendChild(dialog);
@@ -306,7 +306,7 @@ class StepTemplateBuilder {
         return Array.from(set).sort().map(mondayStr => {
             const monday = new Date(mondayStr+'T00:00:00'), friday = new Date(monday);
             friday.setDate(monday.getDate()+4);
-            return { mondayStr, monday, friday, label:`🍽️ ${monday.toLocaleDateString(locale,{month:'short',day:'numeric'})} – ${friday.toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'})}` };
+            return { mondayStr, monday, friday, label:`&#127869;&#65039; ${monday.toLocaleDateString(locale,{month:'short',day:'numeric'})} – ${friday.toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'})}` };
         });
     }
 
@@ -338,7 +338,7 @@ class StepTemplateBuilder {
         const open = this.expandedSection === id;
         return `<div class="accordion-section ${open?'expanded':''}" data-section="${id}">
             <div class="accordion-header">
-                <span class="accordion-icon">${open?'▼':'▶'}</span>
+                <span class="accordion-icon">${open?'&#9660;':'&#9658;'}</span>
                 <span>${title}</span>
             </div>
             <div class="accordion-content" style="display:${open?'block':'none'};">${content}</div>
@@ -403,7 +403,7 @@ class StepTemplateBuilder {
             <label>${window.t('label_text_color')}</label>
             <input type="color" id="headerColor" value="${this.settings.headerColor}" class="color-input">
 
-            <h4 style="margin-top:18px;">📅 Date Range</h4>
+            <h4 style="margin-top:18px;">&#128197; Date Range</h4>
             <label class="checkbox-label"><input type="checkbox" id="showDateRange" ${this.settings.showDateRange?'checked':''}><span>Show Date Range</span></label>
             <label>Date Alignment</label>
             <select id="dateAlignment" class="select-input">
@@ -419,6 +419,12 @@ class StepTemplateBuilder {
     }
 
     renderMenuControls() {
+        // dayBackground can be 'transparent' — color input requires a valid #rrggbb value.
+        // We use a separate checkbox for "No background" and only show the color picker
+        // when a real color is selected. This eliminates the browser console warning.
+        const dayBgIsTransparent = !this.settings.dayBackground || this.settings.dayBackground === 'transparent';
+        const dayBgColor = dayBgIsTransparent ? '#ffffff' : this.settings.dayBackground;
+
         return `<div class="control-group">
             <h4>${window.t('label_template_style')}</h4>
             <label class="radio-label"><input type="radio" name="templateStyle" value="compact"       ${this.settings.templateStyle==='compact'?'checked':''}><span><strong>${window.t('style_compact')}</strong> – ${window.t('style_compact_desc')}</span></label>
@@ -443,8 +449,15 @@ class StepTemplateBuilder {
                 <option value="3px" ${this.settings.dayBorderThickness==='3px'?'selected':''}>3px</option>
                 <option value="4px" ${this.settings.dayBorderThickness==='4px'?'selected':''}>4px</option>
             </select>
-            <label>${window.t('label_background')}</label>
-            <input type="color" id="dayBackground" value="${this.settings.dayBackground}" class="color-input">
+
+            <label style="margin-top:4px;">${window.t('label_background')}</label>
+            <label class="checkbox-label" style="margin-bottom:4px;">
+                <input type="checkbox" id="dayBgTransparent" ${dayBgIsTransparent?'checked':''}>
+                <span>No background (transparent)</span>
+            </label>
+            <input type="color" id="dayBackground" value="${dayBgColor}" class="color-input"
+                   style="${dayBgIsTransparent?'opacity:0.35;pointer-events:none;':''}"
+                   ${dayBgIsTransparent?'disabled':''}>
 
             <h4 style="margin-top:15px;">${window.t('label_day_name')}</h4>
             <label>Size (pt)</label>
@@ -452,7 +465,7 @@ class StepTemplateBuilder {
             <label>${window.t('label_color')}</label>
             <input type="color" id="dayNameColor" value="${this.settings.dayNameColor}" class="color-input">
 
-            <h4 style="margin-top:15px;">🍽️ Meal Text</h4>
+            <h4 style="margin-top:15px;">&#127869;&#65039; Meal Text</h4>
             <label>Meal Size (pt)</label>
             <input type="number" id="mealFontSize" value="${this.settings.mealFontSize}" min="6" max="36" class="text-input">
 
@@ -513,12 +526,12 @@ class StepTemplateBuilder {
                 document.querySelectorAll('.accordion-section').forEach(s => {
                     s.classList.remove('expanded');
                     s.querySelector('.accordion-content').style.display = 'none';
-                    s.querySelector('.accordion-icon').textContent = '▶';
+                    s.querySelector('.accordion-icon').textContent = '\u25b6';
                 });
                 if (!isOpen) {
                     section.classList.add('expanded');
                     section.querySelector('.accordion-content').style.display = 'block';
-                    section.querySelector('.accordion-icon').textContent = '▼';
+                    section.querySelector('.accordion-icon').textContent = '\u25bc';
                     this.expandedSection = section.dataset.section;
                 }
             });
@@ -545,7 +558,8 @@ class StepTemplateBuilder {
         this.bindColorInput('dayBorderColor');
         this.bindSelect('dayBorderStyle');
         this.bindSelect('dayBorderThickness');
-        this.bindColorInput('dayBackground');
+        // dayBackground handled separately — supports 'transparent' via checkbox
+        this.bindDayBackground();
         this.bindNumberInput('dayNameSize');
         this.bindColorInput('dayNameColor');
         this.bindNumberInput('mealFontSize');
@@ -556,6 +570,37 @@ class StepTemplateBuilder {
         this.bindTextInput('footerText');
         this.bindSelect('footerAlignment');
         this.bindNumberInput('footerFontSize');
+    }
+
+    // Special binding for dayBackground:
+    // - Checkbox "No background" sets dayBackground to 'transparent' and disables the picker
+    // - Color picker only active when checkbox is unchecked, stores a valid hex value
+    bindDayBackground() {
+        const check = document.getElementById('dayBgTransparent');
+        const color = document.getElementById('dayBackground');
+        if (!check || !color) return;
+
+        check.addEventListener('change', e => {
+            if (e.target.checked) {
+                this.settings.dayBackground = 'transparent';
+                color.disabled = true;
+                color.style.opacity = '0.35';
+                color.style.pointerEvents = 'none';
+            } else {
+                this.settings.dayBackground = color.value;
+                color.disabled = false;
+                color.style.opacity = '1';
+                color.style.pointerEvents = '';
+            }
+            this.updatePreview();
+        });
+
+        color.addEventListener('input', e => {
+            if (!check.checked) {
+                this.settings.dayBackground = e.target.value;
+                this.updatePreview();
+            }
+        });
     }
 
     bindMultiImageSlot(index) {
@@ -641,7 +686,7 @@ class StepTemplateBuilder {
         } catch { return false; }
     }
 
-    // ─── PREVIEW ──────────────────────────────────────────────────────────────
+    // ─── PREVIEW ───────────────────────────────────────────────────────────────
     updatePreview() {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
@@ -706,7 +751,6 @@ class StepTemplateBuilder {
 
         day.meals.forEach(meal => {
             if (isCompact) {
-                // Compact: all on one line
                 let line = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) line += ` – ${meal.portion}`;
                 if (meal.ingredients && meal.ingredients.length) {
@@ -716,7 +760,6 @@ class StepTemplateBuilder {
                 if (meal.calories) line += ` | ККАЛ ${meal.calories}`;
                 html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:4px;margin-left:8px;">${line}</div>`;
             } else {
-                // Detailed: name on first line, ingredients on second
                 let title = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) title += ` – ${meal.portion}`;
                 html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:2px;margin-left:8px;font-weight:500;">${title}</div>`;
