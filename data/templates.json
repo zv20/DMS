@@ -69,5 +69,355 @@
     "footerText": "Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.",
     "footerAlignment": "center",
     "footerFontSize": "11pt"
+  },
+  "pist": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 34,
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "dateFontSize": 25,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": 11,
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.",
+    "footerAlignment": "center",
+    "footerFontSize": 12
+  },
+  "pisttt": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 34,
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "dateFontSize": 25,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": 11,
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.",
+    "footerAlignment": "center",
+    "footerFontSize": 12
+  },
+  "pisss": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 34,
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "dateFontSize": 25,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": 11,
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г. Менюто е съгласувано с мед.лице - Елиза Дамянова.",
+    "footerAlignment": "center",
+    "footerFontSize": 12
+  },
+  "menu": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 30,
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "dateFontSize": 18,
+    "dateColor": "#cc3e3e",
+    "dateAlignment": "center",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": 11,
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233.Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233.Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233",
+    "footerAlignment": "center",
+    "footerFontSize": 12
+  },
+  "perfect\\": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 30,
+    "headerColor": "#d2691e",
+    "showDateRange": true,
+    "dateFontSize": 18,
+    "dateColor": "#cc3e3e",
+    "dateAlignment": "center",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 13,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "mealFontSize": 9,
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233.Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233.Приготвено с любов imnofo m,ddikfjdfkjdjfjkdjfhkdjfsdgfsdfdfsd  fdfee f. efd f ee. sd d eferew f.  efwefefd f ed sf befe,efdfd f d f 1211233",
+    "footerAlignment": "center",
+    "footerFontSize": 12
   }
 }
