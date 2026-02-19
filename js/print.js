@@ -1,7 +1,7 @@
 /**
  * Print Menu Function
  * Single-dialog: week + template + margin all in one modal
- * @version 6.3 - Fixed page cut: use CSS zoom instead of transform:scale
+ * @version 6.4 - Fill full page: flexbox space-evenly on day blocks
  */
 
 (function(window) {
@@ -71,8 +71,13 @@
             if (b64) settings.backgroundImageData = b64;
         }
 
-        const html = renderMenuHTML(mealPlanData, settings);
-        openPrintWindow(html, mealPlanData, choice.margins);
+        // Usable page dimensions in px at 96dpi (1mm = 3.7795px)
+        const { top, right, bottom, left } = choice.margins;
+        const usableH = Math.round((297 - top - bottom) * 3.7795);
+        const usableW = Math.round((210 - left - right) * 3.7795);
+
+        const html = renderMenuHTML(mealPlanData, settings, usableH);
+        openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW);
     };
 
     // ─── BUILD WEEK DROPDOWN OPTIONS ───────────────────────────────────────────
@@ -342,15 +347,28 @@
             return `<span style="${st}">${ing.name}</span>`;
         }).join(', ');
     }
-    // Accept plain numbers (from builder number inputs) or strings with pt/px/etc
+    // Accept plain numbers (from builder number inputs) or strings with pt/px/em etc.
     function normSize(v, fallback) {
         if (!v && v !== 0) return fallback;
-        return /^\d+$/.test(String(v).trim()) ? `${v}pt` : String(v);
+        return /^\d+(\.\d+)?$/.test(String(v).trim()) ? `${v}pt` : String(v);
     }
 
     // ─── RENDER HTML ──────────────────────────────────────────────────────────
-    function renderMenuHTML(data, s) {
-        if ((s.templateStyle || 'compact') === 'detailed-2col') return renderMenuHTML2Column(data, s);
+    //
+    // Layout strategy:
+    //   #menu-content
+    //     ├─ background layers (position:absolute, no layout impact)
+    //     └─ inner (position:relative, z-index:10, flex:1, flex-direction:column)
+    //           ├─ header block  (shrinks to content)
+    //           ├─ days block    (flex:1 → fills all remaining height)
+    //           │     justify-content:space-evenly → equal gaps between/around days
+    //           └─ footer block  (shrinks to content)
+    //
+    // This ensures the 5 day-blocks always spread across the FULL page height
+    // regardless of how compact the content is.
+    //
+    function renderMenuHTML(data, s, usableH) {
+        if ((s.templateStyle || 'compact') === 'detailed-2col') return renderMenuHTML2Column(data, s, usableH);
 
         const { startDate, endDate, days } = data;
         const isCompact = (s.templateStyle || 'compact') === 'compact';
@@ -361,36 +379,46 @@
         const ms  = normSize(s.mealFontSize,     '10pt');
         const fs  = normSize(s.footerFontSize,   '8pt');
         const ff  = s.fontFamily || 'Arial, sans-serif';
+        // height: usableH for screen preview; print uses height:100% via CSS
+        const hStyle = usableH ? `height:${usableH}px;` : '';
 
-        let html = `<div id="menu-content" style="background-color:${s.backgroundColor};position:relative;padding:0;font-family:${ff};">`;
+        // Outer wrapper: flex column, fills usableH on screen / 100% on print
+        let html = `<div id="menu-content" style="background-color:${s.backgroundColor};position:relative;` +
+                   `padding:0;font-family:${ff};${hStyle}display:flex;flex-direction:column;">`;
         html = addBgLayers(html, s);
-        html += `<div style="position:relative;z-index:10;">`;
 
-        if (s.showHeader)    html += `<div style="text-align:${s.headerAlignment||'center'};margin-bottom:4px;"><span style="font-size:${hs};color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>`;
-        if (s.showDateRange) html += `<div style="text-align:center;margin-bottom:6px;font-size:9pt;color:#555;">${dr}</div>`;
+        // Inner: sits above bg layers, also flex column to pass height down
+        html += `<div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;">`;
 
+        // ── Header block ─────────────────────────────────────────────────────
+        html += `<div>`;
+        if (s.showHeader)    html += `<div style="text-align:${s.headerAlignment||'center'};padding-top:4px;margin-bottom:2px;"><span style="font-size:${hs};color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>`;
+        if (s.showDateRange) html += `<div style="text-align:center;margin-bottom:4px;font-size:9pt;color:#555;">${dr}</div>`;
+        html += `</div>`;
+
+        // ── Days block ─ flex:1 + space-evenly = fills page, days spread out ──
+        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;">`;
         days.forEach(day => {
             const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
             const bg  = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
-            html += `<div style="${brd}${bg}padding:4px 5px;margin-bottom:5px;border-radius:3px;">`;
-            html += `<div style="font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:2px;">${day.name}</div>`;
+            html += `<div style="${brd}${bg}padding:4px 6px;border-radius:3px;">`;
+            html += `<div style="font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:1px;">${day.name}</div>`;
 
             day.meals.forEach(meal => {
                 const ingHtml = renderIngHtml(meal, s);
                 if (isCompact) {
-                    html += `<div style="margin-bottom:1px;margin-left:8px;font-size:${ms};line-height:${lh};"> ${meal.number}. ${meal.name}`;
+                    html += `<div style="margin-left:8px;font-size:${ms};line-height:${lh};"> ${meal.number}. ${meal.name}`;
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
                     if (ingHtml) html += `; ${ingHtml}`;
                     if (s.showCalories && meal.calories) html += ` ККАЛ ${meal.calories}`;
                     html += `</div>`;
                 } else {
-                    html += `<div style="margin-bottom:2px;margin-left:8px;">`;
+                    html += `<div style="margin-left:8px;">`;
                     html += `<div style="font-size:${ms};line-height:${lh};font-weight:500;"> ${meal.number}. ${meal.name}`;
                     if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
                     html += `</div>`;
-                    const ingHtml2 = renderIngHtml(meal, s);
-                    if (ingHtml2) {
-                        html += `<div style="font-size:${ms};line-height:${lh};margin-left:12px;color:#555;font-style:italic;">${ingHtml2}`;
+                    if (ingHtml) {
+                        html += `<div style="font-size:${ms};line-height:${lh};margin-left:12px;color:#555;font-style:italic;">${ingHtml}`;
                         if (s.showCalories && meal.calories) html += ` - ККАЛ ${meal.calories}`;
                         html += `</div>`;
                     } else if (s.showCalories && meal.calories) {
@@ -399,15 +427,19 @@
                     html += `</div>`;
                 }
             });
-            html += `</div>`;
+            html += `</div>`; // day block
         });
+        html += `</div>`; // days container
 
-        if (s.showFooter) html += `<div style="text-align:${s.footerAlignment||'center'};margin-top:6px;padding-top:4px;border-top:1px solid #ddd;font-size:${fs};color:#888;">${s.footerText}</div>`;
-        html += `</div></div>`;
+        // ── Footer block ────────────────────────────────────────────────────
+        if (s.showFooter) html += `<div style="text-align:${s.footerAlignment||'center'};padding:4px 0 2px;border-top:1px solid #ddd;font-size:${fs};color:#888;">${s.footerText}</div>`;
+
+        html += `</div>`; // inner
+        html += `</div>`; // #menu-content
         return html;
     }
 
-    function renderMenuHTML2Column(data, s) {
+    function renderMenuHTML2Column(data, s, usableH) {
         const { startDate, endDate, days } = data;
         const dr  = fmtDateRange(startDate, endDate);
         const hs  = normSize(s.headerFontSize, '20pt');
@@ -415,22 +447,33 @@
         const ms  = normSize(s.mealFontSize,   '10pt');
         const fs  = normSize(s.footerFontSize, '8pt');
         const ff  = s.fontFamily || 'Arial, sans-serif';
+        const hStyle = usableH ? `height:${usableH}px;` : '';
 
-        let html = `<div id="menu-content" style="background-color:${s.backgroundColor};position:relative;padding:0;font-family:${ff};">`;
+        let html = `<div id="menu-content" style="background-color:${s.backgroundColor};position:relative;` +
+                   `padding:0;font-family:${ff};${hStyle}display:flex;flex-direction:column;">`;
         html = addBgLayers(html, s);
-        html += `<div style="position:relative;z-index:10;">`;
+        html += `<div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;">`;
 
-        if (s.showHeader)    html += `<div style="text-align:${s.headerAlignment||'center'};margin-bottom:4px;"><span style="font-size:${hs};color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>`;
-        if (s.showDateRange) html += `<div style="text-align:center;margin-bottom:6px;font-size:9pt;color:#555;">${dr}</div>`;
+        html += `<div>`;
+        if (s.showHeader)    html += `<div style="text-align:${s.headerAlignment||'center'};padding-top:4px;margin-bottom:2px;"><span style="font-size:${hs};color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>`;
+        if (s.showDateRange) html += `<div style="text-align:center;margin-bottom:4px;font-size:9pt;color:#555;">${dr}</div>`;
+        html += `</div>`;
+
+        // 2-col: rows flex:1 so they spread vertically too
+        const rows = [];
+        for (let i = 0; i < days.length; i += 2) rows.push([days[i], days[i+1] || null]);
+
+        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;">`;
 
         const renderDay = (day) => {
+            if (!day) return `<div style="flex:1;"></div>`;
             const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
             const bg  = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
-            let d = `<div style="${brd}${bg}padding:4px 5px;border-radius:3px;">`;
-            d += `<div style="font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:2px;">${day.name}</div>`;
+            let d = `<div style="flex:1;${brd}${bg}padding:4px 6px;border-radius:3px;">`;
+            d += `<div style="font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:1px;">${day.name}</div>`;
             day.meals.forEach(meal => {
                 const ingHtml = renderIngHtml(meal, s);
-                d += `<div style="margin-bottom:2px;margin-left:8px;">`;
+                d += `<div style="margin-left:8px;">`;
                 d += `<div style="font-size:${ms};line-height:1.2;font-weight:500;"> ${meal.number}. ${meal.name}`;
                 if (s.showPortions && meal.portion) d += ` - ${meal.portion}`;
                 d += `</div>`;
@@ -447,33 +490,33 @@
             return d;
         };
 
-        for (let i = 0; i < days.length; i += 2) {
-            html += `<div style="display:flex;gap:8px;margin-bottom:5px;">`;
-            html += `<div style="flex:1;">${days[i] ? renderDay(days[i]) : ''}</div>`;
-            html += `<div style="flex:1;">${days[i+1] ? renderDay(days[i+1]) : ''}</div>`;
-            html += `</div>`;
-        }
+        rows.forEach(([a, b]) => {
+            html += `<div style="display:flex;gap:8px;">${renderDay(a)}${renderDay(b)}</div>`;
+        });
+        html += `</div>`; // rows container
 
-        if (s.showFooter) html += `<div style="text-align:${s.footerAlignment||'center'};margin-top:6px;padding-top:4px;border-top:1px solid #ddd;font-size:${fs};color:#888;">${s.footerText}</div>`;
-        html += `</div></div>`;
+        if (s.showFooter) html += `<div style="text-align:${s.footerAlignment||'center'};padding:4px 0 2px;border-top:1px solid #ddd;font-size:${fs};color:#888;">${s.footerText}</div>`;
+        html += `</div>`; // inner
+        html += `</div>`; // #menu-content
         return html;
     }
 
     // ─── PRINT WINDOW ────────────────────────────────────────────────────────────────
     //
-    // KEY FIX: We use CSS `zoom` instead of `transform:scale`.
+    // For PRINT:
+    //   html, body, #page-wrapper, #menu-content all get height:100%
+    //   This makes the flex layout fill the entire A4 content area.
+    //   The days-container (flex:1 + space-evenly) then distributes day blocks
+    //   evenly from top to bottom with no white gap at the bottom.
     //
-    // Previous code used:
-    //   c.style.transform = "scale(" + sf + ")";
-    //   body { height:297mm; overflow:hidden; }   <-- this CUTS content!
+    // For SCREEN preview:
+    //   #menu-content already has height:[usableH]px set inline,
+    //   so the preview accurately shows how the page will look.
     //
-    // transform:scale() shrinks content VISUALLY but the element still occupies
-    // its original layout height, so overflow:hidden hard-clips it at the page.
+    // OVERFLOW: if content is taller than the page (very dense menus),
+    //   CSS zoom scales it down proportionally.
     //
-    // CSS zoom actually rescales layout dimensions, so the element fits within
-    // the available page height without any clipping.
-    //
-    function openPrintWindow(html, mealPlanData, margins) {
+    function openPrintWindow(html, mealPlanData, margins, usableH, usableW) {
         const pw = window.open('', '_blank');
         if (!pw) {
             alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
@@ -485,49 +528,44 @@
             `.${mealPlanData.startDate.getFullYear()}`;
         const { top, right, bottom, left } = margins;
 
-        // Usable area in px at 96dpi (1mm = 3.7795px)
-        const usableH = (297 - top - bottom) * 3.7795;
-        const usableW = (210 - left - right) * 3.7795;
-
         pw.document.write(
             '<!DOCTYPE html><html><head>' +
             '<title>Weekly-Menu-' + ds + '</title>' +
             '<meta charset="UTF-8">' +
             '<style>' +
             '* { margin:0; padding:0; box-sizing:border-box; }' +
-            // ── Screen preview ───────────────────────────────────────────────
-            'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#ccc; }' +
+            // ── Screen: white page card on grey background ───────────────────
+            'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
             '@media screen {' +
             '  #page-wrapper {' +
-            '    background:white;' +
-            '    width:' + Math.round(usableW) + 'px;' +
-            '    min-height:' + Math.round(usableH) + 'px;' +
-            '    margin:20px auto;' +
+            '    background:white; width:' + usableW + 'px;' +
+            '    height:' + usableH + 'px;' +  // exact A4 preview on screen
+            '    margin:20px auto; overflow:hidden;' +
             '    padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm;' +
-            '    box-shadow:0 2px 16px rgba(0,0,0,0.3);' +
+            '    box-shadow:0 2px 16px rgba(0,0,0,0.35);' +
             '  }' +
             '}' +
-            // ── Print: exact A4, NO overflow clip ────────────────────────────
+            // ── Print: fill the full A4 page ─────────────────────────────────
             '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; }' +
             '@media print {' +
-            '  body { background:white; }' +
-            '  #page-wrapper { width:100%; padding:0; margin:0; box-shadow:none; }' +
+            '  html, body { height:100%; background:white; }' +
+            '  #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; }' +
+            '  #menu-content { height:100% !important; }' +  // override inline height
             '  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }' +
             '}' +
             '</style>' +
             '</head><body>' +
             '<div id="page-wrapper">' + html + '</div>' +
-            // Auto-scale using CSS zoom (layout-aware, unlike transform:scale)
+            // Only zoom DOWN if content overflows the page (very dense menus)
             '<scr' + 'ipt>' +
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
             '    if (c) {' +
-            '      var pageH = ' + Math.round(usableH) + ';' +
+            '      var pageH = ' + usableH + ';' +
             '      var ch = c.scrollHeight;' +
-            '      if (ch > pageH) {' +
+            '      if (ch > pageH * 1.05) {' +  // 5% tolerance
             '        var zf = pageH / ch;' +
-            // Only scale DOWN (never zoom in), and never below 50%
             '        if (zf < 1) { c.style.zoom = Math.max(0.5, zf).toFixed(4); }' +
             '      }' +
             '    }' +
