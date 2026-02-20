@@ -34,31 +34,25 @@
             });
         });
         
-        // Setup click-outside-to-close for hamburger menu
         const navOverlay = document.getElementById('navOverlay');
         const hamburgerBtn = document.getElementById('hamburgerBtn');
         const navContent = document.querySelector('.nav-content');
         
         if (navOverlay && hamburgerBtn && navContent) {
-            // Hamburger button opens/closes the menu
             hamburgerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 window.toggleNav();
             });
             
-            // Click outside the nav content closes it
             document.addEventListener('click', (e) => {
                 if (!navOverlay.classList.contains('active')) return;
-                
                 const clickedInsideNav = navContent.contains(e.target);
                 const clickedHamburger = hamburgerBtn.contains(e.target);
-                
                 if (!clickedInsideNav && !clickedHamburger) {
                     navOverlay.classList.remove('active');
                 }
             });
             
-            // Prevent clicks inside nav content from closing it
             navContent.addEventListener('click', (e) => {
                 e.stopPropagation();
             });
@@ -80,8 +74,39 @@
         });
     };
 
-    // NOTE: changeLanguage is now defined in i18n.js only
-    // Removed duplicate definition that was overwriting the i18n.js version
+    // --- Combobox initialisation helpers ---
+    // Called every time a modal opens so the item lists are always fresh.
+
+    function initIngredientCombobox() {
+        window.initCombobox({
+            inputId    : 'ingredientComboInput',
+            dropdownId : 'ingredientComboDropdown',
+            getItems   : () => {
+                const sorted = [...window.ingredients].sort((a, b) =>
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+                return sorted.map(i => ({ id: i.id, label: i.name }));
+            },
+            onSelect   : (item) => {
+                const ing = window.ingredients.find(i => i.id === item.id);
+                if (ing) window.addIngredientTagToModal(ing);
+            },
+            placeholder: window.t ? window.t('select_ingredient') : 'Type to search ingredients…'
+        });
+    }
+
+    function initAllergenCombobox(inputId, dropdownId, onSelectFn) {
+        window.initCombobox({
+            inputId,
+            dropdownId,
+            getItems: () => {
+                const sorted = [...window.allergens].sort((a, b) =>
+                    window.getAllergenName(a).localeCompare(window.getAllergenName(b), undefined, { sensitivity: 'base' }));
+                return sorted.map(a => ({ id: a.id, label: window.getAllergenName(a) }));
+            },
+            onSelect   : onSelectFn,
+            placeholder: window.t ? window.t('select_allergen') : 'Type to search allergens…'
+        });
+    }
 
     // --- Modal Logic ---
     window.openRecipeModal = function(id = null) {
@@ -132,6 +157,17 @@
             window.editingRecipeId = null;
             document.getElementById('recipeModalTitle').textContent = window.t('modal_add_recipe');
         }
+
+        // Wire up comboboxes fresh every open so lists reflect latest data
+        initIngredientCombobox();
+        initAllergenCombobox(
+            'allergenComboInput',
+            'allergenComboDropdown',
+            (item) => {
+                const alg = window.allergens.find(a => a.id === item.id);
+                if (alg) window.addManualAllergenTag(alg);
+            }
+        );
     };
 
     window.closeRecipeModal = function() {
@@ -161,6 +197,16 @@
         } else {
             window.editingIngredientId = null;
         }
+
+        // Wire up allergen combobox fresh every open
+        initAllergenCombobox(
+            'ingAllergenComboInput',
+            'ingAllergenComboDropdown',
+            (item) => {
+                const alg = window.allergens.find(a => a.id === item.id);
+                if (alg) window.addLinkedAllergenTag(alg);
+            }
+        );
     };
 
     window.closeIngredientModal = function() {
@@ -189,40 +235,6 @@
     window.closeAllergenModal = function() {
         document.getElementById('allergenModal').style.display = 'none';
         window.editingAllergenId = null;
-    };
-
-    // --- Helpers ---
-    window.addIngredientFromSelect = function() {
-        const sel = document.getElementById('ingredientSelect');
-        if (sel && sel.value) {
-            const ing = window.ingredients.find(i => i.id === sel.value);
-            if (ing) {
-                window.addIngredientTagToModal(ing);
-                sel.value = '';
-            }
-        }
-    };
-
-    window.addAllergenFromSelect = function() {
-        const sel = document.getElementById('allergenSelect');
-        if (sel && sel.value) {
-            const alg = window.allergens.find(a => a.id === sel.value);
-            if (alg) {
-                window.addManualAllergenTag(alg);
-                sel.value = '';
-            }
-        }
-    };
-
-    window.addIngredientAllergenFromSelect = function() {
-        const sel = document.getElementById('ingredientAllergenSelect');
-        if (sel && sel.value) {
-            const alg = window.allergens.find(a => a.id === sel.value);
-            if (alg) {
-                window.addLinkedAllergenTag(alg);
-                sel.value = '';
-            }
-        }
     };
 
     // --- Modal Helpers (Tag Management) ---
