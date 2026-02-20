@@ -8,6 +8,11 @@
         return { soup: '🥣', main: '🍽️', dessert: '🍰', other: '➕' }[cat] || '➕'; 
     }
 
+    // ─── SORT HELPERS ─────────────────────────────────────────────────────────
+    function sortAZ(arr, nameGetter) {
+        return [...arr].sort((a, b) => nameGetter(a).localeCompare(nameGetter(b), undefined, { sensitivity: 'base' }));
+    }
+
     window.getAllergenName = function(allergen) {
         if (allergen.isSystem) {
             const def = window.PREDEFINED_ALLERGENS.find(d => d.id === allergen.id);
@@ -51,10 +56,13 @@
         const ingredientSelect = document.getElementById('ingredientSelect');
         const allergenSelect = document.getElementById('allergenSelect');
         const ingAllSelect = document.getElementById('ingredientAllergenSelect');
-        
-        if(ingredientSelect) ingredientSelect.innerHTML = `<option value="">${window.t('select_ingredient')}</option>` + window.ingredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-        if(allergenSelect) allergenSelect.innerHTML = `<option value="">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
-        if(ingAllSelect) ingAllSelect.innerHTML = `<option value="">${window.t('select_allergen')}</option>` + window.allergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+
+        const sortedIngredients = sortAZ(window.ingredients, i => i.name);
+        const sortedAllergens   = sortAZ(window.allergens,   a => window.getAllergenName(a));
+
+        if (ingredientSelect) ingredientSelect.innerHTML = `<option value="">${window.t('select_ingredient')}</option>` + sortedIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+        if (allergenSelect)   allergenSelect.innerHTML   = `<option value="">${window.t('select_allergen')}</option>`   + sortedAllergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+        if (ingAllSelect)     ingAllSelect.innerHTML     = `<option value="">${window.t('select_allergen')}</option>`   + sortedAllergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
     };
 
     window.renderRecipes = function() {
@@ -70,8 +78,10 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${window.t('empty_recipes')}</td></tr>`; 
             return; 
         }
-        
-        window.recipes.forEach(recipe => {
+
+        const sorted = sortAZ(window.recipes, r => r.name);
+
+        sorted.forEach(recipe => {
             if (term && !recipe.name.toLowerCase().includes(term)) return;
             if (cat && recipe.category !== cat) return;
             const tr = document.createElement('tr');
@@ -103,8 +113,10 @@
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_ingredients')}</td></tr>`; 
             return; 
         }
-        
-        window.ingredients.forEach(ing => {
+
+        const sorted = sortAZ(window.ingredients, i => i.name);
+
+        sorted.forEach(ing => {
             const tr = document.createElement('tr');
             let tags = '-';
             if (ing.allergens && ing.allergens.length) { 
@@ -113,7 +125,6 @@
                     return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>` : ''; 
                 }).join('') + '</div>'; 
             }
-
             tr.innerHTML = `
                 <td><strong>${ing.name}</strong></td>
                 <td>${tags}</td>
@@ -135,8 +146,10 @@
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_allergens')}</td></tr>`; 
             return; 
         }
-        
-        window.allergens.forEach(al => {
+
+        const sorted = sortAZ(window.allergens, a => window.getAllergenName(a));
+
+        sorted.forEach(al => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${window.getAllergenName(al)}</strong></td>
@@ -201,7 +214,6 @@
         const slotEl = document.createElement('div');
         slotEl.className = 'meal-slot ' + slotData.type;
         
-        // Header with slot number and allergen dots
         const headerRow = document.createElement('div');
         headerRow.style.display = 'flex';
         headerRow.style.justifyContent = 'space-between';
@@ -222,13 +234,11 @@
         headerRow.appendChild(dotBar);
         slotEl.appendChild(headerRow);
         
-        // Selector row: Category icon dropdown + Recipe dropdown
         const selectorRow = document.createElement('div');
         selectorRow.style.display = 'flex';
         selectorRow.style.gap = '6px';
         selectorRow.style.alignItems = 'stretch';
         
-        // Category icon dropdown (icon only!)
         const categorySelect = document.createElement('select');
         categorySelect.className = 'category-select-compact';
         categorySelect.style.cssText = `
@@ -247,7 +257,7 @@
         categories.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
-            opt.textContent = getCategoryIcon(cat); // ICON ONLY!
+            opt.textContent = getCategoryIcon(cat);
             if (slotData.type === cat) opt.selected = true;
             categorySelect.appendChild(opt);
         });
@@ -262,13 +272,17 @@
         
         selectorRow.appendChild(categorySelect);
         
-        // Recipe dropdown
         const select = document.createElement('select');
         select.className = 'recipe-select';
         select.style.flex = '1';
         select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
-        
-        window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)).forEach(r => { 
+
+        // Sort recipes A-Z in slot dropdowns too
+        const slotRecipes = sortAZ(
+            window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)),
+            r => r.name
+        );
+        slotRecipes.forEach(r => { 
             const opt = document.createElement('option'); 
             opt.value = r.id; opt.textContent = r.name; 
             if (slotData.recipe === r.id) opt.selected = true; 
