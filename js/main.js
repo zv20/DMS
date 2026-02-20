@@ -8,13 +8,10 @@
     };
 
     // ─── DUPLICATE DETECTION HELPERS ─────────────────────────────────────────
-    // Returns true if a name already exists (case-insensitive), ignoring the
-    // item currently being edited (identified by excludeId).
     function isDuplicateName(arr, name, excludeId) {
         const normalized = name.trim().toLowerCase();
         return arr.some(item => item.id !== excludeId && item.name.trim().toLowerCase() === normalized);
     }
-    // Same but uses getAllergenName for allergens (handles system allergens)
     function isDuplicateAllergenName(arr, name, excludeId) {
         const normalized = name.trim().toLowerCase();
         return arr.some(item => item.id !== excludeId && window.getAllergenName(item).trim().toLowerCase() === normalized);
@@ -164,7 +161,6 @@
         const calories = document.getElementById('recipeCalories').value;
         const instr = document.getElementById('recipeInstructions').value;
 
-        // Duplicate check (case-insensitive, ignores self when editing)
         if (isDuplicateName(window.recipes, name, window.editingRecipeId)) {
             alert(`A recipe named "${name}" already exists. Please use a different name.`);
             return;
@@ -192,6 +188,8 @@
         window.updateRecipes(window.recipes);
         window.closeRecipeModal();
         window.renderRecipes();
+        // Re-render calendar so slot dropdowns immediately reflect the new/updated recipe
+        window.renderCalendar(window.currentCalendarDate);
     };
 
     window.saveIngredient = function(e) {
@@ -199,7 +197,6 @@
         const id = window.editingIngredientId || window.generateId('ing');
         const name = document.getElementById('ingredientName').value.trim();
 
-        // Duplicate check (case-insensitive, ignores self when editing)
         if (isDuplicateName(window.ingredients, name, window.editingIngredientId)) {
             alert(`An ingredient named "${name}" already exists. Please use a different name.`);
             return;
@@ -229,7 +226,6 @@
         const name = document.getElementById('allergenName').value.trim();
         const color = document.getElementById('allergenColor').value;
 
-        // Duplicate check (case-insensitive, ignores self when editing)
         if (isDuplicateAllergenName(window.allergens, name, window.editingAllergenId)) {
             alert(`An allergen named "${name}" already exists. Please use a different name.`);
             return;
@@ -255,6 +251,8 @@
             window.recipes = window.recipes.filter(r => r.id !== id);
             window.updateRecipes(window.recipes);
             window.renderRecipes();
+            // Re-render calendar so deleted recipe disappears from slot dropdowns immediately
+            window.renderCalendar(window.currentCalendarDate);
         }
     };
     
