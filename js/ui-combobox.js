@@ -92,7 +92,6 @@
                     const li = lis[activeIndex];
                     selectItem({ id: li.dataset.id, label: li.textContent });
                 } else if (lis.length === 1) {
-                    // Only one match — Enter selects it automatically
                     const li = lis[0];
                     selectItem({ id: li.dataset.id, label: li.textContent });
                 }
@@ -107,7 +106,6 @@
         const input    = document.getElementById(inputId);
         const dropdown = document.getElementById(dropdownId);
         if (!input || !dropdown) return;
-        // Clone to remove stale listeners
         const fresh = input.cloneNode(true);
         input.parentNode.replaceChild(fresh, input);
         attachCombobox(document.getElementById(inputId), dropdown, getItems, onSelect, placeholder, true);
@@ -116,7 +114,6 @@
     // --- Entry point 2: Element-based (calendar slots) — keeps name in field ---
     window.initComboboxOnElement = function({ inputEl, dropdownEl, getItems, onSelect, placeholder, selectedId, selectedLabel }) {
         if (!inputEl || !dropdownEl) return;
-        // Pre-fill if a recipe is already selected
         if (selectedLabel) {
             inputEl.value = selectedLabel;
             inputEl.dataset.selectedId = selectedId || '';
@@ -182,9 +179,10 @@
                 cursor: pointer;
                 font-size: 12px;
                 border-bottom: 1px solid #f0f0f0;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                /* Full name always visible — wrap onto multiple lines if needed */
+                white-space: normal;
+                word-break: break-word;
+                line-height: 1.35;
             }
             .combobox-dropdown li:last-child,
             .slot-combobox-dropdown li:last-child { border-bottom: none; }
