@@ -6,13 +6,25 @@
     window.generateId = function(prefix) {
         return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     };
+
+    // ─── DUPLICATE DETECTION HELPERS ─────────────────────────────────────────
+    // Returns true if a name already exists (case-insensitive), ignoring the
+    // item currently being edited (identified by excludeId).
+    function isDuplicateName(arr, name, excludeId) {
+        const normalized = name.trim().toLowerCase();
+        return arr.some(item => item.id !== excludeId && item.name.trim().toLowerCase() === normalized);
+    }
+    // Same but uses getAllergenName for allergens (handles system allergens)
+    function isDuplicateAllergenName(arr, name, excludeId) {
+        const normalized = name.trim().toLowerCase();
+        return arr.some(item => item.id !== excludeId && window.getAllergenName(item).trim().toLowerCase() === normalized);
+    }
     
     // --- Initialization ---
     async function init() {
         const closeBtn = document.getElementById('closeNavBtn');
         if(closeBtn) closeBtn.addEventListener('click', window.toggleNav);
         
-        // Language dropdown will be set AFTER loading settings
         const langSel = document.getElementById('languageSelect');
         if (langSel) {
             langSel.addEventListener('change', (e) => window.changeLanguage(e.target.value));
@@ -21,7 +33,6 @@
         window.bindNavigation();
         window.setAppTheme(localStorage.getItem('appTheme') || 'default');
 
-        // --- Animated Loading Screen ---
         await handleAnimatedLoading();
     }
 
@@ -41,7 +52,6 @@
         
         let messageIndex = 0;
         
-        // Function to show loading messages
         function showNextMessage() {
             if (messageIndex < loadingMessages.length) {
                 subtitle.textContent = loadingMessages[messageIndex];
@@ -49,20 +59,16 @@
             }
         }
         
-        // Start message rotation
         actions.innerHTML = '<div class="loader-spinner"></div>';
         showNextMessage();
         const messageInterval = setInterval(showNextMessage, 600);
         
         try {
-            // Initialize storage adapter (auto-detects browser capabilities)
             const initialized = await window.checkPreviousFolder();
             
             if (initialized) {
-                // Successfully loaded data (either from File System or IndexedDB)
                 clearInterval(messageInterval);
                 
-                // Check which storage method is being used
                 if (window.storageAdapter.useFileSystem) {
                     subtitle.textContent = window.t('loading_loaded_folder');
                 } else {
@@ -72,7 +78,6 @@
                 await new Promise(resolve => setTimeout(resolve, 800));
                 hideSplash();
             } else {
-                // Only Chrome/Edge users who haven't selected a folder yet
                 clearInterval(messageInterval);
                 askForFolder();
             }
@@ -80,7 +85,6 @@
             console.error('Loading error:', err);
             clearInterval(messageInterval);
             
-            // If using IndexedDB, still continue (error shouldn't stop the app)
             if (!window.storageAdapter.useFileSystem) {
                 subtitle.textContent = window.t('loading_fresh');
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -91,15 +95,12 @@
         }
         
         function askForFolder() {
-            // Only show folder selection for Chrome/Edge
             if (window.storageAdapter && !window.storageAdapter.useFileSystem) {
-                // Firefox/Safari - no folder needed, just start
                 subtitle.textContent = window.t('loading_ready_go');
                 setTimeout(hideSplash, 500);
                 return;
             }
             
-            // Check if we have a folder hint
             const lastFolder = window.storageAdapter.getFolderHint();
             
             if (lastFolder) {
@@ -108,7 +109,6 @@
                 subtitle.textContent = window.t('loading_select_folder');
             }
             
-            // Use translation for button text
             const buttonText = window.getCurrentLanguage() === 'bg' ? 'Избери Папка' : 'Select Folder';
             actions.innerHTML = `
                 <button class="btn btn-primary" onclick="window.selectFolderAndStart()" style="min-width: 200px; height: 48px;">
@@ -123,15 +123,10 @@
             setTimeout(() => {
                 splash.style.display = 'none';
                 
-                // FIX: Apply language from loaded settings.json using changeLanguage()
-                // This updates currentLanguage, the dropdown, AND re-renders all data-i18n elements
-                // in the correct order — AFTER settings.json has been loaded from the folder.
-                // shouldSave=false prevents unnecessarily re-writing settings.json on every load.
                 if (window.appSettings && window.appSettings.language) {
                     console.log('🌍 Applying language from settings:', window.appSettings.language);
                     window.changeLanguage(window.appSettings.language, false);
                 } else {
-                    // No settings loaded — apply translations with current language (localStorage hint)
                     window.applyTranslations();
                 }
                 
@@ -143,7 +138,6 @@
             }, 500);
         }
         
-        // Global function for folder selection button
         window.selectFolderAndStart = async function() {
             actions.innerHTML = '<div class="loader-spinner"></div>';
             subtitle.textContent = window.t('loading_setup');
@@ -155,7 +149,6 @@
                 await new Promise(resolve => setTimeout(resolve, 500));
                 hideSplash();
             } else {
-                // User cancelled, show button again
                 askForFolder();
             }
         };
@@ -165,11 +158,17 @@
     window.saveRecipe = function(e) {
         e.preventDefault();
         const id = window.editingRecipeId || window.generateId('rcp');
-        const name = document.getElementById('recipeName').value;
+        const name = document.getElementById('recipeName').value.trim();
         const cat = document.getElementById('recipeCategory').value;
         const portion = document.getElementById('recipePortionSize').value;
         const calories = document.getElementById('recipeCalories').value;
         const instr = document.getElementById('recipeInstructions').value;
+
+        // Duplicate check (case-insensitive, ignores self when editing)
+        if (isDuplicateName(window.recipes, name, window.editingRecipeId)) {
+            alert(`A recipe named "${name}" already exists. Please use a different name.`);
+            return;
+        }
         
         const ingTags = document.getElementById('recipeIngredients').querySelectorAll('.tag');
         const ingredients = Array.from(ingTags).map(t => ({ id: t.dataset.id }));
@@ -198,7 +197,13 @@
     window.saveIngredient = function(e) {
         e.preventDefault();
         const id = window.editingIngredientId || window.generateId('ing');
-        const name = document.getElementById('ingredientName').value;
+        const name = document.getElementById('ingredientName').value.trim();
+
+        // Duplicate check (case-insensitive, ignores self when editing)
+        if (isDuplicateName(window.ingredients, name, window.editingIngredientId)) {
+            alert(`An ingredient named "${name}" already exists. Please use a different name.`);
+            return;
+        }
         
         const algTags = document.getElementById('ingredientLinkedAllergens').querySelectorAll('.tag');
         const allergens = Array.from(algTags).map(t => t.dataset.id);
@@ -221,8 +226,14 @@
     window.saveAllergen = function(e) {
         e.preventDefault();
         const id = window.editingAllergenId || window.generateId('alg');
-        const name = document.getElementById('allergenName').value;
+        const name = document.getElementById('allergenName').value.trim();
         const color = document.getElementById('allergenColor').value;
+
+        // Duplicate check (case-insensitive, ignores self when editing)
+        if (isDuplicateAllergenName(window.allergens, name, window.editingAllergenId)) {
+            alert(`An allergen named "${name}" already exists. Please use a different name.`);
+            return;
+        }
 
         const newAlg = { id, name, color };
         

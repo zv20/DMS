@@ -1,6 +1,6 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.2 - Fix: transparent dayBackground handled via checkbox, not color input
+ * @version 6.3 - Fix: per-section font families in builder UI
  */
 
 class StepTemplateBuilder {
@@ -21,11 +21,13 @@ class StepTemplateBuilder {
             headerAlignment:  'center',
             headerFontSize:   24,
             headerColor:      '#d2691e',
+            headerFontFamily: 'Arial, sans-serif',
 
             showDateRange:    true,
             dateFontSize:     12,
             dateColor:        '#666666',
             dateAlignment:    'center',
+            dateFontFamily:   'Arial, sans-serif',
 
             showIngredients:  true,
             showCalories:     true,
@@ -39,8 +41,10 @@ class StepTemplateBuilder {
             dayNameSize:        14,
             dayNameColor:       '#333333',
             dayNameWeight:      'bold',
+            dayNameFontFamily:  'Arial, sans-serif',
 
             mealFontSize:       11,
+            mealFontFamily:     'Arial, sans-serif',
 
             allergenColor:      '#ff0000',
             allergenUnderline:  false,
@@ -49,13 +53,31 @@ class StepTemplateBuilder {
             showFooter:       true,
             footerText:       'Приготвено с любов',
             footerAlignment:  'center',
-            footerFontSize:   9
+            footerFontSize:   9,
+            footerFontFamily: 'Arial, sans-serif'
         };
 
         this.previewData      = null;
         this.expandedSection  = 'header';
         this.currentTab       = 'builder';
         this.init();
+    }
+
+    // ─── FONT OPTIONS HELPER ──────────────────────────────────────────────────
+    _fontOptions(currentVal) {
+        const fonts = [
+            { value: 'Arial, sans-serif',              label: 'Arial' },
+            { value: "'Times New Roman', serif",       label: 'Times New Roman' },
+            { value: 'Georgia, serif',                 label: 'Georgia' },
+            { value: "'Comic Sans MS', cursive",       label: 'Comic Sans MS' },
+            { value: 'Verdana, sans-serif',            label: 'Verdana' },
+            { value: "'Courier New', monospace",       label: 'Courier New' },
+            { value: "'Trebuchet MS', sans-serif",     label: 'Trebuchet MS' },
+            { value: 'Tahoma, sans-serif',             label: 'Tahoma' }
+        ];
+        return fonts.map(f =>
+            `<option value="${f.value}" ${currentVal === f.value ? 'selected' : ''}>${f.label}</option>`
+        ).join('');
     }
 
     init() {
@@ -118,15 +140,11 @@ class StepTemplateBuilder {
             <h2 style="margin:0 0 6px 0;font-size:18px;">${window.t('builder_title')}</h2>
             <p  style="margin:0 0 12px 0;font-size:12px;color:#666;">${window.t('builder_subtitle')}</p>
 
-            <!-- ── Font Family always visible at top ── -->
+            <!-- ── Global Font Family (quick apply-to-all) ── -->
             <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;">
-                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🗻️ Page Font Family</label>
+                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🗛 Global Font Family <span style="font-weight:normal;font-size:11px;">(applies to all sections unless overridden below)</span></label>
                 <select id="fontFamily" class="select-input">
-                    <option value="Arial, sans-serif"            ${this.settings.fontFamily.includes('Arial')  ?'selected':''}>Arial</option>
-                    <option value="'Times New Roman', serif"     ${this.settings.fontFamily.includes('Times')  ?'selected':''}>Times New Roman</option>
-                    <option value="Georgia, serif"               ${this.settings.fontFamily.includes('Georgia')?'selected':''}>Georgia</option>
-                    <option value="'Comic Sans MS', cursive"     ${this.settings.fontFamily.includes('Comic')  ?'selected':''}>Comic Sans MS</option>
-                    <option value="Verdana, sans-serif"          ${this.settings.fontFamily.includes('Verdana')?'selected':''}>Verdana</option>
+                    ${this._fontOptions(this.settings.fontFamily)}
                 </select>
             </div>
 
@@ -208,6 +226,13 @@ class StepTemplateBuilder {
         if (!window.menuTemplates?.[name]) { alert(window.t('alert_template_not_found')); return; }
         if (confirm(window.t('alert_template_load_confirm').replace('{name}', name))) {
             this.settings = { ...window.menuTemplates[name] };
+            // Back-fill any missing per-section font keys from global fontFamily
+            const fallback = this.settings.fontFamily || 'Arial, sans-serif';
+            if (!this.settings.headerFontFamily)  this.settings.headerFontFamily  = fallback;
+            if (!this.settings.dateFontFamily)    this.settings.dateFontFamily    = fallback;
+            if (!this.settings.dayNameFontFamily) this.settings.dayNameFontFamily = fallback;
+            if (!this.settings.mealFontFamily)    this.settings.mealFontFamily    = fallback;
+            if (!this.settings.footerFontFamily)  this.settings.footerFontFamily  = fallback;
             this.switchTab('builder');
             this.buildUI(); this.bindTabControls(); this.bindAccordion(); this.bindControls(); this.bindActionButtons();
             this.updatePreview();
@@ -400,6 +425,10 @@ class StepTemplateBuilder {
             </select>
             <label>Header Font Size (pt)</label>
             <input type="number" id="headerFontSize" value="${this.settings.headerFontSize}" min="8" max="120" class="text-input">
+            <label>Header Font Family</label>
+            <select id="headerFontFamily" class="select-input">
+                ${this._fontOptions(this.settings.headerFontFamily)}
+            </select>
             <label>${window.t('label_text_color')}</label>
             <input type="color" id="headerColor" value="${this.settings.headerColor}" class="color-input">
 
@@ -413,15 +442,16 @@ class StepTemplateBuilder {
             </select>
             <label>Date Font Size (pt)</label>
             <input type="number" id="dateFontSize" value="${this.settings.dateFontSize}" min="6" max="60" class="text-input">
+            <label>Date Font Family</label>
+            <select id="dateFontFamily" class="select-input">
+                ${this._fontOptions(this.settings.dateFontFamily)}
+            </select>
             <label>Date Color</label>
             <input type="color" id="dateColor" value="${this.settings.dateColor}" class="color-input">
         </div>`;
     }
 
     renderMenuControls() {
-        // dayBackground can be 'transparent' — color input requires a valid #rrggbb value.
-        // We use a separate checkbox for "No background" and only show the color picker
-        // when a real color is selected. This eliminates the browser console warning.
         const dayBgIsTransparent = !this.settings.dayBackground || this.settings.dayBackground === 'transparent';
         const dayBgColor = dayBgIsTransparent ? '#ffffff' : this.settings.dayBackground;
 
@@ -462,12 +492,20 @@ class StepTemplateBuilder {
             <h4 style="margin-top:15px;">${window.t('label_day_name')}</h4>
             <label>Size (pt)</label>
             <input type="number" id="dayNameSize" value="${this.settings.dayNameSize}" min="8" max="48" class="text-input">
+            <label>Day Name Font Family</label>
+            <select id="dayNameFontFamily" class="select-input">
+                ${this._fontOptions(this.settings.dayNameFontFamily)}
+            </select>
             <label>${window.t('label_color')}</label>
             <input type="color" id="dayNameColor" value="${this.settings.dayNameColor}" class="color-input">
 
             <h4 style="margin-top:15px;">&#127869;&#65039; Meal Text</h4>
             <label>Meal Size (pt)</label>
             <input type="number" id="mealFontSize" value="${this.settings.mealFontSize}" min="6" max="36" class="text-input">
+            <label>Meal Font Family</label>
+            <select id="mealFontFamily" class="select-input">
+                ${this._fontOptions(this.settings.mealFontFamily)}
+            </select>
 
             <h4 style="margin-top:15px;">${window.t('label_allergens')}</h4>
             <label>${window.t('label_color')}</label>
@@ -490,6 +528,10 @@ class StepTemplateBuilder {
             </select>
             <label>Footer Font Size (pt)</label>
             <input type="number" id="footerFontSize" value="${this.settings.footerFontSize}" min="6" max="48" class="text-input">
+            <label>Footer Font Family</label>
+            <select id="footerFontFamily" class="select-input">
+                ${this._fontOptions(this.settings.footerFontFamily)}
+            </select>
         </div>`;
     }
 
@@ -546,10 +588,12 @@ class StepTemplateBuilder {
         this.bindTextInput('headerText');
         this.bindSelect('headerAlignment');
         this.bindNumberInput('headerFontSize');
+        this.bindSelect('headerFontFamily');
         this.bindColorInput('headerColor');
         this.bindCheckbox('showDateRange');
         this.bindSelect('dateAlignment');
         this.bindNumberInput('dateFontSize');
+        this.bindSelect('dateFontFamily');
         this.bindColorInput('dateColor');
         document.querySelectorAll('input[name="templateStyle"]').forEach(r => {
             r.addEventListener('change', e => { this.settings.templateStyle = e.target.value; this.updatePreview(); });
@@ -558,11 +602,12 @@ class StepTemplateBuilder {
         this.bindColorInput('dayBorderColor');
         this.bindSelect('dayBorderStyle');
         this.bindSelect('dayBorderThickness');
-        // dayBackground handled separately — supports 'transparent' via checkbox
         this.bindDayBackground();
         this.bindNumberInput('dayNameSize');
+        this.bindSelect('dayNameFontFamily');
         this.bindColorInput('dayNameColor');
         this.bindNumberInput('mealFontSize');
+        this.bindSelect('mealFontFamily');
         this.bindColorInput('allergenColor');
         this.bindCheckbox('allergenUnderline');
         this.bindCheckbox('allergenBold');
@@ -570,11 +615,9 @@ class StepTemplateBuilder {
         this.bindTextInput('footerText');
         this.bindSelect('footerAlignment');
         this.bindNumberInput('footerFontSize');
+        this.bindSelect('footerFontFamily');
     }
 
-    // Special binding for dayBackground:
-    // - Checkbox "No background" sets dayBackground to 'transparent' and disables the picker
-    // - Color picker only active when checkbox is unchecked, stores a valid hex value
     bindDayBackground() {
         const check = document.getElementById('dayBgTransparent');
         const color = document.getElementById('dayBackground');
@@ -693,6 +736,13 @@ class StepTemplateBuilder {
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
 
+        // Resolve per-section fonts with fallback to global fontFamily
+        const hff  = s.headerFontFamily  || s.fontFamily || 'Arial, sans-serif';
+        const dff  = s.dateFontFamily    || s.fontFamily || 'Arial, sans-serif';
+        const dyff = s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
+        const mff  = s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
+        const fff  = s.footerFontFamily  || s.fontFamily || 'Arial, sans-serif';
+
         const pad2 = n => String(n).padStart(2,'0');
         const dateRangeText = `${pad2(startDate.getDate())}.${pad2(startDate.getMonth()+1)} – ${pad2(endDate.getDate())}.${pad2(endDate.getMonth()+1)} ${startDate.getFullYear()}`;
 
@@ -709,35 +759,38 @@ class StepTemplateBuilder {
         if (is2Col) {
             for (let i=0; i<days.length; i+=2) {
                 content += `<div style="display:flex;gap:16px;margin-bottom:12px;">
-                    <div style="flex:1;">${days[i]  ? this.renderDayBlock(days[i],  s, isCompact) : ''}</div>
-                    <div style="flex:1;">${days[i+1] ? this.renderDayBlock(days[i+1],s, isCompact) : ''}</div>
+                    <div style="flex:1;">${days[i]   ? this.renderDayBlock(days[i],   s, isCompact, dyff, mff) : ''}</div>
+                    <div style="flex:1;">${days[i+1] ? this.renderDayBlock(days[i+1], s, isCompact, dyff, mff) : ''}</div>
                 </div>`;
             }
         } else {
-            days.forEach(day => { content += this.renderDayBlock(day, s, isCompact); });
+            days.forEach(day => { content += this.renderDayBlock(day, s, isCompact, dyff, mff); });
         }
 
         container.innerHTML = `
-        <div style="background-color:${s.backgroundColor};position:relative;padding:40px 40px 30px;min-height:800px;font-family:${s.fontFamily};display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #ddd;box-shadow:0 2px 16px rgba(0,0,0,0.1);overflow:hidden;">
+        <div style="background-color:${s.backgroundColor};position:relative;padding:40px 40px 30px;min-height:800px;display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #ddd;box-shadow:0 2px 16px rgba(0,0,0,0.1);overflow:hidden;">
             ${bgLayers}
             <div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;">
                 <!-- Header -->
                 <div style="margin-bottom:18px;">
-                    ${s.showHeader ? `<div style="text-align:${s.headerAlignment};margin-bottom:6px;"><span style="font-size:${s.headerFontSize}pt;color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>` : ''}
-                    ${s.showDateRange ? `<div style="text-align:${s.dateAlignment};font-size:${s.dateFontSize}pt;color:${s.dateColor};">${dateRangeText}</div>` : ''}
+                    ${s.showHeader ? `<div style="text-align:${s.headerAlignment};margin-bottom:6px;"><span style="font-family:${hff};font-size:${s.headerFontSize}pt;color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>` : ''}
+                    ${s.showDateRange ? `<div style="font-family:${dff};text-align:${s.dateAlignment};font-size:${s.dateFontSize}pt;color:${s.dateColor};">${dateRangeText}</div>` : ''}
                 </div>
-                <!-- Content stretches to fill page -->
+                <!-- Content -->
                 <div style="flex:1;">
                     ${content}
                 </div>
-                <!-- Footer pinned to bottom -->
-                ${s.showFooter ? `<div style="text-align:${s.footerAlignment};margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:${s.footerFontSize}pt;color:#888;">${s.footerText}</div>` : ''}
+                <!-- Footer -->
+                ${s.showFooter ? `<div style="font-family:${fff};text-align:${s.footerAlignment};margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:${s.footerFontSize}pt;color:#888;">${s.footerText}</div>` : ''}
             </div>
         </div>`;
     }
 
-    renderDayBlock(day, s, isCompact) {
+    renderDayBlock(day, s, isCompact, dyff, mff) {
         if (!day || !day.meals.length) return '';
+        // Resolve fonts if called without explicit args (e.g. from old code paths)
+        const resolvedDyff = dyff || s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
+        const resolvedMff  = mff  || s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
         const borderStyle = s.dayBorder
             ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};`
             : '';
@@ -747,7 +800,7 @@ class StepTemplateBuilder {
         const wrapStyle = `${borderStyle}${bgStyle}padding:10px;margin-bottom:14px;border-radius:4px;`;
 
         let html = `<div style="${wrapStyle}">`;
-        html += `<div style="font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:6px;">${day.name}</div>`;
+        html += `<div style="font-family:${resolvedDyff};font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:6px;">${day.name}</div>`;
 
         day.meals.forEach(meal => {
             if (isCompact) {
@@ -758,17 +811,17 @@ class StepTemplateBuilder {
                     line += `; ${ingList}`;
                 }
                 if (meal.calories) line += ` | ККАЛ ${meal.calories}`;
-                html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:4px;margin-left:8px;">${line}</div>`;
+                html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:4px;margin-left:8px;">${line}</div>`;
             } else {
                 let title = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) title += ` – ${meal.portion}`;
-                html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:2px;margin-left:8px;font-weight:500;">${title}</div>`;
+                html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:2px;margin-left:8px;font-weight:500;">${title}</div>`;
                 if (meal.ingredients && meal.ingredients.length) {
                     const ingList = meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ');
                     const calStr  = meal.calories ? ` – ККАЛ ${meal.calories}` : '';
-                    html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${ingList}${calStr}</div>`;
+                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${ingList}${calStr}</div>`;
                 } else if (meal.calories) {
-                    html += `<div style="font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">ККАЛ ${meal.calories}</div>`;
+                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">ККАЛ ${meal.calories}</div>`;
                 }
             }
         });
