@@ -16,6 +16,13 @@
         const normalized = name.trim().toLowerCase();
         return arr.some(item => item.id !== excludeId && window.getAllergenName(item).trim().toLowerCase() === normalized);
     }
+
+    // Refresh the calendar through CalendarManager so it respects current view mode
+    function refreshCalendar() {
+        if (window.CalendarManager) {
+            window.CalendarManager.render();
+        }
+    }
     
     // --- Initialization ---
     async function init() {
@@ -188,8 +195,8 @@
         window.updateRecipes(window.recipes);
         window.closeRecipeModal();
         window.renderRecipes();
-        // Re-render calendar so slot dropdowns immediately reflect the new/updated recipe
-        window.renderCalendar(window.currentCalendarDate);
+        // Re-render calendar via CalendarManager so view mode (weekly/monthly) is preserved
+        refreshCalendar();
     };
 
     window.saveIngredient = function(e) {
@@ -251,8 +258,8 @@
             window.recipes = window.recipes.filter(r => r.id !== id);
             window.updateRecipes(window.recipes);
             window.renderRecipes();
-            // Re-render calendar so deleted recipe disappears from slot dropdowns immediately
-            window.renderCalendar(window.currentCalendarDate);
+            // Re-render calendar via CalendarManager so view mode is preserved
+            refreshCalendar();
         }
     };
     
