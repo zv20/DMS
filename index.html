@@ -5,33 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Детско меню</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=14.5">
-  <link rel="stylesheet" href="css/template-styles.css?v=14.5">
+  <link rel="stylesheet" href="css/styles.css?v=14.6">
+  <link rel="stylesheet" href="css/template-styles.css?v=14.6">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
   <script src="js/libs/jspdf.umd.min.js"></script>
   
   <!-- Core Application Scripts -->
-  <script src="js/i18n.js?v=14.5"></script>
-  <script src="js/constants.js?v=14.5"></script>
+  <script src="js/i18n.js?v=14.6"></script>
+  <script src="js/constants.js?v=14.6"></script>
   
   <!-- STORAGE ADAPTER (must load before store.js) -->
-  <script src="js/storage-adapter.js?v=14.5"></script>
-  <script src="js/store.js?v=14.5"></script>
+  <script src="js/storage-adapter.js?v=14.6"></script>
+  <script src="js/store.js?v=14.6"></script>
   
-  <script src="js/calendar.js?v=14.5"></script>
-  <script src="js/render.js?v=14.5"></script>
-  <script src="js/ui.js?v=14.5"></script>
-  <script src="js/clock.js?v=14.5"></script>
+  <script src="js/calendar.js?v=14.6"></script>
+  <script src="js/render.js?v=14.6"></script>
+  <script src="js/ui.js?v=14.6"></script>
+  <script src="js/ui-combobox.js?v=14.6"></script>
+  <script src="js/clock.js?v=14.6"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER (Accordion UI with Header/Footer Images) -->
-  <script src="js/template/template-builder-steps.js?v=14.5"></script>
+  <script src="js/template/template-builder-steps.js?v=14.6"></script>
   
   <!-- PRINT FUNCTIONALITY -->
-  <script src="js/print.js?v=14.5"></script>
+  <script src="js/print.js?v=14.6"></script>
   
-  <script src="js/main.js?v=14.5"></script>
+  <script src="js/main.js?v=14.6"></script>
 </head>
 <body data-theme="default">
 
@@ -260,9 +261,11 @@
                   data-i18n-placeholder="placeholder_calories" placeholder="e.g., 220">
               
               <label data-i18n="label_ingredients">Ingredients</label>
-              <div style="display:flex; gap:5px; margin-bottom:10px;">
-                  <select id="ingredientSelect" class="form-control" style="flex:1;"></select>
-                  <button type="button" class="btn btn-secondary" onclick="window.addIngredientFromSelect()" data-i18n="btn_add">Add</button>
+              <!-- Combobox: type-to-search ingredient picker -->
+              <div class="combobox-wrapper" style="margin-bottom:10px;">
+                  <input type="text" id="ingredientComboInput" class="form-control"
+                         placeholder="Type to search ingredients..." autocomplete="off">
+                  <ul id="ingredientComboDropdown" class="combobox-dropdown"></ul>
               </div>
               <div id="recipeIngredients" class="tag-container" style="margin-bottom:15px;"></div>
               
@@ -270,9 +273,11 @@
               <div id="recipeAutoAllergens" style="margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:4px; min-height:30px;">-</div>
               
               <label data-i18n="label_manual_allergens">Manual Allergens</label>
-              <div style="display:flex; gap:5px; margin-bottom:10px;">
-                  <select id="allergenSelect" class="form-control" style="flex:1;"></select>
-                  <button type="button" class="btn btn-secondary" onclick="window.addAllergenFromSelect()" data-i18n="btn_add">Add</button>
+              <!-- Combobox: type-to-search allergen picker -->
+              <div class="combobox-wrapper" style="margin-bottom:10px;">
+                  <input type="text" id="allergenComboInput" class="form-control"
+                         placeholder="Type to search allergens..." autocomplete="off">
+                  <ul id="allergenComboDropdown" class="combobox-dropdown"></ul>
               </div>
               <div id="recipeManualAllergens" class="tag-container" style="margin-bottom:15px;"></div>
               
@@ -298,9 +303,11 @@
             data-i18n-placeholder="placeholder_ingredient_name" placeholder="Ingredient Name">
         
         <label data-i18n="label_allergens">Allergens</label>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <select id="ingredientAllergenSelect" class="form-control" style="flex:1;"></select>
-            <button type="button" class="btn btn-secondary" onclick="window.addIngredientAllergenFromSelect()" data-i18n="btn_add">Add</button>
+        <!-- Combobox: type-to-search allergen picker -->
+        <div class="combobox-wrapper" style="margin-bottom:10px;">
+            <input type="text" id="ingAllergenComboInput" class="form-control"
+                   placeholder="Type to search allergens..." autocomplete="off">
+            <ul id="ingAllergenComboDropdown" class="combobox-dropdown"></ul>
         </div>
         <div id="ingredientLinkedAllergens" class="tag-container" style="margin-bottom:15px;"></div>
         
