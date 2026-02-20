@@ -15,10 +15,10 @@
     }
 
     window.MEAL_CATEGORIES = [
-        { id: 'soup',    label: 'slot_soup',    icon: '🥣', color: '#fd7e14' },
-        { id: 'main',    label: 'slot_main',    icon: '🍽️', color: '#28a745' },
-        { id: 'dessert', label: 'slot_dessert', icon: '🍰', color: '#e83e8c' },
-        { id: 'other',   label: 'slot_other',   icon: '➕',  color: '#6c757d' }
+        { id: 'soup',    label: 'slot_soup',    icon: '\uD83E\uDD63', color: '#fd7e14' },
+        { id: 'main',    label: 'slot_main',    icon: '\uD83C\uDF7D\uFE0F', color: '#28a745' },
+        { id: 'dessert', label: 'slot_dessert', icon: '\uD83C\uDF70', color: '#e83e8c' },
+        { id: 'other',   label: 'slot_other',   icon: '\u2795',  color: '#6c757d' }
     ];
 
     window.CalendarManager = {
@@ -134,7 +134,6 @@
             container.appendChild(monthlyCalendar);
         },
 
-        // Build a single day cell — otherMonth = dimmed style
         createDayCell: function(date, otherMonth) {
             const dateStr   = getLocalDateString(date);
             const dow       = date.getDay();
@@ -160,15 +159,13 @@
             if (mealNames.length > 0 && !isWeekend) {
                 const mealIndicators = document.createElement('div');
                 mealIndicators.className = 'meal-indicators';
-
                 mealNames.forEach(mealText => {
                     const mealLine = document.createElement('div');
-                    mealLine.className   = 'meal-name-line';  // CSS handles truncation
-                    mealLine.textContent = mealText;           // visible (truncated) text
-                    mealLine.title       = mealText;           // full name on hover tooltip
+                    mealLine.className   = 'meal-name-line';
+                    mealLine.textContent = mealText;
+                    mealLine.title       = mealText;
                     mealIndicators.appendChild(mealLine);
                 });
-
                 dayCell.appendChild(mealIndicators);
             }
 
@@ -227,13 +224,15 @@
         },
 
         createMealSlotElement: function(dateStr, slotId, slotData) {
+            const self     = this;
             const category = window.MEAL_CATEGORIES.find(c => c.id === slotData.category) || window.MEAL_CATEGORIES[0];
-            const recipe   = slotData.recipe ? window.recipes.find(r => r.id === slotData.recipe) : null;
+            const currentRecipe = slotData.recipe ? window.recipes.find(r => r.id === slotData.recipe) : null;
 
             const slotEl = document.createElement('div');
             slotEl.className = 'meal-slot';
             slotEl.style.borderLeft = `4px solid ${category.color}`;
 
+            // --- Category dropdown (stays as <select>) ---
             const categorySelect = document.createElement('select');
             categorySelect.className = 'category-select';
             window.MEAL_CATEGORIES.forEach(cat => {
@@ -243,26 +242,55 @@
                 if (cat.id === slotData.category) option.selected = true;
                 categorySelect.appendChild(option);
             });
-            categorySelect.addEventListener('change', (e) => this.changeCategory(dateStr, slotId, e.target.value));
+            categorySelect.addEventListener('change', (e) => self.changeCategory(dateStr, slotId, e.target.value));
             slotEl.appendChild(categorySelect);
 
-            const recipeSelect = document.createElement('select');
-            recipeSelect.className = 'recipe-select';
-            const defaultOption = document.createElement('option');
-            defaultOption.value       = '';
-            defaultOption.textContent = window.t('text_select_default');
-            recipeSelect.appendChild(defaultOption);
+            // --- Recipe combobox (type-to-search) ---
+            const comboWrapper = document.createElement('div');
+            comboWrapper.style.cssText = 'position:relative; flex:1; min-width:0;';
 
-            const categoryRecipes = window.recipes.filter(r => r.category === slotData.category);
-            categoryRecipes.forEach(rec => {
-                const option = document.createElement('option');
-                option.value       = rec.id;
-                option.textContent = rec.name;
-                if (recipe && recipe.id === rec.id) option.selected = true;
-                recipeSelect.appendChild(option);
+            const recipeInput = document.createElement('input');
+            recipeInput.type        = 'text';
+            recipeInput.className   = 'slot-recipe-input';
+            recipeInput.autocomplete = 'off';
+            recipeInput.spellcheck  = false;
+            const placeholderText   = window.t ? window.t('text_select_default') : 'Select recipe...';
+            recipeInput.placeholder = placeholderText;
+
+            const recipeDropdown = document.createElement('ul');
+            recipeDropdown.className = 'slot-combobox-dropdown';
+
+            comboWrapper.appendChild(recipeInput);
+            comboWrapper.appendChild(recipeDropdown);
+            slotEl.appendChild(comboWrapper);
+
+            // Wire up combobox behaviour
+            window.initComboboxOnElement({
+                inputEl      : recipeInput,
+                dropdownEl   : recipeDropdown,
+                getItems     : () => {
+                    // Show only recipes matching the current slot category, sorted A-Z
+                    const cat = categorySelect.value;
+                    return [...window.recipes]
+                        .filter(r => r.category === cat)
+                        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+                        .map(r => ({ id: r.id, label: r.name }));
+                },
+                onSelect     : (item) => {
+                    self.selectRecipe(dateStr, slotId, item.id);
+                },
+                placeholder  : placeholderText,
+                selectedId   : currentRecipe ? currentRecipe.id   : null,
+                selectedLabel: currentRecipe ? currentRecipe.name : null
             });
-            recipeSelect.addEventListener('change', (e) => this.selectRecipe(dateStr, slotId, e.target.value));
-            slotEl.appendChild(recipeSelect);
+
+            // Allow clearing the selection by deleting the text
+            recipeInput.addEventListener('input', () => {
+                if (recipeInput.value.trim() === '') {
+                    recipeInput.dataset.selectedId = '';
+                    self.selectRecipe(dateStr, slotId, null);
+                }
+            });
 
             return slotEl;
         },
@@ -323,7 +351,8 @@
             const menu = window.getMenuForDate(dateStr);
             const currentCategory = menu[slotId]?.category || this.getDefaultCategory(parseInt(slotId.replace('slot', '')));
             window.updateMenuForDate(dateStr, slotId, currentCategory, recipeId || null);
-            this.render();
+            // Do NOT call this.render() here — input already shows the selected name
+            // Only re-render the monthly dots if we happen to be in monthly view
         }
     };
 
