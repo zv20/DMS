@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 6.6 - per-section font families
+ * @version 7.0 - PDF generation via html2canvas + jsPDF
  */
 
 (function(window) {
@@ -30,6 +30,59 @@
             console.warn('Failed to load background image:', filename, err);
             return null;
         }
+    }
+
+    // ─── LOADING INDICATOR ───────────────────────────────────────────────────
+    function showLoadingIndicator(isBg) {
+        const overlay = document.createElement('div');
+        overlay.id = 'pdf-loading-overlay';
+        overlay.style.cssText = [
+            'position:fixed;top:0;left:0;right:0;bottom:0;',
+            'background:rgba(0,0,0,0.55);z-index:99999;',
+            'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+        ].join('');
+
+        const box = document.createElement('div');
+        box.style.cssText = [
+            'background:white;border-radius:16px;padding:36px 48px;',
+            'box-shadow:0 8px 32px rgba(0,0,0,0.25);text-align:center;min-width:260px;'
+        ].join('');
+
+        // Spinner
+        const spinner = document.createElement('div');
+        spinner.style.cssText = [
+            'width:48px;height:48px;border:5px solid #f0f0f0;',
+            'border-top-color:#fd7e14;border-radius:50%;',
+            'animation:pdf-spin 0.75s linear infinite;margin:0 auto 18px;'
+        ].join('');
+
+        // Inject keyframes once
+        if (!document.getElementById('pdf-spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'pdf-spin-style';
+            style.textContent = '@keyframes pdf-spin { to { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+        }
+
+        const label = document.createElement('div');
+        label.style.cssText = 'font-size:1.05rem;font-weight:600;color:#333;margin-bottom:6px;';
+        label.textContent = isBg ? '📄 Генериране на PDF...' : '📄 Generating PDF...';
+
+        const sub = document.createElement('div');
+        sub.style.cssText = 'font-size:0.85rem;color:#888;';
+        sub.textContent = isBg ? 'Моля изчакайте...' : 'Please wait...';
+
+        box.appendChild(spinner);
+        box.appendChild(label);
+        box.appendChild(sub);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function hideLoadingIndicator() {
+        const el = document.getElementById('pdf-loading-overlay');
+        if (el) el.parentNode.removeChild(el);
     }
 
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
@@ -75,8 +128,93 @@
         const usableW = Math.round((210 - left - right) * 3.7795);
 
         const html = renderMenuHTML(mealPlanData, settings, usableH);
-        openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW);
+
+        // Show loading indicator before PDF generation
+        const loadingEl = showLoadingIndicator(isBg);
+
+        try {
+            await generateAndOpenPDF(html, mealPlanData, choice.margins, usableH, usableW);
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            alert(isBg
+                ? 'Грешка при генериране на PDF. Моля опитайте отново.'
+                : 'PDF generation failed. Please try again.');
+        } finally {
+            hideLoadingIndicator();
+        }
     };
+
+    // ─── PDF GENERATION ──────────────────────────────────────────────────────
+    async function generateAndOpenPDF(html, mealPlanData, margins, usableH, usableW) {
+        // Verify libraries are available
+        if (!window.html2canvas) throw new Error('html2canvas not loaded');
+        if (!window.jspdf && !(window.jsPDF)) throw new Error('jsPDF not loaded');
+
+        const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+
+        // Build an off-screen container with exact pixel dimensions
+        const container = document.createElement('div');
+        container.style.cssText = [
+            `width:${usableW}px;`,
+            `height:${usableH}px;`,
+            'position:absolute;',
+            'top:0;left:-9999px;',
+            'overflow:hidden;',
+            'background:white;'
+        ].join('');
+        container.innerHTML = html;
+        document.body.appendChild(container);
+
+        let canvas;
+        try {
+            canvas = await window.html2canvas(container.querySelector('#menu-content') || container, {
+                scale: 2,           // 2x for crisp output
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width:  usableW,
+                height: usableH
+            });
+        } finally {
+            document.body.removeChild(container);
+        }
+
+        // Create A4 PDF
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const { top, right, bottom, left } = margins;
+        const imgWidthMM  = 210 - left - right;
+        const imgHeightMM = 297 - top - bottom;
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', left, top, imgWidthMM, imgHeightMM, '', 'FAST');
+
+        // Open PDF blob in a new tab
+        const pdfBlob = pdf.output('blob');
+        const pdfUrl  = URL.createObjectURL(pdfBlob);
+        const pdfWin  = window.open(pdfUrl, '_blank');
+
+        if (!pdfWin) {
+            // Fallback: direct download if pop-up blocked
+            const a = document.createElement('a');
+            const ds = getLocalDateString(mealPlanData.startDate);
+            a.href     = pdfUrl;
+            a.download = `Weekly-Menu-${ds}.pdf`;
+            a.click();
+            return;
+        }
+
+        // Auto-trigger print dialog once the PDF viewer has loaded
+        pdfWin.addEventListener('load', () => {
+            setTimeout(() => {
+                try { pdfWin.print(); } catch(e) { /* some browsers block this — user can print manually */ }
+            }, 800);
+        });
+    }
 
     // ─── WEEK OPTIONS ────────────────────────────────────────────────────────
     function buildWeekOptions(isBg) {
@@ -278,7 +416,6 @@
         if (!v && v !== 0) return fallback;
         return /^\d+(\.\d+)?$/.test(String(v).trim()) ? `${v}pt` : String(v);
     }
-    // Resolve per-section font, falling back to global fontFamily for old templates
     function ff(s, key) {
         return s[key] || s.fontFamily || 'Arial, sans-serif';
     }
@@ -433,27 +570,6 @@
         if (s.showFooter) html += `<div style="font-family:${fff};text-align:${s.footerAlignment||'center'};padding:4px 0 2px;border-top:1px solid #ddd;font-size:${fs};color:#888;">${s.footerText}</div>`;
         html += `</div></div>`;
         return html;
-    }
-
-    // ─── PRINT WINDOW ────────────────────────────────────────────────────────
-    function openPrintWindow(html, mealPlanData, margins, usableH, usableW) {
-        const pw = window.open('', '_blank');
-        if (!pw) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
-        const ds = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth()+1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth()+1}.${mealPlanData.startDate.getFullYear()}`;
-        const { top, right, bottom, left } = margins;
-        pw.document.write(
-            '<!DOCTYPE html><html><head><title>Weekly-Menu-' + ds + '</title><meta charset="UTF-8">' +
-            '<style>* { margin:0; padding:0; box-sizing:border-box; }' +
-            'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
-            '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
-            '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; }' +
-            '@media print { html, body { height:100%; background:white; } #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; } #menu-content { height:100% !important; } * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }' +
-            '</style></head><body>' +
-            '<div id="page-wrapper">' + html + '</div>' +
-            '<scr' + 'ipt>window.onload=function(){setTimeout(function(){var c=document.getElementById("menu-content");if(c){var ph=' + usableH + ',ch=c.scrollHeight;if(ch>ph*1.05){var zf=ph/ch;if(zf<1)c.style.zoom=Math.max(0.5,zf).toFixed(4);}}setTimeout(function(){window.print();},600);},800);};<\/scr' + 'ipt>' +
-            '</body></html>'
-        );
-        pw.document.close();
     }
 
     // ─── DATE / WEEK HELPERS ─────────────────────────────────────────────────
