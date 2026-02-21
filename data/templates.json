@@ -73,5 +73,155 @@
     "footerAlignment": "center",
     "footerFontSize": 13,
     "footerFontFamily": "Tahoma, sans-serif"
+  },
+  "mlqko": {
+    "templateStyle": "compact",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": "5rer.jpg",
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#d2691e",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 12,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "dateFontFamily": "Arial, sans-serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Приготвено с любов",
+    "footerAlignment": "center",
+    "footerFontSize": 9,
+    "footerFontFamily": "Arial, sans-serif"
+  },
+  "nov1": {
+    "templateStyle": "detailed",
+    "fontFamily": "Arial, sans-serif",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": "5rer.jpg",
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": null,
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": null,
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#d2691e",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 17,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "dateFontFamily": "Arial, sans-serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "Алергените са подчертани. Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за ученическо столово хранене Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г Менюто е съгласувано с мед.лице - Елиза Дамянова.",
+    "footerAlignment": "center",
+    "footerFontSize": 9,
+    "footerFontFamily": "Arial, sans-serif"
   }
 }
