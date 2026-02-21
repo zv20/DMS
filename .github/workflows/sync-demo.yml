@@ -1,4 +1,4 @@
-name: Sync main → demo
+name: Sync main -> demo
 
 on:
   push:
@@ -24,36 +24,32 @@ jobs:
         run: git checkout demo
 
       - name: Overwrite demo with everything from main
-        run: |
-          git checkout main -- .
+        run: git checkout main -- .
 
       - name: Restore demo-mode.js from demo
-        run: |
-          git checkout origin/demo -- js/demo-mode.js
+        run: git checkout origin/demo -- js/demo-mode.js
 
       - name: Inject demo-mode.js script tag into index.html
         run: |
-          python3 - <<'EOF'
-          import re
+          python3 inject_demo.py
 
+      - name: Write inject script
+        run: |
+          cat > inject_demo.py << 'PYEOF'
+          import re
           with open('index.html', 'r', encoding='utf-8') as f:
               content = f.read()
-
-          demo_tag = '  <!-- DEMO MODE: overrides storage with fetch() + memory-only writes.\n       Remove this line when merging main → demo is not needed.\n       This is the ONLY line that differs from main\'s index.html. -->\n  <script src="js/demo-mode.js"></script>\n\n'
-
-          # Only inject if not already present
+          demo_tag = '\n  <!-- DEMO MODE: overrides storage with fetch() + memory-only writes. -->\n  <script src="js/demo-mode.js"></script>\n'
           if 'demo-mode.js' not in content:
               content = re.sub(
                   r'(<script src="js/storage-adapter\.js[^"]*"></script>)',
-                  r'\1\n\n' + demo_tag.rstrip('\n'),
+                  r'\1' + demo_tag,
                   content
               )
-
           with open('index.html', 'w', encoding='utf-8') as f:
               f.write(content)
-
-          print("Done — demo-mode.js tag is present in index.html")
-          EOF
+          print('Done - demo-mode.js tag present in index.html')
+          PYEOF
 
       - name: Commit and push to demo
         run: |
