@@ -32,6 +32,11 @@ jobs:
       - name: Inject demo-mode.js script tag into index.html
         run: python3 .github/scripts/inject-demo.py
 
+      - name: Remove all markdown docs from demo
+        run: |
+          find . -maxdepth 1 -name "*.md" -delete
+          echo "Markdown docs stripped from demo."
+
       - name: Commit and push to demo
         run: |
           git add -A
