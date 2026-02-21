@@ -1,2 +1,0 @@
-# DMS
-Recipe Manager Application
