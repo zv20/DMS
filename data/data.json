@@ -2472,6 +2472,213 @@
         }
       ],
       "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771683848245_r6wdo9yma",
+      "name": "Рибно филе на фурна с гарнитура",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 249,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771456169186_vjeu1kx8v"
+        },
+        {
+          "id": "ing_1771455859911_qrt9rd5ob"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455941164_31fwlzfjj"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771684061657_netx86hkf",
+      "name": "Картофен пай с пилешко месо",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 212,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771617674760_yea2wms8y"
+        },
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771456006976_u7cwz3spm"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771456221980_5fmrk5cr8"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771684202055_97ckf4mtz",
+      "name": "Телешка супа със застройка",
+      "category": "soup",
+      "portionSize": "150гр",
+      "calories": 122,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771684217496_ylnz5j3pa"
+        },
+        {
+          "id": "ing_1771455680431_10ii5j0si"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771455718074_54uyf4uh7"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455762201_sjs6jwvny"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771684281157_dyj3mgaph",
+      "name": "Славянски гювеч",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 174,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771455696498_4f3z7dk4r"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771455680431_10ii5j0si"
+        },
+        {
+          "id": "ing_1771455710514_81ab30tv0"
+        },
+        {
+          "id": "ing_1771456279208_59tgvnrgw"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771684509791_j2lo8qv2q",
+      "name": "Картофен пай със свинско мляно месо",
+      "category": "main",
+      "portionSize": "150гр",
+      "calories": 236,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771546086543_q4oeygfm0"
+        },
+        {
+          "id": "ing_1771455680431_10ii5j0si"
+        },
+        {
+          "id": "ing_1771506779501_7t5ccs9ws"
+        },
+        {
+          "id": "ing_1771455750407_mecs49pmh"
+        },
+        {
+          "id": "ing_1771455874658_rgy1o5rw0"
+        },
+        {
+          "id": "ing_1771455833978_46cszr0i6"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771455820385_elmi86q63"
+        }
+      ],
+      "manualAllergens": []
+    },
+    {
+      "id": "rcp_1771684860415_ynbfp7xzz",
+      "name": "Борш с прясно зеле",
+      "category": "soup",
+      "portionSize": "150гр",
+      "calories": 79,
+      "instructions": "",
+      "ingredients": [
+        {
+          "id": "ing_1771438196607_dlcmku6y3"
+        },
+        {
+          "id": "ing_1771546064739_o4wl0rvv6"
+        },
+        {
+          "id": "ing_1771456006976_u7cwz3spm"
+        },
+        {
+          "id": "ing_1771438203292_4kawzcbf6"
+        },
+        {
+          "id": "ing_1771456011673_pbagbvzf0"
+        },
+        {
+          "id": "ing_1771546071160_p0d0253em"
+        },
+        {
+          "id": "ing_1771456243944_1pz1kbx6u"
+        },
+        {
+          "id": "ing_1771456093894_bd6g2mb1l"
+        },
+        {
+          "id": "ing_1771679713056_6icefp1wt"
+        },
+        {
+          "id": "ing_1771455827144_gry4koh3o"
+        },
+        {
+          "id": "ing_1771684868970_bpjf5zpl5"
+        },
+        {
+          "id": "ing_1771684874386_5onsivx40"
+        }
+      ],
+      "manualAllergens": []
     }
   ],
   "ingredients": [
@@ -2862,6 +3069,21 @@
     {
       "id": "ing_1771679713056_6icefp1wt",
       "name": "черен пипер",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771684217496_ylnz5j3pa",
+      "name": "телешко мляно месо",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771684868970_bpjf5zpl5",
+      "name": "кориандър",
+      "allergens": []
+    },
+    {
+      "id": "ing_1771684874386_5onsivx40",
+      "name": "риган",
       "allergens": []
     }
   ],
