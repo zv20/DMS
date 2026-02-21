@@ -35,8 +35,4 @@ jobs:
       - name: Commit and push to demo
         run: |
           git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to sync."
-          else
-            git commit -m "chore: sync from main ($(git rev-parse --short origin/main))"
-            git push origin demo
+          git diff --cached --quiet && echo "No changes to sync." || (git commit -m "chore: sync from main ($(git rev-parse --short origin/main))" && git push origin demo)
