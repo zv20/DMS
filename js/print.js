@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.0 - Print / Save Image / Save PDF with preview modal
+ * @version 8.1 - Auto-close print tab after print/cancel
  */
 
 (function(window) {
@@ -80,8 +80,6 @@
     }
 
     // ─── PREVIEW MODAL ──────────────────────────────────────────────────────
-    // Shows the canvas as a preview. Returns a Promise that resolves true (download)
-    // or false (cancel).
     function showPreviewModal(canvas, filename, isBg, action) {
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
@@ -90,12 +88,11 @@
             const modal = document.createElement('div');
             modal.style.cssText = 'background:white;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,0.35);display:flex;flex-direction:column;max-width:520px;width:100%;max-height:92vh;overflow:hidden;';
 
-            // Header
             const header = document.createElement('div');
             header.style.cssText = 'padding:16px 20px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;';
             const title = document.createElement('div');
             title.style.cssText = 'font-weight:700;font-size:1rem;color:#333;';
-            const actionIcon = action === 'image' ? '🖼️' : '📄';
+            const actionIcon  = action === 'image' ? '🖼️' : '📄';
             const actionLabel = action === 'image'
                 ? (isBg ? 'Преглед — Изображение' : 'Preview — Image')
                 : (isBg ? 'Преглед — PDF' : 'Preview — PDF');
@@ -109,12 +106,10 @@
             header.appendChild(title);
             header.appendChild(closeBtn);
 
-            // Filename label
             const fileLabel = document.createElement('div');
             fileLabel.style.cssText = 'padding:6px 20px;font-size:0.8rem;color:#aaa;flex-shrink:0;';
             fileLabel.textContent = filename;
 
-            // Preview image (canvas scaled to fit)
             const previewWrap = document.createElement('div');
             previewWrap.style.cssText = 'flex:1;overflow-y:auto;padding:12px 20px;background:#f5f5f5;display:flex;align-items:flex-start;justify-content:center;';
 
@@ -123,7 +118,6 @@
             img.style.cssText = 'width:100%;border:1px solid #ddd;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,0.12);display:block;';
             previewWrap.appendChild(img);
 
-            // Footer buttons
             const footer = document.createElement('div');
             footer.style.cssText = 'padding:14px 20px;border-top:1px solid #eee;display:flex;gap:10px;flex-shrink:0;';
 
@@ -139,7 +133,6 @@
 
             footer.appendChild(dlBtn);
             footer.appendChild(cancelBtn);
-
             modal.appendChild(header);
             modal.appendChild(fileLabel);
             modal.appendChild(previewWrap);
@@ -152,12 +145,10 @@
     // ─── CANVAS RENDERER (shared by image + pdf) ────────────────────────────
     async function renderToCanvas(html, usableH, usableW) {
         if (!window.html2canvas) throw new Error('html2canvas not loaded');
-
         const container = document.createElement('div');
         container.style.cssText = `width:${usableW}px;height:${usableH}px;position:absolute;top:0;left:-9999px;overflow:hidden;background:white;`;
         container.innerHTML = html;
         document.body.appendChild(container);
-
         try {
             return await window.html2canvas(container.querySelector('#menu-content') || container, {
                 scale: 3,
@@ -214,7 +205,7 @@
         const html    = renderMenuHTML(mealPlanData, settings, usableH);
         const ds      = getLocalDateString(mealPlanData.startDate);
 
-        // ─── PRINT (original flow, untouched) ──────────────────────────────
+        // ─── PRINT ─────────────────────────────────────────────────────────────
         if (choice.action === 'print') {
             openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW);
             return;
@@ -237,22 +228,17 @@
             ? `Weekly-Menu-${ds}.png`
             : `Weekly-Menu-${ds}.pdf`;
 
-        // Show preview — wait for user confirmation
         const confirmed = await showPreviewModal(canvas, filename, isBg, choice.action);
         if (!confirmed) return;
 
-        // ─── Download ─────────────────────────────────────────────────────
         if (choice.action === 'image') {
-            // PNG download
             canvas.toBlob(blob => {
                 const url = URL.createObjectURL(blob);
                 const a   = document.createElement('a');
                 a.href = url; a.download = filename; a.click();
                 setTimeout(() => URL.revokeObjectURL(url), 10000);
             }, 'image/png');
-
         } else {
-            // PDF download
             if (!window.jspdf && !window.jsPDF) {
                 alert(isBg ? 'jsPDF не е зареден.' : 'jsPDF library not loaded.');
                 return;
@@ -266,7 +252,7 @@
         }
     };
 
-    // ─── PRINT WINDOW (original, untouched) ────────────────────────────────
+    // ─── PRINT WINDOW ──────────────────────────────────────────────────────────
     function openPrintWindow(html, mealPlanData, margins, usableH, usableW) {
         const pw = window.open('', '_blank');
         if (!pw) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
@@ -274,14 +260,24 @@
         const { top, right, bottom, left } = margins;
         pw.document.write(
             '<!DOCTYPE html><html><head><title>Weekly-Menu-' + ds + '</title><meta charset="UTF-8">' +
-            '<style>* { margin:0; padding:0; box-sizing:border-box; }' +
+            '<style>' +
+            '* { margin:0; padding:0; box-sizing:border-box; }' +
             'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
             '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
             '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; }' +
             '@media print { html, body { height:100%; background:white; } #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; } #menu-content { height:100% !important; } * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }' +
             '</style></head><body>' +
             '<div id="page-wrapper">' + html + '</div>' +
-            '<scr' + 'ipt>window.onload=function(){setTimeout(function(){var c=document.getElementById("menu-content");if(c){var ph=' + usableH + ',ch=c.scrollHeight;if(ch>ph*1.05){var zf=ph/ch;if(zf<1)c.style.zoom=Math.max(0.5,zf).toFixed(4);}}setTimeout(function(){window.print();},600);},800);};<\/scr' + 'ipt>' +
+            '<scr' + 'ipt>' +
+            'window.addEventListener("afterprint", function() { window.close(); });' +
+            'window.onload = function() {' +
+            '  setTimeout(function() {' +
+            '    var c = document.getElementById("menu-content");' +
+            '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.05) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
+            '    setTimeout(function() { window.print(); }, 600);' +
+            '  }, 800);' +
+            '};' +
+            '<\/scr' + 'ipt>' +
             '</body></html>'
         );
         pw.document.close();
@@ -318,7 +314,7 @@
         });
     }
 
-    // ─── PRINT DIALOG (3 action buttons) ──────────────────────────────────
+    // ─── PRINT DIALOG ────────────────────────────────────────────────────────
     function showPrintDialog(weekEntries, isBg) {
         return new Promise((resolve) => {
             const savedTemplates = window.menuTemplates || {};
@@ -365,7 +361,6 @@
                         <option value="comfortable">${isBg ? '🔵 Широки (15мм)' : '🔵 Comfortable (15mm)'}</option>
                     </select>
                 </div>
-
                 <div style="margin-bottom:10px;display:flex;gap:8px;">
                     <button id="pd-print" style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖨️ ${isBg ? 'Печат' : 'Print'}</button>
                     <button id="pd-image" style="flex:1;padding:11px 6px;background:#20c997;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖼️ ${isBg ? 'Като изобр.' : 'Save Image'}</button>
