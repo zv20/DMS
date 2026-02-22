@@ -1,6 +1,6 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.6 - Rich text editor for header & footer
+ * @version 6.7 - Align/font/size/color merged into RTE toolbar
  */
 
 class StepTemplateBuilder {
@@ -78,28 +78,88 @@ class StepTemplateBuilder {
 
     // ─── RICH TEXT EDITOR ────────────────────────────────────────────────────
     /**
-     * Renders a mini rich-text editor tied to a settings key.
-     * @param {string} id   - settings key (e.g. 'headerText')
-     * @param {string} html - current HTML content
+     * Renders a mini rich-text editor with a full integrated toolbar.
+     * Toolbar row 1: align | font | size | B I U S | A (color) | bullet | clear
+     * @param {string} id          - settings key (e.g. 'headerText')
+     * @param {string} html        - current HTML content
+     * @param {string} alignVal    - current alignment setting value
+     * @param {string} fontVal     - current font-family setting value
+     * @param {number} sizeVal     - current font size setting value
+     * @param {number} sizeMin     - min font size
+     * @param {number} sizeMax     - max font size
+     * @param {string} colorVal    - current text colour (hex)
+     * @param {string} alignId     - settings key for alignment
+     * @param {string} fontId      - settings key for font
+     * @param {string} sizeId      - settings key for size
+     * @param {string} colorId     - settings key for colour
      */
-    _richEditor(id, html) {
+    _richEditor(id, html, alignVal, fontVal, sizeVal, sizeMin, sizeMax, colorVal, alignId, fontId, sizeId, colorId) {
+        const fonts   = this._fonts();
+        const curFont = fonts.find(f => f.value === fontVal) || fonts[0];
+        const alignOpts = [
+            { val: 'left',   icon: '&#8676;', title: 'Left'   },
+            { val: 'center', icon: '&#9868;', title: 'Center' },
+            { val: 'right',  icon: '&#8677;', title: 'Right'  }
+        ];
+
         return `
-        <div class="rte-wrap" data-id="${id}">
+        <div class="rte-wrap" data-id="${id}" data-align-id="${alignId}" data-font-id="${fontId}" data-size-id="${sizeId}" data-color-id="${colorId}">
             <div class="rte-toolbar">
+
+                <!-- Alignment -->
+                <div class="rte-align-group" data-id="${alignId}">
+                    ${alignOpts.map(o => `
+                        <button type="button" class="rte-btn rte-align-btn ${alignVal === o.val ? 'active' : ''}" data-val="${o.val}" title="${o.title}">${o.icon}</button>
+                    `).join('')}
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Font family -->
+                <div class="rte-font-picker" id="rfp_${id}" data-id="${fontId}" data-val="${fontVal}">
+                    <button type="button" class="rte-font-btn" title="Font">
+                        <span class="rte-font-preview" style="font-family:${fontVal}">${curFont.label}</span>
+                        <span class="rte-caret">&#9660;</span>
+                    </button>
+                    <div class="rte-font-dropdown">
+                        ${fonts.map(f => `
+                            <div class="rte-font-option ${f.value === fontVal ? 'active' : ''}" data-val="${f.value}" style="font-family:${f.value}">${f.label}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Size stepper -->
+                <div class="rte-size-stepper" data-id="${sizeId}">
+                    <button type="button" class="rte-step-btn" data-dir="-1" title="Decrease">&#8722;</button>
+                    <span class="rte-size-val" id="rsv_${sizeId}">${sizeVal}</span>
+                    <span class="rte-size-unit">pt</span>
+                    <button type="button" class="rte-step-btn" data-dir="1" title="Increase">&#43;</button>
+                    <input type="hidden" id="rsh_${sizeId}" value="${sizeVal}" data-min="${sizeMin}" data-max="${sizeMax}">
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Format: B I U S -->
                 <button type="button" class="rte-btn" data-cmd="bold"          title="Bold"><b>B</b></button>
                 <button type="button" class="rte-btn" data-cmd="italic"        title="Italic"><i>I</i></button>
                 <button type="button" class="rte-btn" data-cmd="underline"     title="Underline"><u>U</u></button>
                 <button type="button" class="rte-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
                 <div class="rte-sep"></div>
+
+                <!-- Inline colour -->
                 <label class="rte-color-wrap" title="Text color">
                     <span>A</span>
-                    <input type="color" class="rte-color" value="#000000">
+                    <input type="color" class="rte-color" value="${colorVal || '#000000'}">
                 </label>
                 <div class="rte-sep"></div>
+
+                <!-- Bullet list -->
                 <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Bullet list">&#8226;&#8211;</button>
                 <div class="rte-sep"></div>
+
+                <!-- Clear formatting -->
                 <button type="button" class="rte-btn rte-clear" title="Remove formatting">&#10005;</button>
             </div>
+
             <div class="rte-editor"
                  id="rte_${id}"
                  contenteditable="true"
@@ -107,8 +167,7 @@ class StepTemplateBuilder {
         </div>`;
     }
 
-    // ─── TOOLBAR HELPERS ─────────────────────────────────────────────────────
-
+    // ─── LEGACY STANDALONE HELPERS (still used by date-range & menu sections) ─
     _alignToggle(id, currentVal) {
         const opts = [
             { val: 'left',   title: 'Left'   },
@@ -507,44 +566,41 @@ class StepTemplateBuilder {
 
     // ─── HEADER ───────────────────────────────────────────────────────────────
     renderHeaderControls() {
+        const s = this.settings;
         return `<div class="control-group">
             <label class="checkbox-label">
-                <input type="checkbox" id="showHeader" ${this.settings.showHeader?'checked':''}>
+                <input type="checkbox" id="showHeader" ${s.showHeader?'checked':''}>
                 <span>${window.t('label_show_header')}</span>
             </label>
 
             <label>${window.t('label_header_text')}</label>
-            ${this._richEditor('headerText', this.settings.headerText)}
-
-            <label>${window.t('label_text_alignment')}</label>
-            ${this._alignToggle('headerAlignment', this.settings.headerAlignment)}
-
-            <label>Font</label>
-            ${this._fontPicker('headerFontFamily', this.settings.headerFontFamily)}
-
-            <label>Size</label>
-            ${this._sizeStepper('headerFontSize', this.settings.headerFontSize, 8, 120)}
-
-            <label>${window.t('label_text_color')}</label>
-            <input type="color" id="headerColor" value="${this.settings.headerColor}" class="color-input">
+            ${this._richEditor(
+                'headerText',
+                s.headerText,
+                s.headerAlignment,
+                s.headerFontFamily,
+                s.headerFontSize, 8, 120,
+                s.headerColor,
+                'headerAlignment', 'headerFontFamily', 'headerFontSize', 'headerColor'
+            )}
 
             <h4 style="margin-top:18px;">&#128197; Date Range</h4>
             <label class="checkbox-label">
-                <input type="checkbox" id="showDateRange" ${this.settings.showDateRange?'checked':''}>
+                <input type="checkbox" id="showDateRange" ${s.showDateRange?'checked':''}>
                 <span>Show Date Range</span>
             </label>
 
             <label>Alignment</label>
-            ${this._alignToggle('dateAlignment', this.settings.dateAlignment)}
+            ${this._alignToggle('dateAlignment', s.dateAlignment)}
 
             <label>Font</label>
-            ${this._fontPicker('dateFontFamily', this.settings.dateFontFamily)}
+            ${this._fontPicker('dateFontFamily', s.dateFontFamily)}
 
             <label>Size</label>
-            ${this._sizeStepper('dateFontSize', this.settings.dateFontSize, 6, 60)}
+            ${this._sizeStepper('dateFontSize', s.dateFontSize, 6, 60)}
 
             <label>Color</label>
-            <input type="color" id="dateColor" value="${this.settings.dateColor}" class="color-input">
+            <input type="color" id="dateColor" value="${s.dateColor}" class="color-input">
         </div>`;
     }
 
@@ -603,23 +659,23 @@ class StepTemplateBuilder {
 
     // ─── FOOTER ───────────────────────────────────────────────────────────────
     renderFooterControls() {
+        const s = this.settings;
         return `<div class="control-group">
             <label class="checkbox-label">
-                <input type="checkbox" id="showFooter" ${this.settings.showFooter?'checked':''}>
+                <input type="checkbox" id="showFooter" ${s.showFooter?'checked':''}>
                 <span>${window.t('label_show_footer')}</span>
             </label>
 
             <label>${window.t('label_footer_text')}</label>
-            ${this._richEditor('footerText', this.settings.footerText)}
-
-            <label>${window.t('label_text_alignment')}</label>
-            ${this._alignToggle('footerAlignment', this.settings.footerAlignment)}
-
-            <label>Font</label>
-            ${this._fontPicker('footerFontFamily', this.settings.footerFontFamily)}
-
-            <label>Size</label>
-            ${this._sizeStepper('footerFontSize', this.settings.footerFontSize, 6, 48)}
+            ${this._richEditor(
+                'footerText',
+                s.footerText,
+                s.footerAlignment,
+                s.footerFontFamily,
+                s.footerFontSize, 6, 48,
+                '#000000',
+                'footerAlignment', 'footerFontFamily', 'footerFontSize', null
+            )}
         </div>`;
     }
 
@@ -649,11 +705,12 @@ class StepTemplateBuilder {
             .image-card{padding:10px;border:2px solid #e0e0e0;border-radius:8px;text-align:center;}
 
             /* ── Rich Text Editor ── */
-            .rte-wrap{border:1px solid #ddd;border-radius:6px;overflow:hidden;}
+            .rte-wrap{border:1px solid #ddd;border-radius:6px;overflow:visible;}
             .rte-toolbar{
                 display:flex;align-items:center;gap:2px;
                 padding:5px 6px;background:#f8f9fa;
                 border-bottom:1px solid #e0e0e0;flex-wrap:wrap;
+                border-radius:6px 6px 0 0;
             }
             .rte-btn{
                 min-width:28px;height:26px;padding:0 5px;
@@ -664,7 +721,7 @@ class StepTemplateBuilder {
             }
             .rte-btn:hover{background:#e9ecef;border-color:#adb5bd;}
             .rte-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
-            .rte-sep{width:1px;height:18px;background:#ddd;margin:0 3px;}
+            .rte-sep{width:1px;height:18px;background:#ddd;margin:0 3px;flex-shrink:0;}
             .rte-color-wrap{
                 position:relative;display:flex;align-items:center;justify-content:center;
                 min-width:28px;height:26px;padding:0 5px;
@@ -689,17 +746,44 @@ class StepTemplateBuilder {
                 line-height:1.5;
                 outline:none;
                 background:white;
+                border-radius:0 0 6px 6px;
             }
             .rte-editor:focus{background:#fffdf8;}
             .rte-clear{color:#999;}
 
-            /* ── Alignment toggle ── */
+            /* ── RTE: Alignment ── */
+            .rte-align-group{display:flex;gap:2px;}
+            .rte-align-btn{min-width:26px;height:26px;padding:0 4px;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+            .rte-align-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-align-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+
+            /* ── RTE: Font picker ── */
+            .rte-font-picker{position:relative;}
+            .rte-font-btn{display:flex;align-items:center;justify-content:space-between;padding:3px 7px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;height:26px;white-space:nowrap;max-width:100px;transition:all .15s;}
+            .rte-font-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-font-preview{font-size:12px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
+            .rte-caret{font-size:9px;color:#888;margin-left:4px;flex-shrink:0;}
+            .rte-font-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:160px;background:white;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:99999;max-height:200px;overflow-y:auto;}
+            .rte-font-picker.open .rte-font-dropdown{display:block;}
+            .rte-font-option{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .1s;}
+            .rte-font-option:last-child{border-bottom:none;}
+            .rte-font-option:hover{background:#fff3e0;}
+            .rte-font-option.active{background:#fff3e0;color:#fd7e14;font-weight:600;}
+
+            /* ── RTE: Size stepper ── */
+            .rte-size-stepper{display:flex;align-items:center;gap:3px;}
+            .rte-step-btn{width:22px;height:22px;border:1px solid #ddd;border-radius:4px;background:white;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+            .rte-step-btn:hover{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .rte-size-val{min-width:24px;text-align:center;font-size:12px;font-weight:600;color:#333;}
+            .rte-size-unit{font-size:10px;color:#888;}
+
+            /* ── Standalone alignment toggle (date-range / menu) ── */
             .tb-align-group{display:flex;gap:4px;}
             .tb-align-btn{flex:1;padding:6px 0;border:1px solid #ddd;border-radius:5px;background:#f8f9fa;cursor:pointer;font-size:15px;line-height:1;transition:all .15s;}
             .tb-align-btn:hover{background:#e9ecef;border-color:#adb5bd;}
             .tb-align-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
 
-            /* ── Font picker ── */
+            /* ── Standalone font picker ── */
             .tb-font-picker{position:relative;width:100%;}
             .tb-font-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid #ddd;border-radius:5px;background:#f8f9fa;cursor:pointer;font-size:13px;transition:all .15s;}
             .tb-font-btn:hover{background:#e9ecef;border-color:#adb5bd;}
@@ -712,7 +796,7 @@ class StepTemplateBuilder {
             .tb-font-option:hover{background:#fff3e0;}
             .tb-font-option.active{background:#fff3e0;color:#fd7e14;font-weight:600;}
 
-            /* ── Size stepper ── */
+            /* ── Standalone size stepper ── */
             .tb-size-stepper{display:flex;align-items:center;gap:6px;background:#f8f9fa;border:1px solid #ddd;border-radius:5px;padding:4px 8px;width:fit-content;}
             .tb-step-btn{width:26px;height:26px;border:1px solid #ddd;border-radius:4px;background:white;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;}
             .tb-step-btn:hover{background:#fd7e14;border-color:#fd7e14;color:white;}
@@ -754,15 +838,11 @@ class StepTemplateBuilder {
         [0,1,2,3,4].forEach(i => this.bindMultiImageSlot(i));
         this.bindColorInput('backgroundColor');
 
-        // Header
+        // Header — rich editor binds align/font/size/color internally
         this.bindCheckbox('showHeader');
         this.bindRichEditor('headerText');
-        this.bindAlignToggle('headerAlignment');
-        this.bindFontPicker('headerFontFamily');
-        this.bindSizeStepper('headerFontSize');
-        this.bindColorInput('headerColor');
 
-        // Date range
+        // Date range — standalone controls
         this.bindCheckbox('showDateRange');
         this.bindAlignToggle('dateAlignment');
         this.bindFontPicker('dateFontFamily');
@@ -787,12 +867,9 @@ class StepTemplateBuilder {
         this.bindCheckbox('allergenUnderline');
         this.bindCheckbox('allergenBold');
 
-        // Footer
+        // Footer — rich editor binds align/font/size internally
         this.bindCheckbox('showFooter');
         this.bindRichEditor('footerText');
-        this.bindAlignToggle('footerAlignment');
-        this.bindFontPicker('footerFontFamily');
-        this.bindSizeStepper('footerFontSize');
     }
 
     // ─── RICH EDITOR BINDER ───────────────────────────────────────────────────
@@ -801,7 +878,12 @@ class StepTemplateBuilder {
         const editor = document.getElementById(`rte_${id}`);
         if (!wrap || !editor) return;
 
-        // Track last saved selection so toolbar buttons don't lose it
+        const alignId = wrap.dataset.alignId;
+        const fontId  = wrap.dataset.fontId;
+        const sizeId  = wrap.dataset.sizeId;
+        const colorId = wrap.dataset.colorId;
+
+        // ── Selection save/restore ────────────────────────────────────────────
         let savedRange = null;
         const saveSelection = () => {
             const sel = window.getSelection();
@@ -813,20 +895,77 @@ class StepTemplateBuilder {
             sel.removeAllRanges();
             sel.addRange(savedRange);
         };
-
         editor.addEventListener('keyup',   saveSelection);
         editor.addEventListener('mouseup', saveSelection);
 
-        // Content → settings on every input
+        // ── Content → settings ────────────────────────────────────────────────
         editor.addEventListener('input', () => {
             this.settings[id] = editor.innerHTML;
             this.updatePreview();
         });
 
-        // Format buttons
+        // ── Alignment buttons ────────────────────────────────────────────────
+        const alignGroup = wrap.querySelector('.rte-align-group');
+        if (alignGroup) {
+            alignGroup.querySelectorAll('.rte-align-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alignGroup.querySelectorAll('.rte-align-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.settings[alignId] = btn.dataset.val;
+                    this.updatePreview();
+                });
+            });
+        }
+
+        // ── Font picker ───────────────────────────────────────────────────────
+        const fontWrap = wrap.querySelector('.rte-font-picker');
+        if (fontWrap) {
+            const fontBtn      = fontWrap.querySelector('.rte-font-btn');
+            const fontDropdown = fontWrap.querySelector('.rte-font-dropdown');
+            const fontPreview  = fontWrap.querySelector('.rte-font-preview');
+            fontBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                document.querySelectorAll('.rte-font-picker.open, .tb-font-picker.open').forEach(p => { if (p !== fontWrap) p.classList.remove('open'); });
+                fontWrap.classList.toggle('open');
+            });
+            fontDropdown.querySelectorAll('.rte-font-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const val = opt.dataset.val;
+                    this.settings[fontId] = val;
+                    fontPreview.textContent = opt.textContent.trim();
+                    fontPreview.style.fontFamily = val;
+                    fontDropdown.querySelectorAll('.rte-font-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    fontWrap.classList.remove('open');
+                    this.updatePreview();
+                });
+            });
+            document.addEventListener('click', () => fontWrap.classList.remove('open'));
+        }
+
+        // ── Size stepper ──────────────────────────────────────────────────────
+        const sizeStepper = wrap.querySelector('.rte-size-stepper');
+        if (sizeStepper) {
+            const hidden  = sizeStepper.querySelector(`#rsh_${sizeId}`);
+            const display = sizeStepper.querySelector(`#rsv_${sizeId}`);
+            const min = parseInt(hidden.dataset.min);
+            const max = parseInt(hidden.dataset.max);
+            sizeStepper.querySelectorAll('.rte-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let val = parseInt(hidden.value) + parseInt(btn.dataset.dir);
+                    val = Math.min(max, Math.max(min, val));
+                    hidden.value = val;
+                    display.textContent = val;
+                    this.settings[sizeId] = val;
+                    this.updatePreview();
+                });
+            });
+        }
+
+        // ── Format buttons (B I U S / bullet / clear) ─────────────────────────
         wrap.querySelectorAll('.rte-btn[data-cmd]').forEach(btn => {
             btn.addEventListener('mousedown', e => {
-                e.preventDefault(); // keep focus in editor
+                e.preventDefault();
                 editor.focus();
                 restoreSelection();
                 if (btn.classList.contains('rte-clear')) {
@@ -836,12 +975,11 @@ class StepTemplateBuilder {
                 }
                 this.settings[id] = editor.innerHTML;
                 this.updatePreview();
-                // toggle active state
                 this._updateRteActiveStates(wrap);
             });
         });
 
-        // Color picker
+        // ── Inline colour picker ──────────────────────────────────────────────
         const colorInput = wrap.querySelector('.rte-color');
         const colorLabel = wrap.querySelector('.rte-color-wrap span');
         if (colorInput) {
@@ -854,11 +992,12 @@ class StepTemplateBuilder {
                 restoreSelection();
                 document.execCommand('foreColor', false, e.target.value);
                 this.settings[id] = editor.innerHTML;
+                if (colorId) this.settings[colorId] = e.target.value;
                 this.updatePreview();
             });
         }
 
-        // Update toolbar active states on selection change
+        // ── Toolbar active states on selection change ─────────────────────────
         editor.addEventListener('keyup',   () => this._updateRteActiveStates(wrap));
         editor.addEventListener('mouseup', () => this._updateRteActiveStates(wrap));
     }
@@ -871,7 +1010,7 @@ class StepTemplateBuilder {
         });
     }
 
-    // ─── TOOLBAR BINDERS ─────────────────────────────────────────────────────
+    // ─── STANDALONE TOOLBAR BINDERS (date-range, menu) ───────────────────────
     bindAlignToggle(id) {
         const group = document.querySelector(`.tb-align-group[data-id="${id}"]`);
         if (!group) return;
@@ -893,7 +1032,7 @@ class StepTemplateBuilder {
         const preview  = wrap.querySelector('.tb-font-preview');
         btn.addEventListener('click', e => {
             e.stopPropagation();
-            document.querySelectorAll('.tb-font-picker.open').forEach(p => { if (p!==wrap) p.classList.remove('open'); });
+            document.querySelectorAll('.tb-font-picker.open, .rte-font-picker.open').forEach(p => { if (p!==wrap) p.classList.remove('open'); });
             wrap.classList.toggle('open');
         });
         dropdown.querySelectorAll('.tb-font-option').forEach(opt => {
