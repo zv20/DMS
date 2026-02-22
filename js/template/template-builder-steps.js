@@ -1,13 +1,12 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.3 - Fix: per-section font families in builder UI
+ * @version 6.4 - Remove global fontFamily dropdown; per-section fonts only
  */
 
 class StepTemplateBuilder {
     constructor() {
         this.settings = {
             templateStyle: 'compact',
-            fontFamily: 'Arial, sans-serif',
             backgroundColor: '#ffffff',
             backgroundImages: [
                 { image: null, position: 'center',       size: 100, opacity: 1.0, zIndex: 1 },
@@ -140,14 +139,6 @@ class StepTemplateBuilder {
             <h2 style="margin:0 0 6px 0;font-size:18px;">${window.t('builder_title')}</h2>
             <p  style="margin:0 0 12px 0;font-size:12px;color:#666;">${window.t('builder_subtitle')}</p>
 
-            <!-- ── Global Font Family (quick apply-to-all) ── -->
-            <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;">
-                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🗛 Global Font Family <span style="font-weight:normal;font-size:11px;">(applies to all sections unless overridden below)</span></label>
-                <select id="fontFamily" class="select-input">
-                    ${this._fontOptions(this.settings.fontFamily)}
-                </select>
-            </div>
-
             ${this.renderAccordionSection('background', window.t('section_background'), this.renderBackgroundControls())}
             ${this.renderAccordionSection('header',     window.t('section_header'),     this.renderHeaderControls())}
             ${this.renderAccordionSection('menu',       window.t('section_menu'),       this.renderMenuControls())}
@@ -226,8 +217,8 @@ class StepTemplateBuilder {
         if (!window.menuTemplates?.[name]) { alert(window.t('alert_template_not_found')); return; }
         if (confirm(window.t('alert_template_load_confirm').replace('{name}', name))) {
             this.settings = { ...window.menuTemplates[name] };
-            // Back-fill any missing per-section font keys from global fontFamily
-            const fallback = this.settings.fontFamily || 'Arial, sans-serif';
+            // Back-fill any missing per-section font keys with Arial default
+            const fallback = 'Arial, sans-serif';
             if (!this.settings.headerFontFamily)  this.settings.headerFontFamily  = fallback;
             if (!this.settings.dateFontFamily)    this.settings.dateFontFamily    = fallback;
             if (!this.settings.dayNameFontFamily) this.settings.dayNameFontFamily = fallback;
@@ -583,7 +574,6 @@ class StepTemplateBuilder {
     bindControls() {
         [0,1,2,3,4].forEach(i => this.bindMultiImageSlot(i));
         this.bindColorInput('backgroundColor');
-        this.bindSelect('fontFamily');
         this.bindCheckbox('showHeader');
         this.bindTextInput('headerText');
         this.bindSelect('headerAlignment');
@@ -736,12 +726,12 @@ class StepTemplateBuilder {
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
 
-        // Resolve per-section fonts with fallback to global fontFamily
-        const hff  = s.headerFontFamily  || s.fontFamily || 'Arial, sans-serif';
-        const dff  = s.dateFontFamily    || s.fontFamily || 'Arial, sans-serif';
-        const dyff = s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
-        const mff  = s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
-        const fff  = s.footerFontFamily  || s.fontFamily || 'Arial, sans-serif';
+        // Per-section fonts with Arial fallback
+        const hff  = s.headerFontFamily  || 'Arial, sans-serif';
+        const dff  = s.dateFontFamily    || 'Arial, sans-serif';
+        const dyff = s.dayNameFontFamily || 'Arial, sans-serif';
+        const mff  = s.mealFontFamily    || 'Arial, sans-serif';
+        const fff  = s.footerFontFamily  || 'Arial, sans-serif';
 
         const pad2 = n => String(n).padStart(2,'0');
         const dateRangeText = `${pad2(startDate.getDate())}.${pad2(startDate.getMonth()+1)} – ${pad2(endDate.getDate())}.${pad2(endDate.getMonth()+1)} ${startDate.getFullYear()}`;
@@ -788,9 +778,8 @@ class StepTemplateBuilder {
 
     renderDayBlock(day, s, isCompact, dyff, mff) {
         if (!day || !day.meals.length) return '';
-        // Resolve fonts if called without explicit args (e.g. from old code paths)
-        const resolvedDyff = dyff || s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
-        const resolvedMff  = mff  || s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
+        const resolvedDyff = dyff || s.dayNameFontFamily || 'Arial, sans-serif';
+        const resolvedMff  = mff  || s.mealFontFamily    || 'Arial, sans-serif';
         const borderStyle = s.dayBorder
             ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};`
             : '';
