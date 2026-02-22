@@ -1,6 +1,6 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.4 - Remove global fontFamily dropdown; per-section fonts only
+ * @version 6.5 - Toolbar-style icon controls (alignment toggles, font picker, size spinner, border visuals)
  */
 
 class StepTemplateBuilder {
@@ -62,23 +62,112 @@ class StepTemplateBuilder {
         this.init();
     }
 
-    // ─── FONT OPTIONS HELPER ──────────────────────────────────────────────────
-    _fontOptions(currentVal) {
-        const fonts = [
+    // ─── FONT LIST ────────────────────────────────────────────────────────────
+    _fonts() {
+        return [
             { value: 'Arial, sans-serif',              label: 'Arial' },
             { value: "'Times New Roman', serif",       label: 'Times New Roman' },
             { value: 'Georgia, serif',                 label: 'Georgia' },
-            { value: "'Comic Sans MS', cursive",       label: 'Comic Sans MS' },
+            { value: "'Comic Sans MS', cursive",       label: 'Comic Sans' },
             { value: 'Verdana, sans-serif',            label: 'Verdana' },
             { value: "'Courier New', monospace",       label: 'Courier New' },
-            { value: "'Trebuchet MS', sans-serif",     label: 'Trebuchet MS' },
+            { value: "'Trebuchet MS', sans-serif",     label: 'Trebuchet' },
             { value: 'Tahoma, sans-serif',             label: 'Tahoma' }
         ];
-        return fonts.map(f =>
-            `<option value="${f.value}" ${currentVal === f.value ? 'selected' : ''}>${f.label}</option>`
-        ).join('');
     }
 
+    // ─── TOOLBAR HELPERS ──────────────────────────────────────────────────────
+
+    /** Alignment toggle group — renders 3 icon buttons */
+    _alignToggle(id, currentVal) {
+        const opts = [
+            { val: 'left',   icon: '&#9776;', title: 'Left'   },
+            { val: 'center', icon: '&#9638;', title: 'Center' },
+            { val: 'right',  icon: '&#9776;', title: 'Right'  }
+        ];
+        // Use different icons per alignment
+        const icons = { left: '&#8676;', center: '&#9868;', right: '&#8677;' };
+        return `<div class="tb-align-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-align-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}"
+                    title="${o.title}">
+                    ${ o.val === 'left' ? '&#8676;' : o.val === 'center' ? '&#9868;' : '&#8677;' }
+                </button>`).join('')}
+        </div>`;
+    }
+
+    /** Font family picker — shows font name rendered in that font */
+    _fontPicker(id, currentVal) {
+        const fonts = this._fonts();
+        const current = fonts.find(f => f.value === currentVal) || fonts[0];
+        return `<div class="tb-font-picker" id="fp_${id}" data-id="${id}" data-val="${currentVal}">
+            <button type="button" class="tb-font-btn" title="Font Family">
+                <span class="tb-font-preview" style="font-family:${currentVal}">${current.label}</span>
+                <span class="tb-caret">&#9660;</span>
+            </button>
+            <div class="tb-font-dropdown">
+                ${fonts.map(f => `
+                    <div class="tb-font-option ${f.value === currentVal ? 'active' : ''}"
+                        data-val="${f.value}"
+                        style="font-family:${f.value}">
+                        ${f.label}
+                    </div>`).join('')}
+            </div>
+        </div>`;
+    }
+
+    /** Font size spinner — minus / value pill / plus */
+    _sizeStepper(id, currentVal, min, max) {
+        return `<div class="tb-size-stepper" data-id="${id}">
+            <button type="button" class="tb-step-btn" data-dir="-1" title="Decrease">&#8722;</button>
+            <span class="tb-size-val" id="sv_${id}">${currentVal}</span>
+            <span class="tb-size-unit">pt</span>
+            <button type="button" class="tb-step-btn" data-dir="1" title="Increase">&#43;</button>
+            <input type="hidden" id="${id}" value="${currentVal}" data-min="${min}" data-max="${max}">
+        </div>`;
+    }
+
+    /** Border style visual toggle */
+    _borderStyleToggle(id, currentVal) {
+        const opts = [
+            { val: 'solid',  label: '─────' },
+            { val: 'dashed', label: '- - -' },
+            { val: 'dotted', label: '· · ·' },
+            { val: 'double', label: '═════' }
+        ];
+        return `<div class="tb-border-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-border-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}"
+                    title="${o.val}">
+                    <span style="border-bottom:2px ${o.val} currentColor;display:block;width:28px;"></span>
+                </button>`).join('')}
+        </div>`;
+    }
+
+    /** Border thickness visual toggle */
+    _borderThicknessToggle(id, currentVal) {
+        const opts = [
+            { val: '1px', px: 1 },
+            { val: '2px', px: 2 },
+            { val: '3px', px: 3 },
+            { val: '4px', px: 4 }
+        ];
+        return `<div class="tb-border-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-border-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}"
+                    title="${o.val}">
+                    <span style="display:block;width:28px;height:${o.px * 2}px;background:currentColor;border-radius:1px;"></span>
+                </button>`).join('')}
+        </div>`;
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────
     init() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setup());
@@ -217,7 +306,6 @@ class StepTemplateBuilder {
         if (!window.menuTemplates?.[name]) { alert(window.t('alert_template_not_found')); return; }
         if (confirm(window.t('alert_template_load_confirm').replace('{name}', name))) {
             this.settings = { ...window.menuTemplates[name] };
-            // Back-fill any missing per-section font keys with Arial default
             const fallback = 'Arial, sans-serif';
             if (!this.settings.headerFontFamily)  this.settings.headerFontFamily  = fallback;
             if (!this.settings.dateFontFamily)    this.settings.dateFontFamily    = fallback;
@@ -361,6 +449,7 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── BACKGROUND ──────────────────────────────────────────────────────────
     renderBackgroundControls() {
         return `<div class="control-group">
             <label>${window.t('label_background_color')}</label>
@@ -403,45 +492,43 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── HEADER ───────────────────────────────────────────────────────────────
     renderHeaderControls() {
         return `<div class="control-group">
             <label class="checkbox-label"><input type="checkbox" id="showHeader" ${this.settings.showHeader?'checked':''}><span>${window.t('label_show_header')}</span></label>
             <label>${window.t('label_header_text')}</label>
             <input type="text" id="headerText" value="${this.settings.headerText}" class="text-input">
+
             <label>${window.t('label_text_alignment')}</label>
-            <select id="headerAlignment" class="select-input">
-                <option value="left"   ${this.settings.headerAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.headerAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.headerAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Header Font Size (pt)</label>
-            <input type="number" id="headerFontSize" value="${this.settings.headerFontSize}" min="8" max="120" class="text-input">
-            <label>Header Font Family</label>
-            <select id="headerFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.headerFontFamily)}
-            </select>
+            ${this._alignToggle('headerAlignment', this.settings.headerAlignment)}
+
+            <label>Font</label>
+            ${this._fontPicker('headerFontFamily', this.settings.headerFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('headerFontSize', this.settings.headerFontSize, 8, 120)}
+
             <label>${window.t('label_text_color')}</label>
             <input type="color" id="headerColor" value="${this.settings.headerColor}" class="color-input">
 
             <h4 style="margin-top:18px;">&#128197; Date Range</h4>
             <label class="checkbox-label"><input type="checkbox" id="showDateRange" ${this.settings.showDateRange?'checked':''}><span>Show Date Range</span></label>
-            <label>Date Alignment</label>
-            <select id="dateAlignment" class="select-input">
-                <option value="left"   ${this.settings.dateAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.dateAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.dateAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Date Font Size (pt)</label>
-            <input type="number" id="dateFontSize" value="${this.settings.dateFontSize}" min="6" max="60" class="text-input">
-            <label>Date Font Family</label>
-            <select id="dateFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.dateFontFamily)}
-            </select>
-            <label>Date Color</label>
+
+            <label>Alignment</label>
+            ${this._alignToggle('dateAlignment', this.settings.dateAlignment)}
+
+            <label>Font</label>
+            ${this._fontPicker('dateFontFamily', this.settings.dateFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('dateFontSize', this.settings.dateFontSize, 6, 60)}
+
+            <label>Color</label>
             <input type="color" id="dateColor" value="${this.settings.dateColor}" class="color-input">
         </div>`;
     }
 
+    // ─── MENU ─────────────────────────────────────────────────────────────────
     renderMenuControls() {
         const dayBgIsTransparent = !this.settings.dayBackground || this.settings.dayBackground === 'transparent';
         const dayBgColor = dayBgIsTransparent ? '#ffffff' : this.settings.dayBackground;
@@ -454,22 +541,15 @@ class StepTemplateBuilder {
 
             <h4 style="margin-top:15px;">${window.t('label_day_block')}</h4>
             <label class="checkbox-label"><input type="checkbox" id="dayBorder" ${this.settings.dayBorder?'checked':''}><span>${window.t('label_show_border')}</span></label>
+
             <label>${window.t('label_border_color')}</label>
             <input type="color" id="dayBorderColor" value="${this.settings.dayBorderColor}" class="color-input">
+
             <label>${window.t('label_border_style')}</label>
-            <select id="dayBorderStyle" class="select-input">
-                <option value="solid"  ${this.settings.dayBorderStyle==='solid'?'selected':''}>${window.t('border_solid')}</option>
-                <option value="dashed" ${this.settings.dayBorderStyle==='dashed'?'selected':''}>${window.t('border_dashed')}</option>
-                <option value="dotted" ${this.settings.dayBorderStyle==='dotted'?'selected':''}>${window.t('border_dotted')}</option>
-                <option value="double" ${this.settings.dayBorderStyle==='double'?'selected':''}>${window.t('border_double')}</option>
-            </select>
+            ${this._borderStyleToggle('dayBorderStyle', this.settings.dayBorderStyle)}
+
             <label>${window.t('label_border_thickness')}</label>
-            <select id="dayBorderThickness" class="select-input">
-                <option value="1px" ${this.settings.dayBorderThickness==='1px'?'selected':''}>1px</option>
-                <option value="2px" ${this.settings.dayBorderThickness==='2px'?'selected':''}>2px</option>
-                <option value="3px" ${this.settings.dayBorderThickness==='3px'?'selected':''}>3px</option>
-                <option value="4px" ${this.settings.dayBorderThickness==='4px'?'selected':''}>4px</option>
-            </select>
+            ${this._borderThicknessToggle('dayBorderThickness', this.settings.dayBorderThickness)}
 
             <label style="margin-top:4px;">${window.t('label_background')}</label>
             <label class="checkbox-label" style="margin-bottom:4px;">
@@ -481,22 +561,21 @@ class StepTemplateBuilder {
                    ${dayBgIsTransparent?'disabled':''}>
 
             <h4 style="margin-top:15px;">${window.t('label_day_name')}</h4>
-            <label>Size (pt)</label>
-            <input type="number" id="dayNameSize" value="${this.settings.dayNameSize}" min="8" max="48" class="text-input">
-            <label>Day Name Font Family</label>
-            <select id="dayNameFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.dayNameFontFamily)}
-            </select>
+            <label>Font</label>
+            ${this._fontPicker('dayNameFontFamily', this.settings.dayNameFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('dayNameSize', this.settings.dayNameSize, 8, 48)}
+
             <label>${window.t('label_color')}</label>
             <input type="color" id="dayNameColor" value="${this.settings.dayNameColor}" class="color-input">
 
             <h4 style="margin-top:15px;">&#127869;&#65039; Meal Text</h4>
-            <label>Meal Size (pt)</label>
-            <input type="number" id="mealFontSize" value="${this.settings.mealFontSize}" min="6" max="36" class="text-input">
-            <label>Meal Font Family</label>
-            <select id="mealFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.mealFontFamily)}
-            </select>
+            <label>Font</label>
+            ${this._fontPicker('mealFontFamily', this.settings.mealFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('mealFontSize', this.settings.mealFontSize, 6, 36)}
 
             <h4 style="margin-top:15px;">${window.t('label_allergens')}</h4>
             <label>${window.t('label_color')}</label>
@@ -506,28 +585,29 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── FOOTER ───────────────────────────────────────────────────────────────
     renderFooterControls() {
         return `<div class="control-group">
             <label class="checkbox-label"><input type="checkbox" id="showFooter" ${this.settings.showFooter?'checked':''}><span>${window.t('label_show_footer')}</span></label>
+
             <label>${window.t('label_footer_text')}</label>
             <input type="text" id="footerText" value="${this.settings.footerText}" class="text-input">
+
             <label>${window.t('label_text_alignment')}</label>
-            <select id="footerAlignment" class="select-input">
-                <option value="left"   ${this.settings.footerAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.footerAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.footerAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Footer Font Size (pt)</label>
-            <input type="number" id="footerFontSize" value="${this.settings.footerFontSize}" min="6" max="48" class="text-input">
-            <label>Footer Font Family</label>
-            <select id="footerFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.footerFontFamily)}
-            </select>
+            ${this._alignToggle('footerAlignment', this.settings.footerAlignment)}
+
+            <label>Font</label>
+            ${this._fontPicker('footerFontFamily', this.settings.footerFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('footerFontSize', this.settings.footerFontSize, 6, 48)}
         </div>`;
     }
 
+    // ─── STYLES ───────────────────────────────────────────────────────────────
     renderStyles() {
         return `<style>
+            /* ── Layout ── */
             .step-template-controls{padding:20px;background:white;border-radius:8px;}
             .tab-content{display:none;} .tab-content.active{display:block;}
             .accordion-section{margin-bottom:10px;border:2px solid #e0e0e0;border-radius:8px;overflow:hidden;}
@@ -548,9 +628,74 @@ class StepTemplateBuilder {
             .subsection{background:#f8f9fa;padding:12px;border-radius:6px;}
             .template-card{display:flex;align-items:center;gap:10px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;}
             .image-card{padding:10px;border:2px solid #e0e0e0;border-radius:8px;text-align:center;}
+
+            /* ── Alignment toggle ── */
+            .tb-align-group{display:flex;gap:4px;}
+            .tb-align-btn{
+                flex:1;padding:6px 0;border:1px solid #ddd;border-radius:5px;
+                background:#f8f9fa;cursor:pointer;font-size:15px;line-height:1;
+                transition:all .15s;
+            }
+            .tb-align-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-align-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+
+            /* ── Font picker ── */
+            .tb-font-picker{position:relative;width:100%;}
+            .tb-font-btn{
+                width:100%;display:flex;align-items:center;justify-content:space-between;
+                padding:7px 10px;border:1px solid #ddd;border-radius:5px;
+                background:#f8f9fa;cursor:pointer;font-size:13px;
+                transition:all .15s;
+            }
+            .tb-font-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-font-preview{font-size:14px;flex:1;text-align:left;}
+            .tb-caret{font-size:10px;color:#888;margin-left:6px;}
+            .tb-font-dropdown{
+                display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+                background:white;border:1px solid #ddd;border-radius:6px;
+                box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:9999;max-height:220px;overflow-y:auto;
+            }
+            .tb-font-picker.open .tb-font-dropdown{display:block;}
+            .tb-font-option{
+                padding:9px 12px;font-size:14px;cursor:pointer;
+                border-bottom:1px solid #f0f0f0;transition:background .1s;
+            }
+            .tb-font-option:last-child{border-bottom:none;}
+            .tb-font-option:hover{background:#fff3e0;}
+            .tb-font-option.active{background:#fff3e0;color:#fd7e14;font-weight:600;}
+
+            /* ── Size stepper ── */
+            .tb-size-stepper{
+                display:flex;align-items:center;gap:6px;
+                background:#f8f9fa;border:1px solid #ddd;border-radius:5px;padding:4px 8px;
+                width:fit-content;
+            }
+            .tb-step-btn{
+                width:26px;height:26px;border:1px solid #ddd;border-radius:4px;
+                background:white;cursor:pointer;font-size:16px;line-height:1;
+                display:flex;align-items:center;justify-content:center;
+                transition:all .15s;
+            }
+            .tb-step-btn:hover{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .tb-size-val{
+                min-width:28px;text-align:center;font-size:14px;font-weight:600;color:#333;
+            }
+            .tb-size-unit{font-size:11px;color:#888;}
+
+            /* ── Border style toggle ── */
+            .tb-border-group{display:flex;gap:4px;}
+            .tb-border-btn{
+                flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:5px;
+                background:#f8f9fa;cursor:pointer;display:flex;align-items:center;justify-content:center;
+                transition:all .15s;
+            }
+            .tb-border-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-border-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .tb-border-btn.active span{background:white!important;border-bottom-color:white!important;}
         </style>`;
     }
 
+    // ─── ACCORDION ────────────────────────────────────────────────────────────
     bindAccordion() {
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', e => {
@@ -571,69 +716,158 @@ class StepTemplateBuilder {
         });
     }
 
+    // ─── BIND CONTROLS ────────────────────────────────────────────────────────
     bindControls() {
         [0,1,2,3,4].forEach(i => this.bindMultiImageSlot(i));
         this.bindColorInput('backgroundColor');
+
+        // Header
         this.bindCheckbox('showHeader');
         this.bindTextInput('headerText');
-        this.bindSelect('headerAlignment');
-        this.bindNumberInput('headerFontSize');
-        this.bindSelect('headerFontFamily');
+        this.bindAlignToggle('headerAlignment');
+        this.bindFontPicker('headerFontFamily');
+        this.bindSizeStepper('headerFontSize');
         this.bindColorInput('headerColor');
+
+        // Date range
         this.bindCheckbox('showDateRange');
-        this.bindSelect('dateAlignment');
-        this.bindNumberInput('dateFontSize');
-        this.bindSelect('dateFontFamily');
+        this.bindAlignToggle('dateAlignment');
+        this.bindFontPicker('dateFontFamily');
+        this.bindSizeStepper('dateFontSize');
         this.bindColorInput('dateColor');
+
+        // Menu / day block
         document.querySelectorAll('input[name="templateStyle"]').forEach(r => {
             r.addEventListener('change', e => { this.settings.templateStyle = e.target.value; this.updatePreview(); });
         });
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
-        this.bindSelect('dayBorderStyle');
-        this.bindSelect('dayBorderThickness');
+        this.bindButtonGroup('dayBorderStyle');
+        this.bindButtonGroup('dayBorderThickness');
         this.bindDayBackground();
-        this.bindNumberInput('dayNameSize');
-        this.bindSelect('dayNameFontFamily');
+
+        // Day name
+        this.bindFontPicker('dayNameFontFamily');
+        this.bindSizeStepper('dayNameSize');
         this.bindColorInput('dayNameColor');
-        this.bindNumberInput('mealFontSize');
-        this.bindSelect('mealFontFamily');
+
+        // Meal
+        this.bindFontPicker('mealFontFamily');
+        this.bindSizeStepper('mealFontSize');
+
+        // Allergens
         this.bindColorInput('allergenColor');
         this.bindCheckbox('allergenUnderline');
         this.bindCheckbox('allergenBold');
+
+        // Footer
         this.bindCheckbox('showFooter');
         this.bindTextInput('footerText');
-        this.bindSelect('footerAlignment');
-        this.bindNumberInput('footerFontSize');
-        this.bindSelect('footerFontFamily');
+        this.bindAlignToggle('footerAlignment');
+        this.bindFontPicker('footerFontFamily');
+        this.bindSizeStepper('footerFontSize');
+    }
+
+    // ─── TOOLBAR BINDERS ──────────────────────────────────────────────────────
+
+    /** Bind alignment toggle group */
+    bindAlignToggle(id) {
+        const group = document.querySelector(`.tb-align-group[data-id="${id}"]`);
+        if (!group) return;
+        group.querySelectorAll('.tb-align-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.tb-align-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.settings[id] = btn.dataset.val;
+                this.updatePreview();
+            });
+        });
+    }
+
+    /** Bind font picker dropdown */
+    bindFontPicker(id) {
+        const wrap = document.getElementById(`fp_${id}`);
+        if (!wrap) return;
+        const btn      = wrap.querySelector('.tb-font-btn');
+        const dropdown = wrap.querySelector('.tb-font-dropdown');
+        const preview  = wrap.querySelector('.tb-font-preview');
+
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            // Close all other open font pickers
+            document.querySelectorAll('.tb-font-picker.open').forEach(p => {
+                if (p !== wrap) p.classList.remove('open');
+            });
+            wrap.classList.toggle('open');
+        });
+
+        dropdown.querySelectorAll('.tb-font-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const val = opt.dataset.val;
+                this.settings[id] = val;
+                preview.textContent = opt.textContent.trim();
+                preview.style.fontFamily = val;
+                dropdown.querySelectorAll('.tb-font-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                wrap.classList.remove('open');
+                this.updatePreview();
+            });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', () => wrap.classList.remove('open'));
+    }
+
+    /** Bind size stepper (− / + buttons) */
+    bindSizeStepper(id) {
+        const stepper = document.querySelector(`.tb-size-stepper[data-id="${id}"]`);
+        if (!stepper) return;
+        const hidden  = stepper.querySelector(`#${id}`);
+        const display = stepper.querySelector(`#sv_${id}`);
+        const min = parseInt(hidden.dataset.min);
+        const max = parseInt(hidden.dataset.max);
+
+        stepper.querySelectorAll('.tb-step-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let val = parseInt(hidden.value) + parseInt(btn.dataset.dir);
+                val = Math.min(max, Math.max(min, val));
+                hidden.value = val;
+                display.textContent = val;
+                this.settings[id] = val;
+                this.updatePreview();
+            });
+        });
+    }
+
+    /** Bind generic button-group toggle (border style / thickness) */
+    bindButtonGroup(id) {
+        const group = document.querySelector(`.tb-border-group[data-id="${id}"]`);
+        if (!group) return;
+        group.querySelectorAll('.tb-border-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.tb-border-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.settings[id] = btn.dataset.val;
+                this.updatePreview();
+            });
+        });
     }
 
     bindDayBackground() {
         const check = document.getElementById('dayBgTransparent');
         const color = document.getElementById('dayBackground');
         if (!check || !color) return;
-
         check.addEventListener('change', e => {
             if (e.target.checked) {
                 this.settings.dayBackground = 'transparent';
-                color.disabled = true;
-                color.style.opacity = '0.35';
-                color.style.pointerEvents = 'none';
+                color.disabled = true; color.style.opacity = '0.35'; color.style.pointerEvents = 'none';
             } else {
                 this.settings.dayBackground = color.value;
-                color.disabled = false;
-                color.style.opacity = '1';
-                color.style.pointerEvents = '';
+                color.disabled = false; color.style.opacity = '1'; color.style.pointerEvents = '';
             }
             this.updatePreview();
         });
-
-        color.addEventListener('input', e => {
-            if (!check.checked) {
-                this.settings.dayBackground = e.target.value;
-                this.updatePreview();
-            }
-        });
+        color.addEventListener('input', e => { if (!check.checked) { this.settings.dayBackground = e.target.value; this.updatePreview(); } });
     }
 
     bindMultiImageSlot(index) {
@@ -702,7 +936,6 @@ class StepTemplateBuilder {
 
     bindCheckbox(id)    { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.checked; this.updatePreview(); }); }
     bindTextInput(id)   { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
-    bindNumberInput(id) { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=parseInt(e.target.value)||8; this.updatePreview(); }); }
     bindSelect(id)      { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
     bindColorInput(id)  { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
 
@@ -719,14 +952,13 @@ class StepTemplateBuilder {
         } catch { return false; }
     }
 
-    // ─── PREVIEW ───────────────────────────────────────────────────────────────
+    // ─── PREVIEW ──────────────────────────────────────────────────────────────
     updatePreview() {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
 
-        // Per-section fonts with Arial fallback
         const hff  = s.headerFontFamily  || 'Arial, sans-serif';
         const dff  = s.dateFontFamily    || 'Arial, sans-serif';
         const dyff = s.dayNameFontFamily || 'Arial, sans-serif';
@@ -761,16 +993,11 @@ class StepTemplateBuilder {
         <div style="background-color:${s.backgroundColor};position:relative;padding:40px 40px 30px;min-height:800px;display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #ddd;box-shadow:0 2px 16px rgba(0,0,0,0.1);overflow:hidden;">
             ${bgLayers}
             <div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;">
-                <!-- Header -->
                 <div style="margin-bottom:18px;">
                     ${s.showHeader ? `<div style="text-align:${s.headerAlignment};margin-bottom:6px;"><span style="font-family:${hff};font-size:${s.headerFontSize}pt;color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>` : ''}
                     ${s.showDateRange ? `<div style="font-family:${dff};text-align:${s.dateAlignment};font-size:${s.dateFontSize}pt;color:${s.dateColor};">${dateRangeText}</div>` : ''}
                 </div>
-                <!-- Content -->
-                <div style="flex:1;">
-                    ${content}
-                </div>
-                <!-- Footer -->
+                <div style="flex:1;">${content}</div>
                 ${s.showFooter ? `<div style="font-family:${fff};text-align:${s.footerAlignment};margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:${s.footerFontSize}pt;color:#888;">${s.footerText}</div>` : ''}
             </div>
         </div>`;
@@ -780,13 +1007,9 @@ class StepTemplateBuilder {
         if (!day || !day.meals.length) return '';
         const resolvedDyff = dyff || s.dayNameFontFamily || 'Arial, sans-serif';
         const resolvedMff  = mff  || s.mealFontFamily    || 'Arial, sans-serif';
-        const borderStyle = s.dayBorder
-            ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};`
-            : '';
-        const bgStyle = s.dayBackground && s.dayBackground !== 'transparent'
-            ? `background:${s.dayBackground};`
-            : '';
-        const wrapStyle = `${borderStyle}${bgStyle}padding:10px;margin-bottom:14px;border-radius:4px;`;
+        const borderStyle = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};` : '';
+        const bgStyle     = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        const wrapStyle   = `${borderStyle}${bgStyle}padding:10px;margin-bottom:14px;border-radius:4px;`;
 
         let html = `<div style="${wrapStyle}">`;
         html += `<div style="font-family:${resolvedDyff};font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:6px;">${day.name}</div>`;
@@ -795,27 +1018,22 @@ class StepTemplateBuilder {
             if (isCompact) {
                 let line = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) line += ` – ${meal.portion}`;
-                if (meal.ingredients && meal.ingredients.length) {
-                    const ingList = meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ');
-                    line += `; ${ingList}`;
-                }
+                if (meal.ingredients?.length) line += `; ${meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ')}`;
                 if (meal.calories) line += ` | ККАЛ ${meal.calories}`;
                 html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:4px;margin-left:8px;">${line}</div>`;
             } else {
                 let title = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) title += ` – ${meal.portion}`;
                 html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:2px;margin-left:8px;font-weight:500;">${title}</div>`;
-                if (meal.ingredients && meal.ingredients.length) {
-                    const ingList = meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ');
-                    const calStr  = meal.calories ? ` – ККАЛ ${meal.calories}` : '';
-                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${ingList}${calStr}</div>`;
+                if (meal.ingredients?.length) {
+                    const calStr = meal.calories ? ` – ККАЛ ${meal.calories}` : '';
+                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ')}${calStr}</div>`;
                 } else if (meal.calories) {
                     html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">ККАЛ ${meal.calories}</div>`;
                 }
             }
         });
-
-        html += `</div>`;
+        html += '</div>';
         return html;
     }
 
