@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.2 - Safer print margins to prevent bottom cut-off
+ * @version 8.3 - Align content height with @page margin to stop bottom cut-off
  */
 
 (function(window) {
@@ -163,6 +163,12 @@
         }
     }
 
+    // ─── SAFE BOTTOM BUFFER (mm) ───────────────────────────────────────────────
+    // Extra mm subtracted from the printable height so content never reaches
+    // the physical non-printable dead-zone at the bottom of the page.
+    // This same value is also added to the @page bottom margin.
+    const BOTTOM_SAFE_BUFFER_MM = 8;
+
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
     window.printMenu = async function() {
         const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
@@ -200,14 +206,18 @@
         }
 
         const { top, right, bottom, left } = choice.margins;
-        const usableH = Math.round((297 - top - bottom) * 3.7795);
-        const usableW = Math.round((210 - left - right) * 3.7795);
+
+        // Content is sized using the SAME safe bottom so the rendered height
+        // exactly matches what the @page rule will give the printer.
+        const safeBottom = bottom + BOTTOM_SAFE_BUFFER_MM;
+        const usableH = Math.round((297 - top - safeBottom) * 3.7795);
+        const usableW = Math.round((210 - left - right)     * 3.7795);
         const html    = renderMenuHTML(mealPlanData, settings, usableH);
         const ds      = getLocalDateString(mealPlanData.startDate);
 
         // ─── PRINT ──────────────────────────────────────────────────────────
         if (choice.action === 'print') {
-            openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW);
+            openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW, safeBottom);
             return;
         }
 
@@ -246,22 +256,18 @@
             const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
             const pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const imgWidthMM  = 210 - left - right;
-            const imgHeightMM = 297 - top - bottom;
+            const imgHeightMM = 297 - top - safeBottom;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', left, top, imgWidthMM, imgHeightMM, '', 'FAST');
             pdf.save(filename);
         }
     };
 
     // ─── PRINT WINDOW ────────────────────────────────────────────────────────
-    function openPrintWindow(html, mealPlanData, margins, usableH, usableW) {
+    function openPrintWindow(html, mealPlanData, margins, usableH, usableW, safeBottom) {
         const pw = window.open('', '_blank');
         if (!pw) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
         const ds = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth()+1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth()+1}.${mealPlanData.startDate.getFullYear()}`;
         const { top, right, bottom, left } = margins;
-
-        // Add a safe 4mm buffer to the bottom to account for physical printer dead-zones.
-        // The @page margin handles the browser side; the extra buffer absorbs printer variance.
-        const safeBottom = bottom + 4;
 
         pw.document.write(
             '<!DOCTYPE html><html><head><title>Weekly-Menu-' + ds + '</title><meta charset="UTF-8">' +
@@ -269,6 +275,7 @@
             '* { margin:0; padding:0; box-sizing:border-box; }' +
             'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
             '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
+            // @page uses safeBottom — content was already sized to match this
             '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + safeBottom + 'mm ' + left + 'mm; }' +
             '@media print {' +
             '  html, body { height:100%; background:white; overflow:hidden; }' +
@@ -283,7 +290,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
-            '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.02) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
+            '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
             '};' +
