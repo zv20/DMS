@@ -1,9 +1,10 @@
 # 🤝 KitchenPro DMS — Agent Handoff Document
 
-> **Last Updated:** February 21, 2026  
+> **Last Updated:** February 22, 2026  
 > **Repo:** [zv20/DMS](https://github.com/zv20/DMS)  
-> **Current version:** 14.6  
-> **App type:** Vanilla JS single-page app (no framework, no build step — open `index.html` directly in a browser)
+> **Active branch:** `beta`  
+> **Current version:** 14.8  
+> **App type:** Vanilla JS SPA — no framework, no build step, open `index.html` directly in browser
 
 ---
 
@@ -15,14 +16,14 @@
 - Manage **ingredients** and link them to allergens
 - Plan a **weekly/monthly menu** on a calendar
 - **Print/export** beautifully styled weekly menu PDFs
-- Customize the printed menu look with a **Template Builder** (backgrounds, headers, footers, fonts, borders)
+- Customise the printed menu look with a **Template Builder** (backgrounds, headers, footers, fonts, borders, 5-layer image system)
 - Switch between 🇧🇬 **Bulgarian** and 🇺🇸 **English** at any time
 
-Data is saved either to a **local folder** (via File System Access API) or to **IndexedDB** (browser fallback).
+Data is saved to a **local folder** (File System Access API — Chrome/Edge) or **IndexedDB** (browser fallback — Firefox/Safari).
 
 ---
 
-## 📁 Repo Structure (Quick Reference)
+## 📁 Repo Structure
 
 ```
 DMS/
@@ -32,121 +33,103 @@ DMS/
 │   ├── calendar.css                    # Calendar / week view
 │   └── template-styles.css             # Template builder panel styles
 ├── js/
-│   ├── i18n.js                         # ⭐ Translations (EN + BG) — ALL keys live here
+│   ├── i18n.js                         # ⭐ ALL translations (EN + BG)
 │   ├── constants.js                    # Centralised magic numbers / defaults
-│   ├── store.js                        # CRUD + data persistence
 │   ├── storage-adapter.js              # File System API ↔ IndexedDB abstraction
-│   ├── calendar.js                     # Calendar logic, date helpers
-│   ├── render.js                       # Data → DOM rendering (pure, no events)
+│   ├── store.js                        # CRUD + save/load wiring
+│   ├── calendar.js                     # Calendar logic, date helpers, view modes
+│   ├── render.js                       # Data → DOM (pure, no events)
 │   ├── ui.js                           # Event handlers, modals, navigation
-│   ├── main.js                         # App boot, splash screen
+│   ├── ui-combobox.js                  # Reusable autocomplete widget
 │   ├── clock.js                        # Live clock in header
-│   ├── print.js                        # ⭐ PDF/print/image export (v8.1 — see below)
-│   ├── demo-mode.js                    # ⭐ DEMO BRANCH ONLY — fetch-based storage, memory writes
-│   ├── template.js                     # Legacy template file (mostly superseded)
-│   ├── template-presets.js             # Preset template definitions
+│   ├── print.js                        # ⭐ Print / Save Image / Save PDF (v8.1)
+│   ├── main.js                         # App boot, splash screen
+│   ├── template.js                     # Thin init wrapper for TemplateManager
+│   ├── template-presets.js             # 6 built-in preset template definitions
 │   └── template/
-│       └── template-builder-steps.js   # ⭐ NEW step-based Template Builder UI
-├── data/
-│   └── preset-templates.js             # Built-in template presets (6 designs)
+│       └── template-builder-steps.js   # ⭐ Full step-based Template Builder
+├── data/                               # Runtime data (user folder — not tracked in git)
 ├── img/
-│   └── logo.png                        # App logo
+│   └── logo.png
 ├── .github/
-│   ├── workflows/
-│   │   └── sync-demo.yml               # ⭐ CI: auto-syncs main → demo on every push
-│   └── scripts/
-│       └── inject-demo.py              # Python script used by the CI workflow
+│   ├── workflows/sync-demo.yml         # CI: auto-syncs main → demo on push
+│   └── scripts/inject-demo.py          # Injects demo-mode.js into index.html
+├── ARCHITECTURE.md                     # Deep-dive module reference
 └── AGENT_HANDOFF.md                    # This file
 ```
 
 ---
 
-## ✅ What Was Completed — February 21, 2026 Session
+## ✅ Session Log
 
-### 1. 🖨️ PDF Print Overhaul (print.js v8.1) — merged via PR #29
+### February 22, 2026 — Dead Code Cleanup
 
-The print system was completely upgraded. The old print-only button now opens a **three-action dialog**:
+**What was done:**
 
-- 🖨️ **Print Menu** — opens a new tab with the rendered menu and triggers `window.print()`, then auto-closes the tab after the dialog is confirmed/cancelled via `afterprint` event
-- 🖼️ **Save as Image** — renders to canvas via html2canvas, shows a **preview modal**, then downloads as PNG
-- 📄 **Save as PDF** — renders via html2canvas + jsPDF, shows a **preview modal**, then downloads as PDF
+1. **Removed PDF Archive card from `index.html`** — the Settings page had a card referencing `openArchiveFolder()` which never existed in JS. Removed entirely.
 
-**Key files changed:** `js/print.js` (v8.1, 40 KB)
+2. **Cleaned `storage-adapter.js`** — removed `ensureDataFolderStructure()` (was creating a useless `data/archive/menus/` folder on disk) and its call in `selectFolder()`. Also trimmed orphaned inline comments.
 
-**Key commits:**
-- `76c9bc9` — three-action dialog + preview modal
-- `bd69e4b` — auto-close print tab via `afterprint` event
-- `d027929` — merge PR #29 into main
+3. **Cleaned `ui.js`** — removed dead `loadBuilderSettings()`, `updateBuilderPreview()`, `setVal()` stubs that referenced non-existent DOM elements. `initStyleBuilder()` is now a clean 3-line delegate to `window.TemplateManager`.
 
-### 2. 🌐 Demo Branch + GitHub Pages
+4. **Cleaned `i18n.js`** — removed `settings_archive_title`, `settings_archive_desc`, `btn_open_archive` from both `en` and `bg` locales.
 
-A `demo` branch was set up to serve the app publicly via **GitHub Pages** without exposing real production data.
+5. **Updated `ARCHITECTURE.md`** — fully rewritten to reflect current file structure, real module sizes, actual storage schema, and current patterns. Old stale content (references to the old monolithic `template.js`, phantom `archive/` folder, outdated storage docs) removed.
 
-**How the demo works:**
-- `js/demo-mode.js` overrides `storageAdapter.init()` to use `fetch()` instead of the File System API
-- Data is loaded from `data/data.json` and `data/templates.json` in the repo (read-only from the user's perspective)
-- All writes are **memory-only** — changes are lost on page refresh, which is correct for a demo
-- The folder picker prompt is suppressed entirely
-
-**The only difference between `main` and `demo` index.html** is one extra script tag:
-```html
-<!-- After storage-adapter.js, before store.js -->
-<script src="js/demo-mode.js"></script>
-```
-
-### 3. 🤖 GitHub Actions: Auto-Sync main → demo
-
-A CI workflow was created at `.github/workflows/sync-demo.yml` that **automatically syncs `demo` from `main`** on every push.
-
-**What it does:**
-1. Checks out the repo with full history
-2. Switches to `demo` branch
-3. Overwrites all files with `main`'s versions (`git checkout main -- .`)
-4. Restores `js/demo-mode.js` from `demo` (prevents it from being deleted since it doesn't exist on main)
-5. Runs `.github/scripts/inject-demo.py` to inject the `demo-mode.js` script tag into `index.html` after `storage-adapter.js`
-6. Commits and pushes to `demo` only if there are actual changes
-
-**Important settings required:**
-- Repo → Settings → Actions → General → **Workflow permissions** must be set to **"Read and write permissions"** — this was already done.
-
-**Why demo shows "X ahead, Y behind" main:**
-This is expected and harmless. The action copies *files* from main but doesn't merge *git history*, so the commit counts diverge. The files are always in sync.
-
-**Key files:**
-- `.github/workflows/sync-demo.yml`
-- `.github/scripts/inject-demo.py`
+**Commit:** `09f6a42` — `chore: remove dead PDF archive code, orphaned i18n keys, and dead builder stubs`
 
 ---
 
-## ✅ What Was Completed — Previous Sessions (pre Feb 21)
+### February 21, 2026 — PDF Print Overhaul + Demo Branch
 
-### Full Bulgarian Translation
-The app is fully translated into Bulgarian. All `data-i18n` keys in `index.html` and dynamically rendered strings in JS use `window.t('key')` from `js/i18n.js`.
+#### 🖨️ Print System (print.js v8.1)
+The old single print button now opens a **three-action dialog**:
+- 🖨️ **Print Menu** — new tab → `window.print()` → auto-close via `afterprint` event
+- 🖼️ **Save as Image** — html2canvas → preview modal → PNG download
+- 📄 **Save as PDF** — html2canvas + jsPDF → preview modal → PDF download
 
-### Language Preference Persistence
-Saved in both `settings.json` and `localStorage` (`dms_language_hint`) so the correct language shows even on first load before the folder is selected.
+**Key commits:** `76c9bc9`, `bd69e4b`, `d027929` (merge PR #29)
 
-### Step-Based Template Builder
-Refactored from flat list to 4-step accordion: Background → Header → Weekly Menu → Footer. Lives in `js/template/template-builder-steps.js`.
+#### 🌐 Demo Branch + GitHub Pages
+- `demo` branch serves the app publicly via GitHub Pages with read-only sample data
+- `js/demo-mode.js` overrides `storageAdapter.init()` to use `fetch()` — all writes are memory-only
+- The folder picker is suppressed entirely on demo
+- **`demo-mode.js` must never be committed to `main` or `beta`**
+
+#### 🤖 GitHub Actions: Auto-Sync main → demo
+- `.github/workflows/sync-demo.yml` fires on every push to `main`
+- Copies all files from `main`, restores `demo-mode.js`, injects script tag into `index.html`
+- Repo → Settings → Actions → General → Workflow permissions = **Read and write** (do not change)
+- The `demo` branch will always show "X ahead, Y behind" `main` — this is by design
 
 ---
 
-## 🔧 Key Technical Patterns to Know
+### Pre February 21 — Foundation Work
 
-### Global Function Exposure
+- Full Bulgarian translation across all modules
+- Language preference persisted in both `settings.json` and `localStorage` (`dms_language_hint`)
+- Step-based Template Builder (Background → Header → Weekly Menu → Footer accordion)
+- Combobox widget for ingredient/allergen search in modals
+- Monthly/weekly calendar view switcher
+
+---
+
+## 🔧 Key Technical Patterns
+
+### Global function exposure
 ```javascript
 window.saveRecipe = function(event) { ... };
 window.openRecipeModal = function(id) { ... };
 ```
 
-### Module Pattern (IIFE)
+### Module pattern (IIFE)
 ```javascript
 (function(window) {
     // module code
 })(window);
 ```
 
-### Translation Pattern
+### Translation
 ```javascript
 // Static HTML — auto-translated on language change
 <h1 data-i18n="nav_recipes">Recipes</h1>
@@ -154,17 +137,16 @@ window.openRecipeModal = function(id) { ... };
 // Dynamic JS — must call window.t() explicitly
 const html = `<button>${window.t('btn_edit')}</button>`;
 ```
-**Important:** Dynamically generated HTML does NOT auto-translate. Call `window.t('key')` when building the string, OR call `window.applyTranslations()` after injecting HTML.
+**⚠️ Dynamically generated HTML does NOT auto-translate.** Always use `window.t('key')` when building strings in JS, or call `window.applyTranslations()` after injecting HTML.
 
-### Storage Abstraction
+### Storage abstraction
 ```javascript
-window.storageAdapter.saveData(data);   // saves to either backend
-window.storageAdapter.loadData();       // loads from either backend
-window.storageAdapter.useFileSystem     // boolean — which mode is active
+window.storageAdapter.save('recipes', data);  // saves to whichever backend is active
+window.storageAdapter.useFileSystem           // boolean — true = File System API
 ```
 
-### Version Cache-Busting
-All `<script src="...">` and `<link rel="stylesheet">` tags use `?v=14.6`. **Manually increment this** when making JS/CSS changes to bust the browser cache. There is no automatic versioning.
+### Cache busting
+All `<script src="...">` and `<link rel="stylesheet">` tags use `?v=14.8`. **Manually increment** after any JS/CSS change. No automatic versioning.
 
 ---
 
@@ -172,76 +154,82 @@ All `<script src="...">` and `<link rel="stylesheet">` tags use `?v=14.6`. **Man
 
 | Issue | Details |
 |---|---|
-| **Settings page text not translated** | The `#storage-info` banner in Settings uses hardcoded strings inside an inline `<script>` in `index.html`. Needs `window.t()` calls. |
-| **Export/Import button labels** | Export/Import buttons in Settings use hardcoded English — not wired to `data-i18n`. |
-| **`template.js` still exists** | Legacy file, mostly superseded by `template-builder-steps.js`. Should eventually be removed. |
-| **No automated tests** | Zero test coverage. Manually test all changes in Chrome/Edge. |
-| **demo branch history diverges** | `demo` will always show "X behind Y ahead" vs `main` — this is by design, not a bug. |
-| **print.js is large** | 40 KB, uses html2canvas + jsPDF. Treat carefully. |
+| **Settings storage banner not i18n'd** | `#storage-method-text` in `index.html` uses hardcoded strings in an inline `<script>`. Needs `window.t()`. |
+| **No automated tests** | Zero coverage. Manually test all changes in Chrome/Edge. |
+| **demo branch history diverges** | `demo` always shows "X behind Y ahead" vs `main` — expected, not a bug. |
+| **print.js is large** | 41 KB, uses html2canvas + jsPDF. Treat carefully. |
+| **template-builder-steps.js is large** | 78 KB monolith — works well but be careful editing. |
+| **Stale dev docs in root** | `CLEANUP_PLAN.md`, `REFACTOR_SUMMARY.md`, `NEW_TEMPLATE_BUILDER_READY.md`, `TEMPLATE_SYSTEM_CLEANUP.md`, `js/template/DELETED_OLD_FILES.md` — can be deleted when convenient. |
 
 ---
 
 ## 🚀 Suggested Next Steps
 
-### High Priority
-- [ ] **Fix Settings page translations** — wire `storage-info` banner and Export/Import buttons to `window.t()` / `data-i18n`
-- [ ] **Test the demo on GitHub Pages** — verify `demo-mode.js` loads correctly, data appears, writes are memory-only, no folder picker shows
-- [ ] **Christmas background image** — generate or source `img/xmas-bg.jpg` (A4 portrait ~2480×3508px) and add to Image Library in Template Builder
+### Ready for testing (owner is testing now)
+- [ ] Full regression test in Chrome — recipes, ingredients, allergens CRUD
+- [ ] Menu planning — add/clear meals, week navigation
+- [ ] Template builder — all 4 steps, save/load/delete templates, preset loading
+- [ ] Print dialog — Print / Save Image / Save PDF
+- [ ] Language switch BG ↔ EN
+- [ ] Folder change / Export backup / Import data
 
-### Medium Priority
-- [ ] **Template builder i18n audit** — scan `template-builder-steps.js` for hardcoded English strings not using `window.t()`
-- [ ] **Version bump** — increment `?v=14.6` in `index.html` after any JS/CSS changes
-- [ ] **Clean up legacy `template.js`** — evaluate what's still used vs replaced
+### After testing passes
+- [ ] **Bump version** — increment `?v=14.8` → `?v=14.9` in `index.html` after any further JS/CSS changes
+- [ ] **Delete stale dev docs** — `CLEANUP_PLAN.md`, `REFACTOR_SUMMARY.md`, `NEW_TEMPLATE_BUILDER_READY.md`, `TEMPLATE_SYSTEM_CLEANUP.md`, `js/template/DELETED_OLD_FILES.md`
+- [ ] **Fix Settings banner i18n** — wire `#storage-method-text` to `window.t()`
+- [ ] **Write a real README.md** — currently only 33 bytes
+- [ ] **Merge `beta` → `main`** when stable
 
-### Low Priority / Future
+### Medium priority
+- [ ] Template builder i18n audit — scan `template-builder-steps.js` for hardcoded English
+- [ ] Add JSDoc to major public functions
+
+### Future / nice to have
 - [ ] Split `print.js` into smaller modules
-- [ ] Add JSDoc to major functions
 - [ ] Shopping list generator
 - [ ] Nutrition calculator
 - [ ] Multi-week planning view
-- [ ] Consider Personal Access Token (PAT) for CI if more granular permissions are ever needed
 
 ---
 
-## 🧪 How to Test Changes
+## 🧪 How to Test
 
-1. **Open `index.html` directly** in Chrome/Edge (File System API requires Chromium)
-2. **Select the DMS folder** when prompted on first load
-3. Switch language with 🇧🇬/🇺🇸 flag dropdown in top-right
+1. Open `index.html` directly in **Chrome or Edge** (File System API requires Chromium)
+2. Select the DMS folder when prompted on first load
+3. Switch language with 🇧🇬/🇺🇸 flag in top-right
 4. Check browser **Console** for `❌` errors
-5. For print: Menu → Print → choose Print / Save Image / Save PDF
-6. For template builder: Menu → 📝 Template Builder
-7. For demo: open the GitHub Pages URL on the `demo` branch
+5. **Print test:** Menu → Print → try all three actions (Print / Image / PDF)
+6. **Template builder:** Menu → 📝 Template Builder → test all 4 steps
+7. **Demo:** open GitHub Pages URL on `demo` branch — verify folder picker absent, data loads, writes don't persist
 
 ---
 
-## 📌 Key Commits for Context
+## 📌 Key Commits Reference
 
 | Commit | What it did |
 |---|---|
-| `978da5e` | CI: finalized sync-demo workflow (last fix) |
-| `69c57c2` | CI: split inject script into `.github/scripts/inject-demo.py` |
-| `a092600` | CI: initial sync-demo workflow added |
+| `09f6a42` | chore: dead code cleanup — archive card, i18n keys, builder stubs |
+| `978da5e` | CI: finalised sync-demo workflow |
 | `d027929` | Merge PR #29 — PDF/print overhaul into main |
 | `bd69e4b` | fix: auto-close print tab via afterprint event |
 | `76c9bc9` | feat: three-action print dialog + preview modal |
-| `821aa44` | feat: add demo-mode.js (demo branch origin) |
-| `a85ba5ea` | Restored ALL Bulgarian translations + localStorage hint |
+| `821aa44` | feat: add demo-mode.js |
+| `a85ba5e` | Restored ALL Bulgarian translations + localStorage hint |
 
 ---
 
 ## 💬 Notes for the Next Agent
 
-- The **owner is Bulgarian** — default language is `bg`, not `en`
-- Always use `window.t('key')` for any user-visible text in JS; add matching `bg:` key to `i18n.js`
-- The app has **no backend, no npm, no build step** — plain HTML/CSS/JS only
-- The **GitHub MCP tool works perfectly** on this repo — read and commit files directly
-- When committing large files (like `i18n.js` or `print.js`), always fetch the current SHA first
-- **`demo-mode.js` must never be committed to `main`** — it belongs only on `demo`
-- The CI workflow handles main → demo sync automatically. Just push to `main` and demo updates within ~30 seconds
-- The "X ahead, Y behind" on the demo branch is **expected and harmless** — files are always in sync
-- Repo Settings → Actions → General → Workflow permissions is set to **Read and write** — do not change this or the CI will break
+- **Owner is Bulgarian** — default language is `bg`, not `en`
+- **Always use `window.t('key')`** for user-visible text in JS; add matching `bg:` key to `i18n.js`
+- **No backend, no npm, no build step** — plain HTML/CSS/JS only
+- **GitHub MCP tool works perfectly** on this repo — read and commit files directly
+- When editing large files (`i18n.js`, `print.js`, `template-builder-steps.js`) — always fetch the current SHA first to avoid overwriting concurrent changes
+- **`demo-mode.js` must never be on `main` or `beta`** — demo branch only
+- The CI handles main → demo sync automatically — just push to `main`
+- Repo Settings → Actions → Workflow permissions = **Read and write** — do not change
+- Read `ARCHITECTURE.md` for the full module reference — it's up to date as of this session
 
 ---
 
-*Good luck! The codebase is clean and well-organised. Read `ARCHITECTURE.md` for a deeper dive into each module.* 🚀
+*The codebase is clean and well-organised. Good luck! 🚀*

@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.1 - Auto-close print tab after print/cancel
+ * @version 8.3 - Align content height with @page margin to stop bottom cut-off
  */
 
 (function(window) {
@@ -32,7 +32,7 @@
         }
     }
 
-    // ─── KEYFRAME INJECTION ──────────────────────────────────────────────────
+    // ─── KEYFRAME INJECTION ───────────────────────────────────────────────
     function injectSpinnerStyle() {
         if (document.getElementById('menu-spin-style')) return;
         const s = document.createElement('style');
@@ -41,7 +41,7 @@
         document.head.appendChild(s);
     }
 
-    // ─── LOADING INDICATOR ──────────────────────────────────────────────────
+    // ─── LOADING INDICATOR ───────────────────────────────────────────────
     function showLoadingIndicator(isBg, action) {
         injectSpinnerStyle();
         const overlay = document.createElement('div');
@@ -79,7 +79,7 @@
         if (el) el.parentNode.removeChild(el);
     }
 
-    // ─── PREVIEW MODAL ──────────────────────────────────────────────────────
+    // ─── PREVIEW MODAL ────────────────────────────────────────────────
     function showPreviewModal(canvas, filename, isBg, action) {
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
@@ -142,7 +142,7 @@
         });
     }
 
-    // ─── CANVAS RENDERER (shared by image + pdf) ────────────────────────────
+    // ─── CANVAS RENDERER (shared by image + pdf) ─────────────────────────────────
     async function renderToCanvas(html, usableH, usableW) {
         if (!window.html2canvas) throw new Error('html2canvas not loaded');
         const container = document.createElement('div');
@@ -162,6 +162,12 @@
             document.body.removeChild(container);
         }
     }
+
+    // ─── SAFE BOTTOM BUFFER (mm) ───────────────────────────────────────────────
+    // Extra mm subtracted from the printable height so content never reaches
+    // the physical non-printable dead-zone at the bottom of the page.
+    // This same value is also added to the @page bottom margin.
+    const BOTTOM_SAFE_BUFFER_MM = 8;
 
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
     window.printMenu = async function() {
@@ -200,18 +206,22 @@
         }
 
         const { top, right, bottom, left } = choice.margins;
-        const usableH = Math.round((297 - top - bottom) * 3.7795);
-        const usableW = Math.round((210 - left - right) * 3.7795);
+
+        // Content is sized using the SAME safe bottom so the rendered height
+        // exactly matches what the @page rule will give the printer.
+        const safeBottom = bottom + BOTTOM_SAFE_BUFFER_MM;
+        const usableH = Math.round((297 - top - safeBottom) * 3.7795);
+        const usableW = Math.round((210 - left - right)     * 3.7795);
         const html    = renderMenuHTML(mealPlanData, settings, usableH);
         const ds      = getLocalDateString(mealPlanData.startDate);
 
-        // ─── PRINT ─────────────────────────────────────────────────────────────
+        // ─── PRINT ──────────────────────────────────────────────────────────
         if (choice.action === 'print') {
-            openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW);
+            openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW, safeBottom);
             return;
         }
 
-        // ─── SAVE IMAGE or SAVE PDF ─────────────────────────────────────
+        // ─── SAVE IMAGE or SAVE PDF ───────────────────────────────────────
         showLoadingIndicator(isBg, choice.action);
         let canvas;
         try {
@@ -246,26 +256,33 @@
             const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
             const pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const imgWidthMM  = 210 - left - right;
-            const imgHeightMM = 297 - top - bottom;
+            const imgHeightMM = 297 - top - safeBottom;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', left, top, imgWidthMM, imgHeightMM, '', 'FAST');
             pdf.save(filename);
         }
     };
 
-    // ─── PRINT WINDOW ──────────────────────────────────────────────────────────
-    function openPrintWindow(html, mealPlanData, margins, usableH, usableW) {
+    // ─── PRINT WINDOW ────────────────────────────────────────────────────────
+    function openPrintWindow(html, mealPlanData, margins, usableH, usableW, safeBottom) {
         const pw = window.open('', '_blank');
         if (!pw) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
         const ds = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth()+1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth()+1}.${mealPlanData.startDate.getFullYear()}`;
         const { top, right, bottom, left } = margins;
+
         pw.document.write(
             '<!DOCTYPE html><html><head><title>Weekly-Menu-' + ds + '</title><meta charset="UTF-8">' +
             '<style>' +
             '* { margin:0; padding:0; box-sizing:border-box; }' +
             'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
             '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
-            '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; }' +
-            '@media print { html, body { height:100%; background:white; } #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; } #menu-content { height:100% !important; } * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }' +
+            // @page uses safeBottom — content was already sized to match this
+            '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + safeBottom + 'mm ' + left + 'mm; }' +
+            '@media print {' +
+            '  html, body { height:100%; background:white; overflow:hidden; }' +
+            '  #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; overflow:hidden; }' +
+            '  #menu-content { height:100% !important; overflow:hidden !important; }' +
+            '  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }' +
+            '}' +
             '</style></head><body>' +
             '<div id="page-wrapper">' + html + '</div>' +
             '<scr' + 'ipt>' +
@@ -273,7 +290,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
-            '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.05) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
+            '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
             '};' +
@@ -408,7 +425,7 @@
         });
     }
 
-    // ─── DEFAULT SETTINGS ────────────────────────────────────────────────────
+    // ─── DEFAULT SETTINGS ────────────────────────────────────────────────
     function getDefaultSettings() {
         return {
             templateStyle:    'compact',
@@ -456,7 +473,7 @@
         };
     }
 
-    // ─── MEAL PLAN DATA ───────────────────────────────────────────────────────
+    // ─── MEAL PLAN DATA ───────────────────────────────────────────────────
     function generateMealPlanData(startDate, endDate) {
         const days     = [];
         const lang     = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
@@ -491,7 +508,7 @@
         return { startDate, endDate, days };
     }
 
-    // ─── HELPERS ─────────────────────────────────────────────────────────────
+    // ─── HELPERS ─────────────────────────────────────────────────────────────────
     function normSize(v, fallback) {
         if (!v && v !== 0) return fallback;
         return /^\d+(\.\d+)?$/.test(String(v).trim()) ? `${v}pt` : String(v);
@@ -523,7 +540,7 @@
         }).join(', ');
     }
 
-    // ─── RENDER ───────────────────────────────────────────────────────────────
+    // ─── RENDER ─────────────────────────────────────────────────────────────────
     function renderMenuHTML(data, s, usableH) {
         if ((s.templateStyle || 'compact') === 'detailed-2col') return renderMenuHTML2Column(data, s, usableH);
         const { startDate, endDate, days } = data;
@@ -642,7 +659,7 @@
         return html;
     }
 
-    // ─── DATE / WEEK HELPERS ─────────────────────────────────────────────────
+    // ─── DATE / WEEK HELPERS ────────────────────────────────────────────────────────
     function getWeekDates(date) {
         const d = new Date(date), day = d.getDay(), mon = new Date(d);
         mon.setDate(d.getDate() + (day === 0 ? 1 : -(day - 1))); mon.setHours(0,0,0,0);

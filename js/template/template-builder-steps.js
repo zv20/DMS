@@ -1,13 +1,12 @@
 /**
  * Step-Based Template Builder with Accordion UI
- * @version 6.3 - Fix: per-section font families in builder UI
+ * @version 6.7 - Align/font/size/color merged into RTE toolbar
  */
 
 class StepTemplateBuilder {
     constructor() {
         this.settings = {
             templateStyle: 'compact',
-            fontFamily: 'Arial, sans-serif',
             backgroundColor: '#ffffff',
             backgroundImages: [
                 { image: null, position: 'center',       size: 100, opacity: 1.0, zIndex: 1 },
@@ -57,29 +56,190 @@ class StepTemplateBuilder {
             footerFontFamily: 'Arial, sans-serif'
         };
 
-        this.previewData      = null;
-        this.expandedSection  = 'header';
-        this.currentTab       = 'builder';
+        this.previewData     = null;
+        this.expandedSection = 'header';
+        this.currentTab      = 'builder';
         this.init();
     }
 
-    // ─── FONT OPTIONS HELPER ──────────────────────────────────────────────────
-    _fontOptions(currentVal) {
-        const fonts = [
-            { value: 'Arial, sans-serif',              label: 'Arial' },
-            { value: "'Times New Roman', serif",       label: 'Times New Roman' },
-            { value: 'Georgia, serif',                 label: 'Georgia' },
-            { value: "'Comic Sans MS', cursive",       label: 'Comic Sans MS' },
-            { value: 'Verdana, sans-serif',            label: 'Verdana' },
-            { value: "'Courier New', monospace",       label: 'Courier New' },
-            { value: "'Trebuchet MS', sans-serif",     label: 'Trebuchet MS' },
-            { value: 'Tahoma, sans-serif',             label: 'Tahoma' }
+    // ─── FONT LIST ────────────────────────────────────────────────────────────
+    _fonts() {
+        return [
+            { value: 'Arial, sans-serif',            label: 'Arial' },
+            { value: "'Times New Roman', serif",     label: 'Times New Roman' },
+            { value: 'Georgia, serif',               label: 'Georgia' },
+            { value: "'Comic Sans MS', cursive",     label: 'Comic Sans' },
+            { value: 'Verdana, sans-serif',          label: 'Verdana' },
+            { value: "'Courier New', monospace",     label: 'Courier New' },
+            { value: "'Trebuchet MS', sans-serif",   label: 'Trebuchet' },
+            { value: 'Tahoma, sans-serif',           label: 'Tahoma' }
         ];
-        return fonts.map(f =>
-            `<option value="${f.value}" ${currentVal === f.value ? 'selected' : ''}>${f.label}</option>`
-        ).join('');
     }
 
+    // ─── RICH TEXT EDITOR ────────────────────────────────────────────────────
+    /**
+     * Renders a mini rich-text editor with a full integrated toolbar.
+     * Toolbar row 1: align | font | size | B I U S | A (color) | bullet | clear
+     * @param {string} id          - settings key (e.g. 'headerText')
+     * @param {string} html        - current HTML content
+     * @param {string} alignVal    - current alignment setting value
+     * @param {string} fontVal     - current font-family setting value
+     * @param {number} sizeVal     - current font size setting value
+     * @param {number} sizeMin     - min font size
+     * @param {number} sizeMax     - max font size
+     * @param {string} colorVal    - current text colour (hex)
+     * @param {string} alignId     - settings key for alignment
+     * @param {string} fontId      - settings key for font
+     * @param {string} sizeId      - settings key for size
+     * @param {string} colorId     - settings key for colour
+     */
+    _richEditor(id, html, alignVal, fontVal, sizeVal, sizeMin, sizeMax, colorVal, alignId, fontId, sizeId, colorId) {
+        const fonts   = this._fonts();
+        const curFont = fonts.find(f => f.value === fontVal) || fonts[0];
+        const alignOpts = [
+            { val: 'left',   icon: '&#8676;', title: 'Left'   },
+            { val: 'center', icon: '&#9868;', title: 'Center' },
+            { val: 'right',  icon: '&#8677;', title: 'Right'  }
+        ];
+
+        return `
+        <div class="rte-wrap" data-id="${id}" data-align-id="${alignId}" data-font-id="${fontId}" data-size-id="${sizeId}" data-color-id="${colorId}">
+            <div class="rte-toolbar">
+
+                <!-- Alignment -->
+                <div class="rte-align-group" data-id="${alignId}">
+                    ${alignOpts.map(o => `
+                        <button type="button" class="rte-btn rte-align-btn ${alignVal === o.val ? 'active' : ''}" data-val="${o.val}" title="${o.title}">${o.icon}</button>
+                    `).join('')}
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Font family -->
+                <div class="rte-font-picker" id="rfp_${id}" data-id="${fontId}" data-val="${fontVal}">
+                    <button type="button" class="rte-font-btn" title="Font">
+                        <span class="rte-font-preview" style="font-family:${fontVal}">${curFont.label}</span>
+                        <span class="rte-caret">&#9660;</span>
+                    </button>
+                    <div class="rte-font-dropdown">
+                        ${fonts.map(f => `
+                            <div class="rte-font-option ${f.value === fontVal ? 'active' : ''}" data-val="${f.value}" style="font-family:${f.value}">${f.label}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Size stepper -->
+                <div class="rte-size-stepper" data-id="${sizeId}">
+                    <button type="button" class="rte-step-btn" data-dir="-1" title="Decrease">&#8722;</button>
+                    <span class="rte-size-val" id="rsv_${sizeId}">${sizeVal}</span>
+                    <span class="rte-size-unit">pt</span>
+                    <button type="button" class="rte-step-btn" data-dir="1" title="Increase">&#43;</button>
+                    <input type="hidden" id="rsh_${sizeId}" value="${sizeVal}" data-min="${sizeMin}" data-max="${sizeMax}">
+                </div>
+                <div class="rte-sep"></div>
+
+                <!-- Format: B I U S -->
+                <button type="button" class="rte-btn" data-cmd="bold"          title="Bold"><b>B</b></button>
+                <button type="button" class="rte-btn" data-cmd="italic"        title="Italic"><i>I</i></button>
+                <button type="button" class="rte-btn" data-cmd="underline"     title="Underline"><u>U</u></button>
+                <button type="button" class="rte-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+                <div class="rte-sep"></div>
+
+                <!-- Inline colour -->
+                <label class="rte-color-wrap" title="Text color">
+                    <span>A</span>
+                    <input type="color" class="rte-color" value="${colorVal || '#000000'}">
+                </label>
+                <div class="rte-sep"></div>
+
+                <!-- Bullet list -->
+                <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Bullet list">&#8226;&#8211;</button>
+                <div class="rte-sep"></div>
+
+                <!-- Clear formatting -->
+                <button type="button" class="rte-btn rte-clear" title="Remove formatting">&#10005;</button>
+            </div>
+
+            <div class="rte-editor"
+                 id="rte_${id}"
+                 contenteditable="true"
+                 spellcheck="false">${html}</div>
+        </div>`;
+    }
+
+    // ─── LEGACY STANDALONE HELPERS (still used by date-range & menu sections) ─
+    _alignToggle(id, currentVal) {
+        const opts = [
+            { val: 'left',   title: 'Left'   },
+            { val: 'center', title: 'Center' },
+            { val: 'right',  title: 'Right'  }
+        ];
+        return `<div class="tb-align-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-align-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}" title="${o.title}">
+                    ${ o.val === 'left' ? '&#8676;' : o.val === 'center' ? '&#9868;' : '&#8677;' }
+                </button>`).join('')}
+        </div>`;
+    }
+
+    _fontPicker(id, currentVal) {
+        const fonts = this._fonts();
+        const current = fonts.find(f => f.value === currentVal) || fonts[0];
+        return `<div class="tb-font-picker" id="fp_${id}" data-id="${id}" data-val="${currentVal}">
+            <button type="button" class="tb-font-btn" title="Font Family">
+                <span class="tb-font-preview" style="font-family:${currentVal}">${current.label}</span>
+                <span class="tb-caret">&#9660;</span>
+            </button>
+            <div class="tb-font-dropdown">
+                ${fonts.map(f => `
+                    <div class="tb-font-option ${f.value === currentVal ? 'active' : ''}"
+                        data-val="${f.value}" style="font-family:${f.value}">${f.label}</div>`).join('')}
+            </div>
+        </div>`;
+    }
+
+    _sizeStepper(id, currentVal, min, max) {
+        return `<div class="tb-size-stepper" data-id="${id}">
+            <button type="button" class="tb-step-btn" data-dir="-1" title="Decrease">&#8722;</button>
+            <span class="tb-size-val" id="sv_${id}">${currentVal}</span>
+            <span class="tb-size-unit">pt</span>
+            <button type="button" class="tb-step-btn" data-dir="1" title="Increase">&#43;</button>
+            <input type="hidden" id="${id}" value="${currentVal}" data-min="${min}" data-max="${max}">
+        </div>`;
+    }
+
+    _borderStyleToggle(id, currentVal) {
+        const opts = [
+            { val: 'solid',  px: 2 },
+            { val: 'dashed', px: 2 },
+            { val: 'dotted', px: 2 },
+            { val: 'double', px: 4 }
+        ];
+        return `<div class="tb-border-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-border-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}" title="${o.val}">
+                    <span style="border-bottom:${o.px}px ${o.val} currentColor;display:block;width:28px;"></span>
+                </button>`).join('')}
+        </div>`;
+    }
+
+    _borderThicknessToggle(id, currentVal) {
+        const opts = [{ val:'1px',px:1},{val:'2px',px:2},{val:'3px',px:3},{val:'4px',px:4}];
+        return `<div class="tb-border-group" data-id="${id}">
+            ${opts.map(o => `
+                <button type="button"
+                    class="tb-border-btn ${currentVal === o.val ? 'active' : ''}"
+                    data-val="${o.val}" title="${o.val}">
+                    <span style="display:block;width:28px;height:${o.px*2}px;background:currentColor;border-radius:1px;"></span>
+                </button>`).join('')}
+        </div>`;
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────
     init() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setup());
@@ -117,7 +277,7 @@ class StepTemplateBuilder {
         else pageHeader.appendChild(tabsContainer);
 
         const style = document.createElement('style');
-        style.textContent = `.builder-tab-btn:hover{background:#5a6268!important;} .builder-tab-btn.active{background:#495057!important;}`;
+        style.textContent = `.builder-tab-btn:hover{background:#5a6268!important;}.builder-tab-btn.active{background:#495057!important;}`;
         document.head.appendChild(style);
     }
 
@@ -139,26 +299,15 @@ class StepTemplateBuilder {
         return `
             <h2 style="margin:0 0 6px 0;font-size:18px;">${window.t('builder_title')}</h2>
             <p  style="margin:0 0 12px 0;font-size:12px;color:#666;">${window.t('builder_subtitle')}</p>
-
-            <!-- ── Global Font Family (quick apply-to-all) ── -->
-            <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;">
-                <label style="font-weight:600;font-size:12px;color:#856404;display:block;margin-bottom:6px;">🗛 Global Font Family <span style="font-weight:normal;font-size:11px;">(applies to all sections unless overridden below)</span></label>
-                <select id="fontFamily" class="select-input">
-                    ${this._fontOptions(this.settings.fontFamily)}
-                </select>
-            </div>
-
             ${this.renderAccordionSection('background', window.t('section_background'), this.renderBackgroundControls())}
             ${this.renderAccordionSection('header',     window.t('section_header'),     this.renderHeaderControls())}
             ${this.renderAccordionSection('menu',       window.t('section_menu'),       this.renderMenuControls())}
             ${this.renderAccordionSection('footer',     window.t('section_footer'),     this.renderFooterControls())}
-
             <div style="margin-top:25px;padding-top:20px;border-top:2px solid #e0e0e0;">
                 <button id="btnLoadData"     class="btn btn-primary"   style="width:100%;margin-bottom:10px;">${window.t('btn_load_menu_data')}</button>
                 <button id="btnSaveTemplate" class="btn btn-secondary" style="width:100%;margin-bottom:10px;">${window.t('btn_save_template')}</button>
                 <button id="btnReset"        class="btn btn-secondary" style="width:100%;">${window.t('btn_reset_default')}</button>
-            </div>
-        `;
+            </div>`;
     }
 
     renderTemplatesTab() {
@@ -182,7 +331,7 @@ class StepTemplateBuilder {
 
     bindTabControls() {
         document.querySelectorAll('.builder-tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab));
+            btn.addEventListener('click', e => this.switchTab(e.currentTarget.dataset.tab));
         });
     }
 
@@ -226,15 +375,16 @@ class StepTemplateBuilder {
         if (!window.menuTemplates?.[name]) { alert(window.t('alert_template_not_found')); return; }
         if (confirm(window.t('alert_template_load_confirm').replace('{name}', name))) {
             this.settings = { ...window.menuTemplates[name] };
-            // Back-fill any missing per-section font keys from global fontFamily
-            const fallback = this.settings.fontFamily || 'Arial, sans-serif';
-            if (!this.settings.headerFontFamily)  this.settings.headerFontFamily  = fallback;
-            if (!this.settings.dateFontFamily)    this.settings.dateFontFamily    = fallback;
-            if (!this.settings.dayNameFontFamily) this.settings.dayNameFontFamily = fallback;
-            if (!this.settings.mealFontFamily)    this.settings.mealFontFamily    = fallback;
-            if (!this.settings.footerFontFamily)  this.settings.footerFontFamily  = fallback;
+            const fb = 'Arial, sans-serif';
+            ['headerFontFamily','dateFontFamily','dayNameFontFamily','mealFontFamily','footerFontFamily']
+                .forEach(k => { if (!this.settings[k]) this.settings[k] = fb; });
             this.switchTab('builder');
             this.buildUI(); this.bindTabControls(); this.bindAccordion(); this.bindControls(); this.bindActionButtons();
+            // restore rich-text content
+            const hEl = document.getElementById('rte_headerText');
+            const fEl = document.getElementById('rte_footerText');
+            if (hEl) hEl.innerHTML = this.settings.headerText || '';
+            if (fEl) fEl.innerHTML = this.settings.footerText  || '';
             this.updatePreview();
             alert(window.t('alert_template_loaded'));
         }
@@ -258,14 +408,13 @@ class StepTemplateBuilder {
             return;
         }
         try {
-            const dataDir   = await window.directoryHandle.getDirectoryHandle('data',   { create: false });
-            const imagesDir = await dataDir.getDirectoryHandle('images',                { create: false });
-            const folderDir = await imagesDir.getDirectoryHandle(folder,               { create: false });
+            const dataDir   = await window.directoryHandle.getDirectoryHandle('data',   { create:false });
+            const imagesDir = await dataDir.getDirectoryHandle('images',                { create:false });
+            const folderDir = await imagesDir.getDirectoryHandle(folder,               { create:false });
             const images = [];
             for await (const entry of folderDir.values()) {
-                if (entry.kind === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(entry.name)) {
+                if (entry.kind === 'file' && /\.(png|jpg|jpeg|gif|webp)$/i.test(entry.name))
                     images.push({ name: entry.name, url: URL.createObjectURL(await entry.getFile()) });
-                }
             }
             if (!images.length) {
                 container.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:#999;border:2px dashed #ddd;border-radius:8px;font-size:12px;">${window.t('images_empty')}</div>`;
@@ -277,19 +426,21 @@ class StepTemplateBuilder {
                     <div style="font-size:10px;color:#666;margin-bottom:5px;word-break:break-word;">${img.name}</div>
                     <button class="btn btn-secondary" style="width:100%;padding:4px;font-size:11px;" onclick="stepTemplateBuilder.deleteImage('${folder}','${img.name}')">&#128465;</button>
                 </div>`).join('');
-        } catch { container.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:#999;border:2px dashed #ddd;border-radius:8px;font-size:12px;">${window.t('images_folder_missing')}</div>`; }
+        } catch {
+            container.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:#999;border:2px dashed #ddd;border-radius:8px;font-size:12px;">${window.t('images_folder_missing')}</div>`;
+        }
     }
 
     async deleteImage(folder, filename) {
         if (!confirm(window.t('alert_image_delete_confirm').replace('{name}', filename))) return;
         try {
-            const dataDir   = await window.directoryHandle.getDirectoryHandle('data',   { create: false });
-            const imagesDir = await dataDir.getDirectoryHandle('images',                { create: false });
-            const folderDir = await imagesDir.getDirectoryHandle(folder,               { create: false });
+            const dataDir   = await window.directoryHandle.getDirectoryHandle('data',   { create:false });
+            const imagesDir = await dataDir.getDirectoryHandle('images',                { create:false });
+            const folderDir = await imagesDir.getDirectoryHandle(folder,               { create:false });
             await folderDir.removeEntry(filename);
             await this.loadImages();
             alert(window.t('alert_image_deleted'));
-        } catch (err) { alert(window.t('alert_image_delete_failed')); }
+        } catch { alert(window.t('alert_image_delete_failed')); }
     }
 
     loadRealData() {
@@ -370,6 +521,7 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── BACKGROUND ──────────────────────────────────────────────────────────
     renderBackgroundControls() {
         return `<div class="control-group">
             <label>${window.t('label_background_color')}</label>
@@ -412,49 +564,50 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── HEADER ───────────────────────────────────────────────────────────────
     renderHeaderControls() {
+        const s = this.settings;
         return `<div class="control-group">
-            <label class="checkbox-label"><input type="checkbox" id="showHeader" ${this.settings.showHeader?'checked':''}><span>${window.t('label_show_header')}</span></label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="showHeader" ${s.showHeader?'checked':''}>
+                <span>${window.t('label_show_header')}</span>
+            </label>
+
             <label>${window.t('label_header_text')}</label>
-            <input type="text" id="headerText" value="${this.settings.headerText}" class="text-input">
-            <label>${window.t('label_text_alignment')}</label>
-            <select id="headerAlignment" class="select-input">
-                <option value="left"   ${this.settings.headerAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.headerAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.headerAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Header Font Size (pt)</label>
-            <input type="number" id="headerFontSize" value="${this.settings.headerFontSize}" min="8" max="120" class="text-input">
-            <label>Header Font Family</label>
-            <select id="headerFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.headerFontFamily)}
-            </select>
-            <label>${window.t('label_text_color')}</label>
-            <input type="color" id="headerColor" value="${this.settings.headerColor}" class="color-input">
+            ${this._richEditor(
+                'headerText',
+                s.headerText,
+                s.headerAlignment,
+                s.headerFontFamily,
+                s.headerFontSize, 8, 120,
+                s.headerColor,
+                'headerAlignment', 'headerFontFamily', 'headerFontSize', 'headerColor'
+            )}
 
             <h4 style="margin-top:18px;">&#128197; Date Range</h4>
-            <label class="checkbox-label"><input type="checkbox" id="showDateRange" ${this.settings.showDateRange?'checked':''}><span>Show Date Range</span></label>
-            <label>Date Alignment</label>
-            <select id="dateAlignment" class="select-input">
-                <option value="left"   ${this.settings.dateAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.dateAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.dateAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Date Font Size (pt)</label>
-            <input type="number" id="dateFontSize" value="${this.settings.dateFontSize}" min="6" max="60" class="text-input">
-            <label>Date Font Family</label>
-            <select id="dateFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.dateFontFamily)}
-            </select>
-            <label>Date Color</label>
-            <input type="color" id="dateColor" value="${this.settings.dateColor}" class="color-input">
+            <label class="checkbox-label">
+                <input type="checkbox" id="showDateRange" ${s.showDateRange?'checked':''}>
+                <span>Show Date Range</span>
+            </label>
+
+            <label>Alignment</label>
+            ${this._alignToggle('dateAlignment', s.dateAlignment)}
+
+            <label>Font</label>
+            ${this._fontPicker('dateFontFamily', s.dateFontFamily)}
+
+            <label>Size</label>
+            ${this._sizeStepper('dateFontSize', s.dateFontSize, 6, 60)}
+
+            <label>Color</label>
+            <input type="color" id="dateColor" value="${s.dateColor}" class="color-input">
         </div>`;
     }
 
+    // ─── MENU ─────────────────────────────────────────────────────────────────
     renderMenuControls() {
         const dayBgIsTransparent = !this.settings.dayBackground || this.settings.dayBackground === 'transparent';
         const dayBgColor = dayBgIsTransparent ? '#ffffff' : this.settings.dayBackground;
-
         return `<div class="control-group">
             <h4>${window.t('label_template_style')}</h4>
             <label class="radio-label"><input type="radio" name="templateStyle" value="compact"       ${this.settings.templateStyle==='compact'?'checked':''}><span><strong>${window.t('style_compact')}</strong> – ${window.t('style_compact_desc')}</span></label>
@@ -463,22 +616,15 @@ class StepTemplateBuilder {
 
             <h4 style="margin-top:15px;">${window.t('label_day_block')}</h4>
             <label class="checkbox-label"><input type="checkbox" id="dayBorder" ${this.settings.dayBorder?'checked':''}><span>${window.t('label_show_border')}</span></label>
+
             <label>${window.t('label_border_color')}</label>
             <input type="color" id="dayBorderColor" value="${this.settings.dayBorderColor}" class="color-input">
+
             <label>${window.t('label_border_style')}</label>
-            <select id="dayBorderStyle" class="select-input">
-                <option value="solid"  ${this.settings.dayBorderStyle==='solid'?'selected':''}>${window.t('border_solid')}</option>
-                <option value="dashed" ${this.settings.dayBorderStyle==='dashed'?'selected':''}>${window.t('border_dashed')}</option>
-                <option value="dotted" ${this.settings.dayBorderStyle==='dotted'?'selected':''}>${window.t('border_dotted')}</option>
-                <option value="double" ${this.settings.dayBorderStyle==='double'?'selected':''}>${window.t('border_double')}</option>
-            </select>
+            ${this._borderStyleToggle('dayBorderStyle', this.settings.dayBorderStyle)}
+
             <label>${window.t('label_border_thickness')}</label>
-            <select id="dayBorderThickness" class="select-input">
-                <option value="1px" ${this.settings.dayBorderThickness==='1px'?'selected':''}>1px</option>
-                <option value="2px" ${this.settings.dayBorderThickness==='2px'?'selected':''}>2px</option>
-                <option value="3px" ${this.settings.dayBorderThickness==='3px'?'selected':''}>3px</option>
-                <option value="4px" ${this.settings.dayBorderThickness==='4px'?'selected':''}>4px</option>
-            </select>
+            ${this._borderThicknessToggle('dayBorderThickness', this.settings.dayBorderThickness)}
 
             <label style="margin-top:4px;">${window.t('label_background')}</label>
             <label class="checkbox-label" style="margin-bottom:4px;">
@@ -486,26 +632,22 @@ class StepTemplateBuilder {
                 <span>No background (transparent)</span>
             </label>
             <input type="color" id="dayBackground" value="${dayBgColor}" class="color-input"
-                   style="${dayBgIsTransparent?'opacity:0.35;pointer-events:none;':''}"
-                   ${dayBgIsTransparent?'disabled':''}>
+                style="${dayBgIsTransparent?'opacity:0.35;pointer-events:none;':''}"
+                ${dayBgIsTransparent?'disabled':''}>
 
             <h4 style="margin-top:15px;">${window.t('label_day_name')}</h4>
-            <label>Size (pt)</label>
-            <input type="number" id="dayNameSize" value="${this.settings.dayNameSize}" min="8" max="48" class="text-input">
-            <label>Day Name Font Family</label>
-            <select id="dayNameFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.dayNameFontFamily)}
-            </select>
+            <label>Font</label>
+            ${this._fontPicker('dayNameFontFamily', this.settings.dayNameFontFamily)}
+            <label>Size</label>
+            ${this._sizeStepper('dayNameSize', this.settings.dayNameSize, 8, 48)}
             <label>${window.t('label_color')}</label>
             <input type="color" id="dayNameColor" value="${this.settings.dayNameColor}" class="color-input">
 
             <h4 style="margin-top:15px;">&#127869;&#65039; Meal Text</h4>
-            <label>Meal Size (pt)</label>
-            <input type="number" id="mealFontSize" value="${this.settings.mealFontSize}" min="6" max="36" class="text-input">
-            <label>Meal Font Family</label>
-            <select id="mealFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.mealFontFamily)}
-            </select>
+            <label>Font</label>
+            ${this._fontPicker('mealFontFamily', this.settings.mealFontFamily)}
+            <label>Size</label>
+            ${this._sizeStepper('mealFontSize', this.settings.mealFontSize, 6, 36)}
 
             <h4 style="margin-top:15px;">${window.t('label_allergens')}</h4>
             <label>${window.t('label_color')}</label>
@@ -515,30 +657,34 @@ class StepTemplateBuilder {
         </div>`;
     }
 
+    // ─── FOOTER ───────────────────────────────────────────────────────────────
     renderFooterControls() {
+        const s = this.settings;
         return `<div class="control-group">
-            <label class="checkbox-label"><input type="checkbox" id="showFooter" ${this.settings.showFooter?'checked':''}><span>${window.t('label_show_footer')}</span></label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="showFooter" ${s.showFooter?'checked':''}>
+                <span>${window.t('label_show_footer')}</span>
+            </label>
+
             <label>${window.t('label_footer_text')}</label>
-            <input type="text" id="footerText" value="${this.settings.footerText}" class="text-input">
-            <label>${window.t('label_text_alignment')}</label>
-            <select id="footerAlignment" class="select-input">
-                <option value="left"   ${this.settings.footerAlignment==='left'?'selected':''}>${window.t('align_left')}</option>
-                <option value="center" ${this.settings.footerAlignment==='center'?'selected':''}>${window.t('align_center')}</option>
-                <option value="right"  ${this.settings.footerAlignment==='right'?'selected':''}>${window.t('align_right')}</option>
-            </select>
-            <label>Footer Font Size (pt)</label>
-            <input type="number" id="footerFontSize" value="${this.settings.footerFontSize}" min="6" max="48" class="text-input">
-            <label>Footer Font Family</label>
-            <select id="footerFontFamily" class="select-input">
-                ${this._fontOptions(this.settings.footerFontFamily)}
-            </select>
+            ${this._richEditor(
+                'footerText',
+                s.footerText,
+                s.footerAlignment,
+                s.footerFontFamily,
+                s.footerFontSize, 6, 48,
+                '#000000',
+                'footerAlignment', 'footerFontFamily', 'footerFontSize', null
+            )}
         </div>`;
     }
 
+    // ─── STYLES ───────────────────────────────────────────────────────────────
     renderStyles() {
         return `<style>
+            /* ── Layout ── */
             .step-template-controls{padding:20px;background:white;border-radius:8px;}
-            .tab-content{display:none;} .tab-content.active{display:block;}
+            .tab-content{display:none;}.tab-content.active{display:block;}
             .accordion-section{margin-bottom:10px;border:2px solid #e0e0e0;border-radius:8px;overflow:hidden;}
             .accordion-section.expanded{border-color:#2196f3;}
             .accordion-header{padding:12px 15px;background:#f8f9fa;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;}
@@ -553,13 +699,120 @@ class StepTemplateBuilder {
             .radio-label{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;}
             .text-input,.select-input{padding:7px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:100%;box-sizing:border-box;}
             .color-input{width:100%;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;}
-            .slider{width:100%;} .slider-value{text-align:center;font-size:12px;color:#666;}
+            .slider{width:100%;}.slider-value{text-align:center;font-size:12px;color:#666;}
             .subsection{background:#f8f9fa;padding:12px;border-radius:6px;}
             .template-card{display:flex;align-items:center;gap:10px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;}
             .image-card{padding:10px;border:2px solid #e0e0e0;border-radius:8px;text-align:center;}
+
+            /* ── Rich Text Editor ── */
+            .rte-wrap{border:1px solid #ddd;border-radius:6px;overflow:visible;}
+            .rte-toolbar{
+                display:flex;align-items:center;gap:2px;
+                padding:5px 6px;background:#f8f9fa;
+                border-bottom:1px solid #e0e0e0;flex-wrap:wrap;
+                border-radius:6px 6px 0 0;
+            }
+            .rte-btn{
+                min-width:28px;height:26px;padding:0 5px;
+                border:1px solid transparent;border-radius:4px;
+                background:transparent;cursor:pointer;font-size:13px;
+                display:flex;align-items:center;justify-content:center;
+                transition:all .15s;
+            }
+            .rte-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .rte-sep{width:1px;height:18px;background:#ddd;margin:0 3px;flex-shrink:0;}
+            .rte-color-wrap{
+                position:relative;display:flex;align-items:center;justify-content:center;
+                min-width:28px;height:26px;padding:0 5px;
+                border:1px solid transparent;border-radius:4px;
+                cursor:pointer;font-size:13px;font-weight:700;
+                transition:all .15s;
+            }
+            .rte-color-wrap:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-color-wrap span{
+                pointer-events:none;
+                text-decoration:underline;
+                text-decoration-color: var(--rte-color, #000);
+                text-decoration-thickness:2px;
+            }
+            .rte-color{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;top:0;left:0;}
+            .rte-editor{
+                padding:8px 10px;
+                min-height:60px;
+                max-height:160px;
+                overflow-y:auto;
+                font-size:13px;
+                line-height:1.5;
+                outline:none;
+                background:white;
+                border-radius:0 0 6px 6px;
+            }
+            .rte-editor:focus{background:#fffdf8;}
+            .rte-clear{color:#999;}
+
+            /* ── RTE: Alignment ── */
+            .rte-align-group{display:flex;gap:2px;}
+            .rte-align-btn{min-width:26px;height:26px;padding:0 4px;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+            .rte-align-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-align-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+
+            /* ── RTE: Font picker ── */
+            .rte-font-picker{position:relative;}
+            .rte-font-btn{display:flex;align-items:center;justify-content:space-between;padding:3px 7px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;height:26px;white-space:nowrap;max-width:100px;transition:all .15s;}
+            .rte-font-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .rte-font-preview{font-size:12px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
+            .rte-caret{font-size:9px;color:#888;margin-left:4px;flex-shrink:0;}
+            .rte-font-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:160px;background:white;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:99999;max-height:200px;overflow-y:auto;}
+            .rte-font-picker.open .rte-font-dropdown{display:block;}
+            .rte-font-option{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .1s;}
+            .rte-font-option:last-child{border-bottom:none;}
+            .rte-font-option:hover{background:#fff3e0;}
+            .rte-font-option.active{background:#fff3e0;color:#fd7e14;font-weight:600;}
+
+            /* ── RTE: Size stepper ── */
+            .rte-size-stepper{display:flex;align-items:center;gap:3px;}
+            .rte-step-btn{width:22px;height:22px;border:1px solid #ddd;border-radius:4px;background:white;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+            .rte-step-btn:hover{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .rte-size-val{min-width:24px;text-align:center;font-size:12px;font-weight:600;color:#333;}
+            .rte-size-unit{font-size:10px;color:#888;}
+
+            /* ── Standalone alignment toggle (date-range / menu) ── */
+            .tb-align-group{display:flex;gap:4px;}
+            .tb-align-btn{flex:1;padding:6px 0;border:1px solid #ddd;border-radius:5px;background:#f8f9fa;cursor:pointer;font-size:15px;line-height:1;transition:all .15s;}
+            .tb-align-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-align-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+
+            /* ── Standalone font picker ── */
+            .tb-font-picker{position:relative;width:100%;}
+            .tb-font-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid #ddd;border-radius:5px;background:#f8f9fa;cursor:pointer;font-size:13px;transition:all .15s;}
+            .tb-font-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-font-preview{font-size:14px;flex:1;text-align:left;}
+            .tb-caret{font-size:10px;color:#888;margin-left:6px;}
+            .tb-font-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:9999;max-height:220px;overflow-y:auto;}
+            .tb-font-picker.open .tb-font-dropdown{display:block;}
+            .tb-font-option{padding:9px 12px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .1s;}
+            .tb-font-option:last-child{border-bottom:none;}
+            .tb-font-option:hover{background:#fff3e0;}
+            .tb-font-option.active{background:#fff3e0;color:#fd7e14;font-weight:600;}
+
+            /* ── Standalone size stepper ── */
+            .tb-size-stepper{display:flex;align-items:center;gap:6px;background:#f8f9fa;border:1px solid #ddd;border-radius:5px;padding:4px 8px;width:fit-content;}
+            .tb-step-btn{width:26px;height:26px;border:1px solid #ddd;border-radius:4px;background:white;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+            .tb-step-btn:hover{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .tb-size-val{min-width:28px;text-align:center;font-size:14px;font-weight:600;color:#333;}
+            .tb-size-unit{font-size:11px;color:#888;}
+
+            /* ── Border toggles ── */
+            .tb-border-group{display:flex;gap:4px;}
+            .tb-border-btn{flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:5px;background:#f8f9fa;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+            .tb-border-btn:hover{background:#e9ecef;border-color:#adb5bd;}
+            .tb-border-btn.active{background:#fd7e14;border-color:#fd7e14;color:white;}
+            .tb-border-btn.active span{background:white!important;border-bottom-color:white!important;}
         </style>`;
     }
 
+    // ─── ACCORDION ────────────────────────────────────────────────────────────
     bindAccordion() {
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', e => {
@@ -580,70 +833,270 @@ class StepTemplateBuilder {
         });
     }
 
+    // ─── BIND CONTROLS ────────────────────────────────────────────────────────
     bindControls() {
         [0,1,2,3,4].forEach(i => this.bindMultiImageSlot(i));
         this.bindColorInput('backgroundColor');
-        this.bindSelect('fontFamily');
+
+        // Header — rich editor binds align/font/size/color internally
         this.bindCheckbox('showHeader');
-        this.bindTextInput('headerText');
-        this.bindSelect('headerAlignment');
-        this.bindNumberInput('headerFontSize');
-        this.bindSelect('headerFontFamily');
-        this.bindColorInput('headerColor');
+        this.bindRichEditor('headerText');
+
+        // Date range — standalone controls
         this.bindCheckbox('showDateRange');
-        this.bindSelect('dateAlignment');
-        this.bindNumberInput('dateFontSize');
-        this.bindSelect('dateFontFamily');
+        this.bindAlignToggle('dateAlignment');
+        this.bindFontPicker('dateFontFamily');
+        this.bindSizeStepper('dateFontSize');
         this.bindColorInput('dateColor');
+
+        // Menu
         document.querySelectorAll('input[name="templateStyle"]').forEach(r => {
             r.addEventListener('change', e => { this.settings.templateStyle = e.target.value; this.updatePreview(); });
         });
         this.bindCheckbox('dayBorder');
         this.bindColorInput('dayBorderColor');
-        this.bindSelect('dayBorderStyle');
-        this.bindSelect('dayBorderThickness');
+        this.bindButtonGroup('dayBorderStyle');
+        this.bindButtonGroup('dayBorderThickness');
         this.bindDayBackground();
-        this.bindNumberInput('dayNameSize');
-        this.bindSelect('dayNameFontFamily');
+        this.bindFontPicker('dayNameFontFamily');
+        this.bindSizeStepper('dayNameSize');
         this.bindColorInput('dayNameColor');
-        this.bindNumberInput('mealFontSize');
-        this.bindSelect('mealFontFamily');
+        this.bindFontPicker('mealFontFamily');
+        this.bindSizeStepper('mealFontSize');
         this.bindColorInput('allergenColor');
         this.bindCheckbox('allergenUnderline');
         this.bindCheckbox('allergenBold');
+
+        // Footer — rich editor binds align/font/size internally
         this.bindCheckbox('showFooter');
-        this.bindTextInput('footerText');
-        this.bindSelect('footerAlignment');
-        this.bindNumberInput('footerFontSize');
-        this.bindSelect('footerFontFamily');
+        this.bindRichEditor('footerText');
+    }
+
+    // ─── RICH EDITOR BINDER ───────────────────────────────────────────────────
+    bindRichEditor(id) {
+        const wrap   = document.querySelector(`.rte-wrap[data-id="${id}"]`);
+        const editor = document.getElementById(`rte_${id}`);
+        if (!wrap || !editor) return;
+
+        const alignId = wrap.dataset.alignId;
+        const fontId  = wrap.dataset.fontId;
+        const sizeId  = wrap.dataset.sizeId;
+        const colorId = wrap.dataset.colorId;
+
+        // ── Selection save/restore ────────────────────────────────────────────
+        let savedRange = null;
+        const saveSelection = () => {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+        };
+        const restoreSelection = () => {
+            if (!savedRange) return;
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+        };
+        editor.addEventListener('keyup',   saveSelection);
+        editor.addEventListener('mouseup', saveSelection);
+
+        // ── Content → settings ────────────────────────────────────────────────
+        editor.addEventListener('input', () => {
+            this.settings[id] = editor.innerHTML;
+            this.updatePreview();
+        });
+
+        // ── Alignment buttons ────────────────────────────────────────────────
+        const alignGroup = wrap.querySelector('.rte-align-group');
+        if (alignGroup) {
+            alignGroup.querySelectorAll('.rte-align-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alignGroup.querySelectorAll('.rte-align-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.settings[alignId] = btn.dataset.val;
+                    this.updatePreview();
+                });
+            });
+        }
+
+        // ── Font picker ───────────────────────────────────────────────────────
+        const fontWrap = wrap.querySelector('.rte-font-picker');
+        if (fontWrap) {
+            const fontBtn      = fontWrap.querySelector('.rte-font-btn');
+            const fontDropdown = fontWrap.querySelector('.rte-font-dropdown');
+            const fontPreview  = fontWrap.querySelector('.rte-font-preview');
+            fontBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                document.querySelectorAll('.rte-font-picker.open, .tb-font-picker.open').forEach(p => { if (p !== fontWrap) p.classList.remove('open'); });
+                fontWrap.classList.toggle('open');
+            });
+            fontDropdown.querySelectorAll('.rte-font-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const val = opt.dataset.val;
+                    this.settings[fontId] = val;
+                    fontPreview.textContent = opt.textContent.trim();
+                    fontPreview.style.fontFamily = val;
+                    fontDropdown.querySelectorAll('.rte-font-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    fontWrap.classList.remove('open');
+                    this.updatePreview();
+                });
+            });
+            document.addEventListener('click', () => fontWrap.classList.remove('open'));
+        }
+
+        // ── Size stepper ──────────────────────────────────────────────────────
+        const sizeStepper = wrap.querySelector('.rte-size-stepper');
+        if (sizeStepper) {
+            const hidden  = sizeStepper.querySelector(`#rsh_${sizeId}`);
+            const display = sizeStepper.querySelector(`#rsv_${sizeId}`);
+            const min = parseInt(hidden.dataset.min);
+            const max = parseInt(hidden.dataset.max);
+            sizeStepper.querySelectorAll('.rte-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let val = parseInt(hidden.value) + parseInt(btn.dataset.dir);
+                    val = Math.min(max, Math.max(min, val));
+                    hidden.value = val;
+                    display.textContent = val;
+                    this.settings[sizeId] = val;
+                    this.updatePreview();
+                });
+            });
+        }
+
+        // ── Format buttons (B I U S / bullet / clear) ─────────────────────────
+        wrap.querySelectorAll('.rte-btn[data-cmd]').forEach(btn => {
+            btn.addEventListener('mousedown', e => {
+                e.preventDefault();
+                editor.focus();
+                restoreSelection();
+                if (btn.classList.contains('rte-clear')) {
+                    document.execCommand('removeFormat', false, null);
+                } else {
+                    document.execCommand(btn.dataset.cmd, false, null);
+                }
+                this.settings[id] = editor.innerHTML;
+                this.updatePreview();
+                this._updateRteActiveStates(wrap);
+            });
+        });
+
+        // ── Inline colour picker ──────────────────────────────────────────────
+        const colorInput = wrap.querySelector('.rte-color');
+        const colorLabel = wrap.querySelector('.rte-color-wrap span');
+        if (colorInput) {
+            colorInput.addEventListener('focus', saveSelection);
+            colorInput.addEventListener('input', e => {
+                colorLabel.style.setProperty('--rte-color', e.target.value);
+            });
+            colorInput.addEventListener('change', e => {
+                editor.focus();
+                restoreSelection();
+                document.execCommand('foreColor', false, e.target.value);
+                this.settings[id] = editor.innerHTML;
+                if (colorId) this.settings[colorId] = e.target.value;
+                this.updatePreview();
+            });
+        }
+
+        // ── Toolbar active states on selection change ─────────────────────────
+        editor.addEventListener('keyup',   () => this._updateRteActiveStates(wrap));
+        editor.addEventListener('mouseup', () => this._updateRteActiveStates(wrap));
+    }
+
+    _updateRteActiveStates(wrap) {
+        const cmds = ['bold','italic','underline','strikeThrough'];
+        cmds.forEach(cmd => {
+            const btn = wrap.querySelector(`.rte-btn[data-cmd="${cmd}"]`);
+            if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+        });
+    }
+
+    // ─── STANDALONE TOOLBAR BINDERS (date-range, menu) ───────────────────────
+    bindAlignToggle(id) {
+        const group = document.querySelector(`.tb-align-group[data-id="${id}"]`);
+        if (!group) return;
+        group.querySelectorAll('.tb-align-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.tb-align-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.settings[id] = btn.dataset.val;
+                this.updatePreview();
+            });
+        });
+    }
+
+    bindFontPicker(id) {
+        const wrap = document.getElementById(`fp_${id}`);
+        if (!wrap) return;
+        const btn      = wrap.querySelector('.tb-font-btn');
+        const dropdown = wrap.querySelector('.tb-font-dropdown');
+        const preview  = wrap.querySelector('.tb-font-preview');
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            document.querySelectorAll('.tb-font-picker.open, .rte-font-picker.open').forEach(p => { if (p!==wrap) p.classList.remove('open'); });
+            wrap.classList.toggle('open');
+        });
+        dropdown.querySelectorAll('.tb-font-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const val = opt.dataset.val;
+                this.settings[id] = val;
+                preview.textContent = opt.textContent.trim();
+                preview.style.fontFamily = val;
+                dropdown.querySelectorAll('.tb-font-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                wrap.classList.remove('open');
+                this.updatePreview();
+            });
+        });
+        document.addEventListener('click', () => wrap.classList.remove('open'));
+    }
+
+    bindSizeStepper(id) {
+        const stepper = document.querySelector(`.tb-size-stepper[data-id="${id}"]`);
+        if (!stepper) return;
+        const hidden  = stepper.querySelector(`#${id}`);
+        const display = stepper.querySelector(`#sv_${id}`);
+        const min = parseInt(hidden.dataset.min);
+        const max = parseInt(hidden.dataset.max);
+        stepper.querySelectorAll('.tb-step-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let val = parseInt(hidden.value) + parseInt(btn.dataset.dir);
+                val = Math.min(max, Math.max(min, val));
+                hidden.value = val;
+                display.textContent = val;
+                this.settings[id] = val;
+                this.updatePreview();
+            });
+        });
+    }
+
+    bindButtonGroup(id) {
+        const group = document.querySelector(`.tb-border-group[data-id="${id}"]`);
+        if (!group) return;
+        group.querySelectorAll('.tb-border-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.tb-border-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.settings[id] = btn.dataset.val;
+                this.updatePreview();
+            });
+        });
     }
 
     bindDayBackground() {
         const check = document.getElementById('dayBgTransparent');
         const color = document.getElementById('dayBackground');
         if (!check || !color) return;
-
         check.addEventListener('change', e => {
             if (e.target.checked) {
                 this.settings.dayBackground = 'transparent';
-                color.disabled = true;
-                color.style.opacity = '0.35';
-                color.style.pointerEvents = 'none';
+                color.disabled = true; color.style.opacity = '0.35'; color.style.pointerEvents = 'none';
             } else {
                 this.settings.dayBackground = color.value;
-                color.disabled = false;
-                color.style.opacity = '1';
-                color.style.pointerEvents = '';
+                color.disabled = false; color.style.opacity = '1'; color.style.pointerEvents = '';
             }
             this.updatePreview();
         });
-
-        color.addEventListener('input', e => {
-            if (!check.checked) {
-                this.settings.dayBackground = e.target.value;
-                this.updatePreview();
-            }
-        });
+        color.addEventListener('input', e => { if (!check.checked) { this.settings.dayBackground = e.target.value; this.updatePreview(); } });
     }
 
     bindMultiImageSlot(index) {
@@ -710,11 +1163,10 @@ class StepTemplateBuilder {
         } catch { alert(window.t('alert_image_library_failed')); }
     }
 
-    bindCheckbox(id)    { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.checked; this.updatePreview(); }); }
-    bindTextInput(id)   { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
-    bindNumberInput(id) { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=parseInt(e.target.value)||8; this.updatePreview(); }); }
-    bindSelect(id)      { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
-    bindColorInput(id)  { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
+    bindCheckbox(id)   { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.checked; this.updatePreview(); }); }
+    bindTextInput(id)  { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
+    bindSelect(id)     { document.getElementById(id)?.addEventListener('change', e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
+    bindColorInput(id) { document.getElementById(id)?.addEventListener('input',  e => { this.settings[id]=e.target.value;   this.updatePreview(); }); }
 
     async saveImage(file, folder) {
         if (!window.directoryHandle) return false;
@@ -729,19 +1181,18 @@ class StepTemplateBuilder {
         } catch { return false; }
     }
 
-    // ─── PREVIEW ───────────────────────────────────────────────────────────────
+    // ─── PREVIEW ──────────────────────────────────────────────────────────────
     updatePreview() {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
         const s = this.settings;
         const { startDate, endDate, days } = this.previewData;
 
-        // Resolve per-section fonts with fallback to global fontFamily
-        const hff  = s.headerFontFamily  || s.fontFamily || 'Arial, sans-serif';
-        const dff  = s.dateFontFamily    || s.fontFamily || 'Arial, sans-serif';
-        const dyff = s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
-        const mff  = s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
-        const fff  = s.footerFontFamily  || s.fontFamily || 'Arial, sans-serif';
+        const hff  = s.headerFontFamily  || 'Arial, sans-serif';
+        const dff  = s.dateFontFamily    || 'Arial, sans-serif';
+        const dyff = s.dayNameFontFamily || 'Arial, sans-serif';
+        const mff  = s.mealFontFamily    || 'Arial, sans-serif';
+        const fff  = s.footerFontFamily  || 'Arial, sans-serif';
 
         const pad2 = n => String(n).padStart(2,'0');
         const dateRangeText = `${pad2(startDate.getDate())}.${pad2(startDate.getMonth()+1)} – ${pad2(endDate.getDate())}.${pad2(endDate.getMonth()+1)} ${startDate.getFullYear()}`;
@@ -771,33 +1222,29 @@ class StepTemplateBuilder {
         <div style="background-color:${s.backgroundColor};position:relative;padding:40px 40px 30px;min-height:800px;display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #ddd;box-shadow:0 2px 16px rgba(0,0,0,0.1);overflow:hidden;">
             ${bgLayers}
             <div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;">
-                <!-- Header -->
                 <div style="margin-bottom:18px;">
-                    ${s.showHeader ? `<div style="text-align:${s.headerAlignment};margin-bottom:6px;"><span style="font-family:${hff};font-size:${s.headerFontSize}pt;color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>` : ''}
-                    ${s.showDateRange ? `<div style="font-family:${dff};text-align:${s.dateAlignment};font-size:${s.dateFontSize}pt;color:${s.dateColor};">${dateRangeText}</div>` : ''}
+                    ${s.showHeader
+                        ? `<div style="font-family:${hff};text-align:${s.headerAlignment};font-size:${s.headerFontSize}pt;color:${s.headerColor};font-weight:bold;margin-bottom:6px;">${s.headerText}</div>`
+                        : ''}
+                    ${s.showDateRange
+                        ? `<div style="font-family:${dff};text-align:${s.dateAlignment};font-size:${s.dateFontSize}pt;color:${s.dateColor};">${dateRangeText}</div>`
+                        : ''}
                 </div>
-                <!-- Content -->
-                <div style="flex:1;">
-                    ${content}
-                </div>
-                <!-- Footer -->
-                ${s.showFooter ? `<div style="font-family:${fff};text-align:${s.footerAlignment};margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:${s.footerFontSize}pt;color:#888;">${s.footerText}</div>` : ''}
+                <div style="flex:1;">${content}</div>
+                ${s.showFooter
+                    ? `<div style="font-family:${fff};text-align:${s.footerAlignment};margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:${s.footerFontSize}pt;color:#888;">${s.footerText}</div>`
+                    : ''}
             </div>
         </div>`;
     }
 
     renderDayBlock(day, s, isCompact, dyff, mff) {
         if (!day || !day.meals.length) return '';
-        // Resolve fonts if called without explicit args (e.g. from old code paths)
-        const resolvedDyff = dyff || s.dayNameFontFamily || s.fontFamily || 'Arial, sans-serif';
-        const resolvedMff  = mff  || s.mealFontFamily    || s.fontFamily || 'Arial, sans-serif';
-        const borderStyle = s.dayBorder
-            ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};`
-            : '';
-        const bgStyle = s.dayBackground && s.dayBackground !== 'transparent'
-            ? `background:${s.dayBackground};`
-            : '';
-        const wrapStyle = `${borderStyle}${bgStyle}padding:10px;margin-bottom:14px;border-radius:4px;`;
+        const resolvedDyff = dyff || s.dayNameFontFamily || 'Arial, sans-serif';
+        const resolvedMff  = mff  || s.mealFontFamily    || 'Arial, sans-serif';
+        const borderStyle  = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor};` : '';
+        const bgStyle      = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        const wrapStyle    = `${borderStyle}${bgStyle}padding:10px;margin-bottom:14px;border-radius:4px;`;
 
         let html = `<div style="${wrapStyle}">`;
         html += `<div style="font-family:${resolvedDyff};font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};margin-bottom:6px;">${day.name}</div>`;
@@ -806,27 +1253,22 @@ class StepTemplateBuilder {
             if (isCompact) {
                 let line = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) line += ` – ${meal.portion}`;
-                if (meal.ingredients && meal.ingredients.length) {
-                    const ingList = meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ');
-                    line += `; ${ingList}`;
-                }
+                if (meal.ingredients?.length) line += `; ${meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ')}`;
                 if (meal.calories) line += ` | ККАЛ ${meal.calories}`;
                 html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:4px;margin-left:8px;">${line}</div>`;
             } else {
                 let title = ` ${meal.number}. ${meal.name}`;
                 if (meal.portion) title += ` – ${meal.portion}`;
                 html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-bottom:2px;margin-left:8px;font-weight:500;">${title}</div>`;
-                if (meal.ingredients && meal.ingredients.length) {
-                    const ingList = meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ');
-                    const calStr  = meal.calories ? ` – ККАЛ ${meal.calories}` : '';
-                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${ingList}${calStr}</div>`;
+                if (meal.ingredients?.length) {
+                    const calStr = meal.calories ? ` – ККАЛ ${meal.calories}` : '';
+                    html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">${meal.ingredients.map(ing => this._formatIng(ing, s)).join(', ')}${calStr}</div>`;
                 } else if (meal.calories) {
                     html += `<div style="font-family:${resolvedMff};font-size:${s.mealFontSize}pt;line-height:1.4;margin-left:22px;color:#555;font-style:italic;margin-bottom:4px;">ККАЛ ${meal.calories}</div>`;
                 }
             }
         });
-
-        html += `</div>`;
+        html += '</div>';
         return html;
     }
 
@@ -845,24 +1287,24 @@ class StepTemplateBuilder {
             startDate: today, endDate: end,
             days: [
                 { name:'Понеделник', meals:[
-                    { number:1, name:'Супа топчета',      portion:'150гр', calories:129, ingredients:[{name:'кайма',hasAllergen:false},{name:'яйца',hasAllergen:true}]},
-                    { number:2, name:'Пиле с ориз',        portion:'200гр', calories:250, ingredients:[{name:'пиле',hasAllergen:false},{name:'ориз',hasAllergen:false}]}
+                    { number:1, name:'Супа топчета',     portion:'150гр', calories:129, ingredients:[{name:'кайма',hasAllergen:false},{name:'яйца',hasAllergen:true}]},
+                    { number:2, name:'Пиле с ориз',       portion:'200гр', calories:250, ingredients:[{name:'пиле',hasAllergen:false},{name:'ориз',hasAllergen:false}]}
                 ]},
                 { name:'Вторник', meals:[
-                    { number:1, name:'Таратор',            portion:'150гр', calories:100, ingredients:[{name:'краставица',hasAllergen:false},{name:'кисело мляко',hasAllergen:true}]},
-                    { number:2, name:'Мусака',             portion:'200гр', calories:320, ingredients:[{name:'картофи',hasAllergen:false},{name:'яйца',hasAllergen:true}]}
+                    { number:1, name:'Таратор',           portion:'150гр', calories:100, ingredients:[{name:'краставица',hasAllergen:false},{name:'кисело мляко',hasAllergen:true}]},
+                    { number:2, name:'Мусака',            portion:'200гр', calories:320, ingredients:[{name:'картофи',hasAllergen:false},{name:'яйца',hasAllergen:true}]}
                 ]},
                 { name:'Сряда', meals:[
-                    { number:1, name:'Пилешка супа',       portion:'150гр', calories:120, ingredients:[{name:'пиле',hasAllergen:false},{name:'моркови',hasAllergen:false}]},
-                    { number:2, name:'Кюфтета',            portion:'180гр', calories:280, ingredients:[{name:'кайма',hasAllergen:false},{name:'лук',hasAllergen:false}]}
+                    { number:1, name:'Пилешка супа',      portion:'150гр', calories:120, ingredients:[{name:'пиле',hasAllergen:false},{name:'моркови',hasAllergen:false}]},
+                    { number:2, name:'Кюфтета',           portion:'180гр', calories:280, ingredients:[{name:'кайма',hasAllergen:false},{name:'лук',hasAllergen:false}]}
                 ]},
                 { name:'Четвъртък', meals:[
-                    { number:1, name:'Леща яхния',         portion:'200гр', calories:180, ingredients:[{name:'леща',hasAllergen:false},{name:'домати',hasAllergen:false}]},
-                    { number:2, name:'Свинско с картофи',  portion:'200гр', calories:350, ingredients:[{name:'свинско',hasAllergen:false},{name:'картофи',hasAllergen:false}]}
+                    { number:1, name:'Леща яхния',        portion:'200гр', calories:180, ingredients:[{name:'леща',hasAllergen:false},{name:'домати',hasAllergen:false}]},
+                    { number:2, name:'Свинско с картофи', portion:'200гр', calories:350, ingredients:[{name:'свинско',hasAllergen:false},{name:'картофи',hasAllergen:false}]}
                 ]},
                 { name:'Петък', meals:[
-                    { number:1, name:'Рибена чорба',       portion:'150гр', calories:110, ingredients:[{name:'риба',hasAllergen:true},{name:'картофи',hasAllergen:false}]},
-                    { number:2, name:'Пъстърва на скара',  portion:'180гр', calories:200, ingredients:[{name:'пъстърва',hasAllergen:true},{name:'лимон',hasAllergen:false}]}
+                    { number:1, name:'Рибена чорба',      portion:'150гр', calories:110, ingredients:[{name:'риба',hasAllergen:true},{name:'картофи',hasAllergen:false}]},
+                    { number:2, name:'Пъстърва на скара', portion:'180гр', calories:200, ingredients:[{name:'пъстърва',hasAllergen:true},{name:'лимон',hasAllergen:false}]}
                 ]}
             ]
         };
