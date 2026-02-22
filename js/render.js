@@ -143,9 +143,19 @@
                     const full = window.ingredients.find(i => i.id === ing.id);
                     return full ? full.name : null;
                 }).filter(Boolean);
-                const shown = ingNames.slice(0, MAX_ING).join(', ');
-                const more  = ingNames.length > MAX_ING ? ` <span style="color:#aaa;">+${ingNames.length - MAX_ING}</span>` : '';
-                ingPreview = `<div style="font-size:0.78rem;color:#888;margin-top:3px;font-weight:normal;">${shown}${more}</div>`;
+
+                const shown    = ingNames.slice(0, MAX_ING).join(', ');
+                const moreCount = ingNames.length - MAX_ING;
+                const moreHtml  = moreCount > 0
+                    ? ` <span style="color:#fd7e14;font-weight:600;cursor:default;">+${moreCount}</span>`
+                    : '';
+                // Full list shown on hover via title attribute
+                const fullList = ingNames.join(', ');
+
+                ingPreview = `<div
+                    style="font-size:0.78rem;color:#888;margin-top:3px;font-weight:normal;cursor:default;"
+                    title="${fullList.replace(/"/g, '&quot;')}"
+                >${shown}${moreHtml}</div>`;
             }
 
             const recipeAllergens = window.getRecipeAllergens(recipe);
@@ -160,7 +170,7 @@
                     <strong>${recipe.name}</strong>
                     ${ingPreview}
                 </td>
-                <td>${getCategoryIcon(recipe.category || 'other')} ${window.t('category_' + (recipe.category || 'other'))}</td>
+                <td>${window.t('category_' + (recipe.category || 'other'))}</td>
                 <td>${recipe.portionSize || '-'}</td>
                 <td>${allergensHtml}</td>
                 <td>
