@@ -74,5 +74,80 @@
     "footerAlignment": "center",
     "footerFontSize": 9,
     "footerFontFamily": "Arial, sans-serif"
+  },
+  "TEST1": {
+    "templateStyle": "detailed",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": "9be75c84.png",
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": null,
+        "position": "bottom-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "<font color=\"#2bda9f\">С</font><font color=\"#46534f\">е</font><font color=\"#d0b925\">д</font><font color=\"#ba2626\">м</font><font color=\"#2e5dbd\">и</font><font color=\"#b545b1\">ч</font><font color=\"#4d9e47\">н</font><font color=\"#001be6\">о </font><font color=\"#000000\">меню</font>",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#000000",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 15,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "dateFontFamily": "Georgia, serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": false,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "<div>Алергените са подчертани.</div><div>Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на M3X и Рецептурника</div><div>за ученическо столово хранене</div><div>Менютата са изготвени сыгласно Сборник рецепти за ученически столове и бюфети от 2012г.</div><div>Менюто е съгласувано с мед.лице - Елиза Дамянова.</div><div><ul><li><font color=\"#ff0000\">Менюто може да претьрпи промени,поради независещи от нас</font></li></ul></div><div><font color=\"#ff0000\">причини, за кото се извиняваме предварително.</font></div>",
+    "footerAlignment": "left",
+    "footerFontSize": 9,
+    "footerFontFamily": "Arial, sans-serif",
+    "null": "#ff0000"
   }
 }

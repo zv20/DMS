@@ -2893,7 +2893,9 @@
     {
       "id": "ing_1771546097221_1kvzcgmww",
       "name": "грис",
-      "allergens": []
+      "allergens": [
+        "alg_1771455731813_zrz67a2nl"
+      ]
     },
     {
       "id": "ing_1771546112405_uxmp347xh",
@@ -2938,7 +2940,9 @@
     {
       "id": "ing_1771607459470_2ahadkc08",
       "name": "брашно УС",
-      "allergens": []
+      "allergens": [
+        "alg_1771455731813_zrz67a2nl"
+      ]
     },
     {
       "id": "ing_1771607490083_o417x686w",
@@ -2970,7 +2974,9 @@
     {
       "id": "ing_1771607574825_nzw88atgr",
       "name": "масло",
-      "allergens": []
+      "allergens": [
+        "alg_1771456034476_g7qf0f9d7"
+      ]
     },
     {
       "id": "ing_1771609609268_ogqokbb9y",
