@@ -2,9 +2,9 @@
   "recipes": [
     {
       "id": "rcp_1771456356559_9l0vcanc5",
-      "name": "Зеленчукова супа ",
+      "name": "Зеленчукова супа",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 129,
       "instructions": "",
       "ingredients": [
@@ -101,7 +101,7 @@
       "id": "rcp_1771456524466_dqwgoob46",
       "name": "Таратор",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 100,
       "instructions": "",
       "ingredients": [
@@ -361,7 +361,7 @@
       "id": "rcp_1771546339662_f40k9vjt0",
       "name": "Свинско месо със зрял фасул",
       "category": "soup",
-      "portionSize": "160",
+      "portionSize": "150гр",
       "calories": 144,
       "instructions": "",
       "ingredients": [
@@ -399,7 +399,7 @@
       "id": "rcp_1771546418837_8915o6etv",
       "name": "Салата от прясно зеле",
       "category": "main",
-      "portionSize": "",
+      "portionSize": "150гр",
       "calories": 67,
       "instructions": "",
       "ingredients": [
@@ -489,7 +489,7 @@
       "id": "rcp_1771546613793_eej9dy6jt",
       "name": "Леща",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 116,
       "instructions": "",
       "ingredients": [
@@ -521,7 +521,7 @@
       "id": "rcp_1771546731632_j8qwxrqp6",
       "name": "Супа по селски с месо",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 110,
       "instructions": "",
       "ingredients": [
@@ -602,7 +602,7 @@
       "id": "rcp_1771607680391_07t2wh2l2",
       "name": "Пиле с ориз",
       "category": "main",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 220,
       "instructions": "",
       "ingredients": [
@@ -631,7 +631,7 @@
       "id": "rcp_1771607840973_3htx6gzgm",
       "name": "Вегетариански борш",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 74,
       "instructions": "",
       "ingredients": [
@@ -678,7 +678,7 @@
       "id": "rcp_1771608124712_xe0ytyksy",
       "name": "Кюфтета Стара Планина с гарнитура картофено пюре",
       "category": "main",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 223,
       "instructions": "",
       "ingredients": [
@@ -704,7 +704,7 @@
       "id": "rcp_1771608205084_gpdxjhfni",
       "name": "Боб чорба",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 144,
       "instructions": "",
       "ingredients": [
@@ -734,9 +734,9 @@
     },
     {
       "id": "rcp_1771608443008_d3wt0zyog",
-      "name": "Риба хек на фурна с гарнитура зеле с моркови ",
+      "name": "Риба хек на фурна с гарнитура зеле с моркови",
       "category": "main",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 249,
       "instructions": "",
       "ingredients": [
@@ -806,7 +806,7 @@
       "id": "rcp_1771608857701_gtbyu1s61",
       "name": "Грах яхния",
       "category": "main",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 132,
       "instructions": "",
       "ingredients": [
@@ -870,7 +870,7 @@
       "id": "rcp_1771609893622_g8kgx29mc",
       "name": "Телешка супа",
       "category": "soup",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 155,
       "instructions": "",
       "ingredients": [
@@ -1510,7 +1510,7 @@
       "id": "rcp_1771614706180_djod0cndx",
       "name": "Рибно филе от морски език на фурна с гарнитура - зеле с моркови",
       "category": "main",
-      "portionSize": "150",
+      "portionSize": "150гр",
       "calories": 249,
       "instructions": "",
       "ingredients": [
