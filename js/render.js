@@ -4,6 +4,10 @@
     let viewMode = localStorage.getItem('calendarViewMode') || 'week';
     window.currentCalendarDate = new Date();
 
+    // ─── RECIPE TABLE SORT STATE ───────────────────────────────────────────────
+    let recipeSortCol = 'name';
+    let recipeSortDir = 'asc';
+
     function getCategoryIcon(cat) { 
         return { soup: '🥣', main: '🍽️', dessert: '🍰', other: '➕' }[cat] || '➕'; 
     }
@@ -12,6 +16,50 @@
     function sortAZ(arr, nameGetter) {
         return [...arr].sort((a, b) => nameGetter(a).localeCompare(nameGetter(b), undefined, { sensitivity: 'base' }));
     }
+
+    function sortRecipes(arr) {
+        const dir = recipeSortDir === 'asc' ? 1 : -1;
+        return [...arr].sort((a, b) => {
+            let va = '', vb = '';
+            if (recipeSortCol === 'name') {
+                va = a.name || ''; vb = b.name || '';
+            } else if (recipeSortCol === 'category') {
+                va = a.category || ''; vb = b.category || '';
+            } else if (recipeSortCol === 'portion') {
+                va = a.portionSize || ''; vb = b.portionSize || '';
+            } else if (recipeSortCol === 'allergens') {
+                va = window.getRecipeAllergens(a).map(x => window.getAllergenName(x)).join(',');
+                vb = window.getRecipeAllergens(b).map(x => window.getAllergenName(x)).join(',');
+            }
+            return dir * va.localeCompare(vb, undefined, { sensitivity: 'base' });
+        });
+    }
+
+    function setSortArrows() {
+        ['name','category','portion','allergens'].forEach(col => {
+            const th = document.getElementById('recipeTh_' + col);
+            if (!th) return;
+            const arrow = th.querySelector('.sort-arrow');
+            if (!arrow) return;
+            if (col === recipeSortCol) {
+                arrow.textContent = recipeSortDir === 'asc' ? ' ↑' : ' ↓';
+                th.style.color = '#fd7e14';
+            } else {
+                arrow.textContent = ' ↕';
+                th.style.color = '';
+            }
+        });
+    }
+
+    window.setRecipeSort = function(col) {
+        if (recipeSortCol === col) {
+            recipeSortDir = recipeSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            recipeSortCol = col;
+            recipeSortDir = 'asc';
+        }
+        window.renderRecipes();
+    };
 
     window.getAllergenName = function(allergen) {
         if (allergen.isSystem) {
@@ -73,26 +121,46 @@
         const catFilter = document.getElementById('recipeCategoryFilter');
         const term = search ? search.value.toLowerCase() : '';
         const cat = catFilter ? catFilter.value : '';
+
+        setSortArrows();
         
         if (window.recipes.length === 0) { 
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${window.t('empty_recipes')}</td></tr>`; 
             return; 
         }
 
-        const sorted = sortAZ(window.recipes, r => r.name);
+        const sorted = sortRecipes(window.recipes);
 
         sorted.forEach(recipe => {
             if (term && !recipe.name.toLowerCase().includes(term)) return;
             if (cat && recipe.category !== cat) return;
-            const tr = document.createElement('tr');
+
+            // ── Build ingredients preview ──────────────────────────────────────
+            const MAX_ING = 5;
+            let ingPreview = '';
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+                const ingNames = recipe.ingredients.map(ing => {
+                    const full = window.ingredients.find(i => i.id === ing.id);
+                    return full ? full.name : null;
+                }).filter(Boolean);
+                const shown = ingNames.slice(0, MAX_ING).join(', ');
+                const more  = ingNames.length > MAX_ING ? ` <span style="color:#aaa;">+${ingNames.length - MAX_ING}</span>` : '';
+                ingPreview = `<div style="font-size:0.78rem;color:#888;margin-top:3px;font-weight:normal;">${shown}${more}</div>`;
+            }
+
             const recipeAllergens = window.getRecipeAllergens(recipe);
             let allergensHtml = '-';
             if (recipeAllergens.length > 0) { 
                 allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>`).join('')}</div>`; 
             }
+
+            const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${recipe.name}</strong></td>
-                <td>${window.t('category_' + (recipe.category || 'other'))}</td>
+                <td>
+                    <strong>${recipe.name}</strong>
+                    ${ingPreview}
+                </td>
+                <td>${getCategoryIcon(recipe.category || 'other')} ${window.t('category_' + (recipe.category || 'other'))}</td>
                 <td>${recipe.portionSize || '-'}</td>
                 <td>${allergensHtml}</td>
                 <td>
@@ -108,6 +176,9 @@
         const tbody = document.getElementById('ingredientList');
         if (!tbody) return;
         tbody.innerHTML = '';
+
+        const search = document.getElementById('ingredientSearch');
+        const term = search ? search.value.toLowerCase() : '';
         
         if (window.ingredients.length === 0) { 
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_ingredients')}</td></tr>`; 
@@ -117,6 +188,7 @@
         const sorted = sortAZ(window.ingredients, i => i.name);
 
         sorted.forEach(ing => {
+            if (term && !ing.name.toLowerCase().includes(term)) return;
             const tr = document.createElement('tr');
             let tags = '-';
             if (ing.allergens && ing.allergens.length) { 
@@ -277,7 +349,6 @@
         select.style.flex = '1';
         select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
 
-        // Sort recipes A-Z in slot dropdowns too
         const slotRecipes = sortAZ(
             window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)),
             r => r.name

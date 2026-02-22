@@ -5,34 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Детско меню</title>
   
-  <link rel="stylesheet" href="css/styles.css?v=14.6">
-  <link rel="stylesheet" href="css/template-styles.css?v=14.6">
+  <link rel="stylesheet" href="css/styles.css?v=14.7">
+  <link rel="stylesheet" href="css/template-styles.css?v=14.7">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
   <script src="js/libs/jspdf.umd.min.js"></script>
   
   <!-- Core Application Scripts -->
-  <script src="js/i18n.js?v=14.6"></script>
-  <script src="js/constants.js?v=14.6"></script>
+  <script src="js/i18n.js?v=14.7"></script>
+  <script src="js/constants.js?v=14.7"></script>
   
   <!-- STORAGE ADAPTER (must load before store.js) -->
-  <script src="js/storage-adapter.js?v=14.6"></script>
-  <script src="js/store.js?v=14.6"></script>
+  <script src="js/storage-adapter.js?v=14.7"></script>
+  <script src="js/store.js?v=14.7"></script>
   
-  <script src="js/calendar.js?v=14.6"></script>
-  <script src="js/render.js?v=14.6"></script>
-  <script src="js/ui.js?v=14.6"></script>
-  <script src="js/ui-combobox.js?v=14.6"></script>
-  <script src="js/clock.js?v=14.6"></script>
+  <script src="js/calendar.js?v=14.7"></script>
+  <script src="js/render.js?v=14.7"></script>
+  <script src="js/ui.js?v=14.7"></script>
+  <script src="js/ui-combobox.js?v=14.7"></script>
+  <script src="js/clock.js?v=14.7"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER (Accordion UI with Header/Footer Images) -->
-  <script src="js/template/template-builder-steps.js?v=14.6"></script>
+  <script src="js/template/template-builder-steps.js?v=14.7"></script>
   
   <!-- PRINT FUNCTIONALITY -->
-  <script src="js/print.js?v=14.6"></script>
+  <script src="js/print.js?v=14.7"></script>
   
-  <script src="js/main.js?v=14.6"></script>
+  <script src="js/main.js?v=14.7"></script>
+
+  <style>
+    /* ── Sortable recipe table headers ── */
+    .sortable-th {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .sortable-th:hover { color: #fd7e14; }
+    .sort-arrow { font-style: normal; font-size: 0.8em; }
+  </style>
 </head>
 <body data-theme="default">
 
@@ -142,10 +153,10 @@
             <table class="list-table">
                 <thead>
                     <tr>
-                        <th data-i18n="label_recipe_name">Name</th>
-                        <th data-i18n="label_category">Category</th>
-                        <th data-i18n="label_portion_size">Portion</th>
-                        <th data-i18n="label_allergens">Allergens</th>
+                        <th id="recipeTh_name" class="sortable-th" onclick="window.setRecipeSort('name')" data-i18n="label_recipe_name">Name <span class="sort-arrow">↑</span></th>
+                        <th id="recipeTh_category" class="sortable-th" onclick="window.setRecipeSort('category')" data-i18n="label_category">Category <span class="sort-arrow">↕</span></th>
+                        <th id="recipeTh_portion" class="sortable-th" onclick="window.setRecipeSort('portion')" data-i18n="label_portion_size">Portion <span class="sort-arrow">↕</span></th>
+                        <th id="recipeTh_allergens" class="sortable-th" onclick="window.setRecipeSort('allergens')" data-i18n="label_allergens">Allergens <span class="sort-arrow">↕</span></th>
                         <th data-i18n="table_actions">Actions</th>
                     </tr>
                 </thead>
@@ -159,6 +170,12 @@
         <div class="page-header">
           <h1 data-i18n="nav_ingredients">Ingredients</h1>
           <button class="btn btn-primary" onclick="window.openIngredientModal()" data-i18n="btn_add_ingredient">+ Add Ingredient</button>
+        </div>
+        <div class="filters-row" style="display:flex; gap:10px; margin-bottom:15px;">
+            <input type="text" id="ingredientSearch" class="form-control" style="max-width:300px;"
+                data-i18n-placeholder="filter_search_placeholder"
+                placeholder="Search ingredients..."
+                oninput="window.renderIngredients()">
         </div>
         <div class="table-responsive">
             <table class="list-table">
