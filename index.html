@@ -150,7 +150,6 @@
             <table class="list-table">
                 <thead>
                     <tr>
-                        <!-- NOTE: i18n label is in a child <span> so applyTranslations() does NOT wipe the sort arrow -->
                         <th id="recipeTh_name" class="sortable-th" onclick="window.setRecipeSort('name')">
                             <span data-i18n="label_recipe_name">Name</span><span class="sort-arrow"> ↑</span>
                         </th>
@@ -230,11 +229,6 @@
               <button id="btn-export" class="btn btn-secondary" onclick="window.exportAllData()" style="margin-top: 10px;" data-i18n="btn_export_backup">💾 Export Data (Backup)</button>
               <input type="file" id="file-import" accept=".json" style="display:none;" onchange="window.importData(event)">
               <button id="btn-import" class="btn btn-secondary" onclick="document.getElementById('file-import').click()" style="margin-top: 10px;" data-i18n="btn_import_data">📂 Import Data</button>
-          </div>
-          <div class="settings-card">
-              <h3 data-i18n="settings_archive_title">📁 PDF Archive</h3>
-              <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;" data-i18n="settings_archive_desc">Printed menus are automatically saved to: archive/menus/</p>
-              <button class="btn btn-secondary" onclick="window.openArchiveFolder()" data-i18n="btn_open_archive">Open Archive Folder</button>
           </div>
       </div>
 

@@ -77,9 +77,6 @@ class StorageAdapter {
         }
         
         try {
-            // Get folder hint if available
-            const lastFolder = this.getFolderHint();
-            
             const dirHandle = await window.showDirectoryPicker({
                 mode: 'readwrite',
                 startIn: 'documents'
@@ -93,7 +90,6 @@ class StorageAdapter {
             this.saveFolderHint(dirHandle.name);
             
             await this.storeDirectoryHandle(dirHandle);
-            await this.ensureDataFolderStructure();
             await this.loadFromFileSystem();
             return true;
         } catch (err) {
@@ -206,12 +202,11 @@ class StorageAdapter {
                 window.appSettings = JSON.parse(await settingsData.text());
                 console.log('✅ Loaded settings:', window.appSettings);
             } catch (e) {
-                // FIX: default to 'bg' — this is a Bulgarian kitchen app
                 window.appSettings = { language: 'bg' };
                 console.log('ℹ️ No settings.json found, defaulting to Bulgarian');
             }
             
-            // Load templates.json (NEW!)
+            // Load templates.json
             try {
                 const templatesFile = await dataDir.getFileHandle('templates.json');
                 const templatesData = await templatesFile.getFile();
@@ -224,7 +219,6 @@ class StorageAdapter {
                 
                 if (Object.keys(legacyTemplates).length > 0) {
                     console.log('📦 Migrated', Object.keys(legacyTemplates).length, 'templates from localStorage');
-                    // Save migrated templates
                     await this.saveToFileSystem('templates', legacyTemplates);
                 } else {
                     console.log('ℹ️ No templates.json found, starting with empty templates');
@@ -244,7 +238,6 @@ class StorageAdapter {
             // Get or create data subfolder
             const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: true });
             
-            // Save to data.json (combined format for compatibility)
             if (type === 'recipes' || type === 'ingredients' || type === 'allergens') {
                 const combined = {
                     recipes: type === 'recipes' ? data : window.recipes,
@@ -273,7 +266,6 @@ class StorageAdapter {
                 
                 console.log('✅ Saved settings to settings.json:', data);
             } else if (type === 'templates') {
-                // NEW: Save templates to templates.json
                 const fileHandle = await dataDir.getFileHandle('templates.json', { create: true });
                 const writable = await fileHandle.createWritable();
                 await writable.write(JSON.stringify(data, null, 2));
@@ -286,21 +278,6 @@ class StorageAdapter {
         }
     }
     
-    async ensureDataFolderStructure() {
-        if (!window.directoryHandle) return;
-        
-        try {
-            await window.directoryHandle.getDirectoryHandle('data', { create: true });
-            const dataDir = await window.directoryHandle.getDirectoryHandle('data', { create: false });
-            await dataDir.getDirectoryHandle('archive', { create: true });
-            const archiveDir = await dataDir.getDirectoryHandle('archive', { create: false });
-            await archiveDir.getDirectoryHandle('menus', { create: true });
-            console.log('✅ Folder structure created');
-        } catch (err) {
-            console.error('❌ Error creating structure:', err);
-        }
-    }
-    
     async storeDirectoryHandle(dirHandle) {
         try {
             console.log('💾 Attempting to save handle to IndexedDB...');
@@ -308,10 +285,8 @@ class StorageAdapter {
             const tx = db.transaction('handles', 'readwrite');
             const store = tx.objectStore('handles');
             
-            // Put the handle
             store.put(dirHandle, 'rootDirectory');
             
-            // Wait for transaction to complete
             await new Promise((resolve, reject) => {
                 tx.oncomplete = () => {
                     console.log('✅ Folder handle saved to IndexedDB (may not persist in file://)'); 
@@ -369,7 +344,6 @@ class StorageAdapter {
     async verifyPermission(handle) {
         const opts = { mode: 'readwrite' };
         
-        // Check if we already have permission
         const currentPermission = await handle.queryPermission(opts);
         
         if (currentPermission === 'granted') {
@@ -377,7 +351,6 @@ class StorageAdapter {
             return true;
         }
         
-        // Only request if not already granted
         console.log('🔐 Requesting folder permission...');
         const requestedPermission = await handle.requestPermission(opts);
         
@@ -396,10 +369,8 @@ class StorageAdapter {
         try {
             this.db = await this.openIDB();
             
-            // Load data from IndexedDB
             await this.loadFromIndexedDB();
             
-            // If empty, pre-populate with sample data
             if (window.recipes.length === 0) {
                 await this.prePopulateData();
             }
@@ -421,7 +392,6 @@ class StorageAdapter {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 
-                // Create object stores
                 if (!db.objectStoreNames.contains('recipes')) {
                     db.createObjectStore('recipes', { keyPath: 'id' });
                 }
@@ -440,7 +410,6 @@ class StorageAdapter {
                 if (!db.objectStoreNames.contains('handles')) {
                     db.createObjectStore('handles');
                 }
-                // NEW: Templates store
                 if (!db.objectStoreNames.contains('templates')) {
                     db.createObjectStore('templates');
                     console.log('📦 Created templates store in IndexedDB');
@@ -453,7 +422,6 @@ class StorageAdapter {
         try {
             const db = await this.openIDB();
             
-            // Load recipes
             const recipesTx = db.transaction('recipes', 'readonly');
             const recipesStore = recipesTx.objectStore('recipes');
             const recipesRequest = recipesStore.getAll();
@@ -462,7 +430,6 @@ class StorageAdapter {
                 recipesRequest.onerror = () => resolve([]);
             });
             
-            // Load ingredients
             const ingredientsTx = db.transaction('ingredients', 'readonly');
             const ingredientsStore = ingredientsTx.objectStore('ingredients');
             const ingredientsRequest = ingredientsStore.getAll();
@@ -471,7 +438,6 @@ class StorageAdapter {
                 ingredientsRequest.onerror = () => resolve([]);
             });
             
-            // Load allergens
             const allergensTx = db.transaction('allergens', 'readonly');
             const allergensStore = allergensTx.objectStore('allergens');
             const allergensRequest = allergensStore.getAll();
@@ -480,7 +446,6 @@ class StorageAdapter {
                 allergensRequest.onerror = () => resolve([]);
             });
             
-            // Load menu
             const menuTx = db.transaction('menu', 'readonly');
             const menuStore = menuTx.objectStore('menu');
             const menuRequest = menuStore.get('currentMenu');
@@ -489,17 +454,14 @@ class StorageAdapter {
                 menuRequest.onerror = () => resolve({});
             });
             
-            // Load settings
             const settingsTx = db.transaction('settings', 'readonly');
             const settingsStore = settingsTx.objectStore('settings');
             const settingsRequest = settingsStore.get('appSettings');
-            // FIX: default to 'bg' — this is a Bulgarian kitchen app
             window.appSettings = await new Promise((resolve) => {
                 settingsRequest.onsuccess = () => resolve(settingsRequest.result || { language: 'bg' });
                 settingsRequest.onerror = () => resolve({ language: 'bg' });
             });
             
-            // Load templates (NEW!)
             const templatesTx = db.transaction('templates', 'readonly');
             const templatesStore = templatesTx.objectStore('templates');
             const templatesRequest = templatesStore.get('menuTemplates');
@@ -508,12 +470,10 @@ class StorageAdapter {
                 templatesRequest.onerror = () => resolve(null);
             });
             
-            // If no templates in IndexedDB, try migrating from localStorage
             if (!templates || Object.keys(templates).length === 0) {
                 templates = this.migrateLegacyTemplates();
                 if (Object.keys(templates).length > 0) {
                     console.log('📦 Migrated', Object.keys(templates).length, 'templates from localStorage');
-                    // Save migrated templates to IndexedDB
                     await this.saveToIndexedDB('templates', templates);
                 }
             }
@@ -529,7 +489,6 @@ class StorageAdapter {
             window.ingredients = [];
             window.allergens = [];
             window.currentMenu = {};
-            // FIX: default to 'bg' — this is a Bulgarian kitchen app
             window.appSettings = { language: 'bg' };
             window.menuTemplates = {};
         }
@@ -557,7 +516,6 @@ class StorageAdapter {
                 await store.put(data, 'appSettings');
                 console.log('✅ Settings saved to IndexedDB:', data);
             } else if (type === 'templates') {
-                // NEW: Save templates to IndexedDB
                 const tx = db.transaction('templates', 'readwrite');
                 const store = tx.objectStore('templates');
                 await store.put(data, 'menuTemplates');
@@ -570,7 +528,7 @@ class StorageAdapter {
         }
     }
     
-    // NEW: Migrate legacy templates from localStorage
+    // Migrate legacy templates from localStorage
     migrateLegacyTemplates() {
         try {
             const legacyTemplates = localStorage.getItem('meal-templates');
@@ -630,7 +588,6 @@ class StorageAdapter {
         window.ingredients = sampleIngredients;
         window.recipes = sampleRecipes;
         window.currentMenu = {};
-        // FIX: default to 'bg' — this is a Bulgarian kitchen app
         window.appSettings = { language: 'bg' };
         window.menuTemplates = {};
         
@@ -661,7 +618,7 @@ class StorageAdapter {
             allergens: window.allergens,
             currentMenu: window.currentMenu,
             appSettings: window.appSettings,
-            templates: window.menuTemplates || {}, // NEW: Include templates in export
+            templates: window.menuTemplates || {},
             exportDate: new Date().toISOString()
         };
         
@@ -684,14 +641,14 @@ class StorageAdapter {
             if (data.allergens) window.allergens = data.allergens;
             if (data.currentMenu) window.currentMenu = data.currentMenu;
             if (data.appSettings) window.appSettings = data.appSettings;
-            if (data.templates) window.menuTemplates = data.templates; // NEW: Import templates
+            if (data.templates) window.menuTemplates = data.templates;
             
             await this.save('recipes', window.recipes);
             await this.save('ingredients', window.ingredients);
             await this.save('allergens', window.allergens);
             await this.save('currentMenu', window.currentMenu);
             await this.save('appSettings', window.appSettings);
-            await this.save('templates', window.menuTemplates); // NEW: Save imported templates
+            await this.save('templates', window.menuTemplates);
             
             return true;
         } catch (err) {
