@@ -1,7 +1,6 @@
 // UI Interactions & Theme Logic (Global Scope)
 
 (function(window) {
-    let templateBackgroundImage = localStorage.getItem('templateBackgroundImage') || '';
 
     // --- Navigation ---
     window.toggleNav = function() {
@@ -297,50 +296,11 @@
         }
     };
 
-    // --- Builder Logic (Robust) ---
-    window.initStyleBuilder = function() { 
+    // --- Template Builder init (delegates to TemplateManager) ---
+    window.initStyleBuilder = function() {
         if (window.TemplateManager && window.TemplateManager.init) {
             window.TemplateManager.init();
-            return;
         }
-
-        const ids = ['styleFont', 'stylePageBg'];
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', window.updateBuilderPreview);
-        });
-        
-        window.loadBuilderSettings();
-        window.updateBuilderPreview();
     };
 
-    window.loadBuilderSettings = function() { 
-        const s = window.currentStyleSettings;
-        if (!s) return;
-        setVal('styleFont', s.font);
-        setVal('stylePageBg', s.pageBg);
-    };
-
-    window.updateBuilderPreview = function() { 
-        const fontEl = document.getElementById('styleFont');
-        if (!fontEl) return;
-        
-        const pageBgEl = document.getElementById('stylePageBg');
-        
-        const s = {
-            font: fontEl.value,
-            pageBg: pageBgEl ? pageBgEl.value : '#ffffff'
-        };
-        
-        const sheet = document.getElementById('livePreviewSheet');
-        if (!sheet) return;
-        
-        sheet.style.fontFamily = s.font;
-        sheet.style.backgroundColor = s.pageBg;
-    };
-
-    function setVal(id, val) {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    }
 })(window);
