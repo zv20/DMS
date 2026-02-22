@@ -1,453 +1,320 @@
-# KitchenPro DMS - Architecture Documentation
+# KitchenPro DMS — Architecture Documentation
+
+> **Last Updated:** February 22, 2026  
+> **Version:** 14.8  
+> **Branch:** `beta`
+
+---
 
 ## 📁 Project Structure
 
 ```
 DMS/
-├── index.html                  # Main HTML entry point
+├── index.html                          # Single entry point — the whole app
 ├── css/
-│   ├── styles.css              # Main stylesheet (18 KB)
-│   ├── calendar.css            # Calendar-specific styles
-│   └── template-builder.css    # Template builder UI styles
+│   ├── styles.css                      # Main UI styles
+│   ├── calendar.css                    # Calendar / week view styles
+│   └── template-styles.css             # Template builder panel styles
 ├── js/
-│   ├── libs/                   # External libraries
-│   │   ├── html2canvas.min.js  # HTML to canvas conversion
-│   │   └── jspdf.umd.min.js    # PDF generation
-│   ├── i18n.js                 # Internationalization (EN/BG)
-│   ├── constants.js            # Centralized constants
-│   ├── store.js                # Data persistence layer
-│   ├── calendar.js             # Calendar/week view logic
-│   ├── render.js               # DOM rendering functions
-│   ├── ui.js                   # UI interactions & modals
-│   ├── template.js             # Template builder (LARGE - 116 KB)
-│   └── main.js                 # App initialization
-└── data/
-    └── preset-templates.js     # Predefined templates
+│   ├── libs/                           # Vendored libraries (no CDN)
+│   │   ├── html2canvas.min.js          # DOM → canvas (used by print.js)
+│   │   └── jspdf.umd.min.js            # Canvas → PDF (used by print.js)
+│   ├── i18n.js                         # ⭐ All translations (EN + BG)
+│   ├── constants.js                    # Centralised magic numbers / defaults
+│   ├── storage-adapter.js              # File System API ↔ IndexedDB abstraction
+│   ├── store.js                        # CRUD + save/load wiring
+│   ├── calendar.js                     # Calendar logic, date helpers, view modes
+│   ├── render.js                       # Data → DOM (pure rendering, no events)
+│   ├── ui.js                           # Event handlers, modals, navigation
+│   ├── ui-combobox.js                  # Reusable combobox/autocomplete widget
+│   ├── clock.js                        # Live clock widget in header
+│   ├── print.js                        # ⭐ Print / Save Image / Save PDF (v8.1)
+│   ├── main.js                         # App boot, splash screen, init sequence
+│   ├── template.js                     # Thin init wrapper for TemplateManager
+│   ├── template-presets.js             # 6 built-in preset template definitions
+│   └── template/
+│       └── template-builder-steps.js   # ⭐ Full step-based Template Builder UI
+├── data/                               # Runtime data files (user folder, not tracked)
+├── img/
+│   └── logo.png
+└── .github/
+    ├── workflows/
+    │   └── sync-demo.yml               # CI: auto-syncs main → demo on every push
+    └── scripts/
+        └── inject-demo.py              # Injects demo-mode.js script tag into index.html
 ```
 
 ---
 
 ## 🔄 Module Responsibilities
 
-### Core Modules
+### Storage Layer
 
-#### `i18n.js` (26 KB)
-**Purpose:** Internationalization support  
-**Provides:**
-- Translation strings (English & Bulgarian)
-- `window.t(key)` - Get translated string
-- `window.changeLanguage(lang)` - Switch language
-- Auto-updates all `data-i18n` attributes
+#### `storage-adapter.js`
+**Purpose:** Abstracts the two storage backends so the rest of the app never needs to know which one is active.
 
-#### `constants.js` (6.9 KB)
-**Purpose:** Centralized configuration  
-**Provides:**
-- `DMS_CONSTANTS` - All magic numbers and defaults
-- Layout dimensions, colors, typography
-- Prevents hardcoded values scattered across codebase
+| Method | What it does |
+|---|---|
+| `init()` | Auto-detects File System API vs IndexedDB, loads all data |
+| `selectFolder()` | Opens folder picker (Chrome/Edge only), saves handle to IndexedDB |
+| `save(type, data)` | Unified save — routes to `saveToFileSystem` or `saveToIndexedDB` |
+| `exportData()` | Exports all data as a `.json` backup file (download) |
+| `importData(file)` | Imports a `.json` backup and saves to active backend |
+| `migrateLegacyTemplates()` | One-time migration from old `localStorage` template format |
 
-#### `store.js` (23.7 KB)
-**Purpose:** Data persistence and state management  
-**Provides:**
-- CRUD operations for recipes, ingredients, allergens
-- Menu planning data management
-- LocalStorage/FileSystem persistence
-- Auto-save functionality
-- Sync indicator updates
+**Storage backends:**
 
-**Key Functions:**
-- `window.saveData()` - Persist all data
-- `window.loadData()` - Load from storage
-- `window.saveRecipe(event)` - Create/update recipe
-- `window.deleteRecipe(id)` - Remove recipe
-- Similar functions for ingredients and allergens
+- **File System API** (Chrome/Edge): data lives in `data/data.json`, `data/menus.json`, `data/settings.json`, `data/templates.json` inside user-selected folder
+- **IndexedDB** (Firefox/Safari): stores `recipes`, `ingredients`, `allergens`, `menu`, `settings`, `templates`, `handles` object stores in `KitchenProDB` (v2)
+
+#### `store.js`
+**Purpose:** CRUD operations and save/load wiring on top of `storage-adapter.js`.
+
+**Key functions:**
+- `window.saveRecipe(event)` / `window.deleteRecipe(id)`
+- `window.saveIngredient(event)` / `window.deleteIngredient(id)`
+- `window.saveAllergen(event)` / `window.deleteAllergen(id)`
+- `window.saveMeal(date, slot, recipeId)` / `window.clearMeal(date, slot)`
+- `window.saveSettings()` — persists `window.appSettings`
+- `window.saveTemplates()` — persists `window.menuTemplates`
+- `window.exportAllData()` / `window.importData(event)`
 
 ---
 
-### UI & Rendering Modules
+### Core UI Modules
 
-#### `render.js` (14.9 KB)
-**Purpose:** Pure rendering logic (data → DOM)  
-**Responsibilities:**
-- Convert data structures to HTML
-- Populate tables, lists, calendar
-- Calculate derived data (allergens from ingredients)
-- No user interaction handling
+#### `i18n.js`
+**Purpose:** All translation strings and language switching logic.
+- Supports 🇧🇬 Bulgarian (default) and 🇺🇸 English
+- `window.t('key')` — returns translated string for current language
+- `window.changeLanguage(lang)` — switches language, saves preference, re-renders
+- `window.applyTranslations()` — updates all `data-i18n` and `data-i18n-placeholder` elements
+- Language preference stored in both `settings.json` and `localStorage` (`dms_language_hint`) so it's available before folder loads
 
-**Key Functions:**
-- `window.renderAll()` - Re-render entire app
-- `window.renderRecipes()` - Recipe table
-- `window.renderIngredients()` - Ingredient table
-- `window.renderAllergens()` - Allergen table
-- `window.renderCalendar(date)` - Weekly meal slots
-- `window.getRecipeAllergens(recipe)` - Calculate allergens
+**⚠️ Rule:** Every user-visible string in JS must use `window.t('key')`. Add matching key to both `en` and `bg` objects.
 
-#### `ui.js` (13.3 KB)
-**Purpose:** User interactions and modal management  
-**Responsibilities:**
-- Event handlers for clicks, navigation
-- Modal open/close logic
-- Tag management in forms
-- Theme switching
-- Navigation menu behavior
+#### `render.js`
+**Purpose:** Pure data → DOM rendering. No event listeners here.
+- `window.renderAll()` — re-renders the whole app
+- `window.renderRecipes()` / `window.renderIngredients()` / `window.renderAllergens()`
+- `window.renderCalendar(date)` — weekly/monthly calendar view
+- `window.getRecipeAllergens(recipe)` — derives allergen list from linked ingredients
+- `window.getAllergenName(allergen)` — returns display name (i18n-aware)
 
-**Key Functions:**
-- `window.navigateTo(pageId)` - Page switching
-- `window.toggleNav()` - Hamburger menu
-- `window.openRecipeModal(id)` - Open recipe form
-- `window.addIngredientTagToModal(ing)` - Tag UI
-- `window.updateAutoAllergens()` - Live allergen detection
+#### `ui.js`
+**Purpose:** All user interaction — clicks, modals, navigation, theme.
+- `window.navigateTo(pageId)` — switches active page
+- `window.toggleNav()` — hamburger menu open/close
+- `window.openRecipeModal(id)` / `window.closeRecipeModal()`
+- `window.openIngredientModal(id)` / `window.closeIngredientModal()`
+- `window.openAllergenModal(id)` / `window.closeAllergenModal()`
+- `window.addIngredientTagToModal(ing)` / `window.addManualAllergenTag(alg)` / `window.addLinkedAllergenTag(alg)`
+- `window.updateAutoAllergens()` — live allergen detection as ingredients are added
+- `window.setAppTheme(name)` — applies CSS data-theme attribute
+- `window.initStyleBuilder()` — delegates to `window.TemplateManager.init()`
 
-**Design Principle:**  
-`ui.js` = "What happens when user clicks X"  
-`render.js` = "How to display X"
+**Design principle:** `ui.js` = *what happens when user clicks X*. `render.js` = *how to display X*.
+
+#### `ui-combobox.js`
+**Purpose:** Reusable autocomplete/combobox widget used in recipe and ingredient modals.
+- `window.initCombobox({ inputId, dropdownId, getItems, onSelect, placeholder })`
 
 ---
 
 ### Feature Modules
 
-#### `calendar.js` (15.8 KB)
-**Purpose:** Calendar/week view logic  
-**Provides:**
-- Week start calculations
+#### `calendar.js`
+**Purpose:** Calendar views and date logic.
+- Week start/end calculations
+- `window.changeMonth(delta)` — navigate forward/backward
+- Weekly ↔ Monthly view switching
 - Date formatting utilities
-- Week navigation
-- View mode switching (weekly/monthly)
 
-**Key Functions:**
-- `window.getWeekStart(date)` - Get Monday of week
-- `window.changeMonth(delta)` - Navigate weeks/months
-- View mode management
+#### `print.js` (v8.1 — 41 KB)
+**Purpose:** All print and export functionality.
 
-#### `template.js` (116 KB) ⚠️ **NEEDS REFACTORING**
-**Purpose:** Template builder and print functionality  
-**Problems:**
-- Too large (2,800+ lines)
-- Multiple responsibilities mixed together
-- Hard to maintain
+Opens a three-action dialog:
+- 🖨️ **Print Menu** — opens styled new tab, triggers `window.print()`, auto-closes via `afterprint` event
+- 🖼️ **Save as Image** — html2canvas render → preview modal → PNG download
+- 📄 **Save as PDF** — html2canvas render → jsPDF embed → preview modal → PDF download
 
-**Current Contents:**
-- Template UI generation
-- Settings management
-- Print preview
-- Template save/load
-- Image upload handling
-- Week picker modal
-- Print execution
+**Treat this file carefully** — it's the most complex module.
 
-**Planned Refactor** (See Issue #23):
-```
-js/template/
-├── template-manager.js     # Orchestration
-├── template-ui.js          # UI rendering
-├── template-settings.js    # Settings get/set
-├── template-print.js       # Print logic
-├── template-storage.js     # Save/load
-└── template-modals.js      # Picker dialogs
-```
+#### `template-builder-steps.js` (78 KB)
+**Purpose:** The full step-based Template Builder UI, registered as `window.TemplateManager`.
 
-#### `main.js` (9 KB)
-**Purpose:** App initialization and startup  
-**Responsibilities:**
-- Load data on startup
-- Initialize all modules
-- Bind event listeners
-- Show/hide splash screen
-- Check for Electron environment
+Four accordion steps:
+1. 🌏 **Background** — up to 5 image layers with position/size/opacity/z-index controls
+2. 📌 **Header** — text, font, size, color, alignment
+3. 🍽️ **Weekly Menu** — day block style, meal slot visibility, ingredient display options
+4. 📍 **Footer** — text, font, size, color
+
+Also manages the **Templates tab** (save/load/delete named templates) and **Images tab** (upload, library, delete).
+
+#### `template-presets.js`
+**Purpose:** Defines `window.DMSPresets` — array of 6 built-in preset template objects.
+
+Presets: Classic, Modern Minimalist, Colorful & Bold, Professional Corporate, Elegant Casual, Health-Focused.
+
+#### `template.js`
+**Purpose:** Thin init wrapper only. Checks for `window.TemplateManager` and calls `.init()` on `DOMContentLoaded`. No logic lives here.
+
+#### `constants.js`
+**Purpose:** Centralised `DMS_CONSTANTS` object — layout dimensions, default colours, typography values. Prevents magic numbers scattered across files.
+
+#### `clock.js`
+**Purpose:** Live clock and date display in the app header. Self-contained.
+
+#### `main.js`
+**Purpose:** App boot sequence.
+1. Shows splash screen
+2. Calls `storageAdapter.init()`
+3. If File System API — prompts folder selection if no saved handle
+4. Runs `window.renderAll()` once data is loaded
+5. Binds global navigation (`ui.bindNavigation()`)
+6. Initialises language from `appSettings`
 
 ---
 
 ## 🗂️ Data Flow
 
-### Typical User Action Flow
-
 ```
-1. User Action (Button Click)
+User Action (click)
       ↓
-2. ui.js (Event Handler)
+  ui.js  (event handler)
       ↓
-3. store.js (Data Operation)
+  store.js  (CRUD operation)
       ↓
-4. localStorage/FileSystem (Persistence)
+  storage-adapter.js  (persist to File System / IndexedDB)
       ↓
-5. render.js (Update Display)
+  render.js  (update DOM)
       ↓
-6. User sees result
+User sees result
 ```
 
 ### Example: Adding a Recipe
 
 ```javascript
-// 1. User clicks "Add Recipe" button
-ui.js: window.openRecipeModal()
-  → Opens modal, sets up form
+// 1. User clicks "+ Add Recipe"
+window.openRecipeModal()       // ui.js — opens modal
 
-// 2. User fills form and clicks Save
-ui.js: Form submit event
-  ↓
-store.js: window.saveRecipe(event)
-  → Validates data
-  → Adds to window.recipes array
-  → Calls window.saveData()
-  ↓
-store.js: window.saveData()
-  → Persists to storage
-  → Shows sync indicator
-  ↓
-render.js: window.renderRecipes()
-  → Updates recipe table
-  → Recipe now visible
+// 2. User fills form and submits
+window.saveRecipe(event)       // store.js — validates, pushes to window.recipes
+  → window.storageAdapter.save('recipes', window.recipes)
+  → window.renderRecipes()     // render.js — updates table
 ```
 
 ---
 
-## 🎨 Styling Architecture
+## 💾 Storage Details
 
-### CSS Organization
+### File System API (Chrome/Edge)
 
-**styles.css (18 KB)** - Main stylesheet
-- CSS variables for theming
-- Component styles (buttons, modals, cards)
-- Responsive layouts
-- Theme variations (default, dark, teal)
-
-**calendar.css (7.8 KB)** - Calendar-specific
-- Weekly view grid
-- Meal slot styles
-- Allergen dots
-- Category indicators
-
-**template-builder.css (3.8 KB)** - Builder UI
-- Collapsible sections
-- Form controls
-- Preview panel
-- Layout styles for print
-
----
-
-## 💾 Data Persistence
-
-### Storage Strategy
-
-The app supports two storage backends:
-
-#### 1. LocalStorage (Web Version)
-```javascript
-localStorage.setItem('dmsData', JSON.stringify({
-  recipes: [...],
-  ingredients: [...],
-  allergens: [...],
-  currentMenu: {...},
-  savedTemplates: [...],
-  imageUploads: [...]
-}));
-```
-
-#### 2. FileSystem (Electron Version)
 ```
 User Selected Folder/
-├── data/
-│   ├── recipes.json
-│   ├── ingredients.json
-│   ├── allergens.json
-│   ├── menu.json
-│   ├── templates.json
-│   └── pictures/
-│       └── [uploaded images]
-└── archive/
-    └── menus/
-        └── [exported PDFs]
+└── data/
+    ├── data.json        # Combined recipes + ingredients + allergens
+    ├── menus.json       # Current menu (keyed by date string)
+    ├── settings.json    # { language: 'bg' }
+    └── templates.json   # Named user templates
 ```
 
-### Auto-Save
-- Triggered after every data modification
-- Debounced to prevent excessive writes
-- Sync indicator shows save status
+The folder handle is persisted to IndexedDB (`handles` store) so permission only needs to be re-granted once per browser session, not on every page load.
+
+### IndexedDB (Firefox/Safari)
+
+Database: `KitchenProDB` (version 2)
+
+| Store | Key | Content |
+|---|---|---|
+| `recipes` | `id` (keyPath) | Recipe objects |
+| `ingredients` | `id` (keyPath) | Ingredient objects |
+| `allergens` | `id` (keyPath) | Allergen objects |
+| `menu` | `'currentMenu'` | Date-keyed menu object |
+| `settings` | `'appSettings'` | `{ language }` |
+| `templates` | `'menuTemplates'` | Named template objects |
+| `handles` | `'rootDirectory'` | FileSystemDirectoryHandle |
 
 ---
 
-## 🌐 Internationalization
+## 🌐 Internationalisation
 
-### Supported Languages
-- 🇺🇸 English (default)
-- 🇧🇬 Bulgarian
-
-### How It Works
-
-```html
-<!-- HTML markup -->
-<button data-i18n="btn_save">Save</button>
-
-<!-- JavaScript translation -->
-const text = window.t('btn_save'); // Returns "Save" or "Запази"
-```
-
-### Adding New Translations
-
-1. Add key to `translations` object in `i18n.js`
-2. Use `data-i18n="key"` in HTML
-3. Or `window.t('key')` in JavaScript
+- Default language: **Bulgarian (`bg`)**
+- All keys live in `js/i18n.js` under `translations.en` and `translations.bg`
+- HTML: `<button data-i18n="btn_save">Save</button>` — auto-replaced on language switch
+- JS: `window.t('btn_save')` — must be called explicitly for dynamic HTML
+- Adding a key: add to both `en` and `bg` objects, then use `data-i18n` or `window.t()`
 
 ---
 
 ## 🔧 External Dependencies
 
-### PDF Generation Stack
+| Library | Size | Purpose |
+|---|---|---|
+| `html2canvas.min.js` | 199 KB | Converts DOM to `<canvas>` for print/export |
+| `jspdf.umd.min.js` | 364 KB | Generates PDF from canvas image |
 
-**html2canvas** (199 KB)
-- Converts DOM to canvas
-- Captures template preview
-- Handles CSS rendering
-
-**jsPDF** (364 KB)
-- Generates PDF files
-- Embeds canvas as image
-- Saves to archive folder
-
-### Why Not Use Browser Print?
-
-Browser print dialog is used, but PDF libraries provide:
-- Automatic archiving
-- Programmatic file naming
-- Pre-rendered previews
-- Better print templates
+Both are vendored locally in `js/libs/` — no CDN, works fully offline.
 
 ---
 
-## ⚡ Performance Considerations
+## 🎨 CSS Architecture
 
-### Current Bottlenecks
+| File | What it covers |
+|---|---|
+| `styles.css` | Global layout, components, themes (default / dark / teal), modals, buttons |
+| `calendar.css` | Monthly/weekly grid, meal slots, allergen dots, category badges |
+| `template-styles.css` | Template builder sidebar, accordion steps, preview panel |
 
-1. **template.js is too large** (116 KB)
-   - Loads entire template builder on page load
-   - Should be lazy-loaded
-
-2. **No code splitting**
-   - All JavaScript loads upfront
-   - Template builder rarely used but always loaded
-
-3. **Synchronous rendering**
-   - Large recipe lists can block UI
-   - Should implement virtual scrolling
-
-### Optimization Opportunities
-
-```javascript
-// Future: Lazy load template builder
-if (pageId === 'style-editor') {
-  import('./js/template/index.js').then(module => {
-    module.init();
-  });
-}
-```
+Themes are applied via `data-theme` on `<body>`. CSS variables control colours.
 
 ---
 
-## 🐛 Known Issues
+## 🚀 Cache Busting
 
-### Tracked in GitHub Issues
-
-- **#22** - Add layout style options to template builder
-- **#23** - Code cleanup & refactoring plan (this effort)
-
-### Technical Debt
-
-1. `template.js` needs splitting (Phase 2)
-2. No automated tests
-3. No build process (future enhancement)
-4. Inline styles in calendar rendering (should be CSS classes)
+All `<script>` and `<link>` tags use `?v=14.8`. **Manually increment this version** after any JS/CSS change to bust the browser cache. There is no build process.
 
 ---
 
-## 🚀 Future Improvements
+## ⚡ Known Technical Debt
 
-### Phase 2 Refactoring (Next)
-
-- [ ] Split `template.js` into modules
-- [ ] Add JSDoc comments
-- [ ] Implement lazy loading
-- [ ] Create build script for minification
-
-### Feature Roadmap
-
-- [ ] Export/import data (JSON backup)
-- [ ] Recipe search and filtering
-- [ ] Nutrition calculator
-- [ ] Shopping list generator
-- [ ] Multi-week planning
-- [ ] Recipe sharing
+| Item | Notes |
+|---|---|
+| No automated tests | Manually test in Chrome/Edge after every change |
+| No build step | No minification, no bundling — raw files served directly |
+| `print.js` is large (41 KB) | Works well but treat carefully |
+| `template-builder-steps.js` is large (78 KB) | Monolithic but well-structured internally |
+| Inline `<script>` in `index.html` | The storage info banner uses hardcoded strings, not `window.t()` |
 
 ---
 
 ## 📖 For New Developers
 
 ### Quick Start
-
-1. **Entry Point:** Start reading `main.js`
-2. **Data Layer:** Understand `store.js` next
-3. **UI Flow:** Follow `ui.js` → `render.js`
-4. **Features:** Explore `calendar.js`, `template.js`
+1. Open `index.html` directly in **Chrome or Edge**
+2. Select your DMS data folder when prompted
+3. Start reading `main.js` → `store.js` → `ui.js` → `render.js`
 
 ### Debugging Tips
 
 ```javascript
-// Check current data state
-console.log(window.recipes);
-console.log(window.currentMenu);
-
-// Watch for saves
-window.addEventListener('dataSaved', () => {
-  console.log('Data saved!');
-});
-
-// Force re-render
-window.renderAll();
+console.log(window.recipes);       // current recipe data
+console.log(window.currentMenu);   // current menu state
+console.log(window.appSettings);   // language etc.
+window.renderAll();                 // force full re-render
 ```
 
-### Common Patterns
-
-**Adding a new data type:**
-1. Add array to `store.js` data structure
-2. Create CRUD functions in `store.js`
-3. Add render function in `render.js`
-4. Add modal handlers in `ui.js`
-5. Create HTML modal in `index.html`
-6. Add translations to `i18n.js`
-
----
-
-## 📝 Code Style
-
-### Conventions
-
-- ✅ Use `window.functionName` for global functions
-- ✅ Wrap modules in IIFEs: `(function(window) { ... })(window)`
-- ✅ Use `const` for immutable, `let` for mutable
-- ✅ Prefer template literals over string concatenation
-- ✅ Use `dataset` for HTML data attributes
-- ❌ Avoid `var` (legacy)
-- ❌ Don't use jQuery (vanilla JS only)
-
-### File Headers
-
-```javascript
-// ModuleName - Brief Description (Global Scope)
-
-(function(window) {
-    // Module code here
-})(window);
-```
+### Adding a New Data Type
+1. Add array to `window` globals in `store.js`
+2. Add CRUD functions in `store.js`
+3. Add `save` call in `storage-adapter.js` (`saveToFileSystem` + `saveToIndexedDB`)
+4. Add render function in `render.js`
+5. Add modal HTML in `index.html`
+6. Add modal handlers in `ui.js`
+7. Add translation keys in `i18n.js` (both `en` and `bg`)
 
 ---
 
-## 🔗 Related Documentation
-
-- [README.md](./README.md) - Project overview
-- [Issue #23](https://github.com/zv20/DMS/issues/23) - Refactoring plan
-- [Issue #22](https://github.com/zv20/DMS/issues/22) - Layout styles feature
-
----
-
-**Last Updated:** February 13, 2026  
-**Version:** 11.0  
-**Maintained by:** Development Team
+**Last Updated:** February 22, 2026  
+**Version:** 14.8  
+**Branch:** `beta`
