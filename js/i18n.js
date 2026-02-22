@@ -284,6 +284,7 @@
             // Filters
             filter_all_categories: 'All Categories',
             filter_search_placeholder: 'Search recipes...',
+            filter_search_ingredients_placeholder: 'Search ingredients...',
             
             // Table Headers
             table_actions: 'Actions',
@@ -709,6 +710,7 @@
             // Filters
             filter_all_categories: 'Всички Категории',
             filter_search_placeholder: 'Търси рецепти...',
+            filter_search_ingredients_placeholder: 'Търси съставки...',
             
             // Table Headers
             table_actions: 'Действия',
@@ -862,36 +864,23 @@
         return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
     };
 
-    // Update changeLanguage to save hint to localStorage
     window.changeLanguage = function(lang, shouldSave = true) {
         console.log('🌍 changeLanguage called:', lang, 'shouldSave:', shouldSave);
         currentLanguage = lang;
-        
-        // Save language hint to localStorage for next page load
         localStorage.setItem('dms_language_hint', lang);
         console.log('💾 Language hint saved to localStorage:', lang);
-        
-        // Update the language selector dropdown
         const langSelect = document.getElementById('languageSelect');
         if (langSelect) langSelect.value = lang;
-        
-        // Apply translations to all elements
         window.applyTranslations();
-        
-        // Re-render dynamic content that uses window.t() at render time
         if (typeof window.updateSelects === 'function') window.updateSelects();
         if (typeof window.renderRecipes === 'function') window.renderRecipes();
         if (typeof window.renderCalendar === 'function') window.renderCalendar(window.currentCalendarDate);
-        
-        // Save to settings.json if shouldSave is true
         if (shouldSave) {
             console.log('💾 Attempting to save language. appSettings exists:', !!window.appSettings);
             console.log('💾 saveSettings function exists:', typeof window.saveSettings);
-            
             if (window.appSettings) {
                 window.appSettings.language = lang;
                 console.log('✅ Updated appSettings.language to:', lang);
-                
                 if (typeof window.saveSettings === 'function') {
                     console.log('📝 Calling saveSettings()...');
                     window.saveSettings();
@@ -921,11 +910,9 @@
 
     window.setCurrentLanguage = function(lang) {
         currentLanguage = lang;
-        // Also save to localStorage
         localStorage.setItem('dms_language_hint', lang);
     };
 
-    // Initialize language from appSettings on load
     window.initLanguage = function() {
         if (window.appSettings && window.appSettings.language) {
             currentLanguage = window.appSettings.language;
