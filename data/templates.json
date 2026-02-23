@@ -149,5 +149,227 @@
     "footerFontSize": 9,
     "footerFontFamily": "Arial, sans-serif",
     "null": "#ff0000"
+  },
+  "apt": {
+    "templateStyle": "detailed",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": "9be75c84.png",
+        "position": "center-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#d2691e",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 12,
+    "dateColor": "#666666",
+    "dateAlignment": "center",
+    "dateFontFamily": "Arial, sans-serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "<div>ергените с а подчертани. Менюто е съобразено с изискванията н а Наредба Nº 37, Наредба Nº9 н а</div><div>МЗ И Рецептурника за ученическо столово хранене Менютата са изготвени сьгласно Сборник</div><div>ченически стелове и бюфети от 2012г Менюто е съгласувано с мед.лице - Елиза</div>",
+    "footerAlignment": "center",
+    "footerFontSize": 9,
+    "footerFontFamily": "Arial, sans-serif"
+  },
+  "Clean": {
+    "templateStyle": "detailed-2col",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": "9be75c84.png",
+        "position": "center-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#d2691e",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 19,
+    "dateColor": "#804747",
+    "dateAlignment": "center",
+    "dateFontFamily": "Arial, sans-serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "<div>Алергените с а подчертани. Менюто е съобразено с изискванията н а&nbsp;</div><div>Наредба Nº 37, Наредба Nº9 н а&nbsp;<span style=\"font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif;\">МЗ И Рецептурника за ученическо столово хранене.</span></div><div>Менютата са изготвени сьгласно Сборник&nbsp;<span style=\"font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif;\">ченически стелове и бюфети от 2012г Менюто е съгласувано с мед.лице - Елиза</span></div>",
+    "footerAlignment": "left",
+    "footerFontSize": 11,
+    "footerFontFamily": "Arial, sans-serif"
+  },
+  "picture": {
+    "templateStyle": "detailed-2col",
+    "backgroundColor": "#ffffff",
+    "backgroundImages": [
+      {
+        "image": null,
+        "position": "center",
+        "size": 100,
+        "opacity": 1,
+        "zIndex": 1
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-left",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 2
+      },
+      {
+        "image": "Hand-drawn-sun-on-transparent-background-PNG.png",
+        "position": "top-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 3
+      },
+      {
+        "image": "9be75c84.png",
+        "position": "center-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 4
+      },
+      {
+        "image": null,
+        "position": "bottom-right",
+        "size": 20,
+        "opacity": 1,
+        "zIndex": 5
+      }
+    ],
+    "showHeader": true,
+    "headerText": "Седмично меню",
+    "headerAlignment": "center",
+    "headerFontSize": 24,
+    "headerColor": "#d2691e",
+    "headerFontFamily": "Arial, sans-serif",
+    "showDateRange": true,
+    "dateFontSize": 19,
+    "dateColor": "#804747",
+    "dateAlignment": "center",
+    "dateFontFamily": "Arial, sans-serif",
+    "showIngredients": true,
+    "showCalories": true,
+    "showPortions": true,
+    "dayBorder": false,
+    "dayBorderColor": "#e0e0e0",
+    "dayBorderStyle": "solid",
+    "dayBorderThickness": "1px",
+    "dayBackground": "transparent",
+    "dayNameSize": 14,
+    "dayNameColor": "#333333",
+    "dayNameWeight": "bold",
+    "dayNameFontFamily": "Arial, sans-serif",
+    "mealFontSize": 11,
+    "mealFontFamily": "Arial, sans-serif",
+    "allergenColor": "#ff0000",
+    "allergenUnderline": true,
+    "allergenBold": true,
+    "showFooter": true,
+    "footerText": "<div>Алергените с а подчертани. Менюто е съобразено с изискванията н а&nbsp;</div><div>Наредба Nº 37, Наредба Nº9 н а&nbsp;<span style=\"font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif;\">МЗ И Рецептурника за ученическо столово хранене.</span></div><div>Менютата са изготвени сьгласно Сборник&nbsp;<span style=\"font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif;\">ченически стелове и бюфети от 2012г Менюто е съгласувано с мед.лице - Елиза</span></div>",
+    "footerAlignment": "left",
+    "footerFontSize": 11,
+    "footerFontFamily": "Arial, sans-serif"
   }
 }
