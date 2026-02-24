@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.3 - Align content height with @page margin to stop bottom cut-off
+ * @version 8.4 - Switch day blocks from space-evenly to space-between to free footer space
  */
 
 (function(window) {
@@ -294,7 +294,7 @@
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
             '};' +
-            '<\/scr' + 'ipt>' +
+            '<\\/scr' + 'ipt>' +
             '</body></html>'
         );
         pw.document.close();
@@ -566,7 +566,9 @@
         if (s.showHeader)    html += `<div style="text-align:${s.headerAlignment||'center'};padding-top:4px;margin-bottom:2px;"><span style="font-family:${hff};font-size:${hs};color:${s.headerColor};font-weight:bold;">${s.headerText}</span></div>`;
         if (s.showDateRange) html += `<div style="font-family:${dff};text-align:${s.dateAlignment||'center'};margin-bottom:4px;font-size:${dss};color:${s.dateColor||'#555555'};">${dr}</div>`;
         html += `</div>`;
-        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;">`;
+        // space-between keeps spacing only between day blocks (not above/below the group),
+        // freeing up bottom space for the footer. gap:6px adds a small fixed gutter.
+        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:6px;">`;
         days.forEach(day => {
             const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
             const bg  = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
@@ -627,7 +629,9 @@
         html += `</div>`;
         const rows = [];
         for (let i = 0; i < days.length; i += 2) rows.push([days[i], days[i+1] || null]);
-        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;">`;
+        // space-between keeps spacing only between row blocks (not above/below the group),
+        // freeing up bottom space for the footer. gap:6px adds a small fixed gutter.
+        html += `<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:6px;">`;
         const renderDay = (day) => {
             if (!day) return `<div style="flex:1;"></div>`;
             const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
