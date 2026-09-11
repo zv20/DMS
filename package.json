@@ -1,8 +1,8 @@
 {
   "name": "kitchenpro-dms",
-  "version": "15.0.0-alpha.0",
+  "version": "1.0.0",
   "private": false,
-  "description": "KitchenPro DMS Windows desktop application",
+  "description": "KitchenPro DMS desktop application",
   "main": "electron/main.cjs",
   "engines": {
     "node": ">=20"
@@ -15,7 +15,10 @@
     "desktop:rebuild-native": "electron-rebuild -f -w better-sqlite3",
     "desktop:pack": "electron-builder --dir",
     "desktop:dist:win": "electron-builder --win",
-    "desktop:dist:win:x64": "electron-builder --win --x64"
+    "desktop:dist:win:x64": "electron-builder --win --x64",
+    "desktop:dist:mac:x64": "electron-builder --mac --x64",
+    "desktop:dist:mac:arm64": "electron-builder --mac --arm64",
+    "desktop:dist:mac": "electron-builder --mac --x64 --arm64"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
@@ -58,6 +61,14 @@
         "nsis",
         "portable"
       ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "category": "public.app-category.business"
     },
     "nsis": {
       "artifactName": "${productName}-${version}-${arch}-Setup.${ext}",

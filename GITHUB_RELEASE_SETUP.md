@@ -1,6 +1,6 @@
 # GitHub Release Setup
 
-This project is set up so GitHub Actions can build the Windows installer and portable `.exe` files from source.
+This project is set up so GitHub Actions can build Windows and macOS release files from source.
 
 ## What To Commit
 
@@ -42,20 +42,25 @@ GitHub Actions uses the built-in `GITHUB_TOKEN`, so no personal GitHub credentia
 
 ## Create A Release
 
-1. Update the version in `package.json`, for example `15.0.1`.
+1. Update the version in `package.json`, for example `1.0.1`.
 2. Commit and push your changes.
 3. Create and push a matching tag:
 
 ```powershell
-git tag v15.0.1
-git push origin v15.0.1
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
-GitHub Actions will build the Windows app and attach these files to the GitHub Release:
+GitHub Actions will build the desktop app and attach these files to the GitHub Release:
 
 - `KitchenPro DMS-<version>-x64-Setup.exe`
 - `KitchenPro DMS-<version>-x64-Portable.exe`
+- `KitchenPro DMS-<version>-x64.dmg`
+- `KitchenPro DMS-<version>-arm64.dmg`
+- macOS `.zip` files
 - `latest.yml`
+- `latest-mac.yml`
 - `.blockmap` files
 
 The installed app needs `latest.yml` and the setup/blockmap files to perform updates.
+macOS builds are unsigned unless Apple Developer signing credentials are added later.
