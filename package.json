@@ -1,6 +1,6 @@
 {
   "name": "kitchenpro-dms",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": false,
   "description": "KitchenPro DMS desktop application",
   "main": "electron/main.cjs",
@@ -69,11 +69,11 @@
         "dmg",
         "zip"
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "artifactName": "KitchenPro-DMS-${version}-${arch}.${ext}",
       "category": "public.app-category.business"
     },
     "nsis": {
-      "artifactName": "${productName}-${version}-${arch}-Setup.${ext}",
+      "artifactName": "KitchenPro-DMS-${version}-${arch}-Setup.${ext}",
       "oneClick": false,
       "perMachine": false,
       "allowElevation": true,
@@ -81,7 +81,7 @@
       "deleteAppDataOnUninstall": false
     },
     "portable": {
-      "artifactName": "${productName}-${version}-${arch}-Portable.${ext}"
+      "artifactName": "KitchenPro-DMS-${version}-${arch}-Portable.${ext}"
     }
   }
 }
