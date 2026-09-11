@@ -1,6 +1,6 @@
 {
   "name": "kitchenpro-dms",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": false,
   "description": "KitchenPro DMS desktop application",
   "main": "electron/main.cjs",

@@ -7,6 +7,21 @@
     return isBg() ? bg : en;
   }
 
+  let lastKnownState = {
+    currentVersion: null,
+    availableVersion: null
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
+
   function setButtons(state) {
     const check = document.getElementById('btn-check-updates');
     const download = document.getElementById('btn-download-update');
@@ -22,16 +37,26 @@
     const el = document.getElementById('update-status');
     if (!el) return;
 
-    const current = state.currentVersion || 'unknown';
-    const available = state.availableVersion ? ` ${text('Available:', 'Налична:')} ${state.availableVersion}.` : '';
+    const nextState = {
+      ...lastKnownState,
+      ...state
+    };
+    lastKnownState = {
+      ...lastKnownState,
+      ...nextState
+    };
+
+    const current = nextState.currentVersion || 'unknown';
+    const available = nextState.availableVersion ? ` ${text('Available:', 'Налична:')} ${nextState.availableVersion}.` : '';
+    const message = nextState.message || text('Ready to check for updates.', 'Готово за проверка за обновления.');
     el.innerHTML = `
       <div class="update-summary">
-        <strong>${text('Current version:', 'Текуща версия:')} ${current}</strong>
-        <span>${state.message || text('Ready to check for updates.', 'Готово за проверка за обновления.')}${available}</span>
+        <strong>${escapeHtml(text('Current version:', 'Текуща версия:'))} ${escapeHtml(current)}</strong>
+        <span>${escapeHtml(message)}${escapeHtml(available)}</span>
       </div>
     `;
-    el.dataset.status = state.status || 'idle';
-    setButtons(state);
+    el.dataset.status = nextState.status || 'idle';
+    setButtons(nextState);
   }
 
   async function refreshUpdateStatus() {
