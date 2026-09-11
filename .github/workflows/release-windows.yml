@@ -32,8 +32,6 @@ jobs:
 
       - name: Build Windows release files
         run: npm run desktop:dist:win:x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows artifacts
         uses: softprops/action-gh-release@v2
@@ -70,7 +68,6 @@ jobs:
       - name: Build macOS release files
         run: npm run desktop:dist:mac
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload macOS artifacts
