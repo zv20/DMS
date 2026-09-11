@@ -1,6 +1,6 @@
 {
   "name": "kitchenpro-dms",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "KitchenPro DMS desktop application",
   "main": "electron/main.cjs",
@@ -44,6 +44,7 @@
     "files": [
       "assets/**/*",
       "build/icon.ico",
+      "build/icon.png",
       "css/**/*",
       "electron/**/*",
       "img/**/*",
@@ -63,6 +64,7 @@
       ]
     },
     "mac": {
+      "icon": "build/icon.png",
       "target": [
         "dmg",
         "zip"

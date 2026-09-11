@@ -8,6 +8,7 @@ Commit the source files, including:
 
 - `.github/workflows/release-windows.yml`
 - `build/icon.ico`
+- `build/icon.png`
 - `css/`
 - `electron/`
 - `img/`
@@ -63,4 +64,4 @@ GitHub Actions will build the desktop app and attach these files to the GitHub R
 - `.blockmap` files
 
 The installed app needs `latest.yml` and the setup/blockmap files to perform updates.
-macOS builds are unsigned unless Apple Developer signing credentials are added later.
+macOS builds use the app icon, but they are unsigned and not notarized unless Apple Developer signing credentials are added later. Unsigned macOS downloads can show "damaged" or "cannot be opened" Gatekeeper warnings even when the release files are valid.
