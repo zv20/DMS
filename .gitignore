@@ -1,0 +1,27 @@
+# Data directories
+/data/pictures
+/data/archive
+
+# Mac system files
+.DS_Store
+**/.DS_Store
+
+# Node modules (if added in future)
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build files
+dist/
+/out/
+/release/
+KitchenPro-DMS-GitHub/
+
+# Electron runtime data (the production app uses the per-user application-data folder)
+.electron/
+/data/images

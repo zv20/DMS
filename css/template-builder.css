@@ -1,0 +1,235 @@
+/**
+ * Template Builder Styles
+ * Extracted from inline styles for better maintainability
+ */
+
+/* Section Labels */
+.tb-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.tb-label-sm {
+    font-size: 0.75rem;
+}
+
+.tb-label-xs {
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Input Fields */
+.tb-input {
+    font-size: 0.85rem;
+    height: 32px;
+}
+
+.tb-input-sm {
+    font-size: 0.75rem;
+    height: 28px;
+}
+
+.tb-input-xs {
+    font-size: 0.7rem;
+    height: 24px;
+}
+
+/* Grid Layouts */
+.tb-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.tb-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.tb-grid-3-sm {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+}
+
+/* Margins */
+.tb-mb-6 {
+    margin-bottom: 6px;
+}
+
+.tb-mb-8 {
+    margin-bottom: 8px;
+}
+
+.tb-mt-8 {
+    margin-top: 8px;
+}
+
+.tb-mt-4 {
+    margin-top: 4px;
+}
+
+/* Color Inputs */
+.tb-color {
+    width: 100%;
+    height: 28px;
+}
+
+.tb-color-lg {
+    width: 100%;
+    height: 32px;
+}
+
+/* Range Sliders */
+.tb-range {
+    width: 100%;
+}
+
+.tb-range-value {
+    font-size: 0.7rem;
+}
+
+/* Section Container */
+.tb-section-box {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: #fafafa;
+}
+
+/* Margin Grid Container */
+.tb-margin-grid {
+    margin-bottom: 8px;
+}
+
+.tb-margin-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* Slot Visibility Headers */
+.tb-slot-header {
+    margin: 0 0 6px 0;
+    color: #fd7e14;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+/* Slot Label */
+.tb-slot-label {
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.tb-slot-label-last {
+    font-size: 0.75rem;
+    display: block;
+}
+
+/* Textarea */
+.tb-textarea {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+/* ===== PRINT LAYOUT STYLES ===== */
+
+/* Layout: Single Column (Default) */
+.layout-single-column #days-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--day-block-spacing, 8px);
+}
+
+/* Layout: Two Column */
+.layout-two-column #days-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--column-gap, 10px);
+    align-items: start;
+}
+
+.layout-two-column .print-day-block {
+    margin-bottom: 0;
+}
+
+/* Layout: Table */
+.layout-table #days-container {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.layout-table .print-day-block {
+    display: table-row;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}
+
+.layout-table .day-name {
+    display: table-cell;
+    font-weight: 600;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+    width: 15%;
+}
+
+.layout-table .day-meals {
+    display: table-cell;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+}
+
+.layout-table .meal-item {
+    margin-bottom: 6px;
+}
+
+.layout-table .meal-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Layout: Compact Cards */
+.layout-compact-cards #days-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--column-gap, 8px);
+    align-items: start;
+}
+
+.layout-compact-cards .print-day-block {
+    padding: 6px 8px;
+    margin-bottom: 0;
+}
+
+.layout-compact-cards .day-name {
+    font-size: 10pt;
+    margin-bottom: 3px;
+    padding-bottom: 2px;
+}
+
+.layout-compact-cards .meal-title {
+    font-size: 8pt;
+    margin-bottom: 1px;
+}
+
+.layout-compact-cards .ingredients {
+    font-size: 7pt;
+    margin-left: 6px;
+}
+
+.layout-compact-cards .meal-item {
+    margin-bottom: 2px;
+}

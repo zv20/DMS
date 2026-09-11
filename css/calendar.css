@@ -1,0 +1,328 @@
+/* ========================================
+   CALENDAR STYLES - CSS Grid Rewrite
+   Clean, modern, full-width approach
+   ======================================== */
+
+/* ===========================
+   CALENDAR CONTROLS
+   =========================== */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.calendar-controls .btn.active {
+    background: #fd7e14;
+    color: white;
+    border-color: #fd7e14;
+}
+
+/* ===========================
+   WEEKLY VIEW - Pure CSS Grid
+   =============================== */
+.week-view {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.day-column {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    min-width: 0;
+    min-height: 400px;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.day-column:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.day-header-weekly {
+    text-align: center;
+    padding: 12px 8px;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.day-header-weekly strong {
+    font-size: 15pt;
+    color: #212529;
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.day-header-weekly small {
+    font-size: 10.5pt;
+    color: #6c757d;
+}
+
+/* ===========================
+   MEAL SLOTS
+   =========================== */
+.meal-slot {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #fd7e14;
+    transition: all 0.2s;
+}
+
+.meal-slot:hover {
+    background: #f1f3f5;
+    border-left-width: 5px;
+}
+
+.meal-slot.soup    { border-left-color: #fd7e14; }
+.meal-slot.main    { border-left-color: #28a745; }
+.meal-slot.dessert { border-left-color: #e83e8c; }
+.meal-slot.other   { border-left-color: #6c757d; }
+
+.meal-slot .category-select {
+    width: 100%;
+    padding: 9px 10px;
+    margin-bottom: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 11pt;
+    font-weight: 600;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.meal-slot .category-select:hover  { border-color: #fd7e14; }
+.meal-slot .category-select:focus  { outline: none; border-color: #fd7e14; box-shadow: 0 0 0 3px rgba(253,126,20,0.1); }
+
+.meal-slot .recipe-select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 10pt;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.meal-slot .recipe-select:hover { border-color: #adb5bd; }
+.meal-slot .recipe-select:focus { outline: none; border-color: #fd7e14; box-shadow: 0 0 0 3px rgba(253,126,20,0.1); }
+.meal-slot .recipe-select option[value=""] { color: #adb5bd; font-style: italic; }
+
+/* ===========================
+   MONTHLY VIEW - Pure CSS Grid
+   =============================== */
+.monthly-calendar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.month-header {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.day-header {
+    text-align: center;
+    font-weight: 600;
+    color: #fd7e14;
+    padding: 8px 6px;
+    background: #fff5e6;
+    border-radius: 8px;
+    font-size: 11pt;
+}
+
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+/* Individual Day Cell */
+.day-cell {
+    aspect-ratio: 1;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    box-sizing: border-box;
+    /* Remove justify-content:space-between so meals sit just below the number */
+    gap: 4px;
+}
+
+.day-cell:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 4px 12px rgba(253,126,20,0.15);
+    transform: translateY(-2px);
+}
+
+/* ── Overflow days from previous / next month ── */
+.day-cell.other-month {
+    background: #f9f9f9;
+    border-color: #efefef;
+    opacity: 0.45;
+}
+
+.day-cell.other-month:hover {
+    opacity: 0.75;
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253,126,20,0.10);
+    transform: translateY(-1px);
+}
+
+.day-cell.other-month .day-number {
+    color: #adb5bd;
+}
+
+/* Weekend cells */
+.day-cell.weekend {
+    background: #f8f9fa;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.day-cell.weekend:hover {
+    border-color: #e9ecef;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Today highlighting */
+.day-cell.today {
+    border-color: #28a745;
+    border-width: 3px;
+    background: #e7f5e9;
+}
+
+.day-cell.today:hover {
+    border-color: #28a745;
+}
+
+/* Day number */
+.day-number {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* Meal name list container */
+.meal-indicators {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;   /* allow children to shrink inside flex */
+    overflow: hidden;
+}
+
+/* ── Single meal name line: truncate + tooltip ── */
+.meal-name-line {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #fd7e14;
+    line-height: 1.3;
+
+    /* Truncate with ellipsis */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+
+    /* Cursor hint that there's more info on hover */
+    cursor: default;
+}
+
+/* Slightly darken on hover so user notices the tooltip is available */
+.meal-name-line:hover {
+    color: #c45e00;
+}
+
+/* ===========================
+   MENU PAGE: tighter page-header gap
+   =========================== */
+#menu.page .page-header {
+    margin-bottom: 0.6rem;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 1024px) {
+    .week-view        { gap: 14px; }
+    .day-column       { padding: 14px; min-height: 360px; }
+    .meal-slot        { padding: 10px; }
+    .monthly-calendar { padding: 14px; }
+    .month-grid,
+    .month-header     { gap: 8px; }
+}
+
+@media (max-width: 768px) {
+    .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 12px;
+    }
+    .calendar-controls > div {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+    .week-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .day-column       { padding: 16px; min-height: auto; }
+    .monthly-calendar { padding: 12px; }
+    .month-grid,
+    .month-header     { gap: 6px; }
+    .day-cell         { min-height: 80px; padding: 8px; }
+    .day-number       { font-size: 13pt; }
+    .meal-name-line   { font-size: 0.6rem; }
+}
+
+@media (max-width: 480px) {
+    .calendar-controls  { padding: 8px 10px; }
+    .monthly-calendar   { padding: 10px; }
+    .month-grid,
+    .month-header       { gap: 4px; }
+    .day-cell           { min-height: 60px; padding: 6px; }
+    .day-number         { font-size: 11pt; }
+    .meal-name-line     { font-size: 0.55rem; }
+    .day-header         { font-size: 9pt; padding: 6px 4px; }
+}

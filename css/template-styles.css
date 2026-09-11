@@ -1,0 +1,200 @@
+/* Template Builder Styles */
+
+.builder-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+    min-height: calc(100vh - 150px);
+}
+
+#template-sidebar {
+    position: sticky;
+    top: 16px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    max-height: calc(100vh - 180px);
+    box-shadow: var(--shadow-sm);
+}
+
+.template-preview-shell {
+    background: #edf0f3;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    overflow: hidden;
+    border: 1px solid #dde2e7;
+    border-radius: 8px;
+    min-height: calc(100vh - 180px);
+}
+
+.template-canvas-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 0 12px;
+    flex-shrink: 0;
+}
+
+.template-canvas-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #495057;
+}
+
+.template-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.template-zoom-controls #templateZoomLabel {
+    min-width: 44px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #5d6770;
+}
+
+.template-preview-scroll {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 18px;
+    background:
+        linear-gradient(45deg, rgba(0,0,0,0.035) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0,0,0,0.035) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.035) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.035) 75%);
+    background-size: 18px 18px;
+    background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    border-radius: 6px;
+}
+
+.template-controls {
+    padding: 20px;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.control-group input[type="text"],
+.control-group input[type="color"],
+.control-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.control-group input[type="range"] {
+    width: calc(100% - 50px);
+}
+
+.control-group .range-value {
+    display: inline-block;
+    width: 45px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* NOTE: .btn-primary and .btn-secondary styles are inherited from main styles.css */
+/* This ensures consistent orange theme and rounded buttons across the entire app */
+
+/* Preview Container */
+#template-preview {
+    padding: 30px;
+    background: #fff;
+    min-height: 500px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 12px 34px rgba(33,37,41,0.2);
+    border-radius: 4px;
+    transition: transform 0.16s ease;
+}
+
+.meal-plan-container {
+    background: white;
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+.meal-plan-container.with-border {
+    border: 2px solid #333;
+}
+
+/* Layout Styles */
+.days-container.single-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.days-container.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.days-container.compact-cards .day-card {
+    /* Styles applied inline */
+}
+
+/* Table Layout */
+.meal-plan-table th {
+    background: var(--color-background);
+    font-weight: 600;
+}
+
+/* Print Styles */
+@media print {
+    #template-sidebar {
+        display: none;
+    }
+    
+    #template-preview {
+        padding: 0;
+        background: white;
+    }
+    
+    .meal-plan-container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 1100px) {
+    .builder-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #template-sidebar {
+        position: relative;
+        top: auto;
+        max-height: none;
+    }
+}

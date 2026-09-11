@@ -1,0 +1,74 @@
+{
+  "name": "kitchenpro-dms",
+  "version": "15.0.0-alpha.0",
+  "private": false,
+  "description": "KitchenPro DMS Windows desktop application",
+  "main": "electron/main.cjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "desktop:dev": "electron .",
+    "desktop:check": "node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/storage.cjs && node --check electron/storage-test-runner.cjs && node --check electron/storage.test.cjs && node --check electron/install-native.cjs && node --check js/desktop-storage-adapter.js",
+    "desktop:test-storage": "electron . --storage-test",
+    "desktop:install-native": "node electron/install-native.cjs",
+    "desktop:rebuild-native": "electron-rebuild -f -w better-sqlite3",
+    "desktop:pack": "electron-builder --dir",
+    "desktop:dist:win": "electron-builder --win",
+    "desktop:dist:win:x64": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "^42.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.kitchenpro.dms",
+    "productName": "KitchenPro DMS",
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "CHANGE_ME_GITHUB_OWNER",
+        "repo": "CHANGE_ME_REPO"
+      }
+    ],
+    "files": [
+      "assets/**/*",
+      "build/icon.ico",
+      "css/**/*",
+      "electron/**/*",
+      "img/**/*",
+      "js/**/*",
+      "index.html",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-${arch}-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-${arch}-Portable.${ext}"
+    }
+  }
+}

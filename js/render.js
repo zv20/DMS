@@ -1,0 +1,447 @@
+// Rendering Logic (Global Scope)
+
+(function(window) {
+    let viewMode = localStorage.getItem('calendarViewMode') || 'week';
+    window.currentCalendarDate = new Date();
+
+    // ─── RECIPE TABLE SORT STATE ───────────────────────────────────────────────
+    let recipeSortCol = 'name';
+    let recipeSortDir = 'asc';
+
+    function getCategoryIcon(cat) { 
+        return { soup: '🥣', main: '🍽️', dessert: '🍰', other: '➕' }[cat] || '➕'; 
+    }
+
+    // ─── SORT HELPERS ─────────────────────────────────────────────────────────
+    function sortAZ(arr, nameGetter) {
+        return [...arr].sort((a, b) => nameGetter(a).localeCompare(nameGetter(b), undefined, { sensitivity: 'base' }));
+    }
+
+    function sortRecipes(arr) {
+        const dir = recipeSortDir === 'asc' ? 1 : -1;
+        return [...arr].sort((a, b) => {
+            let va = '', vb = '';
+            if (recipeSortCol === 'name') {
+                va = a.name || ''; vb = b.name || '';
+            } else if (recipeSortCol === 'category') {
+                va = a.category || ''; vb = b.category || '';
+            } else if (recipeSortCol === 'portion') {
+                va = a.portionSize || ''; vb = b.portionSize || '';
+            } else if (recipeSortCol === 'allergens') {
+                va = window.getRecipeAllergens(a).map(x => window.getAllergenName(x)).join(',');
+                vb = window.getRecipeAllergens(b).map(x => window.getAllergenName(x)).join(',');
+            }
+            return dir * va.localeCompare(vb, undefined, { sensitivity: 'base' });
+        });
+    }
+
+    function setSortArrows() {
+        ['name','category','portion','allergens'].forEach(col => {
+            const th = document.getElementById('recipeTh_' + col);
+            if (!th) return;
+            const arrow = th.querySelector('.sort-arrow');
+            if (!arrow) return;
+            if (col === recipeSortCol) {
+                arrow.textContent = recipeSortDir === 'asc' ? ' ↑' : ' ↓';
+                th.style.color = '#fd7e14';
+            } else {
+                arrow.textContent = ' ↕';
+                th.style.color = '';
+            }
+        });
+    }
+
+    window.setRecipeSort = function(col) {
+        if (recipeSortCol === col) {
+            recipeSortDir = recipeSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            recipeSortCol = col;
+            recipeSortDir = 'asc';
+        }
+        window.renderRecipes();
+    };
+
+    window.getAllergenName = function(allergen) {
+        if (allergen.isSystem) {
+            const def = window.PREDEFINED_ALLERGENS.find(d => d.id === allergen.id);
+            if (def) return window.getCurrentLanguage() === 'bg' ? def.name_bg : def.name;
+        }
+        return allergen.name;
+    };
+
+    window.getRecipeAllergens = function(recipe) {
+        if (!recipe) return [];
+        const all = new Set();
+        if (recipe.ingredients) {
+            recipe.ingredients.forEach(ing => {
+                const fullIng = window.ingredients.find(i => i.id === ing.id);
+                if (fullIng && fullIng.allergens) {
+                    fullIng.allergens.forEach(aid => all.add(aid));
+                }
+            });
+        }
+        if (recipe.manualAllergens) {
+            recipe.manualAllergens.forEach(ma => all.add(ma.id));
+        }
+        const result = [];
+        all.forEach(id => {
+            const alg = window.allergens.find(a => a.id === id);
+            if (alg) result.push(alg);
+        });
+        return result;
+    };
+
+    window.renderAll = function() {
+        window.updateSelects();
+        window.renderRecipes();
+        window.renderIngredients();
+        window.renderAllergens();
+        window.renderCalendar(window.currentCalendarDate);
+        window.renderMenuHistory();
+    };
+
+    window.updateSelects = function() {
+        const ingredientSelect = document.getElementById('ingredientSelect');
+        const allergenSelect = document.getElementById('allergenSelect');
+        const ingAllSelect = document.getElementById('ingredientAllergenSelect');
+
+        const sortedIngredients = sortAZ(window.ingredients, i => i.name);
+        const sortedAllergens   = sortAZ(window.allergens,   a => window.getAllergenName(a));
+
+        if (ingredientSelect) ingredientSelect.innerHTML = `<option value="">${window.t('select_ingredient')}</option>` + sortedIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+        if (allergenSelect)   allergenSelect.innerHTML   = `<option value="">${window.t('select_allergen')}</option>`   + sortedAllergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+        if (ingAllSelect)     ingAllSelect.innerHTML     = `<option value="">${window.t('select_allergen')}</option>`   + sortedAllergens.map(a => `<option value="${a.id}">${window.getAllergenName(a)}</option>`).join('');
+    };
+
+    window.renderRecipes = function() {
+        const tbody = document.getElementById('recipeList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const search = document.getElementById('recipeSearch');
+        const catFilter = document.getElementById('recipeCategoryFilter');
+        const term = search ? search.value.toLowerCase() : '';
+        const cat = catFilter ? catFilter.value : '';
+
+        setSortArrows();
+        
+        if (window.recipes.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">${window.t('empty_recipes')}</td></tr>`; 
+            return; 
+        }
+
+        const sorted = sortRecipes(window.recipes);
+
+        sorted.forEach(recipe => {
+            if (term && !recipe.name.toLowerCase().includes(term)) return;
+            if (cat && recipe.category !== cat) return;
+
+            // ── Build ingredients preview ──────────────────────────────────────
+            const MAX_ING = 5;
+            let ingPreview = '';
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+                const ingNames = recipe.ingredients.map(ing => {
+                    const full = window.ingredients.find(i => i.id === ing.id);
+                    return full ? full.name : null;
+                }).filter(Boolean);
+
+                const shown    = ingNames.slice(0, MAX_ING).join(', ');
+                const moreCount = ingNames.length - MAX_ING;
+                const moreHtml  = moreCount > 0
+                    ? ` <span style="color:#fd7e14;font-weight:600;cursor:default;">+${moreCount}</span>`
+                    : '';
+                // Full list shown on hover via title attribute
+                const fullList = ingNames.join(', ');
+
+                ingPreview = `<div
+                    style="font-size:0.78rem;color:#888;margin-top:3px;font-weight:normal;cursor:default;"
+                    title="${fullList.replace(/"/g, '&quot;')}"
+                >${shown}${moreHtml}</div>`;
+            }
+
+            const recipeAllergens = window.getRecipeAllergens(recipe);
+            let allergensHtml = '-';
+            if (recipeAllergens.length > 0) { 
+                allergensHtml = `<div class="tag-container" style="gap:5px;">${recipeAllergens.map(a => `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>`).join('')}</div>`; 
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <strong>${recipe.name}</strong>
+                    ${ingPreview}
+                </td>
+                <td>${window.t('category_' + (recipe.category || 'other'))}</td>
+                <td>${recipe.portionSize || '-'}</td>
+                <td>${allergensHtml}</td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openRecipeModal('${recipe.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteRecipe('${recipe.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderIngredients = function() {
+        const tbody = document.getElementById('ingredientList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const search = document.getElementById('ingredientSearch');
+        const term = search ? search.value.toLowerCase() : '';
+        
+        if (window.ingredients.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_ingredients')}</td></tr>`; 
+            return; 
+        }
+
+        const sorted = sortAZ(window.ingredients, i => i.name);
+
+        sorted.forEach(ing => {
+            if (term && !ing.name.toLowerCase().includes(term)) return;
+            const tr = document.createElement('tr');
+            let tags = '-';
+            if (ing.allergens && ing.allergens.length) { 
+                tags = '<div class="tag-container" style="gap:5px;">' + ing.allergens.map(aid => { 
+                    const a = window.allergens.find(x => x.id === aid); 
+                    return a ? `<span class="tag allergen" style="border-color:${a.color};background:${a.color}15; font-size:0.75rem; padding:2px 6px;">${window.getAllergenName(a)}</span>` : ''; 
+                }).join('') + '</div>'; 
+            }
+            tr.innerHTML = `
+                <td><strong>${ing.name}</strong></td>
+                <td>${tags}</td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openIngredientModal('${ing.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteIngredient('${ing.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderAllergens = function() {
+        const tbody = document.getElementById('allergenList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (window.allergens.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">${window.t('empty_allergens')}</td></tr>`; 
+            return; 
+        }
+
+        const sorted = sortAZ(window.allergens, a => window.getAllergenName(a));
+
+        sorted.forEach(al => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${window.getAllergenName(al)}</strong></td>
+                <td><div style="width:20px; height:20px; background:${al.color}; border-radius:50%; border:1px solid #ddd;"></div></td>
+                <td>
+                    <button class="icon-btn edit" onclick="window.openAllergenModal('${al.id}')">✏️</button>
+                    <button class="icon-btn delete" onclick="window.deleteAllergen('${al.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.renderCalendar = function(date) {
+        if (window.CalendarManager && typeof window.CalendarManager.render === 'function') {
+            if (date instanceof Date) window.CalendarManager.currentDate = new Date(date);
+            window.CalendarManager.render();
+            return;
+        }
+
+        if (!date) date = new Date();
+        window.currentCalendarDate = date;
+
+        const calendarEl = document.getElementById('calendar');
+        const currentMonthEl = document.getElementById('currentMonth');
+        if (!calendarEl) return;
+        calendarEl.innerHTML = '';
+        
+        if (currentMonthEl) {
+            const options = { month: 'long', year: 'numeric' };
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            currentMonthEl.textContent = date.toLocaleDateString(lang, options);
+        }
+
+        if (viewMode === 'week') {
+            calendarEl.className = 'week-view';
+            const weekStart = window.getWeekStart(date);
+            const SLOTS = [{id:'slot1',type:'soup'},{id:'slot2',type:'main'},{id:'slot3',type:'dessert'},{id:'slot4',type:'other'}];
+
+            for (let i = 0; i < 5; i++) {
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
+                const dateStr = day.toISOString().split('T')[0];
+                if (!window.currentMenu[dateStr]) window.currentMenu[dateStr] = {};
+
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'day-column';
+                
+                const langStr = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header-weekly';
+                const dayName = day.toLocaleDateString(langStr, { weekday: 'long' });
+                const dayDate = day.toLocaleDateString(langStr, { month: 'short', day: 'numeric' });
+                dayHeader.innerHTML = `<strong>${dayName}</strong><small>${dayDate}</small>`;
+                dayColumn.appendChild(dayHeader);
+                
+                SLOTS.forEach((conf, index) => { 
+                    const slotData = window.currentMenu[dateStr][conf.id] || { type: conf.type, recipe: null }; 
+                    dayColumn.appendChild(renderSlot(dateStr, conf.id, slotData, index + 1)); 
+                });
+                
+                calendarEl.appendChild(dayColumn);
+            }
+        }
+    };
+
+    function renderSlot(dateStr, slotId, slotData, indexLabel) {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'meal-slot ' + slotData.type;
+        
+        const headerRow = document.createElement('div');
+        headerRow.style.display = 'flex';
+        headerRow.style.justifyContent = 'space-between';
+        headerRow.style.alignItems = 'center';
+        headerRow.style.marginBottom = '8px';
+        
+        const slotLabel = document.createElement('span');
+        slotLabel.style.fontSize = '0.85rem';
+        slotLabel.style.fontWeight = 'bold';
+        slotLabel.style.color = '#7f8c8d';
+        slotLabel.textContent = `${indexLabel}.`;
+        headerRow.appendChild(slotLabel);
+        
+        const dotBar = document.createElement('div');
+        dotBar.className = 'slot-allergen-dots';
+        dotBar.style.display = 'flex';
+        dotBar.style.gap = '3px';
+        headerRow.appendChild(dotBar);
+        slotEl.appendChild(headerRow);
+        
+        const selectorRow = document.createElement('div');
+        selectorRow.style.display = 'flex';
+        selectorRow.style.gap = '6px';
+        selectorRow.style.alignItems = 'stretch';
+        
+        const categorySelect = document.createElement('select');
+        categorySelect.className = 'category-select-compact';
+        categorySelect.style.cssText = `
+            width: 42px;
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid #fd7e14;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            padding: 4px 2px;
+            flex-shrink: 0;
+        `;
+        
+        const categories = ['soup', 'main', 'dessert', 'other'];
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = getCategoryIcon(cat);
+            if (slotData.type === cat) opt.selected = true;
+            categorySelect.appendChild(opt);
+        });
+        
+        categorySelect.addEventListener('change', async () => {
+            const newCat = categorySelect.value;
+            try {
+                await window.saveMenuSlot(dateStr, slotId, { type: newCat, recipe: null });
+                window.renderCalendar(window.currentCalendarDate);
+            } catch (error) {
+                console.error('Failed to save menu slot:', error);
+                alert(window.t('alert_save_menu_failed'));
+            }
+        });
+        
+        selectorRow.appendChild(categorySelect);
+        
+        const select = document.createElement('select');
+        select.className = 'recipe-select';
+        select.style.flex = '1';
+        select.innerHTML = `<option value="">${window.t('select_recipe')}</option>`;
+
+        const slotRecipes = sortAZ(
+            window.recipes.filter(r => (slotData.type === 'other' || r.category === slotData.type)),
+            r => r.name
+        );
+        slotRecipes.forEach(r => { 
+            const opt = document.createElement('option'); 
+            opt.value = r.id; opt.textContent = r.name; 
+            if (slotData.recipe === r.id) opt.selected = true; 
+            select.appendChild(opt); 
+        });
+
+        const updateDots = (recipeId) => {
+            dotBar.innerHTML = '';
+            if (!recipeId) return;
+            const recipe = window.recipes.find(r => r.id === recipeId);
+            window.getRecipeAllergens(recipe).forEach(a => {
+                const dot = document.createElement('div');
+                dot.style.cssText = `width:8px; height:8px; border-radius:50%; background-color:${a.color};`;
+                dot.title = window.getAllergenName(a);
+                dotBar.appendChild(dot);
+            });
+        };
+
+        updateDots(slotData.recipe);
+        select.addEventListener('change', async () => {
+            const recipeId = select.value || null;
+            try {
+                await window.saveMenuSlot(dateStr, slotId, { type: slotData.type, recipe: recipeId });
+                updateDots(recipeId);
+            } catch (error) {
+                console.error('Failed to save menu slot:', error);
+                alert(window.t('alert_save_menu_failed'));
+            }
+        });
+        
+        selectorRow.appendChild(select);
+        slotEl.appendChild(selectorRow);
+        
+        return slotEl;
+    }
+
+    window.changeMonth = (delta) => {
+        if (window.CalendarManager && typeof window.CalendarManager.navigate === 'function') {
+            window.CalendarManager.navigate(delta);
+            return;
+        }
+
+        const d = new Date(window.currentCalendarDate);
+        if (viewMode === 'week') d.setDate(d.getDate() + (delta * 7));
+        else d.setMonth(d.getMonth() + delta);
+        window.renderCalendar(d);
+    };
+
+    window.renderMenuHistory = function() {
+        const list = document.getElementById('menuHistory');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!window.menuHistory.length) { 
+            list.innerHTML = `<div class="empty-state">${window.t('empty_menus')}</div>`; 
+            return; 
+        }
+        window.menuHistory.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'menu-history-item';
+            const lang = window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US';
+            item.innerHTML = `
+                <div class="menu-history-name">${m.name}</div>
+                <div class="menu-history-date">${new Date(m.date).toLocaleString(lang)}</div>
+                <div class="menu-history-actions">
+                    <button onclick="window.loadSavedMenu('${m.id}')">${window.t('btn_load')}</button>
+                    <button onclick="window.deleteSavedMenu('${m.id}')">${window.t('btn_delete')}</button>
+                </div>`;
+            list.appendChild(item);
+        });
+    };
+
+})(window);
