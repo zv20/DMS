@@ -1,6 +1,6 @@
 {
   "name": "kitchenpro-dms",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "description": "KitchenPro DMS desktop application",
   "main": "electron/main.cjs",
@@ -14,11 +14,11 @@
     "desktop:install-native": "node electron/install-native.cjs",
     "desktop:rebuild-native": "electron-rebuild -f -w better-sqlite3",
     "desktop:pack": "electron-builder --dir",
-    "desktop:dist:win": "electron-builder --win",
-    "desktop:dist:win:x64": "electron-builder --win --x64",
-    "desktop:dist:mac:x64": "electron-builder --mac --x64",
-    "desktop:dist:mac:arm64": "electron-builder --mac --arm64",
-    "desktop:dist:mac": "electron-builder --mac --x64 --arm64"
+    "desktop:dist:win": "electron-builder --win --publish never",
+    "desktop:dist:win:x64": "electron-builder --win --x64 --publish never",
+    "desktop:dist:mac:x64": "electron-builder --mac --x64 --publish never",
+    "desktop:dist:mac:arm64": "electron-builder --mac --arm64 --publish never",
+    "desktop:dist:mac": "electron-builder --mac --x64 --arm64 --publish never"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
