@@ -23,28 +23,22 @@ Do not commit generated or local-only folders:
 - `data/`
 - `.git/`
 
-## Configure The Update Feed
+## Update Feed
 
-Before the first real release, edit `package.json` and replace:
-
-- `CHANGE_ME_GITHUB_OWNER`
-- `CHANGE_ME_REPO`
-
-with your GitHub username or organization and repository name.
-
-Example:
+The app is configured to use GitHub Releases from:
 
 ```json
 "publish": [
   {
     "provider": "github",
-    "owner": "your-user-name",
-    "repo": "kitchenpro-dms"
+    "owner": "zv20",
+    "repo": "KitchenPro-DMS"
   }
 ]
 ```
 
 The Settings page uses this GitHub Releases feed to check for updates in the installed Windows app.
+GitHub Actions uses the built-in `GITHUB_TOKEN`, so no personal GitHub credential should be committed into the app.
 
 ## Create A Release
 
