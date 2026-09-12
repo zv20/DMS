@@ -54,6 +54,19 @@
         return null;
     }
 
+    async function hydrateEditorBlockImages(settings) {
+        if (!Array.isArray(settings.editorBlocks) || !window.dmsDesktop?.images?.getDataUrl) return;
+        for (const block of settings.editorBlocks) {
+            if (block.type !== 'image' || !block.style?.imageName) continue;
+            try {
+                const dataUrl = await window.dmsDesktop.images.getDataUrl(block.style.imageFolder || 'template-objects', block.style.imageName);
+                if (dataUrl) block.style.imageData = dataUrl;
+            } catch (err) {
+                console.warn('Failed to load template image:', block.style.imageName, err);
+            }
+        }
+    }
+
     // ─── KEYFRAME INJECTION ───────────────────────────────────────────────
     function injectSpinnerStyle() {
         if (document.getElementById('menu-spin-style')) return;
@@ -226,6 +239,7 @@
             const b64 = await loadBackgroundImageAsBase64(settings.backgroundImage);
             if (b64) settings.backgroundImageData = b64;
         }
+        await hydrateEditorBlockImages(settings);
 
         const { top, right, bottom, left } = choice.margins;
 
@@ -583,8 +597,82 @@
         }).join(', ');
     }
 
+    function blockStyle(block, style) {
+        const st = style || {};
+        return [
+            'position:absolute',
+            `left:${block.x || 0}%`,
+            `top:${block.y || 0}%`,
+            `width:${block.width || 20}%`,
+            `height:${block.height || 8}%`,
+            `z-index:${block.zIndex || 30}`,
+            'box-sizing:border-box',
+            'overflow:hidden',
+            'padding:4px',
+            `font-family:${st.fontFamily || 'Arial, sans-serif'}`,
+            `font-size:${normSize(st.fontSize || 12, '12pt')}`,
+            `color:${st.color || '#222222'}`,
+            `text-align:${st.align || 'left'}`,
+            `font-weight:${st.bold ? '700' : '400'}`,
+            `font-style:${st.italic ? 'italic' : 'normal'}`,
+            `text-decoration:${st.underline ? 'underline' : 'none'}`,
+            `line-height:${st.lineHeight || 1.2}`,
+            st.backgroundColor && st.backgroundColor !== 'transparent' ? `background:${st.backgroundColor}` : ''
+        ].join(';');
+    }
+
+    function renderEditorMealLine(meal, s) {
+        const ingHtml = renderIngHtml(meal, s);
+        let html = `<p style="margin:0 0 4px;line-height:1.24;"><strong>${meal.number}. ${meal.name}`;
+        if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
+        html += `</strong>`;
+        if (ingHtml) html += `<br><span style="color:#555;font-style:italic;">${ingHtml}</span>`;
+        if (s.showCalories && meal.calories) html += ` <span style="color:#555;font-size:.92em;">ККАЛ ${meal.calories}</span>`;
+        html += `</p>`;
+        return html;
+    }
+
+    function renderEditorMenuBlock(data, s) {
+        const dys = normSize(s.dayNameSize, '12pt');
+        const ms = normSize(s.mealFontSize, '10pt');
+        const dyff = ff(s, 'dayNameFontFamily');
+        const mff = ff(s, 'mealFontFamily');
+        const columns = (s.templateStyle || 'compact') === 'detailed-2col';
+        const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
+        const bg = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        return `<div style="display:${columns ? 'grid' : 'flex'};${columns ? 'grid-template-columns:1fr 1fr;' : 'flex-direction:column;'}gap:7px;font-family:${mff};font-size:${ms};">
+            ${data.days.map(day => `
+                <section style="${brd}${bg}padding:7px;border-radius:3px;break-inside:avoid;">
+                    <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};">${day.name}</h3>
+                    ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+                </section>
+            `).join('')}
+        </div>`;
+    }
+
+    function renderEditorBlockContent(block, data, s) {
+        if (block.type === 'date') return fmtDateRange(data.startDate, data.endDate);
+        if (block.type === 'menu') return renderEditorMenuBlock(data, s);
+        if (block.type === 'image') return `<img src="${block.style?.imageData || block.style?.src || ''}" style="display:block;width:100%;height:100%;object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
+        if (block.type === 'shape') return `<div style="width:100%;height:100%;box-sizing:border-box;background:${block.style?.fill || '#f8f9fb'};border:${block.style?.strokeWidth ?? 1}px solid ${block.style?.stroke || '#1f2933'};opacity:${block.style?.opacity ?? 1};"></div>`;
+        return block.style?.html || '';
+    }
+
+    function renderEditorBlocksHTML(data, s, usableH) {
+        const hStyle = usableH ? `height:${usableH}px;` : 'min-height:100%;';
+        let html = `<div id="menu-content" style="background-color:${s.backgroundColor};position:relative;padding:0;${hStyle}overflow:hidden;">`;
+        html = addBgLayers(html, s);
+        html += `<div style="position:absolute;inset:0;z-index:10;">`;
+        s.editorBlocks.filter(block => block.visible !== false).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).forEach(block => {
+            html += `<div style="${blockStyle(block, block.style)}">${renderEditorBlockContent(block, data, s)}</div>`;
+        });
+        html += `</div></div>`;
+        return html;
+    }
+
     // ─── RENDER ─────────────────────────────────────────────────────────────────
     function renderMenuHTML(data, s, usableH) {
+        if (Array.isArray(s.editorBlocks) && s.editorBlocks.length) return renderEditorBlocksHTML(data, s, usableH);
         if ((s.templateStyle || 'compact') === 'detailed-2col') return renderMenuHTML2Column(data, s, usableH);
         const { startDate, endDate, days } = data;
         const isCompact = (s.templateStyle || 'compact') === 'compact';

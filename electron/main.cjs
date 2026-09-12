@@ -3,6 +3,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { readFile } = require('node:fs/promises');
 const { randomUUID } = require('node:crypto');
+const AdmZip = require('adm-zip');
 const { createDesktopDatabase } = require('./storage.cjs');
 const { runStorageProjectionTest } = require('./storage-test-runner.cjs');
 const { autoUpdater } = require('electron-updater');
@@ -11,6 +12,7 @@ const APP_PROTOCOL = 'dms';
 const APP_HOST = 'app';
 const APP_ORIGIN = `${APP_PROTOCOL}://${APP_HOST}`;
 let desktopDatabase;
+let autoBackupCreatedForQuit = false;
 const pendingImports = new Map();
 const isStorageTest = process.argv.includes('--storage-test');
 const updateState = {
@@ -99,6 +101,16 @@ function isTrustedSender(event) {
   return event.senderFrame.url.startsWith(`${APP_ORIGIN}/`);
 }
 
+function createAutoBackupOnce(reason) {
+  if (!desktopDatabase || autoBackupCreatedForQuit || isStorageTest) return;
+  autoBackupCreatedForQuit = true;
+  try {
+    desktopDatabase.createAutoBackup(reason);
+  } catch (error) {
+    console.warn(`Auto-backup on ${reason} failed:`, error);
+  }
+}
+
 function configureSession() {
   protocol.handle(APP_PROTOCOL, async (request) => {
     try {
@@ -158,6 +170,7 @@ function createMainWindow() {
   window.webContents.on('will-navigate', (event, url) => {
     if (!url.startsWith(`${APP_ORIGIN}/`)) event.preventDefault();
   });
+  window.on('close', () => createAutoBackupOnce('close'));
   window.loadURL(`${APP_ORIGIN}/index.html`);
 }
 
@@ -239,6 +252,7 @@ ipcMain.handle('desktop:updates:download', async (event) => {
 ipcMain.handle('desktop:updates:install', (event) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   if (!updateState.downloaded) throw new Error('No downloaded update is ready to install.');
+  createAutoBackupOnce('before-update');
   autoUpdater.quitAndInstall(false, true);
   return true;
 });
@@ -300,7 +314,7 @@ ipcMain.handle('desktop:images:list', (event, folder) => {
 ipcMain.handle('desktop:images:save', (event, folder, image) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   if (!image || typeof image !== 'object' || Array.isArray(image)) throw new Error('Invalid image payload.');
-  desktopDatabase.saveTemplateImage(folder, image.name, image.mimeType, image.dataUrl);
+  return desktopDatabase.saveTemplateImage(folder, image.name, image.mimeType, image.dataUrl);
 });
 
 ipcMain.handle('desktop:images:delete', (event, folder, name) => {
@@ -322,15 +336,19 @@ ipcMain.handle('desktop:storage:import', (event, snapshot) => {
 ipcMain.handle('desktop:storage:export', async (event) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   const { dialog } = require('electron');
-  const { writeFile } = require('node:fs/promises');
   const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender), {
     title: 'Export DMS backup',
-    defaultPath: `dms-backup-${new Date().toISOString().slice(0, 10)}.json`,
-    filters: [{ name: 'DMS backup', extensions: ['json'] }]
+    defaultPath: `dms-backup-${new Date().toISOString().slice(0, 10)}.zip`,
+    filters: [{ name: 'DMS backup', extensions: ['zip'] }, { name: 'Legacy JSON backup', extensions: ['json'] }]
   });
   if (result.canceled || !result.filePath) return false;
-  const data = { ...desktopDatabase.loadSnapshot(), templateImages: desktopDatabase.exportTemplateImages(), exportDate: new Date().toISOString() };
-  await writeFile(result.filePath, JSON.stringify(data, null, 2), 'utf8');
+  if (result.filePath.toLowerCase().endsWith('.json')) {
+    const { writeFile } = require('node:fs/promises');
+    const data = { ...desktopDatabase.loadSnapshot(), templateImages: desktopDatabase.exportTemplateImages(), exportDate: new Date().toISOString() };
+    await writeFile(result.filePath, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  }
+  desktopDatabase.createBackupZip(result.filePath);
   return true;
 });
 
@@ -340,14 +358,28 @@ ipcMain.handle('desktop:storage:choose-import', async (event) => {
   const result = await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), {
     title: 'Select DMS backup',
     properties: ['openFile'],
-    filters: [{ name: 'DMS backup', extensions: ['json'] }]
+    filters: [{ name: 'DMS backup', extensions: ['zip', 'json'] }]
   });
   if (result.canceled || !result.filePaths[0]) return null;
+  const filePath = result.filePaths[0];
   let snapshot;
   try {
-    snapshot = JSON.parse(await readFile(result.filePaths[0], 'utf8'));
+    if (filePath.toLowerCase().endsWith('.zip')) {
+      const zip = new AdmZip(filePath);
+      const manifest = zip.getEntry('backup.json');
+      if (!manifest) throw new Error('Missing backup manifest.');
+      snapshot = JSON.parse(manifest.getData().toString('utf8'));
+      snapshot.templateImages = (snapshot.templateImages || []).map((image) => {
+        if (!image?.relativePath) return image;
+        const entry = zip.getEntry(image.relativePath.replace(/\\/g, '/'));
+        if (!entry) return image;
+        return { ...image, dataUrl: `data:${image.mimeType};base64,${entry.getData().toString('base64')}` };
+      });
+    } else {
+      snapshot = JSON.parse(await readFile(filePath, 'utf8'));
+    }
   } catch {
-    throw new Error('The selected file is not a valid JSON backup.');
+    throw new Error('The selected file is not a valid DMS backup.');
   }
   const id = randomUUID();
   pendingImports.set(id, snapshot);
@@ -440,4 +472,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  createAutoBackupOnce('quit');
 });

@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { mkdirSync } = require('node:fs');
+const { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } = require('node:fs');
 const Database = require('better-sqlite3');
 
 const DOCUMENT_KEYS = new Set(['recipes', 'ingredients', 'allergens', 'currentMenu', 'appSettings', 'templates', 'menuHistory']);
@@ -10,9 +10,11 @@ const CATALOG_PROJECTIONS = Object.freeze({
 });
 const DEFAULTS = Object.freeze({
   recipes: [], ingredients: [], allergens: [], currentMenu: {},
-  appSettings: { language: 'bg', theme: 'default' }, templates: {}, menuHistory: []
+  appSettings: { language: 'bg', theme: 'default', autoBackupLimit: 3 }, templates: {}, menuHistory: []
 });
-const IMAGE_FOLDERS = new Set(['backgrounds']);
+const IMAGE_FOLDERS = new Set(['backgrounds', 'template-objects']);
+const IMAGE_EXTENSIONS = Object.freeze({ 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' });
+const DEFAULT_AUTO_BACKUP_LIMIT = 3;
 
 function cloneDefault(key) { return JSON.parse(JSON.stringify(DEFAULTS[key])); }
 
@@ -52,8 +54,14 @@ function assertImage(folder, name, mimeType, dataUrl) {
   return data;
 }
 
+function safeImageFilename(name) {
+  return String(name || '').replace(/[\\/:*?"<>|]/g, '_').replace(/^\.+$/, 'image').slice(0, 120);
+}
+
 function createDesktopDatabase(userDataPath) {
   mkdirSync(userDataPath, { recursive: true });
+  const imageRoot = path.join(userDataPath, 'images');
+  for (const folder of IMAGE_FOLDERS) mkdirSync(path.join(imageRoot, folder), { recursive: true });
   const database = new Database(path.join(userDataPath, 'dms.sqlite'));
   database.pragma('journal_mode = WAL');
   database.exec(`
@@ -91,10 +99,13 @@ function createDesktopDatabase(userDataPath) {
       name TEXT NOT NULL,
       mime_type TEXT NOT NULL,
       data BLOB NOT NULL,
+      relative_path TEXT,
       updated_at TEXT NOT NULL,
       PRIMARY KEY (folder, name)
     );
   `);
+  const templateImageColumns = database.prepare('PRAGMA table_info(template_images)').all().map((row) => row.name);
+  if (!templateImageColumns.includes('relative_path')) database.exec('ALTER TABLE template_images ADD COLUMN relative_path TEXT;');
   database.prepare('INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)').run(1, new Date().toISOString());
 
   const get = database.prepare('SELECT value_json FROM application_documents WHERE key = ?');
@@ -109,12 +120,45 @@ function createDesktopDatabase(userDataPath) {
   const insertRecipeAllergen = database.prepare('INSERT OR IGNORE INTO recipe_manual_allergens (recipe_id, allergen_id) VALUES (?, ?)');
   const insertMenuItem = database.prepare('INSERT INTO menu_items_projection (menu_date, slot, category, recipe_id) VALUES (?, ?, ?, ?)');
   const insertTemplate = database.prepare('INSERT INTO templates_projection (name, data_json) VALUES (?, ?)');
-  const upsertImage = database.prepare(`INSERT INTO template_images (folder, name, mime_type, data, updated_at)
-    VALUES (@folder, @name, @mimeType, @data, @updatedAt)
-    ON CONFLICT(folder, name) DO UPDATE SET mime_type = excluded.mime_type, data = excluded.data, updated_at = excluded.updated_at`);
+  const upsertImage = database.prepare(`INSERT INTO template_images (folder, name, mime_type, data, relative_path, updated_at)
+    VALUES (@folder, @name, @mimeType, @data, @relativePath, @updatedAt)
+    ON CONFLICT(folder, name) DO UPDATE SET mime_type = excluded.mime_type, data = excluded.data, relative_path = excluded.relative_path, updated_at = excluded.updated_at`);
   const deleteImage = database.prepare('DELETE FROM template_images WHERE folder = ? AND name = ?');
-  const listImages = database.prepare('SELECT name, mime_type, data, updated_at FROM template_images WHERE folder = ? ORDER BY name COLLATE NOCASE');
-  const getImage = database.prepare('SELECT mime_type, data FROM template_images WHERE folder = ? AND name = ?');
+  const listImages = database.prepare('SELECT folder, name, mime_type, data, relative_path, updated_at FROM template_images WHERE folder = ? ORDER BY name COLLATE NOCASE');
+  const getImage = database.prepare('SELECT folder, name, mime_type, data, relative_path FROM template_images WHERE folder = ? AND name = ?');
+
+  function imageRelativePath(folder, name, mimeType) {
+    const extension = IMAGE_EXTENSIONS[String(mimeType || '').toLowerCase()] || path.extname(name) || '.img';
+    const parsed = path.parse(safeImageFilename(name));
+    const base = parsed.name || 'image';
+    const filename = `${base}${extension}`;
+    return path.posix.join('images', folder, filename);
+  }
+
+  function imageDiskPath(relativePath) {
+    const normalized = String(relativePath || '').replace(/\\/g, '/');
+    if (!normalized.startsWith('images/')) throw new Error('Invalid image path.');
+    return path.join(userDataPath, ...normalized.split('/'));
+  }
+
+  function writeImageFile(folder, name, mimeType, data) {
+    const relativePath = imageRelativePath(folder, name, mimeType);
+    const diskPath = imageDiskPath(relativePath);
+    mkdirSync(path.dirname(diskPath), { recursive: true });
+    writeFileSync(diskPath, data);
+    return relativePath;
+  }
+
+  function migrateImageRowsToFiles() {
+    const rows = database.prepare('SELECT folder, name, mime_type, data, relative_path FROM template_images').all();
+    const update = database.prepare('UPDATE template_images SET relative_path = ? WHERE folder = ? AND name = ?');
+    for (const row of rows) {
+      if (row.relative_path && existsSync(imageDiskPath(row.relative_path))) continue;
+      if (!row.data || !row.data.length) continue;
+      const relativePath = writeImageFile(row.folder, row.name, row.mime_type, row.data);
+      update.run(relativePath, row.folder, row.name);
+    }
+  }
 
   function loadSnapshot() {
     const snapshot = {};
@@ -360,7 +404,8 @@ function createDesktopDatabase(userDataPath) {
         for (const image of snapshot.templateImages) {
           if (!image || typeof image !== 'object') continue;
           const data = assertImage(image.folder, image.name, image.mimeType, image.dataUrl);
-          upsertImage.run({ folder: image.folder, name: image.name, mimeType: image.mimeType, data, updatedAt: timestamp });
+          const relativePath = writeImageFile(image.folder, image.name, image.mimeType, data);
+          upsertImage.run({ folder: image.folder, name: image.name, mimeType: image.mimeType, data: Buffer.alloc(0), relativePath, updatedAt: timestamp });
         }
       }
       refreshProjection();
@@ -369,18 +414,32 @@ function createDesktopDatabase(userDataPath) {
   }
 
   function imageRowToDto(row, includeData = true) {
-    const dto = { name: row.name, mimeType: row.mime_type, updatedAt: row.updated_at };
-    if (includeData) dto.dataUrl = `data:${row.mime_type};base64,${row.data.toString('base64')}`;
+    const dto = { name: row.name, mimeType: row.mime_type, relativePath: row.relative_path || null, updatedAt: row.updated_at };
+    if (includeData) {
+      const data = getImageBuffer(row);
+      if (data) dto.dataUrl = `data:${row.mime_type};base64,${data.toString('base64')}`;
+    }
     return dto;
+  }
+
+  function getImageBuffer(row) {
+    if (!row) return null;
+    if (row.relative_path) {
+      const diskPath = imageDiskPath(row.relative_path);
+      if (existsSync(diskPath)) return readFileSync(diskPath);
+    }
+    return row.data && row.data.length ? row.data : null;
   }
 
   function saveTemplateImage(folder, name, mimeType, dataUrl) {
     const data = assertImage(folder, name, mimeType, dataUrl);
     const timestamp = new Date().toISOString();
+    const relativePath = writeImageFile(folder, name, mimeType, data);
     database.transaction(() => {
-      upsertImage.run({ folder, name, mimeType, data, updatedAt: timestamp });
+      upsertImage.run({ folder, name, mimeType, data: Buffer.alloc(0), relativePath, updatedAt: timestamp });
       audit.run({ occurredAt: timestamp, operation: 'images.upsert', documentKey: null, detailJson: JSON.stringify({ folder, name, bytes: data.length }) });
     })();
+    return { name, mimeType, relativePath, updatedAt: timestamp };
   }
 
   function listTemplateImages(folder) {
@@ -391,14 +450,19 @@ function createDesktopDatabase(userDataPath) {
   function getTemplateImageDataUrl(folder, name) {
     if (!IMAGE_FOLDERS.has(folder) || typeof name !== 'string') throw new Error('Invalid image.');
     const row = getImage.get(folder, name);
-    return row ? `data:${row.mime_type};base64,${row.data.toString('base64')}` : null;
+    const data = getImageBuffer(row);
+    return row && data ? `data:${row.mime_type};base64,${data.toString('base64')}` : null;
   }
 
   function deleteTemplateImage(folder, name) {
     if (!IMAGE_FOLDERS.has(folder) || typeof name !== 'string') throw new Error('Invalid image.');
     const timestamp = new Date().toISOString();
     const result = database.transaction(() => {
+      const row = getImage.get(folder, name);
       const deleted = deleteImage.run(folder, name);
+      if (deleted.changes && row?.relative_path) {
+        try { unlinkSync(imageDiskPath(row.relative_path)); } catch {}
+      }
       audit.run({ occurredAt: timestamp, operation: 'images.delete', documentKey: null, detailJson: JSON.stringify({ folder, name, deleted: deleted.changes }) });
       return deleted;
     })();
@@ -406,7 +470,7 @@ function createDesktopDatabase(userDataPath) {
   }
 
   function exportTemplateImages() {
-    return database.prepare('SELECT folder, name, mime_type, data, updated_at FROM template_images ORDER BY folder, name COLLATE NOCASE')
+    return database.prepare('SELECT folder, name, mime_type, data, relative_path, updated_at FROM template_images ORDER BY folder, name COLLATE NOCASE')
       .all()
       .map((row) => ({ folder: row.folder, ...imageRowToDto(row) }));
   }
@@ -425,10 +489,47 @@ function createDesktopDatabase(userDataPath) {
     return Object.fromEntries(tables.map((table) => [table, database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count]));
   }
 
+  function createBackupZip(filePath) {
+    const AdmZip = require('adm-zip');
+    const data = { ...loadSnapshot(), templateImages: exportTemplateImages(), exportDate: new Date().toISOString() };
+    const zip = new AdmZip();
+    const manifest = { ...data, templateImages: data.templateImages.map(({ dataUrl, ...image }) => image) };
+    zip.addFile('backup.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
+    for (const image of data.templateImages) {
+      if (!image.relativePath || !image.dataUrl) continue;
+      const base64 = image.dataUrl.split(',')[1];
+      if (base64) zip.addFile(image.relativePath.replace(/\\/g, '/'), Buffer.from(base64, 'base64'));
+    }
+    zip.writeZip(filePath);
+    return filePath;
+  }
+
+  function createAutoBackup(reason = 'close') {
+    const snapshot = loadSnapshot();
+    const settings = snapshot.appSettings && typeof snapshot.appSettings === 'object' ? snapshot.appSettings : {};
+    const limit = Number.isInteger(settings.autoBackupLimit) ? Math.max(0, settings.autoBackupLimit) : DEFAULT_AUTO_BACKUP_LIMIT;
+    if (limit <= 0) return null;
+
+    const backupDir = path.join(userDataPath, 'auto-backups');
+    mkdirSync(backupDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeReason = String(reason || 'backup').replace(/[^a-z0-9_-]/gi, '-').slice(0, 32);
+    const filePath = path.join(backupDir, `dms-auto-${safeReason}-${stamp}.zip`);
+    createBackupZip(filePath);
+
+    const backups = readdirSync(backupDir)
+      .filter((name) => /^dms-auto-.*\.zip$/i.test(name))
+      .map((name) => ({ name, path: path.join(backupDir, name) }))
+      .sort((a, b) => b.name.localeCompare(a.name));
+    for (const backup of backups.slice(limit)) rmSync(backup.path, { force: true });
+    return filePath;
+  }
+
   function close() {
     database.close();
   }
 
+  migrateImageRowsToFiles();
   database.transaction(refreshProjection)();
 
   return {
@@ -437,6 +538,8 @@ function createDesktopDatabase(userDataPath) {
     deleteTemplate,
     deleteTemplateImage,
     deleteCatalogRecord,
+    createAutoBackup,
+    createBackupZip,
     exportTemplateImages,
     getImportSummary,
     getProjectionStats,

@@ -9,7 +9,7 @@
     window.menuHistory = [];
     window.savedTemplates = [];
     window.imageUploads = [];
-    window.appSettings = { language: 'bg', theme: 'default' };  // Changed default from 'en' to 'bg'
+    window.appSettings = { language: 'bg', theme: 'default', autoBackupLimit: 3 };  // Changed default from 'en' to 'bg'
     window.imageCache = {};
 
     // Predefined allergens (only used for initial population on brand new installs)
@@ -43,6 +43,8 @@
         if (window.appSettings && window.appSettings.theme && typeof window.setAppTheme === 'function') {
             window.setAppTheme(window.appSettings.theme, false);
         }
+        const autoBackupLimit = document.getElementById('autoBackupLimit');
+        if (autoBackupLimit) autoBackupLimit.value = String(Number.isInteger(window.appSettings.autoBackupLimit) ? window.appSettings.autoBackupLimit : 3);
         
         return initialized;
     };
@@ -96,6 +98,14 @@
         await window.storageAdapter.save('appSettings', window.appSettings);
         window.showSyncIndicator();
         console.log('✅ Settings saved successfully');
+    };
+
+    window.updateAutoBackupLimit = async function(value) {
+        const limit = Math.max(0, Math.min(20, parseInt(value, 10) || 0));
+        window.appSettings.autoBackupLimit = limit;
+        const input = document.getElementById('autoBackupLimit');
+        if (input) input.value = String(limit);
+        await window.saveSettings();
     };
     
     // Legacy compatibility

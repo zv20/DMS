@@ -6,7 +6,7 @@
   <title>Детско меню</title>
   
   <link rel="stylesheet" href="css/styles.css?v=14.8">
-  <link rel="stylesheet" href="css/template-styles.css?v=14.8">
+  <link rel="stylesheet" href="css/template-styles.css?v=15.4">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
@@ -29,7 +29,7 @@
   <script src="js/clock.js?v=14.8"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER -->
-  <script src="js/template/template-builder-steps.js?v=14.8"></script>
+  <script src="js/template/template-builder-steps.js?v=15.4"></script>
   
   <!-- PRINT FUNCTIONALITY -->
   <script src="js/print.js?v=14.8"></script>
@@ -231,8 +231,12 @@
               <h3 data-i18n="heading_data">💾 Data Management</h3>
               <button id="btn-change-folder" class="btn btn-primary" onclick="window.selectSaveLocation()" data-i18n="btn_change_folder">Change Storage Folder</button>
               <button id="btn-export" class="btn btn-secondary" onclick="window.exportAllData()" style="margin-top: 10px;" data-i18n="btn_export_backup">💾 Export Data (Backup)</button>
-              <input type="file" id="file-import" accept=".json" style="display:none;" onchange="window.importData(event)">
+              <input type="file" id="file-import" accept=".zip,.json" style="display:none;" onchange="window.importData(event)">
               <button id="btn-import" class="btn btn-secondary" onclick="window.openImportData()" style="margin-top: 10px;" data-i18n="btn_import_data">📂 Import Data</button>
+              <label class="settings-inline-field" for="autoBackupLimit">
+                  <span>Auto backups to keep</span>
+                  <input type="number" id="autoBackupLimit" min="0" max="20" step="1" value="3" onchange="window.updateAutoBackupLimit(this.value)">
+              </label>
           </div>
           <div class="settings-card update-card">
               <h3>App Updates</h3>
@@ -423,6 +427,14 @@
     };
     window.resetTemplatePreviewZoom = function() {
       window.templatePreviewZoom = 1;
+      window.applyTemplatePreviewZoom();
+    };
+    window.fitTemplatePreviewToWidth = function() {
+      const preview = document.getElementById('template-preview');
+      const scroll = document.querySelector('.template-preview-scroll');
+      if (!preview || !scroll) return;
+      const available = Math.max(320, scroll.clientWidth - 68);
+      window.templatePreviewZoom = Math.min(1.4, Math.max(0.35, +(available / preview.offsetWidth).toFixed(2)));
       window.applyTemplatePreviewZoom();
     };
   </script>

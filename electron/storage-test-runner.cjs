@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { mkdtempSync, rmSync } = require('node:fs');
+const { existsSync, mkdtempSync, readdirSync, rmSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { createDesktopDatabase } = require('./storage.cjs');
@@ -53,7 +53,10 @@ function runStorageProjectionTest() {
     const imageDataUrl = 'data:image/png;base64,iVBORw0KGgo=';
     storage.saveTemplateImage('backgrounds', 'test.png', 'image/png', imageDataUrl);
     assert.equal(storage.getProjectionStats().template_images, 1);
-    assert.equal(storage.listTemplateImages('backgrounds')[0].name, 'test.png');
+    const savedImage = storage.listTemplateImages('backgrounds')[0];
+    assert.equal(savedImage.name, 'test.png');
+    assert.equal(savedImage.relativePath, 'images/backgrounds/test.png');
+    assert.equal(existsSync(path.join(directory, savedImage.relativePath)), true);
     assert.equal(storage.getTemplateImageDataUrl('backgrounds', 'test.png'), imageDataUrl);
     assert.equal(storage.exportTemplateImages()[0].dataUrl, imageDataUrl);
     assert.equal(storage.deleteTemplateImage('backgrounds', 'test.png'), true);
@@ -61,6 +64,9 @@ function runStorageProjectionTest() {
     storage.saveDocument('menuHistory', [{ id: 'menu-2', name: 'Second saved week', data: '{}' }]);
     assert.equal(storage.loadSnapshot().menuHistory[0].id, 'menu-2');
     assert.equal(storage.loadSnapshot().recipes[0].name, 'Toast');
+    for (let i = 0; i < 5; i++) storage.createAutoBackup('test');
+    const autoBackups = readdirSync(path.join(directory, 'auto-backups')).filter((name) => name.endsWith('.zip'));
+    assert.equal(autoBackups.length, 3);
   } finally {
     if (storage) storage.close();
     rmSync(directory, { recursive: true, force: true });
