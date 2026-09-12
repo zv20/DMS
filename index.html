@@ -6,7 +6,7 @@
   <title>Детско меню</title>
   
   <link rel="stylesheet" href="css/styles.css?v=14.8">
-  <link rel="stylesheet" href="css/template-styles.css?v=15.4">
+  <link rel="stylesheet" href="css/template-styles.css?v=15.6">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
@@ -29,11 +29,11 @@
   <script src="js/clock.js?v=14.8"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER -->
-  <script src="js/template/template-builder-steps.js?v=15.4"></script>
+  <script src="js/template/template-builder-steps.js?v=15.6"></script>
   
   <!-- PRINT FUNCTIONALITY -->
   <script src="js/print.js?v=14.8"></script>
-  <script src="js/updater-ui.js?v=15.1"></script>
+  <script src="js/updater-ui.js?v=15.5"></script>
   
   <script src="js/main.js?v=14.8"></script>
 
@@ -241,6 +241,15 @@
           <div class="settings-card update-card">
               <h3>App Updates</h3>
               <div id="update-status" class="update-status">Loading update status...</div>
+              <div id="update-progress" class="update-progress" aria-hidden="true">
+                  <div class="update-progress-topline">
+                      <span>Download Progress</span>
+                      <strong id="update-progress-label">0%</strong>
+                  </div>
+                  <div class="update-progress-track">
+                      <div id="update-progress-fill" class="update-progress-fill" style="width: 0%;"></div>
+                  </div>
+              </div>
               <div class="update-actions">
                   <button id="btn-check-updates" class="btn btn-secondary" onclick="window.checkForAppUpdates()">Check for Updates</button>
                   <button id="btn-download-update" class="btn btn-primary" onclick="window.downloadAppUpdate()" style="display:none;">Download Update</button>
@@ -412,20 +421,23 @@
     });
 
     window.templatePreviewZoom = 1;
+    window.templatePreviewZoomMode = 'fit';
     window.applyTemplatePreviewZoom = function() {
       const preview = document.getElementById('template-preview');
       const label = document.getElementById('templateZoomLabel');
       if (!preview) return;
       preview.style.transform = `scale(${window.templatePreviewZoom})`;
       preview.style.transformOrigin = 'top center';
-      preview.style.marginBottom = `${Math.max(0, (window.templatePreviewZoom - 1) * preview.offsetHeight)}px`;
+      preview.style.marginBottom = `${Math.max(0, (window.templatePreviewZoom - 1) * preview.offsetHeight) + 24}px`;
       if (label) label.textContent = `${Math.round(window.templatePreviewZoom * 100)}%`;
     };
     window.setTemplatePreviewZoom = function(delta) {
-      window.templatePreviewZoom = Math.min(1.4, Math.max(0.6, +(window.templatePreviewZoom + delta).toFixed(2)));
+      window.templatePreviewZoomMode = 'manual';
+      window.templatePreviewZoom = Math.min(1.6, Math.max(0.3, +(window.templatePreviewZoom + delta).toFixed(2)));
       window.applyTemplatePreviewZoom();
     };
     window.resetTemplatePreviewZoom = function() {
+      window.templatePreviewZoomMode = 'manual';
       window.templatePreviewZoom = 1;
       window.applyTemplatePreviewZoom();
     };
@@ -433,10 +445,17 @@
       const preview = document.getElementById('template-preview');
       const scroll = document.querySelector('.template-preview-scroll');
       if (!preview || !scroll) return;
-      const available = Math.max(320, scroll.clientWidth - 68);
-      window.templatePreviewZoom = Math.min(1.4, Math.max(0.35, +(available / preview.offsetWidth).toFixed(2)));
+      window.templatePreviewZoomMode = 'fit';
+      const available = Math.max(240, scroll.clientWidth - 64);
+      window.templatePreviewZoom = Math.min(1.4, Math.max(0.28, +(available / preview.offsetWidth).toFixed(2)));
       window.applyTemplatePreviewZoom();
     };
+    window.addEventListener('resize', () => {
+      if (window.templatePreviewZoomMode === 'fit') window.fitTemplatePreviewToWidth();
+    });
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => window.fitTemplatePreviewToWidth(), 250);
+    });
   </script>
 
 </body>

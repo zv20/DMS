@@ -20,7 +20,8 @@ const updateState = {
   message: app.isPackaged ? 'Ready to check for updates.' : 'Updates are available only in the installed Windows app.',
   currentVersion: app.getVersion(),
   availableVersion: null,
-  downloaded: false
+  downloaded: false,
+  percent: null
 };
 
 autoUpdater.autoDownload = false;
@@ -28,34 +29,42 @@ autoUpdater.autoInstallOnAppQuit = false;
 
 function setUpdateState(next) {
   Object.assign(updateState, next, { currentVersion: app.getVersion() });
+  BrowserWindow.getAllWindows().forEach(browserWindow => {
+    browserWindow.webContents.send('desktop:updates:status-changed', { ...updateState });
+  });
 }
 
-autoUpdater.on('checking-for-update', () => setUpdateState({ status: 'checking', message: 'Checking for updates...', downloaded: false }));
+autoUpdater.on('checking-for-update', () => setUpdateState({ status: 'checking', message: 'Checking for updates...', downloaded: false, percent: null }));
 autoUpdater.on('update-available', info => setUpdateState({
   status: 'available',
   message: `Version ${info.version} is available.`,
   availableVersion: info.version,
-  downloaded: false
+  downloaded: false,
+  percent: null
 }));
 autoUpdater.on('update-not-available', () => setUpdateState({
   status: 'idle',
   message: 'You are running the latest version.',
   availableVersion: null,
-  downloaded: false
+  downloaded: false,
+  percent: null
 }));
 autoUpdater.on('download-progress', progress => setUpdateState({
   status: 'downloading',
-  message: `Downloading update: ${Math.round(progress.percent || 0)}%`
+  message: `Downloading update: ${Math.round(progress.percent || 0)}%`,
+  percent: Math.max(0, Math.min(100, Number(progress.percent) || 0))
 }));
 autoUpdater.on('update-downloaded', info => setUpdateState({
   status: 'downloaded',
   message: `Version ${info.version} is ready to install.`,
   availableVersion: info.version,
-  downloaded: true
+  downloaded: true,
+  percent: 100
 }));
 autoUpdater.on('error', error => setUpdateState({
   status: 'error',
-  message: error && error.message ? error.message : 'Update check failed.'
+  message: error && error.message ? error.message : 'Update check failed.',
+  percent: null
 }));
 
 if (isStorageTest) {

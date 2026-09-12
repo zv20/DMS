@@ -650,9 +650,23 @@
         </div>`;
     }
 
+    function renderEditorDayBlock(block, data, s) {
+        const day = data.days[block.style?.dayIndex || 0];
+        if (!day) return '';
+        const dys = normSize(s.dayNameSize, '12pt');
+        const dyff = ff(s, 'dayNameFontFamily');
+        const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
+        const bg = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        return `<section style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
+            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};">${day.name}</h3>
+            ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+        </section>`;
+    }
+
     function renderEditorBlockContent(block, data, s) {
         if (block.type === 'date') return fmtDateRange(data.startDate, data.endDate);
         if (block.type === 'menu') return renderEditorMenuBlock(data, s);
+        if (block.type === 'day') return renderEditorDayBlock(block, data, s);
         if (block.type === 'image') return `<img src="${block.style?.imageData || block.style?.src || ''}" style="display:block;width:100%;height:100%;object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
         if (block.type === 'shape') return `<div style="width:100%;height:100%;box-sizing:border-box;background:${block.style?.fill || '#f8f9fb'};border:${block.style?.strokeWidth ?? 1}px solid ${block.style?.stroke || '#1f2933'};opacity:${block.style?.opacity ?? 1};"></div>`;
         return block.style?.html || '';

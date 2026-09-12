@@ -53,6 +53,12 @@ contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
     getStatus: () => ipcRenderer.invoke('desktop:updates:get-status'),
     check: () => ipcRenderer.invoke('desktop:updates:check'),
     download: () => ipcRenderer.invoke('desktop:updates:download'),
-    install: () => ipcRenderer.invoke('desktop:updates:install')
+    install: () => ipcRenderer.invoke('desktop:updates:install'),
+    onStatusChanged: (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('desktop:updates:status-changed', listener);
+      return () => ipcRenderer.removeListener('desktop:updates:status-changed', listener);
+    }
   })
 }));

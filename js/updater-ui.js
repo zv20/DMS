@@ -50,6 +50,24 @@
     if (install) install.style.display = state.status === 'downloaded' ? 'inline-flex' : 'none';
   }
 
+  function renderProgress(state) {
+    const progress = document.getElementById('update-progress');
+    const fill = document.getElementById('update-progress-fill');
+    const label = document.getElementById('update-progress-label');
+    if (!progress || !fill || !label) return;
+
+    const isVisible = state.status === 'downloading' || state.status === 'downloaded';
+    const percent = state.status === 'downloaded'
+      ? 100
+      : Math.max(0, Math.min(100, Math.round(Number(state.percent) || 0)));
+
+    progress.classList.toggle('is-visible', isVisible);
+    progress.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+    fill.style.width = `${percent}%`;
+    fill.classList.toggle('is-active', state.status === 'downloading');
+    label.textContent = `${percent}%`;
+  }
+
   function renderStatus(state) {
     const el = document.getElementById('update-status');
     if (!el) return;
@@ -73,6 +91,7 @@
       </div>
     `;
     el.dataset.status = nextState.status || 'idle';
+    renderProgress(nextState);
     setButtons(nextState);
   }
 
@@ -116,6 +135,9 @@
   };
 
   window.addEventListener('DOMContentLoaded', () => {
+    if (window.dmsDesktop?.updates?.onStatusChanged) {
+      window.dmsDesktop.updates.onStatusChanged(renderStatus);
+    }
     setTimeout(refreshUpdateStatus, 800);
   });
 })(window);

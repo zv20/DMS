@@ -65,7 +65,7 @@ class StepTemplateBuilder {
             editorBlocks: [
                 this.createBlock('header', 'text', 'Header', 8, 6, 84, 9, { html: 'Седмично меню', fontFamily: 'Arial, sans-serif', fontSize: 24, color: '#d2691e', align: 'center', bold: true, italic: false, underline: false }),
                 this.createBlock('date', 'date', 'Date Range', 24, 16, 52, 5, { fontFamily: 'Arial, sans-serif', fontSize: 12, color: '#666666', align: 'center', bold: false, italic: false, underline: false }),
-                this.createBlock('menu', 'menu', 'Menu Content', 7, 24, 86, 54, { fontFamily: 'Arial, sans-serif', fontSize: 11, color: '#222222', align: 'left', columns: 1 }),
+                ...this.createDefaultDayBlocks(),
                 this.createBlock('footer', 'text', 'Footer', 18, 86, 64, 6, { html: 'Prepared with care by DMS', fontFamily: 'Arial, sans-serif', fontSize: 9, color: '#777777', align: 'center', bold: false, italic: false, underline: false })
             ]
         };
@@ -73,6 +73,26 @@ class StepTemplateBuilder {
 
     createBlock(id, type, label, x, y, width, height, style = {}) {
         return { id, type, label, visible: true, locked: false, x, y, width, height, zIndex: 30, style };
+    }
+
+    createDefaultDayBlocks() {
+        const labels = this.weekdayBlockLabels();
+        return labels.map((label, index) => this.createBlock(`day-${index}`, 'day', label, 7, 24 + (index * 12), 86, 10.5, {
+            dayIndex: index,
+            fontFamily: 'Arial, sans-serif',
+            fontSize: 11,
+            color: '#222222',
+            align: 'left',
+            lineHeight: 1.2,
+            backgroundColor: 'transparent'
+        }));
+    }
+
+    weekdayBlockLabels() {
+        const isBg = (window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg') === 'bg';
+        return isBg
+            ? ['Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък']
+            : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     }
 
     init() {
@@ -107,6 +127,8 @@ class StepTemplateBuilder {
         tabs.className = 'builder-tab-btns';
         tabs.innerHTML = `
             <button class="btn btn-secondary btn-small builder-tab-btn active" data-tab="builder">Editor</button>
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="templates">Saved Templates</button>
+            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="images">Images</button>
         `;
         const backButton = pageHeader.querySelector('button');
         if (backButton?.parentNode) backButton.parentNode.insertBefore(tabs, backButton.nextSibling);
@@ -117,123 +139,120 @@ class StepTemplateBuilder {
         const sidebar = document.getElementById('template-sidebar');
         const toolbar = document.querySelector('.template-canvas-toolbar');
         if (!sidebar || !toolbar) return;
-        sidebar.innerHTML = '';
+        sidebar.innerHTML = `
+            <div id="tab-builder" class="tab-content active"></div>
+            <div id="tab-templates" class="tab-content">${this.renderTemplatesTab()}</div>
+            <div id="tab-images" class="tab-content">${this.renderImagesTab()}</div>
+        `;
         toolbar.innerHTML = this.renderRibbon();
         this.bindTabControls();
         this.bindEditorControls();
         this.bindActionButtons();
+        this.applyTabVisibility();
     }
 
     renderRibbon() {
         const block = this.getSelectedBlock();
         const style = block?.style || {};
         const fonts = this._fonts();
-        const canTextStyle = block && block.type !== 'menu';
-        const blockOptions = this.settings.editorBlocks.map(item => `<option value="${this.escapeAttr(item.id)}" ${item.id === this.selectedBlockId ? 'selected' : ''}>${this.escapeHtml(item.label)}</option>`).join('');
+        const canTextStyle = block && !['image', 'shape'].includes(block.type);
+        const textBackground = style.backgroundColor && style.backgroundColor !== 'transparent' ? style.backgroundColor : '#ffffff';
         const templateOptions = Object.keys(window.menuTemplates || {}).sort().map(name => `<option value="${this.escapeAttr(name)}">${this.escapeHtml(name)}</option>`).join('');
+        const iconButton = (id, icon, title, extra = '') => `<button type="button" class="ribbon-btn icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}>${icon}</button>`;
         return `
             <div class="dms-ribbon">
-                <div class="ribbon-group ribbon-actions">
-                    <button type="button" class="btn btn-primary btn-small" id="btnSaveTemplate">Save</button>
-                    <button type="button" class="btn btn-secondary btn-small" id="btnLoadData">Load Data</button>
-                    <button type="button" class="btn btn-secondary btn-small" id="btnReset">Clear</button>
+                <div class="ribbon-row ribbon-row-primary">
+                    <div class="ribbon-group ribbon-actions">
+                        <button type="button" class="ribbon-command primary" id="btnSaveTemplate" title="Save template" aria-label="Save template">💾 <span>Save</span></button>
+                        <button type="button" class="ribbon-command" id="btnLoadData" title="Load menu data" aria-label="Load menu data">📅 <span>Load Data</span></button>
+                        <button type="button" class="ribbon-command" id="btnReset" title="Clear template" aria-label="Clear template">🧹 <span>Clear</span></button>
+                    </div>
+                    <div class="ribbon-group ribbon-template">
+                        <select id="savedTemplateSelect" title="Saved templates">
+                            <option value="">Saved Templates</option>
+                            ${templateOptions}
+                        </select>
+                        ${iconButton('btnLoadSavedTemplate', '📂', 'Open template')}
+                        ${iconButton('btnDeleteSavedTemplate', '🗑', 'Delete template')}
+                    </div>
+                    <div class="ribbon-group">
+                        ${iconButton('btnUndo', '↶', 'Undo')}
+                        ${iconButton('btnRedo', '↷', 'Redo')}
+                    </div>
+                    <div class="ribbon-group">
+                        ${iconButton('btnAddText', '▤', 'Add text box')}
+                        ${iconButton('btnAddImage', '🖼', 'Insert image')}
+                        <input type="file" id="canvasImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
+                        ${iconButton('btnAddRect', '▭', 'Add rectangle')}
+                        ${iconButton('btnAddLine', '╱', 'Add line')}
+                    </div>
+                    <div class="ribbon-group">
+                        ${iconButton('btnDuplicateBlock', '⧉', 'Duplicate selected')}
+                        ${iconButton('btnDeleteBlock', '⌫', 'Delete selected')}
+                        <button type="button" class="ribbon-btn icon-btn ${block?.locked ? 'active' : ''}" id="btnLockBlock" title="Lock or unlock selected" aria-label="Lock or unlock selected">${block?.locked ? '🔒' : '🔓'}</button>
+                    </div>
+                    <div class="ribbon-group">
+                        ${iconButton('btnBringForward', '⬆', 'Bring forward')}
+                        ${iconButton('btnSendBackward', '⬇', 'Send backward')}
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="left" title="Align page left" aria-label="Align page left">⇤</button>
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="center" title="Align page center" aria-label="Align page center">↔</button>
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="right" title="Align page right" aria-label="Align page right">⇥</button>
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="top" title="Align page top" aria-label="Align page top">⇡</button>
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="middle" title="Align page middle" aria-label="Align page middle">↕</button>
+                        <button type="button" class="ribbon-btn icon-btn" data-page-align="bottom" title="Align page bottom" aria-label="Align page bottom">⇣</button>
+                    </div>
+                    <div class="ribbon-group">
+                        <button type="button" class="ribbon-btn icon-btn" onclick="window.setTemplatePreviewZoom(-0.1)" title="Zoom out" aria-label="Zoom out">⌕−</button>
+                        <span id="templateZoomLabel" class="ribbon-zoom-label">${Math.round((window.templatePreviewZoom || 1) * 100)}%</span>
+                        <button type="button" class="ribbon-btn icon-btn" onclick="window.setTemplatePreviewZoom(0.1)" title="Zoom in" aria-label="Zoom in">⌕+</button>
+                        <button type="button" class="ribbon-btn text-icon-btn" onclick="window.fitTemplatePreviewToWidth()" title="Fit page to screen" aria-label="Fit page to screen">⌕ Fit</button>
+                    </div>
                 </div>
-                <div class="ribbon-group ribbon-template">
-                    <select id="savedTemplateSelect" title="Saved templates">
-                        <option value="">Templates</option>
-                        ${templateOptions}
-                    </select>
-                    <button type="button" class="ribbon-btn" id="btnLoadSavedTemplate" title="Load template">Open</button>
-                    <button type="button" class="ribbon-btn" id="btnDeleteSavedTemplate" title="Delete template">Del</button>
-                </div>
-                <div class="ribbon-group">
-                    <button type="button" class="ribbon-btn" id="btnUndo" title="Undo">↶</button>
-                    <button type="button" class="ribbon-btn" id="btnRedo" title="Redo">↷</button>
-                </div>
-                <div class="ribbon-group ribbon-object">
-                    <select id="ribbonBlockSelect" title="Selected object">${blockOptions}</select>
-                    <input id="blockLabel" type="text" value="${this.escapeAttr(block?.label || '')}" title="Object label" ${!block ? 'disabled' : ''}>
-                    <label class="ribbon-check"><input type="checkbox" id="selectedBlockVisible" ${block?.visible ? 'checked' : ''} ${!block ? 'disabled' : ''}> Visible</label>
-                </div>
-                <div class="ribbon-group">
-                    <button type="button" class="ribbon-btn" id="btnAddText" title="Add text">T</button>
-                    <button type="button" class="ribbon-btn" id="btnAddImage" title="Insert image">▧</button>
-                    <input type="file" id="canvasImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
-                    <button type="button" class="ribbon-btn" id="btnAddRect" title="Add rectangle">□</button>
-                    <button type="button" class="ribbon-btn" id="btnAddLine" title="Add line">─</button>
-                    <button type="button" class="ribbon-btn" id="btnDuplicateBlock" title="Duplicate">⧉</button>
-                    <button type="button" class="ribbon-btn" id="btnDeleteBlock" title="Hide/Delete">⌫</button>
-                    <button type="button" class="ribbon-btn ${block?.locked ? 'active' : ''}" id="btnLockBlock" title="Lock/unlock">${block?.locked ? 'L' : 'U'}</button>
-                </div>
-                <div class="ribbon-group">
-                    <button type="button" class="ribbon-btn" id="btnBringForward" title="Bring forward">↑</button>
-                    <button type="button" class="ribbon-btn" id="btnSendBackward" title="Send backward">↓</button>
-                    <button type="button" class="ribbon-btn" data-page-align="left" title="Align page left">⇤</button>
-                    <button type="button" class="ribbon-btn" data-page-align="center" title="Align page center">↔</button>
-                    <button type="button" class="ribbon-btn" data-page-align="right" title="Align page right">⇥</button>
-                    <button type="button" class="ribbon-btn" data-page-align="top" title="Align page top">⇡</button>
-                    <button type="button" class="ribbon-btn" data-page-align="middle" title="Align page middle">↕</button>
-                    <button type="button" class="ribbon-btn" data-page-align="bottom" title="Align page bottom">⇣</button>
-                </div>
-                <div class="ribbon-group ribbon-wide">
-                    <select id="ribbonFont" ${!block ? 'disabled' : ''}>${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${style.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
-                    <input id="ribbonSize" type="number" min="6" max="120" value="${style.fontSize || 12}" ${!block ? 'disabled' : ''}>
-                    <input id="ribbonColor" type="color" value="${style.color || '#222222'}" ${!block ? 'disabled' : ''}>
-                </div>
-                <div class="ribbon-group">
-                    <button type="button" class="ribbon-btn ${style.bold ? 'active' : ''}" data-style-toggle="bold" ${!canTextStyle ? 'disabled' : ''} title="Bold"><b>B</b></button>
-                    <button type="button" class="ribbon-btn ${style.italic ? 'active' : ''}" data-style-toggle="italic" ${!canTextStyle ? 'disabled' : ''} title="Italic"><i>I</i></button>
-                    <button type="button" class="ribbon-btn ${style.underline ? 'active' : ''}" data-style-toggle="underline" ${!canTextStyle ? 'disabled' : ''} title="Underline"><u>U</u></button>
-                </div>
-                <div class="ribbon-group">${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn ${style.align === a ? 'active' : ''}" data-align="${a}" ${!block ? 'disabled' : ''} title="${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}</div>
-                <div class="ribbon-group ribbon-text-more">
-                    <label>LH<input type="number" id="ribbonLineHeight" min="0.8" max="3" step="0.1" value="${style.lineHeight || 1.2}" ${!block || block.type !== 'text' ? 'disabled' : ''}></label>
-                    <input id="ribbonHighlight" type="color" value="${style.backgroundColor || '#ffffff'}" title="Text background" ${!block || block.type !== 'text' ? 'disabled' : ''}>
-                    <button type="button" class="ribbon-btn" id="btnClearFormatting" title="Clear formatting">Tx</button>
-                </div>
-                <div class="ribbon-group ribbon-image-tools">
-                    <select id="imageFit" title="Image fit" ${!block || block.type !== 'image' ? 'disabled' : ''}>
-                        <option value="contain" ${style.fit === 'contain' ? 'selected' : ''}>Fit</option>
-                        <option value="cover" ${style.fit === 'cover' ? 'selected' : ''}>Fill</option>
-                        <option value="fill" ${style.fit === 'fill' ? 'selected' : ''}>Stretch</option>
-                    </select>
-                    <label>Opacity<input type="number" id="imageOpacity" min="10" max="100" value="${Math.round((style.opacity ?? 1) * 100)}" ${!block || block.type !== 'image' ? 'disabled' : ''}></label>
-                </div>
-                <div class="ribbon-group ribbon-shape-tools">
-                    <input id="shapeFill" type="color" value="${style.fill || '#f8f9fb'}" title="Shape fill" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
-                    <input id="shapeStroke" type="color" value="${style.stroke || '#1f2933'}" title="Shape border" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
-                    <label>Border<input type="number" id="shapeStrokeWidth" min="0" max="20" value="${style.strokeWidth ?? 1}" ${!block || block.type !== 'shape' ? 'disabled' : ''}></label>
-                </div>
-                <div class="ribbon-group ribbon-position">
-                    <label>X<input type="number" id="blockX" min="0" max="100" value="${Math.round(block?.x || 0)}" ${!block ? 'disabled' : ''}></label>
-                    <label>Y<input type="number" id="blockY" min="0" max="100" value="${Math.round(block?.y || 0)}" ${!block ? 'disabled' : ''}></label>
-                    <label>W<input type="number" id="blockW" min="5" max="100" value="${Math.round(block?.width || 0)}" ${!block ? 'disabled' : ''}></label>
-                    <label>H<input type="number" id="blockH" min="4" max="100" value="${Math.round(block?.height || 0)}" ${!block ? 'disabled' : ''}></label>
-                </div>
-                <div class="ribbon-group">
-                    <label class="ribbon-check"><input type="checkbox" id="toggleHeader" ${this.settings.showHeader ? 'checked' : ''}> Header</label>
-                    <label class="ribbon-check"><input type="checkbox" id="toggleDate" ${this.settings.showDateRange ? 'checked' : ''}> Date</label>
-                    <label class="ribbon-check"><input type="checkbox" id="toggleFooter" ${this.settings.showFooter ? 'checked' : ''}> Footer</label>
-                </div>
-                <div class="ribbon-group ribbon-page">
-                    <select id="templateStyle" title="Template layout">
-                        <option value="compact" ${this.settings.templateStyle === 'compact' ? 'selected' : ''}>Compact</option>
-                        <option value="detailed" ${this.settings.templateStyle === 'detailed' ? 'selected' : ''}>Detailed</option>
-                        <option value="detailed-2col" ${this.settings.templateStyle === 'detailed-2col' ? 'selected' : ''}>2 Columns</option>
-                    </select>
-                    <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color">
-                    <label class="ribbon-check"><input type="checkbox" id="dayBorder" ${this.settings.dayBorder ? 'checked' : ''}> Borders</label>
-                    <input type="color" id="dayBorderColor" value="${this.settings.dayBorderColor}" title="Day border color">
-                    <label class="ribbon-check"><input type="checkbox" id="dayBgTransparent" ${!this.settings.dayBackground || this.settings.dayBackground === 'transparent' ? 'checked' : ''}> Clear day</label>
-                    <input type="color" id="dayBackgroundColor" value="${this.settings.dayBackground && this.settings.dayBackground !== 'transparent' ? this.settings.dayBackground : '#ffffff'}" title="Day background">
-                    <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> Guides</label>
-                    <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> Snap</label>
-                </div>
-                <div class="ribbon-group">
-                    <button type="button" class="ribbon-btn" onclick="window.setTemplatePreviewZoom(-0.1)" title="Zoom out">−</button>
-                    <span id="templateZoomLabel">${Math.round((window.templatePreviewZoom || 1) * 100)}%</span>
-                    <button type="button" class="ribbon-btn" onclick="window.setTemplatePreviewZoom(0.1)" title="Zoom in">+</button>
-                    <button type="button" class="ribbon-btn" onclick="window.fitTemplatePreviewToWidth()" title="Fit to width">Fit</button>
+                <div class="ribbon-row ribbon-row-format">
+                    <div class="ribbon-group ribbon-selected-name" title="Selected object">
+                        <span class="selected-object-dot"></span>
+                        <input id="blockLabel" type="text" value="${this.escapeAttr(block?.label || '')}" aria-label="Selected object label" ${!block ? 'disabled' : ''}>
+                    </div>
+                    <div class="ribbon-group ribbon-wide">
+                        <select id="ribbonFont" title="Font family" ${!canTextStyle ? 'disabled' : ''}>${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${style.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
+                        <input id="ribbonSize" type="number" min="6" max="120" value="${style.fontSize || 12}" title="Font size" ${!canTextStyle ? 'disabled' : ''}>
+                        <input id="ribbonColor" type="color" value="${style.color || '#222222'}" title="Text color" ${!canTextStyle ? 'disabled' : ''}>
+                        <input id="ribbonHighlight" type="color" value="${textBackground}" title="Text background" ${!canTextStyle ? 'disabled' : ''}>
+                    </div>
+                    <div class="ribbon-group">
+                        <button type="button" class="ribbon-btn icon-btn ${style.bold ? 'active' : ''}" data-style-toggle="bold" ${!canTextStyle ? 'disabled' : ''} title="Bold" aria-label="Bold"><b>B</b></button>
+                        <button type="button" class="ribbon-btn icon-btn ${style.italic ? 'active' : ''}" data-style-toggle="italic" ${!canTextStyle ? 'disabled' : ''} title="Italic" aria-label="Italic"><i>I</i></button>
+                        <button type="button" class="ribbon-btn icon-btn ${style.underline ? 'active' : ''}" data-style-toggle="underline" ${!canTextStyle ? 'disabled' : ''} title="Underline" aria-label="Underline"><u>U</u></button>
+                        ${iconButton('btnClearFormatting', 'Tx', 'Clear formatting', !canTextStyle ? 'disabled' : '')}
+                    </div>
+                    <div class="ribbon-group">${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${style.align === a ? 'active' : ''}" data-align="${a}" ${!canTextStyle ? 'disabled' : ''} title="Align ${a}" aria-label="Align ${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}</div>
+                    <div class="ribbon-group ribbon-text-more">
+                        <label title="Line height">LH<input type="number" id="ribbonLineHeight" min="0.8" max="3" step="0.1" value="${style.lineHeight || 1.2}" ${!canTextStyle ? 'disabled' : ''}></label>
+                    </div>
+                    <div class="ribbon-group ribbon-image-tools">
+                        <select id="imageFit" title="Image fit" ${!block || block.type !== 'image' ? 'disabled' : ''}>
+                            <option value="contain" ${style.fit === 'contain' ? 'selected' : ''}>Fit</option>
+                            <option value="cover" ${style.fit === 'cover' ? 'selected' : ''}>Fill</option>
+                            <option value="fill" ${style.fit === 'fill' ? 'selected' : ''}>Stretch</option>
+                        </select>
+                        <label title="Image opacity">Opacity<input type="number" id="imageOpacity" min="10" max="100" value="${Math.round((style.opacity ?? 1) * 100)}" ${!block || block.type !== 'image' ? 'disabled' : ''}></label>
+                    </div>
+                    <div class="ribbon-group ribbon-shape-tools">
+                        <input id="shapeFill" type="color" value="${style.fill || '#f8f9fb'}" title="Shape fill" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
+                        <input id="shapeStroke" type="color" value="${style.stroke || '#1f2933'}" title="Shape border" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
+                        <label title="Border size">Border<input type="number" id="shapeStrokeWidth" min="0" max="20" value="${style.strokeWidth ?? 1}" ${!block || block.type !== 'shape' ? 'disabled' : ''}></label>
+                    </div>
+                    <div class="ribbon-group ribbon-position">
+                        <label>X<input type="number" id="blockX" min="0" max="100" value="${Math.round(block?.x || 0)}" ${!block ? 'disabled' : ''}></label>
+                        <label>Y<input type="number" id="blockY" min="0" max="100" value="${Math.round(block?.y || 0)}" ${!block ? 'disabled' : ''}></label>
+                        <label>W<input type="number" id="blockW" min="5" max="100" value="${Math.round(block?.width || 0)}" ${!block ? 'disabled' : ''}></label>
+                        <label>H<input type="number" id="blockH" min="4" max="100" value="${Math.round(block?.height || 0)}" ${!block ? 'disabled' : ''}></label>
+                    </div>
+                    <div class="ribbon-group">
+                        <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color">
+                        <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> Guides</label>
+                        <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> Snap</label>
+                    </div>
                 </div>
             </div>
         `;
@@ -308,10 +327,17 @@ class StepTemplateBuilder {
 
     async switchTab(tab) {
         this.currentTab = tab;
-        document.querySelectorAll('.builder-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
+        this.applyTabVisibility();
         if (tab === 'templates') await this.loadTemplates();
         if (tab === 'images') await this.loadImages();
+    }
+
+    applyTabVisibility() {
+        const tab = this.currentTab || 'builder';
+        const sidebar = document.getElementById('template-sidebar');
+        document.querySelectorAll('.builder-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
+        if (sidebar) sidebar.classList.toggle('is-open', tab !== 'builder');
     }
 
     bindEditorControls() {
@@ -505,7 +531,7 @@ class StepTemplateBuilder {
     deleteSelectedBlock() {
         const block = this.getSelectedBlock();
         if (!block) return;
-        if (['header', 'date', 'menu', 'footer'].includes(block.id)) block.visible = false;
+        if (['header', 'date', 'footer'].includes(block.id) || block.type === 'day') block.visible = false;
         else this.settings.editorBlocks = this.settings.editorBlocks.filter(item => item.id !== block.id);
         this.selectedBlockId = this.settings.editorBlocks[0]?.id || 'header';
         this.syncLegacySettings();
@@ -614,14 +640,43 @@ class StepTemplateBuilder {
             this.settings.editorBlocks = this.getDefaultSettings().editorBlocks;
             this.syncBlocksFromLegacy();
         }
+        this.ensureDayBlocks();
         this.syncLegacySettings();
+    }
+
+    ensureDayBlocks() {
+        const oldMenu = this.getBlock('menu');
+        const dayBlocks = this.settings.editorBlocks.filter(block => block.type === 'day');
+        if (dayBlocks.length >= 5) return;
+
+        const source = oldMenu || { x: 7, y: 24, width: 86, height: 54, zIndex: 30, style: {} };
+        const gap = 1.4;
+        const dayHeight = Math.max(8, ((source.height || 54) - (gap * 4)) / 5);
+        const existingIds = new Set(this.settings.editorBlocks.map(block => block.id));
+        const labels = this.weekdayBlockLabels();
+        labels.forEach((label, index) => {
+            if (existingIds.has(`day-${index}`)) return;
+            const block = this.createBlock(`day-${index}`, 'day', label, source.x || 7, (source.y || 24) + (index * (dayHeight + gap)), source.width || 86, dayHeight, {
+                ...(source.style || {}),
+                dayIndex: index,
+                fontFamily: source.style?.fontFamily || this.settings.mealFontFamily || 'Arial, sans-serif',
+                fontSize: source.style?.fontSize || this.settings.mealFontSize || 11,
+                color: source.style?.color || '#222222',
+                align: source.style?.align || 'left',
+                lineHeight: source.style?.lineHeight || 1.2,
+                backgroundColor: source.style?.backgroundColor || 'transparent'
+            });
+            block.zIndex = (source.zIndex || 30) + index;
+            block.visible = source.visible !== false;
+            this.settings.editorBlocks.push(block);
+        });
+        if (oldMenu) oldMenu.visible = false;
     }
 
     syncBlocksFromLegacy() {
         const header = this.getBlock('header');
         const date = this.getBlock('date');
         const footer = this.getBlock('footer');
-        const menu = this.getBlock('menu');
         this.settings.editorBlocks.forEach((block, index) => {
             if (!block.zIndex) block.zIndex = 30 + index;
             if (!block.style) block.style = {};
@@ -629,14 +684,18 @@ class StepTemplateBuilder {
         if (header) Object.assign(header, { visible: this.settings.showHeader, style: { ...header.style, html: this.settings.headerText, fontFamily: this.settings.headerFontFamily, fontSize: this.settings.headerFontSize, color: this.settings.headerColor, align: this.settings.headerAlignment } });
         if (date) Object.assign(date, { visible: this.settings.showDateRange, style: { ...date.style, fontFamily: this.settings.dateFontFamily, fontSize: this.settings.dateFontSize, color: this.settings.dateColor, align: this.settings.dateAlignment } });
         if (footer) Object.assign(footer, { visible: this.settings.showFooter, style: { ...footer.style, html: this.settings.footerText, fontFamily: this.settings.footerFontFamily, fontSize: this.settings.footerFontSize, align: this.settings.footerAlignment } });
-        if (menu) Object.assign(menu.style, { fontFamily: this.settings.mealFontFamily, fontSize: this.settings.mealFontSize });
+        this.settings.editorBlocks.filter(block => block.type === 'day').forEach(block => {
+            Object.assign(block.style, {
+                fontFamily: block.style.fontFamily || this.settings.mealFontFamily,
+                fontSize: block.style.fontSize || this.settings.mealFontSize
+            });
+        });
     }
 
     syncLegacySettings() {
         const header = this.getBlock('header');
         const date = this.getBlock('date');
         const footer = this.getBlock('footer');
-        const menu = this.getBlock('menu');
         if (header) {
             this.settings.showHeader = header.visible;
             this.settings.headerText = header.style.html || '';
@@ -659,9 +718,10 @@ class StepTemplateBuilder {
             this.settings.footerFontSize = footer.style.fontSize || 9;
             this.settings.footerAlignment = footer.style.align || 'center';
         }
-        if (menu) {
-            this.settings.mealFontFamily = menu.style.fontFamily || 'Arial, sans-serif';
-            this.settings.mealFontSize = menu.style.fontSize || 11;
+        const day = this.settings.editorBlocks.find(block => block.type === 'day');
+        if (day) {
+            this.settings.mealFontFamily = day.style.fontFamily || 'Arial, sans-serif';
+            this.settings.mealFontSize = day.style.fontSize || 11;
         }
     }
 
@@ -676,7 +736,8 @@ class StepTemplateBuilder {
             </div>
         `;
         this.bindCanvasInteractions();
-        if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
+        if (window.templatePreviewZoomMode === 'fit' && typeof window.fitTemplatePreviewToWidth === 'function') window.fitTemplatePreviewToWidth();
+        else if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
     }
 
     renderEditableBlock(block) {
@@ -696,6 +757,7 @@ class StepTemplateBuilder {
     renderBlockContent(block) {
         if (block.type === 'date') return this.getDateRangeText();
         if (block.type === 'menu') return this.renderMenuContent(block);
+        if (block.type === 'day') return this.renderDayContent(block);
         if (block.type === 'image') return `<img class="canvas-image" src="${this.escapeAttr(block.style?.imageData || block.style?.src || '')}" alt="" style="object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
         if (block.type === 'shape') return `<div class="canvas-shape ${block.style?.kind === 'line' ? 'line' : 'rectangle'}" style="background:${block.style?.fill || '#f8f9fb'};border:${block.style?.strokeWidth ?? 1}px solid ${block.style?.stroke || '#1f2933'};opacity:${block.style?.opacity ?? 1};"></div>`;
         return block.style?.html || '';
@@ -712,6 +774,20 @@ class StepTemplateBuilder {
                 </section>
             `).join('')}
         </div>`;
+    }
+
+    renderDayContent(block) {
+        const s = this.settings;
+        const day = this.previewData?.days?.[block.style?.dayIndex || 0];
+        if (!day) return '';
+        const border = s.dayBorder ? `border:${s.dayBorderThickness} ${s.dayBorderStyle} ${s.dayBorderColor};` : '';
+        const bg = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        return `
+            <section class="editor-day-card single-day" style="${border}${bg}">
+                <h3 style="font-family:${s.dayNameFontFamily};font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight};">${this.escapeHtml(day.name)}</h3>
+                ${day.meals.map(meal => this.renderMealLine(meal)).join('')}
+            </section>
+        `;
     }
 
     renderMealLine(meal) {
