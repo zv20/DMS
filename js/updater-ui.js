@@ -22,6 +22,23 @@
     }[char]));
   }
 
+  function friendlyError(error, fallback) {
+    const message = error && error.message ? error.message : '';
+    if (/status 404/i.test(message) || /Cannot download/i.test(message)) {
+      return text(
+        'The update file was not found on GitHub. The release may still be uploading or its asset name may not match the update feed.',
+        'Файлът за обновление не беше намерен в GitHub. Възможно е релийзът още да се качва или името на файла да не съвпада с update feed.'
+      );
+    }
+    if (/network|getaddrinfo|ENOTFOUND|ECONNRESET|ETIMEDOUT/i.test(message)) {
+      return text(
+        'Network error while checking for updates. Check your internet connection and try again.',
+        'Мрежова грешка при проверката за обновления. Проверете интернет връзката и опитайте отново.'
+      );
+    }
+    return message || fallback;
+  }
+
   function setButtons(state) {
     const check = document.getElementById('btn-check-updates');
     const download = document.getElementById('btn-download-update');
@@ -66,7 +83,7 @@
     } catch (error) {
       renderStatus({
         status: 'error',
-        message: error && error.message ? error.message : text('Unable to read update status.', 'Не може да се прочете статуса на обновленията.')
+        message: friendlyError(error, text('Unable to read update status.', 'Не може да се прочете статуса на обновленията.'))
       });
     }
   }
@@ -79,7 +96,7 @@
     try {
       renderStatus(await window.dmsDesktop.updates.check());
     } catch (error) {
-      renderStatus({ status: 'error', message: error && error.message ? error.message : text('Update check failed.', 'Проверката за обновления не успя.') });
+      renderStatus({ status: 'error', message: friendlyError(error, text('Update check failed.', 'Проверката за обновления не успя.')) });
     }
   };
 
@@ -89,7 +106,7 @@
     try {
       renderStatus(await window.dmsDesktop.updates.download());
     } catch (error) {
-      renderStatus({ status: 'error', message: error && error.message ? error.message : text('Update download failed.', 'Изтеглянето на обновлението не успя.') });
+      renderStatus({ status: 'error', message: friendlyError(error, text('Update download failed.', 'Изтеглянето на обновлението не успя.')) });
     }
   };
 

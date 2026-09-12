@@ -6,7 +6,7 @@
   window.storageAdapter = {
     isDesktop: false,
     async init() {
-      throw new Error('KitchenPro DMS is configured as a Windows desktop app and requires Electron SQLite storage.');
+      throw new Error('DMS is configured as a desktop app and requires Electron SQLite storage.');
     }
   };
 })(window);

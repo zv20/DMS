@@ -1,8 +1,8 @@
 {
-  "name": "kitchenpro-dms",
+  "name": "dms",
   "version": "1.0.5",
   "private": false,
-  "description": "KitchenPro DMS desktop application",
+  "description": "DMS desktop application",
   "main": "electron/main.cjs",
   "engines": {
     "node": ">=20"
@@ -29,8 +29,8 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.kitchenpro.dms",
-    "productName": "KitchenPro DMS",
+    "appId": "com.dms.app",
+    "productName": "DMS",
     "directories": {
       "output": "release"
     },
@@ -38,7 +38,7 @@
       {
         "provider": "github",
         "owner": "zv20",
-        "repo": "KitchenPro-DMS"
+        "repo": "DMS"
       }
     ],
     "files": [
@@ -69,11 +69,11 @@
         "dmg",
         "zip"
       ],
-      "artifactName": "KitchenPro-DMS-${version}-${arch}.${ext}",
+      "artifactName": "DMS-${version}-${arch}.${ext}",
       "category": "public.app-category.business"
     },
     "nsis": {
-      "artifactName": "KitchenPro-DMS-${version}-${arch}-Setup.${ext}",
+      "artifactName": "DMS-${version}-${arch}-Setup.${ext}",
       "oneClick": false,
       "perMachine": false,
       "allowElevation": true,
@@ -81,7 +81,7 @@
       "deleteAppDataOnUninstall": false
     },
     "portable": {
-      "artifactName": "KitchenPro-DMS-${version}-${arch}-Portable.${ext}"
+      "artifactName": "DMS-${version}-${arch}-Portable.${ext}"
     }
   }
 }

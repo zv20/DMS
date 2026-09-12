@@ -1,4 +1,4 @@
-# KitchenPro DMS — Architecture Documentation
+# DMS Architecture Documentation
 
 > **Last Updated:** February 22, 2026  
 > **Version:** 14.8  
@@ -65,7 +65,7 @@ DMS/
 **Storage backends:**
 
 - **File System API** (Chrome/Edge): data lives in `data/data.json`, `data/menus.json`, `data/settings.json`, `data/templates.json` inside user-selected folder
-- **IndexedDB** (Firefox/Safari): stores `recipes`, `ingredients`, `allergens`, `menu`, `settings`, `templates`, `handles` object stores in `KitchenProDB` (v2)
+- **IndexedDB** (Firefox/Safari): stores `recipes`, `ingredients`, `allergens`, `menu`, `settings`, `templates`, `handles` object stores in `DMSDB` (v2)
 
 #### `store.js`
 **Purpose:** CRUD operations and save/load wiring on top of `storage-adapter.js`.
@@ -223,7 +223,7 @@ The folder handle is persisted to IndexedDB (`handles` store) so permission only
 
 ### IndexedDB (Firefox/Safari)
 
-Database: `KitchenProDB` (version 2)
+Database: `DMSDB` (version 2)
 
 | Store | Key | Content |
 |---|---|---|

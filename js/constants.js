@@ -142,7 +142,7 @@
         // Default Text Values
         TEXT: {
             DEFAULT_HEADER: 'Weekly Menu',
-            DEFAULT_FOOTER: 'Prepared with care by KitchenPro',
+            DEFAULT_FOOTER: 'Prepared with care by DMS',
             DEFAULT_MEAL_NUMBER_SUFFIX: '.'
         },
 

@@ -33,7 +33,7 @@ The app is configured to use GitHub Releases from:
   {
     "provider": "github",
     "owner": "zv20",
-    "repo": "KitchenPro-DMS"
+    "repo": "DMS"
   }
 ]
 ```
@@ -54,10 +54,10 @@ git push origin v1.0.1
 
 GitHub Actions will build the desktop app and attach these files to the GitHub Release:
 
-- `KitchenPro-DMS-<version>-x64-Setup.exe`
-- `KitchenPro-DMS-<version>-x64-Portable.exe`
-- `KitchenPro-DMS-<version>-x64.dmg`
-- `KitchenPro-DMS-<version>-arm64.dmg`
+- `DMS-<version>-x64-Setup.exe`
+- `DMS-<version>-x64-Portable.exe`
+- `DMS-<version>-x64.dmg`
+- `DMS-<version>-arm64.dmg`
 - macOS `.zip` files
 - `latest.yml`
 - `latest-mac.yml`

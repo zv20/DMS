@@ -325,7 +325,7 @@ ipcMain.handle('desktop:storage:export', async (event) => {
   const { writeFile } = require('node:fs/promises');
   const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender), {
     title: 'Export DMS backup',
-    defaultPath: `kitchenpro-backup-${new Date().toISOString().slice(0, 10)}.json`,
+    defaultPath: `dms-backup-${new Date().toISOString().slice(0, 10)}.json`,
     filters: [{ name: 'DMS backup', extensions: ['json'] }]
   });
   if (result.canceled || !result.filePath) return false;
