@@ -102,7 +102,6 @@ class StepTemplateBuilder {
 
     setup() {
         this.ensureEditorBlocks();
-        this.injectTabsIntoHeader();
         this.buildUI();
         this.loadSampleData();
         this.pushHistory();
@@ -120,25 +119,18 @@ class StepTemplateBuilder {
         ];
     }
 
-    injectTabsIntoHeader() {
-        const pageHeader = document.querySelector('#style-editor .page-header');
-        if (!pageHeader || document.querySelector('.builder-tab-btns')) return;
-        const tabs = document.createElement('div');
-        tabs.className = 'builder-tab-btns';
-        tabs.innerHTML = `
-            <button class="btn btn-secondary btn-small builder-tab-btn active" data-tab="builder">Editor</button>
-            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="templates">Saved Templates</button>
-            <button class="btn btn-secondary btn-small builder-tab-btn" data-tab="images">Images</button>
-        `;
-        const backButton = pageHeader.querySelector('button');
-        if (backButton?.parentNode) backButton.parentNode.insertBefore(tabs, backButton.nextSibling);
-        else pageHeader.appendChild(tabs);
-    }
-
     buildUI() {
         const sidebar = document.getElementById('template-sidebar');
+        const tabs = document.getElementById('template-builder-tabs');
         const toolbar = document.querySelector('.template-canvas-toolbar');
         if (!sidebar || !toolbar) return;
+        if (tabs) {
+            tabs.innerHTML = `
+                <button class="builder-tab-btn active" data-tab="builder" type="button">Editor</button>
+                <button class="builder-tab-btn" data-tab="templates" type="button">Saved Templates</button>
+                <button class="builder-tab-btn" data-tab="images" type="button">Images</button>
+            `;
+        }
         sidebar.innerHTML = `
             <div id="tab-builder" class="tab-content active"></div>
             <div id="tab-templates" class="tab-content">${this.renderTemplatesTab()}</div>
@@ -149,6 +141,8 @@ class StepTemplateBuilder {
         this.bindEditorControls();
         this.bindActionButtons();
         this.applyTabVisibility();
+        if (this.currentTab === 'templates') setTimeout(() => this.loadTemplates(), 0);
+        if (this.currentTab === 'images') setTimeout(() => this.loadImages(), 0);
     }
 
     renderRibbon() {
@@ -158,6 +152,9 @@ class StepTemplateBuilder {
         const canTextStyle = block && !['image', 'shape'].includes(block.type);
         const textBackground = style.backgroundColor && style.backgroundColor !== 'transparent' ? style.backgroundColor : '#ffffff';
         const templateOptions = Object.keys(window.menuTemplates || {}).sort().map(name => `<option value="${this.escapeAttr(name)}">${this.escapeHtml(name)}</option>`).join('');
+        const pageBackground = this.settings.backgroundImages?.[0] || {};
+        const hasPageBackground = !!pageBackground.image;
+        const pageBackgroundLabel = hasPageBackground ? pageBackground.image : 'No image';
         const iconButton = (id, icon, title, extra = '') => `<button type="button" class="ribbon-btn icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}>${icon}</button>`;
         return `
             <div class="dms-ribbon">
@@ -248,8 +245,37 @@ class StepTemplateBuilder {
                         <label>W<input type="number" id="blockW" min="5" max="100" value="${Math.round(block?.width || 0)}" ${!block ? 'disabled' : ''}></label>
                         <label>H<input type="number" id="blockH" min="4" max="100" value="${Math.round(block?.height || 0)}" ${!block ? 'disabled' : ''}></label>
                     </div>
-                    <div class="ribbon-group">
-                        <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color">
+                    <div class="ribbon-group ribbon-page">
+                        <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color" aria-label="Page color">
+                        <div class="page-background-control">
+                            <button type="button" class="ribbon-command page-background-btn ${hasPageBackground ? 'active' : ''}" id="btnPageBackground" title="Page Background" aria-label="Page Background">
+                                ▧ <span>Page Background</span>
+                            </button>
+                            <span class="page-background-label" title="${this.escapeAttr(pageBackgroundLabel)}">${this.escapeHtml(pageBackgroundLabel)}</span>
+                            <div id="pageBackgroundMenu" class="page-background-menu" hidden>
+                                <button type="button" data-bg-action="upload">Upload new image</button>
+                                <button type="button" data-bg-action="clear" ${!hasPageBackground ? 'disabled' : ''}>Clear background</button>
+                                <div id="pageBackgroundChoices" class="page-background-choices">
+                                    <div class="empty-state">Open to load background images.</div>
+                                </div>
+                                <label>Fit
+                                    <select id="pageBackgroundFit" ${!hasPageBackground ? 'disabled' : ''}>
+                                        <option value="100" ${Math.round(pageBackground.size || 100) === 100 ? 'selected' : ''}>Fit page</option>
+                                        <option value="140" ${Math.round(pageBackground.size || 100) === 140 ? 'selected' : ''}>Fill page</option>
+                                        <option value="50" ${Math.round(pageBackground.size || 100) === 50 ? 'selected' : ''}>Small</option>
+                                    </select>
+                                </label>
+                                <label>Position
+                                    <select id="pageBackgroundPosition" ${!hasPageBackground ? 'disabled' : ''}>
+                                        ${['center', 'top-left', 'top-right', 'bottom-left', 'bottom-right'].map(position => `<option value="${position}" ${pageBackground.position === position ? 'selected' : ''}>${this.escapeHtml(this.formatBackgroundPosition(position))}</option>`).join('')}
+                                    </select>
+                                </label>
+                                <label>Opacity
+                                    <input type="range" id="pageBackgroundOpacity" min="5" max="100" value="${Math.round((pageBackground.opacity ?? 0.25) * 100)}" ${!hasPageBackground ? 'disabled' : ''}>
+                                </label>
+                            </div>
+                        </div>
+                        <input type="file" id="backgroundImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
                         <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> Guides</label>
                         <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> Snap</label>
                     </div>
@@ -313,10 +339,19 @@ class StepTemplateBuilder {
     renderImagesTab() {
         return `
             <section class="editor-panel">
-                <h2>Background Images</h2>
                 <input type="file" id="imagesTabUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
-                <button id="btnUploadImageFromTab" class="btn btn-primary">Upload Image</button>
-                <div id="bg-images-list" class="image-grid"></div>
+                <div class="panel-title-row">
+                    <h2>Images</h2>
+                    <button id="btnUploadImageFromTab" class="btn btn-primary">Upload Background</button>
+                </div>
+                <div class="image-library-section">
+                    <h3>Inserted Images</h3>
+                    <div id="object-images-list" class="image-grid"></div>
+                </div>
+                <div class="image-library-section">
+                    <h3>Background Images</h3>
+                    <div id="bg-images-list" class="image-grid"></div>
+                </div>
             </section>
         `;
     }
@@ -335,9 +370,14 @@ class StepTemplateBuilder {
     applyTabVisibility() {
         const tab = this.currentTab || 'builder';
         const sidebar = document.getElementById('template-sidebar');
+        const layout = document.querySelector('.builder-layout');
         document.querySelectorAll('.builder-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
         if (sidebar) sidebar.classList.toggle('is-open', tab !== 'builder');
+        if (layout) {
+            layout.classList.toggle('is-editor-page', tab === 'builder');
+            layout.classList.toggle('is-library-page', tab !== 'builder');
+        }
     }
 
     bindEditorControls() {
@@ -414,7 +454,8 @@ class StepTemplateBuilder {
         document.getElementById('btnSaveTemplate')?.addEventListener('click', () => this.saveTemplate());
         document.getElementById('btnReset')?.addEventListener('click', () => this.reset());
         document.getElementById('btnAddText')?.addEventListener('click', () => this.addTextBlock());
-        document.getElementById('btnAddImage')?.addEventListener('click', () => document.getElementById('canvasImageUpload')?.click());
+        document.getElementById('btnAddImage')?.addEventListener('click', () => this.openInsertImageDialog());
+        this.bindPageBackgroundControls();
         document.getElementById('btnAddRect')?.addEventListener('click', () => this.addShapeBlock('rectangle'));
         document.getElementById('btnAddLine')?.addEventListener('click', () => this.addShapeBlock('line'));
         document.getElementById('btnDuplicateBlock')?.addEventListener('click', () => this.duplicateSelectedBlock());
@@ -426,7 +467,81 @@ class StepTemplateBuilder {
         document.getElementById('btnLoadSavedTemplate')?.addEventListener('click', () => this.loadSelectedTemplate());
         document.getElementById('btnDeleteSavedTemplate')?.addEventListener('click', () => this.deleteSelectedTemplate());
         document.getElementById('canvasImageUpload')?.addEventListener('change', e => this.addImageBlockFromFile(e.target));
+        document.getElementById('backgroundImageUpload')?.addEventListener('change', e => this.addBackgroundImageFromFile(e.target));
         this.bindImagesTabUpload();
+    }
+
+    bindPageBackgroundControls() {
+        const menu = document.getElementById('pageBackgroundMenu');
+        const button = document.getElementById('btnPageBackground');
+        if (this.pageBackgroundCloseHandler) document.removeEventListener('pointerdown', this.pageBackgroundCloseHandler);
+        this.pageBackgroundCloseHandler = () => {
+            const currentMenu = document.getElementById('pageBackgroundMenu');
+            if (currentMenu) currentMenu.hidden = true;
+        };
+        button?.addEventListener('pointerdown', event => {
+            event.stopPropagation();
+            if (menu) {
+                menu.hidden = !menu.hidden;
+                if (!menu.hidden) this.loadPageBackgroundMenuImages();
+            }
+        });
+        menu?.addEventListener('pointerdown', event => event.stopPropagation());
+        document.addEventListener('pointerdown', this.pageBackgroundCloseHandler);
+        menu?.querySelector('[data-bg-action="upload"]')?.addEventListener('click', () => {
+            menu.hidden = true;
+            document.getElementById('backgroundImageUpload')?.click();
+        });
+        menu?.querySelector('[data-bg-action="clear"]')?.addEventListener('click', () => {
+            menu.hidden = true;
+            this.applyBackgroundImage(null, null);
+        });
+        document.getElementById('pageBackgroundFit')?.addEventListener('change', event => this.updatePageBackgroundLayer('size', parseInt(event.target.value, 10) || 100));
+        document.getElementById('pageBackgroundPosition')?.addEventListener('change', event => this.updatePageBackgroundLayer('position', event.target.value));
+        document.getElementById('pageBackgroundOpacity')?.addEventListener('input', event => this.updatePageBackgroundLayer('opacity', this.clamp((parseInt(event.target.value, 10) || 25) / 100, 0.05, 1), false));
+    }
+
+    async loadPageBackgroundMenuImages() {
+        const container = document.getElementById('pageBackgroundChoices');
+        if (!container) return;
+        if (!window.dmsDesktop?.images?.list) {
+            container.innerHTML = `<div class="empty-state">Background library is available in the desktop app.</div>`;
+            return;
+        }
+        try {
+            const images = await window.dmsDesktop.images.list('backgrounds');
+            if (!images.length) {
+                container.innerHTML = `<div class="empty-state">No saved background images.</div>`;
+                return;
+            }
+            container.innerHTML = images.map(img => {
+                const imageUrl = img.dataUrl || img.url || '';
+                return `
+                    <button type="button" class="page-background-choice" data-image-name="${this.escapeAttr(img.name)}" data-image-url="${this.escapeAttr(imageUrl)}">
+                        ${imageUrl ? `<img src="${this.escapeAttr(imageUrl)}" alt="">` : '<span class="missing-image-preview">Missing file</span>'}
+                        <span>${this.escapeHtml(img.name)}</span>
+                    </button>
+                `;
+            }).join('');
+            container.querySelectorAll('.page-background-choice').forEach(choice => {
+                choice.addEventListener('click', () => {
+                    this.applyBackgroundImage(choice.dataset.imageName, choice.dataset.imageUrl || null);
+                });
+            });
+        } catch {
+            container.innerHTML = `<div class="empty-state">Could not load background images.</div>`;
+        }
+    }
+
+    updatePageBackgroundLayer(key, value, rebuild = true) {
+        const layer = this.settings.backgroundImages[0];
+        if (!layer || !layer.image) return;
+        layer[key] = value;
+        this.recordChange(rebuild);
+    }
+
+    formatBackgroundPosition(position) {
+        return String(position || 'center').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
     }
 
     selectBlock(id) {
@@ -496,6 +611,161 @@ class StepTemplateBuilder {
         block.zIndex = this.nextZIndex();
         this.settings.editorBlocks.push(block);
         this.selectedBlockId = id;
+        this.recordChange();
+    }
+
+    async openInsertImageDialog() {
+        const overlay = document.createElement('div');
+        overlay.className = 'editor-dialog-overlay';
+        overlay.innerHTML = `
+            <div class="editor-dialog image-picker-dialog">
+                <h2>Insert Image</h2>
+                <div class="dialog-actions image-choice-actions">
+                    <button id="image-choice-upload" class="btn btn-primary" type="button">Upload New Image</button>
+                    <button id="image-choice-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+                <h3>Use Existing Image</h3>
+                <div id="insert-image-library" class="image-grid image-picker-grid">
+                    <div class="empty-state">Loading images...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#image-choice-cancel')?.addEventListener('click', close);
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) close();
+        });
+        overlay.querySelector('#image-choice-upload')?.addEventListener('click', () => {
+            close();
+            document.getElementById('canvasImageUpload')?.click();
+        });
+
+        await this.loadInsertImageLibrary(overlay);
+    }
+
+    async loadInsertImageLibrary(overlay) {
+        const container = overlay.querySelector('#insert-image-library');
+        if (!container) return;
+        if (!window.dmsDesktop?.images?.list) {
+            container.innerHTML = `<div class="empty-state">Image library is available in the desktop app.</div>`;
+            return;
+        }
+        try {
+            const images = await window.dmsDesktop.images.list('template-objects');
+            if (!images.length) {
+                container.innerHTML = `<div class="empty-state">No inserted images yet.</div>`;
+                return;
+            }
+            container.innerHTML = images.map(img => `<button type="button" class="image-card" data-image-name="${this.escapeAttr(img.name)}" data-image-url="${this.escapeAttr(img.dataUrl || img.url || '')}"><img src="${img.dataUrl || img.url}" alt=""><span>${this.escapeHtml(img.name)}</span></button>`).join('');
+            container.querySelectorAll('.image-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    this.addImageBlockFromLibrary(card.dataset.imageName, 'template-objects', card.dataset.imageUrl);
+                    overlay.remove();
+                });
+            });
+        } catch {
+            container.innerHTML = `<div class="empty-state">Could not load image library.</div>`;
+        }
+    }
+
+    async openBackgroundImageDialog() {
+        const overlay = document.createElement('div');
+        overlay.className = 'editor-dialog-overlay';
+        overlay.innerHTML = `
+            <div class="editor-dialog image-picker-dialog">
+                <h2>Background Image</h2>
+                <div class="dialog-actions image-choice-actions">
+                    <button id="background-choice-upload" class="btn btn-primary" type="button">Upload New Background</button>
+                    <button id="background-choice-clear" class="btn btn-secondary" type="button">Clear Background</button>
+                    <button id="background-choice-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+                <h3>Use Existing Background</h3>
+                <div id="background-image-library" class="image-grid image-picker-grid">
+                    <div class="empty-state">Loading images...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#background-choice-cancel')?.addEventListener('click', close);
+        overlay.querySelector('#background-choice-clear')?.addEventListener('click', () => {
+            this.applyBackgroundImage(null, null);
+            close();
+        });
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) close();
+        });
+        overlay.querySelector('#background-choice-upload')?.addEventListener('click', () => {
+            close();
+            document.getElementById('backgroundImageUpload')?.click();
+        });
+
+        await this.loadBackgroundImageLibrary(overlay);
+    }
+
+    async loadBackgroundImageLibrary(overlay) {
+        const container = overlay.querySelector('#background-image-library');
+        if (!container) return;
+        if (!window.dmsDesktop?.images?.list) {
+            container.innerHTML = `<div class="empty-state">Background library is available in the desktop app.</div>`;
+            return;
+        }
+        try {
+            const images = await window.dmsDesktop.images.list('backgrounds');
+            if (!images.length) {
+                container.innerHTML = `<div class="empty-state">No background images yet.</div>`;
+                return;
+            }
+            container.innerHTML = images.map(img => {
+                const imageUrl = img.dataUrl || img.url || '';
+                return `
+                    <button type="button" class="image-card" data-image-name="${this.escapeAttr(img.name)}" data-image-url="${this.escapeAttr(imageUrl)}">
+                        ${imageUrl ? `<img src="${this.escapeAttr(imageUrl)}" alt="">` : '<div class="missing-image-preview">Missing file</div>'}
+                        <span>${this.escapeHtml(img.name)}</span>
+                    </button>
+                `;
+            }).join('');
+            container.querySelectorAll('.image-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    this.applyBackgroundImage(card.dataset.imageName, card.dataset.imageUrl || null);
+                    overlay.remove();
+                });
+            });
+        } catch {
+            container.innerHTML = `<div class="empty-state">Could not load background images.</div>`;
+        }
+    }
+
+    async addBackgroundImageFromFile(input) {
+        const file = input?.files?.[0];
+        if (!file) return;
+        if (!this.isAllowedImageFile(file)) {
+            alert(window.t('alert_invalid_image_format') || 'Unsupported image format.');
+            input.value = '';
+            return;
+        }
+        const dataUrl = await this.readImageFile(file);
+        input.value = '';
+        if (!dataUrl) return;
+        let imageName = file.name;
+        if (window.dmsDesktop?.images?.save) {
+            const saved = await window.dmsDesktop.images.save('backgrounds', { name: file.name, mimeType: file.type, dataUrl });
+            imageName = saved?.name || imageName;
+        }
+        this.applyBackgroundImage(imageName, dataUrl);
+        if (this.currentTab === 'images') await this.loadImages();
+    }
+
+    applyBackgroundImage(name, dataUrl) {
+        const layer = this.settings.backgroundImages[0];
+        layer.image = name;
+        layer.imageData = dataUrl || null;
+        layer.size = name ? 100 : layer.size;
+        layer.opacity = name ? 0.25 : layer.opacity;
+        this.switchTab('builder');
         this.recordChange();
     }
 
@@ -603,6 +873,12 @@ class StepTemplateBuilder {
         this.updatePreview();
         this.pushHistory();
         if (rebuild) this.buildUI();
+    }
+
+    recordCanvasChange() {
+        this.syncLegacySettings();
+        this.updatePreview();
+        this.pushHistory();
     }
 
     pushHistory() {
@@ -962,7 +1238,12 @@ class StepTemplateBuilder {
         await this.loadTemplates();
     }
 
-    async loadImages() { await this.loadImageFolder('backgrounds', 'bg-images-list'); }
+    async loadImages() {
+        await Promise.all([
+            this.loadImageFolder('template-objects', 'object-images-list', 'object'),
+            this.loadImageFolder('backgrounds', 'bg-images-list', 'background')
+        ]);
+    }
 
     bindImagesTabUpload() {
         const uploadInput = document.getElementById('imagesTabUpload');
@@ -977,7 +1258,7 @@ class StepTemplateBuilder {
         });
     }
 
-    async loadImageFolder(folder, containerId) {
+    async loadImageFolder(folder, containerId, mode = 'background') {
         const container = document.getElementById(containerId);
         if (!container) return;
         if (!window.dmsDesktop?.images?.list) {
@@ -986,20 +1267,38 @@ class StepTemplateBuilder {
         }
         try {
             const images = await window.dmsDesktop.images.list(folder);
-            this.renderImageCards(container, images);
+            this.renderImageCards(container, images, folder, mode);
         } catch {
             container.innerHTML = `<div class="empty-state">Could not load image library.</div>`;
         }
     }
 
-    renderImageCards(container, images) {
+    renderImageCards(container, images, folder, mode) {
         if (!images.length) {
             container.innerHTML = `<div class="empty-state">No images yet.</div>`;
             return;
         }
-        container.innerHTML = images.map(img => `<button type="button" class="image-card" data-image-name="${this.escapeAttr(img.name)}" data-image-url="${this.escapeAttr(img.dataUrl || img.url || '')}"><img src="${img.dataUrl || img.url}" alt=""><span>${this.escapeHtml(img.name)}</span></button>`).join('');
+        container.innerHTML = images.map(img => {
+            const imageUrl = img.dataUrl || img.url || '';
+            return `
+            <div class="image-card" data-image-folder="${this.escapeAttr(folder)}" data-image-mode="${this.escapeAttr(mode)}" data-image-name="${this.escapeAttr(img.name)}" data-image-url="${this.escapeAttr(imageUrl)}">
+                <button type="button" class="image-card-preview" data-image-use>
+                    ${imageUrl ? `<img src="${this.escapeAttr(imageUrl)}" alt="">` : '<div class="missing-image-preview">Missing file</div>'}
+                    <span>${this.escapeHtml(img.name)}</span>
+                </button>
+                <div class="image-card-actions">
+                    <button type="button" class="mini-btn" data-image-rename>Rename</button>
+                    <button type="button" class="mini-btn" data-image-delete>Delete</button>
+                </div>
+            </div>
+        `;
+        }).join('');
         container.querySelectorAll('.image-card').forEach(card => {
-            card.addEventListener('click', () => {
+            card.querySelector('[data-image-use]')?.addEventListener('click', () => {
+                if (card.dataset.imageMode === 'object') {
+                    this.addImageBlockFromLibrary(card.dataset.imageName, card.dataset.imageFolder, card.dataset.imageUrl);
+                    return;
+                }
                 const layer = this.settings.backgroundImages[0];
                 layer.image = card.dataset.imageName;
                 layer.imageData = card.dataset.imageUrl || null;
@@ -1008,7 +1307,82 @@ class StepTemplateBuilder {
                 this.switchTab('builder');
                 this.recordChange();
             });
+            card.querySelector('[data-image-rename]')?.addEventListener('click', () => this.renameLibraryImage(card));
+            card.querySelector('[data-image-delete]')?.addEventListener('click', () => this.deleteLibraryImage(card));
         });
+    }
+
+    async renameLibraryImage(card) {
+        if (!window.dmsDesktop?.images?.rename) return;
+        const oldName = card.dataset.imageName || '';
+        const nextName = prompt('New image name:', oldName);
+        if (!nextName || nextName.trim() === oldName) return;
+        try {
+            const renamed = await window.dmsDesktop.images.rename(card.dataset.imageFolder, oldName, nextName.trim());
+            this.settings.editorBlocks
+                .filter(block => block.type === 'image' && block.style?.imageFolder === card.dataset.imageFolder && block.style?.imageName === oldName)
+                .forEach(block => {
+                    block.style.imageName = renamed.name;
+                    block.style.relativePath = renamed.relativePath;
+                });
+            if (card.dataset.imageFolder === 'backgrounds') {
+                this.settings.backgroundImages
+                    .filter(layer => layer.image === oldName)
+                    .forEach(layer => {
+                        layer.image = renamed.name;
+                        layer.imageData = card.dataset.imageUrl || layer.imageData || null;
+                    });
+            }
+            await this.loadImages();
+            this.recordCanvasChange();
+        } catch (error) {
+            alert(error?.message || 'Could not rename image.');
+        }
+    }
+
+    async deleteLibraryImage(card) {
+        if (!window.dmsDesktop?.images?.delete) return;
+        const name = card.dataset.imageName || '';
+        if (!confirm(`Delete image "${name}"?`)) return;
+        try {
+            await window.dmsDesktop.images.delete(card.dataset.imageFolder, name);
+            this.settings.editorBlocks
+                .filter(block => block.type === 'image' && block.style?.imageFolder === card.dataset.imageFolder && block.style?.imageName === name)
+                .forEach(block => {
+                    block.style.imageData = '';
+                    block.style.src = '';
+                });
+            if (card.dataset.imageFolder === 'backgrounds') {
+                this.settings.backgroundImages
+                    .filter(layer => layer.image === name)
+                    .forEach(layer => {
+                        layer.image = null;
+                        layer.imageData = null;
+                    });
+            }
+            await this.loadImages();
+            this.recordCanvasChange();
+        } catch (error) {
+            alert(error?.message || 'Could not delete image.');
+        }
+    }
+
+    addImageBlockFromLibrary(name, folder, dataUrl) {
+        const id = `image-${Date.now()}`;
+        const block = this.createBlock(id, 'image', name || 'Image', 22, 22, 28, 18, {
+            src: dataUrl || '',
+            imageData: dataUrl || '',
+            imageFolder: folder || 'template-objects',
+            imageName: name || '',
+            fit: 'contain',
+            opacity: 1,
+            backgroundColor: 'transparent'
+        });
+        block.zIndex = this.nextZIndex();
+        this.settings.editorBlocks.push(block);
+        this.selectedBlockId = id;
+        this.switchTab('builder');
+        this.recordChange();
     }
 
     async saveImage(file, folder) {
@@ -1028,6 +1402,15 @@ class StepTemplateBuilder {
             return dataUrl;
         }
         return false;
+    }
+
+    readImageFile(file) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(file);
+        });
     }
 
     isAllowedImageFile(file) {

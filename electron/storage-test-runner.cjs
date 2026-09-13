@@ -59,7 +59,11 @@ function runStorageProjectionTest() {
     assert.equal(existsSync(path.join(directory, savedImage.relativePath)), true);
     assert.equal(storage.getTemplateImageDataUrl('backgrounds', 'test.png'), imageDataUrl);
     assert.equal(storage.exportTemplateImages()[0].dataUrl, imageDataUrl);
-    assert.equal(storage.deleteTemplateImage('backgrounds', 'test.png'), true);
+    const renamedImage = storage.renameTemplateImage('backgrounds', 'test.png', 'renamed-test.png');
+    assert.equal(renamedImage.name, 'renamed-test.png');
+    assert.equal(storage.getTemplateImageDataUrl('backgrounds', 'renamed-test.png'), imageDataUrl);
+    assert.equal(existsSync(path.join(directory, 'images/backgrounds/renamed-test.png')), true);
+    assert.equal(storage.deleteTemplateImage('backgrounds', 'renamed-test.png'), true);
     assert.equal(storage.getProjectionStats().template_images, 0);
     storage.saveDocument('menuHistory', [{ id: 'menu-2', name: 'Second saved week', data: '{}' }]);
     assert.equal(storage.loadSnapshot().menuHistory[0].id, 'menu-2');

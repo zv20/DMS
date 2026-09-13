@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
     list: (folder) => ipcRenderer.invoke('desktop:images:list', folder),
     save: (folder, image) => ipcRenderer.invoke('desktop:images:save', folder, image),
     delete: (folder, name) => ipcRenderer.invoke('desktop:images:delete', folder, name),
+    rename: (folder, oldName, newName) => ipcRenderer.invoke('desktop:images:rename', folder, oldName, newName),
     getDataUrl: (folder, name) => ipcRenderer.invoke('desktop:images:get-data-url', folder, name)
   }),
   print: Object.freeze({

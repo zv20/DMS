@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } = require('node:fs');
+const { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } = require('node:fs');
 const Database = require('better-sqlite3');
 
 const DOCUMENT_KEYS = new Set(['recipes', 'ingredients', 'allergens', 'currentMenu', 'appSettings', 'templates', 'menuHistory']);
@@ -124,6 +124,7 @@ function createDesktopDatabase(userDataPath) {
     VALUES (@folder, @name, @mimeType, @data, @relativePath, @updatedAt)
     ON CONFLICT(folder, name) DO UPDATE SET mime_type = excluded.mime_type, data = excluded.data, relative_path = excluded.relative_path, updated_at = excluded.updated_at`);
   const deleteImage = database.prepare('DELETE FROM template_images WHERE folder = ? AND name = ?');
+  const renameImage = database.prepare('UPDATE template_images SET name = ?, relative_path = ?, updated_at = ? WHERE folder = ? AND name = ?');
   const listImages = database.prepare('SELECT folder, name, mime_type, data, relative_path, updated_at FROM template_images WHERE folder = ? ORDER BY name COLLATE NOCASE');
   const getImage = database.prepare('SELECT folder, name, mime_type, data, relative_path FROM template_images WHERE folder = ? AND name = ?');
 
@@ -469,6 +470,29 @@ function createDesktopDatabase(userDataPath) {
     return result.changes > 0;
   }
 
+  function renameTemplateImage(folder, oldName, newName) {
+    if (!IMAGE_FOLDERS.has(folder) || typeof oldName !== 'string' || typeof newName !== 'string') throw new Error('Invalid image.');
+    const cleanName = safeImageFilename(newName.trim());
+    if (!cleanName) throw new Error('Image name is required.');
+    if (getImage.get(folder, cleanName)) throw new Error('An image with that name already exists.');
+    const timestamp = new Date().toISOString();
+    return database.transaction(() => {
+      const row = getImage.get(folder, oldName);
+      if (!row) throw new Error('Image not found.');
+      const data = getImageBuffer(row);
+      const relativePath = imageRelativePath(folder, cleanName, row.mime_type);
+      if (row.relative_path && existsSync(imageDiskPath(row.relative_path))) {
+        mkdirSync(path.dirname(imageDiskPath(relativePath)), { recursive: true });
+        renameSync(imageDiskPath(row.relative_path), imageDiskPath(relativePath));
+      } else if (data) {
+        writeFileSync(imageDiskPath(relativePath), data);
+      }
+      renameImage.run(cleanName, relativePath, timestamp, folder, oldName);
+      audit.run({ occurredAt: timestamp, operation: 'images.rename', documentKey: null, detailJson: JSON.stringify({ folder, oldName, newName: cleanName }) });
+      return { name: cleanName, mimeType: row.mime_type, relativePath, updatedAt: timestamp };
+    })();
+  }
+
   function exportTemplateImages() {
     return database.prepare('SELECT folder, name, mime_type, data, relative_path, updated_at FROM template_images ORDER BY folder, name COLLATE NOCASE')
       .all()
@@ -545,6 +569,7 @@ function createDesktopDatabase(userDataPath) {
     getProjectionStats,
     getTemplateImageDataUrl,
     listTemplateImages,
+    renameTemplateImage,
     loadCatalog,
     loadSnapshot,
     replaceCatalog,

@@ -6,7 +6,7 @@
   <title>Детско меню</title>
   
   <link rel="stylesheet" href="css/styles.css?v=14.8">
-  <link rel="stylesheet" href="css/template-styles.css?v=15.6">
+  <link rel="stylesheet" href="css/template-styles.css?v=16.6">
   
   <!-- PDF Generation Libraries (Local) -->
   <script src="js/libs/html2canvas.min.js"></script>
@@ -29,7 +29,7 @@
   <script src="js/clock.js?v=14.8"></script>
   
   <!-- NEW STEP-BASED TEMPLATE BUILDER -->
-  <script src="js/template/template-builder-steps.js?v=15.6"></script>
+  <script src="js/template/template-builder-steps.js?v=16.6"></script>
   
   <!-- PRINT FUNCTIONALITY -->
   <script src="js/print.js?v=14.8"></script>
@@ -262,20 +262,13 @@
       <div id="style-editor" class="page">
         <div class="page-header">
           <button class="btn btn-secondary btn-small" onclick="window.navigateTo('menu')" data-i18n="btn_back_to_menu">← Back to Menu</button>
+          <div id="template-builder-tabs" class="builder-tab-btns"></div>
           <h1 data-i18n="nav_template_builder">📝 Template Builder</h1>
         </div>
         <div class="builder-layout">
              <aside id="template-sidebar"></aside>
              <div class="template-preview-shell">
-                  <div class="template-canvas-toolbar">
-                    <span class="template-canvas-title">A4 Preview</span>
-                    <div class="template-zoom-controls">
-                      <button type="button" class="btn btn-secondary btn-small" onclick="window.setTemplatePreviewZoom(-0.1)">−</button>
-                      <span id="templateZoomLabel">100%</span>
-                      <button type="button" class="btn btn-secondary btn-small" onclick="window.setTemplatePreviewZoom(0.1)">+</button>
-                      <button type="button" class="btn btn-secondary btn-small" onclick="window.resetTemplatePreviewZoom()">100%</button>
-                    </div>
-                  </div>
+                  <div class="template-canvas-toolbar"></div>
                   <div class="template-preview-scroll">
                     <div id="template-preview"></div>
                   </div>

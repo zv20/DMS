@@ -331,6 +331,11 @@ ipcMain.handle('desktop:images:delete', (event, folder, name) => {
   return desktopDatabase.deleteTemplateImage(folder, name);
 });
 
+ipcMain.handle('desktop:images:rename', (event, folder, oldName, newName) => {
+  if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
+  return desktopDatabase.renameTemplateImage(folder, oldName, newName);
+});
+
 ipcMain.handle('desktop:images:get-data-url', (event, folder, name) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   return desktopDatabase.getTemplateImageDataUrl(folder, name);
