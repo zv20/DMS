@@ -454,15 +454,25 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
       });
     `);
     return await new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (error, result) => {
+        if (settled) return;
+        settled = true;
+        if (!printWindow.isDestroyed()) printWindow.destroy();
+        if (parent && !parent.isDestroyed()) parent.focus();
+        if (error) reject(error);
+        else resolve(result);
+      };
+      printWindow.once('closed', () => finish(null, false));
       printWindow.webContents.print({ silent: false, printBackground: true }, (success, failureReason) => {
-        if (!printWindow.isDestroyed()) printWindow.close();
-        if (success) resolve(true);
-        else if (failureReason === 'cancelled') resolve(false);
-        else reject(new Error(failureReason || 'Print failed.'));
+        if (success) finish(null, true);
+        else if (failureReason === 'cancelled') finish(null, false);
+        else finish(new Error(failureReason || 'Print failed.'));
       });
     });
   } catch (error) {
-    if (!printWindow.isDestroyed()) printWindow.close();
+    if (!printWindow.isDestroyed()) printWindow.destroy();
+    if (parent && !parent.isDestroyed()) parent.focus();
     throw error;
   }
 });

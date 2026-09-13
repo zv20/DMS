@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.3 - Align content height with @page margin to stop bottom cut-off
+ * @version 8.4 - Keep print flow unlocked after dialog cancel
  */
 
 (function(window) {
@@ -206,6 +206,9 @@
 
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
     window.printMenu = async function() {
+        if (window.__dmsPrintInProgress) return;
+        window.__dmsPrintInProgress = true;
+        try {
         const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg';
         const isBg = lang === 'bg';
 
@@ -253,7 +256,7 @@
 
         // ─── PRINT ──────────────────────────────────────────────────────────
         if (choice.action === 'print') {
-            openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW, safeBottom);
+            await openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW, safeBottom);
             return;
         }
 
@@ -296,6 +299,9 @@
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', left, top, imgWidthMM, imgHeightMM, '', 'FAST');
             pdf.save(filename);
         }
+        } finally {
+            window.__dmsPrintInProgress = false;
+        }
     };
 
     // ─── PRINT WINDOW ────────────────────────────────────────────────────────
@@ -304,7 +310,7 @@
         const title = 'Weekly-Menu-' + ds;
 
         if (window.dmsDesktop && window.dmsDesktop.print && window.dmsDesktop.print.menu) {
-            window.dmsDesktop.print.menu({ title, html, margins, usableH, usableW, safeBottom })
+            return window.dmsDesktop.print.menu({ title, html, margins, usableH, usableW, safeBottom })
                 .then(result => {
                     if (result === false) console.info('Desktop print cancelled.');
                 })
