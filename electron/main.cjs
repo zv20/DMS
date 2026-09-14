@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, net, protocol, session } = require('electron');
+const { app, BrowserWindow, ipcMain, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { copyFile, readFile } = require('node:fs/promises');
@@ -8,12 +8,15 @@ const { createDesktopDatabase } = require('./storage.cjs');
 const { runStorageProjectionTest } = require('./storage-test-runner.cjs');
 const { autoUpdater } = require('electron-updater');
 const { createLogger } = require('./logger.cjs');
+const { createRecoveryState } = require('./recovery-state.cjs');
 
 const APP_PROTOCOL = 'dms';
 const APP_HOST = 'app';
 const APP_ORIGIN = `${APP_PROTOCOL}://${APP_HOST}`;
 const logger = createLogger(app);
 let desktopDatabase;
+let recoveryState;
+let startupHealthMarked = false;
 let autoBackupCreatedForQuit = false;
 const pendingImports = new Map();
 const isStorageTest = process.argv.includes('--storage-test');
@@ -151,6 +154,68 @@ function createAutoBackupOnce(reason) {
   }
 }
 
+function runStartupDiagnostics(stage) {
+  if (!desktopDatabase) return null;
+  const integrity = desktopDatabase.getIntegrityReport();
+  const health = desktopDatabase.getDataHealth();
+  const level = integrity.ok && health.ok ? 'info' : 'warn';
+  logger.write(level, 'Startup diagnostics completed.', {
+    stage,
+    integrity,
+    dataHealth: {
+      ok: health.ok,
+      issueCount: health.issues.length,
+      counts: health.counts
+    }
+  });
+  return { integrity, health };
+}
+
+function markApplicationHealthy(stage) {
+  if (startupHealthMarked || !recoveryState || !desktopDatabase) return;
+  startupHealthMarked = true;
+  try {
+    const diagnostics = runStartupDiagnostics(stage);
+    const hasDataErrors = diagnostics?.health?.issues?.some((issue) => issue.level === 'error');
+    if (!diagnostics?.integrity?.ok || hasDataErrors) {
+      logger.warn('Application was not marked as last known good because startup diagnostics found blocking issues.', {
+        version: app.getVersion(),
+        stage,
+        integrity: diagnostics?.integrity,
+        dataHealth: diagnostics?.health ? {
+          ok: diagnostics.health.ok,
+          issueCount: diagnostics.health.issues.length
+        } : null
+      });
+      return;
+    }
+    recoveryState.markHealthy(diagnostics || {});
+    logger.info('Application marked as last known good.', {
+      version: app.getVersion(),
+      stage,
+      recoveryStatePath: recoveryState.statePath
+    });
+  } catch (error) {
+    logger.warn('Application health marking failed.', { stage, error });
+  }
+}
+
+function initializeDesktopRuntime() {
+  const userDataPath = app.getPath('userData');
+  logger.info('Desktop startup: initializing runtime.', {
+    version: app.getVersion(),
+    userDataPath,
+    platform: process.platform,
+    arch: process.arch
+  });
+  recoveryState = createRecoveryState(userDataPath, app.getVersion());
+  const startupState = recoveryState.beginStartup();
+  if (startupState.failedUpdate) logger.warn('Possible failed update detected.', startupState.failedUpdate);
+  logger.info('Desktop startup: opening SQLite database.');
+  desktopDatabase = createDesktopDatabase(userDataPath);
+  runStartupDiagnostics('database-open');
+}
+
 function configureSession() {
   protocol.handle(APP_PROTOCOL, async (request) => {
     try {
@@ -217,6 +282,7 @@ function createMainWindow() {
   window.webContents.on('will-navigate', (event, url) => {
     if (!url.startsWith(`${APP_ORIGIN}/`)) event.preventDefault();
   });
+  window.webContents.once('did-finish-load', () => markApplicationHealthy('renderer-loaded'));
   window.on('close', () => createAutoBackupOnce('close'));
   window.loadURL(`${APP_ORIGIN}/index.html`);
   return window;
@@ -322,6 +388,41 @@ function buildPrintDocument({ title, html, margins, usableH, usableW, safeBottom
   ].join('');
 }
 
+function buildDiagnosticReport(stage) {
+  const diagnostics = desktopDatabase ? runStartupDiagnostics(stage) : null;
+  const recentLogs = logger.read(100);
+  return [
+    'DMS Diagnostic Report',
+    '',
+    `Generated: ${new Date().toISOString()}`,
+    `App version: ${app.getVersion()}`,
+    `Platform: ${process.platform}`,
+    `Architecture: ${process.arch}`,
+    `User data path: ${app.getPath('userData')}`,
+    `Log file: ${logger.filePath}`,
+    `Recovery folder: ${recoveryState?.recoveryDir || 'unavailable'}`,
+    '',
+    'Update Status:',
+    JSON.stringify(updateState, null, 2),
+    '',
+    'Recovery State:',
+    JSON.stringify(recoveryState?.read() || null, null, 2),
+    '',
+    'SQLite Integrity:',
+    JSON.stringify(diagnostics?.integrity || null, null, 2),
+    '',
+    'Data Health:',
+    JSON.stringify(diagnostics?.health ? {
+      ok: diagnostics.health.ok,
+      issues: diagnostics.health.issues,
+      counts: diagnostics.health.counts
+    } : null, null, 2),
+    '',
+    'Recent Logs:',
+    JSON.stringify(recentLogs.entries || [], null, 2)
+  ].join('\n');
+}
+
 function assertPrintPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('Invalid print payload.');
   if (typeof payload.html !== 'string' || payload.html.length === 0 || Buffer.byteLength(payload.html, 'utf8') > 20 * 1024 * 1024) {
@@ -404,7 +505,26 @@ ipcMain.handle('desktop:updates:install', (event) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   if (!updateState.downloaded) throw new Error('No downloaded update is ready to install.');
   const backup = desktopDatabase.createRequiredBackup('before-update');
-  logger.info('Verified backup created before update.', { filePath: backup?.filePath, summary: backup?.summary });
+  const diagnostics = runStartupDiagnostics('before-update');
+  const recoveryInstructionsPath = recoveryState?.writeRecoveryInstructions({
+    fromVersion: app.getVersion(),
+    toVersion: updateState.availableVersion,
+    backupFilePath: backup?.filePath
+  });
+  recoveryState?.recordUpdateAttempt({
+    toVersion: updateState.availableVersion,
+    backupFilePath: backup?.filePath,
+    backupSummary: backup?.summary,
+    health: diagnostics?.health,
+    integrity: diagnostics?.integrity,
+    releaseUrl: updateState.availableVersion ? `https://github.com/zv20/DMS/releases/tag/v${updateState.availableVersion}` : null
+  });
+  logger.info('Verified recovery snapshot created before update.', {
+    filePath: backup?.filePath,
+    summary: backup?.summary,
+    recoveryInstructionsPath,
+    targetVersion: updateState.availableVersion
+  });
   autoUpdater.quitAndInstall(false, true);
   return true;
 });
@@ -511,6 +631,38 @@ ipcMain.handle('desktop:storage:export', async (event) => {
 
 registerIpc('desktop:storage:health', () => {
   return desktopDatabase.getDataHealth();
+});
+
+registerIpc('desktop:recovery:get-state', () => {
+  return recoveryState ? {
+    ...recoveryState.read(),
+    recoveryDir: recoveryState.recoveryDir,
+    statePath: recoveryState.statePath
+  } : null;
+});
+
+registerIpc('desktop:recovery:open-folder', async () => {
+  if (!recoveryState) return false;
+  const error = await shell.openPath(recoveryState.recoveryDir);
+  if (error) throw new Error(error);
+  return true;
+});
+
+registerIpc('desktop:recovery:diagnostic-report', () => {
+  return buildDiagnosticReport('diagnostic-report');
+});
+
+registerIpc('desktop:recovery:save-diagnostic-report', async (event) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender), {
+    title: 'Save DMS diagnostic report',
+    defaultPath: `dms-diagnostic-${new Date().toISOString().slice(0, 10)}.txt`,
+    filters: [{ name: 'Text report', extensions: ['txt'] }]
+  });
+  if (result.canceled || !result.filePath) return false;
+  const { writeFile } = require('node:fs/promises');
+  await writeFile(result.filePath, buildDiagnosticReport('diagnostic-report-save'), 'utf8');
+  return true;
 });
 
 ipcMain.handle('desktop:storage:choose-import', async (event) => {
@@ -654,7 +806,7 @@ app.whenReady().then(() => {
     return;
   }
 
-  desktopDatabase = createDesktopDatabase(app.getPath('userData'));
+  initializeDesktopRuntime();
   configureSession();
   createMainWindow();
 

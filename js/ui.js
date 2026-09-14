@@ -1,6 +1,27 @@
 // UI Interactions & Theme Logic (Global Scope)
 
 (function(window) {
+    window.showToast = function(message, options = {}) {
+        const region = document.getElementById('toast-region');
+        if (!region) return;
+        const toast = document.createElement('div');
+        toast.className = `app-toast toast-${options.type || 'info'}`;
+        const text = document.createElement('span');
+        text.textContent = message;
+        toast.appendChild(text);
+        if (typeof options.action === 'function') {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = options.actionLabel || (window.t ? window.t('toast_undo') : 'Undo');
+            button.addEventListener('click', async () => {
+                toast.remove();
+                await options.action();
+            });
+            toast.appendChild(button);
+        }
+        region.appendChild(toast);
+        setTimeout(() => toast.remove(), options.duration || 7000);
+    };
 
     // --- Navigation ---
     window.toggleNav = function() {

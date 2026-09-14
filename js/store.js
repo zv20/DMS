@@ -9,8 +9,9 @@
     window.menuHistory = [];
     window.savedTemplates = [];
     window.imageUploads = [];
-    window.appSettings = { language: 'bg', theme: 'default', autoBackupLimit: 3 };  // Changed default from 'en' to 'bg'
+    window.appSettings = { language: 'bg', theme: 'default', autoBackupLimit: 3, onboardingComplete: false };  // Changed default from 'en' to 'bg'
     window.imageCache = {};
+    window.undoStack = [];
 
     // Predefined allergens (only used for initial population on brand new installs)
     window.PREDEFINED_ALLERGENS = [
@@ -108,6 +109,44 @@
         await window.saveSettings();
     };
 
+    window.pushUndoAction = function(action) {
+        if (!action || typeof action.undo !== 'function') return;
+        window.undoStack.push({ ...action, createdAt: new Date().toISOString() });
+        if (window.undoStack.length > 20) window.undoStack.shift();
+        window.showToast?.(action.message || (window.t ? window.t('toast_action_done') : 'Action completed.'), {
+            type: 'success',
+            actionLabel: window.t ? window.t('toast_undo') : 'Undo',
+            action: async () => {
+                try {
+                    await action.undo();
+                    window.showToast?.(window.t ? window.t('toast_undo_done') : 'Undo completed.', { type: 'success' });
+                } catch (error) {
+                    console.error('Undo failed:', error);
+                    window.showToast?.(window.t ? window.t('toast_undo_failed') : 'Undo failed.', { type: 'error' });
+                }
+            }
+        });
+    };
+
+    window.createRestorePoint = async function(reason = 'manual') {
+        const snapshot = {
+            id: window.generateId('restore'),
+            name: reason,
+            date: new Date().toISOString(),
+            data: JSON.stringify({
+                recipes: window.recipes,
+                ingredients: window.ingredients,
+                allergens: window.allergens,
+                currentMenu: window.currentMenu,
+                templates: window.menuTemplates || {},
+                menuHistory: window.menuHistory
+            })
+        };
+        window.menuHistory.push(snapshot);
+        await window.storageAdapter.save('menuHistory', window.menuHistory);
+        return snapshot;
+    };
+
     window.checkDataHealth = async function() {
         const resultEl = document.getElementById('data-health-result');
         if (!resultEl || !window.dmsDesktop?.storage?.health) return;
@@ -153,16 +192,48 @@
     window.loadSavedMenu = function(id) {
         const menu = window.menuHistory.find(m => m.id === id);
         if (!menu) return;
-        window.currentMenu = JSON.parse(menu.data);
+        const parsed = JSON.parse(menu.data);
+        if (parsed.currentMenu) {
+            window.recipes = parsed.recipes || window.recipes;
+            window.ingredients = parsed.ingredients || window.ingredients;
+            window.allergens = parsed.allergens || window.allergens;
+            window.currentMenu = parsed.currentMenu || {};
+            window.menuTemplates = parsed.templates || window.menuTemplates || {};
+            window.menuHistory = parsed.menuHistory || window.menuHistory;
+            Promise.all([
+                window.storageAdapter.save('recipes', window.recipes),
+                window.storageAdapter.save('ingredients', window.ingredients),
+                window.storageAdapter.save('allergens', window.allergens),
+                window.storageAdapter.save('currentMenu', window.currentMenu),
+                window.storageAdapter.save('templates', window.menuTemplates),
+                window.storageAdapter.save('menuHistory', window.menuHistory)
+            ]).then(() => {
+                window.renderAll();
+                window.showToast?.(window.t ? window.t('toast_restore_done') : 'Restore point loaded.', { type: 'success' });
+            });
+            return;
+        }
+        window.currentMenu = parsed;
         window.saveData();
         window.renderCalendar(window.currentCalendarDate);
     };
 
     window.deleteSavedMenu = async function(id) {
         if (!confirm(window.t('alert_delete_menu'))) return;
+        const removed = window.menuHistory.find(m => m.id === id);
         window.menuHistory = window.menuHistory.filter(m => m.id !== id);
         await window.storageAdapter.save('menuHistory', window.menuHistory);
         window.renderMenuHistory();
+        if (removed) {
+            window.pushUndoAction({
+                message: window.t ? window.t('toast_deleted') : 'Deleted.',
+                undo: async () => {
+                    window.menuHistory.push(removed);
+                    await window.storageAdapter.save('menuHistory', window.menuHistory);
+                    window.renderMenuHistory();
+                }
+            });
+        }
     };
 
     // ==================== IMPORT/EXPORT ====================
@@ -175,9 +246,10 @@
         const file = event.target.files[0];
         if (!file) return;
         
+        await window.createRestorePoint('before-import');
         const success = await window.storageAdapter.importData(file);
         if (success) {
-            alert(window.t('alert_import_success'));
+            window.showToast?.(window.t('alert_import_success'), { type: 'success' });
             window.renderAll();
         } else {
             alert(window.t('alert_import_error'));
@@ -196,9 +268,10 @@
                 .replace('{templates}', preview.templates)
                 .replace('{images}', preview.images || 0);
             if (!confirm(summary)) return;
+            await window.createRestorePoint('before-import');
             await window.storageAdapter.applyImport(preview.id);
             window.renderAll();
-            alert(window.t('alert_import_success'));
+            window.showToast?.(window.t('alert_import_success'), { type: 'success' });
         } catch (error) {
             console.error('Desktop import failed:', error);
             alert(window.t('alert_import_error'));

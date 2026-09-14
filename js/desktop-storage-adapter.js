@@ -16,7 +16,7 @@
       window.ingredients = snapshot.ingredients || [];
       window.allergens = snapshot.allergens || [];
       window.currentMenu = snapshot.currentMenu || {};
-      window.appSettings = { language: 'bg', theme: 'default', autoBackupLimit: 3, ...(snapshot.appSettings || {}) };
+      window.appSettings = { language: 'bg', theme: 'default', autoBackupLimit: 3, onboardingComplete: false, ...(snapshot.appSettings || {}) };
       window.menuTemplates = window.mergeBuiltInMenuTemplates
         ? window.mergeBuiltInMenuTemplates(snapshot.templates)
         : (snapshot.templates || {});

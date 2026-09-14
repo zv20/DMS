@@ -19,6 +19,12 @@ contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
     applyImport: (importId) => ipcRenderer.invoke('desktop:storage:apply-import', importId),
     health: () => ipcRenderer.invoke('desktop:storage:health')
   }),
+  recovery: Object.freeze({
+    getState: () => ipcRenderer.invoke('desktop:recovery:get-state'),
+    openFolder: () => ipcRenderer.invoke('desktop:recovery:open-folder'),
+    diagnosticReport: () => ipcRenderer.invoke('desktop:recovery:diagnostic-report'),
+    saveDiagnosticReport: () => ipcRenderer.invoke('desktop:recovery:save-diagnostic-report')
+  }),
   catalog: Object.freeze({
     recipes: Object.freeze({
       list: () => ipcRenderer.invoke('desktop:recipes:list'),

@@ -123,9 +123,24 @@
                 if (window.CalendarManager) {
                     window.CalendarManager.init();
                 }
+                window.showOnboardingIfNeeded?.();
             }, 500);
         }
     }
+
+    window.showOnboardingIfNeeded = function() {
+        if (window.appSettings?.onboardingComplete) return;
+        const modal = document.getElementById('onboarding-modal');
+        if (!modal) return;
+        modal.style.display = 'grid';
+        window.applyTranslations?.();
+        document.getElementById('btn-finish-onboarding')?.addEventListener('click', async () => {
+            window.appSettings.onboardingComplete = true;
+            await window.saveSettings();
+            modal.style.display = 'none';
+            window.showToast?.(window.t ? window.t('toast_settings_saved') : 'Settings saved.', { type: 'success' });
+        }, { once: true });
+    };
 
     // --- CRUD Save Functions ---
     window.saveRecipe = async function(e) {
@@ -245,6 +260,7 @@
 
     window.deleteRecipe = async function(id) {
         if(confirm(window.t('alert_delete_recipe'))) {
+            const removed = window.recipes.find(r => r.id === id);
             const nextRecipes = window.recipes.filter(r => r.id !== id);
             try {
                 if (window.storageAdapter.isDesktop) {
@@ -261,11 +277,24 @@
             window.renderRecipes();
             // Re-render calendar via CalendarManager so view mode is preserved
             refreshCalendar();
+            if (removed) {
+                window.pushUndoAction?.({
+                    message: window.t ? window.t('toast_recipe_deleted') : 'Recipe deleted.',
+                    undo: async () => {
+                        if (window.storageAdapter.isDesktop) await window.storageAdapter.upsert('recipes', removed);
+                        else await window.updateRecipes([...window.recipes, removed]);
+                        window.recipes = [...window.recipes.filter(r => r.id !== removed.id), removed];
+                        window.renderRecipes();
+                        refreshCalendar();
+                    }
+                });
+            }
         }
     };
     
     window.deleteIngredient = async function(id) {
         if(confirm(window.t('alert_delete_ingredient'))) {
+            const removed = window.ingredients.find(ingredient => ingredient.id === id);
             const nextIngredients = window.ingredients.filter(ingredient => ingredient.id !== id);
             try {
                 if (window.storageAdapter.isDesktop) {
@@ -281,11 +310,24 @@
             }
             window.renderIngredients();
             window.updateSelects();
+            if (removed) {
+                window.pushUndoAction?.({
+                    message: window.t ? window.t('toast_ingredient_deleted') : 'Ingredient deleted.',
+                    undo: async () => {
+                        if (window.storageAdapter.isDesktop) await window.storageAdapter.upsert('ingredients', removed);
+                        else await window.updateIngredients([...window.ingredients, removed]);
+                        window.ingredients = [...window.ingredients.filter(ingredient => ingredient.id !== removed.id), removed];
+                        window.renderIngredients();
+                        window.updateSelects();
+                    }
+                });
+            }
         }
     };
     
     window.deleteAllergen = async function(id) {
         if(confirm(window.t('alert_delete_allergen'))) {
+            const removed = window.allergens.find(allergen => allergen.id === id);
             const nextAllergens = window.allergens.filter(allergen => allergen.id !== id);
             try {
                 if (window.storageAdapter.isDesktop) {
@@ -301,6 +343,18 @@
             }
             window.renderAllergens();
             window.updateSelects();
+            if (removed) {
+                window.pushUndoAction?.({
+                    message: window.t ? window.t('toast_allergen_deleted') : 'Allergen deleted.',
+                    undo: async () => {
+                        if (window.storageAdapter.isDesktop) await window.storageAdapter.upsert('allergens', removed);
+                        else await window.updateAllergens([...window.allergens, removed]);
+                        window.allergens = [...window.allergens.filter(allergen => allergen.id !== removed.id), removed];
+                        window.renderAllergens();
+                        window.updateSelects();
+                    }
+                });
+            }
         }
     };
 

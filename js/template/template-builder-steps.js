@@ -1325,6 +1325,7 @@ class StepTemplateBuilder {
 
     async deleteTemplate(name) {
         if (!confirm((window.t('alert_template_delete_confirm') || 'Delete template "{name}"?').replace('{name}', name))) return;
+        const removedTemplate = window.menuTemplates?.[name] ? JSON.parse(JSON.stringify(window.menuTemplates[name])) : null;
         if (window.storageAdapter?.isDesktop && window.storageAdapter.deleteTemplate) await window.storageAdapter.deleteTemplate(name);
         else if (window.storageAdapter) {
             delete window.menuTemplates[name];
@@ -1332,6 +1333,17 @@ class StepTemplateBuilder {
         }
         delete window.menuTemplates[name];
         await this.loadTemplates();
+        if (removedTemplate) {
+            window.pushUndoAction?.({
+                message: window.t ? window.t('toast_template_deleted') : 'Template deleted.',
+                undo: async () => {
+                    window.menuTemplates[name] = removedTemplate;
+                    if (window.storageAdapter?.isDesktop && window.storageAdapter.upsertTemplate) await window.storageAdapter.upsertTemplate(name, removedTemplate);
+                    else if (window.storageAdapter) await window.storageAdapter.save('templates', window.menuTemplates);
+                    await this.loadTemplates();
+                }
+            });
+        }
     }
 
     async loadImages() {
@@ -1440,6 +1452,12 @@ class StepTemplateBuilder {
         if (!window.dmsDesktop?.images?.delete) return;
         const name = card.dataset.imageName || '';
         if (!confirm(`Delete image "${name}"?`)) return;
+        const removedImage = {
+            name,
+            folder: card.dataset.imageFolder,
+            dataUrl: card.dataset.imageUrl || '',
+            mimeType: this.mimeTypeFromImageName(name)
+        };
         try {
             await window.dmsDesktop.images.delete(card.dataset.imageFolder, name);
             this.settings.editorBlocks
@@ -1458,9 +1476,25 @@ class StepTemplateBuilder {
             }
             await this.loadImages();
             this.recordCanvasChange();
+            if (removedImage.dataUrl) {
+                window.pushUndoAction?.({
+                    message: window.t ? window.t('toast_image_deleted') : 'Image deleted.',
+                    undo: async () => {
+                        await window.dmsDesktop.images.save(removedImage.folder, removedImage);
+                        await this.loadImages();
+                    }
+                });
+            }
         } catch (error) {
             alert(error?.message || 'Could not delete image.');
         }
+    }
+
+    mimeTypeFromImageName(name) {
+        if (/\.jpe?g$/i.test(name)) return 'image/jpeg';
+        if (/\.gif$/i.test(name)) return 'image/gif';
+        if (/\.webp$/i.test(name)) return 'image/webp';
+        return 'image/png';
     }
 
     addImageBlockFromLibrary(name, folder, dataUrl) {

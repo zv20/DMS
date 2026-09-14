@@ -10,7 +10,7 @@ const CATALOG_PROJECTIONS = Object.freeze({
 });
 const DEFAULTS = Object.freeze({
   recipes: [], ingredients: [], allergens: [], currentMenu: {},
-  appSettings: { language: 'bg', theme: 'default', autoBackupLimit: 3 }, templates: {}, menuHistory: []
+  appSettings: { language: 'bg', theme: 'default', autoBackupLimit: 3, onboardingComplete: false }, templates: {}, menuHistory: []
 });
 const IMAGE_FOLDERS = new Set(['backgrounds', 'template-objects']);
 const IMAGE_EXTENSIONS = Object.freeze({ 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' });
@@ -557,6 +557,15 @@ function createDesktopDatabase(userDataPath) {
     return Object.fromEntries(tables.map((table) => [table, database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count]));
   }
 
+  function getIntegrityReport() {
+    const rows = database.prepare('PRAGMA integrity_check').all();
+    const messages = rows.map((row) => row.integrity_check || Object.values(row)[0]).filter(Boolean);
+    return {
+      ok: messages.length === 1 && messages[0] === 'ok',
+      messages
+    };
+  }
+
   function createBackupZip(filePath) {
     const AdmZip = require('adm-zip');
     const data = { ...loadSnapshot(), templateImages: exportTemplateImages(), exportDate: new Date().toISOString() };
@@ -632,6 +641,7 @@ function createDesktopDatabase(userDataPath) {
     exportTemplateImages,
     getDataHealth,
     getImportSummary,
+    getIntegrityReport,
     getProjectionStats,
     verifyBackupZip,
     getTemplateImageDataUrl,
