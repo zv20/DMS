@@ -153,7 +153,7 @@
         const instr = document.getElementById('recipeInstructions').value;
 
         if (isDuplicateName(window.recipes, name, window.editingRecipeId)) {
-            alert(`A recipe named "${name}" already exists. Please use a different name.`);
+            await window.dmsAlert(`A recipe named "${name}" already exists. Please use a different name.`, { title: window.t('dialog_duplicate_title') });
             return;
         }
         
@@ -181,7 +181,7 @@
             }
         } catch (error) {
             console.error('Recipe save failed:', error);
-            alert(window.t('alert_save_recipe_failed'));
+            await window.dmsAlert(window.t('alert_save_recipe_failed'), { title: window.t('dialog_error_title') });
             return;
         }
         window.closeRecipeModal();
@@ -196,7 +196,7 @@
         const name = document.getElementById('ingredientName').value.trim();
 
         if (isDuplicateName(window.ingredients, name, window.editingIngredientId)) {
-            alert(`An ingredient named "${name}" already exists. Please use a different name.`);
+            await window.dmsAlert(`An ingredient named "${name}" already exists. Please use a different name.`, { title: window.t('dialog_duplicate_title') });
             return;
         }
         
@@ -217,7 +217,7 @@
             }
         } catch (error) {
             console.error('Ingredient save failed:', error);
-            alert(window.t('alert_save_ingredient_failed'));
+            await window.dmsAlert(window.t('alert_save_ingredient_failed'), { title: window.t('dialog_error_title') });
             return;
         }
         window.closeIngredientModal();
@@ -232,7 +232,7 @@
         const color = document.getElementById('allergenColor').value;
 
         if (isDuplicateAllergenName(window.allergens, name, window.editingAllergenId)) {
-            alert(`An allergen named "${name}" already exists. Please use a different name.`);
+            await window.dmsAlert(`An allergen named "${name}" already exists. Please use a different name.`, { title: window.t('dialog_duplicate_title') });
             return;
         }
 
@@ -250,7 +250,7 @@
             }
         } catch (error) {
             console.error('Allergen save failed:', error);
-            alert(window.t('alert_save_allergen_failed'));
+            await window.dmsAlert(window.t('alert_save_allergen_failed'), { title: window.t('dialog_error_title') });
             return;
         }
         window.closeAllergenModal();
@@ -259,7 +259,7 @@
     };
 
     window.deleteRecipe = async function(id) {
-        if(confirm(window.t('alert_delete_recipe'))) {
+        if(await window.dmsConfirm(window.t('alert_delete_recipe'), { title: window.t('dialog_confirm_delete'), danger: true })) {
             const removed = window.recipes.find(r => r.id === id);
             const nextRecipes = window.recipes.filter(r => r.id !== id);
             try {
@@ -271,7 +271,7 @@
                 }
             } catch (error) {
                 console.error('Recipe delete failed:', error);
-                alert(window.t('alert_delete_recipe_failed'));
+                await window.dmsAlert(window.t('alert_delete_recipe_failed'), { title: window.t('dialog_error_title') });
                 return;
             }
             window.renderRecipes();
@@ -293,7 +293,7 @@
     };
     
     window.deleteIngredient = async function(id) {
-        if(confirm(window.t('alert_delete_ingredient'))) {
+        if(await window.dmsConfirm(window.t('alert_delete_ingredient'), { title: window.t('dialog_confirm_delete'), danger: true })) {
             const removed = window.ingredients.find(ingredient => ingredient.id === id);
             const nextIngredients = window.ingredients.filter(ingredient => ingredient.id !== id);
             try {
@@ -305,7 +305,7 @@
                 }
             } catch (error) {
                 console.error('Ingredient delete failed:', error);
-                alert(window.t('alert_delete_ingredient_failed'));
+                await window.dmsAlert(window.t('alert_delete_ingredient_failed'), { title: window.t('dialog_error_title') });
                 return;
             }
             window.renderIngredients();
@@ -326,7 +326,7 @@
     };
     
     window.deleteAllergen = async function(id) {
-        if(confirm(window.t('alert_delete_allergen'))) {
+        if(await window.dmsConfirm(window.t('alert_delete_allergen'), { title: window.t('dialog_confirm_delete'), danger: true })) {
             const removed = window.allergens.find(allergen => allergen.id === id);
             const nextAllergens = window.allergens.filter(allergen => allergen.id !== id);
             try {
@@ -338,7 +338,7 @@
                 }
             } catch (error) {
                 console.error('Allergen delete failed:', error);
-                alert(window.t('alert_delete_allergen_failed'));
+                await window.dmsAlert(window.t('alert_delete_allergen_failed'), { title: window.t('dialog_error_title') });
                 return;
             }
             window.renderAllergens();

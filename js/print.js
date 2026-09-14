@@ -216,9 +216,9 @@
 
         const weekEntries = buildWeekOptions(isBg);
         if (!weekEntries.length) {
-            alert(isBg
+            await window.dmsAlert(isBg
                 ? 'Няма планирани ястия. Добавете ястия в менюто, за да използвате печат.'
-                : 'No meals planned. Add meals to the menu before printing.');
+                : 'No meals planned. Add meals to the menu before printing.', { title: window.t('dialog_error_title') });
             return;
         }
 
@@ -227,7 +227,7 @@
 
         const mealPlanData = generateMealPlanData(choice.startDate, choice.endDate);
         if (mealPlanData.days.length === 0) {
-            alert(isBg ? 'Няма планирани ястия за избраната седмица!' : 'No meals planned for the selected week!');
+            await window.dmsAlert(isBg ? 'Няма планирани ястия за избраната седмица!' : 'No meals planned for the selected week!', { title: window.t('dialog_error_title') });
             return;
         }
 
@@ -270,7 +270,7 @@
         } catch (err) {
             hideLoadingIndicator();
             console.error('Render failed:', err);
-            alert(isBg ? 'Грешка при генериране. Моля опитайте отново.' : 'Render failed. Please try again.');
+            await window.dmsAlert(isBg ? 'Грешка при генериране. Моля опитайте отново.' : 'Render failed. Please try again.', { title: window.t('dialog_error_title') });
             return;
         }
         hideLoadingIndicator();
@@ -291,7 +291,7 @@
             }, 'image/png');
         } else {
             if (!window.jspdf && !window.jsPDF) {
-                alert(isBg ? 'jsPDF не е зареден.' : 'jsPDF library not loaded.');
+                await window.dmsAlert(isBg ? 'jsPDF не е зареден.' : 'jsPDF library not loaded.', { title: window.t('dialog_error_title') });
                 return;
             }
             const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
@@ -324,15 +324,18 @@
                 .catch(error => {
                     console.error('Desktop print failed:', error);
                     const message = error && error.message ? error.message : String(error || '');
-                    alert(message
+                    window.dmsAlert?.(message
                         ? `Print failed: ${message}\n\nYou can still save as PDF if needed.`
-                        : 'Print failed. You can still save as PDF if needed.');
+                        : 'Print failed. You can still save as PDF if needed.', { title: window.t('dialog_error_title') });
                 });
             return;
         }
 
         const pw = window.open('', '_blank');
-        if (!pw) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
+        if (!pw) {
+            window.dmsAlert?.('Pop-up blocked. Please allow pop-ups for this site and try again.', { title: window.t('dialog_error_title') });
+            return;
+        }
         const { top, right, bottom, left } = margins;
 
         pw.document.write(
@@ -446,8 +449,8 @@
                 </div>
                 <div style="margin-bottom:10px;display:flex;gap:8px;">
                     <button id="pd-print" style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖨️ ${isBg ? 'Печат' : 'Print'}</button>
-                    <button id="pd-image" style="flex:1;padding:11px 6px;background:#20c997;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖼️ ${isBg ? 'Като изобр.' : 'Save Image'}</button>
-                    <button id="pd-pdf"   style="flex:1;padding:11px 6px;background:#4c6ef5;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">📄 ${isBg ? 'Като PDF' : 'Save PDF'}</button>
+                    <button id="pd-image" style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖼️ ${isBg ? 'Като изобр.' : 'Save Image'}</button>
+                    <button id="pd-pdf"   style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">📄 ${isBg ? 'Като PDF' : 'Save PDF'}</button>
                 </div>
                 <div style="display:flex;justify-content:flex-end;">
                     <button id="pd-cancel" style="padding:9px 18px;background:#e9ecef;color:#555;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">${isBg ? 'Отказ' : 'Cancel'}</button>

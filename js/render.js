@@ -357,7 +357,7 @@
                 window.renderCalendar(window.currentCalendarDate);
             } catch (error) {
                 console.error('Failed to save menu slot:', error);
-                alert(window.t('alert_save_menu_failed'));
+                await window.dmsAlert(window.t('alert_save_menu_failed'), { title: window.t('dialog_error_title') });
             }
         });
         
@@ -399,7 +399,7 @@
                 updateDots(recipeId);
             } catch (error) {
                 console.error('Failed to save menu slot:', error);
-                alert(window.t('alert_save_menu_failed'));
+                await window.dmsAlert(window.t('alert_save_menu_failed'), { title: window.t('dialog_error_title') });
             }
         });
         

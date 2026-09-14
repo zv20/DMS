@@ -23,6 +23,64 @@
         setTimeout(() => toast.remove(), options.duration || 7000);
     };
 
+    function openDmsDialog(options = {}) {
+        const root = document.getElementById('dms-dialog-root');
+        const title = document.getElementById('dms-dialog-title');
+        const message = document.getElementById('dms-dialog-message');
+        const input = document.getElementById('dms-dialog-input');
+        const cancel = document.getElementById('dms-dialog-cancel');
+        const ok = document.getElementById('dms-dialog-ok');
+        if (!root || !title || !message || !input || !cancel || !ok) return Promise.resolve(null);
+
+        return new Promise(resolve => {
+            title.textContent = options.title || 'DMS';
+            message.textContent = options.message || '';
+            ok.textContent = options.okLabel || (window.t ? window.t('dialog_ok') : 'OK');
+            cancel.textContent = options.cancelLabel || (window.t ? window.t('dialog_cancel') : 'Cancel');
+            cancel.style.display = options.kind === 'alert' ? 'none' : '';
+            input.style.display = options.kind === 'prompt' ? '' : 'none';
+            input.value = options.defaultValue || '';
+            ok.classList.toggle('btn-danger', options.danger === true);
+            root.style.display = 'grid';
+            root.setAttribute('aria-hidden', 'false');
+
+            const cleanup = result => {
+                root.style.display = 'none';
+                root.setAttribute('aria-hidden', 'true');
+                ok.classList.remove('btn-danger');
+                ok.removeEventListener('click', handleOk);
+                cancel.removeEventListener('click', handleCancel);
+                root.removeEventListener('click', handleBackdrop);
+                document.removeEventListener('keydown', handleKeydown);
+                resolve(result);
+            };
+            const handleOk = () => cleanup(options.kind === 'prompt' ? input.value : true);
+            const handleCancel = () => cleanup(options.kind === 'prompt' ? null : false);
+            const handleBackdrop = event => { if (event.target === root) handleCancel(); };
+            const handleKeydown = event => {
+                if (event.key === 'Escape') handleCancel();
+                if (event.key === 'Enter' && options.kind === 'prompt') handleOk();
+            };
+            ok.addEventListener('click', handleOk);
+            cancel.addEventListener('click', handleCancel);
+            root.addEventListener('click', handleBackdrop);
+            document.addEventListener('keydown', handleKeydown);
+            setTimeout(() => (options.kind === 'prompt' ? input : ok).focus(), 0);
+        });
+    }
+
+    window.dmsAlert = function(message, options = {}) {
+        return openDmsDialog({ ...options, kind: 'alert', message });
+    };
+
+    window.dmsConfirm = function(message, options = {}) {
+        return openDmsDialog({ ...options, kind: 'confirm', message });
+    };
+
+    window.dmsPrompt = function(message, defaultValue = '', options = {}) {
+        return openDmsDialog({ ...options, kind: 'prompt', message, defaultValue });
+    };
+
     // --- Navigation ---
     window.toggleNav = function() {
         const overlay = document.getElementById('navOverlay');

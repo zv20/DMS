@@ -645,7 +645,7 @@ class StepTemplateBuilder {
         const file = input?.files?.[0];
         if (!file) return;
         if (!this.isAllowedImageFile(file)) {
-            alert(window.t('alert_invalid_image_format') || 'Unsupported image format.');
+            await window.dmsAlert(window.t('alert_invalid_image_format') || 'Unsupported image format.', { title: window.t('dialog_error_title') });
             input.value = '';
             return;
         }
@@ -807,7 +807,7 @@ class StepTemplateBuilder {
         const file = input?.files?.[0];
         if (!file) return;
         if (!this.isAllowedImageFile(file)) {
-            alert(window.t('alert_invalid_image_format') || 'Unsupported image format.');
+            await window.dmsAlert(window.t('alert_invalid_image_format') || 'Unsupported image format.', { title: window.t('dialog_error_title') });
             input.value = '';
             return;
         }
@@ -1311,8 +1311,8 @@ class StepTemplateBuilder {
     }
 
     async loadTemplate(name) {
-        if (!window.menuTemplates?.[name]) { alert(window.t('alert_template_not_found') || 'Template not found'); return; }
-        if (!confirm((window.t('alert_template_load_confirm') || 'Load template "{name}"?').replace('{name}', name))) return;
+        if (!window.menuTemplates?.[name]) { await window.dmsAlert(window.t('alert_template_not_found') || 'Template not found', { title: window.t('dialog_error_title') }); return; }
+        if (!await window.dmsConfirm((window.t('alert_template_load_confirm') || 'Load template "{name}"?').replace('{name}', name), { title: window.t('dialog_load_template_title') })) return;
         this.settings = { ...this.getDefaultSettings(), ...JSON.parse(JSON.stringify(window.menuTemplates[name])) };
         this.ensureEditorBlocks();
         this.syncBlocksFromLegacy();
@@ -1324,7 +1324,7 @@ class StepTemplateBuilder {
     }
 
     async deleteTemplate(name) {
-        if (!confirm((window.t('alert_template_delete_confirm') || 'Delete template "{name}"?').replace('{name}', name))) return;
+        if (!await window.dmsConfirm((window.t('alert_template_delete_confirm') || 'Delete template "{name}"?').replace('{name}', name), { title: window.t('dialog_confirm_delete'), danger: true })) return;
         const removedTemplate = window.menuTemplates?.[name] ? JSON.parse(JSON.stringify(window.menuTemplates[name])) : null;
         if (window.storageAdapter?.isDesktop && window.storageAdapter.deleteTemplate) await window.storageAdapter.deleteTemplate(name);
         else if (window.storageAdapter) {
@@ -1361,7 +1361,7 @@ class StepTemplateBuilder {
             if (!file) return;
             const savedImageData = await this.saveImage(file, 'backgrounds');
             if (savedImageData) await this.loadImages();
-            else alert(window.t('alert_upload_failed') || 'Upload failed.');
+            else await window.dmsAlert(window.t('alert_upload_failed') || 'Upload failed.', { title: window.t('dialog_error_title') });
             uploadInput.value = '';
         });
     }
@@ -1423,7 +1423,7 @@ class StepTemplateBuilder {
     async renameLibraryImage(card) {
         if (!window.dmsDesktop?.images?.rename) return;
         const oldName = card.dataset.imageName || '';
-        const nextName = prompt('New image name:', oldName);
+        const nextName = await window.dmsPrompt(window.t('dialog_new_image_name') || 'New image name:', oldName, { title: window.t('dialog_rename_title') });
         if (!nextName || nextName.trim() === oldName) return;
         try {
             const renamed = await window.dmsDesktop.images.rename(card.dataset.imageFolder, oldName, nextName.trim());
@@ -1444,14 +1444,14 @@ class StepTemplateBuilder {
             await this.loadImages();
             this.recordCanvasChange();
         } catch (error) {
-            alert(error?.message || 'Could not rename image.');
+            await window.dmsAlert(error?.message || 'Could not rename image.', { title: window.t('dialog_error_title') });
         }
     }
 
     async deleteLibraryImage(card) {
         if (!window.dmsDesktop?.images?.delete) return;
         const name = card.dataset.imageName || '';
-        if (!confirm(`Delete image "${name}"?`)) return;
+        if (!await window.dmsConfirm(`Delete image "${name}"?`, { title: window.t('dialog_confirm_delete'), danger: true })) return;
         const removedImage = {
             name,
             folder: card.dataset.imageFolder,
@@ -1486,7 +1486,7 @@ class StepTemplateBuilder {
                 });
             }
         } catch (error) {
-            alert(error?.message || 'Could not delete image.');
+            await window.dmsAlert(error?.message || 'Could not delete image.', { title: window.t('dialog_error_title') });
         }
     }
 
@@ -1517,7 +1517,7 @@ class StepTemplateBuilder {
 
     async saveImage(file, folder) {
         if (!this.isAllowedImageFile(file)) {
-            alert(window.t('alert_invalid_image_format') || 'Unsupported image format.');
+            await window.dmsAlert(window.t('alert_invalid_image_format') || 'Unsupported image format.', { title: window.t('dialog_error_title') });
             return false;
         }
         if (window.dmsDesktop?.images?.save) {
@@ -1548,10 +1548,10 @@ class StepTemplateBuilder {
         return !!file && allowedTypes.has(file.type) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || '');
     }
 
-    loadRealData() {
+    async loadRealData() {
         const isBg = (window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg') === 'bg';
         const weeks = this._buildWeekOptions(isBg);
-        if (!weeks.length) { alert(isBg ? 'Няма планирани ястия.' : 'No meals found.'); return; }
+        if (!weeks.length) { await window.dmsAlert(isBg ? 'Няма планирани ястия.' : 'No meals found.', { title: window.t('dialog_error_title') }); return; }
         const overlay = document.createElement('div');
         overlay.className = 'editor-dialog-overlay';
         overlay.innerHTML = `<div class="editor-dialog"><h2>${isBg ? 'Зареди данни' : 'Load Menu Data'}</h2><select id="lrd-week">${weeks.map(e => `<option value="${e.mondayStr}">${e.label}</option>`).join('')}</select><div class="dialog-actions"><button id="lrd-load" class="btn btn-primary">${isBg ? 'Зареди' : 'Load'}</button><button id="lrd-cancel" class="btn btn-secondary">${isBg ? 'Отказ' : 'Cancel'}</button></div></div>`;
@@ -1694,11 +1694,11 @@ class StepTemplateBuilder {
             await window.storageAdapter.save('templates', window.menuTemplates);
         }
         window.menuTemplates[name] = template;
-        alert(window.t('alert_template_saved') || 'Template saved.');
+        window.showToast?.(window.t('alert_template_saved') || 'Template saved.', { type: 'success' });
     }
 
-    reset() {
-        if (!confirm(window.t('alert_reset_confirm') || 'Reset template?')) return;
+    async reset() {
+        if (!await window.dmsConfirm(window.t('alert_reset_confirm') || 'Reset template?', { title: window.t('dialog_reset_title'), danger: true })) return;
         this.settings = this.getDefaultSettings();
         this.selectedBlockId = 'header';
         this.history = [];

@@ -145,7 +145,7 @@
 
   async function clearLogs() {
     if (!window.dmsDesktop?.logs?.clear) return;
-    if (!confirm(t('logs_clear_confirm', 'Clear all saved app logs?'))) return;
+    if (!await window.dmsConfirm(t('logs_clear_confirm', 'Clear all saved app logs?'), { title: t('logs_title', 'App Logs'), danger: true })) return;
     await window.dmsDesktop.logs.clear();
     logEntries = [];
     renderLogs();

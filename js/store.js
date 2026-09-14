@@ -219,7 +219,7 @@
     };
 
     window.deleteSavedMenu = async function(id) {
-        if (!confirm(window.t('alert_delete_menu'))) return;
+        if (!await window.dmsConfirm(window.t('alert_delete_menu'), { title: window.t('dialog_confirm_delete'), danger: true })) return;
         const removed = window.menuHistory.find(m => m.id === id);
         window.menuHistory = window.menuHistory.filter(m => m.id !== id);
         await window.storageAdapter.save('menuHistory', window.menuHistory);
@@ -252,7 +252,7 @@
             window.showToast?.(window.t('alert_import_success'), { type: 'success' });
             window.renderAll();
         } else {
-            alert(window.t('alert_import_error'));
+            await window.dmsAlert(window.t('alert_import_error'), { title: window.t('dialog_error_title') });
         }
     };
 
@@ -267,14 +267,14 @@
                 .replace('{menus}', preview.menuDates)
                 .replace('{templates}', preview.templates)
                 .replace('{images}', preview.images || 0);
-            if (!confirm(summary)) return;
+            if (!await window.dmsConfirm(summary, { title: window.t('dialog_import_title') })) return;
             await window.createRestorePoint('before-import');
             await window.storageAdapter.applyImport(preview.id);
             window.renderAll();
             window.showToast?.(window.t('alert_import_success'), { type: 'success' });
         } catch (error) {
             console.error('Desktop import failed:', error);
-            alert(window.t('alert_import_error'));
+            await window.dmsAlert(window.t('alert_import_error'), { title: window.t('dialog_error_title') });
         }
     };
 
