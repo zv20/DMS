@@ -7,10 +7,12 @@ const AdmZip = require('adm-zip');
 const { createDesktopDatabase } = require('./storage.cjs');
 const { runStorageProjectionTest } = require('./storage-test-runner.cjs');
 const { autoUpdater } = require('electron-updater');
+const { createLogger } = require('./logger.cjs');
 
 const APP_PROTOCOL = 'dms';
 const APP_HOST = 'app';
 const APP_ORIGIN = `${APP_PROTOCOL}://${APP_HOST}`;
+const logger = createLogger(app);
 let desktopDatabase;
 let autoBackupCreatedForQuit = false;
 const pendingImports = new Map();
@@ -66,6 +68,7 @@ autoUpdater.on('error', error => setUpdateState({
   message: error && error.message ? error.message : 'Update check failed.',
   percent: null
 }));
+autoUpdater.on('error', error => logger.error('Auto updater failed.', { error }));
 
 if (isStorageTest) {
   app.disableHardwareAcceleration();
@@ -110,6 +113,18 @@ function isTrustedSender(event) {
   return event.senderFrame.url.startsWith(`${APP_ORIGIN}/`);
 }
 
+function registerIpc(channel, handler) {
+  ipcMain.handle(channel, async (event, ...args) => {
+    try {
+      if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
+      return await handler(event, ...args);
+    } catch (error) {
+      logger.error('IPC handler failed.', { channel, error });
+      throw error;
+    }
+  });
+}
+
 function createAutoBackupOnce(reason) {
   if (!desktopDatabase || autoBackupCreatedForQuit || isStorageTest) return;
   autoBackupCreatedForQuit = true;
@@ -117,6 +132,7 @@ function createAutoBackupOnce(reason) {
     desktopDatabase.createAutoBackup(reason);
   } catch (error) {
     console.warn(`Auto-backup on ${reason} failed:`, error);
+    logger.warn('Auto-backup failed.', { reason, error });
   }
 }
 
@@ -126,6 +142,7 @@ function configureSession() {
       return net.fetch(pathToFileURL(fileForRequest(request.url)).toString());
     } catch (error) {
       console.error('Unable to load packaged application content:', error);
+      logger.error('Unable to load packaged application content.', { url: request.url, error });
       return new Response('Not found', { status: 404 });
     }
   });
@@ -176,6 +193,12 @@ function createMainWindow() {
 
   window.once('ready-to-show', () => window.show());
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('render-process-gone', (_event, details) => {
+    logger.error('Renderer process exited unexpectedly.', { details });
+  });
+  window.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    if (level >= 2) logger.warn('Renderer console message.', { level, message, line, sourceId });
+  });
   window.webContents.on('will-navigate', (event, url) => {
     if (!url.startsWith(`${APP_ORIGIN}/`)) event.preventDefault();
   });
@@ -227,8 +250,21 @@ ipcMain.handle('desktop:get-runtime-info', (event) => {
   return {
     platform: process.platform,
     appVersion: app.getVersion(),
-    storageMode: 'desktop-shell'
+    storageMode: 'desktop-shell',
+    logFile: logger.filePath
   };
+});
+
+registerIpc('desktop:logs:write', (_event, level, message, meta) => {
+  return logger.write(level, message, meta);
+});
+
+registerIpc('desktop:logs:read', (_event, limit) => {
+  return logger.read(limit);
+});
+
+registerIpc('desktop:logs:clear', () => {
+  return logger.clear();
 });
 
 ipcMain.handle('desktop:updates:get-status', (event) => {
@@ -455,9 +491,13 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
     `);
     return await new Promise((resolve, reject) => {
       let settled = false;
+      let focusFallbackTimer = null;
+      const focusFallback = () => finish(null, false);
       const finish = (error, result) => {
         if (settled) return;
         settled = true;
+        if (focusFallbackTimer) clearTimeout(focusFallbackTimer);
+        if (parent && !parent.isDestroyed()) parent.removeListener('focus', focusFallback);
         if (!printWindow.isDestroyed()) printWindow.destroy();
         if (parent && !parent.isDestroyed()) parent.focus();
         if (error) reject(error);
@@ -469,6 +509,10 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
         else if (failureReason === 'cancelled') finish(null, false);
         else finish(new Error(failureReason || 'Print failed.'));
       });
+      focusFallbackTimer = setTimeout(() => {
+        if (parent && !parent.isDestroyed()) parent.once('focus', focusFallback);
+      }, 1000);
+      setTimeout(() => finish(null, false), 15000);
     });
   } catch (error) {
     if (!printWindow.isDestroyed()) printWindow.destroy();
@@ -500,4 +544,14 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   createAutoBackupOnce('quit');
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught main-process exception.', { error });
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled main-process rejection.', {
+    error: reason instanceof Error ? reason : new Error(String(reason))
+  });
 });

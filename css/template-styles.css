@@ -220,7 +220,8 @@
 
 .ribbon-text-more label,
 .ribbon-image-tools label,
-.ribbon-shape-tools label {
+.ribbon-shape-tools label,
+.ribbon-day-tools label {
     display: inline-flex;
     align-items: center;
     gap: 3px;
@@ -230,8 +231,17 @@
 
 .ribbon-text-more input[type="number"],
 .ribbon-image-tools input[type="number"],
-.ribbon-shape-tools input[type="number"] {
+.ribbon-shape-tools input[type="number"],
+.ribbon-day-tools input[type="number"] {
     width: 54px;
+}
+
+.ribbon-day-tools input[type="text"] {
+    width: 118px;
+}
+
+.ribbon-day-tools input[type="color"] {
+    flex: 0 0 auto;
 }
 
 .ribbon-image-tools select {

@@ -79,6 +79,16 @@ class StepTemplateBuilder {
         const labels = this.weekdayBlockLabels();
         return labels.map((label, index) => this.createBlock(`day-${index}`, 'day', label, 7, 24 + (index * 12), 86, 10.5, {
             dayIndex: index,
+            dayTitle: label,
+            dayNameFontFamily: 'Arial, sans-serif',
+            dayNameSize: 14,
+            dayNameColor: '#d2691e',
+            dayNameWeight: 'bold',
+            dayBackground: 'transparent',
+            dayBorderEnabled: true,
+            dayBorderColor: '#e0e0e0',
+            dayBorderWidth: '1px',
+            dayBorderStyle: 'solid',
             fontFamily: 'Arial, sans-serif',
             fontSize: 11,
             color: '#222222',
@@ -155,6 +165,11 @@ class StepTemplateBuilder {
         const pageBackground = this.settings.backgroundImages?.[0] || {};
         const hasPageBackground = !!pageBackground.image;
         const pageBackgroundLabel = hasPageBackground ? pageBackground.image : 'No image';
+        const isDayBlock = block?.type === 'day';
+        const dayTitleColor = style.dayNameColor || this.settings.dayNameColor || '#d2691e';
+        const dayHolderBg = style.dayBackground && style.dayBackground !== 'transparent' ? style.dayBackground : '#ffffff';
+        const dayHolderBorder = style.dayBorderEnabled ?? this.settings.dayBorder;
+        const dayHolderBorderWidth = parseInt(style.dayBorderWidth || this.settings.dayBorderThickness || '1px', 10) || 1;
         const iconButton = (id, icon, title, extra = '') => `<button type="button" class="ribbon-btn icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}>${icon}</button>`;
         return `
             <div class="dms-ribbon">
@@ -226,6 +241,18 @@ class StepTemplateBuilder {
                     <div class="ribbon-group ribbon-text-more">
                         <label title="Line height">LH<input type="number" id="ribbonLineHeight" min="0.8" max="3" step="0.1" value="${style.lineHeight || 1.2}" ${!canTextStyle ? 'disabled' : ''}></label>
                     </div>
+                    ${isDayBlock ? `
+                    <div class="ribbon-group ribbon-day-tools">
+                        <label title="Day holder title">Day<input type="text" id="dayTitleInput" value="${this.escapeAttr(style.dayTitle || block.label || '')}"></label>
+                        <label title="Day title size">Size<input type="number" id="dayTitleSize" min="6" max="72" value="${style.dayNameSize || this.settings.dayNameSize || 14}"></label>
+                        <input id="dayTitleColor" type="color" value="${dayTitleColor}" title="Day title color" aria-label="Day title color">
+                        <button type="button" class="ribbon-btn icon-btn ${(style.dayNameWeight || this.settings.dayNameWeight || 'bold') === 'bold' ? 'active' : ''}" id="dayTitleBold" title="Day title bold" aria-label="Day title bold"><b>B</b></button>
+                        <label title="Day holder background">Fill<input id="dayHolderBg" type="color" value="${dayHolderBg}"></label>
+                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBgTransparent" ${!style.dayBackground || style.dayBackground === 'transparent' ? 'checked' : ''}> Clear</label>
+                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBorder" ${dayHolderBorder ? 'checked' : ''}> Border</label>
+                        <input id="dayHolderBorderColor" type="color" value="${style.dayBorderColor || this.settings.dayBorderColor || '#e0e0e0'}" title="Day border color" aria-label="Day border color">
+                        <label title="Day border width">B<input type="number" id="dayHolderBorderWidth" min="0" max="12" value="${dayHolderBorderWidth}"></label>
+                    </div>` : ''}
                     <div class="ribbon-group ribbon-image-tools">
                         <select id="imageFit" title="Image fit" ${!block || block.type !== 'image' ? 'disabled' : ''}>
                             <option value="contain" ${style.fit === 'contain' ? 'selected' : ''}>Fit</option>
@@ -442,6 +469,31 @@ class StepTemplateBuilder {
         document.getElementById('toggleSnap')?.addEventListener('change', e => { this.settings.snapToGrid = e.target.checked; this.recordChange(false); });
         document.getElementById('ribbonLineHeight')?.addEventListener('input', e => this.updateSelectedStyle('lineHeight', parseFloat(e.target.value) || 1.2, false));
         document.getElementById('ribbonHighlight')?.addEventListener('input', e => this.updateSelectedStyle('backgroundColor', e.target.value, false));
+        document.getElementById('dayTitleInput')?.addEventListener('input', e => {
+            const block = this.getSelectedBlock();
+            if (!block || block.type !== 'day') return;
+            block.label = e.target.value;
+            block.style.dayTitle = e.target.value;
+            this.recordChange(false);
+        });
+        document.getElementById('dayTitleSize')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameSize', parseInt(e.target.value, 10) || 14, false));
+        document.getElementById('dayTitleColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameColor', e.target.value, false));
+        document.getElementById('dayTitleBold')?.addEventListener('click', () => {
+            const block = this.getSelectedBlock();
+            if (!block || block.type !== 'day') return;
+            const next = (block.style.dayNameWeight || this.settings.dayNameWeight || 'bold') === 'bold' ? 'normal' : 'bold';
+            this.updateDayHolderStyle('dayNameWeight', next);
+        });
+        document.getElementById('dayHolderBg')?.addEventListener('input', e => {
+            if (!document.getElementById('dayHolderBgTransparent')?.checked) this.updateDayHolderStyle('dayBackground', e.target.value, false);
+        });
+        document.getElementById('dayHolderBgTransparent')?.addEventListener('change', e => {
+            const color = document.getElementById('dayHolderBg')?.value || '#ffffff';
+            this.updateDayHolderStyle('dayBackground', e.target.checked ? 'transparent' : color);
+        });
+        document.getElementById('dayHolderBorder')?.addEventListener('change', e => this.updateDayHolderStyle('dayBorderEnabled', e.target.checked));
+        document.getElementById('dayHolderBorderColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayBorderColor', e.target.value, false));
+        document.getElementById('dayHolderBorderWidth')?.addEventListener('input', e => this.updateDayHolderStyle('dayBorderWidth', `${parseInt(e.target.value, 10) || 0}px`, false));
         document.getElementById('imageFit')?.addEventListener('change', e => this.updateSelectedStyle('fit', e.target.value));
         document.getElementById('imageOpacity')?.addEventListener('input', e => this.updateSelectedStyle('opacity', this.clamp((parseInt(e.target.value, 10) || 100) / 100, 0.1, 1), false));
         document.getElementById('shapeFill')?.addEventListener('input', e => this.updateSelectedStyle('fill', e.target.value, false));
@@ -557,6 +609,14 @@ class StepTemplateBuilder {
     updateSelectedStyle(key, value, rebuild = true) {
         const block = this.getSelectedBlock();
         if (!block) return;
+        block.style[key] = value;
+        this.syncLegacySettings();
+        this.recordChange(rebuild);
+    }
+
+    updateDayHolderStyle(key, value, rebuild = true) {
+        const block = this.getSelectedBlock();
+        if (!block || block.type !== 'day') return;
         block.style[key] = value;
         this.syncLegacySettings();
         this.recordChange(rebuild);
@@ -962,6 +1022,16 @@ class StepTemplateBuilder {
         if (footer) Object.assign(footer, { visible: this.settings.showFooter, style: { ...footer.style, html: this.settings.footerText, fontFamily: this.settings.footerFontFamily, fontSize: this.settings.footerFontSize, align: this.settings.footerAlignment } });
         this.settings.editorBlocks.filter(block => block.type === 'day').forEach(block => {
             Object.assign(block.style, {
+                dayTitle: block.style.dayTitle || block.label,
+                dayNameFontFamily: block.style.dayNameFontFamily || this.settings.dayNameFontFamily,
+                dayNameSize: block.style.dayNameSize || this.settings.dayNameSize,
+                dayNameColor: block.style.dayNameColor || this.settings.dayNameColor,
+                dayNameWeight: block.style.dayNameWeight || this.settings.dayNameWeight,
+                dayBackground: block.style.dayBackground ?? this.settings.dayBackground,
+                dayBorderEnabled: block.style.dayBorderEnabled ?? this.settings.dayBorder,
+                dayBorderColor: block.style.dayBorderColor || this.settings.dayBorderColor,
+                dayBorderWidth: block.style.dayBorderWidth || this.settings.dayBorderThickness,
+                dayBorderStyle: block.style.dayBorderStyle || this.settings.dayBorderStyle,
                 fontFamily: block.style.fontFamily || this.settings.mealFontFamily,
                 fontSize: block.style.fontSize || this.settings.mealFontSize
             });
@@ -1056,11 +1126,19 @@ class StepTemplateBuilder {
         const s = this.settings;
         const day = this.previewData?.days?.[block.style?.dayIndex || 0];
         if (!day) return '';
-        const border = s.dayBorder ? `border:${s.dayBorderThickness} ${s.dayBorderStyle} ${s.dayBorderColor};` : '';
-        const bg = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        const st = block.style || {};
+        const title = st.dayTitle || block.label || day.name;
+        const borderEnabled = st.dayBorderEnabled ?? s.dayBorder;
+        const border = borderEnabled ? `border:${st.dayBorderWidth || s.dayBorderThickness || '1px'} ${st.dayBorderStyle || s.dayBorderStyle || 'solid'} ${st.dayBorderColor || s.dayBorderColor || '#e0e0e0'};` : '';
+        const dayBackground = st.dayBackground ?? s.dayBackground;
+        const bg = dayBackground && dayBackground !== 'transparent' ? `background:${dayBackground};` : '';
+        const titleFont = st.dayNameFontFamily || s.dayNameFontFamily || 'Arial, sans-serif';
+        const titleSize = st.dayNameSize || s.dayNameSize || 14;
+        const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
+        const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
         return `
             <section class="editor-day-card single-day" style="${border}${bg}">
-                <h3 style="font-family:${s.dayNameFontFamily};font-size:${s.dayNameSize}pt;color:${s.dayNameColor};font-weight:${s.dayNameWeight};">${this.escapeHtml(day.name)}</h3>
+                <h3 style="font-family:${titleFont};font-size:${titleSize}pt;color:${titleColor};font-weight:${titleWeight};">${this.escapeHtml(title)}</h3>
                 ${day.meals.map(meal => this.renderMealLine(meal)).join('')}
             </section>
         `;

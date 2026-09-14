@@ -26,6 +26,9 @@
          if (pageId === 'settings' && typeof window.updateStorageStats === 'function') {
              window.updateStorageStats();
          }
+         if (pageId === 'settings' && typeof window.refreshLogs === 'function') {
+             window.refreshLogs();
+         }
     };
 
     window.bindNavigation = function() {

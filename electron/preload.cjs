@@ -4,6 +4,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // input-validated in the main process, and documented in the IPC contract.
 contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
   getRuntimeInfo: () => ipcRenderer.invoke('desktop:get-runtime-info'),
+  logs: Object.freeze({
+    write: (level, message, meta) => ipcRenderer.invoke('desktop:logs:write', level, message, meta),
+    read: (limit) => ipcRenderer.invoke('desktop:logs:read', limit),
+    clear: () => ipcRenderer.invoke('desktop:logs:clear')
+  }),
   storage: Object.freeze({
     load: () => ipcRenderer.invoke('desktop:storage:load'),
     save: (type, value) => ipcRenderer.invoke('desktop:storage:save', type, value),

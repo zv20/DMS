@@ -1,6 +1,6 @@
 /**
  * Print Menu Function
- * @version 8.4 - Keep print flow unlocked after dialog cancel
+ * @version 8.5 - Recover when the native print dialog does not report cancel
  */
 
 (function(window) {
@@ -204,6 +204,8 @@
     // This same value is also added to the @page bottom margin.
     const BOTTOM_SAFE_BUFFER_MM = 8;
 
+    const DESKTOP_PRINT_TIMEOUT_MS = 15000;
+
     // ─── MAIN ENTRY POINT ────────────────────────────────────────────────────
     window.printMenu = async function() {
         if (window.__dmsPrintInProgress) return;
@@ -310,9 +312,14 @@
         const title = 'Weekly-Menu-' + ds;
 
         if (window.dmsDesktop && window.dmsDesktop.print && window.dmsDesktop.print.menu) {
-            return window.dmsDesktop.print.menu({ title, html, margins, usableH, usableW, safeBottom })
+            const printTask = window.dmsDesktop.print.menu({ title, html, margins, usableH, usableW, safeBottom });
+            const unlockTask = new Promise(resolve => {
+                setTimeout(() => resolve(false), DESKTOP_PRINT_TIMEOUT_MS);
+            });
+
+            return Promise.race([printTask, unlockTask])
                 .then(result => {
-                    if (result === false) console.info('Desktop print cancelled.');
+                    if (result === false) console.info('Desktop print cancelled or timed out.');
                 })
                 .catch(error => {
                     console.error('Desktop print failed:', error);
@@ -659,12 +666,18 @@
     function renderEditorDayBlock(block, data, s) {
         const day = data.days[block.style?.dayIndex || 0];
         if (!day) return '';
-        const dys = normSize(s.dayNameSize, '12pt');
-        const dyff = ff(s, 'dayNameFontFamily');
-        const brd = s.dayBorder ? `border:${s.dayBorderThickness||'1px'} ${s.dayBorderStyle||'solid'} ${s.dayBorderColor||'#e0e0e0'};` : '';
-        const bg = s.dayBackground && s.dayBackground !== 'transparent' ? `background:${s.dayBackground};` : '';
+        const st = block.style || {};
+        const title = st.dayTitle || block.label || day.name;
+        const dys = normSize(st.dayNameSize || s.dayNameSize, '12pt');
+        const dyff = st.dayNameFontFamily || ff(s, 'dayNameFontFamily');
+        const borderEnabled = st.dayBorderEnabled ?? s.dayBorder;
+        const brd = borderEnabled ? `border:${st.dayBorderWidth||s.dayBorderThickness||'1px'} ${st.dayBorderStyle||s.dayBorderStyle||'solid'} ${st.dayBorderColor||s.dayBorderColor||'#e0e0e0'};` : '';
+        const dayBackground = st.dayBackground ?? s.dayBackground;
+        const bg = dayBackground && dayBackground !== 'transparent' ? `background:${dayBackground};` : '';
+        const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
+        const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
         return `<section style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
-            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${s.dayNameColor};font-weight:${s.dayNameWeight||'bold'};">${day.name}</h3>
+            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
             ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
         </section>`;
     }
