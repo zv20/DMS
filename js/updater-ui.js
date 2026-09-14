@@ -26,14 +26,14 @@
     const message = error && error.message ? error.message : '';
     if (/status 404/i.test(message) || /Cannot download/i.test(message)) {
       return text(
-        'The update file was not found on GitHub. The release may still be uploading or its asset name may not match the update feed.',
-        'Файлът за обновление не беше намерен в GitHub. Възможно е релийзът още да се качва или името на файла да не съвпада с update feed.'
+        window.t ? window.t('updates_error_missing_file') : 'The update file was not found on GitHub. The release may still be uploading or its asset name may not match the update feed.',
+        window.t ? window.t('updates_error_missing_file') : 'Файлът за обновление не беше намерен в GitHub. Възможно е релийзът още да се качва или името на файла да не съвпада с update feed.'
       );
     }
     if (/network|getaddrinfo|ENOTFOUND|ECONNRESET|ETIMEDOUT/i.test(message)) {
       return text(
-        'Network error while checking for updates. Check your internet connection and try again.',
-        'Мрежова грешка при проверката за обновления. Проверете интернет връзката и опитайте отново.'
+        window.t ? window.t('updates_error_network') : 'Network error while checking for updates. Check your internet connection and try again.',
+        window.t ? window.t('updates_error_network') : 'Мрежова грешка при проверката за обновления. Проверете интернет връзката и опитайте отново.'
       );
     }
     return message || fallback;
@@ -82,11 +82,20 @@
     };
 
     const current = nextState.currentVersion || 'unknown';
-    const available = nextState.availableVersion ? ` ${text('Available:', 'Налична:')} ${nextState.availableVersion}.` : '';
-    const message = nextState.message || text('Ready to check for updates.', 'Готово за проверка за обновления.');
+    const available = nextState.availableVersion ? ` ${window.t ? window.t('updates_available_label') : text('Available:', 'Налична:')} ${nextState.availableVersion}.` : '';
+    const statusMessages = {
+      idle: 'updates_ready',
+      checking: 'updates_checking',
+      available: 'updates_available',
+      downloading: 'updates_downloading',
+      downloaded: 'updates_downloaded',
+      unavailable: 'updates_unavailable'
+    };
+    const translatedStatus = window.t && statusMessages[nextState.status] ? window.t(statusMessages[nextState.status]) : '';
+    const message = translatedStatus || nextState.message || (window.t ? window.t('updates_ready') : text('Ready to check for updates.', 'Готово за проверка за обновления.'));
     el.innerHTML = `
       <div class="update-summary">
-        <strong>${escapeHtml(text('Current version:', 'Текуща версия:'))} ${escapeHtml(current)}</strong>
+        <strong>${escapeHtml(window.t ? window.t('updates_current_version') : text('Current version:', 'Текуща версия:'))} ${escapeHtml(current)}</strong>
         <span>${escapeHtml(message)}${escapeHtml(available)}</span>
       </div>
     `;
@@ -102,7 +111,7 @@
     } catch (error) {
       renderStatus({
         status: 'error',
-        message: friendlyError(error, text('Unable to read update status.', 'Не може да се прочете статуса на обновленията.'))
+        message: friendlyError(error, window.t ? window.t('updates_read_failed') : text('Unable to read update status.', 'Не може да се прочете статуса на обновленията.'))
       });
     }
   }
@@ -111,21 +120,21 @@
 
   window.checkForAppUpdates = async function() {
     if (!window.dmsDesktop?.updates?.check) return;
-    renderStatus({ status: 'checking', message: text('Checking for updates...', 'Проверка за обновления...') });
+    renderStatus({ status: 'checking', message: window.t ? window.t('updates_checking') : text('Checking for updates...', 'Проверка за обновления...') });
     try {
       renderStatus(await window.dmsDesktop.updates.check());
     } catch (error) {
-      renderStatus({ status: 'error', message: friendlyError(error, text('Update check failed.', 'Проверката за обновления не успя.')) });
+      renderStatus({ status: 'error', message: friendlyError(error, window.t ? window.t('updates_check_failed') : text('Update check failed.', 'Проверката за обновления не успя.')) });
     }
   };
 
   window.downloadAppUpdate = async function() {
     if (!window.dmsDesktop?.updates?.download) return;
-    renderStatus({ status: 'downloading', message: text('Starting download...', 'Стартиране на изтеглянето...') });
+    renderStatus({ status: 'downloading', message: window.t ? window.t('updates_starting_download') : text('Starting download...', 'Стартиране на изтеглянето...') });
     try {
       renderStatus(await window.dmsDesktop.updates.download());
     } catch (error) {
-      renderStatus({ status: 'error', message: friendlyError(error, text('Update download failed.', 'Изтеглянето на обновлението не успя.')) });
+      renderStatus({ status: 'error', message: friendlyError(error, window.t ? window.t('updates_download_failed') : text('Update download failed.', 'Изтеглянето на обновлението не успя.')) });
     }
   };
 

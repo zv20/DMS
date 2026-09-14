@@ -45,16 +45,20 @@
         const splash = document.getElementById('splashScreen');
         const actions = document.getElementById('splashActions');
         const subtitle = splash.querySelector('.splash-subtitle');
+        const progressFill = document.getElementById('splashProgressFill');
+        const minimumSplashMs = 2200;
+        const startedAt = Date.now();
         
         const loadingMessages = [
-            window.t('loading_detecting'),
-            window.t('loading_data'),
-            window.t('loading_recipes'),
-            window.t('loading_ingredients'),
-            window.t('loading_ready')
+            window.t('loading_preparing_menu'),
+            window.t('loading_mixing_ingredients'),
+            window.t('loading_checking_allergens'),
+            window.t('loading_templates'),
+            window.t('loading_workspace')
         ];
         
         let messageIndex = 0;
+        let progress = 8;
         
         function showNextMessage() {
             if (messageIndex < loadingMessages.length) {
@@ -62,22 +66,36 @@
                 messageIndex++;
             }
         }
+
+        function setProgress(value) {
+            progress = Math.max(progress, Math.min(100, value));
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
         
         actions.innerHTML = '<div class="loader-spinner"></div>';
         showNextMessage();
-        const messageInterval = setInterval(showNextMessage, 600);
+        setProgress(12);
+        const messageInterval = setInterval(() => {
+            showNextMessage();
+            setProgress(progress + 18);
+        }, 480);
         
         try {
             const initialized = await window.checkPreviousFolder();
+            setProgress(88);
+            const remaining = Math.max(0, minimumSplashMs - (Date.now() - startedAt));
+            if (remaining) await new Promise(resolve => setTimeout(resolve, remaining));
             
             if (initialized) {
                 clearInterval(messageInterval);
                 subtitle.textContent = window.t('loading_ready_go');
+                setProgress(100);
                 await new Promise(resolve => setTimeout(resolve, 800));
                 hideSplash();
             } else {
                 clearInterval(messageInterval);
                 subtitle.textContent = window.t('loading_ready_go');
+                setProgress(100);
                 setTimeout(hideSplash, 500);
             }
         } catch (err) {

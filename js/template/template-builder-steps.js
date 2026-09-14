@@ -129,6 +129,10 @@ class StepTemplateBuilder {
         ];
     }
 
+    tr(key, fallback) {
+        return window.t ? window.t(key) : fallback;
+    }
+
     buildUI() {
         const sidebar = document.getElementById('template-sidebar');
         const tabs = document.getElementById('template-builder-tabs');
@@ -136,9 +140,9 @@ class StepTemplateBuilder {
         if (!sidebar || !toolbar) return;
         if (tabs) {
             tabs.innerHTML = `
-                <button class="builder-tab-btn active" data-tab="builder" type="button">Editor</button>
-                <button class="builder-tab-btn" data-tab="templates" type="button">Saved Templates</button>
-                <button class="builder-tab-btn" data-tab="images" type="button">Images</button>
+                <button class="builder-tab-btn active" data-tab="builder" type="button">${this.escapeHtml(this.tr('tab_builder', 'Editor'))}</button>
+                <button class="builder-tab-btn" data-tab="templates" type="button">${this.escapeHtml(this.tr('tab_templates', 'Saved Templates'))}</button>
+                <button class="builder-tab-btn" data-tab="images" type="button">${this.escapeHtml(this.tr('tab_images', 'Images'))}</button>
             `;
         }
         sidebar.innerHTML = `
@@ -164,7 +168,7 @@ class StepTemplateBuilder {
         const templateOptions = Object.keys(window.menuTemplates || {}).sort().map(name => `<option value="${this.escapeAttr(name)}">${this.escapeHtml(name)}</option>`).join('');
         const pageBackground = this.settings.backgroundImages?.[0] || {};
         const hasPageBackground = !!pageBackground.image;
-        const pageBackgroundLabel = hasPageBackground ? pageBackground.image : 'No image';
+        const pageBackgroundLabel = hasPageBackground ? pageBackground.image : this.tr('text_no_uploads', 'No image');
         const isDayBlock = block?.type === 'day';
         const dayTitleColor = style.dayNameColor || this.settings.dayNameColor || '#d2691e';
         const dayHolderBg = style.dayBackground && style.dayBackground !== 'transparent' ? style.dayBackground : '#ffffff';
@@ -175,28 +179,28 @@ class StepTemplateBuilder {
             <div class="dms-ribbon">
                 <div class="ribbon-row ribbon-row-primary">
                     <div class="ribbon-group ribbon-actions">
-                        <button type="button" class="ribbon-command primary" id="btnSaveTemplate" title="Save template" aria-label="Save template">💾 <span>Save</span></button>
-                        <button type="button" class="ribbon-command" id="btnLoadData" title="Load menu data" aria-label="Load menu data">📅 <span>Load Data</span></button>
-                        <button type="button" class="ribbon-command" id="btnReset" title="Clear template" aria-label="Clear template">🧹 <span>Clear</span></button>
+                        <button type="button" class="ribbon-command primary" id="btnSaveTemplate" title="${this.escapeAttr(this.tr('btn_save_template', 'Save template'))}" aria-label="${this.escapeAttr(this.tr('btn_save_template', 'Save template'))}"><span class="ribbon-symbol">S</span><span>${this.escapeHtml(this.tr('ribbon_save', 'Save'))}</span></button>
+                        <button type="button" class="ribbon-command" id="btnLoadData" title="${this.escapeAttr(this.tr('ribbon_load_data', 'Load menu data'))}" aria-label="${this.escapeAttr(this.tr('ribbon_load_data', 'Load menu data'))}"><span class="ribbon-symbol">D</span><span>${this.escapeHtml(this.tr('ribbon_load_data', 'Load Data'))}</span></button>
+                        <button type="button" class="ribbon-command" id="btnReset" title="${this.escapeAttr(this.tr('ribbon_clear', 'Clear template'))}" aria-label="${this.escapeAttr(this.tr('ribbon_clear', 'Clear template'))}"><span class="ribbon-symbol">C</span><span>${this.escapeHtml(this.tr('ribbon_clear', 'Clear'))}</span></button>
                     </div>
                     <div class="ribbon-group ribbon-template">
-                        <select id="savedTemplateSelect" title="Saved templates">
-                            <option value="">Saved Templates</option>
+                        <select id="savedTemplateSelect" title="${this.escapeAttr(this.tr('ribbon_saved_templates', 'Saved templates'))}">
+                            <option value="">${this.escapeHtml(this.tr('ribbon_saved_templates', 'Saved Templates'))}</option>
                             ${templateOptions}
                         </select>
-                        ${iconButton('btnLoadSavedTemplate', '📂', 'Open template')}
-                        ${iconButton('btnDeleteSavedTemplate', '🗑', 'Delete template')}
+                        ${iconButton('btnLoadSavedTemplate', '□', this.tr('ribbon_open_template', 'Open template'))}
+                        ${iconButton('btnDeleteSavedTemplate', '⌫', this.tr('ribbon_delete_template', 'Delete template'))}
                     </div>
                     <div class="ribbon-group">
                         ${iconButton('btnUndo', '↶', 'Undo')}
                         ${iconButton('btnRedo', '↷', 'Redo')}
                     </div>
                     <div class="ribbon-group">
-                        ${iconButton('btnAddText', '▤', 'Add text box')}
-                        ${iconButton('btnAddImage', '🖼', 'Insert image')}
+                        ${iconButton('btnAddText', 'T', this.tr('ribbon_add_text', 'Add text box'))}
+                        ${iconButton('btnAddImage', '▧', this.tr('ribbon_insert_image', 'Insert image'))}
                         <input type="file" id="canvasImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
-                        ${iconButton('btnAddRect', '▭', 'Add rectangle')}
-                        ${iconButton('btnAddLine', '╱', 'Add line')}
+                        ${iconButton('btnAddRect', '▭', this.tr('ribbon_add_rectangle', 'Add rectangle'))}
+                        ${iconButton('btnAddLine', '╱', this.tr('ribbon_add_line', 'Add line'))}
                     </div>
                     <div class="ribbon-group">
                         ${iconButton('btnDuplicateBlock', '⧉', 'Duplicate selected')}
@@ -235,7 +239,7 @@ class StepTemplateBuilder {
                         <button type="button" class="ribbon-btn icon-btn ${style.bold ? 'active' : ''}" data-style-toggle="bold" ${!canTextStyle ? 'disabled' : ''} title="Bold" aria-label="Bold"><b>B</b></button>
                         <button type="button" class="ribbon-btn icon-btn ${style.italic ? 'active' : ''}" data-style-toggle="italic" ${!canTextStyle ? 'disabled' : ''} title="Italic" aria-label="Italic"><i>I</i></button>
                         <button type="button" class="ribbon-btn icon-btn ${style.underline ? 'active' : ''}" data-style-toggle="underline" ${!canTextStyle ? 'disabled' : ''} title="Underline" aria-label="Underline"><u>U</u></button>
-                        ${iconButton('btnClearFormatting', 'Tx', 'Clear formatting', !canTextStyle ? 'disabled' : '')}
+                        ${iconButton('btnClearFormatting', 'Tx', this.tr('ribbon_clear_formatting', 'Clear formatting'), !canTextStyle ? 'disabled' : '')}
                     </div>
                     <div class="ribbon-group">${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${style.align === a ? 'active' : ''}" data-align="${a}" ${!canTextStyle ? 'disabled' : ''} title="Align ${a}" aria-label="Align ${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}</div>
                     <div class="ribbon-group ribbon-text-more">
@@ -243,13 +247,13 @@ class StepTemplateBuilder {
                     </div>
                     ${isDayBlock ? `
                     <div class="ribbon-group ribbon-day-tools">
-                        <label title="Day holder title">Day<input type="text" id="dayTitleInput" value="${this.escapeAttr(style.dayTitle || block.label || '')}"></label>
-                        <label title="Day title size">Size<input type="number" id="dayTitleSize" min="6" max="72" value="${style.dayNameSize || this.settings.dayNameSize || 14}"></label>
+                        <label title="${this.escapeAttr(this.tr('ribbon_day', 'Day'))}">${this.escapeHtml(this.tr('ribbon_day', 'Day'))}<input type="text" id="dayTitleInput" value="${this.escapeAttr(style.dayTitle || block.label || '')}"></label>
+                        <label title="${this.escapeAttr(this.tr('ribbon_size', 'Size'))}">${this.escapeHtml(this.tr('ribbon_size', 'Size'))}<input type="number" id="dayTitleSize" min="6" max="72" value="${style.dayNameSize || this.settings.dayNameSize || 14}"></label>
                         <input id="dayTitleColor" type="color" value="${dayTitleColor}" title="Day title color" aria-label="Day title color">
                         <button type="button" class="ribbon-btn icon-btn ${(style.dayNameWeight || this.settings.dayNameWeight || 'bold') === 'bold' ? 'active' : ''}" id="dayTitleBold" title="Day title bold" aria-label="Day title bold"><b>B</b></button>
-                        <label title="Day holder background">Fill<input id="dayHolderBg" type="color" value="${dayHolderBg}"></label>
-                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBgTransparent" ${!style.dayBackground || style.dayBackground === 'transparent' ? 'checked' : ''}> Clear</label>
-                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBorder" ${dayHolderBorder ? 'checked' : ''}> Border</label>
+                        <label title="${this.escapeAttr(this.tr('ribbon_fill', 'Fill'))}">${this.escapeHtml(this.tr('ribbon_fill', 'Fill'))}<input id="dayHolderBg" type="color" value="${dayHolderBg}"></label>
+                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBgTransparent" ${!style.dayBackground || style.dayBackground === 'transparent' ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_clear_fill', 'Clear'))}</label>
+                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBorder" ${dayHolderBorder ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</label>
                         <input id="dayHolderBorderColor" type="color" value="${style.dayBorderColor || this.settings.dayBorderColor || '#e0e0e0'}" title="Day border color" aria-label="Day border color">
                         <label title="Day border width">B<input type="number" id="dayHolderBorderWidth" min="0" max="12" value="${dayHolderBorderWidth}"></label>
                     </div>` : ''}
@@ -275,21 +279,21 @@ class StepTemplateBuilder {
                     <div class="ribbon-group ribbon-page">
                         <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color" aria-label="Page color">
                         <div class="page-background-control">
-                            <button type="button" class="ribbon-command page-background-btn ${hasPageBackground ? 'active' : ''}" id="btnPageBackground" title="Page Background" aria-label="Page Background">
-                                ▧ <span>Page Background</span>
+                            <button type="button" class="ribbon-command page-background-btn ${hasPageBackground ? 'active' : ''}" id="btnPageBackground" title="${this.escapeAttr(this.tr('ribbon_page_background', 'Page Background'))}" aria-label="${this.escapeAttr(this.tr('ribbon_page_background', 'Page Background'))}">
+                                ▧ <span>${this.escapeHtml(this.tr('ribbon_page_background', 'Page Background'))}</span>
                             </button>
                             <span class="page-background-label" title="${this.escapeAttr(pageBackgroundLabel)}">${this.escapeHtml(pageBackgroundLabel)}</span>
                             <div id="pageBackgroundMenu" class="page-background-menu" hidden>
-                                <button type="button" data-bg-action="upload">Upload new image</button>
-                                <button type="button" data-bg-action="clear" ${!hasPageBackground ? 'disabled' : ''}>Clear background</button>
+                                <button type="button" data-bg-action="upload">${this.escapeHtml(this.tr('ribbon_upload_new_image', 'Upload new image'))}</button>
+                                <button type="button" data-bg-action="clear" ${!hasPageBackground ? 'disabled' : ''}>${this.escapeHtml(this.tr('ribbon_clear_background', 'Clear background'))}</button>
                                 <div id="pageBackgroundChoices" class="page-background-choices">
                                     <div class="empty-state">Open to load background images.</div>
                                 </div>
                                 <label>Fit
                                     <select id="pageBackgroundFit" ${!hasPageBackground ? 'disabled' : ''}>
-                                        <option value="100" ${Math.round(pageBackground.size || 100) === 100 ? 'selected' : ''}>Fit page</option>
-                                        <option value="140" ${Math.round(pageBackground.size || 100) === 140 ? 'selected' : ''}>Fill page</option>
-                                        <option value="50" ${Math.round(pageBackground.size || 100) === 50 ? 'selected' : ''}>Small</option>
+                                        <option value="100" ${Math.round(pageBackground.size || 100) === 100 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_fit_page', 'Fit page'))}</option>
+                                        <option value="140" ${Math.round(pageBackground.size || 100) === 140 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_fill_page', 'Fill page'))}</option>
+                                        <option value="50" ${Math.round(pageBackground.size || 100) === 50 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_small', 'Small'))}</option>
                                     </select>
                                 </label>
                                 <label>Position
@@ -303,8 +307,8 @@ class StepTemplateBuilder {
                             </div>
                         </div>
                         <input type="file" id="backgroundImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
-                        <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> Guides</label>
-                        <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> Snap</label>
+                        <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_guides', 'Guides'))}</label>
+                        <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_snap', 'Snap'))}</label>
                     </div>
                 </div>
             </div>
