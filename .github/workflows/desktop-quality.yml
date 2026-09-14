@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Rebuild native modules for Electron
+        run: npm run desktop:rebuild-native
+
       - name: Validate desktop sources
         run: npm run desktop:check
 
