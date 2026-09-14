@@ -7,7 +7,8 @@ contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
   logs: Object.freeze({
     write: (level, message, meta) => ipcRenderer.invoke('desktop:logs:write', level, message, meta),
     read: (limit) => ipcRenderer.invoke('desktop:logs:read', limit),
-    clear: () => ipcRenderer.invoke('desktop:logs:clear')
+    clear: () => ipcRenderer.invoke('desktop:logs:clear'),
+    export: () => ipcRenderer.invoke('desktop:logs:export')
   }),
   storage: Object.freeze({
     load: () => ipcRenderer.invoke('desktop:storage:load'),
@@ -15,7 +16,8 @@ contextBridge.exposeInMainWorld('dmsDesktop', Object.freeze({
     import: (snapshot) => ipcRenderer.invoke('desktop:storage:import', snapshot),
     export: () => ipcRenderer.invoke('desktop:storage:export'),
     chooseImport: () => ipcRenderer.invoke('desktop:storage:choose-import'),
-    applyImport: (importId) => ipcRenderer.invoke('desktop:storage:apply-import', importId)
+    applyImport: (importId) => ipcRenderer.invoke('desktop:storage:apply-import', importId),
+    health: () => ipcRenderer.invoke('desktop:storage:health')
   }),
   catalog: Object.freeze({
     recipes: Object.freeze({

@@ -41,3 +41,6 @@ jobs:
 
       - name: Run SQLite storage test
         run: npm run desktop:test-storage
+
+      - name: Run desktop smoke test
+        run: npm run desktop:smoke

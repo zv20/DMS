@@ -9,8 +9,9 @@
   },
   "scripts": {
     "desktop:dev": "electron .",
-    "desktop:check": "node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/storage.cjs && node --check electron/logger.cjs && node --check electron/storage-test-runner.cjs && node --check electron/storage.test.cjs && node --check electron/install-native.cjs && node --check js/app-logger.js && node --check js/settings-logs.js && node --check js/desktop-storage-adapter.js && node --check js/i18n.js && node --check js/main.js && node --check js/ui.js && node --check js/updater-ui.js && node --check js/template/template-builder-steps.js",
+    "desktop:check": "node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/storage.cjs && node --check electron/logger.cjs && node --check electron/storage-test-runner.cjs && node --check electron/storage.test.cjs && node --check electron/install-native.cjs && node --check js/app-logger.js && node --check js/settings-logs.js && node --check js/desktop-storage-adapter.js && node --check js/i18n.js && node --check js/store.js && node --check js/main.js && node --check js/ui.js && node --check js/updater-ui.js && node --check js/template/template-builder-steps.js",
     "desktop:test-storage": "electron . --storage-test",
+    "desktop:smoke": "electron . --smoke-test",
     "desktop:install-native": "node electron/install-native.cjs",
     "desktop:rebuild-native": "electron-rebuild -f -w better-sqlite3",
     "desktop:pack": "electron-builder --dir",

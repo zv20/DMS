@@ -551,6 +551,16 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
     color: var(--color-text);
 }
 
+.data-health-result {
+    margin-top: 12px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.data-health-result ul {
+    margin: 8px 0 0 18px;
+}
+
 .sqlite-stats-card {
     background: #eef7f1;
     border-left: 4px solid #2f8f5b;
@@ -701,11 +711,21 @@ input:focus, select:focus, textarea:focus, .form-control:focus {
 }
 
 .logs-filters {
+    align-items: center;
     margin-bottom: 14px;
     padding: 10px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
     background: var(--color-background);
+}
+
+.logs-search {
+    flex: 1 1 220px;
+    min-width: 180px;
+    padding: 9px 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font: inherit;
 }
 
 .logs-filters label {

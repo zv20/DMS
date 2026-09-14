@@ -38,7 +38,12 @@
     const list = document.getElementById('logs-list');
     if (!list) return;
     const levels = selectedLevels();
-    const visible = logEntries.filter(entry => levels.has(entry.level || 'info')).reverse();
+    const query = (document.getElementById('logs-search')?.value || '').trim().toLowerCase();
+    const visible = logEntries.filter(entry => {
+      if (!levels.has(entry.level || 'info')) return false;
+      if (!query) return true;
+      return JSON.stringify(entry).toLowerCase().includes(query);
+    }).reverse();
     if (!visible.length) {
       list.innerHTML = `<div class="logs-empty">${escapeHtml(t('logs_empty_filtered', 'No logs match the selected filters.'))}</div>`;
       return;
@@ -88,6 +93,12 @@
     renderLogs();
   }
 
+  async function exportLogs() {
+    if (!window.dmsDesktop?.logs?.export) return;
+    const exported = await window.dmsDesktop.logs.export();
+    if (exported) await refreshLogs();
+  }
+
   function showSettingsTab(tab) {
     document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.settingsTab === tab));
     document.querySelectorAll('.settings-tab-page').forEach(page => page.classList.toggle('active', page.id === `settings-tab-${tab}`));
@@ -101,7 +112,9 @@
       btn.addEventListener('click', () => showSettingsTab(btn.dataset.settingsTab || 'general'));
     });
     document.querySelectorAll('.logs-filters input').forEach(input => input.addEventListener('change', renderLogs));
+    document.getElementById('logs-search')?.addEventListener('input', renderLogs);
     document.getElementById('btn-refresh-logs')?.addEventListener('click', refreshLogs);
+    document.getElementById('btn-export-logs')?.addEventListener('click', exportLogs);
     document.getElementById('btn-clear-logs')?.addEventListener('click', clearLogs);
   });
 })(window);

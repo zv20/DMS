@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, net, protocol, session } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { readFile } = require('node:fs/promises');
+const { copyFile, readFile } = require('node:fs/promises');
 const { randomUUID } = require('node:crypto');
 const AdmZip = require('adm-zip');
 const { createDesktopDatabase } = require('./storage.cjs');
@@ -17,6 +17,7 @@ let desktopDatabase;
 let autoBackupCreatedForQuit = false;
 const pendingImports = new Map();
 const isStorageTest = process.argv.includes('--storage-test');
+const isSmokeTest = process.argv.includes('--smoke-test');
 const updateState = {
   status: app.isPackaged ? 'idle' : 'unavailable',
   message: app.isPackaged ? 'Ready to check for updates.' : 'Updates are available only in the installed Windows app.',
@@ -28,6 +29,13 @@ const updateState = {
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+
+if (isSmokeTest) {
+  setTimeout(() => {
+    console.error('Desktop smoke test exceeded the hard timeout.');
+    process.exit(1);
+  }, 25000);
+}
 
 function setUpdateState(next) {
   Object.assign(updateState, next, { currentVersion: app.getVersion() });
@@ -70,7 +78,7 @@ autoUpdater.on('error', error => setUpdateState({
 }));
 autoUpdater.on('error', error => logger.error('Auto updater failed.', { error }));
 
-if (isStorageTest) {
+if (isStorageTest || isSmokeTest) {
   app.disableHardwareAcceleration();
   app.commandLine.appendSwitch('disable-gpu');
 }
@@ -110,14 +118,20 @@ function fileForRequest(requestUrl) {
 }
 
 function isTrustedSender(event) {
-  return event.senderFrame.url.startsWith(`${APP_ORIGIN}/`);
+  const url = event.senderFrame.url;
+  if (url.startsWith(`${APP_ORIGIN}/`)) return true;
+  return isSmokeTest && url.startsWith(pathToFileURL(rendererRoot()).toString());
 }
 
 function registerIpc(channel, handler) {
   ipcMain.handle(channel, async (event, ...args) => {
+    const startedAt = Date.now();
     try {
       if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
-      return await handler(event, ...args);
+      const result = await handler(event, ...args);
+      const elapsedMs = Date.now() - startedAt;
+      if (elapsedMs > 500) logger.warn('Slow IPC operation.', { channel, elapsedMs });
+      return result;
     } catch (error) {
       logger.error('IPC handler failed.', { channel, error });
       throw error;
@@ -129,7 +143,8 @@ function createAutoBackupOnce(reason) {
   if (!desktopDatabase || autoBackupCreatedForQuit || isStorageTest) return;
   autoBackupCreatedForQuit = true;
   try {
-    desktopDatabase.createAutoBackup(reason);
+    const result = desktopDatabase.createAutoBackup(reason);
+    if (result) logger.info('Auto-backup created.', { reason, filePath: result.filePath, summary: result.summary });
   } catch (error) {
     console.warn(`Auto-backup on ${reason} failed:`, error);
     logger.warn('Auto-backup failed.', { reason, error });
@@ -204,6 +219,67 @@ function createMainWindow() {
   });
   window.on('close', () => createAutoBackupOnce('close'));
   window.loadURL(`${APP_ORIGIN}/index.html`);
+  return window;
+}
+
+async function runSmokeTest() {
+  console.log('Desktop smoke test: opening database.');
+  desktopDatabase = createDesktopDatabase(app.getPath('userData'));
+  console.log('Desktop smoke test: creating window.');
+  const window = new BrowserWindow({
+    width: 1366,
+    height: 900,
+    show: false,
+    backgroundColor: '#ffffff',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false
+    }
+  });
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  console.log('Desktop smoke test: waiting for renderer load.');
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Smoke test page load timed out.')), 10000);
+    const finish = (error) => {
+      clearTimeout(timer);
+      window.webContents.removeListener('did-finish-load', handleLoaded);
+      window.webContents.removeListener('did-fail-load', handleFailed);
+      if (error) reject(error);
+      else resolve();
+    };
+    const handleLoaded = () => finish();
+    const handleFailed = (_event, errorCode, errorDescription, validatedURL) => {
+      finish(new Error(`Smoke test page load failed (${errorCode}): ${errorDescription} ${validatedURL}`));
+    };
+    window.webContents.once('did-finish-load', handleLoaded);
+    window.webContents.once('did-fail-load', handleFailed);
+    window.loadFile(path.join(__dirname, '..', 'index.html')).catch(finish);
+  });
+  console.log('Desktop smoke test: checking renderer UI.');
+  await window.webContents.executeJavaScript(`
+    new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Smoke test timed out.")), 8000);
+      const check = () => {
+        const required = ["menu", "recipes", "ingredients", "allergens", "settings", "style-editor", "btn-check-updates", "btn-refresh-logs"];
+        const missing = required.filter(id => !document.getElementById(id));
+        if (!missing.length && window.storageAdapter && window.t) {
+          clearTimeout(timeout);
+          resolve(true);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  `);
+  logger.info('Desktop smoke test passed.');
+  console.log('Desktop smoke test passed.');
+  process.exit(0);
 }
 
 function buildPrintDocument({ title, html, margins, usableH, usableW, safeBottom }) {
@@ -267,6 +343,18 @@ registerIpc('desktop:logs:clear', () => {
   return logger.clear();
 });
 
+registerIpc('desktop:logs:export', async (event) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender), {
+    title: 'Export DMS logs',
+    defaultPath: `dms-logs-${new Date().toISOString().slice(0, 10)}.log`,
+    filters: [{ name: 'DMS logs', extensions: ['log'] }]
+  });
+  if (result.canceled || !result.filePath) return false;
+  await copyFile(logger.filePath, result.filePath);
+  return true;
+});
+
 ipcMain.handle('desktop:updates:get-status', (event) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   return { ...updateState };
@@ -297,7 +385,8 @@ ipcMain.handle('desktop:updates:download', async (event) => {
 ipcMain.handle('desktop:updates:install', (event) => {
   if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender.');
   if (!updateState.downloaded) throw new Error('No downloaded update is ready to install.');
-  createAutoBackupOnce('before-update');
+  const backup = desktopDatabase.createRequiredBackup('before-update');
+  logger.info('Verified backup created before update.', { filePath: backup?.filePath, summary: backup?.summary });
   autoUpdater.quitAndInstall(false, true);
   return true;
 });
@@ -400,6 +489,10 @@ ipcMain.handle('desktop:storage:export', async (event) => {
   }
   desktopDatabase.createBackupZip(result.filePath);
   return true;
+});
+
+registerIpc('desktop:storage:health', () => {
+  return desktopDatabase.getDataHealth();
 });
 
 ipcMain.handle('desktop:storage:choose-import', async (event) => {
@@ -526,6 +619,15 @@ app.whenReady().then(() => {
     runStorageProjectionTest();
     console.log('SQLite storage projection test passed.');
     app.quit();
+    return;
+  }
+
+  if (isSmokeTest) {
+    runSmokeTest().catch((error) => {
+      logger.error('Desktop smoke test failed.', { error });
+      console.error(error);
+      process.exit(1);
+    });
     return;
   }
 

@@ -508,6 +508,50 @@ function createDesktopDatabase(userDataPath) {
     return { recipes: count('recipes'), ingredients: count('ingredients'), allergens: count('allergens'), menuDates, templates, images };
   }
 
+  function getDataHealth() {
+    const snapshot = loadSnapshot();
+    const issues = [];
+    const recipes = Array.isArray(snapshot.recipes) ? snapshot.recipes : [];
+    const ingredients = Array.isArray(snapshot.ingredients) ? snapshot.ingredients : [];
+    const allergens = Array.isArray(snapshot.allergens) ? snapshot.allergens : [];
+    const templates = snapshot.templates && typeof snapshot.templates === 'object' ? snapshot.templates : {};
+    const menu = snapshot.currentMenu && typeof snapshot.currentMenu === 'object' ? snapshot.currentMenu : {};
+    const recipeIds = new Set(recipes.map((recipe) => recipe?.id).filter(Boolean));
+    const ingredientIds = new Set(ingredients.map((ingredient) => ingredient?.id).filter(Boolean));
+    const allergenIds = new Set(allergens.map((allergen) => allergen?.id).filter(Boolean));
+
+    recipes.forEach((recipe, index) => {
+      if (!recipe?.id || !recipe?.name) issues.push({ level: 'error', area: 'recipes', message: `Recipe ${index + 1} is missing an id or name.` });
+      for (const ingredient of Array.isArray(recipe?.ingredients) ? recipe.ingredients : []) {
+        const id = getId(ingredient);
+        if (id && !ingredientIds.has(id)) issues.push({ level: 'warn', area: 'recipes', message: `Recipe "${recipe.name || recipe.id}" references a missing ingredient.` });
+      }
+      for (const allergen of Array.isArray(recipe?.manualAllergens) ? recipe.manualAllergens : []) {
+        const id = getId(allergen);
+        if (id && !allergenIds.has(id)) issues.push({ level: 'warn', area: 'recipes', message: `Recipe "${recipe.name || recipe.id}" references a missing allergen.` });
+      }
+    });
+
+    for (const [date, slots] of Object.entries(menu)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) issues.push({ level: 'warn', area: 'menu', message: `Menu date "${date}" is not valid.` });
+      for (const [slot, item] of Object.entries(slots || {})) {
+        if (!/^slot\d+$/.test(slot)) issues.push({ level: 'warn', area: 'menu', message: `Menu slot "${slot}" is not valid.` });
+        if (typeof item?.recipe === 'string' && !recipeIds.has(item.recipe)) issues.push({ level: 'warn', area: 'menu', message: `Menu slot ${date} ${slot} references a missing recipe.` });
+      }
+    }
+
+    for (const [name, template] of Object.entries(templates)) {
+      if (!template || typeof template !== 'object') issues.push({ level: 'warn', area: 'templates', message: `Template "${name}" is not valid.` });
+      for (const block of Array.isArray(template?.editorBlocks) ? template.editorBlocks : []) {
+        if (block?.type === 'image' && block.style?.imageName && !getImage.get(block.style.imageFolder || 'template-objects', block.style.imageName)) {
+          issues.push({ level: 'warn', area: 'templates', message: `Template "${name}" references a missing image "${block.style.imageName}".` });
+        }
+      }
+    }
+
+    return { ok: issues.length === 0, issues, counts: getImportSummary({ ...snapshot, templateImages: exportTemplateImages() }) };
+  }
+
   function getProjectionStats() {
     const tables = ['recipes_projection', 'ingredients_projection', 'allergens_projection', 'recipe_ingredients', 'ingredient_allergens', 'recipe_manual_allergens', 'menu_items_projection', 'templates_projection', 'template_images'];
     return Object.fromEntries(tables.map((table) => [table, database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count]));
@@ -525,7 +569,31 @@ function createDesktopDatabase(userDataPath) {
       if (base64) zip.addFile(image.relativePath.replace(/\\/g, '/'), Buffer.from(base64, 'base64'));
     }
     zip.writeZip(filePath);
-    return filePath;
+    return verifyBackupZip(filePath);
+  }
+
+  function verifyBackupZip(filePath) {
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(filePath);
+    const manifestEntry = zip.getEntry('backup.json');
+    if (!manifestEntry) throw new Error('Backup verification failed: missing backup.json.');
+    const manifest = JSON.parse(manifestEntry.getData().toString('utf8'));
+    const summary = getImportSummary(manifest);
+    for (const image of Array.isArray(manifest.templateImages) ? manifest.templateImages : []) {
+      if (image.relativePath && !zip.getEntry(image.relativePath.replace(/\\/g, '/'))) {
+        throw new Error(`Backup verification failed: missing image ${image.relativePath}.`);
+      }
+    }
+    return { filePath, summary };
+  }
+
+  function createRequiredBackup(reason = 'backup') {
+    const backupDir = path.join(userDataPath, 'auto-backups');
+    mkdirSync(backupDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeReason = String(reason || 'backup').replace(/[^a-z0-9_-]/gi, '-').slice(0, 32);
+    const filePath = path.join(backupDir, `dms-auto-${safeReason}-${stamp}.zip`);
+    return createBackupZip(filePath);
   }
 
   function createAutoBackup(reason = 'close') {
@@ -535,18 +603,14 @@ function createDesktopDatabase(userDataPath) {
     if (limit <= 0) return null;
 
     const backupDir = path.join(userDataPath, 'auto-backups');
-    mkdirSync(backupDir, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const safeReason = String(reason || 'backup').replace(/[^a-z0-9_-]/gi, '-').slice(0, 32);
-    const filePath = path.join(backupDir, `dms-auto-${safeReason}-${stamp}.zip`);
-    createBackupZip(filePath);
+    const backup = createRequiredBackup(reason);
 
     const backups = readdirSync(backupDir)
       .filter((name) => /^dms-auto-.*\.zip$/i.test(name))
       .map((name) => ({ name, path: path.join(backupDir, name) }))
       .sort((a, b) => b.name.localeCompare(a.name));
     for (const backup of backups.slice(limit)) rmSync(backup.path, { force: true });
-    return filePath;
+    return backup;
   }
 
   function close() {
@@ -564,9 +628,12 @@ function createDesktopDatabase(userDataPath) {
     deleteCatalogRecord,
     createAutoBackup,
     createBackupZip,
+    createRequiredBackup,
     exportTemplateImages,
+    getDataHealth,
     getImportSummary,
     getProjectionStats,
+    verifyBackupZip,
     getTemplateImageDataUrl,
     listTemplateImages,
     renameTemplateImage,

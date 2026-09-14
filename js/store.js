@@ -107,6 +107,33 @@
         if (input) input.value = String(limit);
         await window.saveSettings();
     };
+
+    window.checkDataHealth = async function() {
+        const resultEl = document.getElementById('data-health-result');
+        if (!resultEl || !window.dmsDesktop?.storage?.health) return;
+        resultEl.textContent = window.t ? window.t('data_health_checking') : 'Checking data...';
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+        try {
+            const health = await window.dmsDesktop.storage.health();
+            if (health.ok) {
+                resultEl.innerHTML = `<strong>${window.t ? window.t('data_health_ok') : 'Data health looks good.'}</strong>`;
+                return;
+            }
+            resultEl.innerHTML = `
+                <strong>${window.t ? window.t('data_health_issues') : 'Data issues found:'}</strong>
+                <ul>${health.issues.map(issue => `<li>${escapeHtml(issue.level).toUpperCase()}: ${escapeHtml(issue.message)}</li>`).join('')}</ul>
+            `;
+        } catch (error) {
+            console.error('Data health check failed:', error);
+            resultEl.textContent = window.t ? window.t('data_health_failed') : 'Data health check failed.';
+        }
+    };
     
     // Legacy compatibility
     window.saveMenus = window.saveData;

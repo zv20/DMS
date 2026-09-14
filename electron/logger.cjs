@@ -41,6 +41,9 @@ function createLogger(app) {
       time: new Date().toISOString(),
       level: safeLevel,
       message: String(message || ''),
+      appVersion: app.getVersion(),
+      platform: process.platform,
+      arch: process.arch,
       ...normalizeMeta(meta)
     };
 
