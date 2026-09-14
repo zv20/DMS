@@ -10,8 +10,15 @@ permissions:
   contents: write
 
 jobs:
+  quality-checks:
+    name: Desktop Quality Checks
+    uses: ./.github/workflows/desktop-quality.yml
+    permissions:
+      contents: read
+
   build-windows:
     name: Build Windows
+    needs: quality-checks
     runs-on: windows-latest
 
     steps:
@@ -26,9 +33,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Validate desktop sources
-        run: npm run desktop:check
 
       - name: Build Windows release files
         run: npm run desktop:dist:win:x64
@@ -47,6 +51,7 @@ jobs:
 
   build-macos:
     name: Build macOS
+    needs: quality-checks
     runs-on: macos-latest
 
     steps:
@@ -61,9 +66,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Validate desktop sources
-        run: npm run desktop:check
 
       - name: Build macOS release files
         run: npm run desktop:dist:mac
