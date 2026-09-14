@@ -1085,9 +1085,23 @@ class StepTemplateBuilder {
                 ${this.settings.editorBlocks.filter(block => block.visible).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).map(block => this.renderEditableBlock(block)).join('')}
             </div>
         `;
+        this.fitPreviewDayBlocks(container);
         this.bindCanvasInteractions();
         if (window.templatePreviewZoomMode === 'fit' && typeof window.fitTemplatePreviewToWidth === 'function') window.fitTemplatePreviewToWidth();
         else if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
+    }
+
+    fitPreviewDayBlocks(container) {
+        container.querySelectorAll('.editable-block .editor-day-card.single-day').forEach(card => {
+            const availableHeight = card.clientHeight;
+            const contentHeight = card.scrollHeight;
+            if (!availableHeight || contentHeight <= availableHeight) return;
+            const scale = Math.max(0.62, Math.min(1, availableHeight / contentHeight));
+            card.style.transform = `scale(${scale.toFixed(4)})`;
+            card.style.transformOrigin = 'top left';
+            card.style.width = `${(100 / scale).toFixed(4)}%`;
+            card.style.height = `${(100 / scale).toFixed(4)}%`;
+        });
     }
 
     renderEditableBlock(block) {

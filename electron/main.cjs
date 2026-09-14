@@ -616,9 +616,14 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
 
 app.whenReady().then(() => {
   if (isStorageTest) {
-    runStorageProjectionTest();
-    console.log('SQLite storage projection test passed.');
-    app.quit();
+    try {
+      runStorageProjectionTest();
+      console.log('SQLite storage projection test passed.');
+      process.exit(0);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+    }
     return;
   }
 
