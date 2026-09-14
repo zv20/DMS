@@ -277,6 +277,24 @@ async function runSmokeTest() {
       check();
     });
   `);
+  console.log('Desktop smoke test: checking template preview meal slots.');
+  await window.webContents.executeJavaScript(`
+    new Promise((resolve, reject) => {
+      window.navigateTo('style-editor');
+      const timeout = setTimeout(() => reject(new Error("Template preview smoke test timed out.")), 8000);
+      const check = () => {
+        const firstDayMeals = Array.from(document.querySelectorAll('.editor-day-card.single-day'))[0]?.querySelectorAll('.meal-line') || [];
+        const mealText = Array.from(firstDayMeals).map(node => node.textContent || '').join(' ');
+        if (firstDayMeals.length >= 4 && mealText.includes('3.') && mealText.includes('4.')) {
+          clearTimeout(timeout);
+          resolve(true);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  `);
   logger.info('Desktop smoke test passed.');
   console.log('Desktop smoke test passed.');
   process.exit(0);

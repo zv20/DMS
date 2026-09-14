@@ -113,7 +113,7 @@ class StepTemplateBuilder {
     setup() {
         this.ensureEditorBlocks();
         this.buildUI();
-        this.loadSampleData();
+        if (!this.loadCurrentMenuData()) this.loadSampleData();
         this.pushHistory();
         this.updatePreview();
     }
@@ -1096,7 +1096,7 @@ class StepTemplateBuilder {
             const availableHeight = card.clientHeight;
             const contentHeight = card.scrollHeight;
             if (!availableHeight || contentHeight <= availableHeight) return;
-            const scale = Math.max(0.62, Math.min(1, availableHeight / contentHeight));
+            const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
             card.style.transform = `scale(${scale.toFixed(4)})`;
             card.style.transformOrigin = 'top left';
             card.style.width = `${(100 / scale).toFixed(4)}%`;
@@ -1532,6 +1532,19 @@ class StepTemplateBuilder {
         overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     }
 
+    loadCurrentMenuData() {
+        const isBg = (window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg') === 'bg';
+        const weeks = this._buildWeekOptions(isBg);
+        if (!weeks.length) return false;
+        const activeDate = window.currentCalendarDate instanceof Date ? window.currentCalendarDate : new Date();
+        const mondayOf = d => { const x = new Date(d); const day = x.getDay(); x.setDate(x.getDate() + (day === 0 ? 1 : -(day - 1))); x.setHours(0, 0, 0, 0); return x; };
+        const str = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const activeMonday = str(mondayOf(activeDate));
+        const entry = weeks.find(item => item.mondayStr === activeMonday) || weeks[weeks.length - 1];
+        this._applyWeekData(entry.monday, entry.friday, isBg, false);
+        return true;
+    }
+
     _buildWeekOptions(isBg) {
         const mondayOf = d => { const x = new Date(d); const day = x.getDay(); x.setDate(x.getDate() + (day === 0 ? 1 : -(day - 1))); x.setHours(0, 0, 0, 0); return x; };
         const str = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1548,7 +1561,7 @@ class StepTemplateBuilder {
         });
     }
 
-    _applyWeekData(startDate, endDate, isBg) {
+    _applyWeekData(startDate, endDate, isBg, refreshPreview = true) {
         const dayNames = isBg ? ['Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         const str = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const days = [];
@@ -1570,7 +1583,7 @@ class StepTemplateBuilder {
             if (meals.length) days.push({ name: dayNames[i], meals });
         }
         this.previewData = { startDate, endDate, days };
-        this.updatePreview();
+        if (refreshPreview) this.updatePreview();
     }
 
     loadSampleData() {
@@ -1581,8 +1594,8 @@ class StepTemplateBuilder {
             startDate: today,
             endDate: end,
             days: [
-                { name: 'Понеделник', meals: [{ number: 1, name: 'Супа топчета', portion: '150гр', calories: 129, ingredients: [{ name: 'кайма', hasAllergen: false }, { name: 'яйца', hasAllergen: true }] }, { number: 2, name: 'Пиле с ориз', portion: '200гр', calories: 250, ingredients: [{ name: 'пиле', hasAllergen: false }, { name: 'ориз', hasAllergen: false }] }] },
-                { name: 'Вторник', meals: [{ number: 1, name: 'Таратор', portion: '150гр', calories: 100, ingredients: [{ name: 'краставица', hasAllergen: false }, { name: 'кисело мляко', hasAllergen: true }] }, { number: 2, name: 'Мусака', portion: '200гр', calories: 320, ingredients: [{ name: 'картофи', hasAllergen: false }, { name: 'яйца', hasAllergen: true }] }] },
+                { name: 'Понеделник', meals: [{ number: 1, name: 'Супа топчета', portion: '150гр', calories: 129, ingredients: [{ name: 'кайма', hasAllergen: false }, { name: 'яйца', hasAllergen: true }] }, { number: 2, name: 'Пиле с ориз', portion: '200гр', calories: 250, ingredients: [{ name: 'пиле', hasAllergen: false }, { name: 'ориз', hasAllergen: false }] }, { number: 3, name: 'Крем карамел', portion: '120гр', calories: 190, ingredients: [{ name: 'мляко', hasAllergen: true }, { name: 'яйца', hasAllergen: true }] }, { number: 4, name: 'Плод', portion: '100гр', calories: 60, ingredients: [{ name: 'ябълка', hasAllergen: false }] }] },
+                { name: 'Вторник', meals: [{ number: 1, name: 'Таратор', portion: '150гр', calories: 100, ingredients: [{ name: 'краставица', hasAllergen: false }, { name: 'кисело мляко', hasAllergen: true }] }, { number: 2, name: 'Мусака', portion: '200гр', calories: 320, ingredients: [{ name: 'картофи', hasAllergen: false }, { name: 'яйца', hasAllergen: true }] }, { number: 3, name: 'Бисквитена торта', portion: '100гр', calories: 210, ingredients: [{ name: 'бисквити', hasAllergen: true }, { name: 'мляко', hasAllergen: true }] }, { number: 4, name: 'Салата', portion: '80гр', calories: 45, ingredients: [{ name: 'домати', hasAllergen: false }] }] },
                 { name: 'Сряда', meals: [{ number: 1, name: 'Пилешка супа', portion: '150гр', calories: 120, ingredients: [{ name: 'пиле', hasAllergen: false }, { name: 'моркови', hasAllergen: false }] }, { number: 2, name: 'Кюфтета', portion: '180гр', calories: 280, ingredients: [{ name: 'кайма', hasAllergen: false }, { name: 'лук', hasAllergen: false }] }] },
                 { name: 'Четвъртък', meals: [{ number: 1, name: 'Леща яхния', portion: '200гр', calories: 180, ingredients: [{ name: 'леща', hasAllergen: false }, { name: 'домати', hasAllergen: false }] }] },
                 { name: 'Петък', meals: [{ number: 1, name: 'Рибена чорба', portion: '150гр', calories: 110, ingredients: [{ name: 'риба', hasAllergen: true }, { name: 'картофи', hasAllergen: false }] }, { number: 2, name: 'Пъстърва на скара', portion: '180гр', calories: 200, ingredients: [{ name: 'пъстърва', hasAllergen: true }, { name: 'лимон', hasAllergen: false }] }] }
