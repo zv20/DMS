@@ -48,11 +48,11 @@ class StepTemplateBuilder {
             dayBorderStyle: 'solid',
             dayBorderThickness: '1px',
             dayBackground: 'transparent',
-            dayNameSize: 14,
+            dayNameSize: 18,
             dayNameColor: '#333333',
             dayNameWeight: 'bold',
             dayNameFontFamily: 'Arial, sans-serif',
-            mealFontSize: 11,
+            mealFontSize: 12,
             mealFontFamily: 'Arial, sans-serif',
             allergenColor: '#ff0000',
             allergenUnderline: false,
@@ -81,7 +81,7 @@ class StepTemplateBuilder {
             dayIndex: index,
             dayTitle: label,
             dayNameFontFamily: 'Arial, sans-serif',
-            dayNameSize: 14,
+            dayNameSize: 18,
             dayNameColor: '#d2691e',
             dayNameWeight: 'bold',
             dayBackground: 'transparent',
@@ -90,7 +90,7 @@ class StepTemplateBuilder {
             dayBorderWidth: '1px',
             dayBorderStyle: 'solid',
             fontFamily: 'Arial, sans-serif',
-            fontSize: 11,
+            fontSize: 12,
             color: '#222222',
             align: 'left',
             lineHeight: 1.2,
@@ -172,112 +172,70 @@ class StepTemplateBuilder {
         const isDayBlock = block?.type === 'day';
         const dayTitleColor = style.dayNameColor || this.settings.dayNameColor || '#d2691e';
         const dayHolderBg = style.dayBackground && style.dayBackground !== 'transparent' ? style.dayBackground : '#ffffff';
-        const dayHolderBorder = style.dayBorderEnabled ?? this.settings.dayBorder;
-        const dayHolderBorderWidth = parseInt(style.dayBorderWidth || this.settings.dayBorderThickness || '1px', 10) || 1;
-        const iconButton = (id, icon, title, extra = '') => `<button type="button" class="ribbon-btn icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}>${icon}</button>`;
+        const borderSettings = this.getBlockBorderSettings(block);
+        const iconButton = (id, icon, title, label, extra = '') => `<button type="button" class="ribbon-btn icon-btn labeled-icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}><span class="ribbon-btn-icon">${icon}</span><span class="ribbon-btn-label">${this.escapeHtml(label || title)}</span></button>`;
+        const alignButton = (align, icon, title, label) => `<button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-page-align="${align}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}"><span class="ribbon-btn-icon">${icon}</span><span class="ribbon-btn-label">${this.escapeHtml(label)}</span></button>`;
         return `
             <div class="dms-ribbon">
                 <div class="ribbon-row ribbon-row-primary">
-                    <div class="ribbon-group ribbon-actions">
-                        <button type="button" class="ribbon-command primary" id="btnSaveTemplate" title="${this.escapeAttr(this.tr('btn_save_template', 'Save template'))}" aria-label="${this.escapeAttr(this.tr('btn_save_template', 'Save template'))}"><span class="ribbon-symbol">S</span><span>${this.escapeHtml(this.tr('ribbon_save', 'Save'))}</span></button>
-                        <button type="button" class="ribbon-command" id="btnLoadData" title="${this.escapeAttr(this.tr('ribbon_load_data', 'Load menu data'))}" aria-label="${this.escapeAttr(this.tr('ribbon_load_data', 'Load menu data'))}"><span class="ribbon-symbol">D</span><span>${this.escapeHtml(this.tr('ribbon_load_data', 'Load Data'))}</span></button>
-                        <button type="button" class="ribbon-command" id="btnReset" title="${this.escapeAttr(this.tr('ribbon_clear', 'Clear template'))}" aria-label="${this.escapeAttr(this.tr('ribbon_clear', 'Clear template'))}"><span class="ribbon-symbol">C</span><span>${this.escapeHtml(this.tr('ribbon_clear', 'Clear'))}</span></button>
-                    </div>
-                    <div class="ribbon-group ribbon-template">
-                        <select id="savedTemplateSelect" title="${this.escapeAttr(this.tr('ribbon_saved_templates', 'Saved templates'))}">
-                            <option value="">${this.escapeHtml(this.tr('ribbon_saved_templates', 'Saved Templates'))}</option>
-                            ${templateOptions}
-                        </select>
-                        ${iconButton('btnLoadSavedTemplate', '□', this.tr('ribbon_open_template', 'Open template'))}
-                        ${iconButton('btnDeleteSavedTemplate', '⌫', this.tr('ribbon_delete_template', 'Delete template'))}
+                    <div class="ribbon-group ribbon-file">
+                        <button type="button" class="ribbon-command primary builder-menu-button" id="btnBuilderFileMenu" title="${this.escapeAttr(this.tr('ribbon_file_menu', 'Template actions'))}" aria-label="${this.escapeAttr(this.tr('ribbon_file_menu', 'Template actions'))}" aria-expanded="false">
+                            <span class="ribbon-symbol">☰</span><span>${this.escapeHtml(this.tr('ribbon_file', 'File'))}</span>
+                        </button>
+                        <div id="builderFileMenu" class="builder-file-menu" hidden>
+                            <button type="button" id="btnSaveTemplate"><strong>${this.escapeHtml(this.tr('ribbon_save', 'Save'))}</strong><span>${this.escapeHtml(this.tr('btn_save_template', 'Save template'))}</span></button>
+                            <button type="button" id="btnLoadData"><strong>${this.escapeHtml(this.tr('ribbon_load_data', 'Load Data'))}</strong><span>${this.escapeHtml(this.tr('ribbon_load_menu_help', 'Use planned meals'))}</span></button>
+                            <label>
+                                <strong>${this.escapeHtml(this.tr('ribbon_saved_templates', 'Saved Templates'))}</strong>
+                                <select id="savedTemplateSelect" title="${this.escapeAttr(this.tr('ribbon_saved_templates', 'Saved templates'))}">
+                                    <option value="">${this.escapeHtml(this.tr('ribbon_choose_template', 'Choose template'))}</option>
+                                    ${templateOptions}
+                                </select>
+                            </label>
+                            <div class="builder-file-menu-actions">
+                                <button type="button" id="btnLoadSavedTemplate">${this.escapeHtml(this.tr('ribbon_open_template', 'Open'))}</button>
+                                <button type="button" id="btnDeleteSavedTemplate">${this.escapeHtml(this.tr('ribbon_delete_template', 'Delete'))}</button>
+                            </div>
+                            <button type="button" class="danger" id="btnReset"><strong>${this.escapeHtml(this.tr('ribbon_clear', 'Clear'))}</strong><span>${this.escapeHtml(this.tr('ribbon_clear_template_help', 'Reset the canvas'))}</span></button>
+                        </div>
                     </div>
                     <div class="ribbon-group">
-                        ${iconButton('btnUndo', '↶', 'Undo')}
-                        ${iconButton('btnRedo', '↷', 'Redo')}
+                        ${iconButton('btnUndo', '↶', this.tr('ribbon_undo', 'Undo'), this.tr('ribbon_undo_short', 'Undo'))}
+                        ${iconButton('btnRedo', '↷', this.tr('ribbon_redo', 'Redo'), this.tr('ribbon_redo_short', 'Redo'))}
                     </div>
                     <div class="ribbon-group">
-                        ${iconButton('btnAddText', 'T', this.tr('ribbon_add_text', 'Add text box'))}
-                        ${iconButton('btnAddImage', '▧', this.tr('ribbon_insert_image', 'Insert image'))}
+                        ${iconButton('btnAddText', 'T', this.tr('ribbon_add_text', 'Add text box'), this.tr('ribbon_text_short', 'Text'))}
+                        ${iconButton('btnAddImage', '▧', this.tr('ribbon_insert_image', 'Insert image'), this.tr('ribbon_image_short', 'Image'))}
                         <input type="file" id="canvasImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
-                        ${iconButton('btnAddRect', '▭', this.tr('ribbon_add_rectangle', 'Add rectangle'))}
-                        ${iconButton('btnAddLine', '╱', this.tr('ribbon_add_line', 'Add line'))}
+                        ${iconButton('btnAddRect', '▭', this.tr('ribbon_add_rectangle', 'Add rectangle'), this.tr('ribbon_rect_short', 'Box'))}
+                        ${iconButton('btnAddLine', '╱', this.tr('ribbon_add_line', 'Add line'), this.tr('ribbon_line_short', 'Line'))}
                     </div>
                     <div class="ribbon-group">
-                        ${iconButton('btnDuplicateBlock', '⧉', 'Duplicate selected')}
-                        ${iconButton('btnDeleteBlock', '⌫', 'Delete selected')}
-                        <button type="button" class="ribbon-btn icon-btn ${block?.locked ? 'active' : ''}" id="btnLockBlock" title="Lock or unlock selected" aria-label="Lock or unlock selected">${block?.locked ? '🔒' : '🔓'}</button>
+                        ${iconButton('btnDuplicateBlock', '⧉', this.tr('ribbon_duplicate', 'Duplicate selected'), this.tr('ribbon_copy_short', 'Copy'))}
+                        ${iconButton('btnDeleteBlock', '⌫', this.tr('ribbon_delete', 'Delete selected'), this.tr('ribbon_delete_short', 'Delete'))}
+                        <button type="button" class="ribbon-btn icon-btn labeled-icon-btn ${block?.locked ? 'active' : ''}" id="btnLockBlock" title="${this.escapeAttr(this.tr('ribbon_lock', 'Lock or unlock selected'))}" aria-label="${this.escapeAttr(this.tr('ribbon_lock', 'Lock or unlock selected'))}"><span class="ribbon-btn-icon">${block?.locked ? '🔒' : '🔓'}</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_lock_short', 'Lock'))}</span></button>
                     </div>
                     <div class="ribbon-group">
-                        ${iconButton('btnBringForward', '⬆', 'Bring forward')}
-                        ${iconButton('btnSendBackward', '⬇', 'Send backward')}
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="left" title="Align page left" aria-label="Align page left">⇤</button>
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="center" title="Align page center" aria-label="Align page center">↔</button>
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="right" title="Align page right" aria-label="Align page right">⇥</button>
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="top" title="Align page top" aria-label="Align page top">⇡</button>
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="middle" title="Align page middle" aria-label="Align page middle">↕</button>
-                        <button type="button" class="ribbon-btn icon-btn" data-page-align="bottom" title="Align page bottom" aria-label="Align page bottom">⇣</button>
+                        ${iconButton('btnBringForward', '⬆', this.tr('ribbon_bring_forward', 'Bring forward'), this.tr('ribbon_front_short', 'Front'))}
+                        ${iconButton('btnSendBackward', '⬇', this.tr('ribbon_send_backward', 'Send backward'), this.tr('ribbon_back_short', 'Back'))}
+                        ${alignButton('left', '⇤', this.tr('ribbon_align_left', 'Align page left'), this.tr('ribbon_left_short', 'Left'))}
+                        ${alignButton('center', '↔', this.tr('ribbon_align_center', 'Align page center'), this.tr('ribbon_center_short', 'Center'))}
+                        ${alignButton('right', '⇥', this.tr('ribbon_align_right', 'Align page right'), this.tr('ribbon_right_short', 'Right'))}
+                        ${alignButton('top', '⇡', this.tr('ribbon_align_top', 'Align page top'), this.tr('ribbon_top_short', 'Top'))}
+                        ${alignButton('middle', '↕', this.tr('ribbon_align_middle', 'Align page middle'), this.tr('ribbon_middle_short', 'Middle'))}
+                        ${alignButton('bottom', '⇣', this.tr('ribbon_align_bottom', 'Align page bottom'), this.tr('ribbon_bottom_short', 'Bottom'))}
                     </div>
                     <div class="ribbon-group">
-                        <button type="button" class="ribbon-btn icon-btn" onclick="window.setTemplatePreviewZoom(-0.1)" title="Zoom out" aria-label="Zoom out">⌕−</button>
+                        <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" onclick="window.setTemplatePreviewZoom(-0.1)" title="${this.escapeAttr(this.tr('ribbon_zoom_out', 'Zoom out'))}" aria-label="${this.escapeAttr(this.tr('ribbon_zoom_out', 'Zoom out'))}"><span class="ribbon-btn-icon">⌕−</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_out_short', 'Out'))}</span></button>
                         <span id="templateZoomLabel" class="ribbon-zoom-label">${Math.round((window.templatePreviewZoom || 1) * 100)}%</span>
-                        <button type="button" class="ribbon-btn icon-btn" onclick="window.setTemplatePreviewZoom(0.1)" title="Zoom in" aria-label="Zoom in">⌕+</button>
-                        <button type="button" class="ribbon-btn text-icon-btn" onclick="window.fitTemplatePreviewToWidth()" title="Fit page to screen" aria-label="Fit page to screen">⌕ Fit</button>
+                        <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" onclick="window.setTemplatePreviewZoom(0.1)" title="${this.escapeAttr(this.tr('ribbon_zoom_in', 'Zoom in'))}" aria-label="${this.escapeAttr(this.tr('ribbon_zoom_in', 'Zoom in'))}"><span class="ribbon-btn-icon">⌕+</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_in_short', 'In'))}</span></button>
+                        <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" onclick="window.fitTemplatePreviewToWidth()" title="${this.escapeAttr(this.tr('ribbon_fit_screen', 'Fit page to screen'))}" aria-label="${this.escapeAttr(this.tr('ribbon_fit_screen', 'Fit page to screen'))}"><span class="ribbon-btn-icon">⌕</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_fit_short', 'Fit'))}</span></button>
                     </div>
                 </div>
-                <div class="ribbon-row ribbon-row-format">
-                    <div class="ribbon-group ribbon-selected-name" title="Selected object">
-                        <span class="selected-object-dot"></span>
-                        <input id="blockLabel" type="text" value="${this.escapeAttr(block?.label || '')}" aria-label="Selected object label" ${!block ? 'disabled' : ''}>
-                    </div>
-                    <div class="ribbon-group ribbon-wide">
-                        <select id="ribbonFont" title="Font family" ${!canTextStyle ? 'disabled' : ''}>${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${style.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
-                        <input id="ribbonSize" type="number" min="6" max="120" value="${style.fontSize || 12}" title="Font size" ${!canTextStyle ? 'disabled' : ''}>
-                        <input id="ribbonColor" type="color" value="${style.color || '#222222'}" title="Text color" ${!canTextStyle ? 'disabled' : ''}>
-                        <input id="ribbonHighlight" type="color" value="${textBackground}" title="Text background" ${!canTextStyle ? 'disabled' : ''}>
-                    </div>
-                    <div class="ribbon-group">
-                        <button type="button" class="ribbon-btn icon-btn ${style.bold ? 'active' : ''}" data-style-toggle="bold" ${!canTextStyle ? 'disabled' : ''} title="Bold" aria-label="Bold"><b>B</b></button>
-                        <button type="button" class="ribbon-btn icon-btn ${style.italic ? 'active' : ''}" data-style-toggle="italic" ${!canTextStyle ? 'disabled' : ''} title="Italic" aria-label="Italic"><i>I</i></button>
-                        <button type="button" class="ribbon-btn icon-btn ${style.underline ? 'active' : ''}" data-style-toggle="underline" ${!canTextStyle ? 'disabled' : ''} title="Underline" aria-label="Underline"><u>U</u></button>
-                        ${iconButton('btnClearFormatting', 'Tx', this.tr('ribbon_clear_formatting', 'Clear formatting'), !canTextStyle ? 'disabled' : '')}
-                    </div>
-                    <div class="ribbon-group">${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${style.align === a ? 'active' : ''}" data-align="${a}" ${!canTextStyle ? 'disabled' : ''} title="Align ${a}" aria-label="Align ${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}</div>
-                    <div class="ribbon-group ribbon-text-more">
-                        <label title="Line height">LH<input type="number" id="ribbonLineHeight" min="0.8" max="3" step="0.1" value="${style.lineHeight || 1.2}" ${!canTextStyle ? 'disabled' : ''}></label>
-                    </div>
-                    ${isDayBlock ? `
-                    <div class="ribbon-group ribbon-day-tools">
-                        <label title="${this.escapeAttr(this.tr('ribbon_day', 'Day'))}">${this.escapeHtml(this.tr('ribbon_day', 'Day'))}<input type="text" id="dayTitleInput" value="${this.escapeAttr(style.dayTitle || block.label || '')}"></label>
-                        <label title="${this.escapeAttr(this.tr('ribbon_size', 'Size'))}">${this.escapeHtml(this.tr('ribbon_size', 'Size'))}<input type="number" id="dayTitleSize" min="6" max="72" value="${style.dayNameSize || this.settings.dayNameSize || 14}"></label>
-                        <input id="dayTitleColor" type="color" value="${dayTitleColor}" title="Day title color" aria-label="Day title color">
-                        <button type="button" class="ribbon-btn icon-btn ${(style.dayNameWeight || this.settings.dayNameWeight || 'bold') === 'bold' ? 'active' : ''}" id="dayTitleBold" title="Day title bold" aria-label="Day title bold"><b>B</b></button>
-                        <label title="${this.escapeAttr(this.tr('ribbon_fill', 'Fill'))}">${this.escapeHtml(this.tr('ribbon_fill', 'Fill'))}<input id="dayHolderBg" type="color" value="${dayHolderBg}"></label>
-                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBgTransparent" ${!style.dayBackground || style.dayBackground === 'transparent' ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_clear_fill', 'Clear'))}</label>
-                        <label class="ribbon-check"><input type="checkbox" id="dayHolderBorder" ${dayHolderBorder ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</label>
-                        <input id="dayHolderBorderColor" type="color" value="${style.dayBorderColor || this.settings.dayBorderColor || '#e0e0e0'}" title="Day border color" aria-label="Day border color">
-                        <label title="Day border width">B<input type="number" id="dayHolderBorderWidth" min="0" max="12" value="${dayHolderBorderWidth}"></label>
-                    </div>` : ''}
-                    <div class="ribbon-group ribbon-image-tools">
-                        <select id="imageFit" title="Image fit" ${!block || block.type !== 'image' ? 'disabled' : ''}>
-                            <option value="contain" ${style.fit === 'contain' ? 'selected' : ''}>Fit</option>
-                            <option value="cover" ${style.fit === 'cover' ? 'selected' : ''}>Fill</option>
-                            <option value="fill" ${style.fit === 'fill' ? 'selected' : ''}>Stretch</option>
-                        </select>
-                        <label title="Image opacity">Opacity<input type="number" id="imageOpacity" min="10" max="100" value="${Math.round((style.opacity ?? 1) * 100)}" ${!block || block.type !== 'image' ? 'disabled' : ''}></label>
-                    </div>
-                    <div class="ribbon-group ribbon-shape-tools">
-                        <input id="shapeFill" type="color" value="${style.fill || '#f8f9fb'}" title="Shape fill" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
-                        <input id="shapeStroke" type="color" value="${style.stroke || '#1f2933'}" title="Shape border" ${!block || block.type !== 'shape' ? 'disabled' : ''}>
-                        <label title="Border size">Border<input type="number" id="shapeStrokeWidth" min="0" max="20" value="${style.strokeWidth ?? 1}" ${!block || block.type !== 'shape' ? 'disabled' : ''}></label>
-                    </div>
-                    <div class="ribbon-group ribbon-position">
-                        <label>X<input type="number" id="blockX" min="0" max="100" value="${Math.round(block?.x || 0)}" ${!block ? 'disabled' : ''}></label>
-                        <label>Y<input type="number" id="blockY" min="0" max="100" value="${Math.round(block?.y || 0)}" ${!block ? 'disabled' : ''}></label>
-                        <label>W<input type="number" id="blockW" min="5" max="100" value="${Math.round(block?.width || 0)}" ${!block ? 'disabled' : ''}></label>
-                        <label>H<input type="number" id="blockH" min="4" max="100" value="${Math.round(block?.height || 0)}" ${!block ? 'disabled' : ''}></label>
-                    </div>
-                    <div class="ribbon-group ribbon-page">
-                        <input type="color" id="backgroundColor" value="${this.settings.backgroundColor}" title="Page color" aria-label="Page color">
+                <div class="ribbon-row ribbon-row-page">
+                    <div class="ribbon-group ribbon-format-group ribbon-page">
+                        <span class="ribbon-group-label">${this.escapeHtml(this.tr('ribbon_page', 'Page'))}</span>
+                        <label>${this.escapeHtml(this.tr('ribbon_page_color', 'Page Color'))}<input type="color" id="backgroundColor" value="${this.settings.backgroundColor}"></label>
                         <div class="page-background-control">
                             <button type="button" class="ribbon-command page-background-btn ${hasPageBackground ? 'active' : ''}" id="btnPageBackground" title="${this.escapeAttr(this.tr('ribbon_page_background', 'Page Background'))}" aria-label="${this.escapeAttr(this.tr('ribbon_page_background', 'Page Background'))}">
                                 ▧ <span>${this.escapeHtml(this.tr('ribbon_page_background', 'Page Background'))}</span>
@@ -307,6 +265,8 @@ class StepTemplateBuilder {
                             </div>
                         </div>
                         <input type="file" id="backgroundImageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" style="display:none;">
+                    </div>
+                    <div class="ribbon-group ribbon-page">
                         <label class="ribbon-check"><input type="checkbox" id="toggleGuides" ${this.settings.showGuides ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_guides', 'Guides'))}</label>
                         <label class="ribbon-check"><input type="checkbox" id="toggleSnap" ${this.settings.snapToGrid ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_snap', 'Snap'))}</label>
                     </div>
@@ -428,9 +388,6 @@ class StepTemplateBuilder {
         });
         document.getElementById('btnUndo')?.addEventListener('click', () => this.undo());
         document.getElementById('btnRedo')?.addEventListener('click', () => this.redo());
-        document.getElementById('ribbonFont')?.addEventListener('change', e => this.updateSelectedStyle('fontFamily', e.target.value));
-        document.getElementById('ribbonSize')?.addEventListener('input', e => this.updateSelectedStyle('fontSize', parseInt(e.target.value, 10) || 12));
-        document.getElementById('ribbonColor')?.addEventListener('input', e => this.updateSelectedStyle('color', e.target.value));
         document.querySelectorAll('[data-style-toggle]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const block = this.getSelectedBlock();
@@ -471,8 +428,6 @@ class StepTemplateBuilder {
         document.getElementById('dayBgTransparent')?.addEventListener('change', e => { this.settings.dayBackground = e.target.checked ? 'transparent' : (document.getElementById('dayBackgroundColor')?.value || '#ffffff'); this.recordChange(); });
         document.getElementById('toggleGuides')?.addEventListener('change', e => { this.settings.showGuides = e.target.checked; this.recordChange(); });
         document.getElementById('toggleSnap')?.addEventListener('change', e => { this.settings.snapToGrid = e.target.checked; this.recordChange(false); });
-        document.getElementById('ribbonLineHeight')?.addEventListener('input', e => this.updateSelectedStyle('lineHeight', parseFloat(e.target.value) || 1.2, false));
-        document.getElementById('ribbonHighlight')?.addEventListener('input', e => this.updateSelectedStyle('backgroundColor', e.target.value, false));
         document.getElementById('dayTitleInput')?.addEventListener('input', e => {
             const block = this.getSelectedBlock();
             if (!block || block.type !== 'day') return;
@@ -480,32 +435,16 @@ class StepTemplateBuilder {
             block.style.dayTitle = e.target.value;
             this.recordChange(false);
         });
-        document.getElementById('dayTitleSize')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameSize', parseInt(e.target.value, 10) || 14, false));
-        document.getElementById('dayTitleColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameColor', e.target.value, false));
         document.getElementById('dayTitleBold')?.addEventListener('click', () => {
             const block = this.getSelectedBlock();
             if (!block || block.type !== 'day') return;
             const next = (block.style.dayNameWeight || this.settings.dayNameWeight || 'bold') === 'bold' ? 'normal' : 'bold';
             this.updateDayHolderStyle('dayNameWeight', next);
         });
-        document.getElementById('dayHolderBg')?.addEventListener('input', e => {
-            if (!document.getElementById('dayHolderBgTransparent')?.checked) this.updateDayHolderStyle('dayBackground', e.target.value, false);
-        });
-        document.getElementById('dayHolderBgTransparent')?.addEventListener('change', e => {
-            const color = document.getElementById('dayHolderBg')?.value || '#ffffff';
-            this.updateDayHolderStyle('dayBackground', e.target.checked ? 'transparent' : color);
-        });
-        document.getElementById('dayHolderBorder')?.addEventListener('change', e => this.updateDayHolderStyle('dayBorderEnabled', e.target.checked));
-        document.getElementById('dayHolderBorderColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayBorderColor', e.target.value, false));
-        document.getElementById('dayHolderBorderWidth')?.addEventListener('input', e => this.updateDayHolderStyle('dayBorderWidth', `${parseInt(e.target.value, 10) || 0}px`, false));
-        document.getElementById('imageFit')?.addEventListener('change', e => this.updateSelectedStyle('fit', e.target.value));
-        document.getElementById('imageOpacity')?.addEventListener('input', e => this.updateSelectedStyle('opacity', this.clamp((parseInt(e.target.value, 10) || 100) / 100, 0.1, 1), false));
-        document.getElementById('shapeFill')?.addEventListener('input', e => this.updateSelectedStyle('fill', e.target.value, false));
-        document.getElementById('shapeStroke')?.addEventListener('input', e => this.updateSelectedStyle('stroke', e.target.value, false));
-        document.getElementById('shapeStrokeWidth')?.addEventListener('input', e => this.updateSelectedStyle('strokeWidth', parseInt(e.target.value, 10) || 0, false));
     }
 
     bindActionButtons() {
+        this.bindBuilderFileMenu();
         document.getElementById('btnLoadData')?.addEventListener('click', () => this.loadRealData());
         document.getElementById('btnSaveTemplate')?.addEventListener('click', () => this.saveTemplate());
         document.getElementById('btnReset')?.addEventListener('click', () => this.reset());
@@ -519,12 +458,40 @@ class StepTemplateBuilder {
         document.getElementById('btnLockBlock')?.addEventListener('click', () => this.toggleSelectedLock());
         document.getElementById('btnBringForward')?.addEventListener('click', () => this.nudgeLayer(1));
         document.getElementById('btnSendBackward')?.addEventListener('click', () => this.nudgeLayer(-1));
-        document.getElementById('btnClearFormatting')?.addEventListener('click', () => this.clearSelectedFormatting());
         document.getElementById('btnLoadSavedTemplate')?.addEventListener('click', () => this.loadSelectedTemplate());
         document.getElementById('btnDeleteSavedTemplate')?.addEventListener('click', () => this.deleteSelectedTemplate());
         document.getElementById('canvasImageUpload')?.addEventListener('change', e => this.addImageBlockFromFile(e.target));
         document.getElementById('backgroundImageUpload')?.addEventListener('change', e => this.addBackgroundImageFromFile(e.target));
         this.bindImagesTabUpload();
+    }
+
+    bindBuilderFileMenu() {
+        const menu = document.getElementById('builderFileMenu');
+        const button = document.getElementById('btnBuilderFileMenu');
+        if (this.builderFileMenuCloseHandler) document.removeEventListener('pointerdown', this.builderFileMenuCloseHandler);
+        if (!menu || !button) return;
+
+        const close = () => {
+            menu.hidden = true;
+            button.setAttribute('aria-expanded', 'false');
+        };
+
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            const nextOpen = menu.hidden;
+            menu.hidden = !nextOpen;
+            button.setAttribute('aria-expanded', String(nextOpen));
+        });
+
+        menu.addEventListener('click', event => {
+            if (event.target.closest('select')) return;
+            if (event.target.closest('button')) close();
+        });
+
+        this.builderFileMenuCloseHandler = event => {
+            if (!menu.hidden && !menu.contains(event.target) && event.target !== button && !button.contains(event.target)) close();
+        };
+        document.addEventListener('pointerdown', this.builderFileMenuCloseHandler);
     }
 
     bindPageBackgroundControls() {
@@ -624,6 +591,121 @@ class StepTemplateBuilder {
         block.style[key] = value;
         this.syncLegacySettings();
         this.recordChange(rebuild);
+    }
+
+    applySelectedDayStyleToAllDays() {
+        const source = this.getSelectedBlock();
+        if (!source || source.type !== 'day') return;
+        const style = source.style || {};
+        const copiedKeys = [
+            'fontFamily', 'fontSize', 'color', 'align', 'bold', 'italic', 'underline', 'lineHeight', 'backgroundColor',
+            'dayNameFontFamily', 'dayNameSize', 'dayNameColor', 'dayNameWeight', 'dayBackground',
+            'borderEnabled', 'borderColor', 'borderWidth', 'borderStyle',
+            'dayBorderEnabled', 'dayBorderColor', 'dayBorderWidth', 'dayBorderStyle'
+        ];
+
+        this.settings.editorBlocks
+            .filter(block => block.type === 'day' && block.id !== source.id)
+            .forEach(block => {
+                block.style = block.style || {};
+                copiedKeys.forEach(key => {
+                    if (style[key] !== undefined) block.style[key] = style[key];
+                });
+            });
+
+        this.syncLegacySettings();
+        this.recordChange();
+    }
+
+    getBlockBorderSettings(block) {
+        const style = block?.style || {};
+        if (!block) return { enabled: false, color: '#d8dee5', width: 1 };
+        if (block.type === 'day') {
+            const width = parseInt(style.borderWidth || style.dayBorderWidth || this.settings.dayBorderThickness || '1px', 10) || 1;
+            return {
+                enabled: style.borderEnabled ?? style.dayBorderEnabled ?? this.settings.dayBorder ?? false,
+                color: style.borderColor || style.dayBorderColor || this.settings.dayBorderColor || '#d8dee5',
+                width
+            };
+        }
+        if (block.type === 'shape') {
+            const width = parseInt(style.borderWidth ?? style.strokeWidth ?? 1, 10) || 0;
+            return {
+                enabled: style.borderEnabled ?? width > 0,
+                color: style.borderColor || style.stroke || '#1f2933',
+                width
+            };
+        }
+        const width = parseInt(style.borderWidth ?? 0, 10) || 0;
+        return {
+            enabled: style.borderEnabled ?? width > 0,
+            color: style.borderColor || '#d8dee5',
+            width
+        };
+    }
+
+    updateSelectedBorder(key, value, rebuild = true) {
+        const block = this.getSelectedBlock();
+        if (!block) return;
+        const style = block.style || (block.style = {});
+        const current = this.getBlockBorderSettings(block);
+        const next = {
+            enabled: key === 'enabled' ? value : current.enabled,
+            color: key === 'color' ? value : current.color,
+            width: key === 'width' ? value : current.width
+        };
+
+        style.borderEnabled = !!next.enabled;
+        style.borderColor = next.color;
+        style.borderWidth = next.width;
+        style.borderStyle = 'solid';
+
+        if (block.type === 'day') {
+            style.dayBorderEnabled = !!next.enabled;
+            style.dayBorderColor = next.color;
+            style.dayBorderWidth = `${next.width}px`;
+            style.dayBorderStyle = 'solid';
+        } else if (block.type === 'shape') {
+            style.stroke = next.color;
+            style.strokeWidth = next.enabled ? next.width : 0;
+        }
+
+        this.syncLegacySettings();
+        this.recordChange(rebuild);
+    }
+
+    bindFloatingPanelControls() {
+        const panel = document.querySelector('[data-floating-panel]');
+        if (!panel) return;
+        panel.addEventListener('pointerdown', event => event.stopPropagation());
+        panel.addEventListener('click', event => event.stopPropagation());
+
+        document.getElementById('floatFont')?.addEventListener('change', e => this.updateSelectedStyle('fontFamily', e.target.value));
+        document.getElementById('floatSize')?.addEventListener('input', e => this.updateSelectedStyle('fontSize', parseInt(e.target.value, 10) || 12, false));
+        document.getElementById('floatColor')?.addEventListener('input', e => this.updateSelectedStyle('color', e.target.value, false));
+        document.querySelectorAll('[data-float-toggle]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const block = this.getSelectedBlock();
+                if (!block) return;
+                block.style[btn.dataset.floatToggle] = !block.style[btn.dataset.floatToggle];
+                this.syncLegacySettings();
+                this.recordChange();
+            });
+        });
+        document.querySelectorAll('[data-float-align]').forEach(btn => btn.addEventListener('click', () => this.updateSelectedStyle('align', btn.dataset.floatAlign)));
+
+        document.getElementById('floatDayTitleSize')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameSize', parseInt(e.target.value, 10) || 14, false));
+        document.getElementById('floatDayTitleColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameColor', e.target.value, false));
+        document.getElementById('floatDayFill')?.addEventListener('input', e => this.updateDayHolderStyle('dayBackground', e.target.value, false));
+        document.getElementById('floatApplyDayStyle')?.addEventListener('click', () => this.applySelectedDayStyleToAllDays());
+
+        document.getElementById('floatImageFit')?.addEventListener('change', e => this.updateSelectedStyle('fit', e.target.value));
+        document.getElementById('floatImageOpacity')?.addEventListener('input', e => this.updateSelectedStyle('opacity', this.clamp((parseInt(e.target.value, 10) || 100) / 100, 0.1, 1), false));
+        document.getElementById('floatShapeFill')?.addEventListener('input', e => this.updateSelectedStyle('fill', e.target.value, false));
+
+        document.getElementById('floatBorderEnabled')?.addEventListener('change', e => this.updateSelectedBorder('enabled', e.target.checked));
+        document.getElementById('floatBorderColor')?.addEventListener('input', e => this.updateSelectedBorder('color', e.target.value, false));
+        document.getElementById('floatBorderWidth')?.addEventListener('input', e => this.updateSelectedBorder('width', parseInt(e.target.value, 10) || 0, false));
     }
 
     toggleKnownBlock(id, visible) {
@@ -1079,14 +1161,18 @@ class StepTemplateBuilder {
         const container = document.getElementById('template-preview');
         if (!container || !this.previewData) return;
         container.innerHTML = `
-            <div class="designer-page" style="background:${this.settings.backgroundColor};">
-                ${this.renderBackgroundLayers()}
-                ${this.settings.showGuides ? '<div class="page-guides"></div>' : ''}
-                ${this.settings.editorBlocks.filter(block => block.visible).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).map(block => this.renderEditableBlock(block)).join('')}
+            <div class="designer-stage">
+                <div class="designer-page" style="background:${this.settings.backgroundColor};">
+                    ${this.renderBackgroundLayers()}
+                    ${this.settings.showGuides ? '<div class="page-guides"></div>' : ''}
+                    ${this.settings.editorBlocks.filter(block => block.visible).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).map(block => this.renderEditableBlock(block)).join('')}
+                </div>
+                ${this.renderFloatingPanel()}
             </div>
         `;
         this.fitPreviewDayBlocks(container);
         this.bindCanvasInteractions();
+        this.bindFloatingPanelControls();
         if (window.templatePreviewZoomMode === 'fit' && typeof window.fitTemplatePreviewToWidth === 'function') window.fitTemplatePreviewToWidth();
         else if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
     }
@@ -1107,7 +1193,8 @@ class StepTemplateBuilder {
     renderEditableBlock(block) {
         const st = block.style || {};
         const bg = st.backgroundColor && st.backgroundColor !== 'transparent' ? `background:${st.backgroundColor};` : '';
-        const common = `left:${block.x}%;top:${block.y}%;width:${block.width}%;height:${block.height}%;z-index:${block.zIndex || 30};font-family:${st.fontFamily || 'Arial, sans-serif'};font-size:${st.fontSize || 12}pt;color:${st.color || '#222'};text-align:${st.align || 'left'};font-weight:${st.bold ? '700' : '400'};font-style:${st.italic ? 'italic' : 'normal'};text-decoration:${st.underline ? 'underline' : 'none'};line-height:${st.lineHeight || 1.2};${bg}`;
+        const border = this.getBlockOuterBorderCss(block);
+        const common = `left:${block.x}%;top:${block.y}%;width:${block.width}%;height:${block.height}%;z-index:${block.zIndex || 30};font-family:${st.fontFamily || 'Arial, sans-serif'};font-size:${st.fontSize || 12}pt;color:${st.color || '#222'};text-align:${st.align || 'left'};font-weight:${st.bold ? '700' : '400'};font-style:${st.italic ? 'italic' : 'normal'};text-decoration:${st.underline ? 'underline' : 'none'};line-height:${st.lineHeight || 1.2};${bg}${border}`;
         const editable = block.type === 'text' ? 'contenteditable="true" spellcheck="true" data-edit-block="' + this.escapeAttr(block.id) + '"' : '';
         return `
             <div class="editable-block ${block.id === this.selectedBlockId ? 'selected' : ''} ${block.locked ? 'locked' : ''}" data-block-id="${this.escapeAttr(block.id)}" style="${common}">
@@ -1118,13 +1205,96 @@ class StepTemplateBuilder {
         `;
     }
 
+    getBlockOuterBorderCss(block) {
+        if (!block || block.type === 'day' || block.type === 'shape') return '';
+        const border = this.getBlockBorderSettings(block);
+        if (!border.enabled || border.width <= 0) return '';
+        return `border:${border.width}px solid ${border.color};`;
+    }
+
     renderBlockContent(block) {
         if (block.type === 'date') return this.getDateRangeText();
         if (block.type === 'menu') return this.renderMenuContent(block);
         if (block.type === 'day') return this.renderDayContent(block);
         if (block.type === 'image') return `<img class="canvas-image" src="${this.escapeAttr(block.style?.imageData || block.style?.src || '')}" alt="" style="object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
-        if (block.type === 'shape') return `<div class="canvas-shape ${block.style?.kind === 'line' ? 'line' : 'rectangle'}" style="background:${block.style?.fill || '#f8f9fb'};border:${block.style?.strokeWidth ?? 1}px solid ${block.style?.stroke || '#1f2933'};opacity:${block.style?.opacity ?? 1};"></div>`;
+        if (block.type === 'shape') {
+            const border = this.getBlockBorderSettings(block);
+            const borderCss = border.enabled && border.width > 0 ? `${border.width}px solid ${border.color}` : '0';
+            return `<div class="canvas-shape ${block.style?.kind === 'line' ? 'line' : 'rectangle'}" style="background:${block.style?.fill || '#f8f9fb'};border:${borderCss};opacity:${block.style?.opacity ?? 1};"></div>`;
+        }
         return block.style?.html || '';
+    }
+
+    renderFloatingPanel() {
+        const block = this.getSelectedBlock();
+        if (!block || block.visible === false) return '';
+        const st = block.style || {};
+        const fonts = this._fonts();
+        const canTextStyle = !['image', 'shape'].includes(block.type);
+        const isDayBlock = block.type === 'day';
+        const border = this.getBlockBorderSettings(block);
+        const textControls = canTextStyle ? `
+            <div class="floating-control-row">
+                <select id="floatFont" title="Font">${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${st.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
+                <input id="floatSize" type="number" min="6" max="120" value="${st.fontSize || 12}" title="Size">
+                <input id="floatColor" type="color" value="${st.color || '#222222'}" title="Text color">
+            </div>
+            <div class="floating-control-row">
+                <button type="button" class="ribbon-btn icon-btn ${st.bold ? 'active' : ''}" data-float-toggle="bold" title="Bold"><b>B</b></button>
+                <button type="button" class="ribbon-btn icon-btn ${st.italic ? 'active' : ''}" data-float-toggle="italic" title="Italic"><i>I</i></button>
+                <button type="button" class="ribbon-btn icon-btn ${st.underline ? 'active' : ''}" data-float-toggle="underline" title="Underline"><u>U</u></button>
+                ${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${st.align === a ? 'active' : ''}" data-float-align="${a}" title="Align ${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}
+            </div>
+        ` : '';
+        const dayControls = isDayBlock ? `
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_day_style', 'Day'))}</strong>
+                <div class="floating-control-row">
+                    <label>${this.escapeHtml(this.tr('ribbon_title_size', 'Title Size'))}<input type="number" id="floatDayTitleSize" min="6" max="72" value="${st.dayNameSize || this.settings.dayNameSize || 14}"></label>
+                    <label>${this.escapeHtml(this.tr('ribbon_title_color', 'Title Color'))}<input id="floatDayTitleColor" type="color" value="${st.dayNameColor || this.settings.dayNameColor || '#d2691e'}"></label>
+                    <label>${this.escapeHtml(this.tr('ribbon_fill', 'Fill'))}<input id="floatDayFill" type="color" value="${st.dayBackground && st.dayBackground !== 'transparent' ? st.dayBackground : '#ffffff'}"></label>
+                </div>
+                <button type="button" class="floating-apply-btn" id="floatApplyDayStyle">${this.escapeHtml(this.tr('ribbon_apply_all_days', 'Apply to all days'))}</button>
+            </div>
+        ` : '';
+        const imageControls = block.type === 'image' ? `
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_image', 'Image'))}</strong>
+                <div class="floating-control-row">
+                    <label>${this.escapeHtml(this.tr('ribbon_fit', 'Fit'))}<select id="floatImageFit">
+                        <option value="contain" ${st.fit === 'contain' ? 'selected' : ''}>Fit</option>
+                        <option value="cover" ${st.fit === 'cover' ? 'selected' : ''}>Fill</option>
+                        <option value="fill" ${st.fit === 'fill' ? 'selected' : ''}>Stretch</option>
+                    </select></label>
+                    <label>${this.escapeHtml(this.tr('ribbon_opacity', 'Opacity'))}<input type="number" id="floatImageOpacity" min="10" max="100" value="${Math.round((st.opacity ?? 1) * 100)}"></label>
+                </div>
+            </div>
+        ` : '';
+        const shapeControls = block.type === 'shape' ? `
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_shape', 'Shape'))}</strong>
+                <div class="floating-control-row">
+                    <label>${this.escapeHtml(this.tr('ribbon_shape_fill', 'Shape Fill'))}<input id="floatShapeFill" type="color" value="${st.fill || '#f8f9fb'}"></label>
+                </div>
+            </div>
+        ` : '';
+        return `
+            <div class="floating-object-panel" data-floating-panel>
+                <div class="floating-panel-title">${this.escapeHtml(block.label || this.tr('ribbon_object', 'Object'))}</div>
+                ${textControls}
+                ${dayControls}
+                ${imageControls}
+                ${shapeControls}
+                <div class="floating-section">
+                    <strong>${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</strong>
+                    <div class="floating-control-row">
+                        <label class="ribbon-check"><input type="checkbox" id="floatBorderEnabled" ${border.enabled ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</label>
+                        <label>${this.escapeHtml(this.tr('ribbon_color', 'Color'))}<input id="floatBorderColor" type="color" value="${border.color}"></label>
+                        <label>${this.escapeHtml(this.tr('ribbon_width', 'Width'))}<input id="floatBorderWidth" type="number" min="0" max="20" value="${border.width}"></label>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     renderMenuContent(block) {
@@ -1146,8 +1316,8 @@ class StepTemplateBuilder {
         if (!day) return '';
         const st = block.style || {};
         const title = st.dayTitle || block.label || day.name;
-        const borderEnabled = st.dayBorderEnabled ?? s.dayBorder;
-        const border = borderEnabled ? `border:${st.dayBorderWidth || s.dayBorderThickness || '1px'} ${st.dayBorderStyle || s.dayBorderStyle || 'solid'} ${st.dayBorderColor || s.dayBorderColor || '#e0e0e0'};` : '';
+        const borderSettings = this.getBlockBorderSettings(block);
+        const border = borderSettings.enabled && borderSettings.width > 0 ? `border:${borderSettings.width}px solid ${borderSettings.color};` : '';
         const dayBackground = st.dayBackground ?? s.dayBackground;
         const bg = dayBackground && dayBackground !== 'transparent' ? `background:${dayBackground};` : '';
         const titleFont = st.dayNameFontFamily || s.dayNameFontFamily || 'Arial, sans-serif';
