@@ -30,43 +30,44 @@ class StepTemplateBuilder {
                 { image: null, position: 'bottom-right', size: 20, opacity: 1, zIndex: 5 }
             ],
             showHeader: true,
-            headerText: 'Седмично меню',
+            headerText: 'Седмично м<font color="#54963c">е</font><font color="#e50606">н</font><font color="#030202">ю</font>',
             headerAlignment: 'center',
             headerFontSize: 24,
             headerColor: '#d2691e',
             headerFontFamily: 'Arial, sans-serif',
             showDateRange: true,
-            dateFontSize: 12,
+            dateFontSize: 22,
             dateColor: '#666666',
             dateAlignment: 'center',
             dateFontFamily: 'Arial, sans-serif',
+            dateFormat: 'dd.mm_range_year',
             showIngredients: true,
             showCalories: true,
             showPortions: true,
-            dayBorder: false,
+            dayBorder: true,
             dayBorderColor: '#e0e0e0',
             dayBorderStyle: 'solid',
             dayBorderThickness: '1px',
             dayBackground: 'transparent',
-            dayNameSize: 18,
-            dayNameColor: '#333333',
+            dayNameSize: 40,
+            dayNameColor: '#d2691e',
             dayNameWeight: 'bold',
             dayNameFontFamily: 'Arial, sans-serif',
-            mealFontSize: 12,
+            mealFontSize: 28,
             mealFontFamily: 'Arial, sans-serif',
             allergenColor: '#ff0000',
             allergenUnderline: false,
             allergenBold: true,
             showFooter: true,
-            footerText: 'Prepared with care by DMS',
+            footerText: '<div>Алергените са подчертани.</div><div>Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за&nbsp;<span style="font-size: 8pt;">ученическо столово хранене</span></div><div>Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.</div><div>Менюто е съгласувано с мед.лице - Елиза Дамянова.</div><div><font color="#ff0000">Менюто може да претърпи промени, поради независещи от нас&nbsp;</font><span style="color: rgb(255, 0, 0); font-size: 8pt;">причини,за което се извиняваме предварително</span></div>',
             footerAlignment: 'center',
-            footerFontSize: 9,
+            footerFontSize: 8,
             footerFontFamily: 'Arial, sans-serif',
             editorBlocks: [
-                this.createBlock('header', 'text', 'Header', 8, 6, 84, 9, { html: 'Седмично меню', fontFamily: 'Arial, sans-serif', fontSize: 24, color: '#d2691e', align: 'center', bold: true, italic: false, underline: false }),
-                this.createBlock('date', 'date', 'Date Range', 24, 16, 52, 5, { fontFamily: 'Arial, sans-serif', fontSize: 12, color: '#666666', align: 'center', bold: false, italic: false, underline: false }),
+                this.createBlock('header', 'text', 'Header', 8, 4, 84, 9, { html: 'Седмично м<font color="#54963c">е</font><font color="#e50606">н</font><font color="#030202">ю</font>', fontFamily: 'Arial, sans-serif', fontSize: 24, color: '#d2691e', align: 'center', bold: true, italic: false, underline: false }),
+                this.createBlock('date', 'date', 'Date Range', 24, 8, 52, 5, { fontFamily: 'Arial, sans-serif', fontSize: 22, color: '#666666', align: 'center', bold: false, italic: false, underline: false, dateFormat: 'dd.mm_range_year' }),
                 ...this.createDefaultDayBlocks(),
-                this.createBlock('footer', 'text', 'Footer', 18, 86, 64, 6, { html: 'Prepared with care by DMS', fontFamily: 'Arial, sans-serif', fontSize: 9, color: '#777777', align: 'center', bold: false, italic: false, underline: false })
+                this.createBlock('footer', 'text', 'Footer', 0, 88, 100, 12, { html: '<div>Алергените са подчертани.</div><div>Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за&nbsp;<span style="font-size: 8pt;">ученическо столово хранене</span></div><div>Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.</div><div>Менюто е съгласувано с мед.лице - Елиза Дамянова.</div><div><font color="#ff0000">Менюто може да претърпи промени, поради независещи от нас&nbsp;</font><span style="color: rgb(255, 0, 0); font-size: 8pt;">причини,за което се извиняваме предварително</span></div>', fontFamily: 'Arial, sans-serif', fontSize: 8, color: '#777777', align: 'center', bold: false, italic: false, underline: false })
             ]
         };
     }
@@ -77,11 +78,18 @@ class StepTemplateBuilder {
 
     createDefaultDayBlocks() {
         const labels = this.weekdayBlockLabels();
-        return labels.map((label, index) => this.createBlock(`day-${index}`, 'day', label, 7, 24 + (index * 12), 86, 10.5, {
+        const layout = [
+            { x: 6, y: 14, width: 88, height: 14 },
+            { x: 6, y: 28, width: 88, height: 16 },
+            { x: 6, y: 42, width: 90, height: 18 },
+            { x: 6, y: 58, width: 90, height: 16 },
+            { x: 6, y: 74, width: 88, height: 16 }
+        ];
+        return labels.map((label, index) => this.createBlock(`day-${index}`, 'day', label, layout[index].x, layout[index].y, layout[index].width, layout[index].height, {
             dayIndex: index,
             dayTitle: label,
             dayNameFontFamily: 'Arial, sans-serif',
-            dayNameSize: 18,
+            dayNameSize: 40,
             dayNameColor: '#d2691e',
             dayNameWeight: 'bold',
             dayBackground: 'transparent',
@@ -90,7 +98,7 @@ class StepTemplateBuilder {
             dayBorderWidth: '1px',
             dayBorderStyle: 'solid',
             fontFamily: 'Arial, sans-serif',
-            fontSize: 12,
+            fontSize: 28,
             color: '#222222',
             align: 'left',
             lineHeight: 1.2,
@@ -111,11 +119,29 @@ class StepTemplateBuilder {
     }
 
     setup() {
+        this.bindLanguageChange();
+        this.bindRichTextSelectionTracking();
         this.ensureEditorBlocks();
         this.buildUI();
         if (!this.loadCurrentMenuData()) this.loadSampleData();
         this.pushHistory();
         this.updatePreview();
+    }
+
+    bindLanguageChange() {
+        if (this.languageChangeBound) return;
+        this.languageChangeBound = true;
+        window.addEventListener('dms:language-changed', () => {
+            this.ensureEditorBlocks();
+            this.buildUI();
+            this.updatePreview();
+        });
+    }
+
+    bindRichTextSelectionTracking() {
+        if (this.richTextSelectionBound) return;
+        this.richTextSelectionBound = true;
+        document.addEventListener('selectionchange', () => this.captureRichTextSelection());
     }
 
     _fonts() {
@@ -174,7 +200,6 @@ class StepTemplateBuilder {
         const dayHolderBg = style.dayBackground && style.dayBackground !== 'transparent' ? style.dayBackground : '#ffffff';
         const borderSettings = this.getBlockBorderSettings(block);
         const iconButton = (id, icon, title, label, extra = '') => `<button type="button" class="ribbon-btn icon-btn labeled-icon-btn" id="${id}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}" ${extra}><span class="ribbon-btn-icon">${icon}</span><span class="ribbon-btn-label">${this.escapeHtml(label || title)}</span></button>`;
-        const alignButton = (align, icon, title, label) => `<button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-page-align="${align}" title="${this.escapeAttr(title)}" aria-label="${this.escapeAttr(title)}"><span class="ribbon-btn-icon">${icon}</span><span class="ribbon-btn-label">${this.escapeHtml(label)}</span></button>`;
         return `
             <div class="dms-ribbon">
                 <div class="ribbon-row ribbon-row-primary">
@@ -218,12 +243,6 @@ class StepTemplateBuilder {
                     <div class="ribbon-group">
                         ${iconButton('btnBringForward', '⬆', this.tr('ribbon_bring_forward', 'Bring forward'), this.tr('ribbon_front_short', 'Front'))}
                         ${iconButton('btnSendBackward', '⬇', this.tr('ribbon_send_backward', 'Send backward'), this.tr('ribbon_back_short', 'Back'))}
-                        ${alignButton('left', '⇤', this.tr('ribbon_align_left', 'Align page left'), this.tr('ribbon_left_short', 'Left'))}
-                        ${alignButton('center', '↔', this.tr('ribbon_align_center', 'Align page center'), this.tr('ribbon_center_short', 'Center'))}
-                        ${alignButton('right', '⇥', this.tr('ribbon_align_right', 'Align page right'), this.tr('ribbon_right_short', 'Right'))}
-                        ${alignButton('top', '⇡', this.tr('ribbon_align_top', 'Align page top'), this.tr('ribbon_top_short', 'Top'))}
-                        ${alignButton('middle', '↕', this.tr('ribbon_align_middle', 'Align page middle'), this.tr('ribbon_middle_short', 'Middle'))}
-                        ${alignButton('bottom', '⇣', this.tr('ribbon_align_bottom', 'Align page bottom'), this.tr('ribbon_bottom_short', 'Bottom'))}
                     </div>
                     <div class="ribbon-group">
                         <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" onclick="window.setTemplatePreviewZoom(-0.1)" title="${this.escapeAttr(this.tr('ribbon_zoom_out', 'Zoom out'))}" aria-label="${this.escapeAttr(this.tr('ribbon_zoom_out', 'Zoom out'))}"><span class="ribbon-btn-icon">⌕−</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_out_short', 'Out'))}</span></button>
@@ -245,21 +264,21 @@ class StepTemplateBuilder {
                                 <button type="button" data-bg-action="upload">${this.escapeHtml(this.tr('ribbon_upload_new_image', 'Upload new image'))}</button>
                                 <button type="button" data-bg-action="clear" ${!hasPageBackground ? 'disabled' : ''}>${this.escapeHtml(this.tr('ribbon_clear_background', 'Clear background'))}</button>
                                 <div id="pageBackgroundChoices" class="page-background-choices">
-                                    <div class="empty-state">Open to load background images.</div>
+                                    <div class="empty-state">${this.escapeHtml(this.tr('ribbon_background_empty', 'Open to load background images.'))}</div>
                                 </div>
-                                <label>Fit
+                                <label>${this.escapeHtml(this.tr('ribbon_fit', 'Fit'))}
                                     <select id="pageBackgroundFit" ${!hasPageBackground ? 'disabled' : ''}>
                                         <option value="100" ${Math.round(pageBackground.size || 100) === 100 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_fit_page', 'Fit page'))}</option>
                                         <option value="140" ${Math.round(pageBackground.size || 100) === 140 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_fill_page', 'Fill page'))}</option>
                                         <option value="50" ${Math.round(pageBackground.size || 100) === 50 ? 'selected' : ''}>${this.escapeHtml(this.tr('ribbon_small', 'Small'))}</option>
                                     </select>
                                 </label>
-                                <label>Position
+                                <label>${this.escapeHtml(this.tr('ribbon_position', 'Position'))}
                                     <select id="pageBackgroundPosition" ${!hasPageBackground ? 'disabled' : ''}>
-                                        ${['center', 'top-left', 'top-right', 'bottom-left', 'bottom-right'].map(position => `<option value="${position}" ${pageBackground.position === position ? 'selected' : ''}>${this.escapeHtml(this.formatBackgroundPosition(position))}</option>`).join('')}
+                                        ${['center', 'top-left', 'top-right', 'bottom-left', 'bottom-right'].map(position => `<option value="${position}" ${pageBackground.position === position ? 'selected' : ''}>${this.escapeHtml(this.formatBackgroundPositionLabel(position))}</option>`).join('')}
                                     </select>
                                 </label>
-                                <label>Opacity
+                                <label>${this.escapeHtml(this.tr('ribbon_opacity', 'Opacity'))}
                                     <input type="range" id="pageBackgroundOpacity" min="5" max="100" value="${Math.round((pageBackground.opacity ?? 0.25) * 100)}" ${!hasPageBackground ? 'disabled' : ''}>
                                 </label>
                             </div>
@@ -567,8 +586,14 @@ class StepTemplateBuilder {
         return String(position || 'center').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
     }
 
+    formatBackgroundPositionLabel(position) {
+        const key = `ribbon_position_${String(position || 'center').replace(/-/g, '_')}`;
+        return this.tr(key, this.formatBackgroundPosition(position));
+    }
+
     selectBlock(id) {
         if (!this.getBlock(id)) return;
+        if (this.selectedBlockId !== id) this.clearRichTextSelection();
         this.selectedBlockId = id;
         this.buildUI();
         this.updatePreview();
@@ -580,9 +605,90 @@ class StepTemplateBuilder {
     updateSelectedStyle(key, value, rebuild = true) {
         const block = this.getSelectedBlock();
         if (!block) return;
+        if (this.applyInlineTextStyle(block, key, value)) return;
         block.style[key] = value;
         this.syncLegacySettings();
         this.recordChange(rebuild);
+    }
+
+    captureRichTextSelection() {
+        const selection = window.getSelection?.();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+        const range = selection.getRangeAt(0);
+        const editable = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+            ? range.commonAncestorContainer.closest?.('[data-edit-block]')
+            : range.commonAncestorContainer.parentElement?.closest?.('[data-edit-block]');
+        if (!editable) return;
+        this.richTextSelection = {
+            blockId: editable.dataset.editBlock,
+            range: range.cloneRange()
+        };
+        this.activateBlockForTextEditing(editable.dataset.editBlock);
+    }
+
+    clearRichTextSelection() {
+        this.richTextSelection = null;
+    }
+
+    activateBlockForTextEditing(blockId) {
+        if (!this.getBlock(blockId)) return;
+        if (this.selectedBlockId === blockId) return;
+        this.selectedBlockId = blockId;
+        document.querySelectorAll('.editable-block').forEach(el => {
+            el.classList.toggle('selected', el.dataset.blockId === blockId);
+        });
+        const currentPanel = document.querySelector('[data-floating-panel]');
+        currentPanel?.remove();
+        document.querySelector('.designer-stage')?.insertAdjacentHTML('beforeend', this.renderFloatingPanel());
+        this.bindFloatingPanelControls();
+    }
+
+    applyInlineTextStyle(block, key, value) {
+        if (block.type !== 'text' || !['fontFamily', 'fontSize', 'color', 'bold', 'italic', 'underline'].includes(key)) return false;
+        const editable = document.querySelector(`[data-edit-block="${CSS.escape(block.id)}"]`);
+        if (!editable || !this.restoreRichTextSelection(block.id)) return false;
+        const selection = window.getSelection?.();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+
+        if (key === 'bold' || key === 'italic' || key === 'underline') {
+            document.execCommand(key, false);
+        } else if (key === 'color') {
+            document.execCommand('foreColor', false, value);
+        } else {
+            this.wrapCurrentSelection(block.id, key, value);
+        }
+
+        block.style.html = editable.innerHTML;
+        this.syncLegacySettings();
+        this.pushHistory();
+        return true;
+    }
+
+    restoreRichTextSelection(blockId) {
+        const saved = this.richTextSelection;
+        if (!saved || saved.blockId !== blockId) return false;
+        const editable = document.querySelector(`[data-edit-block="${CSS.escape(blockId)}"]`);
+        if (!editable || !editable.contains(saved.range.commonAncestorContainer)) return false;
+        const selection = window.getSelection?.();
+        if (!selection) return false;
+        selection.removeAllRanges();
+        selection.addRange(saved.range);
+        return true;
+    }
+
+    wrapCurrentSelection(blockId, key, value) {
+        const selection = window.getSelection?.();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        if (key === 'fontFamily') span.style.fontFamily = value;
+        if (key === 'fontSize') span.style.fontSize = `${parseInt(value, 10) || 12}pt`;
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+        range.selectNodeContents(span);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        this.richTextSelection = { blockId, range: range.cloneRange() };
     }
 
     updateDayHolderStyle(key, value, rebuild = true) {
@@ -687,12 +793,11 @@ class StepTemplateBuilder {
             btn.addEventListener('click', () => {
                 const block = this.getSelectedBlock();
                 if (!block) return;
-                block.style[btn.dataset.floatToggle] = !block.style[btn.dataset.floatToggle];
-                this.syncLegacySettings();
-                this.recordChange();
+                this.updateSelectedStyle(btn.dataset.floatToggle, !block.style[btn.dataset.floatToggle]);
             });
         });
         document.querySelectorAll('[data-float-align]').forEach(btn => btn.addEventListener('click', () => this.updateSelectedStyle('align', btn.dataset.floatAlign)));
+        document.getElementById('floatDateFormat')?.addEventListener('change', e => this.updateSelectedStyle('dateFormat', e.target.value));
 
         document.getElementById('floatDayTitleSize')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameSize', parseInt(e.target.value, 10) || 14, false));
         document.getElementById('floatDayTitleColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameColor', e.target.value, false));
@@ -706,6 +811,7 @@ class StepTemplateBuilder {
         document.getElementById('floatBorderEnabled')?.addEventListener('change', e => this.updateSelectedBorder('enabled', e.target.checked));
         document.getElementById('floatBorderColor')?.addEventListener('input', e => this.updateSelectedBorder('color', e.target.value, false));
         document.getElementById('floatBorderWidth')?.addEventListener('input', e => this.updateSelectedBorder('width', parseInt(e.target.value, 10) || 0, false));
+        document.querySelectorAll('[data-floating-page-align]').forEach(btn => btn.addEventListener('click', () => this.alignSelectedBlock(btn.dataset.floatingPageAlign)));
     }
 
     toggleKnownBlock(id, visible) {
@@ -1016,7 +1122,8 @@ class StepTemplateBuilder {
     }
 
     recordChange(rebuild = true) {
-        this.updatePreview();
+        if (rebuild) this.updatePreview();
+        else this.updateCanvasOnly();
         this.pushHistory();
         if (rebuild) this.buildUI();
     }
@@ -1104,7 +1211,7 @@ class StepTemplateBuilder {
             if (!block.style) block.style = {};
         });
         if (header) Object.assign(header, { visible: this.settings.showHeader, style: { ...header.style, html: this.settings.headerText, fontFamily: this.settings.headerFontFamily, fontSize: this.settings.headerFontSize, color: this.settings.headerColor, align: this.settings.headerAlignment } });
-        if (date) Object.assign(date, { visible: this.settings.showDateRange, style: { ...date.style, fontFamily: this.settings.dateFontFamily, fontSize: this.settings.dateFontSize, color: this.settings.dateColor, align: this.settings.dateAlignment } });
+        if (date) Object.assign(date, { visible: this.settings.showDateRange, style: { ...date.style, fontFamily: this.settings.dateFontFamily, fontSize: this.settings.dateFontSize, color: this.settings.dateColor, align: this.settings.dateAlignment, dateFormat: this.settings.dateFormat || date.style.dateFormat || 'dd.mm_range_year' } });
         if (footer) Object.assign(footer, { visible: this.settings.showFooter, style: { ...footer.style, html: this.settings.footerText, fontFamily: this.settings.footerFontFamily, fontSize: this.settings.footerFontSize, align: this.settings.footerAlignment } });
         this.settings.editorBlocks.filter(block => block.type === 'day').forEach(block => {
             Object.assign(block.style, {
@@ -1142,6 +1249,7 @@ class StepTemplateBuilder {
             this.settings.dateFontSize = date.style.fontSize || 12;
             this.settings.dateColor = date.style.color || '#666666';
             this.settings.dateAlignment = date.style.align || 'center';
+            this.settings.dateFormat = date.style.dateFormat || 'dd.mm_range_year';
         }
         if (footer) {
             this.settings.showFooter = footer.visible;
@@ -1162,11 +1270,7 @@ class StepTemplateBuilder {
         if (!container || !this.previewData) return;
         container.innerHTML = `
             <div class="designer-stage">
-                <div class="designer-page" style="background:${this.settings.backgroundColor};">
-                    ${this.renderBackgroundLayers()}
-                    ${this.settings.showGuides ? '<div class="page-guides"></div>' : ''}
-                    ${this.settings.editorBlocks.filter(block => block.visible).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).map(block => this.renderEditableBlock(block)).join('')}
-                </div>
+                ${this.renderDesignerPage()}
                 ${this.renderFloatingPanel()}
             </div>
         `;
@@ -1175,6 +1279,30 @@ class StepTemplateBuilder {
         this.bindFloatingPanelControls();
         if (window.templatePreviewZoomMode === 'fit' && typeof window.fitTemplatePreviewToWidth === 'function') window.fitTemplatePreviewToWidth();
         else if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
+    }
+
+    updateCanvasOnly() {
+        const container = document.getElementById('template-preview');
+        const page = container?.querySelector('.designer-page');
+        if (!container || !page || !this.previewData) {
+            this.updatePreview();
+            return;
+        }
+        page.outerHTML = this.renderDesignerPage();
+        this.fitPreviewDayBlocks(container);
+        this.bindCanvasInteractions();
+        if (window.templatePreviewZoomMode === 'fit' && typeof window.fitTemplatePreviewToWidth === 'function') window.fitTemplatePreviewToWidth();
+        else if (typeof window.applyTemplatePreviewZoom === 'function') window.applyTemplatePreviewZoom();
+    }
+
+    renderDesignerPage() {
+        return `
+            <div class="designer-page" style="background:${this.settings.backgroundColor};">
+                ${this.renderBackgroundLayers()}
+                ${this.settings.showGuides ? '<div class="page-guides"></div>' : ''}
+                ${this.settings.editorBlocks.filter(block => block.visible).sort((a, b) => (a.zIndex || 30) - (b.zIndex || 30)).map(block => this.renderEditableBlock(block)).join('')}
+            </div>
+        `;
     }
 
     fitPreviewDayBlocks(container) {
@@ -1213,7 +1341,7 @@ class StepTemplateBuilder {
     }
 
     renderBlockContent(block) {
-        if (block.type === 'date') return this.getDateRangeText();
+        if (block.type === 'date') return this.getDateRangeText(block.style?.dateFormat);
         if (block.type === 'menu') return this.renderMenuContent(block);
         if (block.type === 'day') return this.renderDayContent(block);
         if (block.type === 'image') return `<img class="canvas-image" src="${this.escapeAttr(block.style?.imageData || block.style?.src || '')}" alt="" style="object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
@@ -1233,26 +1361,44 @@ class StepTemplateBuilder {
         const canTextStyle = !['image', 'shape'].includes(block.type);
         const isDayBlock = block.type === 'day';
         const border = this.getBlockBorderSettings(block);
+        const field = (label, control, extra = '') => `<label class="floating-field ${extra}"><span>${this.escapeHtml(label)}</span>${control}</label>`;
+        const colorField = (label, id, value) => field(label, `<input id="${id}" type="color" value="${value}">`, 'floating-color-field');
+        const positionControls = `
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_position', 'Position'))}</strong>
+                <div class="floating-button-grid">
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="left" title="${this.escapeAttr(this.tr('ribbon_align_left', 'Align page left'))}"><span class="ribbon-btn-icon">⇤</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_left_short', 'Left'))}</span></button>
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="center" title="${this.escapeAttr(this.tr('ribbon_align_center', 'Align page center'))}"><span class="ribbon-btn-icon">↔</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_center_short', 'Center'))}</span></button>
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="right" title="${this.escapeAttr(this.tr('ribbon_align_right', 'Align page right'))}"><span class="ribbon-btn-icon">⇥</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_right_short', 'Right'))}</span></button>
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="top" title="${this.escapeAttr(this.tr('ribbon_align_top', 'Align page top'))}"><span class="ribbon-btn-icon">⇡</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_top_short', 'Top'))}</span></button>
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="middle" title="${this.escapeAttr(this.tr('ribbon_align_middle', 'Align page middle'))}"><span class="ribbon-btn-icon">↕</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_middle_short', 'Middle'))}</span></button>
+                    <button type="button" class="ribbon-btn icon-btn labeled-icon-btn" data-floating-page-align="bottom" title="${this.escapeAttr(this.tr('ribbon_align_bottom', 'Align page bottom'))}"><span class="ribbon-btn-icon">⇣</span><span class="ribbon-btn-label">${this.escapeHtml(this.tr('ribbon_bottom_short', 'Bottom'))}</span></button>
+                </div>
+            </div>
+        `;
         const textControls = canTextStyle ? `
-            <div class="floating-control-row">
-                <select id="floatFont" title="Font">${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${st.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
-                <input id="floatSize" type="number" min="6" max="120" value="${st.fontSize || 12}" title="Size">
-                <input id="floatColor" type="color" value="${st.color || '#222222'}" title="Text color">
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_text_style', 'Text'))}</strong>
+                <div class="floating-control-grid">
+                    ${field(this.tr('ribbon_font', 'Font'), `<select id="floatFont" title="${this.escapeAttr(this.tr('ribbon_font', 'Font'))}">${fonts.map(f => `<option value="${this.escapeAttr(f.value)}" ${st.fontFamily === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}</select>`)}
+                    ${field(this.tr('ribbon_size', 'Size'), `<input id="floatSize" type="number" min="6" max="120" value="${st.fontSize || 12}" title="${this.escapeAttr(this.tr('ribbon_size', 'Size'))}">`)}
+                    ${colorField(this.tr('ribbon_color', 'Color'), 'floatColor', st.color || '#222222')}
+                </div>
             </div>
             <div class="floating-control-row">
-                <button type="button" class="ribbon-btn icon-btn ${st.bold ? 'active' : ''}" data-float-toggle="bold" title="Bold"><b>B</b></button>
-                <button type="button" class="ribbon-btn icon-btn ${st.italic ? 'active' : ''}" data-float-toggle="italic" title="Italic"><i>I</i></button>
-                <button type="button" class="ribbon-btn icon-btn ${st.underline ? 'active' : ''}" data-float-toggle="underline" title="Underline"><u>U</u></button>
-                ${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${st.align === a ? 'active' : ''}" data-float-align="${a}" title="Align ${a}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}
+                <button type="button" class="ribbon-btn icon-btn ${st.bold ? 'active' : ''}" data-float-toggle="bold" title="${this.escapeAttr(this.tr('ribbon_bold', 'Bold'))}"><b>B</b></button>
+                <button type="button" class="ribbon-btn icon-btn ${st.italic ? 'active' : ''}" data-float-toggle="italic" title="${this.escapeAttr(this.tr('ribbon_italic', 'Italic'))}"><i>I</i></button>
+                <button type="button" class="ribbon-btn icon-btn ${st.underline ? 'active' : ''}" data-float-toggle="underline" title="${this.escapeAttr(this.tr('ribbon_underline', 'Underline'))}"><u>U</u></button>
+                ${['left', 'center', 'right'].map(a => `<button type="button" class="ribbon-btn icon-btn ${st.align === a ? 'active' : ''}" data-float-align="${a}" title="${this.escapeAttr(this.tr(`ribbon_text_align_${a}`, `Align ${a}`))}">${a === 'left' ? '≡' : a === 'center' ? '☰' : '≣'}</button>`).join('')}
             </div>
         ` : '';
         const dayControls = isDayBlock ? `
             <div class="floating-section">
                 <strong>${this.escapeHtml(this.tr('ribbon_day_style', 'Day'))}</strong>
-                <div class="floating-control-row">
-                    <label>${this.escapeHtml(this.tr('ribbon_title_size', 'Title Size'))}<input type="number" id="floatDayTitleSize" min="6" max="72" value="${st.dayNameSize || this.settings.dayNameSize || 14}"></label>
-                    <label>${this.escapeHtml(this.tr('ribbon_title_color', 'Title Color'))}<input id="floatDayTitleColor" type="color" value="${st.dayNameColor || this.settings.dayNameColor || '#d2691e'}"></label>
-                    <label>${this.escapeHtml(this.tr('ribbon_fill', 'Fill'))}<input id="floatDayFill" type="color" value="${st.dayBackground && st.dayBackground !== 'transparent' ? st.dayBackground : '#ffffff'}"></label>
+                <div class="floating-control-grid">
+                    ${field(this.tr('ribbon_title_size', 'Title Size'), `<input type="number" id="floatDayTitleSize" min="6" max="72" value="${st.dayNameSize || this.settings.dayNameSize || 14}">`)}
+                    ${colorField(this.tr('ribbon_title_color', 'Title Color'), 'floatDayTitleColor', st.dayNameColor || this.settings.dayNameColor || '#d2691e')}
+                    ${colorField(this.tr('ribbon_fill', 'Fill'), 'floatDayFill', st.dayBackground && st.dayBackground !== 'transparent' ? st.dayBackground : '#ffffff')}
                 </div>
                 <button type="button" class="floating-apply-btn" id="floatApplyDayStyle">${this.escapeHtml(this.tr('ribbon_apply_all_days', 'Apply to all days'))}</button>
             </div>
@@ -1260,21 +1406,29 @@ class StepTemplateBuilder {
         const imageControls = block.type === 'image' ? `
             <div class="floating-section">
                 <strong>${this.escapeHtml(this.tr('ribbon_image', 'Image'))}</strong>
-                <div class="floating-control-row">
-                    <label>${this.escapeHtml(this.tr('ribbon_fit', 'Fit'))}<select id="floatImageFit">
+                <div class="floating-control-grid">
+                    ${field(this.tr('ribbon_fit', 'Fit'), `<select id="floatImageFit">
                         <option value="contain" ${st.fit === 'contain' ? 'selected' : ''}>Fit</option>
                         <option value="cover" ${st.fit === 'cover' ? 'selected' : ''}>Fill</option>
                         <option value="fill" ${st.fit === 'fill' ? 'selected' : ''}>Stretch</option>
-                    </select></label>
-                    <label>${this.escapeHtml(this.tr('ribbon_opacity', 'Opacity'))}<input type="number" id="floatImageOpacity" min="10" max="100" value="${Math.round((st.opacity ?? 1) * 100)}"></label>
+                    </select>`)}
+                    ${field(this.tr('ribbon_opacity', 'Opacity'), `<input type="number" id="floatImageOpacity" min="10" max="100" value="${Math.round((st.opacity ?? 1) * 100)}">`)}
                 </div>
             </div>
         ` : '';
         const shapeControls = block.type === 'shape' ? `
             <div class="floating-section">
                 <strong>${this.escapeHtml(this.tr('ribbon_shape', 'Shape'))}</strong>
-                <div class="floating-control-row">
-                    <label>${this.escapeHtml(this.tr('ribbon_shape_fill', 'Shape Fill'))}<input id="floatShapeFill" type="color" value="${st.fill || '#f8f9fb'}"></label>
+                <div class="floating-control-grid">
+                    ${colorField(this.tr('ribbon_shape_fill', 'Shape Fill'), 'floatShapeFill', st.fill || '#f8f9fb')}
+                </div>
+            </div>
+        ` : '';
+        const dateControls = block.type === 'date' ? `
+            <div class="floating-section">
+                <strong>${this.escapeHtml(this.tr('ribbon_date_format', 'Date Format'))}</strong>
+                <div class="floating-control-grid">
+                    ${field(this.tr('ribbon_date_format', 'Date Format'), `<select id="floatDateFormat">${this.getDateFormatOptions().map(option => `<option value="${this.escapeAttr(option.value)}" ${option.value === (st.dateFormat || 'dd.mm_range_year') ? 'selected' : ''}>${this.escapeHtml(option.label)}</option>`).join('')}</select>`)}
                 </div>
             </div>
         ` : '';
@@ -1282,15 +1436,17 @@ class StepTemplateBuilder {
             <div class="floating-object-panel" data-floating-panel>
                 <div class="floating-panel-title">${this.escapeHtml(block.label || this.tr('ribbon_object', 'Object'))}</div>
                 ${textControls}
+                ${dateControls}
                 ${dayControls}
                 ${imageControls}
                 ${shapeControls}
+                ${positionControls}
                 <div class="floating-section">
                     <strong>${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</strong>
-                    <div class="floating-control-row">
-                        <label class="ribbon-check"><input type="checkbox" id="floatBorderEnabled" ${border.enabled ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</label>
-                        <label>${this.escapeHtml(this.tr('ribbon_color', 'Color'))}<input id="floatBorderColor" type="color" value="${border.color}"></label>
-                        <label>${this.escapeHtml(this.tr('ribbon_width', 'Width'))}<input id="floatBorderWidth" type="number" min="0" max="20" value="${border.width}"></label>
+                    <div class="floating-control-grid">
+                        <label class="ribbon-check floating-check"><input type="checkbox" id="floatBorderEnabled" ${border.enabled ? 'checked' : ''}> ${this.escapeHtml(this.tr('ribbon_border', 'Border'))}</label>
+                        ${colorField(this.tr('ribbon_color', 'Color'), 'floatBorderColor', border.color)}
+                        ${field(this.tr('ribbon_width', 'Width'), `<input id="floatBorderWidth" type="number" min="0" max="20" value="${border.width}">`)}
                     </div>
                 </div>
             </div>
@@ -1376,6 +1532,7 @@ class StepTemplateBuilder {
             el.addEventListener('mousedown', e => this.startDrag(e, el));
             el.addEventListener('click', e => {
                 e.stopPropagation();
+                if (!e.target.closest('[contenteditable="true"]')) this.clearRichTextSelection();
                 if (this.selectedBlockId !== el.dataset.blockId) this.selectBlock(el.dataset.blockId);
             });
         });
@@ -1384,22 +1541,10 @@ class StepTemplateBuilder {
             editable.addEventListener('click', e => {
                 e.stopPropagation();
                 const blockId = editable.dataset.editBlock;
-                if (this.selectedBlockId !== blockId) {
-                    this.selectedBlockId = blockId;
-                    this.buildUI();
-                    this.updatePreview();
-                    setTimeout(() => {
-                        const fresh = document.querySelector(`[data-edit-block="${CSS.escape(blockId)}"]`);
-                        fresh?.focus();
-                    }, 0);
-                }
+                this.activateBlockForTextEditing(blockId);
             });
             editable.addEventListener('focus', () => {
-                const blockId = editable.dataset.editBlock;
-                if (this.selectedBlockId !== blockId) {
-                    this.selectedBlockId = blockId;
-                    this.buildUI();
-                }
+                this.activateBlockForTextEditing(editable.dataset.editBlock);
             });
             editable.addEventListener('input', () => {
                 const block = this.getBlock(editable.dataset.editBlock);
@@ -1459,11 +1604,42 @@ class StepTemplateBuilder {
         this.resizeState = null;
     }
 
-    getDateRangeText() {
+    getDateFormatOptions() {
+        if (!this.previewData) return [];
+        return [
+            { value: 'dd.mm_range_year', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'dd.mm_range_year') },
+            { value: 'dd.mm.yyyy_range', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'dd.mm.yyyy_range') },
+            { value: 'dd_mon_range', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'dd_mon_range') },
+            { value: 'mon_dd_range', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'mon_dd_range') },
+            { value: 'month_dd_range', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'month_dd_range') },
+            { value: 'single_start_dd.mm', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'single_start_dd.mm') },
+            { value: 'single_start_dd_mon', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'single_start_dd_mon') },
+            { value: 'single_start_month_dd', label: this.formatDateRange(this.previewData.startDate, this.previewData.endDate, 'single_start_month_dd') }
+        ];
+    }
+
+    getDateRangeText(format) {
         if (!this.previewData) return '';
-        const { startDate, endDate } = this.previewData;
+        return this.formatDateRange(this.previewData.startDate, this.previewData.endDate, format || this.getBlock('date')?.style?.dateFormat || 'dd.mm_range_year');
+    }
+
+    formatDateRange(startDate, endDate, format = 'dd.mm_range_year') {
         const pad2 = n => String(n).padStart(2, '0');
-        return `${pad2(startDate.getDate())}.${pad2(startDate.getMonth() + 1)} - ${pad2(endDate.getDate())}.${pad2(endDate.getMonth() + 1)} ${startDate.getFullYear()}`;
+        const locale = window.getCurrentLanguage?.() === 'bg' ? 'bg-BG' : 'en-US';
+        const dayMonth = date => `${pad2(date.getDate())}.${pad2(date.getMonth() + 1)}`;
+        const dayMonthYear = date => `${dayMonth(date)}.${date.getFullYear()}`;
+        const ddMon = date => date.toLocaleDateString(locale, { day: '2-digit', month: 'short' }).replace(/\.$/, '');
+        const monDd = date => date.toLocaleDateString(locale, { month: 'short', day: '2-digit' }).replace(/\.$/, '');
+        const monthDd = date => date.toLocaleDateString(locale, { month: 'long', day: '2-digit' });
+        const rangeSep = ' - ';
+        if (format === 'dd.mm.yyyy_range') return `${dayMonthYear(startDate)}${rangeSep}${dayMonthYear(endDate)}`;
+        if (format === 'dd_mon_range') return `${ddMon(startDate)}${rangeSep}${ddMon(endDate)} ${endDate.getFullYear()}`;
+        if (format === 'mon_dd_range') return `${monDd(startDate)}${rangeSep}${monDd(endDate)}, ${endDate.getFullYear()}`;
+        if (format === 'month_dd_range') return `${monthDd(startDate)}${rangeSep}${monthDd(endDate)}, ${endDate.getFullYear()}`;
+        if (format === 'single_start_dd.mm') return dayMonth(startDate);
+        if (format === 'single_start_dd_mon') return ddMon(startDate);
+        if (format === 'single_start_month_dd') return monthDd(startDate);
+        return `${dayMonth(startDate)}${rangeSep}${dayMonth(endDate)} ${startDate.getFullYear()}`;
     }
 
     async loadTemplates() {

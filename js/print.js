@@ -686,7 +686,7 @@
     }
 
     function renderEditorBlockContent(block, data, s) {
-        if (block.type === 'date') return fmtDateRange(data.startDate, data.endDate);
+        if (block.type === 'date') return fmtDateRange(data.startDate, data.endDate, block.style?.dateFormat || s.dateFormat);
         if (block.type === 'menu') return renderEditorMenuBlock(data, s);
         if (block.type === 'day') return renderEditorDayBlock(block, data, s);
         if (block.type === 'image') return `<img src="${block.style?.imageData || block.style?.src || ''}" style="display:block;width:100%;height:100%;object-fit:${block.style?.fit || 'contain'};opacity:${block.style?.opacity ?? 1};">`;
@@ -713,7 +713,7 @@
         const { startDate, endDate, days } = data;
         const isCompact = (s.templateStyle || 'compact') === 'compact';
         const lh   = isCompact ? '1.15' : '1.2';
-        const dr   = fmtDateRange(startDate, endDate);
+        const dr   = fmtDateRange(startDate, endDate, s.dateFormat);
         const hs   = normSize(s.headerFontSize,  '20pt');
         const dys  = normSize(s.dayNameSize,      '12pt');
         const ms   = normSize(s.mealFontSize,     '10pt');
@@ -772,7 +772,7 @@
 
     function renderMenuHTML2Column(data, s, usableH) {
         const { startDate, endDate, days } = data;
-        const dr   = fmtDateRange(startDate, endDate);
+        const dr   = fmtDateRange(startDate, endDate, s.dateFormat);
         const hs   = normSize(s.headerFontSize, '20pt');
         const dys  = normSize(s.dayNameSize,    '12pt');
         const ms   = normSize(s.mealFontSize,   '10pt');
@@ -837,9 +837,23 @@
         const locale = window.getCurrentLanguage ? (window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US') : 'bg-BG';
         return start.toLocaleDateString(locale, { month: 'short', day: 'numeric' }) + ' – ' + end.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     }
-    function fmtDateRange(s, e) {
+    function fmtDateRange(s, e, format = 'dd.mm_range_year') {
         const p = n => String(n).padStart(2,'0');
-        return `${p(s.getDate())}.${p(s.getMonth()+1)}-${p(e.getDate())}.${p(e.getMonth()+1)} ${s.getFullYear()}г.`;
+        const locale = window.getCurrentLanguage ? (window.getCurrentLanguage() === 'bg' ? 'bg-BG' : 'en-US') : 'bg-BG';
+        const dayMonth = d => `${p(d.getDate())}.${p(d.getMonth()+1)}`;
+        const dayMonthYear = d => `${dayMonth(d)}.${d.getFullYear()}`;
+        const ddMon = d => d.toLocaleDateString(locale, { day: '2-digit', month: 'short' }).replace(/\.$/, '');
+        const monDd = d => d.toLocaleDateString(locale, { month: 'short', day: '2-digit' }).replace(/\.$/, '');
+        const monthDd = d => d.toLocaleDateString(locale, { month: 'long', day: '2-digit' });
+        const sep = ' - ';
+        if (format === 'dd.mm.yyyy_range') return `${dayMonthYear(s)}${sep}${dayMonthYear(e)}`;
+        if (format === 'dd_mon_range') return `${ddMon(s)}${sep}${ddMon(e)} ${e.getFullYear()}`;
+        if (format === 'mon_dd_range') return `${monDd(s)}${sep}${monDd(e)}, ${e.getFullYear()}`;
+        if (format === 'month_dd_range') return `${monthDd(s)}${sep}${monthDd(e)}, ${e.getFullYear()}`;
+        if (format === 'single_start_dd.mm') return dayMonth(s);
+        if (format === 'single_start_dd_mon') return ddMon(s);
+        if (format === 'single_start_month_dd') return monthDd(s);
+        return `${dayMonth(s)}${sep}${dayMonth(e)} ${s.getFullYear()}${locale === 'bg-BG' ? 'г.' : ''}`;
     }
 
 })(window);
