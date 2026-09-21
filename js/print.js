@@ -180,18 +180,19 @@
     // ─── CANVAS RENDERER (shared by image + pdf) ─────────────────────────────────
     function fitPrintedDayBlocks(root) {
         root.querySelectorAll('[data-print-day-card]').forEach(card => {
-            card.style.transform = '';
-            card.style.transformOrigin = '';
-            card.style.width = '';
-            card.style.height = '';
+            const content = card.querySelector('[data-print-day-card-content]') || card;
+            content.style.transform = '';
+            content.style.transformOrigin = '';
+            content.style.width = '';
+            content.style.height = '';
             const availableHeight = card.clientHeight;
-            const contentHeight = card.scrollHeight;
+            const contentHeight = content.scrollHeight;
             if (!availableHeight || contentHeight <= availableHeight) return;
             const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-            card.style.transform = `scale(${scale.toFixed(4)})`;
-            card.style.transformOrigin = 'top left';
-            card.style.width = `${(100 / scale).toFixed(4)}%`;
-            card.style.height = `${(100 / scale).toFixed(4)}%`;
+            content.style.transform = `scale(${scale.toFixed(4)})`;
+            content.style.transformOrigin = 'top left';
+            content.style.width = `${(100 / scale).toFixed(4)}%`;
+            content.style.height = `${(100 / scale).toFixed(4)}%`;
         });
     }
 
@@ -244,7 +245,7 @@
         if (!choice) return;
 
         const mealPlanData = generateMealPlanData(choice.startDate, choice.endDate);
-        if (mealPlanData.days.length === 0) {
+        if (!mealPlanData.days.some(day => day.meals.length > 0)) {
             await window.dmsAlert(isBg ? 'Няма планирани ястия за избраната седмица!' : 'No meals planned for the selected week!', { title: window.t('dialog_error_title') });
             return;
         }
@@ -377,7 +378,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
-            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ card.style.transform=""; card.style.transformOrigin=""; card.style.width=""; card.style.height=""; var ah=card.clientHeight, ch=card.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); card.style.transform="scale("+s.toFixed(4)+")"; card.style.transformOrigin="top left"; card.style.width=(100/s).toFixed(4)+"%"; card.style.height=(100/s).toFixed(4)+"%"; } });' +
+            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ var content=card.querySelector("[data-print-day-card-content]")||card; content.style.transform=""; content.style.transformOrigin=""; content.style.width=""; content.style.height=""; var ah=card.clientHeight, ch=content.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); content.style.transform="scale("+s.toFixed(4)+")"; content.style.transformOrigin="top left"; content.style.width=(100/s).toFixed(4)+"%"; content.style.height=(100/s).toFixed(4)+"%"; } });' +
             '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
@@ -589,24 +590,21 @@
             d.setDate(startDate.getDate() + i);
             const dateStr = getLocalDateString(d);
             const dayMenu = window.getMenuForDate(dateStr);
-            const hasMeals = ['slot1','slot2','slot3','slot4'].some(id => { const s = dayMenu[id]; return s && s.recipe; });
-            if (hasMeals) {
-                const meals = [];
-                ['slot1','slot2','slot3','slot4'].forEach((slotId, idx) => {
-                    const slot   = dayMenu[slotId];
-                    const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
-                    if (recipe) {
-                        const ingredientsData = (recipe.ingredients || []).map(ingObj => {
-                            const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
-                            const ing   = window.ingredients.find(i => i.id === ingId);
-                            if (!ing) return null;
-                            return { name: ing.name, hasAllergen: ing.allergens && ing.allergens.length > 0 };
-                        }).filter(Boolean);
-                        meals.push({ number: idx + 1, name: recipe.name, portion: recipe.portionSize || '', calories: recipe.calories || null, ingredients: ingredientsData });
-                    }
-                });
-                if (meals.length > 0) days.push({ name: dayNames[i], meals });
-            }
+            const meals = [];
+            ['slot1','slot2','slot3','slot4'].forEach((slotId, idx) => {
+                const slot   = dayMenu[slotId];
+                const recipe = slot && slot.recipe ? window.recipes.find(r => r.id === slot.recipe) : null;
+                if (recipe) {
+                    const ingredientsData = (recipe.ingredients || []).map(ingObj => {
+                        const ingId = typeof ingObj === 'string' ? ingObj : ingObj.id;
+                        const ing   = window.ingredients.find(i => i.id === ingId);
+                        if (!ing) return null;
+                        return { name: ing.name, hasAllergen: ing.allergens && ing.allergens.length > 0 };
+                    }).filter(Boolean);
+                    meals.push({ number: idx + 1, name: recipe.name, portion: recipe.portionSize || '', calories: recipe.calories || null, ingredients: ingredientsData });
+                }
+            });
+            days.push({ name: dayNames[i], meals, date: dateStr });
         }
         return { startDate, endDate, days };
     }
@@ -710,8 +708,10 @@
         const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
         const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
         return `<section data-print-day-card style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
-            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
-            ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+            <div data-print-day-card-content>
+                <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
+                ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+            </div>
         </section>`;
     }
 

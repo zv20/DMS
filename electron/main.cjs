@@ -741,18 +741,19 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
         setTimeout(() => {
           const content = document.getElementById("menu-content");
           document.querySelectorAll("[data-print-day-card]").forEach((card) => {
-            card.style.transform = "";
-            card.style.transformOrigin = "";
-            card.style.width = "";
-            card.style.height = "";
+            const dayContent = card.querySelector("[data-print-day-card-content]") || card;
+            dayContent.style.transform = "";
+            dayContent.style.transformOrigin = "";
+            dayContent.style.width = "";
+            dayContent.style.height = "";
             const availableHeight = card.clientHeight;
-            const contentHeight = card.scrollHeight;
+            const contentHeight = dayContent.scrollHeight;
             if (availableHeight && contentHeight > availableHeight) {
               const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-              card.style.transform = "scale(" + scale.toFixed(4) + ")";
-              card.style.transformOrigin = "top left";
-              card.style.width = (100 / scale).toFixed(4) + "%";
-              card.style.height = (100 / scale).toFixed(4) + "%";
+              dayContent.style.transform = "scale(" + scale.toFixed(4) + ")";
+              dayContent.style.transformOrigin = "top left";
+              dayContent.style.width = (100 / scale).toFixed(4) + "%";
+              dayContent.style.height = (100 / scale).toFixed(4) + "%";
             }
           });
           if (content) {
