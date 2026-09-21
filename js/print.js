@@ -178,6 +178,23 @@
     }
 
     // ─── CANVAS RENDERER (shared by image + pdf) ─────────────────────────────────
+    function fitPrintedDayBlocks(root) {
+        root.querySelectorAll('[data-print-day-card]').forEach(card => {
+            card.style.transform = '';
+            card.style.transformOrigin = '';
+            card.style.width = '';
+            card.style.height = '';
+            const availableHeight = card.clientHeight;
+            const contentHeight = card.scrollHeight;
+            if (!availableHeight || contentHeight <= availableHeight) return;
+            const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
+            card.style.transform = `scale(${scale.toFixed(4)})`;
+            card.style.transformOrigin = 'top left';
+            card.style.width = `${(100 / scale).toFixed(4)}%`;
+            card.style.height = `${(100 / scale).toFixed(4)}%`;
+        });
+    }
+
     async function renderToCanvas(html, usableH, usableW) {
         if (!window.html2canvas) throw new Error('html2canvas not loaded');
         const container = document.createElement('div');
@@ -185,6 +202,7 @@
         container.innerHTML = html;
         document.body.appendChild(container);
         try {
+            fitPrintedDayBlocks(container);
             return await window.html2canvas(container.querySelector('#menu-content') || container, {
                 scale: 3,
                 useCORS: true,
@@ -359,6 +377,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
+            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ card.style.transform=""; card.style.transformOrigin=""; card.style.width=""; card.style.height=""; var ah=card.clientHeight, ch=card.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); card.style.transform="scale("+s.toFixed(4)+")"; card.style.transformOrigin="top left"; card.style.width=(100/s).toFixed(4)+"%"; card.style.height=(100/s).toFixed(4)+"%"; } });' +
             '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
@@ -511,38 +530,49 @@
                 { image: null, position: 'bottom-right', size: 20,  opacity: 1.0, zIndex: 5 }
             ],
             showHeader:        true,
-            headerText:        'Седмично меню',
+            headerText:        'Седмично м<font color="#54963c">е</font><font color="#e50606">н</font><font color="#030202">ю</font>',
             headerAlignment:   'center',
-            headerFontSize:    '20pt',
+            headerFontSize:    24,
             headerColor:       '#d2691e',
             headerFontFamily:  'Arial, sans-serif',
             showDateRange:     true,
-            dateFontSize:      '9pt',
-            dateColor:         '#555555',
+            dateFontSize:      22,
+            dateColor:         '#666666',
             dateAlignment:     'center',
             dateFontFamily:    'Arial, sans-serif',
+            dateFormat:        'dd.mm_range_year',
             showIngredients:   true,
             showCalories:      true,
             showPortions:      true,
-            dayBorder:          false,
+            dayBorder:          true,
             dayBorderStyle:     'solid',
             dayBorderColor:     '#e0e0e0',
             dayBorderThickness: '1px',
             dayBackground:     'transparent',
-            dayNameSize:       '12pt',
-            dayNameColor:      '#333333',
+            dayNameSize:       40,
+            dayNameColor:      '#d2691e',
             dayNameWeight:     'bold',
             dayNameFontFamily: 'Arial, sans-serif',
-            mealFontSize:      '10pt',
+            mealFontSize:      28,
             mealFontFamily:    'Arial, sans-serif',
             allergenColor:     '#ff0000',
             allergenBold:      true,
             allergenUnderline: false,
             showFooter:        true,
-            footerText:        'Алергените са подчертани.',
+            footerText:        '<div>Алергените са подчертани.</div><div>Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за&nbsp;<span style="font-size: 8pt;">ученическо столово хранене</span></div><div>Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.</div><div>Менюто е съгласувано с мед.лице - Елиза Дамянова.</div><div><font color="#ff0000">Менюто може да претърпи промени, поради независещи от нас&nbsp;</font><span style="color: rgb(255, 0, 0); font-size: 8pt;">причини,за което се извиняваме предварително</span></div>',
             footerAlignment:   'center',
-            footerFontSize:    '8pt',
-            footerFontFamily:  'Arial, sans-serif'
+            footerFontSize:    8,
+            footerFontFamily:  'Arial, sans-serif',
+            editorBlocks: [
+                { id: 'header', type: 'text', label: 'Header', visible: true, locked: false, x: 8, y: 4, width: 84, height: 9, zIndex: 30, style: { html: 'Седмично м<font color="#54963c">е</font><font color="#e50606">н</font><font color="#030202">ю</font>', fontFamily: 'Arial, sans-serif', fontSize: 24, color: '#d2691e', align: 'center', bold: true, italic: false, underline: false } },
+                { id: 'date', type: 'date', label: 'Date Range', visible: true, locked: false, x: 24, y: 8, width: 52, height: 5, zIndex: 30, style: { fontFamily: 'Arial, sans-serif', fontSize: 22, color: '#666666', align: 'center', bold: false, italic: false, underline: false, dateFormat: 'dd.mm_range_year' } },
+                { id: 'day-0', type: 'day', label: 'Понеделник', visible: true, locked: false, x: 6, y: 14, width: 88, height: 14, zIndex: 30, style: { dayIndex: 0, dayTitle: 'Понеделник', dayNameFontFamily: 'Arial, sans-serif', dayNameSize: 40, dayNameColor: '#d2691e', dayNameWeight: 'bold', dayBackground: 'transparent', dayBorderEnabled: true, dayBorderColor: '#e0e0e0', dayBorderWidth: '1px', dayBorderStyle: 'solid', fontFamily: 'Arial, sans-serif', fontSize: 28, color: '#222222', align: 'left', lineHeight: 1.2, backgroundColor: 'transparent' } },
+                { id: 'day-1', type: 'day', label: 'Вторник', visible: true, locked: false, x: 6, y: 28, width: 88, height: 16, zIndex: 30, style: { dayIndex: 1, dayTitle: 'Вторник', dayNameFontFamily: 'Arial, sans-serif', dayNameSize: 40, dayNameColor: '#d2691e', dayNameWeight: 'bold', dayBackground: 'transparent', dayBorderEnabled: true, dayBorderColor: '#e0e0e0', dayBorderWidth: '1px', dayBorderStyle: 'solid', fontFamily: 'Arial, sans-serif', fontSize: 28, color: '#222222', align: 'left', lineHeight: 1.2, backgroundColor: 'transparent' } },
+                { id: 'day-2', type: 'day', label: 'Сряда', visible: true, locked: false, x: 6, y: 42, width: 90, height: 18, zIndex: 30, style: { dayIndex: 2, dayTitle: 'Сряда', dayNameFontFamily: 'Arial, sans-serif', dayNameSize: 40, dayNameColor: '#d2691e', dayNameWeight: 'bold', dayBackground: 'transparent', dayBorderEnabled: true, dayBorderColor: '#e0e0e0', dayBorderWidth: '1px', dayBorderStyle: 'solid', fontFamily: 'Arial, sans-serif', fontSize: 28, color: '#222222', align: 'left', lineHeight: 1.2, backgroundColor: 'transparent' } },
+                { id: 'day-3', type: 'day', label: 'Четвъртък', visible: true, locked: false, x: 6, y: 58, width: 90, height: 16, zIndex: 30, style: { dayIndex: 3, dayTitle: 'Четвъртък', dayNameFontFamily: 'Arial, sans-serif', dayNameSize: 40, dayNameColor: '#d2691e', dayNameWeight: 'bold', dayBackground: 'transparent', dayBorderEnabled: true, dayBorderColor: '#e0e0e0', dayBorderWidth: '1px', dayBorderStyle: 'solid', fontFamily: 'Arial, sans-serif', fontSize: 28, color: '#222222', align: 'left', lineHeight: 1.2, backgroundColor: 'transparent' } },
+                { id: 'day-4', type: 'day', label: 'Петък', visible: true, locked: false, x: 6, y: 74, width: 88, height: 16, zIndex: 30, style: { dayIndex: 4, dayTitle: 'Петък', dayNameFontFamily: 'Arial, sans-serif', dayNameSize: 40, dayNameColor: '#d2691e', dayNameWeight: 'bold', dayBackground: 'transparent', dayBorderEnabled: true, dayBorderColor: '#e0e0e0', dayBorderWidth: '1px', dayBorderStyle: 'solid', fontFamily: 'Arial, sans-serif', fontSize: 28, color: '#222222', align: 'left', lineHeight: 1.2, backgroundColor: 'transparent' } },
+                { id: 'footer', type: 'text', label: 'Footer', visible: true, locked: false, x: 0, y: 88, width: 100, height: 12, zIndex: 30, style: { html: '<div>Алергените са подчертани.</div><div>Менюто е съобразено с изискванията на Наредба Nº 37, Наредба Nº9 на МЗХ и Рецептурника за&nbsp;<span style="font-size: 8pt;">ученическо столово хранене</span></div><div>Менютата са изготвени съгласно Сборник рецепти за ученически столове и бюфети от 2012г.</div><div>Менюто е съгласувано с мед.лице - Елиза Дамянова.</div><div><font color="#ff0000">Менюто може да претърпи промени, поради независещи от нас&nbsp;</font><span style="color: rgb(255, 0, 0); font-size: 8pt;">причини,за което се извиняваме предварително</span></div>', fontFamily: 'Arial, sans-serif', fontSize: 8, color: '#777777', align: 'center', bold: false, italic: false, underline: false } }
+            ]
         };
     }
 
@@ -624,7 +654,7 @@
             `z-index:${block.zIndex || 30}`,
             'box-sizing:border-box',
             'overflow:hidden',
-            'padding:4px',
+            'padding:8px',
             `font-family:${st.fontFamily || 'Arial, sans-serif'}`,
             `font-size:${normSize(st.fontSize || 12, '12pt')}`,
             `color:${st.color || '#222222'}`,
@@ -679,7 +709,7 @@
         const bg = dayBackground && dayBackground !== 'transparent' ? `background:${dayBackground};` : '';
         const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
         const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
-        return `<section style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
+        return `<section data-print-day-card style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
             <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
             ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
         </section>`;

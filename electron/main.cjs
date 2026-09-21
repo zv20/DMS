@@ -740,6 +740,21 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
       new Promise((resolve) => {
         setTimeout(() => {
           const content = document.getElementById("menu-content");
+          document.querySelectorAll("[data-print-day-card]").forEach((card) => {
+            card.style.transform = "";
+            card.style.transformOrigin = "";
+            card.style.width = "";
+            card.style.height = "";
+            const availableHeight = card.clientHeight;
+            const contentHeight = card.scrollHeight;
+            if (availableHeight && contentHeight > availableHeight) {
+              const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
+              card.style.transform = "scale(" + scale.toFixed(4) + ")";
+              card.style.transformOrigin = "top left";
+              card.style.width = (100 / scale).toFixed(4) + "%";
+              card.style.height = (100 / scale).toFixed(4) + "%";
+            }
+          });
           if (content) {
             const pageHeight = ${JSON.stringify(payload.usableH)};
             const contentHeight = content.scrollHeight;
