@@ -1663,6 +1663,7 @@ class StepTemplateBuilder {
         this.ensureEditorBlocks();
         this.syncBlocksFromLegacy();
         await this.hydrateEditorImages();
+        if (!this.loadCurrentMenuData()) this.loadSampleData();
         this.selectedBlockId = 'header';
         this.switchTab('builder');
         this.buildUI();
@@ -1960,7 +1961,7 @@ class StepTemplateBuilder {
                 }).filter(Boolean);
                 meals.push({ number: idx + 1, name: recipe.name, portion: recipe.portionSize || '', calories: recipe.calories || null, ingredients });
             });
-            if (meals.length) days.push({ name: dayNames[i], meals });
+            days.push({ name: dayNames[i], meals, date: str(d) });
         }
         this.previewData = { startDate, endDate, days };
         if (refreshPreview) this.updatePreview();

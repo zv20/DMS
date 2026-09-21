@@ -180,19 +180,18 @@
     // ─── CANVAS RENDERER (shared by image + pdf) ─────────────────────────────────
     function fitPrintedDayBlocks(root) {
         root.querySelectorAll('[data-print-day-card]').forEach(card => {
-            const content = card.querySelector('[data-print-day-card-content]') || card;
-            content.style.transform = '';
-            content.style.transformOrigin = '';
-            content.style.width = '';
-            content.style.height = '';
+            card.style.transform = '';
+            card.style.transformOrigin = '';
+            card.style.width = '';
+            card.style.height = '';
             const availableHeight = card.clientHeight;
-            const contentHeight = content.scrollHeight;
+            const contentHeight = card.scrollHeight;
             if (!availableHeight || contentHeight <= availableHeight) return;
             const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-            content.style.transform = `scale(${scale.toFixed(4)})`;
-            content.style.transformOrigin = 'top left';
-            content.style.width = `${(100 / scale).toFixed(4)}%`;
-            content.style.height = `${(100 / scale).toFixed(4)}%`;
+            card.style.transform = `scale(${scale.toFixed(4)})`;
+            card.style.transformOrigin = 'top left';
+            card.style.width = `${(100 / scale).toFixed(4)}%`;
+            card.style.height = `${(100 / scale).toFixed(4)}%`;
         });
     }
 
@@ -218,10 +217,10 @@
     }
 
     // ─── SAFE BOTTOM BUFFER (mm) ───────────────────────────────────────────────
-    // Extra mm subtracted from the printable height so content never reaches
-    // the physical non-printable dead-zone at the bottom of the page.
-    // This same value is also added to the @page bottom margin.
-    const BOTTOM_SAFE_BUFFER_MM = 8;
+    const A4_WIDTH_MM = 210;
+    const A4_HEIGHT_MM = 297;
+    const A4_WIDTH_PX = 794;
+    const A4_HEIGHT_PX = 1123;
 
     const DESKTOP_PRINT_TIMEOUT_MS = 15000;
 
@@ -265,19 +264,14 @@
         }
         await hydrateEditorBlockImages(settings);
 
-        const { top, right, bottom, left } = choice.margins;
-
-        // Content is sized using the SAME safe bottom so the rendered height
-        // exactly matches what the @page rule will give the printer.
-        const safeBottom = bottom + BOTTOM_SAFE_BUFFER_MM;
-        const usableH = Math.round((297 - top - safeBottom) * 3.7795);
-        const usableW = Math.round((210 - left - right)     * 3.7795);
+        const usableH = A4_HEIGHT_PX;
+        const usableW = A4_WIDTH_PX;
         const html    = renderMenuHTML(mealPlanData, settings, usableH);
         const ds      = getLocalDateString(mealPlanData.startDate);
 
         // ─── PRINT ──────────────────────────────────────────────────────────
         if (choice.action === 'print') {
-            await openPrintWindow(html, mealPlanData, choice.margins, usableH, usableW, safeBottom);
+            await openPrintWindow(html, mealPlanData, usableH, usableW);
             return;
         }
 
@@ -315,9 +309,7 @@
             }
             const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
             const pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const imgWidthMM  = 210 - left - right;
-            const imgHeightMM = 297 - top - safeBottom;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', left, top, imgWidthMM, imgHeightMM, '', 'FAST');
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, '', 'FAST');
             pdf.save(filename);
         }
         } finally {
@@ -326,12 +318,12 @@
     };
 
     // ─── PRINT WINDOW ────────────────────────────────────────────────────────
-    function openPrintWindow(html, mealPlanData, margins, usableH, usableW, safeBottom) {
+    function openPrintWindow(html, mealPlanData, usableH, usableW) {
         const ds = `${mealPlanData.startDate.getDate()}.${mealPlanData.startDate.getMonth()+1}-${mealPlanData.endDate.getDate()}.${mealPlanData.endDate.getMonth()+1}.${mealPlanData.startDate.getFullYear()}`;
         const title = 'Weekly-Menu-' + ds;
 
         if (window.dmsDesktop && window.dmsDesktop.print && window.dmsDesktop.print.menu) {
-            const printTask = window.dmsDesktop.print.menu({ title, html, margins, usableH, usableW, safeBottom });
+            const printTask = window.dmsDesktop.print.menu({ title, html, usableH, usableW });
             const unlockTask = new Promise(resolve => {
                 setTimeout(() => resolve(false), DESKTOP_PRINT_TIMEOUT_MS);
             });
@@ -355,16 +347,13 @@
             window.dmsAlert?.('Pop-up blocked. Please allow pop-ups for this site and try again.', { title: window.t('dialog_error_title') });
             return;
         }
-        const { top, right, bottom, left } = margins;
-
         pw.document.write(
             '<!DOCTYPE html><html><head><title>' + title + '</title><meta charset="UTF-8">' +
             '<style>' +
             '* { margin:0; padding:0; box-sizing:border-box; }' +
             'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }' +
-            '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; padding:' + top + 'mm ' + right + 'mm ' + bottom + 'mm ' + left + 'mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
-            // @page uses safeBottom — content was already sized to match this
-            '@page { size:A4 portrait; margin:' + top + 'mm ' + right + 'mm ' + safeBottom + 'mm ' + left + 'mm; }' +
+            '@media screen { #page-wrapper { background:white; width:' + usableW + 'px; height:' + usableH + 'px; margin:20px auto; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }' +
+            '@page { size:A4 portrait; margin:0; }' +
             '@media print {' +
             '  html, body { height:100%; background:white; overflow:hidden; }' +
             '  #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; overflow:hidden; }' +
@@ -378,7 +367,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
-            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ var content=card.querySelector("[data-print-day-card-content]")||card; content.style.transform=""; content.style.transformOrigin=""; content.style.width=""; content.style.height=""; var ah=card.clientHeight, ch=content.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); content.style.transform="scale("+s.toFixed(4)+")"; content.style.transformOrigin="top left"; content.style.width=(100/s).toFixed(4)+"%"; content.style.height=(100/s).toFixed(4)+"%"; } });' +
+            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ card.style.transform=""; card.style.transformOrigin=""; card.style.width=""; card.style.height=""; var ah=card.clientHeight, ch=card.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); card.style.transform="scale("+s.toFixed(4)+")"; card.style.transformOrigin="top left"; card.style.width=(100/s).toFixed(4)+"%"; card.style.height=(100/s).toFixed(4)+"%"; } });' +
             '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
@@ -455,17 +444,9 @@
                     <label style="${ls}">📅 ${isBg ? 'Седмица' : 'Week'}</label>
                     <select id="pd-week" style="${ss}">${weekOptionsHTML}</select>
                 </div>
-                <div style="margin-bottom:18px;">
+                <div style="margin-bottom:26px;">
                     <label style="${ls}">🎨 ${isBg ? 'Шаблон' : 'Template'}</label>
                     <select id="pd-template" style="${ss}">${templateOptions}</select>
-                </div>
-                <div style="margin-bottom:26px;">
-                    <label style="${ls}">📐 ${isBg ? 'Полета (отстъп)' : 'Page Margins'}</label>
-                    <select id="pd-margin" style="${ss}">
-                        <option value="minimal" selected>${isBg ? '🟢 Минимални (5мм)' : '🟢 Minimal (5mm)'}</option>
-                        <option value="normal">${isBg ? '🟡 Нормални (10мм)' : '🟡 Normal (10mm)'}</option>
-                        <option value="comfortable">${isBg ? '🔵 Широки (15мм)' : '🔵 Comfortable (15mm)'}</option>
-                    </select>
                 </div>
                 <div style="margin-bottom:10px;display:flex;gap:8px;">
                     <button id="pd-print" style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖨️ ${isBg ? 'Печат' : 'Print'}</button>
@@ -479,12 +460,6 @@
             overlay.appendChild(dialog);
             document.body.appendChild(overlay);
 
-            const marginPresets = {
-                minimal:     { top: 5,  right: 5,  bottom: 5,  left: 5  },
-                normal:      { top: 10, right: 10, bottom: 10, left: 10 },
-                comfortable: { top: 15, right: 15, bottom: 15, left: 15 }
-            };
-
             function close() {
                 if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
             }
@@ -492,7 +467,6 @@
             function pick(action) {
                 const mondayStr = dialog.querySelector('#pd-week').value;
                 const tplVal    = dialog.querySelector('#pd-template').value;
-                const marginVal = dialog.querySelector('#pd-margin').value;
                 const entry     = weekEntries.find(e => e.mondayStr === mondayStr);
                 close();
                 resolve({
@@ -501,7 +475,7 @@
                     endDate:          entry.friday,
                     templateType:     tplVal === 'default' ? 'default' : 'saved',
                     templateSettings: tplVal !== 'default' ? savedTemplates[tplVal] : null,
-                    margins:          marginPresets[marginVal]
+                    margins:          null
                 });
             }
 
@@ -643,6 +617,10 @@
 
     function blockStyle(block, style) {
         const st = style || {};
+        const borderWidth = parseInt(st.borderWidth ?? 0, 10) || 0;
+        const border = st.borderEnabled && borderWidth > 0
+            ? `border:${borderWidth}px solid ${st.borderColor || '#d8dee5'}`
+            : 'border:1px solid transparent';
         return [
             'position:absolute',
             `left:${block.x || 0}%`,
@@ -653,6 +631,7 @@
             'box-sizing:border-box',
             'overflow:hidden',
             'padding:8px',
+            border,
             `font-family:${st.fontFamily || 'Arial, sans-serif'}`,
             `font-size:${normSize(st.fontSize || 12, '12pt')}`,
             `color:${st.color || '#222222'}`,
@@ -708,10 +687,8 @@
         const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
         const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
         return `<section data-print-day-card style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
-            <div data-print-day-card-content>
-                <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
-                ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
-            </div>
+            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
+            ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
         </section>`;
     }
 

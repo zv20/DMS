@@ -366,16 +366,15 @@ async function runSmokeTest() {
   process.exit(0);
 }
 
-function buildPrintDocument({ title, html, margins, usableH, usableW, safeBottom }) {
-  const { top, right, bottom, left } = margins;
+function buildPrintDocument({ title, html, usableH, usableW }) {
   return [
     '<!DOCTYPE html><html><head>',
     `<title>${title}</title><meta charset="UTF-8">`,
     '<style>',
     '* { margin:0; padding:0; box-sizing:border-box; }',
     'body { font-family:Arial,sans-serif; font-size:10px; line-height:1.2; color:#333; background:#bbb; }',
-    `@media screen { #page-wrapper { background:white; width:${usableW}px; height:${usableH}px; margin:20px auto; overflow:hidden; padding:${top}mm ${right}mm ${bottom}mm ${left}mm; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }`,
-    `@page { size:A4 portrait; margin:${top}mm ${right}mm ${safeBottom}mm ${left}mm; }`,
+    `@media screen { #page-wrapper { background:white; width:${usableW}px; height:${usableH}px; margin:20px auto; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.35); } }`,
+    '@page { size:A4 portrait; margin:0; }',
     '@media print {',
     '  html, body { height:100%; background:white; overflow:hidden; }',
     '  #page-wrapper { height:100%; padding:0; margin:0; box-shadow:none; overflow:hidden; }',
@@ -741,19 +740,18 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
         setTimeout(() => {
           const content = document.getElementById("menu-content");
           document.querySelectorAll("[data-print-day-card]").forEach((card) => {
-            const dayContent = card.querySelector("[data-print-day-card-content]") || card;
-            dayContent.style.transform = "";
-            dayContent.style.transformOrigin = "";
-            dayContent.style.width = "";
-            dayContent.style.height = "";
+            card.style.transform = "";
+            card.style.transformOrigin = "";
+            card.style.width = "";
+            card.style.height = "";
             const availableHeight = card.clientHeight;
-            const contentHeight = dayContent.scrollHeight;
+            const contentHeight = card.scrollHeight;
             if (availableHeight && contentHeight > availableHeight) {
               const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-              dayContent.style.transform = "scale(" + scale.toFixed(4) + ")";
-              dayContent.style.transformOrigin = "top left";
-              dayContent.style.width = (100 / scale).toFixed(4) + "%";
-              dayContent.style.height = (100 / scale).toFixed(4) + "%";
+              card.style.transform = "scale(" + scale.toFixed(4) + ")";
+              card.style.transformOrigin = "top left";
+              card.style.width = (100 / scale).toFixed(4) + "%";
+              card.style.height = (100 / scale).toFixed(4) + "%";
             }
           });
           if (content) {
