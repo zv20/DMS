@@ -1281,6 +1281,19 @@
     font-size: 18px;
 }
 
+.editor-dialog-field {
+    display: block;
+    margin-bottom: 14px;
+    color: #344054;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.editor-dialog-field span {
+    display: block;
+    margin-bottom: 6px;
+}
+
 .editor-dialog select {
     width: 100%;
 }

@@ -8,6 +8,7 @@ class StepTemplateBuilder {
         this.settings = this.getDefaultSettings();
         this.previewData = null;
         this.currentTab = 'builder';
+        this.currentTemplateName = '';
         this.selectedBlockId = 'header';
         this.dragState = null;
         this.resizeState = null;
@@ -55,6 +56,7 @@ class StepTemplateBuilder {
             dayNameFontFamily: 'Arial, sans-serif',
             mealFontSize: 28,
             mealFontFamily: 'Arial, sans-serif',
+            ingredientColor: '#555555',
             allergenColor: '#ff0000',
             allergenUnderline: false,
             allergenBold: true,
@@ -802,6 +804,14 @@ class StepTemplateBuilder {
         document.getElementById('floatDayTitleSize')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameSize', parseInt(e.target.value, 10) || 14, false));
         document.getElementById('floatDayTitleColor')?.addEventListener('input', e => this.updateDayHolderStyle('dayNameColor', e.target.value, false));
         document.getElementById('floatDayFill')?.addEventListener('input', e => this.updateDayHolderStyle('dayBackground', e.target.value, false));
+        document.getElementById('floatIngredientColor')?.addEventListener('input', e => {
+            this.settings.ingredientColor = e.target.value;
+            this.recordChange(false);
+        });
+        document.getElementById('floatAllergenColor')?.addEventListener('input', e => {
+            this.settings.allergenColor = e.target.value;
+            this.recordChange(false);
+        });
         document.getElementById('floatApplyDayStyle')?.addEventListener('click', () => this.applySelectedDayStyleToAllDays());
 
         document.getElementById('floatImageFit')?.addEventListener('change', e => this.updateSelectedStyle('fit', e.target.value));
@@ -1399,6 +1409,8 @@ class StepTemplateBuilder {
                     ${field(this.tr('ribbon_title_size', 'Title Size'), `<input type="number" id="floatDayTitleSize" min="6" max="72" value="${st.dayNameSize || this.settings.dayNameSize || 14}">`)}
                     ${colorField(this.tr('ribbon_title_color', 'Title Color'), 'floatDayTitleColor', st.dayNameColor || this.settings.dayNameColor || '#d2691e')}
                     ${colorField(this.tr('ribbon_fill', 'Fill'), 'floatDayFill', st.dayBackground && st.dayBackground !== 'transparent' ? st.dayBackground : '#ffffff')}
+                    ${colorField(this.tr('ribbon_ingredient_color', 'Ingredient Color'), 'floatIngredientColor', this.settings.ingredientColor || '#555555')}
+                    ${colorField(this.tr('ribbon_allergen_color', 'Allergen Color'), 'floatAllergenColor', this.settings.allergenColor || '#ff0000')}
                 </div>
                 <button type="button" class="floating-apply-btn" id="floatApplyDayStyle">${this.escapeHtml(this.tr('ribbon_apply_all_days', 'Apply to all days'))}</button>
             </div>
@@ -1491,7 +1503,7 @@ class StepTemplateBuilder {
     renderMealLine(meal) {
         let text = `${meal.number}. ${this.escapeHtml(meal.name)}`;
         if (this.settings.showPortions && meal.portion) text += ` - ${this.escapeHtml(meal.portion)}`;
-        const ingredients = this.settings.showIngredients && meal.ingredients?.length ? `<span class="meal-ingredients">${meal.ingredients.map(ing => this.formatIngredient(ing)).join(', ')}</span>` : '';
+        const ingredients = this.settings.showIngredients && meal.ingredients?.length ? `<span class="meal-ingredients" style="color:${this.settings.ingredientColor || '#555555'};">${meal.ingredients.map(ing => this.formatIngredient(ing)).join(', ')}</span>` : '';
         const calories = this.settings.showCalories && meal.calories ? `<span class="meal-calories">KKAL ${meal.calories}</span>` : '';
         return `<p class="meal-line"><strong>${text}</strong>${ingredients ? `<br>${ingredients}` : ''}${calories ? ` ${calories}` : ''}</p>`;
     }
@@ -1660,6 +1672,7 @@ class StepTemplateBuilder {
         if (!window.menuTemplates?.[name]) { await window.dmsAlert(window.t('alert_template_not_found') || 'Template not found', { title: window.t('dialog_error_title') }); return; }
         if (!await window.dmsConfirm((window.t('alert_template_load_confirm') || 'Load template "{name}"?').replace('{name}', name), { title: window.t('dialog_load_template_title') })) return;
         this.settings = { ...this.getDefaultSettings(), ...JSON.parse(JSON.stringify(window.menuTemplates[name])) };
+        this.currentTemplateName = name;
         this.ensureEditorBlocks();
         this.syncBlocksFromLegacy();
         await this.hydrateEditorImages();
@@ -1984,41 +1997,65 @@ class StepTemplateBuilder {
         };
     }
 
-    async askTemplateName() {
+    async askTemplateTarget() {
         return new Promise(resolve => {
+            const isBg = (window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg') === 'bg';
+            const existingNames = Object.keys(window.menuTemplates || {}).sort();
+            const defaultName = this.currentTemplateName || 'master';
+            const options = existingNames.map(name => `<option value="${this.escapeAttr(name)}" ${name === defaultName ? 'selected' : ''}>${this.escapeHtml(name)}</option>`).join('');
             const overlay = document.createElement('div');
             overlay.className = 'editor-dialog-overlay';
             overlay.innerHTML = `
                 <div class="editor-dialog">
-                    <h2>${window.t('alert_template_name') || 'Template name:'}</h2>
-                    <input id="template-name-input" type="text" maxlength="80" autocomplete="off">
+                    <h2>${isBg ? 'Запази шаблон' : 'Save template'}</h2>
+                    <label class="editor-dialog-field">
+                        <span>${isBg ? 'Запази като нов шаблон' : 'Save as new template'}</span>
+                        <input id="template-name-input" type="text" maxlength="80" autocomplete="off" value="${this.escapeAttr(defaultName && !existingNames.includes(defaultName) ? defaultName : '')}" placeholder="${isBg ? 'Име на шаблон' : 'Template name'}">
+                    </label>
+                    <label class="editor-dialog-field">
+                        <span>${isBg ? 'Или обнови съществуващ шаблон' : 'Or update existing template'}</span>
+                        <select id="template-existing-select">
+                            <option value="">${isBg ? 'Избери съществуващ шаблон' : 'Choose existing template'}</option>
+                            ${options}
+                        </select>
+                    </label>
                     <div class="dialog-actions">
-                        <button id="template-name-cancel" class="btn btn-secondary" type="button">Cancel</button>
-                        <button id="template-name-save" class="btn btn-primary" type="button">Save</button>
+                        <button id="template-name-cancel" class="btn btn-secondary" type="button">${isBg ? 'Отказ' : 'Cancel'}</button>
+                        <button id="template-name-save-new" class="btn btn-primary" type="button">${isBg ? 'Запази нов' : 'Save New'}</button>
+                        <button id="template-name-update" class="btn btn-primary" type="button">${isBg ? 'Обнови' : 'Update Existing'}</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(overlay);
             const input = overlay.querySelector('#template-name-input');
+            const select = overlay.querySelector('#template-existing-select');
             const close = value => {
                 overlay.remove();
                 resolve(value);
             };
-            overlay.querySelector('#template-name-cancel').addEventListener('click', () => close(''));
-            overlay.querySelector('#template-name-save').addEventListener('click', () => close(input.value.trim()));
-            overlay.addEventListener('click', e => { if (e.target === overlay) close(''); });
+            overlay.querySelector('#template-name-cancel').addEventListener('click', () => close(null));
+            overlay.querySelector('#template-name-save-new').addEventListener('click', () => close({ mode: 'new', name: input.value.trim() }));
+            overlay.querySelector('#template-name-update').addEventListener('click', () => close({ mode: 'update', name: select.value }));
+            select.addEventListener('change', () => { if (select.value) input.value = ''; });
+            input.addEventListener('input', () => { if (input.value.trim()) select.value = ''; });
+            overlay.addEventListener('click', e => { if (e.target === overlay) close(null); });
             input.addEventListener('keydown', e => {
-                if (e.key === 'Escape') close('');
-                if (e.key === 'Enter') close(input.value.trim());
+                if (e.key === 'Escape') close(null);
+                if (e.key === 'Enter') close({ mode: 'new', name: input.value.trim() });
             });
-            input.focus();
+            if (select.value) select.focus();
+            else input.focus();
         });
     }
 
     async saveTemplate() {
-        const name = await this.askTemplateName();
+        const target = await this.askTemplateTarget();
+        if (!target || !target.name) return;
+        const name = target.name.trim();
         if (!name) return;
         if (!window.menuTemplates) window.menuTemplates = {};
+        const isBg = (window.getCurrentLanguage ? window.getCurrentLanguage() : 'bg') === 'bg';
+        if (window.menuTemplates[name] && !await window.dmsConfirm(isBg ? `Да се обнови ли шаблон "${name}"?` : `Update existing template "${name}"?`, { title: isBg ? 'Обнови шаблон' : 'Update template' })) return;
         this.syncLegacySettings();
         const template = JSON.parse(JSON.stringify(this.settings));
         if (Array.isArray(template.editorBlocks)) {
@@ -2041,6 +2078,9 @@ class StepTemplateBuilder {
             await window.storageAdapter.save('templates', window.menuTemplates);
         }
         window.menuTemplates[name] = template;
+        this.currentTemplateName = name;
+        this.buildUI();
+        await this.loadTemplates();
         window.showToast?.(window.t('alert_template_saved') || 'Template saved.', { type: 'success' });
     }
 

@@ -180,18 +180,38 @@
     // ─── CANVAS RENDERER (shared by image + pdf) ─────────────────────────────────
     function fitPrintedDayBlocks(root) {
         root.querySelectorAll('[data-print-day-card]').forEach(card => {
-            card.style.transform = '';
-            card.style.transformOrigin = '';
-            card.style.width = '';
-            card.style.height = '';
+            const content = card.querySelector('[data-print-day-card-content]') || card;
+            content.style.transform = '';
+            content.style.transformOrigin = '';
+            content.style.width = '';
+            content.style.height = '';
+            card.style.setProperty('--print-meal-scale', '1');
+            card.style.setProperty('--print-ingredient-scale', '1');
+            card.style.setProperty('--print-meal-gap', '4px');
+            card.style.setProperty('--print-meal-line-height', '1.24');
+            card.style.setProperty('--print-title-gap', '4px');
+            const levels = [
+                { meal: 1, ingredient: 1, gap: 3, line: 1.16, titleGap: 3 },
+                { meal: 0.95, ingredient: 0.9, gap: 2, line: 1.1, titleGap: 2 },
+                { meal: 0.9, ingredient: 0.82, gap: 1, line: 1.05, titleGap: 1 },
+                { meal: 0.84, ingredient: 0.74, gap: 0, line: 1.0, titleGap: 0 }
+            ];
+            for (const level of levels) {
+                card.style.setProperty('--print-meal-scale', String(level.meal));
+                card.style.setProperty('--print-ingredient-scale', String(level.ingredient));
+                card.style.setProperty('--print-meal-gap', `${level.gap}px`);
+                card.style.setProperty('--print-meal-line-height', String(level.line));
+                card.style.setProperty('--print-title-gap', `${level.titleGap}px`);
+                if (content.scrollHeight <= card.clientHeight) return;
+            }
             const availableHeight = card.clientHeight;
-            const contentHeight = card.scrollHeight;
+            const contentHeight = content.scrollHeight;
             if (!availableHeight || contentHeight <= availableHeight) return;
             const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-            card.style.transform = `scale(${scale.toFixed(4)})`;
-            card.style.transformOrigin = 'top left';
-            card.style.width = `${(100 / scale).toFixed(4)}%`;
-            card.style.height = `${(100 / scale).toFixed(4)}%`;
+            content.style.transform = `scale(${scale.toFixed(4)})`;
+            content.style.transformOrigin = 'top left';
+            content.style.width = `${(100 / scale).toFixed(4)}%`;
+            content.style.height = `${(100 / scale).toFixed(4)}%`;
         });
     }
 
@@ -367,7 +387,7 @@
             'window.onload = function() {' +
             '  setTimeout(function() {' +
             '    var c = document.getElementById("menu-content");' +
-            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ card.style.transform=""; card.style.transformOrigin=""; card.style.width=""; card.style.height=""; var ah=card.clientHeight, ch=card.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); card.style.transform="scale("+s.toFixed(4)+")"; card.style.transformOrigin="top left"; card.style.width=(100/s).toFixed(4)+"%"; card.style.height=(100/s).toFixed(4)+"%"; } });' +
+            '    document.querySelectorAll("[data-print-day-card]").forEach(function(card){ var content=card.querySelector("[data-print-day-card-content]")||card; content.style.transform=""; content.style.transformOrigin=""; content.style.width=""; content.style.height=""; card.style.setProperty("--print-meal-scale","1"); card.style.setProperty("--print-ingredient-scale","1"); card.style.setProperty("--print-meal-gap","4px"); card.style.setProperty("--print-meal-line-height","1.24"); card.style.setProperty("--print-title-gap","4px"); var levels=[{meal:1,ingredient:1,gap:3,line:1.16,titleGap:3},{meal:.95,ingredient:.9,gap:2,line:1.1,titleGap:2},{meal:.9,ingredient:.82,gap:1,line:1.05,titleGap:1},{meal:.84,ingredient:.74,gap:0,line:1,titleGap:0}]; for(var i=0;i<levels.length;i++){var l=levels[i]; card.style.setProperty("--print-meal-scale",String(l.meal)); card.style.setProperty("--print-ingredient-scale",String(l.ingredient)); card.style.setProperty("--print-meal-gap",l.gap+"px"); card.style.setProperty("--print-meal-line-height",String(l.line)); card.style.setProperty("--print-title-gap",l.titleGap+"px"); if(content.scrollHeight<=card.clientHeight)return;} var ah=card.clientHeight, ch=content.scrollHeight; if(ah && ch>ah){ var s=Math.max(0.35, Math.min(1, ah/ch)); content.style.transform="scale("+s.toFixed(4)+")"; content.style.transformOrigin="top left"; content.style.width=(100/s).toFixed(4)+"%"; content.style.height=(100/s).toFixed(4)+"%"; } });' +
             '    if (c) { var ph = ' + usableH + ', ch = c.scrollHeight; if (ch > ph * 1.01) { var zf = ph / ch; if (zf < 1) c.style.zoom = Math.max(0.5, zf).toFixed(4); } }' +
             '    setTimeout(function() { window.print(); }, 600);' +
             '  }, 800);' +
@@ -414,20 +434,27 @@
         return new Promise((resolve) => {
             const savedTemplates = window.menuTemplates || {};
             const templateNames  = Object.keys(savedTemplates);
+            const bestTemplateForWeek = () => savedTemplates.master ? 'master' : 'default';
 
-            let templateOptions = `<option value="default">${isBg ? '🎨 Стандартен шаблон' : '🎨 Default Template'}</option>`;
-            templateNames.forEach(name => {
+            function buildTemplateOptions(selectedName) {
+                let html = `<option value="default"${selectedName === 'default' ? ' selected' : ''}>${isBg ? '🎨 Стандартен шаблон' : '🎨 Default Template'}</option>`;
+                templateNames.forEach(name => {
                 const t = savedTemplates[name];
                 let sl  = isBg ? 'Компактен' : 'Compact';
                 if (t.templateStyle === 'detailed')      sl = isBg ? 'Детайлен' : 'Detailed';
                 if (t.templateStyle === 'detailed-2col') sl = isBg ? 'Детайлен (2 колони)' : 'Detailed (2 columns)';
-                templateOptions += `<option value="${name}">📋 ${name} — ${sl}</option>`;
-            });
+                    const selected = name === selectedName ? ' selected' : '';
+                    html += `<option value="${name}"${selected}>📋 ${name} — ${sl}</option>`;
+                });
+                return html;
+            }
 
             const currentEntry    = weekEntries.find(e => e.isCurrent) || weekEntries[0];
+            const selectedTemplate = bestTemplateForWeek(currentEntry);
             const weekOptionsHTML = weekEntries.map(e =>
                 `<option value="${e.mondayStr}"${e.mondayStr === currentEntry.mondayStr ? ' selected' : ''}>${e.label}</option>`
             ).join('');
+            const templateOptions = buildTemplateOptions(selectedTemplate);
 
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
@@ -447,6 +474,7 @@
                 <div style="margin-bottom:26px;">
                     <label style="${ls}">🎨 ${isBg ? 'Шаблон' : 'Template'}</label>
                     <select id="pd-template" style="${ss}">${templateOptions}</select>
+                    <div id="pd-template-hint" style="font-size:0.78rem;color:#777;margin-top:6px;"></div>
                 </div>
                 <div style="margin-bottom:10px;display:flex;gap:8px;">
                     <button id="pd-print" style="flex:1;padding:11px 6px;background:#fd7e14;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">🖨️ ${isBg ? 'Печат' : 'Print'}</button>
@@ -459,14 +487,28 @@
 
             overlay.appendChild(dialog);
             document.body.appendChild(overlay);
+            const weekSelect = dialog.querySelector('#pd-week');
+            const templateSelect = dialog.querySelector('#pd-template');
+            const templateHint = dialog.querySelector('#pd-template-hint');
+
+            function syncSuggestedTemplate() {
+                const entry = weekEntries.find(e => e.mondayStr === weekSelect.value);
+                const templateName = entry ? bestTemplateForWeek(entry) : 'default';
+                templateSelect.value = templateName;
+                templateHint.textContent = templateName === 'master'
+                    ? (isBg ? 'Автоматично избран master шаблон' : 'Auto selected master template')
+                    : '';
+            }
+            syncSuggestedTemplate();
+            weekSelect.addEventListener('change', syncSuggestedTemplate);
 
             function close() {
                 if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
             }
 
             function pick(action) {
-                const mondayStr = dialog.querySelector('#pd-week').value;
-                const tplVal    = dialog.querySelector('#pd-template').value;
+                const mondayStr = weekSelect.value;
+                const tplVal    = templateSelect.value;
                 const entry     = weekEntries.find(e => e.mondayStr === mondayStr);
                 close();
                 resolve({
@@ -530,6 +572,7 @@
             dayNameFontFamily: 'Arial, sans-serif',
             mealFontSize:      28,
             mealFontFamily:    'Arial, sans-serif',
+            ingredientColor:    '#555555',
             allergenColor:     '#ff0000',
             allergenBold:      true,
             allergenUnderline: false,
@@ -578,7 +621,7 @@
                     meals.push({ number: idx + 1, name: recipe.name, portion: recipe.portionSize || '', calories: recipe.calories || null, ingredients: ingredientsData });
                 }
             });
-            days.push({ name: dayNames[i], meals, date: dateStr });
+            if (meals.length) days.push({ name: dayNames[i], meals, date: dateStr });
         }
         return { startDate, endDate, days };
     }
@@ -646,11 +689,12 @@
 
     function renderEditorMealLine(meal, s) {
         const ingHtml = renderIngHtml(meal, s);
-        let html = `<p style="margin:0 0 4px;line-height:1.24;"><strong>${meal.number}. ${meal.name}`;
+        let html = `<p data-print-meal-line style="margin:0 0 var(--print-meal-gap, 4px);line-height:var(--print-meal-line-height, 1.24);font-size:calc(1em * var(--print-meal-scale, 1));"><strong>${meal.number}. ${meal.name}`;
         if (s.showPortions && meal.portion) html += ` - ${meal.portion}`;
         html += `</strong>`;
-        if (ingHtml) html += `<br><span style="color:#555;font-style:italic;">${ingHtml}</span>`;
-        if (s.showCalories && meal.calories) html += ` <span style="color:#555;font-size:.92em;">ККАЛ ${meal.calories}</span>`;
+        const ingredientColor = s.ingredientColor || '#555555';
+        if (ingHtml) html += `<br><span data-print-ingredients style="color:${ingredientColor};font-style:italic;font-size:calc(1em * var(--print-ingredient-scale, 1));">${ingHtml}</span>`;
+        if (s.showCalories && meal.calories) html += ` <span data-print-calories style="color:${ingredientColor};font-size:calc(.92em * var(--print-ingredient-scale, 1));">ККАЛ ${meal.calories}</span>`;
         html += `</p>`;
         return html;
     }
@@ -686,9 +730,11 @@
         const bg = dayBackground && dayBackground !== 'transparent' ? `background:${dayBackground};` : '';
         const titleColor = st.dayNameColor || s.dayNameColor || '#d2691e';
         const titleWeight = st.dayNameWeight || s.dayNameWeight || 'bold';
-        return `<section data-print-day-card style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;">
-            <h3 style="margin:0 0 4px;line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
-            ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+        return `<section data-print-day-card style="${brd}${bg}padding:7px;border-radius:3px;height:100%;box-sizing:border-box;overflow:hidden;--print-meal-scale:1;--print-ingredient-scale:1;--print-meal-gap:4px;--print-meal-line-height:1.24;--print-title-gap:4px;">
+            <div data-print-day-card-content>
+                <h3 style="margin:0 0 var(--print-title-gap, 4px);line-height:1.1;font-family:${dyff};font-size:${dys};color:${titleColor};font-weight:${titleWeight};">${title}</h3>
+                ${day.meals.map(meal => renderEditorMealLine(meal, s)).join('')}
+            </div>
         </section>`;
     }
 

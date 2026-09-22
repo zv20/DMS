@@ -428,13 +428,8 @@ function assertPrintPayload(payload) {
     throw new Error('Invalid print HTML.');
   }
   if (typeof payload.title !== 'string' || payload.title.length > 160) throw new Error('Invalid print title.');
-  for (const key of ['usableH', 'usableW', 'safeBottom']) {
+  for (const key of ['usableH', 'usableW']) {
     if (!Number.isFinite(payload[key]) || payload[key] <= 0 || payload[key] > 5000) throw new Error('Invalid print dimensions.');
-  }
-  const margins = payload.margins;
-  if (!margins || typeof margins !== 'object' || Array.isArray(margins)) throw new Error('Invalid print margins.');
-  for (const key of ['top', 'right', 'bottom', 'left']) {
-    if (!Number.isFinite(margins[key]) || margins[key] < 0 || margins[key] > 100) throw new Error('Invalid print margins.');
   }
 }
 
@@ -740,18 +735,38 @@ ipcMain.handle('desktop:print-menu', async (event, payload) => {
         setTimeout(() => {
           const content = document.getElementById("menu-content");
           document.querySelectorAll("[data-print-day-card]").forEach((card) => {
-            card.style.transform = "";
-            card.style.transformOrigin = "";
-            card.style.width = "";
-            card.style.height = "";
+            const dayContent = card.querySelector("[data-print-day-card-content]") || card;
+            dayContent.style.transform = "";
+            dayContent.style.transformOrigin = "";
+            dayContent.style.width = "";
+            dayContent.style.height = "";
+            card.style.setProperty("--print-meal-scale", "1");
+            card.style.setProperty("--print-ingredient-scale", "1");
+            card.style.setProperty("--print-meal-gap", "4px");
+            card.style.setProperty("--print-meal-line-height", "1.24");
+            card.style.setProperty("--print-title-gap", "4px");
+            const levels = [
+              { meal: 1, ingredient: 1, gap: 3, line: 1.16, titleGap: 3 },
+              { meal: 0.95, ingredient: 0.9, gap: 2, line: 1.1, titleGap: 2 },
+              { meal: 0.9, ingredient: 0.82, gap: 1, line: 1.05, titleGap: 1 },
+              { meal: 0.84, ingredient: 0.74, gap: 0, line: 1, titleGap: 0 }
+            ];
+            for (const level of levels) {
+              card.style.setProperty("--print-meal-scale", String(level.meal));
+              card.style.setProperty("--print-ingredient-scale", String(level.ingredient));
+              card.style.setProperty("--print-meal-gap", level.gap + "px");
+              card.style.setProperty("--print-meal-line-height", String(level.line));
+              card.style.setProperty("--print-title-gap", level.titleGap + "px");
+              if (dayContent.scrollHeight <= card.clientHeight) return;
+            }
             const availableHeight = card.clientHeight;
-            const contentHeight = card.scrollHeight;
+            const contentHeight = dayContent.scrollHeight;
             if (availableHeight && contentHeight > availableHeight) {
               const scale = Math.max(0.35, Math.min(1, availableHeight / contentHeight));
-              card.style.transform = "scale(" + scale.toFixed(4) + ")";
-              card.style.transformOrigin = "top left";
-              card.style.width = (100 / scale).toFixed(4) + "%";
-              card.style.height = (100 / scale).toFixed(4) + "%";
+              dayContent.style.transform = "scale(" + scale.toFixed(4) + ")";
+              dayContent.style.transformOrigin = "top left";
+              dayContent.style.width = (100 / scale).toFixed(4) + "%";
+              dayContent.style.height = (100 / scale).toFixed(4) + "%";
             }
           });
           if (content) {
