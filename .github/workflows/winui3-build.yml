@@ -26,7 +26,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore DMS.sln
+        run: dotnet restore DMS/DMS.csproj
 
       - name: Build DMS
         run: dotnet build DMS/DMS.csproj --configuration Release --no-restore -p:Platform=x64
