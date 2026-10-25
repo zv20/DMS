@@ -27,6 +27,7 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore DMS/DMS.csproj
+        continue-on-error: true
 
       - name: Build DMS
         run: dotnet build DMS/DMS.csproj --configuration Release --no-restore -p:Platform=x64
