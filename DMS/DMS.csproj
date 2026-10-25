@@ -10,7 +10,6 @@
     <UseWinUI>true</UseWinUI>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <WindowsSdkPackageVersion>1.6.240829007</WindowsSdkPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
