@@ -14,7 +14,7 @@ window.DMSPresets = [
         mealNumbering: {style:'numbers',prefix:'',suffix:'.'},
         ingredients: {fontSize:'7.5pt',color:'#555555',fontStyle:'italic',lineHeight:'1.2'},
         separators: {headerEnabled:false,headerStyle:'solid',headerColor:'#ddd',headerWidth:1,footerEnabled:true,footerStyle:'solid',footerColor:'#eee',footerWidth:1},
-        footer: {text:'Prepared with care by KitchenPro',fontSize:'8pt',color:'#7f8c8d',textAlign:'center'},
+        footer: {text:'Prepared with care by DMS',fontSize:'8pt',color:'#7f8c8d',textAlign:'center'},
         background: {image:'',opacity:1,position:'center',overlay:'',overlayOpacity:0},
         branding: {logo:'',logoPosition:'top-right',logoWidth:80,logoHeight:80},
         pageBorder: {enabled:false,width:1,color:'#000000',style:'solid',radius:0},

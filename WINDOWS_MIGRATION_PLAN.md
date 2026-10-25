@@ -1,4 +1,6 @@
-# DMS Windows Desktop Migration Plan
+# DMS Windows Desktop Migration Plan (Electron — SUPERSEDED)
+
+> This plan targets **Electron**. The active target is now **native WinUI 3 (Windows App SDK + C# + XAML)** — see `WINDOWS_UI3_MIGRATION_PLAN.md`. Keep this file for historical reference only.
 
 ## Purpose
 

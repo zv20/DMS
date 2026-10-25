@@ -1,4 +1,4 @@
-# 🤝 KitchenPro DMS — Agent Handoff Document
+# 🤝 DMS — Agent Handoff Document
 
 > **Last Updated:** February 22, 2026  
 > **Repo:** [zv20/DMS](https://github.com/zv20/DMS)  
@@ -10,7 +10,7 @@
 
 ## 🧠 What This App Does
 
-**KitchenPro DMS** is a kitchen/restaurant menu planning tool built for a Bulgarian kitchen. It runs as a local HTML file (no server needed). Staff can:
+**DMS** is a kitchen/restaurant menu planning tool built for a Bulgarian kitchen. It runs as a local HTML file (no server needed). Staff can:
 
 - Manage **recipes** (name, category, ingredients, allergens, calories, portion size)
 - Manage **ingredients** and link them to allergens

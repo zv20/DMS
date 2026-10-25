@@ -1,0 +1,8 @@
+<Page x:Class="DMS.Views.TemplateBuilderPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="32">
+        <StackPanel Spacing="16">
+            <TextBlock Text="Template Builder" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="Template design and live preview will be implemented in Phase 5." TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

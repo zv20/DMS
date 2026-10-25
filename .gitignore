@@ -20,3 +20,47 @@ node_modules/
 dist/
 build/
 /data/images
+
+# .NET Build outputs
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.msix
+*.appx
+*.appxbundle
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NuGet
+packages/
+*.nupkg
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+
+# MSIX
+AppPackages/
+PackageStore/
+
+# Local settings
+appsettings.Development.json
+*.local.json
+
+# Logs
+*.log

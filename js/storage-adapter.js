@@ -9,7 +9,7 @@
 class StorageAdapter {
     constructor() {
         this.useFileSystem = 'showDirectoryPicker' in window;
-        this.dbName = 'KitchenProDB';
+        this.dbName = 'DMSDB';
         this.dbVersion = 2; // Bumped version to add templates store
         this.db = null;
         
@@ -105,7 +105,7 @@ class StorageAdapter {
     // LocalStorage methods for folder hints (persists in file:// protocol!)
     saveFolderHint(folderName) {
         try {
-            localStorage.setItem('kitchenpro_last_folder', folderName);
+            localStorage.setItem('dms_last_folder', folderName);
             console.log('💾 Saved folder hint to LocalStorage:', folderName);
         } catch (err) {
             console.error('Failed to save folder hint:', err);
@@ -114,7 +114,7 @@ class StorageAdapter {
     
     getFolderHint() {
         try {
-            return localStorage.getItem('kitchenpro_last_folder');
+            return localStorage.getItem('dms_last_folder');
         } catch (err) {
             return null;
         }
@@ -626,7 +626,7 @@ class StorageAdapter {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `kitchenpro-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `dms-backup-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
