@@ -29,18 +29,18 @@
                     <TextBlock Text="DMS" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Language Switcher + Sync Indicator -->
-                <!-- Caption buttons occupy the right edge when content extends
-                     into the title bar. Keep app controls outside that area. -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,140,0" VerticalAlignment="Center" Spacing="12">
-                    <TextBlock x:Uid="SyncIndicator" Text="✓ Saved" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" />
-                    <ComboBox x:Name="LanguageSelector" Width="100" SelectionChanged="LanguageSelector_SelectionChanged" VerticalAlignment="Center" IsHitTestVisibleInChrome="False">
-                        <ComboBoxItem Tag="bg" Content="🇧🇬" />
-                        <ComboBoxItem Tag="en" Content="🇺🇸" />
-                    </ComboBox>
-                </StackPanel>
             </Grid>
         </Border>
+
+        <!-- Client-area controls must not be children of AppTitleBar, because
+             SetTitleBar makes that entire element a non-client drag region. -->
+        <StackPanel Grid.Row="0" Panel.ZIndex="10" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,140,0" VerticalAlignment="Center" Spacing="12">
+            <TextBlock x:Uid="SyncIndicator" Text="✓ Saved" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" />
+            <ComboBox x:Name="LanguageSelector" Width="100" SelectionChanged="LanguageSelector_SelectionChanged" VerticalAlignment="Center">
+                <ComboBoxItem Tag="bg" Content="🇧🇬" />
+                <ComboBoxItem Tag="en" Content="🇺🇸" />
+            </ComboBox>
+        </StackPanel>
 
         <!-- Main Content -->
         <NavigationView
