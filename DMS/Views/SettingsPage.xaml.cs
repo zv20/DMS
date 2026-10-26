@@ -19,7 +19,6 @@ public sealed partial class SettingsPage : Page
     private readonly ISettingsService _settingsService;
     private readonly IDatabaseService _databaseService;
     private bool _suppressSettingChanges;
-    private bool _settingsDialogOpen;
 
     public SettingsPage()
     {
@@ -61,21 +60,13 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private async void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_suppressSettingChanges) return;
         if (LanguageComboBox.SelectedItem is ComboBoxItem item && item.Tag is string lang)
         {
             _settingsService.SetLanguage(lang);
             
-            var langDialog = new ContentDialog
-            {
-                Title = "Language Changed",
-                Content = "Please restart the application for the language change to take full effect.",
-                CloseButtonText = "OK",
-                XamlRoot = this.XamlRoot
-            };
-            await ShowSettingsDialogAsync(langDialog);
         }
     }
 
@@ -88,30 +79,6 @@ public sealed partial class SettingsPage : Page
             settings.Theme = theme;
             await _databaseService.SaveSettingsAsync(settings);
             
-            var themeDialog = new ContentDialog
-            {
-                Title = "Theme Changed",
-                Content = "Please restart the application for the theme change to take effect.",
-                CloseButtonText = "OK",
-                XamlRoot = this.XamlRoot
-            };
-            await ShowSettingsDialogAsync(themeDialog);
-        }
-    }
-
-    private async Task ShowSettingsDialogAsync(ContentDialog dialog)
-    {
-        // WinUI permits only one ContentDialog per XamlRoot. SelectionChanged
-        // can fire more than once while controls are being initialized.
-        if (_settingsDialogOpen) return;
-        _settingsDialogOpen = true;
-        try
-        {
-            await dialog.ShowAsync();
-        }
-        finally
-        {
-            _settingsDialogOpen = false;
         }
     }
 
