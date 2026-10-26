@@ -59,8 +59,8 @@
                 <NavigationViewItem x:Uid="NavSettings" Tag="settings" Content="⚙️ Settings" />
             </NavigationView.MenuItems>
 
-            <!-- Test content directly in NavigationView -->
-            <TextBlock Text="TEST: NavigationView Content Area Works!" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Blue" />
+            <!-- Frame for page navigation -->
+            <Frame x:Name="ContentFrame" Margin="0" />
         </NavigationView>
     </Grid>
 </Window>
