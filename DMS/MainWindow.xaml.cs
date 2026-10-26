@@ -15,10 +15,15 @@ public sealed partial class MainWindow : Window
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
+        
+        // Debug: Verify ContentFrame exists after InitializeComponent
+        System.Diagnostics.Debug.WriteLine($"[MainWindow] Constructor - ContentFrame: {ContentFrame?.GetType().Name}");
     }
 
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"[MainWindow] RootGrid_Loaded fired");
+        
         // Set default language from settings
         var settings = App.Services.GetRequiredService<ISettingsService>();
         var lang = settings.GetLanguage();
@@ -27,8 +32,14 @@ public sealed partial class MainWindow : Window
         // Navigate to Menu by default - ensure ContentFrame is ready
         if (ContentFrame != null)
         {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] ContentFrame ready, navigating to MenuPage");
             NavView.SelectedItem = NavView.MenuItems[0];
-            ContentFrame.Navigate(typeof(MenuPage));
+            var result = ContentFrame.Navigate(typeof(MenuPage));
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Navigate result: {result}");
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] ERROR: ContentFrame is NULL!");
         }
     }
 
@@ -50,7 +61,9 @@ public sealed partial class MainWindow : Window
 
         if (pageType != null && ContentFrame != null)
         {
-            ContentFrame.Navigate(pageType);
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] NavView_ItemInvoked - navigating to {pageType.Name}");
+            var result = ContentFrame.Navigate(pageType);
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Navigate result: {result}");
         }
     }
 
