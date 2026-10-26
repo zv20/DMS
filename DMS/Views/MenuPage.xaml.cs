@@ -1,11 +1,13 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.Extensions.DependencyInjection;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
 using Windows.UI;
+using Windows.UI.Text;
 
 namespace DMS.Views;
 
@@ -80,7 +82,7 @@ public sealed partial class MenuPage : Page
                 FontWeight = FontWeights.SemiBold, 
                 FontSize = 14, 
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = isToday ? new SolidColorBrush(Colors.White) : new SolidColorBrush(Colors.White)
+                Foreground = new SolidColorBrush(Colors.White)
             });
             headerPanel.Children.Add(new TextBlock 
             { 
@@ -350,7 +352,7 @@ public sealed partial class MenuPage : Page
             recipeList.SelectedItem = _allRecipes.FirstOrDefault(r => r.Id == currentRecipe.Id);
         }
 
-        panel.Children.Add(new TextBlock { Text = "Select a recipe:", Style="{StaticResource PageTitleTextStyle}", FontSize="14" });
+        panel.Children.Add(new TextBlock { Text = "Select a recipe:", FontSize = 14, FontWeight = FontWeights.SemiBold });
         panel.Children.Add(recipeList);
 
         dialog.Content = panel;
@@ -404,6 +406,6 @@ internal static class XamlReader
 {
     public static object Load(string xaml)
     {
-        return Windows.UI.Xaml.Markup.XamlReader.Load(xaml);
+        return Microsoft.UI.Xaml.Markup.XamlReader.Load(xaml);
     }
 }

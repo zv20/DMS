@@ -10,6 +10,7 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
     public static ILogger<App> Logger { get; private set; } = null!;
+    public static Window CurrentWindow { get; private set; } = null!;
 
     public App()
     {
@@ -25,6 +26,7 @@ public partial class App : Application
         Logger.LogInformation("DMS starting...");
 
         var window = new MainWindow();
+        CurrentWindow = window;
         window.Activate();
 
         Logger.LogInformation("MainWindow activated");

@@ -7,6 +7,7 @@ using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
 using Windows.UI;
+using Windows.UI.Text;
 
 namespace DMS.Views;
 
@@ -213,9 +214,9 @@ public sealed partial class TemplateBuilderPage : Page
         // Simple color picker dialog
         var colors = new[] { "#FFFFFF", "#F8F9FA", "#E8F5E9", "#E3F2FD", "#FFF3E0", "#FCE4EC", "#F3E5F5", "#E0F2F1" };
         var panel = new StackPanel { Spacing = 8 };
-        panel.Children.Add(new TextBlock { Text = "Choose a background color:", Style="{StaticResource PageTitleTextStyle}", FontSize="14" });
+        panel.Children.Add(new TextBlock { Text = "Choose a background color:", FontSize = 14, FontWeight = FontWeights.SemiBold });
         
-        var colorGrid = new WrapPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var colorGrid = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         foreach (var color in colors)
         {
             var btn = new Button

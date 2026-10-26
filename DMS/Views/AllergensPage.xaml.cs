@@ -7,6 +7,7 @@ using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
 using Windows.UI;
+using Windows.UI.Text;
 
 namespace DMS.Views;
 
@@ -127,10 +128,10 @@ public sealed partial class AllergensPage : Page
         panel.Children.Add(nameBox);
 
         // Color Picker
-        var colorLabel = new TextBlock { Text = "Color", Style="{StaticResource PageTitleTextStyle}", FontSize="14" };
+        var colorLabel = new TextBlock { Text = "Color", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(colorLabel);
         
-        var colorPanel = new StackPanel { Orientation = "Horizontal", Spacing = 12 };
+        var colorPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         var colorBox = new TextBox 
         { 
             Header = "Hex Color", 
@@ -167,9 +168,9 @@ public sealed partial class AllergensPage : Page
 
         panel.Children.Add(colorPanel);
 
-        // Quick color buttons
+        // Quick color buttons - use StackPanel with horizontal orientation instead of WrapPanel
         var quickColors = new[] { "#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#34495e" };
-        var quickColorsPanel = new WrapPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var quickColorsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         foreach (var color in quickColors)
         {
             var btn = new Button

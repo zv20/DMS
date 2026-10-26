@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
+using Windows.UI.Text;
 
 namespace DMS.Views;
 
@@ -124,7 +125,7 @@ public sealed partial class IngredientsPage : Page
         panel.Children.Add(nameBox);
 
         // Allergens
-        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", Style="{StaticResource PageTitleTextStyle}", FontSize="14" };
+        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
         var allergensBox = new TextBox { Text = string.Join(", ", ingredient.Allergens), PlaceholderText = "gluten, dairy, nuts" };
         panel.Children.Add(allergensBox);

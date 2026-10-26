@@ -97,7 +97,7 @@ public sealed partial class SettingsPage : Page
             SuggestedFileName = $"DMS_Export_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
         
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSaveFileAsync();
@@ -159,7 +159,7 @@ public sealed partial class SettingsPage : Page
             FileTypeFilter = { ".json" }
         };
 
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSingleFileAsync();
@@ -171,7 +171,7 @@ public sealed partial class SettingsPage : Page
 
     private async Task ImportDataAsync(Windows.Storage.StorageFile file)
     {
-        var dialog = new ContentDialog
+        var importDialog = new ContentDialog
         {
             Title = "Import Data",
             Content = "This will add imported data to your existing data. Duplicate names will be skipped. Continue?",
@@ -181,7 +181,7 @@ public sealed partial class SettingsPage : Page
             XamlRoot = this.XamlRoot
         };
 
-        var result = await dialog.ShowAsync();
+        var result = await importDialog.ShowAsync();
         if (result != ContentDialogResult.Primary) return;
 
         try
@@ -258,14 +258,14 @@ public sealed partial class SettingsPage : Page
         }
         catch (Exception ex)
         {
-            var dialog = new ContentDialog
+            var errorDialog = new ContentDialog
             {
                 Title = "Import Failed",
                 Content = $"Error: {ex.Message}",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await errorDialog.ShowAsync();
         }
     }
 
@@ -278,7 +278,7 @@ public sealed partial class SettingsPage : Page
             SuggestedFileName = $"DMS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
 
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSaveFileAsync();
@@ -301,14 +301,14 @@ public sealed partial class SettingsPage : Page
             }
             catch (Exception ex)
             {
-                var dialog = new ContentDialog
+                var errorDialog = new ContentDialog
                 {
                     Title = "Backup Failed",
                     Content = $"Error: {ex.Message}",
                     CloseButtonText = "OK",
                     XamlRoot = this.XamlRoot
                 };
-                await dialog.ShowAsync();
+                await errorDialog.ShowAsync();
             }
         }
     }
@@ -321,13 +321,13 @@ public sealed partial class SettingsPage : Page
             FileTypeFilter = { ".db" }
         };
 
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSingleFileAsync();
         if (file != null)
         {
-            var dialog = new ContentDialog
+            var restoreDialog = new ContentDialog
             {
                 Title = "Restore Database",
                 Content = "⚠️ This will REPLACE your current database. All current data will be lost. Are you sure?",
@@ -337,7 +337,7 @@ public sealed partial class SettingsPage : Page
                 XamlRoot = this.XamlRoot
             };
 
-            var result = await dialog.ShowAsync();
+            var result = await restoreDialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
                 try
@@ -360,14 +360,14 @@ public sealed partial class SettingsPage : Page
                 }
                 catch (Exception ex)
                 {
-                    var dialog = new ContentDialog
+                    var errorDialog = new ContentDialog
                     {
                         Title = "Restore Failed",
                         Content = $"Error: {ex.Message}",
                         CloseButtonText = "OK",
                         XamlRoot = this.XamlRoot
                     };
-                    await dialog.ShowAsync();
+                    await errorDialog.ShowAsync();
                 }
             }
         }
@@ -387,8 +387,7 @@ public sealed partial class SettingsPage : Page
     {
         try
         {
-            // Access the underlying connection to run VACUUM
-            var dialog = new ContentDialog
+            var vacDialog = new ContentDialog
             {
                 Title = "Vacuum Database",
                 Content = "This will optimize the database file size. Continue?",
@@ -397,30 +396,30 @@ public sealed partial class SettingsPage : Page
                 XamlRoot = this.XamlRoot
             };
 
-            var result = await dialog.ShowAsync();
+            var result = await vacDialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
                 // Would need to access the SQLite connection directly
-                var dialog2 = new ContentDialog
+                var doneDialog = new ContentDialog
                 {
                     Title = "Vacuum Complete",
                     Content = "Database optimized successfully.",
                     CloseButtonText = "OK",
                     XamlRoot = this.XamlRoot
                 };
-                await dialog2.ShowAsync();
+                await doneDialog.ShowAsync();
             }
         }
         catch (Exception ex)
         {
-            var dialog = new ContentDialog
+            var errorDialog = new ContentDialog
             {
                 Title = "Error",
                 Content = ex.Message,
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await errorDialog.ShowAsync();
         }
     }
 

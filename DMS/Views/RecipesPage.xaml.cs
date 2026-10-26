@@ -151,13 +151,13 @@ public sealed partial class RecipesPage : Page
         panel.Children.Add(instructionsBox);
 
         // Ingredients
-        var ingredientsLabel = new TextBlock { Text = "Ingredients (one per line)", Style="{StaticResource PageTitleTextStyle}", FontSize="14" };
+        var ingredientsLabel = new TextBlock { Text = "Ingredients (one per line)", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
         var ingredientsBox = new TextBox { Text = string.Join("\n", recipe.Ingredients), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100, PlaceholderText = "Tomato\nOnion\nGarlic" };
         panel.Children.Add(ingredientsBox);
 
         // Allergens
-        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", Style="{StaticResource PageTitleTextStyle}", FontSize="14" };
+        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
         var allergensBox = new TextBox { Text = string.Join(", ", recipe.Allergens), PlaceholderText = "gluten, dairy, nuts" };
         panel.Children.Add(allergensBox);
