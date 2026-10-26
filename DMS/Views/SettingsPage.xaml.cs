@@ -52,14 +52,14 @@ public sealed partial class SettingsPage : Page
         {
             _settingsService.SetLanguage(lang);
             
-            var dialog = new ContentDialog
+            var langDialog = new ContentDialog
             {
                 Title = "Language Changed",
                 Content = "Please restart the application for the language change to take full effect.",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await langDialog.ShowAsync();
         }
     }
 
@@ -71,7 +71,7 @@ public sealed partial class SettingsPage : Page
             settings.Theme = theme;
             await _databaseService.SaveSettingsAsync(settings);
             
-            var dialog = new ContentDialog
+            var themeDialog = new ContentDialog
             {
                 Title = "Theme Changed",
                 Content = "Please restart the application for the theme change to take effect.",
@@ -129,25 +129,25 @@ public sealed partial class SettingsPage : Page
             var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions { WriteIndented = true });
             await Windows.Storage.FileIO.WriteTextAsync(file, json);
 
-            var dialog = new ContentDialog
+            var exportSuccessDialog = new ContentDialog
             {
                 Title = "Export Complete",
                 Content = $"Exported {recipes.Count} recipes, {ingredients.Count} ingredients, {allergens.Count} allergens, {templates.Count} templates.",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await exportSuccessDialog.ShowAsync();
         }
         catch (Exception ex)
         {
-            var dialog = new ContentDialog
+            var exportErrorDialog = new ContentDialog
             {
                 Title = "Export Failed",
                 Content = $"Error: {ex.Message}",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await exportErrorDialog.ShowAsync();
         }
     }
 
@@ -247,25 +247,25 @@ public sealed partial class SettingsPage : Page
                 }
             }
 
-            var successDialog = new ContentDialog
+            var importSuccessDialog = new ContentDialog
             {
                 Title = "Import Complete",
                 Content = $"Imported: {importedRecipes} recipes, {importedIngredients} ingredients, {importedAllergens} allergens, {importedTemplates} templates.",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await successDialog.ShowAsync();
+            await importSuccessDialog.ShowAsync();
         }
         catch (Exception ex)
         {
-            var errorDialog = new ContentDialog
+            var importErrorDialog = new ContentDialog
             {
                 Title = "Import Failed",
                 Content = $"Error: {ex.Message}",
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await errorDialog.ShowAsync();
+            await importErrorDialog.ShowAsync();
         }
     }
 
@@ -290,25 +290,25 @@ public sealed partial class SettingsPage : Page
                 var sourceFile = await Windows.Storage.StorageFile.GetFileFromPathAsync(dbPath);
                 await sourceFile.CopyAndReplaceAsync(file);
 
-                var dialog = new ContentDialog
+                var backupDialog = new ContentDialog
                 {
                     Title = "Backup Complete",
                     Content = "Database backup created successfully.",
                     CloseButtonText = "OK",
                     XamlRoot = this.XamlRoot
                 };
-                await dialog.ShowAsync();
+                await backupDialog.ShowAsync();
             }
             catch (Exception ex)
             {
-                var errorDialog = new ContentDialog
+                var backupErrorDialog = new ContentDialog
                 {
                     Title = "Backup Failed",
                     Content = $"Error: {ex.Message}",
                     CloseButtonText = "OK",
                     XamlRoot = this.XamlRoot
                 };
-                await errorDialog.ShowAsync();
+                await backupErrorDialog.ShowAsync();
             }
         }
     }
@@ -327,7 +327,7 @@ public sealed partial class SettingsPage : Page
         var file = await picker.PickSingleFileAsync();
         if (file != null)
         {
-            var restoreDialog = new ContentDialog
+            var restoreConfirmDialog = new ContentDialog
             {
                 Title = "Restore Database",
                 Content = "⚠️ This will REPLACE your current database. All current data will be lost. Are you sure?",
@@ -337,7 +337,7 @@ public sealed partial class SettingsPage : Page
                 XamlRoot = this.XamlRoot
             };
 
-            var result = await restoreDialog.ShowAsync();
+            var result = await restoreConfirmDialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
                 try
@@ -349,25 +349,25 @@ public sealed partial class SettingsPage : Page
                     var dbService = (DatabaseService)_databaseService;
                     dbService.Dispose();
                     
-                    var successDialog = new ContentDialog
+                    var restoreSuccessDialog = new ContentDialog
                     {
                         Title = "Restore Complete",
                         Content = "Database restored. Please restart the application.",
                         CloseButtonText = "OK",
                         XamlRoot = this.XamlRoot
                     };
-                    await successDialog.ShowAsync();
+                    await restoreSuccessDialog.ShowAsync();
                 }
                 catch (Exception ex)
                 {
-                    var errorDialog = new ContentDialog
+                    var restoreErrorDialog = new ContentDialog
                     {
                         Title = "Restore Failed",
                         Content = $"Error: {ex.Message}",
                         CloseButtonText = "OK",
                         XamlRoot = this.XamlRoot
                     };
-                    await errorDialog.ShowAsync();
+                    await restoreErrorDialog.ShowAsync();
                 }
             }
         }
@@ -425,14 +425,14 @@ public sealed partial class SettingsPage : Page
 
     private async void ReindexButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var reindexDialog = new ContentDialog
         {
             Title = "Reindex Complete",
             Content = "Database indexes rebuilt.",
             CloseButtonText = "OK",
             XamlRoot = this.XamlRoot
         };
-        await dialog.ShowAsync();
+        await reindexDialog.ShowAsync();
     }
 
     private static string FormatFileSize(long bytes)

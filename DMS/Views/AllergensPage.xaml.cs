@@ -1,4 +1,3 @@
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -7,7 +6,7 @@ using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
 using Windows.UI;
-using Windows.UI.Text;
+using Microsoft.UI.Text;
 
 namespace DMS.Views;
 
@@ -273,7 +272,7 @@ public class AllergenItemViewModel
         };
     }
 
-    private static Color ParseColor(string hex)
+    private Color ParseColor(string hex)
     {
         hex = hex.TrimStart('#');
         var r = Convert.ToByte(hex.Substring(0, 2), 16);

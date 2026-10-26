@@ -6,8 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
-using Windows.UI;
-using Windows.UI.Text;
+using Microsoft.UI.Text;
 
 namespace DMS.Views;
 
