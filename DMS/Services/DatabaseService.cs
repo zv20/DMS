@@ -181,20 +181,25 @@ public class DatabaseService : IDatabaseService, IDisposable
     private async Task SeedDefaultAllergensAsync()
     {
         if (_connection == null) return;
-        var defaults = new (string Name, string Icon)[]
+        var defaults = new (string Name, string Icon, string Color)[]
         {
-            ("глутен", "🌾"), ("ракообразни", "🦐"), ("яйца", "🥚"), ("риба", "🐟"),
-            ("фъстъци", "🥜"), ("соя", "🫛"), ("мляко", "🥛"), ("ядки", "🌰"),
-            ("целина", "🥬"), ("горчица", "🟡"), ("сусам", "🌾"),
-            ("серен диоксид и сулфити", "⚗️"), ("лупина", "🌸"), ("мекотели", "🐚")
+            ("глутен", "🌾", "#D97706"), ("ракообразни", "🦐", "#DC2626"),
+            ("яйца", "🥚", "#EAB308"), ("риба", "🐟", "#0284C7"),
+            ("фъстъци", "🥜", "#A16207"), ("соя", "🫛", "#65A30D"),
+            ("мляко", "🥛", "#64748B"), ("ядки", "🌰", "#92400E"),
+            ("целина", "🥬", "#16A34A"), ("горчица", "🟡", "#CA8A04"),
+            ("сусам", "🌾", "#B45309"), ("серен диоксид и сулфити", "⚗️", "#7C3AED"),
+            ("лупина", "🌸", "#DB2777"), ("мекотели", "🐚", "#0F766E")
         };
         foreach (var allergen in defaults)
         {
             using var command = _connection.CreateCommand();
-            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, icon) VALUES (@name, @icon);
-                                    UPDATE allergens SET icon=@icon WHERE name=@name AND (icon IS NULL OR icon='⚠️');";
+            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, color, icon) VALUES (@name, @color, @icon);
+                                    UPDATE allergens SET color=@color, icon=@icon WHERE name=@name
+                                      AND (color='#3498db' OR color IS NULL OR icon IS NULL OR icon='⚠️');";
             command.Parameters.AddWithValue("@name", allergen.Name);
             command.Parameters.AddWithValue("@icon", allergen.Icon);
+            command.Parameters.AddWithValue("@color", allergen.Color);
             await command.ExecuteNonQueryAsync();
         }
     }
