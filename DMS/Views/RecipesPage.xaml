@@ -1,8 +1,8 @@
 <Page x:Class="DMS.Views.RecipesPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer Padding="32">
         <StackPanel Spacing="16">
-            <TextBlock Text="Recipes" Style="{StaticResource PageTitleTextStyle}" />
-            <TextBlock Text="Recipe CRUD will be implemented in Phase 3." TextWrapping="Wrap" />
+            <TextBlock Text="Recipes" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+            <TextBlock Text="Recipe CRUD will be implemented in Phase 3." TextWrapping="Wrap" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -1,8 +1,8 @@
 <Page x:Class="DMS.Views.SettingsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer Padding="32">
         <StackPanel Spacing="16">
-            <TextBlock Text="Settings" Style="{StaticResource PageTitleTextStyle}" />
-            <TextBlock Text="Language, data management, export, and import will be implemented in Phase 4." TextWrapping="Wrap" />
+            <TextBlock Text="Settings" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+            <TextBlock Text="Language, data management, export, and import will be implemented in Phase 4." TextWrapping="Wrap" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
         </StackPanel>
     </ScrollViewer>
 </Page>
