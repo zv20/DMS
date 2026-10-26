@@ -38,7 +38,6 @@
                                     <TextBlock Text="{x:Bind Icon}" FontSize="20" VerticalAlignment="Center" />
                                     <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="18" />
                                 </StackPanel>
-                                <TextBlock Text="{x:Bind Color}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" FontFamily="Consolas" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="2" VerticalAlignment="Center">
                                 <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditAllergenButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" />
