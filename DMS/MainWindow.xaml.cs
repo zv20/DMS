@@ -16,7 +16,6 @@ public sealed partial class MainWindow : Window
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
 
-        Loaded += MainWindow_Loaded;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
