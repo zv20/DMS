@@ -59,7 +59,9 @@
                 <NavigationViewItem x:Uid="NavSettings" Tag="settings" Content="⚙️ Settings" />
             </NavigationView.MenuItems>
 
-            <Frame x:Name="ContentFrame" Margin="0" />
+            <Frame x:Name="ContentFrame" Margin="0">
+                <TextBlock Text="TEST CONTENT - Frame Works!" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Red" />
+            </Frame>
         </NavigationView>
     </Grid>
 </Window>
