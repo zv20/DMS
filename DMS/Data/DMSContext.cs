@@ -11,7 +11,7 @@ public class Item
 
 public class DMSContext : DbContext
 {
-    public DMSContext(DbContextOptions<Item> options)
+    public DMSContext(DbContextOptions options)
         : base(options)
     {
     }
