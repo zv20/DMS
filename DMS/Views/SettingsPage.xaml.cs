@@ -18,6 +18,8 @@ public sealed partial class SettingsPage : Page
 
     private readonly ISettingsService _settingsService;
     private readonly IDatabaseService _databaseService;
+    private bool _suppressSettingChanges;
+    private bool _settingsDialogOpen;
 
     public SettingsPage()
     {
@@ -34,25 +36,34 @@ public sealed partial class SettingsPage : Page
 
     private async Task LoadSettingsAsync()
     {
-        // Language
-        var language = _settingsService.GetLanguage();
-        LanguageComboBox.SelectedItem = LanguageComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == language) ?? LanguageComboBox.Items[0];
+        _suppressSettingChanges = true;
+        try
+        {
+            // Language
+            var language = _settingsService.GetLanguage();
+            LanguageComboBox.SelectedItem = LanguageComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == language) ?? LanguageComboBox.Items[0];
 
-        // Theme (stored in settings)
-        var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-        ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[2];
+            // Theme (stored in settings)
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[2];
 
-        // Data folder
-        var dbPath = _databaseService.GetDatabasePath();
-        DataFolderText.Text = dbPath;
+            // Data folder
+            var dbPath = _databaseService.GetDatabasePath();
+            DataFolderText.Text = dbPath;
 
-        // Database info
-        var dbInfo = new FileInfo(dbPath);
-        DatabaseInfoText.Text = $"Location: {dbPath}\nSize: {FormatFileSize(dbInfo.Length)}\nLast Modified: {dbInfo.LastWriteTime:yyyy-MM-dd HH:mm}";
+            // Database info
+            var dbInfo = new FileInfo(dbPath);
+            DatabaseInfoText.Text = $"Location: {dbPath}\nSize: {FormatFileSize(dbInfo.Length)}\nLast Modified: {dbInfo.LastWriteTime:yyyy-MM-dd HH:mm}";
+        }
+        finally
+        {
+            _suppressSettingChanges = false;
+        }
     }
 
     private async void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_suppressSettingChanges) return;
         if (LanguageComboBox.SelectedItem is ComboBoxItem item && item.Tag is string lang)
         {
             _settingsService.SetLanguage(lang);
@@ -64,12 +75,13 @@ public sealed partial class SettingsPage : Page
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await langDialog.ShowAsync();
+            await ShowSettingsDialogAsync(langDialog);
         }
     }
 
     private async void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_suppressSettingChanges) return;
         if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string theme)
         {
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
@@ -83,7 +95,23 @@ public sealed partial class SettingsPage : Page
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await themeDialog.ShowAsync();
+            await ShowSettingsDialogAsync(themeDialog);
+        }
+    }
+
+    private async Task ShowSettingsDialogAsync(ContentDialog dialog)
+    {
+        // WinUI permits only one ContentDialog per XamlRoot. SelectionChanged
+        // can fire more than once while controls are being initialized.
+        if (_settingsDialogOpen) return;
+        _settingsDialogOpen = true;
+        try
+        {
+            await dialog.ShowAsync();
+        }
+        finally
+        {
+            _settingsDialogOpen = false;
         }
     }
 

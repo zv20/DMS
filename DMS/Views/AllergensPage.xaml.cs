@@ -110,7 +110,7 @@ public sealed partial class AllergensPage : Page
     private void ShowAllergenDialog(AllergenItemViewModel? existingAllergen)
     {
         var isEditing = existingAllergen != null;
-        var allergen = isEditing ? existingAllergen.ToAllergen() : new Allergen();
+        var allergen = existingAllergen?.ToAllergen() ?? new Allergen();
 
         var dialog = new ContentDialog
         {

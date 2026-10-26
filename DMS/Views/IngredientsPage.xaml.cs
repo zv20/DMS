@@ -107,7 +107,7 @@ public sealed partial class IngredientsPage : Page
     private void ShowIngredientDialog(IngredientItemViewModel? existingIngredient)
     {
         var isEditing = existingIngredient != null;
-        var ingredient = isEditing ? existingIngredient.ToIngredient() : new Ingredient();
+        var ingredient = existingIngredient?.ToIngredient() ?? new Ingredient();
 
         var dialog = new ContentDialog
         {

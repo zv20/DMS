@@ -124,7 +124,7 @@ public sealed partial class RecipesPage : Page
     private void ShowRecipeDialog(RecipeItemViewModel? existingRecipe)
     {
         var isEditing = existingRecipe != null;
-        var recipe = isEditing ? existingRecipe.ToRecipe() : new Recipe();
+        var recipe = existingRecipe?.ToRecipe() ?? new Recipe();
 
         var dialog = new ContentDialog
         {
