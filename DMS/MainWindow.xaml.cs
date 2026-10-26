@@ -15,12 +15,9 @@ public sealed partial class MainWindow : Window
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
-        
-        // Navigate to the default page after the window is fully loaded
-        this.Loaded += MainWindow_Loaded;
     }
 
-    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         // Set default language from settings
         var settings = App.Services.GetRequiredService<ISettingsService>();
