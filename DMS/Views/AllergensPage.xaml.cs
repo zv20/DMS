@@ -88,7 +88,7 @@ public sealed partial class AllergensPage : Page
     {
         if (sender is Button btn && btn.Tag is int id)
         {
-            var dialog = new ContentDialog
+            var deleteDialog = new ContentDialog
             {
                 Title = "Delete Allergen",
                 Content = "Are you sure you want to delete this allergen?",
@@ -98,7 +98,7 @@ public sealed partial class AllergensPage : Page
                 XamlRoot = this.XamlRoot
             };
 
-            var result = await dialog.ShowAsync();
+            var result = await deleteDialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
                 await _database.DeleteAllergenAsync(id);
@@ -145,7 +145,7 @@ public sealed partial class AllergensPage : Page
         { 
             Width = 40, 
             Height = 40, 
-            Background = new SolidColorBrush(ParseColor(allergen.Color)), 
+            Background = new SolidColorBrush(ParseColorHex(allergen.Color)), 
             CornerRadius = new CornerRadius(4),
             BorderBrush = new SolidColorBrush(Colors.Gray),
             BorderThickness = new Thickness(1),
@@ -160,7 +160,7 @@ public sealed partial class AllergensPage : Page
             {
                 try 
                 {
-                    colorPreview.Background = new SolidColorBrush(ParseColor(colorBox.Text));
+                    colorPreview.Background = new SolidColorBrush(ParseColorHex(colorBox.Text));
                 }
                 catch { }
             }
@@ -177,7 +177,7 @@ public sealed partial class AllergensPage : Page
             {
                 Width = 32,
                 Height = 32,
-                Background = new SolidColorBrush(ParseColor(color)),
+                Background = new SolidColorBrush(ParseColorHex(color)),
                 CornerRadius = new CornerRadius(4),
                 Tag = color,
                 Style = (Style)Application.Current.Resources["ButtonRevealStyle"]
@@ -187,7 +187,7 @@ public sealed partial class AllergensPage : Page
                 if (s is Button b && b.Tag is string c)
                 {
                     colorBox.Text = c;
-                    colorPreview.Background = new SolidColorBrush(ParseColor(c));
+                    colorPreview.Background = new SolidColorBrush(ParseColorHex(c));
                 }
             };
             quickColorsPanel.Children.Add(btn);
@@ -236,7 +236,7 @@ public sealed partial class AllergensPage : Page
         _ = dialog.ShowAsync();
     }
 
-    private static Color ParseColor(string hex)
+    private static Color ParseColorHex(string hex)
     {
         hex = hex.TrimStart('#');
         var r = Convert.ToByte(hex.Substring(0, 2), 16);
@@ -252,7 +252,7 @@ public class AllergenItemViewModel
     public string Name { get; set; } = "";
     public string Color { get; set; } = "#3498db";
 
-    public SolidColorBrush ColorBrush => new SolidColorBrush(ParseColor(Color));
+    public SolidColorBrush ColorBrush => new SolidColorBrush(ParseColorHex(Color));
 
     public AllergenItemViewModel() { }
 
@@ -273,7 +273,7 @@ public class AllergenItemViewModel
         };
     }
 
-    private static Color ParseColor(string hex)
+    private static Color ParseColorHex(string hex)
     {
         hex = hex.TrimStart('#');
         var r = Convert.ToByte(hex.Substring(0, 2), 16);
