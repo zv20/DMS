@@ -169,6 +169,26 @@ public sealed partial class RecipesPage : Page
 
         // Ingredients: searchable dropdown plus removable selected list.
         var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
+        var ingredientByName = availableIngredients.ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
+        var inheritedAllergens = selectedIngredients
+            .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var manualAllergens = recipe.Allergens
+            .Where(name => !inheritedAllergens.Contains(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedAllergens = new ObservableCollection<string>();
+        void RebuildAllergensFromIngredients()
+        {
+            selectedAllergens.Clear();
+            foreach (var allergen in selectedIngredients
+                .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
+                .Concat(manualAllergens)
+                .Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                selectedAllergens.Add(allergen);
+            }
+        }
+        RebuildAllergensFromIngredients();
         var ingredientsLabel = new TextBlock { Text = "Ingredients", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
         var ingredientSearch = new AutoSuggestBox { PlaceholderText = "Search ingredients...", QueryIcon = new SymbolIcon(Symbol.Find) };
@@ -183,18 +203,25 @@ public sealed partial class RecipesPage : Page
         };
         ingredientSearch.SuggestionChosen += (sender, args) =>
         {
-            if (args.SelectedItem is string name && !selectedIngredients.Contains(name)) selectedIngredients.Add(name);
+            if (args.SelectedItem is string name && !selectedIngredients.Contains(name))
+            {
+                selectedIngredients.Add(name);
+                RebuildAllergensFromIngredients();
+            }
             ingredientSearch.Text = string.Empty;
         };
         ingredientList.ItemClick += (sender, args) =>
         {
-            if (args.ClickedItem is string name) selectedIngredients.Remove(name);
+            if (args.ClickedItem is string name)
+            {
+                selectedIngredients.Remove(name);
+                RebuildAllergensFromIngredients();
+            }
         };
         panel.Children.Add(ingredientSearch);
         panel.Children.Add(ingredientList);
 
         // Allergens: searchable dropdown plus removable selected list.
-        var selectedAllergens = new ObservableCollection<string>(recipe.Allergens);
         var allergensLabel = new TextBlock { Text = "Allergens", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
         var allergenSearch = new AutoSuggestBox { PlaceholderText = "Search allergens...", QueryIcon = new SymbolIcon(Symbol.Find) };
@@ -209,12 +236,20 @@ public sealed partial class RecipesPage : Page
         };
         allergenSearch.SuggestionChosen += (sender, args) =>
         {
-            if (args.SelectedItem is string name && !selectedAllergens.Contains(name)) selectedAllergens.Add(name);
+            if (args.SelectedItem is string name)
+            {
+                manualAllergens.Add(name);
+                RebuildAllergensFromIngredients();
+            }
             allergenSearch.Text = string.Empty;
         };
         allergenList.ItemClick += (sender, args) =>
         {
-            if (args.ClickedItem is string name) selectedAllergens.Remove(name);
+            if (args.ClickedItem is string name)
+            {
+                manualAllergens.Remove(name);
+                RebuildAllergensFromIngredients();
+            }
         };
         panel.Children.Add(allergenSearch);
         panel.Children.Add(allergenList);
