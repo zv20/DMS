@@ -125,6 +125,7 @@ public class DatabaseService : IDatabaseService, IDisposable
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 color TEXT NOT NULL DEFAULT '#3498db',
+                icon TEXT NOT NULL DEFAULT '⚠️',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
             @"CREATE TABLE IF NOT EXISTS menu (
@@ -161,9 +162,41 @@ public class DatabaseService : IDatabaseService, IDisposable
             await cmd.ExecuteNonQueryAsync();
         }
 
+        await EnsureAllergenIconColumnAsync();
         // Seed default settings
         await SeedDefaultsAsync();
+        await SeedDefaultAllergensAsync();
         await RecordSchemaVersionAsync();
+    }
+
+    private async Task EnsureAllergenIconColumnAsync()
+    {
+        if (_connection == null) return;
+        using var command = _connection.CreateCommand();
+        command.CommandText = "ALTER TABLE allergens ADD COLUMN icon TEXT NOT NULL DEFAULT '⚠️'";
+        try { await command.ExecuteNonQueryAsync(); }
+        catch (SqliteException ex) when (ex.Message.Contains("duplicate column", StringComparison.OrdinalIgnoreCase)) { }
+    }
+
+    private async Task SeedDefaultAllergensAsync()
+    {
+        if (_connection == null) return;
+        var defaults = new (string Name, string Icon)[]
+        {
+            ("глутен", "🌾"), ("ракообразни", "🦐"), ("яйца", "🥚"), ("риба", "🐟"),
+            ("фъстъци", "🥜"), ("соя", "🫛"), ("мляко", "🥛"), ("ядки", "🌰"),
+            ("целина", "🥬"), ("горчица", "🟡"), ("сусам", "🌾"),
+            ("серен диоксид и сулфити", "⚗️"), ("лупина", "🌸"), ("мекотели", "🐚")
+        };
+        foreach (var allergen in defaults)
+        {
+            using var command = _connection.CreateCommand();
+            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, icon) VALUES (@name, @icon);
+                                    UPDATE allergens SET icon=@icon WHERE name=@name AND (icon IS NULL OR icon='⚠️');";
+            command.Parameters.AddWithValue("@name", allergen.Name);
+            command.Parameters.AddWithValue("@icon", allergen.Icon);
+            await command.ExecuteNonQueryAsync();
+        }
     }
 
     private async Task RecordSchemaVersionAsync()
@@ -373,7 +406,7 @@ public class DatabaseService : IDatabaseService, IDisposable
     {
         await InitializeAsync();
         using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM allergens WHERE id = @id";
+        cmd.CommandText = "SELECT id, name, color, icon FROM allergens WHERE id = @id";
         cmd.Parameters.AddWithValue("@id", id);
         using var reader = await cmd.ExecuteReaderAsync();
         if (await reader.ReadAsync()) return ReadAllergen(reader);
@@ -385,7 +418,7 @@ public class DatabaseService : IDatabaseService, IDisposable
         await InitializeAsync();
         var list = new List<Allergen>();
         using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM allergens ORDER BY name";
+        cmd.CommandText = "SELECT id, name, color, icon FROM allergens ORDER BY name";
         using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync()) list.Add(ReadAllergen(reader));
         return list;
@@ -399,18 +432,19 @@ public class DatabaseService : IDatabaseService, IDisposable
 
         if (allergen.Id == 0)
         {
-            cmd.CommandText = @"INSERT INTO allergens (name, color, created_at)
-                               VALUES (@name, @color, @now);
+            cmd.CommandText = @"INSERT INTO allergens (name, color, icon, created_at)
+                               VALUES (@name, @color, @icon, @now);
                                SELECT last_insert_rowid();";
         }
         else
         {
-            cmd.CommandText = "UPDATE allergens SET name=@name, color=@color WHERE id=@id";
+            cmd.CommandText = "UPDATE allergens SET name=@name, color=@color, icon=@icon WHERE id=@id";
             cmd.Parameters.AddWithValue("@id", allergen.Id);
         }
 
         cmd.Parameters.AddWithValue("@name", allergen.Name);
         cmd.Parameters.AddWithValue("@color", allergen.Color);
+        cmd.Parameters.AddWithValue("@icon", allergen.Icon);
         cmd.Parameters.AddWithValue("@now", now);
 
         var result = await cmd.ExecuteScalarAsync();
@@ -435,7 +469,8 @@ public class DatabaseService : IDatabaseService, IDisposable
         {
             Id = reader.GetInt32(0),
             Name = reader.GetString(1),
-            Color = reader.GetString(2)
+            Color = reader.GetString(2),
+            Icon = reader.IsDBNull(3) ? "⚠️" : reader.GetString(3)
         };
     }
 

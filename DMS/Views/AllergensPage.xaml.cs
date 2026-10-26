@@ -251,6 +251,7 @@ public class AllergenItemViewModel
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Color { get; set; } = "#3498db";
+    public string Icon { get; set; } = "⚠️";
 
     public SolidColorBrush ColorBrush => new SolidColorBrush(ParseColorHex(Color));
 
@@ -261,6 +262,7 @@ public class AllergenItemViewModel
         Id = allergen.Id;
         Name = allergen.Name;
         Color = allergen.Color;
+        Icon = allergen.Icon;
     }
 
     public Allergen ToAllergen()
@@ -270,6 +272,7 @@ public class AllergenItemViewModel
             Id = Id,
             Name = Name,
             Color = Color
+            ,Icon = Icon
         };
     }
 
