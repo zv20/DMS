@@ -3,8 +3,16 @@
 **App:** DMS — kitchen/restaurant menu planner  
 **Current:** Vanilla JS SPA, no framework, no build step, open `index.html` in browser (v14.8, branch `beta`)  
 **Target:** Native Windows desktop app — WinUI 3 (Windows App SDK) + C# + XAML  
-**Repo:** `zv20/DMS`, active branch `testing-free` (this worktree)  
-**Constraint:** WinUI 3 compiles only on Windows (Visual Studio 2022 + Windows App SDK workload). This Mac can author C#/XAML and design, but build/test/package must run on a Windows machine.
+**Repo:** `zv20/DMS`, active branch `winUI3`
+**Constraint:** WinUI 3 compiles only on Windows (Visual Studio 2022 + Windows App SDK workload). This Mac can author C#/XAML and design, but build/test/package must run on a Windows machine. The current project targets Windows SDK 22621, so its first native validation must be on Windows 11 or the supported target must be deliberately lowered.
+
+## Current implementation snapshot
+
+The native project is no longer an empty scaffold. It has a WinUI shell, navigation, SQLite-backed CRUD pages for recipes, ingredients, allergens, a weekly menu, settings, and a basic template editor. It also has a Windows GitHub Actions workflow.
+
+The following are implemented in source but **not yet Windows-validated**: SQLite schema initialization and maintenance, browser/native JSON import, JSON export, SQLite backup/restore, menu recipe assignment, and native page navigation. The browser implementation remains the behavioral specification until every workflow below is verified.
+
+Known parity gaps remain: monthly planning and saved-menu history; the rich five-layer template builder and its six presets; native print/PDF/image output; immediate BG/EN localization; configurable accent/theme behavior; a test project; and installer/runtime evidence. Do not describe this branch as release-ready until the Windows validation checklist is completed.
 
 ---
 
@@ -60,7 +68,7 @@ Trade-off accepted: we lose cross-platform builds; we gain a truly native Window
 3. Create a blank **WinUI 3 Desktop (Unpackaged or Packaged)** app project in C#. Confirm `dotnet build` / VS produces `DMS.exe` and a window opens.
 4. Decide packaged (MSIX, `LocalFolder` is app-container isolated) vs unpackaged (plain `.exe`, SQLite path fully under our control). Recommendation: **unpackaged** for phase 1–7 (easier file paths, matches current "user picks a folder" model), revisit MSIX for Phase 8.
 5. Add NuGet packages: `Microsoft.Data.Sqlite`, `CommunityToolkit.WinUI` (optional helpers).
-6. Commit a minimal `DMS.WinUI/` folder (`.sln`, `.csproj`, `App.xaml`, `MainWindow.xaml`) to the repo.
+6. Verify the existing `DMS.sln`, `DMS/DMS.csproj`, `App.xaml`, and `MainWindow.xaml` project on that machine; do not create a second scaffold.
 
 ### Phase 1 — Shell & Navigation
 **Deliverable:** App launches to a native window with header, navigation, and empty page frames matching the current SPA layout.

@@ -26,11 +26,10 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore DMS/DMS.csproj
-        continue-on-error: true
+        run: dotnet restore DMS.sln
 
-      - name: Build DMS
-        run: dotnet build DMS/DMS.csproj --configuration Release --no-restore -p:Platform=x64
+      - name: Build DMS and tests
+        run: dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 
       - name: Run tests
         run: dotnet test DMS.sln --configuration Release --no-build --verbosity normal

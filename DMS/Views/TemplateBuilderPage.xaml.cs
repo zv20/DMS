@@ -16,6 +16,7 @@ public sealed partial class TemplateBuilderPage : Page
     private readonly IDatabaseService _database;
     private MenuTemplate _currentTemplate = new();
     private List<MenuTemplate> _templates = new();
+    private List<Recipe> _recipes = new();
 
     public TemplateBuilderPage()
     {
@@ -34,6 +35,7 @@ public sealed partial class TemplateBuilderPage : Page
     private async Task LoadTemplatesAsync()
     {
         _templates = await _database.GetAllTemplatesAsync();
+        _recipes = await _database.GetAllRecipesAsync();
         TemplateSelector.ItemsSource = _templates;
         TemplateSelector.DisplayMemberPath = "Name";
     }
@@ -63,7 +65,8 @@ public sealed partial class TemplateBuilderPage : Page
                 IsPreset = template.IsPreset,
                 HeaderText = template.HeaderText,
                 FooterText = template.FooterText,
-                BackgroundColor = template.BackgroundColor
+                BackgroundColor = template.BackgroundColor,
+                LegacyDataJson = template.LegacyDataJson
             };
             UpdateFieldsFromTemplate();
             UpdateWeekStructure();
@@ -105,7 +108,8 @@ public sealed partial class TemplateBuilderPage : Page
             { 
                 Width = 300, 
                 PlaceholderText = $"Recipe for {slot}",
-                ItemsSource = new[] { "Recipe 1", "Recipe 2", "Recipe 3" } // Placeholder - would bind to actual recipes
+                ItemsSource = _recipes,
+                DisplayMemberPath = "Name"
             };
             
             slotPanel.Children.Add(iconText);

@@ -101,8 +101,22 @@ public sealed partial class RecipesPage : Page
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-                await _database.DeleteRecipeAsync(id);
-                await LoadRecipesAsync();
+                try
+                {
+                    await _database.DeleteRecipeAsync(id);
+                    await LoadRecipesAsync();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    var blockedDialog = new ContentDialog
+                    {
+                        Title = "Recipe is in use",
+                        Content = ex.Message,
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await blockedDialog.ShowAsync();
+                }
             }
         }
     }

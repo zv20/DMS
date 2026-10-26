@@ -28,6 +28,10 @@ public interface IDatabaseService
     Task<List<MenuTemplate>> GetAllTemplatesAsync();
     Task SaveTemplateAsync(MenuTemplate template);
     Task DeleteTemplateAsync(string name);
+    Task CreateBackupAsync(string destinationPath);
+    Task RestoreFromAsync(string sourcePath);
+    Task VacuumAsync();
+    Task ReindexAsync();
     string GetDatabasePath();
 }
 
@@ -39,13 +43,23 @@ public class DatabaseService : IDatabaseService, IDisposable
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized = false;
 
-    public DatabaseService(ILogger<DatabaseService> logger)
+    public DatabaseService(ILogger<DatabaseService> logger, string? databasePath = null)
     {
         _logger = logger;
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var dmsFolder = Path.Combine(appData, "DMS");
-        Directory.CreateDirectory(dmsFolder);
-        _dbPath = Path.Combine(dmsFolder, "dms.db");
+        if (string.IsNullOrWhiteSpace(databasePath))
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var dmsFolder = Path.Combine(appData, "DMS");
+            Directory.CreateDirectory(dmsFolder);
+            _dbPath = Path.Combine(dmsFolder, "dms.db");
+        }
+        else
+        {
+            var databaseFolder = Path.GetDirectoryName(databasePath)
+                ?? throw new ArgumentException("The database path must include a directory.", nameof(databasePath));
+            Directory.CreateDirectory(databaseFolder);
+            _dbPath = databasePath;
+        }
         _logger.LogInformation("Database path: {Path}", _dbPath);
     }
 
@@ -61,6 +75,7 @@ public class DatabaseService : IDatabaseService, IDisposable
             _connection = new SqliteConnection($"Data Source={_dbPath}");
             await _connection.OpenAsync();
 
+            await ConfigureConnectionAsync();
             await CreateSchemaAsync();
             _initialized = true;
             _logger.LogInformation("Database initialized");
@@ -69,6 +84,17 @@ public class DatabaseService : IDatabaseService, IDisposable
         {
             _initLock.Release();
         }
+    }
+
+    private async Task ConfigureConnectionAsync()
+    {
+        if (_connection == null) return;
+
+        // Foreign-key enforcement is connection-local in SQLite. Keep it enabled
+        // before any page can write data so recipe/menu relationships remain valid.
+        using var command = _connection.CreateCommand();
+        command.CommandText = "PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;";
+        await command.ExecuteNonQueryAsync();
     }
 
     private async Task CreateSchemaAsync()
@@ -105,7 +131,7 @@ public class DatabaseService : IDatabaseService, IDisposable
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
                 slot TEXT NOT NULL,
-                recipe_id INTEGER NOT NULL,
+                recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE RESTRICT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 UNIQUE(date, slot)
             )",
@@ -119,7 +145,13 @@ public class DatabaseService : IDatabaseService, IDisposable
                 is_preset INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-            )"
+            )",
+            @"CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY,
+                applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )",
+            "CREATE INDEX IF NOT EXISTS idx_menu_date ON menu(date)",
+            "CREATE INDEX IF NOT EXISTS idx_menu_recipe_id ON menu(recipe_id)"
         };
 
         foreach (var sql in commands)
@@ -131,6 +163,17 @@ public class DatabaseService : IDatabaseService, IDisposable
 
         // Seed default settings
         await SeedDefaultsAsync();
+        await RecordSchemaVersionAsync();
+    }
+
+    private async Task RecordSchemaVersionAsync()
+    {
+        if (_connection == null) return;
+
+        using var command = _connection.CreateCommand();
+        command.CommandText = @"INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
+                                PRAGMA user_version = 1;";
+        await command.ExecuteNonQueryAsync();
     }
 
     private async Task SeedDefaultsAsync()
@@ -219,6 +262,18 @@ public class DatabaseService : IDatabaseService, IDisposable
     public async Task DeleteRecipeAsync(int id)
     {
         await InitializeAsync();
+        using (var usageCommand = _connection!.CreateCommand())
+        {
+            usageCommand.CommandText = "SELECT COUNT(*) FROM menu WHERE recipe_id = @id";
+            usageCommand.Parameters.AddWithValue("@id", id);
+            var assignmentCount = Convert.ToInt32(await usageCommand.ExecuteScalarAsync());
+            if (assignmentCount > 0)
+            {
+                throw new InvalidOperationException(
+                    "This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.");
+            }
+        }
+
         using var cmd = _connection!.CreateCommand();
         cmd.CommandText = "DELETE FROM recipes WHERE id = @id";
         cmd.Parameters.AddWithValue("@id", id);
@@ -410,6 +465,16 @@ public class DatabaseService : IDatabaseService, IDisposable
     public async Task SaveMenuEntryAsync(MenuEntry entry)
     {
         await InitializeAsync();
+        using (var recipeCommand = _connection!.CreateCommand())
+        {
+            recipeCommand.CommandText = "SELECT COUNT(*) FROM recipes WHERE id = @recipeId";
+            recipeCommand.Parameters.AddWithValue("@recipeId", entry.RecipeId);
+            if (Convert.ToInt32(await recipeCommand.ExecuteScalarAsync()) == 0)
+            {
+                throw new InvalidOperationException("The selected recipe no longer exists.");
+            }
+        }
+
         using var cmd = _connection!.CreateCommand();
         cmd.CommandText = @"INSERT INTO menu (date, slot, recipe_id) VALUES (@date, @slot, @recipeId)
                            ON CONFLICT(date, slot) DO UPDATE SET recipe_id=@recipeId";
@@ -517,6 +582,69 @@ public class DatabaseService : IDatabaseService, IDisposable
         cmd.CommandText = "DELETE FROM templates WHERE name = @name AND is_preset = 0";
         cmd.Parameters.AddWithValue("@name", name);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task CreateBackupAsync(string destinationPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        await InitializeAsync();
+
+        await using var destination = new SqliteConnection($"Data Source={destinationPath}");
+        await destination.OpenAsync();
+        _connection!.BackupDatabase(destination);
+        _logger.LogInformation("Created SQLite backup at {Path}", destinationPath);
+    }
+
+    public async Task RestoreFromAsync(string sourcePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        if (!File.Exists(sourcePath)) throw new FileNotFoundException("The selected backup file no longer exists.", sourcePath);
+
+        await _initLock.WaitAsync();
+        try
+        {
+            _connection?.Dispose();
+            _connection = null;
+            _initialized = false;
+
+            File.Copy(sourcePath, _dbPath, overwrite: true);
+            DeleteIfPresent($"{_dbPath}-wal");
+            DeleteIfPresent($"{_dbPath}-shm");
+
+            _connection = new SqliteConnection($"Data Source={_dbPath}");
+            await _connection.OpenAsync();
+            await ConfigureConnectionAsync();
+            await CreateSchemaAsync();
+            _initialized = true;
+            _logger.LogInformation("Restored database from {Path}", sourcePath);
+        }
+        finally
+        {
+            _initLock.Release();
+        }
+    }
+
+    private static void DeleteIfPresent(string path)
+    {
+        if (File.Exists(path)) File.Delete(path);
+    }
+
+    public async Task VacuumAsync()
+    {
+        await InitializeAsync();
+        using var command = _connection!.CreateCommand();
+        command.CommandText = "VACUUM";
+        await command.ExecuteNonQueryAsync();
+        _logger.LogInformation("Vacuumed database");
+    }
+
+    public async Task ReindexAsync()
+    {
+        await InitializeAsync();
+        using var command = _connection!.CreateCommand();
+        command.CommandText = "REINDEX";
+        await command.ExecuteNonQueryAsync();
+        _logger.LogInformation("Reindexed database");
     }
 
     public void Dispose()
