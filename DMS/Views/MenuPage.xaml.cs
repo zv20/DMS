@@ -1,9 +1,11 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Extensions.DependencyInjection;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
+using Windows.UI;
 
 namespace DMS.Views;
 
