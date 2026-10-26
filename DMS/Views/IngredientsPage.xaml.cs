@@ -59,25 +59,25 @@ public sealed partial class IngredientsPage : Page
         ApplyFilter();
     }
 
-    private void AddIngredientButton_Click(object sender, RoutedEventArgs e)
+    private async void AddIngredientButton_Click(object sender, RoutedEventArgs e)
     {
-        ShowIngredientDialog(null);
+        await ShowIngredientDialogAsync(null);
     }
 
-    private void IngredientsListView_ItemClick(object sender, ItemClickEventArgs e)
+    private async void IngredientsListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is IngredientItemViewModel ingredient)
         {
-            ShowIngredientDialog(ingredient);
+            await ShowIngredientDialogAsync(ingredient);
         }
     }
 
-    private void EditIngredientButton_Click(object sender, RoutedEventArgs e)
+    private async void EditIngredientButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is int id)
         {
             var ingredient = _ingredients.FirstOrDefault(r => r.Id == id);
-            if (ingredient != null) ShowIngredientDialog(ingredient);
+            if (ingredient != null) await ShowIngredientDialogAsync(ingredient);
         }
     }
 
@@ -104,10 +104,11 @@ public sealed partial class IngredientsPage : Page
         }
     }
 
-    private void ShowIngredientDialog(IngredientItemViewModel? existingIngredient)
+    private async Task ShowIngredientDialogAsync(IngredientItemViewModel? existingIngredient)
     {
         var isEditing = existingIngredient != null;
         var ingredient = existingIngredient?.ToIngredient() ?? new Ingredient();
+        var allergens = await _database.GetAllAllergensAsync();
 
         var dialog = new ContentDialog
         {
@@ -125,10 +126,30 @@ public sealed partial class IngredientsPage : Page
         panel.Children.Add(nameBox);
 
         // Allergens
-        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        var allergensLabel = new TextBlock { Text = "Allergens", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
-        var allergensBox = new TextBox { Text = string.Join(", ", ingredient.Allergens), PlaceholderText = "gluten, dairy, nuts" };
-        panel.Children.Add(allergensBox);
+        var allergenList = new ListView
+        {
+            ItemsSource = allergens,
+            DisplayMemberPath = "Name",
+            SelectionMode = ListViewSelectionMode.Multiple,
+            MaxHeight = 180,
+            BorderThickness = new Thickness(1),
+            BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
+        };
+        foreach (var allergen in allergens.Where(item => ingredient.Allergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase)))
+        {
+            allergenList.SelectedItems.Add(allergen);
+        }
+        panel.Children.Add(allergenList);
+        if (allergens.Count == 0)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Create allergens first from the Allergens page.",
+                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
+            });
+        }
 
         dialog.Content = panel;
 
@@ -149,13 +170,16 @@ public sealed partial class IngredientsPage : Page
             }
 
             ingredient.Name = nameBox.Text.Trim();
-            ingredient.Allergens = allergensBox.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new();
+            ingredient.Allergens = allergenList.SelectedItems
+                .OfType<Allergen>()
+                .Select(selected => selected.Name)
+                .ToList();
 
             await _database.SaveIngredientAsync(ingredient);
             await LoadIngredientsAsync();
         };
 
-        _ = dialog.ShowAsync();
+        await dialog.ShowAsync();
     }
 }
 
