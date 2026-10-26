@@ -12,7 +12,7 @@
             <!-- Language Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="🌐 Language & Region" Style="{StaticResource PageTitleTextStyle}" />
+                    <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}" />
                     <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged">
                         <ComboBoxItem Tag="bg" Content="🇧🇬 Bulgarian" />
                         <ComboBoxItem Tag="en" Content="🇺🇸 English" />
