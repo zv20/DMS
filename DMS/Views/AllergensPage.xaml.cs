@@ -242,7 +242,7 @@ public sealed partial class AllergensPage : Page
         var r = Convert.ToByte(hex.Substring(0, 2), 16);
         var g = Convert.ToByte(hex.Substring(2, 2), 16);
         var b = Convert.ToByte(hex.Substring(4, 2), 16);
-        return Color.FromArgb(255, r, g, b);
+        return Windows.UI.Color.FromArgb(255, r, g, b);
     }
 }
 
@@ -279,6 +279,6 @@ public class AllergenItemViewModel
         var r = Convert.ToByte(hex.Substring(0, 2), 16);
         var g = Convert.ToByte(hex.Substring(2, 2), 16);
         var b = Convert.ToByte(hex.Substring(4, 2), 16);
-        return Color.FromArgb(255, r, g, b);
+        return Windows.UI.Color.FromArgb(255, r, g, b);
     }
 }
