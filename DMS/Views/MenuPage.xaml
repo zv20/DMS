@@ -1,8 +1,8 @@
 <Page x:Class="DMS.Views.MenuPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ScrollViewer Padding="32">
+    <ScrollViewer Padding="32" Background="LightYellow">
         <StackPanel Spacing="16">
-            <TextBlock Text="Menu Planner" Style="{StaticResource PageTitleTextStyle}" />
-            <TextBlock Text="Weekly and monthly planning will be implemented in Phase 3." TextWrapping="Wrap" />
+            <TextBlock Text="Menu Planner" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="Black" />
+            <TextBlock Text="Weekly and monthly planning will be implemented in Phase 3." TextWrapping="Wrap" Foreground="Black" />
         </StackPanel>
     </ScrollViewer>
 </Page>

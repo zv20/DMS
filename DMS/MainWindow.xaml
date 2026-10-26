@@ -60,7 +60,11 @@
             </NavigationView.MenuItems>
 
             <!-- Frame for page navigation -->
-            <Frame x:Name="ContentFrame" Margin="0" />
+            <Frame x:Name="ContentFrame" Margin="0">
+                <Frame.Background>
+                    <SolidColorBrush Color="LightBlue" Opacity="0.3" />
+                </Frame.Background>
+            </Frame>
         </NavigationView>
     </Grid>
 </Window>
