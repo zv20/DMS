@@ -47,7 +47,6 @@
             PaneDisplayMode="Left"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
-            Loaded="NavView_Loaded"
             Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
             <NavigationView.MenuItems>

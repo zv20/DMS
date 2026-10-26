@@ -15,7 +15,9 @@ public sealed partial class MainWindow : Window
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
-
+        
+        // Navigate to the default page after InitializeComponent
+        this.Loaded += MainWindow_Loaded;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -24,10 +26,7 @@ public sealed partial class MainWindow : Window
         var settings = App.Services.GetRequiredService<ISettingsService>();
         var lang = settings.GetLanguage();
         LanguageSelector.SelectedIndex = lang == "en" ? 1 : 0;
-    }
 
-    private void NavView_Loaded(object sender, RoutedEventArgs e)
-    {
         // Navigate to Menu by default
         NavView.SelectedItem = NavView.MenuItems[0];
         ContentFrame.Navigate(typeof(MenuPage));
