@@ -62,25 +62,25 @@ public sealed partial class RecipesPage : Page
         ApplyFilter();
     }
 
-    private void AddRecipeButton_Click(object sender, RoutedEventArgs e)
+    private async void AddRecipeButton_Click(object sender, RoutedEventArgs e)
     {
-        ShowRecipeDialog(null);
+        await ShowRecipeDialogAsync(null);
     }
 
-    private void RecipesListView_ItemClick(object sender, ItemClickEventArgs e)
+    private async void RecipesListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is RecipeItemViewModel recipe)
         {
-            ShowRecipeDialog(recipe);
+            await ShowRecipeDialogAsync(recipe);
         }
     }
 
-    private void EditRecipeButton_Click(object sender, RoutedEventArgs e)
+    private async void EditRecipeButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is int id)
         {
             var recipe = _recipes.FirstOrDefault(r => r.Id == id);
-            if (recipe != null) ShowRecipeDialog(recipe);
+            if (recipe != null) await ShowRecipeDialogAsync(recipe);
         }
     }
 
@@ -121,10 +121,12 @@ public sealed partial class RecipesPage : Page
         }
     }
 
-    private void ShowRecipeDialog(RecipeItemViewModel? existingRecipe)
+    private async Task ShowRecipeDialogAsync(RecipeItemViewModel? existingRecipe)
     {
         var isEditing = existingRecipe != null;
         var recipe = existingRecipe?.ToRecipe() ?? new Recipe();
+        var availableIngredients = await _database.GetAllIngredientsAsync();
+        var availableAllergens = await _database.GetAllAllergensAsync();
 
         var dialog = new ContentDialog
         {
@@ -165,17 +167,57 @@ public sealed partial class RecipesPage : Page
         var instructionsBox = new TextBox { Header = "Instructions", Text = recipe.Instructions, PlaceholderText = "Cooking steps...", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         panel.Children.Add(instructionsBox);
 
-        // Ingredients
-        var ingredientsLabel = new TextBlock { Text = "Ingredients (one per line)", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        // Ingredients: searchable dropdown plus removable selected list.
+        var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
+        var ingredientsLabel = new TextBlock { Text = "Ingredients", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
-        var ingredientsBox = new TextBox { Text = string.Join("\n", recipe.Ingredients), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100, PlaceholderText = "Tomato\nOnion\nGarlic" };
-        panel.Children.Add(ingredientsBox);
+        var ingredientSearch = new AutoSuggestBox { PlaceholderText = "Search ingredients...", QueryIcon = new SymbolIcon(Symbol.Find) };
+        var ingredientList = new ListView { ItemsSource = selectedIngredients, IsItemClickEnabled = true, MaxHeight = 90 };
+        ingredientSearch.TextChanged += (sender, args) =>
+        {
+            var query = ingredientSearch.Text.Trim();
+            ingredientSearch.ItemsSource = availableIngredients
+                .Where(item => !selectedIngredients.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                .Select(item => item.Name)
+                .ToList();
+        };
+        ingredientSearch.SuggestionChosen += (sender, args) =>
+        {
+            if (args.SelectedItem is string name && !selectedIngredients.Contains(name)) selectedIngredients.Add(name);
+            ingredientSearch.Text = string.Empty;
+        };
+        ingredientList.ItemClick += (sender, args) =>
+        {
+            if (args.ClickedItem is string name) selectedIngredients.Remove(name);
+        };
+        panel.Children.Add(ingredientSearch);
+        panel.Children.Add(ingredientList);
 
-        // Allergens
-        var allergensLabel = new TextBlock { Text = "Allergens (comma separated)", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        // Allergens: searchable dropdown plus removable selected list.
+        var selectedAllergens = new ObservableCollection<string>(recipe.Allergens);
+        var allergensLabel = new TextBlock { Text = "Allergens", FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
-        var allergensBox = new TextBox { Text = string.Join(", ", recipe.Allergens), PlaceholderText = "gluten, dairy, nuts" };
-        panel.Children.Add(allergensBox);
+        var allergenSearch = new AutoSuggestBox { PlaceholderText = "Search allergens...", QueryIcon = new SymbolIcon(Symbol.Find) };
+        var allergenList = new ListView { ItemsSource = selectedAllergens, IsItemClickEnabled = true, MaxHeight = 90 };
+        allergenSearch.TextChanged += (sender, args) =>
+        {
+            var query = allergenSearch.Text.Trim();
+            allergenSearch.ItemsSource = availableAllergens
+                .Where(item => !selectedAllergens.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                .Select(item => item.Name)
+                .ToList();
+        };
+        allergenSearch.SuggestionChosen += (sender, args) =>
+        {
+            if (args.SelectedItem is string name && !selectedAllergens.Contains(name)) selectedAllergens.Add(name);
+            allergenSearch.Text = string.Empty;
+        };
+        allergenList.ItemClick += (sender, args) =>
+        {
+            if (args.ClickedItem is string name) selectedAllergens.Remove(name);
+        };
+        panel.Children.Add(allergenSearch);
+        panel.Children.Add(allergenList);
 
         dialog.Content = panel;
 
@@ -200,14 +242,14 @@ public sealed partial class RecipesPage : Page
             recipe.PortionSize = portionBox.Text?.Trim() ?? "";
             recipe.Calories = (int)caloriesBox.Value;
             recipe.Instructions = instructionsBox.Text?.Trim() ?? "";
-            recipe.Ingredients = ingredientsBox.Text?.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new();
-            recipe.Allergens = allergensBox.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new();
+            recipe.Ingredients = selectedIngredients.ToList();
+            recipe.Allergens = selectedAllergens.ToList();
 
             await _database.SaveRecipeAsync(recipe);
             await LoadRecipesAsync();
         };
 
-        _ = dialog.ShowAsync();
+        await dialog.ShowAsync();
     }
 }
 
