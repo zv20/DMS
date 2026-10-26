@@ -34,7 +34,7 @@
                      into the title bar. Keep app controls outside that area. -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,140,0" VerticalAlignment="Center" Spacing="12">
                     <TextBlock x:Uid="SyncIndicator" Text="✓ Saved" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" />
-                    <ComboBox x:Name="LanguageSelector" Width="100" SelectionChanged="LanguageSelector_SelectionChanged" VerticalAlignment="Center">
+                    <ComboBox x:Name="LanguageSelector" Width="100" SelectionChanged="LanguageSelector_SelectionChanged" VerticalAlignment="Center" IsHitTestVisibleInChrome="False">
                         <ComboBoxItem Tag="bg" Content="🇧🇬" />
                         <ComboBoxItem Tag="en" Content="🇺🇸" />
                     </ComboBox>
