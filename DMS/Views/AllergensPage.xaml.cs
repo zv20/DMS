@@ -1,3 +1,4 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -272,7 +273,7 @@ public class AllergenItemViewModel
         };
     }
 
-    private Color ParseColor(string hex)
+    private static Color ParseColor(string hex)
     {
         hex = hex.TrimStart('#');
         var r = Convert.ToByte(hex.Substring(0, 2), 16);

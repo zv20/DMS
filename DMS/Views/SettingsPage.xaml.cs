@@ -78,7 +78,7 @@ public sealed partial class SettingsPage : Page
                 CloseButtonText = "OK",
                 XamlRoot = this.XamlRoot
             };
-            await dialog.ShowAsync();
+            await themeDialog.ShowAsync();
         }
     }
 
