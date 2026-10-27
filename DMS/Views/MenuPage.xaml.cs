@@ -99,8 +99,9 @@ public sealed partial class MenuPage : Page
         }
 
         // Slot labels and cells
-        var slots = new[] { "Breakfast", "Lunch", "Dinner", "Snack" };
-        var slotIcons = new[] { "🌅", "🌞", "🌙", "🍪" };
+        // One daily meal is divided into recipe categories.
+        var slots = new[] { "Soup", "Main", "Dessert", "Other" };
+        var slotIcons = new[] { "🍲", "🍽️", "🍰", "🥗" };
 
         for (int row = 0; row < 4; row++)
         {
@@ -337,6 +338,8 @@ public sealed partial class MenuPage : Page
             SelectionMode = ListViewSelectionMode.Single,
             MaxHeight = 300,
             ItemsSource = _allRecipes
+                .Where(recipe => string.Equals(recipe.Category, slot, StringComparison.OrdinalIgnoreCase))
+                .ToList()
         };
         recipeList.ItemTemplate = (DataTemplate)XamlReader.Load(@"
             <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>

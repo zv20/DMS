@@ -145,10 +145,8 @@ public sealed partial class RecipesPage : Page
 
         // Category
         var categoryBox = new ComboBox { Header = "Category", PlaceholderText = "Select category" };
-        categoryBox.Items.Add("breakfast");
-        categoryBox.Items.Add("lunch");
-        categoryBox.Items.Add("dinner");
-        categoryBox.Items.Add("snack");
+        categoryBox.Items.Add("soup");
+        categoryBox.Items.Add("main");
         categoryBox.Items.Add("dessert");
         categoryBox.Items.Add("other");
         categoryBox.SelectedItem = recipe.Category;
