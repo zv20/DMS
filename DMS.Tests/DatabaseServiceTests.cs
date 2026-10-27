@@ -10,6 +10,17 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void PositionedTemplateBuildsLargeEmbeddedImageWithoutDroppingLayers()
+    {
+        var template = new MenuTemplate();
+        TemplateLayout.EnsureInitialized(template);
+        template.ImageLayers.Add(new TemplateImageLayer { DataUri = "data:image/png;base64," + new string('A', 2_000_000) });
+        var html = MenuOutputService.BuildHtml(template, new DateTime(2026, 10, 26), [], []);
+        Assert.Contains("data:image/png;base64,", html);
+        Assert.True(html.Length > 1_900_000);
+    }
+
+    [Fact]
     public void PositionedTemplateExportsSavedGeometryLayersAndStylesWithoutMutatingSource()
     {
         var monday = new DateTime(2026, 10, 26);

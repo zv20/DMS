@@ -37,6 +37,12 @@ instead of the output dialog's margin setting.
 The planner's Print / Export dialog renders the selected saved week and template
 through WebView2. It needs the WebView2 Runtime and supports A4 PDF, print, and
 single-page PNG; an overflowing PNG is rejected instead of silently cropped.
+The canvas snaps moving objects to guides and supports one-pixel arrow-key nudges
+when an object has focus. The output preview checks rendered text for overlaps and
+box/page overflow and warns without preventing print. Images may intentionally
+overlap text; images outside the page are flagged. Preview documents are supplied
+in memory rather than through WebView2's size-limited NavigateToString API. Image
+imports are limited to 4 MiB each and 16 MiB of combined encoded image data.
 
 This is not complete browser-editor parity. In particular, formatting a text
 selection and several per-section fonts and border controls remain unimplemented.
@@ -48,10 +54,12 @@ warns when an imported template may need adjustment.
 On Windows, exercise five-day menu navigation and category selection; save,
 reopen and copy templates; test all supported font, color, alignment and image
 options; move and resize the header, date, day heading, menu, footer and multiple
-overlapping images; reorder layers; save and reopen the template; compare their
+overlapping images; test snapping, keyboard nudging, overlap and overflow warnings,
+including weeks with long recipes; reorder layers; save and reopen the template; compare their
 positions with print, PDF and PNG; test a legacy template before and after enabling
 the canvas; preview two saved weeks; export PDF and PNG; print with an image; try a
 long menu, missing WebView2, malformed/legacy templates, missing images, and a
 cancelled file picker. Test light/dark and accent settings after switching
 languages and restarting. Use disposable data and verify the database and saved
-files. No Windows results have yet been recorded for this implementation.
+files. Run `node scripts/test-template-layout-diagnostics.js` for a small mocked
+geometry check. No Windows results have yet been recorded for this implementation.

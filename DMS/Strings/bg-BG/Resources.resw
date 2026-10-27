@@ -331,7 +331,7 @@
   <data name="TplIngredientText" xml:space="preserve"><value>Съставки</value></data>
   <data name="TplAllergenText" xml:space="preserve"><value>Алергени</value></data>
   <data name="TplEnableCanvas" xml:space="preserve"><value>Включване на подвижно оформление</value></data>
-  <data name="TplCanvasHint" xml:space="preserve"><value>Изберете обект и плъзнете рамката му, за да го преместите, или ъгъла, за да промените размера му.</value></data>
+  <data name="TplCanvasHint" xml:space="preserve"><value>Изберете обект и плъзнете дръжката му, за да го преместите или преоразмерите. Обектите се подравняват по водачи; използвайте стрелките за прецизно движение.</value></data>
   <data name="TplMoveObject" xml:space="preserve"><value>Преместване на обект</value></data>
   <data name="TplResizeObject" xml:space="preserve"><value>Промяна на размера</value></data>
   <data name="TplBringForward" xml:space="preserve"><value>Преместване напред</value></data>
@@ -341,4 +341,8 @@
   <data name="TplLayoutImage" xml:space="preserve"><value>Изображение</value></data>
   <data name="TplLayoutOverflow" xml:space="preserve"><value>Част от съдържанието излиза извън рамката или страницата. Коригирайте оформлението преди печат.</value></data>
   <data name="OutputCanvasMargins" xml:space="preserve"><value>Шаблоните с подвижно оформление използват запазените позиции; полетата за печат не ги преместват.</value></data>
+  <data name="OutputLayoutWarning" xml:space="preserve"><value>Част от текста се застъпва или излиза извън рамката или страницата. Прегледайте шаблона преди печат.</value></data>
+  <data name="OutputLayoutCheckFailed" xml:space="preserve"><value>Оформлението не можа да бъде проверено. Прегледайте внимателно преди печат.</value></data>
+  <data name="TplImageLimit" xml:space="preserve"><value>Изберете изображение до 4 MB.</value></data>
+  <data name="TplImagesTotalLimit" xml:space="preserve"><value>Общият размер на данните за изображенията надвишава 16 MB. Премахнете изображения или изберете по-малки файлове.</value></data>
 </root>

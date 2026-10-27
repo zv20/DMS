@@ -19,6 +19,26 @@ public static class MenuOutputService
 {
     private static DateTime Monday(DateTime date) => date.Date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
 
+    // Run only as an application-injected script; document scripts stay disabled.
+    // Inspect actual text bounds so warnings reflect the selected week and font metrics.
+    internal const string LayoutDiagnosticScript = """
+        (() => {
+            const page = document.querySelector('.page');
+            if (!page) return null;
+            const bounds = page.getBoundingClientRect();
+            const nodes = [...page.querySelectorAll('.box')].filter(x => x.textContent.trim().length > 0);
+            const rects = nodes.map(x => x.getBoundingClientRect());
+            const outside = r => r.left < bounds.left - 1 || r.top < bounds.top - 1 || r.right > bounds.left + 795 || r.bottom > bounds.top + 1124;
+            if (rects.some(outside)) return true;
+            if (nodes.some((x, i) => rects[i].height > parseFloat(getComputedStyle(x).minHeight) + 1)) return true;
+            const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+            for (let i = 0; i < rects.length; i++)
+                for (let j = i + 1; j < rects.length; j++)
+                    if (overlap(rects[i], rects[j])) return true;
+            return [...page.querySelectorAll('img')].some(x => outside(x.getBoundingClientRect()));
+        })()
+        """;
+
     public static async Task ShowAsync(XamlRoot root, DateTime preferredDate)
     {
         var database = App.Services.GetRequiredService<IDatabaseService>();
@@ -117,7 +137,10 @@ public static class MenuOutputService
         root.Changed += rootChanged;
         ownerWindow.Closed += windowClosed;
         ResizeOverlay();
+        MenuPreviewDocumentSource? documentSource = null;
         bool ready = false;
+        ulong currentNavigation = 0;
+        int refreshGeneration = 0;
         void SetReady(bool value) { ready = value; print.IsEnabled = pdf.IsEnabled = png.IsEnabled = value; }
         void UpdateMarginAvailability()
         {
@@ -127,27 +150,45 @@ public static class MenuOutputService
         }
         void Refresh()
         {
-            UpdateMarginAvailability();
-            if (view.CoreWebView2 == null || weekBox.SelectedItem is not ComboBoxItem weekItem || weekItem.Tag is not DateTime week || templateBox.SelectedItem is not MenuTemplate template) return;
+            refreshGeneration++;
+            currentNavigation = 0;
             SetReady(false);
+            UpdateMarginAvailability();
+            if (view.CoreWebView2 == null || documentSource == null || weekBox.SelectedItem is not ComboBoxItem weekItem || weekItem.Tag is not DateTime week || templateBox.SelectedItem is not MenuTemplate template) return;
             status.Text = Localization.Get("OutputPreparing");
             var margin = margins.SelectedIndex switch { 0 => 5, 2 => 15, _ => 10 };
             var html = BuildHtml(template, week, entries, recipes, ingredients, margin);
-            if (Encoding.UTF8.GetByteCount(html) > 1_900_000)
-            {
-                status.Text = Localization.Get("OutputImageTooLarge");
-                return;
-            }
-            view.NavigateToString(html);
+            try { documentSource.Navigate(html); }
+            catch (Exception) { status.Text = Localization.Get("OutputPreviewFailed"); }
         }
-        view.NavigationCompleted += (_, args) =>
+        view.NavigationStarting += (_, args) => { if (documentSource?.IsCurrentUri(args.Uri) == true) currentNavigation = args.NavigationId; };
+        view.NavigationCompleted += async (_, args) =>
         {
-            SetReady(args.IsSuccess);
+            if (args.NavigationId != currentNavigation) return;
+            var generation = refreshGeneration;
+            SetReady(false);
+            if (!args.IsSuccess) { status.Text = Localization.Get("OutputPreviewFailed"); return; }
+            var warning = "";
+            if (templateBox.SelectedItem is MenuTemplate { LayoutEnabled: true })
+            {
+                try
+                {
+                    var result = await view.CoreWebView2.ExecuteScriptAsync(LayoutDiagnosticScript);
+                    if (generation != refreshGeneration || args.NavigationId != currentNavigation) return;
+                    warning = result == "true" ? Localization.Get("OutputLayoutWarning") : result == "false" ? "" : Localization.Get("OutputLayoutCheckFailed");
+                }
+                catch (Exception)
+                {
+                    if (generation != refreshGeneration || args.NavigationId != currentNavigation) return;
+                    warning = Localization.Get("OutputLayoutCheckFailed");
+                }
+            }
             status.Text = args.IsSuccess
                 ? (templateBox.SelectedItem is MenuTemplate selected
-                    ? string.Join(" ", new[] { selected.LayoutEnabled ? Localization.Get("OutputCanvasMargins") : "", selected.LegacyDataJson != null ? Localization.Get("TplLegacy") : "" }.Where(s => s.Length > 0))
+                    ? string.Join(" ", new[] { selected.LayoutEnabled ? Localization.Get("OutputCanvasMargins") : "", selected.LegacyDataJson != null ? Localization.Get("TplLegacy") : "", warning }.Where(s => s.Length > 0))
                     : "")
                 : Localization.Get("OutputPreviewFailed");
+            SetReady(true);
         };
         view.Loaded += async (_, _) =>
         {
@@ -156,6 +197,7 @@ public static class MenuOutputService
                 await view.EnsureCoreWebView2Async();
                 view.CoreWebView2.Settings.IsScriptEnabled = false;
                 view.CoreWebView2.NewWindowRequested += (_, args) => args.Handled = true;
+                documentSource = new MenuPreviewDocumentSource(view.CoreWebView2);
                 Refresh();
             }
             catch (Exception ex) { status.Text = Localization.Get("OutputWebViewRequired") + ex.Message; }
@@ -228,6 +270,7 @@ public static class MenuOutputService
         {
             root.Changed -= rootChanged;
             ownerWindow.Closed -= windowClosed;
+            documentSource?.Dispose();
             view.Close();
             windowRoot.Children.Remove(overlay);
         }

@@ -34,6 +34,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private bool _bindingSelection;
     private string? _selectedImageId;
     private bool _bindingLayers;
+    private Button? _canvasSelectionButton;
+    private readonly List<Microsoft.UI.Xaml.Shapes.Line> _snapGuides = [];
     private bool _dirty, _confirming, _switching, _saving, _layoutOverflow;
     private static readonly string[] Alignments = ["left", "center", "right"];
     private static readonly string[] Layouts = ["compact", "detailed", "detailed-2col"];
@@ -196,6 +198,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         _bindingSelection = false;
         UpdatePreview();
+        if (_template.LayoutEnabled && key != null) _canvasSelectionButton?.Focus(FocusState.Programmatic);
     }
 
     private void SelectedStyleChanged()
@@ -219,6 +222,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             BorderThickness = new Thickness(!_template.LayoutEnabled && _selectedElement == key ? 1 : 0),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue) };
         button.Click += (_, _) => SelectElement(key, legacyKey);
+        if (_template.LayoutEnabled)
+        {
+            button.KeyDown += CanvasObject_KeyDown;
+            if (_selectedElement == key && _canvasSelectionButton == null) _canvasSelectionButton = button;
+        }
         return button;
     }
 
@@ -422,13 +430,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         _layoutOverflow = false;
         LayoutCanvas.Children.Clear();
+        _canvasSelectionButton = null;
+        _snapGuides.Clear();
         foreach (var image in _template.ImageLayers)
         {
             var picture = new Image { Stretch = Stretch.Fill, Opacity = Math.Clamp(double.IsFinite(image.Opacity) ? image.Opacity : 1, 0, 1) };
             _ = LoadCanvasImageAsync(picture, image.DataUri);
             var select = new Button { Content = picture, Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
-            select.Click += (_, _) => { SelectElement(null); _selectedImageId = image.Id; UpdatePreview(); };
-            PlaceCanvasFrame(image.X, image.Y, image.Width, image.Height, image.ZIndex, select, _selectedImageId == image.Id,
+            select.KeyDown += CanvasObject_KeyDown;
+            if (_selectedImageId == image.Id) _canvasSelectionButton = select;
+            select.Click += (_, _) => { SelectElement(null); _selectedImageId = image.Id; UpdatePreview(); _canvasSelectionButton?.Focus(FocusState.Programmatic); };
+            PlaceCanvasFrame("image:" + image.Id, image.X, image.Y, image.Width, image.Height, image.ZIndex, select, _selectedImageId == image.Id,
                 (x, y, w, h) => { image.X = x; image.Y = y; image.Width = w; image.Height = h; });
         }
         if (_template.ShowHeader)
@@ -482,11 +494,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         if (!_template.LayoutElements.TryGetValue(key, out var item) || item == null) return;
         var selected = _selectedElement == key || (key.StartsWith("menu:") && (_selectedElement == key.Replace("menu:", "ingredient-group:") || _selectedElement == key.Replace("menu:", "allergen-group:")));
-        PlaceCanvasFrame(item.X, item.Y, item.Width, item.Height, item.ZIndex, content, selected,
+        PlaceCanvasFrame(key, item.X, item.Y, item.Width, item.Height, item.ZIndex, content, selected,
             (x, y, w, h) => { item.X = x; item.Y = y; item.Width = w; item.Height = h; });
     }
 
-    private void PlaceCanvasFrame(double x, double y, double width, double height, int z, FrameworkElement content, bool selected, Action<double, double, double, double> save)
+    private void PlaceCanvasFrame(string objectKey, double x, double y, double width, double height, int z, FrameworkElement content, bool selected, Action<double, double, double, double> save)
     {
         x = double.IsFinite(x) ? Math.Clamp(x, 0, 774) : 0; y = double.IsFinite(y) ? Math.Clamp(y, 0, 1103) : 0;
         width = double.IsFinite(width) ? Math.Clamp(width, 20, 794 - x) : 100; height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123 - y) : 30;
@@ -519,11 +531,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (!dragging) return;
                 var point = e.GetCurrentPoint(LayoutCanvas).Position;
                 if (resizing) { width = Math.Clamp(initialWidth + point.X - start.X, 20, 794 - x); height = Math.Clamp(initialHeight + point.Y - start.Y, 20, 1123 - y); frame.Width = width; frame.Height = height; }
-                else { x = Math.Clamp(initialX + point.X - start.X, 0, 794 - width); y = Math.Clamp(initialY + point.Y - start.Y, 0, 1123 - height); Canvas.SetLeft(frame, x); Canvas.SetTop(frame, y); }
+                else
+                {
+                    x = Math.Clamp(initialX + point.X - start.X, 0, 794 - width); y = Math.Clamp(initialY + point.Y - start.Y, 0, 1123 - height);
+                    (x, y) = SnapPosition(objectKey, x, y, width, height);
+                    Canvas.SetLeft(frame, x); Canvas.SetTop(frame, y);
+                }
                 save(x, y, width, height); _dirty = true; e.Handled = true;
             };
-            handle.PointerReleased += (_, e) => { if (!dragging) return; dragging = false; handle.ReleasePointerCapture(e.Pointer); UpdatePreview(); e.Handled = true; };
-            handle.PointerCaptureLost += (_, _) => { dragging = false; };
+            handle.PointerReleased += (_, e) => { if (!dragging) return; dragging = false; handle.ReleasePointerCapture(e.Pointer); UpdatePreview(); _canvasSelectionButton?.Focus(FocusState.Programmatic); e.Handled = true; };
+            handle.PointerCaptureLost += (_, _) => { if (dragging) { dragging = false; ClearSnapGuides(); } };
         }
     }
 
@@ -552,6 +569,82 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_selectedElement.StartsWith("ingredient-group:")) return _selectedElement.Replace("ingredient-group:", "menu:");
         if (_selectedElement.StartsWith("allergen-group:")) return _selectedElement.Replace("allergen-group:", "menu:");
         return _selectedElement;
+    }
+
+    private void CanvasObject_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var (dx, dy) = e.Key switch
+        {
+            Windows.System.VirtualKey.Left => (-1, 0), Windows.System.VirtualKey.Right => (1, 0),
+            Windows.System.VirtualKey.Up => (0, -1), Windows.System.VirtualKey.Down => (0, 1),
+            _ => (0, 0)
+        };
+        if (dx == 0 && dy == 0) return;
+        var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
+        var key = SelectedLayoutKey();
+        var item = key != null && _template.LayoutElements.TryGetValue(key, out var selected) ? selected : null;
+        if (image == null && item == null) return;
+        var x = image?.X ?? item!.X; var y = image?.Y ?? item!.Y;
+        var width = image?.Width ?? item!.Width; var height = image?.Height ?? item!.Height;
+        width = double.IsFinite(width) ? Math.Clamp(width, 20, 794) : 100;
+        height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123) : 30;
+        x = Math.Clamp((double.IsFinite(x) ? x : 0) + dx, 0, 794 - width);
+        y = Math.Clamp((double.IsFinite(y) ? y : 0) + dy, 0, 1123 - height);
+        if (image != null) { image.X = x; image.Y = y; } else { item!.X = x; item.Y = y; }
+        _dirty = true;
+        UpdatePreview();
+        _canvasSelectionButton?.Focus(FocusState.Programmatic);
+        e.Handled = true;
+    }
+
+    private (double X, double Y) SnapPosition(string selectedKey, double x, double y, double width, double height)
+    {
+        var vertical = new List<double> { 0, 40, 397, 754, 794 };
+        var horizontal = new List<double> { 0, 40, 561.5, 1083, 1123 };
+        void AddGuides(double left, double top, double w, double h)
+        {
+            if (!double.IsFinite(left) || !double.IsFinite(top) || !double.IsFinite(w) || !double.IsFinite(h)) return;
+            vertical.AddRange([left, left + w / 2, left + w]);
+            horizontal.AddRange([top, top + h / 2, top + h]);
+        }
+        foreach (var pair in _template.LayoutElements)
+            if (pair.Key != selectedKey && pair.Value != null) AddGuides(pair.Value.X, pair.Value.Y, pair.Value.Width, pair.Value.Height);
+        foreach (var layer in _template.ImageLayers)
+            if (layer != null && "image:" + layer.Id != selectedKey) AddGuides(layer.X, layer.Y, layer.Width, layer.Height);
+
+        static (double Position, double? Guide) Closest(double position, double size, double limit, List<double> guides)
+        {
+            double best = 5, result = position; double? aligned = null;
+            foreach (var anchor in new[] { position, position + size / 2, position + size })
+                foreach (var guide in guides)
+                {
+                    var delta = guide - anchor;
+                    if (Math.Abs(delta) >= best || position + delta < 0 || position + delta > limit - size) continue;
+                    best = Math.Abs(delta); result = position + delta; aligned = guide;
+                }
+            return (result, aligned);
+        }
+        var horizontalSnap = Closest(x, width, 794, vertical);
+        var verticalSnap = Closest(y, height, 1123, horizontal);
+        ClearSnapGuides();
+        if (horizontalSnap.Guide is double guideX) AddSnapGuide(guideX, 0, guideX, 1123);
+        if (verticalSnap.Guide is double guideY) AddSnapGuide(0, guideY, 794, guideY);
+        return (horizontalSnap.Position, verticalSnap.Position);
+    }
+
+    private void AddSnapGuide(double x1, double y1, double x2, double y2)
+    {
+        var line = new Microsoft.UI.Xaml.Shapes.Line { X1 = x1, Y1 = y1, X2 = x2, Y2 = y2,
+            Stroke = new SolidColorBrush(Colors.DeepSkyBlue), StrokeThickness = 1, IsHitTestVisible = false };
+        Canvas.SetZIndex(line, 2000);
+        _snapGuides.Add(line);
+        LayoutCanvas.Children.Add(line);
+    }
+
+    private void ClearSnapGuides()
+    {
+        foreach (var line in _snapGuides) LayoutCanvas.Children.Remove(line);
+        _snapGuides.Clear();
     }
 
     private void ChangeLayerOrder(int direction)
@@ -689,14 +782,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSingleFileAsync();
             if (file == null) return;
-            if ((await file.GetBasicPropertiesAsync()).Size > 1024 * 1024) { StatusText.Text = L.Get("TplTooLarge"); return; }
+            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
             var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
             var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
             var data = $"data:{(file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg")};base64,{Convert.ToBase64String(bytes)}";
             if (_template.LayoutEnabled)
             {
                 var size = (_template.BackgroundImageDataUri?.Length ?? 0) + _template.ImageLayers.Sum(layer => layer.DataUri?.Length ?? 0) + data.Length;
-                if (size > 1_400_000) { StatusText.Text = L.Get("OutputImageTooLarge"); return; }
+                if (size > 16 * 1024 * 1024) { StatusText.Text = L.Get("TplImagesTotalLimit"); return; }
                 var layer = new TemplateImageLayer { DataUri = data };
                 _template.ImageLayers.Add(layer); _selectedElement = null; _selectedImageId = layer.Id;
             }

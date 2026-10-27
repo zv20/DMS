@@ -331,7 +331,7 @@
   <data name="TplIngredientText" xml:space="preserve"><value>Ingredients</value></data>
   <data name="TplAllergenText" xml:space="preserve"><value>Allergens</value></data>
   <data name="TplEnableCanvas" xml:space="preserve"><value>Enable movable layout</value></data>
-  <data name="TplCanvasHint" xml:space="preserve"><value>Select an object, then drag its border to move it or its corner to resize it.</value></data>
+  <data name="TplCanvasHint" xml:space="preserve"><value>Select an object; drag its handle to move or resize it. Objects snap to guides; use arrow keys for fine movement.</value></data>
   <data name="TplMoveObject" xml:space="preserve"><value>Move object</value></data>
   <data name="TplResizeObject" xml:space="preserve"><value>Resize object</value></data>
   <data name="TplBringForward" xml:space="preserve"><value>Bring forward</value></data>
@@ -341,4 +341,8 @@
   <data name="TplLayoutImage" xml:space="preserve"><value>Image</value></data>
   <data name="TplLayoutOverflow" xml:space="preserve"><value>Some content extends outside its box or page. Adjust the layout before printing.</value></data>
   <data name="OutputCanvasMargins" xml:space="preserve"><value>Canvas templates use their saved positions; print margins do not move them.</value></data>
+  <data name="OutputLayoutWarning" xml:space="preserve"><value>Some text overlaps or extends outside its box or the page. Review the template before printing.</value></data>
+  <data name="OutputLayoutCheckFailed" xml:space="preserve"><value>Could not check the page layout. Review the preview carefully before printing.</value></data>
+  <data name="TplImageLimit" xml:space="preserve"><value>Choose an image no larger than 4 MB.</value></data>
+  <data name="TplImagesTotalLimit" xml:space="preserve"><value>The combined image data exceeds the 16 MB limit. Remove images or choose smaller files.</value></data>
 </root>
