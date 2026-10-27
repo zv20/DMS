@@ -127,12 +127,13 @@ public static class MenuOutputService
         };
         pdf.Click += async (_, _) =>
         {
-            if (!ready) return;
+            if (!ready || weekBox.SelectedItem is not ComboBoxItem { Tag: DateTime selectedWeek }) return;
+            SetReady(false);
+            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = false;
             try
             {
-                var file = await PickAsync("PDF", ".pdf");
+                var file = await PickAsync("PDF", ".pdf", selectedWeek);
                 if (file == null) return;
-                SetReady(false);
                 var settings = view.CoreWebView2.Environment.CreatePrintSettings();
                 settings.PageWidth = 210.0 / 25.4;
                 settings.PageHeight = 297.0 / 25.4;
@@ -143,11 +144,13 @@ public static class MenuOutputService
                 status.Text = Localization.Get(success ? "OutputPdfSaved" : "OutputPdfFailed");
             }
             catch (Exception ex) { status.Text = ex.Message; }
-            finally { SetReady(true); }
+            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = true; SetReady(true); }
         };
         png.Click += async (_, _) =>
         {
-            if (!ready) return;
+            if (!ready || weekBox.SelectedItem is not ComboBoxItem { Tag: DateTime selectedWeek }) return;
+            SetReady(false);
+            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = false;
             try
             {
                 // CapturePreview captures the viewport. Refuse cropped output for an overflowing document.
@@ -157,9 +160,8 @@ public static class MenuOutputService
                     status.Text = Localization.Get("OutputImageOverflow");
                     return;
                 }
-                var file = await PickAsync("PNG", ".png");
+                var file = await PickAsync("PNG", ".png", selectedWeek);
                 if (file == null) return;
-                SetReady(false);
                 using var image = new InMemoryRandomAccessStream();
                 await view.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, image);
                 image.Seek(0);
@@ -170,7 +172,7 @@ public static class MenuOutputService
                 status.Text = Localization.Get("OutputImageSaved");
             }
             catch (Exception ex) { status.Text = ex.Message; }
-            finally { SetReady(true); }
+            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = true; SetReady(true); }
         };
         try { await dialog.ShowAsync(); }
         finally
@@ -180,9 +182,12 @@ public static class MenuOutputService
         }
     }
 
-    private static async Task<StorageFile?> PickAsync(string type, string extension)
+    private static async Task<StorageFile?> PickAsync(string type, string extension, DateTime selectedWeek)
     {
-        var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = "DMS-Menu" };
+        var start = Monday(selectedWeek);
+        var end = start.AddDays(4);
+        var filename = $"DMS-Menu-{start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}-to-{end.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+        var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = filename };
         picker.FileTypeChoices.Add(type, new[] { extension });
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
         return await picker.PickSaveFileAsync();
