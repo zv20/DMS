@@ -6,6 +6,7 @@ using DMS.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Web.WebView2.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -41,7 +42,9 @@ public static class MenuOutputService
         weekBox.SelectedIndex = Math.Max(0, weeks.IndexOf(Monday(preferredDate)));
         var templateBox = new ComboBox { Header = Localization.Get("OutputTemplate"), ItemsSource = templates, DisplayMemberPath = "Name", SelectedIndex = 0, MinWidth = 200 };
         var margins = new ComboBox { Header = Localization.Get("OutputMargins"), ItemsSource = new[] { "5 mm", "10 mm", "15 mm" }, SelectedIndex = 1, MinWidth = 95 };
-        var view = new WebView2 { Width = 794, Height = 1123, HorizontalAlignment = HorizontalAlignment.Left };
+        // Keep the document's A4-sized viewport fixed so PDF and PNG output are not
+        // affected by the size of the preview shown inside the dialog.
+        var view = new WebView2 { Width = 794, Height = 1123 };
         var status = new TextBlock { TextWrapping = TextWrapping.Wrap };
         var print = new Button { Content = Localization.Get("OutputPrint"), IsEnabled = false };
         var pdf = new Button { Content = Localization.Get("OutputSavePdf"), IsEnabled = false };
@@ -50,11 +53,35 @@ public static class MenuOutputService
         options.Children.Add(weekBox); options.Children.Add(templateBox); options.Children.Add(margins);
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         actions.Children.Add(print); actions.Children.Add(pdf); actions.Children.Add(png);
-        var panel = new StackPanel { Spacing = 10, Width = Math.Max(350, Math.Min(root.Size.Width - 80, 850)) };
-        panel.Children.Add(options); panel.Children.Add(actions); panel.Children.Add(status);
-        panel.Children.Add(new ScrollViewer { Content = view, Height = 560, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        var panel = new Grid { RowSpacing = 10 };
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        var optionScroll = new ScrollViewer { Content = options, HorizontalScrollMode = ScrollMode.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollMode = ScrollMode.Disabled };
+        var actionScroll = new ScrollViewer { Content = actions, HorizontalScrollMode = ScrollMode.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollMode = ScrollMode.Disabled };
+        var pagePreview = new Viewbox { Child = view, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        var previewArea = new Grid { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+        previewArea.Children.Add(pagePreview);
+        Grid.SetRow(optionScroll, 0); Grid.SetRow(actionScroll, 1); Grid.SetRow(status, 2); Grid.SetRow(previewArea, 3);
+        panel.Children.Add(optionScroll); panel.Children.Add(actionScroll); panel.Children.Add(status); panel.Children.Add(previewArea);
         var dialog = new ContentDialog { XamlRoot = root, Title = Localization.Get("OutputPreviewExport"),
-            Content = panel, CloseButtonText = Localization.Get("OutputClose"), MaxWidth = 950 };
+            Content = panel, CloseButtonText = Localization.Get("OutputClose"), MaxWidth = 1100 };
+        dialog.Resources["ContentDialogMaxWidth"] = 1100.0;
+        void ResizeDialog()
+        {
+            var width = Math.Max(0, Math.Min(root.Size.Width - 40, 1040));
+            dialog.Width = width;
+            var actualDialogWidth = dialog.ActualWidth > 0 ? Math.Min(width, dialog.ActualWidth) : width;
+            panel.Width = Math.Max(0, actualDialogWidth - 64);
+            // Leave space for the dialog title, action button and margins.
+            panel.Height = Math.Max(160, Math.Min(root.Size.Height - 200, 850));
+        }
+        Windows.Foundation.TypedEventHandler<XamlRoot, XamlRootChangedEventArgs> rootChanged = (_, _) => ResizeDialog();
+        dialog.SizeChanged += (_, args) => panel.Width = Math.Max(0, args.NewSize.Width - 64);
+        root.Changed += rootChanged;
+        ResizeDialog();
         bool ready = false;
         void SetReady(bool value) { ready = value; print.IsEnabled = pdf.IsEnabled = png.IsEnabled = value; }
         void Refresh()
@@ -145,8 +172,12 @@ public static class MenuOutputService
             catch (Exception ex) { status.Text = ex.Message; }
             finally { SetReady(true); }
         };
-        await dialog.ShowAsync();
-        view.Close();
+        try { await dialog.ShowAsync(); }
+        finally
+        {
+            root.Changed -= rootChanged;
+            view.Close();
+        }
     }
 
     private static async Task<StorageFile?> PickAsync(string type, string extension)
