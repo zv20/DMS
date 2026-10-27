@@ -309,4 +309,5 @@
   <data name="RecipeCloseEditor" xml:space="preserve"><value>Затвори редактора на рецепта</value></data>
   <data name="SideEditorClose" xml:space="preserve"><value>Затвори редактора</value></data>
   <data name="SideEditorDiscardMessage" xml:space="preserve"><value>Имате незапазени промени. Да бъдат ли отхвърлени?</value></data>
+  <data name="RecipeRemoveIngredient" xml:space="preserve"><value>Премахни съставката: {0}</value></data>
 </root>

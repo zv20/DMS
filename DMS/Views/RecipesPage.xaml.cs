@@ -251,7 +251,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var instructionsBox = new TextBox { Header = L.Get("Text_Instructions_ed58f2"), Text = recipe.Instructions, PlaceholderText = L.Get("Text_Cooking_steps_c3f1dd"), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         panel.Children.Add(instructionsBox);
 
-        // Ingredients: searchable dropdown plus removable selected list.
+        // Ingredients: searchable dropdown plus removable wrapping chips.
         var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
         var ingredientByName = availableIngredients.ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
         var inheritedAllergens = selectedIngredients
@@ -279,7 +279,33 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var ingredientsLabel = new TextBlock { Text = L.Get("Text_Ingredients_f9e84e"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
         var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
-        var ingredientList = new ListView { ItemsSource = selectedIngredients, IsItemClickEnabled = true, MaxHeight = 90 };
+        var ingredientChips = new IngredientWrapPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        void AddIngredientChip(string name)
+        {
+            var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 260 };
+            var remove = new TextBlock { Text = "✕", Opacity = 0, VerticalAlignment = VerticalAlignment.Center, FontSize = 11 };
+            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7 };
+            content.Children.Add(label);
+            content.Children.Add(remove);
+            var chip = new Button { Content = content, CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
+            var description = L.Format("RecipeRemoveIngredient", name);
+            ToolTipService.SetToolTip(chip, description);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, description);
+            bool hovering = false;
+            void UpdateRemoveIndicator() => remove.Opacity = hovering || chip.FocusState != FocusState.Unfocused ? 1 : 0;
+            chip.PointerEntered += (_, _) => { hovering = true; UpdateRemoveIndicator(); };
+            chip.PointerExited += (_, _) => { hovering = false; UpdateRemoveIndicator(); };
+            chip.GotFocus += (_, _) => UpdateRemoveIndicator();
+            chip.LostFocus += (_, _) => UpdateRemoveIndicator();
+            chip.Click += (_, _) =>
+            {
+                selectedIngredients.Remove(name);
+                ingredientChips.Children.Remove(chip);
+                RebuildAllergensFromIngredients();
+            };
+            ingredientChips.Children.Add(chip);
+        }
+        foreach (var ingredientName in selectedIngredients) AddIngredientChip(ingredientName);
         ingredientSearch.TextChanged += (sender, args) =>
         {
             var query = ingredientSearch.Text.Trim();
@@ -293,20 +319,13 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             if (args.SelectedItem is string name && !selectedIngredients.Contains(name))
             {
                 selectedIngredients.Add(name);
+                AddIngredientChip(name);
                 RebuildAllergensFromIngredients();
             }
             ingredientSearch.Text = string.Empty;
         };
-        ingredientList.ItemClick += (sender, args) =>
-        {
-            if (args.ClickedItem is string name)
-            {
-                selectedIngredients.Remove(name);
-                RebuildAllergensFromIngredients();
-            }
-        };
         panel.Children.Add(ingredientSearch);
-        panel.Children.Add(ingredientList);
+        panel.Children.Add(ingredientChips);
 
         // Allergens: searchable dropdown plus removable selected list.
         var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
