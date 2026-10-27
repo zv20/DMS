@@ -186,7 +186,7 @@ public static class MenuOutputService
     {
         var start = Monday(selectedWeek);
         var end = start.AddDays(4);
-        var filename = $"DMS-Menu-{start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}-to-{end.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+        var filename = $"{start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} - {end.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
         var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = filename };
         picker.FileTypeChoices.Add(type, new[] { extension });
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
