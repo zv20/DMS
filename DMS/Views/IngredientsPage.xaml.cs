@@ -189,7 +189,17 @@ public class IngredientItemViewModel
     public string Name { get; set; } = "";
     public List<string> Allergens { get; set; } = new();
 
-    public string AllergensDisplay => Allergens.Count > 0 ? $"⚠️ {string.Join(", ", Allergens)}" : "No allergens";
+    public string AllergensDisplay => Allergens.Count > 0
+        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {allergen}"))
+        : "No allergens";
+
+    private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
+    {
+        "глутен" => "🌾", "ракообразни" => "🦐", "яйца" => "🥚", "риба" => "🐟",
+        "фъстъци" => "🥜", "соя" => "🫛", "мляко" => "🥛", "ядки" => "🌰",
+        "целина" => "🥬", "горчица" => "🟡", "сусам" => "🌾",
+        "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
+    };
 
     public IngredientItemViewModel() { }
 

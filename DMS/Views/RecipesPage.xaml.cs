@@ -301,7 +301,15 @@ public class RecipeItemViewModel : INotifyPropertyChanged
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
-    public string AllergensDisplay => Allergens.Count > 0 ? $"⚠️ {string.Join(", ", Allergens)}" : "";
+    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {allergen}"));
+
+    private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
+    {
+        "глутен" => "🌾", "ракообразни" => "🦐", "яйца" => "🥚", "риба" => "🐟",
+        "фъстъци" => "🥜", "соя" => "🫛", "мляко" => "🥛", "ядки" => "🌰",
+        "целина" => "🥬", "горчица" => "🟡", "сусам" => "🌾",
+        "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
+    };
 
     public RecipeItemViewModel() { }
 

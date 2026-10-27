@@ -32,11 +32,11 @@
                     <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="12,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="18" />
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="16" />
                                 <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="{x:Bind Category}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="14" />
-                                    <TextBlock Text="{x:Bind PortionDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="14" />
-                                    <TextBlock Text="{x:Bind CaloriesDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="14" />
+                                    <TextBlock Text="{x:Bind Category}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                                    <TextBlock Text="{x:Bind PortionDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                                    <TextBlock Text="{x:Bind CaloriesDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                                 </StackPanel>
                                 <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" />
                             </StackPanel>

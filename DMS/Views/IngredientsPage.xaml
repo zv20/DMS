@@ -32,8 +32,8 @@
                     <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="12,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="18" />
-                                <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="14" />
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="16" />
+                                <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="1" VerticalAlignment="Center">
                                 <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditIngredientButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" />
