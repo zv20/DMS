@@ -321,4 +321,9 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
+  <data name="TplBold" xml:space="preserve"><value>Получер</value></data>
+  <data name="TplItalic" xml:space="preserve"><value>Курсив</value></data>
+  <data name="TplUnderline" xml:space="preserve"><value>Подчертаване</value></data>
+  <data name="TplPageOptions" xml:space="preserve"><value>Настройки на страницата и шаблона</value></data>
+  <data name="TplVisibilityOptions" xml:space="preserve"><value>Показване или скриване на подробности за менюто</value></data>
 </root>

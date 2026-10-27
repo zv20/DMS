@@ -45,25 +45,27 @@ public sealed partial class TemplateBuilderPage : Page
 
     private void ConfigureControls()
     {
-        NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave"); DeleteButton.Content = L.Get("TplDelete");
-        TemplateSelector.PlaceholderText = L.Get("TplSelect"); NameBox.Header = L.Get("TplName");
+        TemplateSelector.PlaceholderText = L.Get("TplSelect"); NameBox.PlaceholderText = L.Get("TplName");
         HeaderBox.PlaceholderText = L.Get("TplHeader"); FooterBox.PlaceholderText = L.Get("TplFooter");
         FontBox.Header = L.Get("TplFont"); LayoutBox.Header = L.Get("TplLayout");
         HeaderAlignmentBox.Header = L.Get("TplHeaderAlignment"); FooterAlignmentBox.Header = L.Get("TplFooterAlignment");
         HeaderSizeBox.Header = L.Get("TplHeaderSize"); MealSizeBox.Header = L.Get("TplMealSize"); FooterSizeBox.Header = L.Get("TplFooterSize");
         HeaderColorBox.Header = L.Get("TplHeaderColor"); BackgroundColorBox.Header = L.Get("TplBackgroundColor");
-        ImageButton.Content = L.Get("TplImage"); ClearImageButton.Content = L.Get("TplImageClear"); ImageOpacitySlider.Header = L.Get("TplOpacity");
+        ImageOpacitySlider.Header = L.Get("TplOpacity");
         ShowHeaderBox.Content = L.Get("TplShowHeader"); ShowDateBox.Content = L.Get("TplShowDate");
         ShowIngredientsBox.Content = L.Get("TplShowIngredients"); ShowCaloriesBox.Content = L.Get("TplShowCalories");
         ShowPortionsBox.Content = L.Get("TplShowPortions"); ShowFooterBox.Content = L.Get("TplShowFooter");
-        PreviewDate.Header = L.Get("TplPreview"); LegacyNote.Text = L.Get("TplLegacy");
-        SelectedFontBox.Header = L.Get("TplFont"); SelectedSizeBox.Header = L.Get("TplSelectedSize"); SelectedColorBox.Header = L.Get("TplSelectedColor");
+        LegacyNote.Text = L.Get("TplLegacy");
         SelectedElementLabel.Text = L.Get("TplSelectElement");
+        NameTool(NewButton, "TplNew"); NameTool(SaveButton, "TplSave"); NameTool(DeleteButton, "TplDelete");
+        NameTool(TemplateSelector, "TplSelect"); NameTool(NameBox, "TplName"); NameTool(PreviewDate, "TplPreview");
+        NameTool(SelectedFontBox, "TplFont"); NameTool(SelectedSizeBox, "TplSelectedSize"); NameTool(SelectedColorBox, "TplSelectedColor");
+        NameTool(SelectedBoldButton, "TplBold"); NameTool(SelectedItalicButton, "TplItalic"); NameTool(SelectedUnderlineButton, "TplUnderline");
+        NameTool(ImageButton, "TplImage"); NameTool(ClearImageButton, "TplImageClear");
+        NameTool(PageOptionsButton, "TplPageOptions"); NameTool(VisibilityButton, "TplVisibilityOptions");
         ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
         ToolTipService.SetToolTip(FooterDisplayButton, L.Get("TplEditFooter"));
-        ToolTipService.SetToolTip(HeaderBoldButton, L.Get("TplHeaderBold"));
-        ToolTipService.SetToolTip(HeaderItalicButton, L.Get("TplHeaderItalic"));
-        ToolTipService.SetToolTip(HeaderUnderlineButton, L.Get("TplHeaderUnderline"));
+        NameTool(HeaderBoldButton, "TplHeaderBold"); NameTool(HeaderItalicButton, "TplHeaderItalic"); NameTool(HeaderUnderlineButton, "TplHeaderUnderline");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(HeaderDisplayButton, L.Get("TplEditHeader"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FooterDisplayButton, L.Get("TplEditFooter"));
         foreach (var alignment in new[] { "TplLeft", "TplCenter", "TplRight" }) { HeaderAlignmentBox.Items.Add(L.Get(alignment)); FooterAlignmentBox.Items.Add(L.Get(alignment)); }
@@ -87,6 +89,13 @@ public sealed partial class TemplateBuilderPage : Page
         }
         ImageOpacitySlider.ValueChanged += (_, _) => OnEdited();
         PreviewDate.Date = DateTimeOffset.Now;
+    }
+
+    private static void NameTool(FrameworkElement element, string resourceKey)
+    {
+        var label = L.Get(resourceKey);
+        ToolTipService.SetToolTip(element, label);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(element, label);
     }
 
     private async Task LoadAsync()
