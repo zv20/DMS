@@ -10,6 +10,24 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void MenuOutputUsesSavedElementStylesAndRejectsUnsafeCss()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { TemplateStyle = "detailed" };
+        template.TextStyles["meal:0:2"] = new TemplateTextStyle { FontFamily = "Georgia", FontSize = 18, Color = "#123456", Bold = true };
+        template.TextStyles["ingredients:0:2"] = new TemplateTextStyle { FontFamily = "evil');bad", Color = "red;bad", FontSize = 12 };
+        var recipes = new List<Recipe> { new() { Id = 7, Name = "Stew", Ingredients = ["Beans"] } };
+        var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot2", RecipeId = 7 } };
+        var restored = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(System.Text.Json.JsonSerializer.Serialize(template))!;
+        var html = MenuOutputService.BuildHtml(restored, monday, entries, recipes);
+        Assert.Contains("font-family:'Georgia';font-size:18px;color:#123456;font-weight:bold", html);
+        Assert.Contains("font-family:'Arial';font-size:12px;color:#000000", html);
+        Assert.Contains("2. Stew", html);
+        Assert.DoesNotContain("evil');bad", html);
+        Assert.DoesNotContain("red;bad", html);
+    }
+
+    [Fact]
     public void MenuOutputUsesSavedWeekAndEscapesUserContent()
     {
         var monday = new DateTime(2026, 10, 26);

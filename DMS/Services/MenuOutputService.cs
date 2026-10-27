@@ -243,6 +243,12 @@ public static class MenuOutputService
         static string Size(double value, double fallback) => (double.IsFinite(value) ? Math.Clamp(value, 6, 72) : fallback).ToString(CultureInfo.InvariantCulture);
         var fonts = new[] { "Arial", "Times New Roman", "Georgia", "Comic Sans MS", "Verdana", "Courier New", "Trebuchet MS", "Tahoma" };
         var font = fonts.Contains(template.FontFamily, StringComparer.OrdinalIgnoreCase) ? template.FontFamily : "Arial";
+        string TextStyle(string key)
+        {
+            if (template.TextStyles == null || !template.TextStyles.TryGetValue(key, out var style) || style == null) return "";
+            var family = fonts.Contains(style.FontFamily, StringComparer.OrdinalIgnoreCase) ? style.FontFamily : "Arial";
+            return $"font-family:'{H(family)}';font-size:{Size(style.FontSize, 11)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}";
+        }
         var background = Color(template.BackgroundColor, "#ffffff");
         var headerColor = Color(template.HeaderColor, "#D2691E");
         var margin = Math.Clamp(marginMm, 0, 25).ToString(CultureInfo.InvariantCulture);
@@ -254,8 +260,8 @@ public static class MenuOutputService
         sb.Append("</style></head><body><main>");
         if (validImage) sb.Append("<div class='background' style=\"background-image:url('").Append(H(image)).Append("');opacity:").Append((double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1).ToString(CultureInfo.InvariantCulture)).Append("\"></div>");
         sb.Append("<div class='content'>");
-        if (template.ShowHeader) sb.Append("<h1 style='text-align:").Append(Align(template.HeaderAlignment)).Append(";color:").Append(headerColor).Append(";font-size:").Append(Size(template.HeaderFontSize,24)).Append("px;font-weight:").Append(template.HeaderBold ? "bold" : "normal").Append(";font-style:").Append(template.HeaderItalic ? "italic" : "normal").Append(";text-decoration:").Append(template.HeaderUnderline ? "underline" : "none").Append("'>").Append(H(template.HeaderText)).Append("</h1>");
-        if (template.ShowDateRange) sb.Append("<div style='text-align:center'>").Append(H($"{week:d} – {week.AddDays(4):d}")).Append("</div>");
+        if (template.ShowHeader) sb.Append("<h1 style=\"text-align:").Append(Align(template.HeaderAlignment)).Append(";color:").Append(headerColor).Append(";font-size:").Append(Size(template.HeaderFontSize,24)).Append("px;font-weight:").Append(template.HeaderBold ? "bold" : "normal").Append(";font-style:").Append(template.HeaderItalic ? "italic" : "normal").Append(";text-decoration:").Append(template.HeaderUnderline ? "underline" : "none").Append(';').Append(TextStyle("header")).Append("\">").Append(H(template.HeaderText)).Append("</h1>");
+        if (template.ShowDateRange) sb.Append("<div style=\"text-align:center;").Append(TextStyle("date")).Append("\">").Append(H($"{week:d} – {week.AddDays(4):d}")).Append("</div>");
         sb.Append("<div style='font-size:").Append(Size(template.MealFontSize, 11)).Append("px' class='").Append(template.TemplateStyle == "detailed-2col" ? "columns" : "").Append("'>");
         var byId = recipes.ToDictionary(r => r.Id);
         var ingredientByName = (ingredients ?? Array.Empty<Ingredient>()).GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
@@ -265,20 +271,21 @@ public static class MenuOutputService
             var day = week.Date.AddDays(i);
             var dayEntries = entries.Where(e => e.Date.Date == day && byId.ContainsKey(e.RecipeId)).OrderBy(e => SlotOrder(e.Slot)).ToList();
             if (dayEntries.Count == 0) continue;
-            sb.Append("<section><h2>").Append(H(day.ToString("dddd, d MMMM"))).Append("</h2>");
+            sb.Append("<section><h2 style=\"").Append(TextStyle($"day:{i}")).Append("\">").Append(H(day.ToString("dddd, d MMMM"))).Append("</h2>");
             foreach (var entry in dayEntries)
             {
                 var recipe = byId[entry.RecipeId];
-                sb.Append("<div class='meal'>").Append(H(Localization.Category(recipe.Category))).Append(": ").Append(H(recipe.Name));
+                var slot = SlotOrder(entry.Slot);
+                sb.Append("<div class='meal'><span style=\"").Append(TextStyle($"meal:{i}:{slot}")).Append("\">").Append(slot).Append(". ").Append(H(recipe.Name)).Append("</span>");
                 if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) sb.Append(" <span class='detail'>").Append(H(recipe.PortionSize)).Append("</span>");
                 if (template.TemplateStyle != "compact")
                 {
-                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='detail'>").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
+                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='detail' style=\"").Append(TextStyle($"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
                     if (template.ShowCalories && recipe.Calories > 0) sb.Append("<div class='detail'>").Append(recipe.Calories).Append(" kcal</div>");
                 }
                 else
                 {
-                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append(" <span class='detail'>").Append(H(string.Join(", ", recipe.Ingredients))).Append("</span>");
+                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append(" <span class='detail' style=\"").Append(TextStyle($"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</span>");
                     if (template.ShowCalories && recipe.Calories > 0) sb.Append(" <span class='detail'>").Append(recipe.Calories).Append(" kcal</span>");
                 }
                 // The old model flattened inherited and manual allergens. Retain those values and
@@ -286,17 +293,17 @@ public static class MenuOutputService
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name =>
                     ingredientByName.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                if (allergens.Count > 0) sb.Append("<div class='detail'>⚠ ").Append(H(string.Join(", ", allergens.Select(Localization.Allergen)))).Append("</div>");
+                if (allergens.Count > 0) sb.Append("<div class='detail' style=\"").Append(TextStyle($"allergens:{i}:{slot}")).Append("\">⚠ ").Append(H(string.Join(", ", allergens.Select(Localization.Allergen)))).Append("</div>");
                 sb.Append("</div>");
             }
             sb.Append("</section>");
         }
         sb.Append("</div>");
-        if (template.ShowFooter) sb.Append("<footer style='text-align:").Append(Align(template.FooterAlignment)).Append(";font-size:").Append(Size(template.FooterFontSize,9)).Append("px'>").Append(H(template.FooterText)).Append("</footer>");
+        if (template.ShowFooter) sb.Append("<footer style=\"text-align:").Append(Align(template.FooterAlignment)).Append(";font-size:").Append(Size(template.FooterFontSize,9)).Append("px;").Append(TextStyle("footer")).Append("\">").Append(H(template.FooterText)).Append("</footer>");
         return sb.Append("</div></main></body></html>").ToString();
     }
 
-    private static int SlotOrder(string slot) => slot.ToLowerInvariant() switch
+    public static int SlotOrder(string slot) => slot.ToLowerInvariant() switch
     {
         "slot1" or "soup" or "breakfast" => 1,
         "slot2" or "main" or "lunch" => 2,

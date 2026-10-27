@@ -317,4 +317,8 @@
   <data name="TplHeaderBold" xml:space="preserve"><value>Получерно заглавие</value></data>
   <data name="TplHeaderItalic" xml:space="preserve"><value>Заглавие в курсив</value></data>
   <data name="TplHeaderUnderline" xml:space="preserve"><value>Подчертано заглавие</value></data>
+  <data name="TplSelectElement" xml:space="preserve"><value>Изберете текст на страницата</value></data>
+  <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
+  <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
+  <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
 </root>

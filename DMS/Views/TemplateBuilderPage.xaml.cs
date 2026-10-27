@@ -29,6 +29,8 @@ public sealed partial class TemplateBuilderPage : Page
     private string? _previewImageRequest;
     private bool _editingHeader;
     private bool _editingFooter;
+    private string? _selectedElement;
+    private bool _bindingSelection;
     private static readonly string[] Alignments = ["left", "center", "right"];
     private static readonly string[] Layouts = ["compact", "detailed", "detailed-2col"];
     private static readonly string[] Fonts = ["Arial", "Times New Roman", "Georgia", "Comic Sans MS", "Verdana", "Courier New", "Trebuchet MS", "Tahoma"];
@@ -55,6 +57,8 @@ public sealed partial class TemplateBuilderPage : Page
         ShowIngredientsBox.Content = L.Get("TplShowIngredients"); ShowCaloriesBox.Content = L.Get("TplShowCalories");
         ShowPortionsBox.Content = L.Get("TplShowPortions"); ShowFooterBox.Content = L.Get("TplShowFooter");
         PreviewDate.Header = L.Get("TplPreview"); LegacyNote.Text = L.Get("TplLegacy");
+        SelectedFontBox.Header = L.Get("TplFont"); SelectedSizeBox.Header = L.Get("TplSelectedSize"); SelectedColorBox.Header = L.Get("TplSelectedColor");
+        SelectedElementLabel.Text = L.Get("TplSelectElement");
         ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
         ToolTipService.SetToolTip(FooterDisplayButton, L.Get("TplEditFooter"));
         ToolTipService.SetToolTip(HeaderBoldButton, L.Get("TplHeaderBold"));
@@ -64,7 +68,15 @@ public sealed partial class TemplateBuilderPage : Page
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FooterDisplayButton, L.Get("TplEditFooter"));
         foreach (var alignment in new[] { "TplLeft", "TplCenter", "TplRight" }) { HeaderAlignmentBox.Items.Add(L.Get(alignment)); FooterAlignmentBox.Items.Add(L.Get(alignment)); }
         foreach (var layout in new[] { "TplCompact", "TplDetailed", "TplTwoColumns" }) LayoutBox.Items.Add(L.Get(layout));
-        foreach (var font in Fonts) FontBox.Items.Add(font);
+        foreach (var font in Fonts) { FontBox.Items.Add(font); SelectedFontBox.Items.Add(font); }
+        SelectedFontBox.SelectionChanged += (_, _) => SelectedStyleChanged();
+        SelectedSizeBox.ValueChanged += (_, _) => SelectedStyleChanged();
+        SelectedColorBox.TextChanged += (_, _) => SelectedStyleChanged();
+        foreach (var toggle in new[] { SelectedBoldButton, SelectedItalicButton, SelectedUnderlineButton })
+        {
+            toggle.Checked += (_, _) => SelectedStyleChanged();
+            toggle.Unchecked += (_, _) => SelectedStyleChanged();
+        }
         foreach (var box in new[] { NameBox, HeaderBox, FooterBox, HeaderColorBox, BackgroundColorBox }) box.TextChanged += (_, _) => OnEdited();
         foreach (var box in new[] { HeaderAlignmentBox, FooterAlignmentBox, LayoutBox, FontBox }) box.SelectionChanged += (_, _) => OnEdited();
         foreach (var box in new[] { HeaderSizeBox, MealSizeBox, FooterSizeBox }) box.ValueChanged += (_, _) => OnEdited();
@@ -95,7 +107,9 @@ public sealed partial class TemplateBuilderPage : Page
     {
         _binding = true;
         _editingHeader = _editingFooter = false;
+        _selectedElement = null;
         _template = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(template)) ?? new MenuTemplate();
+        _template.TextStyles ??= new();
         _loadedName = originalName;
         TemplateCompatibility.ApplyLegacyDefaults(_template);
         NameBox.Text = _template.Name; HeaderBox.Text = _template.HeaderText; FooterBox.Text = _template.FooterText;
@@ -112,7 +126,65 @@ public sealed partial class TemplateBuilderPage : Page
         LegacyNote.Visibility = _template.LegacyDataJson == null ? Visibility.Collapsed : Visibility.Visible;
         StatusText.Text = "";
         _binding = false;
+        SelectElement(null);
         UpdatePreview();
+    }
+
+    private TemplateTextStyle StyleFor(string key, double size, bool bold = false)
+    {
+        if (_template.TextStyles.TryGetValue(key, out var style) && style != null) return style;
+        return key switch
+        {
+            "header" => new TemplateTextStyle { FontFamily = _template.FontFamily, FontSize = _template.HeaderFontSize, Color = _template.HeaderColor, Bold = _template.HeaderBold, Italic = _template.HeaderItalic, Underline = _template.HeaderUnderline },
+            "footer" => new TemplateTextStyle { FontFamily = _template.FontFamily, FontSize = _template.FooterFontSize },
+            _ => new TemplateTextStyle { FontFamily = _template.FontFamily, FontSize = size, Bold = bold }
+        };
+    }
+
+    private void SelectElement(string? key)
+    {
+        _selectedElement = key;
+        _bindingSelection = true;
+        var enabled = key != null;
+        SelectedFontBox.IsEnabled = SelectedSizeBox.IsEnabled = SelectedColorBox.IsEnabled = enabled;
+        SelectedBoldButton.IsEnabled = SelectedItalicButton.IsEnabled = SelectedUnderlineButton.IsEnabled = enabled;
+        SelectedElementLabel.Text = enabled ? L.Get("TplSelectedElement") : L.Get("TplSelectElement");
+        if (key != null)
+        {
+            var style = StyleFor(key, key.StartsWith("day") ? 15 : key == "date" ? 14 : _template.MealFontSize, key.StartsWith("day"));
+            SelectedFontBox.SelectedIndex = Math.Max(0, Array.FindIndex(Fonts, f => string.Equals(f, style.FontFamily, StringComparison.OrdinalIgnoreCase)));
+            SelectedSizeBox.Value = style.FontSize;
+            SelectedColorBox.Text = style.Color;
+            SelectedBoldButton.IsChecked = style.Bold; SelectedItalicButton.IsChecked = style.Italic; SelectedUnderlineButton.IsChecked = style.Underline;
+        }
+        _bindingSelection = false;
+        UpdatePreview();
+    }
+
+    private void SelectedStyleChanged()
+    {
+        if (_binding || _bindingSelection || _selectedElement == null) return;
+        var style = StyleFor(_selectedElement, _template.MealFontSize);
+        style.FontFamily = SelectedFontBox.SelectedItem as string ?? Fonts[0];
+        style.FontSize = SafeNumber(SelectedSizeBox.Value, 11);
+        if (IsColor(SelectedColorBox.Text)) style.Color = SelectedColorBox.Text;
+        style.Bold = SelectedBoldButton.IsChecked == true; style.Italic = SelectedItalicButton.IsChecked == true; style.Underline = SelectedUnderlineButton.IsChecked == true;
+        _template.TextStyles[_selectedElement] = style;
+        UpdatePreview();
+    }
+
+    private Button SelectableText(string key, string text, double size, bool bold = false)
+    {
+        var style = StyleFor(key, size, bold);
+        var label = new TextBlock { Text = text, FontFamily = new FontFamily(style.FontFamily), FontSize = style.FontSize,
+            Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal,
+            FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
+            TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, TextWrapping = TextWrapping.Wrap };
+        var button = new Button { Content = label, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(2), BorderThickness = new Thickness(_selectedElement == key ? 1 : 0),
+            BorderBrush = new SolidColorBrush(Colors.DodgerBlue) };
+        button.Click += (_, _) => SelectElement(key);
+        return button;
     }
 
     private void OnEdited()
@@ -173,27 +245,31 @@ public sealed partial class TemplateBuilderPage : Page
             _ = UpdateImageAsync(_previewImageRequest);
         }
         PreviewPanel.Children.Clear();
-        var font = new FontFamily(_template.FontFamily);
         HeaderDisplay.Text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
-        HeaderDisplay.FontFamily = HeaderBox.FontFamily = font;
-        HeaderDisplay.FontSize = HeaderBox.FontSize = _template.HeaderFontSize;
-        HeaderDisplay.FontWeight = HeaderBox.FontWeight = _template.HeaderBold ? FontWeights.Bold : FontWeights.Normal;
-        HeaderDisplay.FontStyle = HeaderBox.FontStyle = _template.HeaderItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
-        HeaderDisplay.TextDecorations = _template.HeaderUnderline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None;
-        HeaderDisplay.Foreground = HeaderBox.Foreground = new SolidColorBrush(ParseColor(_template.HeaderColor, Colors.Black));
+        var headerStyle = StyleFor("header", _template.HeaderFontSize);
+        HeaderDisplay.FontFamily = HeaderBox.FontFamily = new FontFamily(headerStyle.FontFamily);
+        HeaderDisplay.FontSize = HeaderBox.FontSize = headerStyle.FontSize;
+        HeaderDisplay.FontWeight = HeaderBox.FontWeight = headerStyle.Bold ? FontWeights.Bold : FontWeights.Normal;
+        HeaderDisplay.FontStyle = HeaderBox.FontStyle = headerStyle.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
+        HeaderDisplay.TextDecorations = headerStyle.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None;
+        HeaderDisplay.Foreground = HeaderBox.Foreground = new SolidColorBrush(ParseColor(headerStyle.Color, Colors.Black));
         HeaderDisplay.TextAlignment = HeaderBox.TextAlignment = TextAlignmentFor(_template.HeaderAlignment);
         HeaderDisplayButton.Visibility = _template.ShowHeader && !_editingHeader ? Visibility.Visible : Visibility.Collapsed;
         HeaderBox.Visibility = _template.ShowHeader && _editingHeader ? Visibility.Visible : Visibility.Collapsed;
         FooterDisplay.Text = string.IsNullOrEmpty(_template.FooterText) ? L.Get("TplEditFooter") : _template.FooterText;
-        FooterDisplay.FontFamily = FooterBox.FontFamily = font;
-        FooterDisplay.FontSize = FooterBox.FontSize = _template.FooterFontSize;
-        FooterDisplay.Foreground = FooterBox.Foreground = new SolidColorBrush(Colors.Black);
+        var footerStyle = StyleFor("footer", _template.FooterFontSize);
+        FooterDisplay.FontFamily = FooterBox.FontFamily = new FontFamily(footerStyle.FontFamily);
+        FooterDisplay.FontSize = FooterBox.FontSize = footerStyle.FontSize;
+        FooterDisplay.FontWeight = FooterBox.FontWeight = footerStyle.Bold ? FontWeights.Bold : FontWeights.Normal;
+        FooterDisplay.FontStyle = FooterBox.FontStyle = footerStyle.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
+        FooterDisplay.TextDecorations = footerStyle.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None;
+        FooterDisplay.Foreground = FooterBox.Foreground = new SolidColorBrush(ParseColor(footerStyle.Color, Colors.Black));
         FooterDisplay.TextAlignment = FooterBox.TextAlignment = TextAlignmentFor(_template.FooterAlignment);
         FooterDisplayButton.Visibility = _template.ShowFooter && !_editingFooter ? Visibility.Visible : Visibility.Collapsed;
         FooterBox.Visibility = _template.ShowFooter && _editingFooter ? Visibility.Visible : Visibility.Collapsed;
         var date = PreviewDate.Date?.DateTime.Date ?? DateTime.Today;
         var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
-        if (_template.ShowDateRange) PreviewPanel.Children.Add(new TextBlock { Text = $"{monday:d} – {monday.AddDays(4):d}", TextAlignment = TextAlignment.Center, Foreground = new SolidColorBrush(Colors.Black) });
+        if (_template.ShowDateRange) PreviewPanel.Children.Add(SelectableText("date", $"{monday:d} – {monday.AddDays(4):d}", 14));
         var days = new Grid { ColumnSpacing = 12, RowSpacing = 12 };
         var columns = _template.TemplateStyle == "detailed-2col" ? 2 : 1;
         for (var column = 0; column < columns; column++) days.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -202,20 +278,22 @@ public sealed partial class TemplateBuilderPage : Page
         {
             var day = monday.AddDays(i);
             var dayPanel = new StackPanel { Spacing = 3 };
-            dayPanel.Children.Add(new TextBlock { Text = day.ToString("dddd, d MMMM"), FontFamily = font, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Colors.Black) });
-            foreach (var entry in _entries.Where(e => e.Date.Date == day).OrderBy(e => e.Slot))
+            dayPanel.Children.Add(SelectableText($"day:{i}", day.ToString("dddd, d MMMM"), 15, true));
+            foreach (var entry in _entries.Where(e => e.Date.Date == day).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
             {
                 var recipe = _recipes.FirstOrDefault(r => r.Id == entry.RecipeId);
                 if (recipe == null) continue;
-                var text = $"{L.Category(recipe.Category)}: {recipe.Name}";
+                var slot = MenuOutputService.SlotOrder(entry.Slot);
+                var text = $"{slot}. {recipe.Name}";
                 if (_template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) text += $" ({recipe.PortionSize})";
                 if (_template.ShowCalories && recipe.Calories > 0) text += $" · {recipe.Calories} kcal";
-                if (_template.ShowIngredients && recipe.Ingredients.Count > 0) text += (_template.TemplateStyle == "compact" ? " · " : "\n") + string.Join(", ", recipe.Ingredients);
-                dayPanel.Children.Add(new TextBlock { Text = text, FontSize = _template.MealFontSize, FontFamily = font, Foreground = new SolidColorBrush(Colors.Black), TextWrapping = TextWrapping.Wrap });
+                dayPanel.Children.Add(SelectableText($"meal:{i}:{slot}", text, _template.MealFontSize));
+                if (_template.ShowIngredients && recipe.Ingredients.Count > 0)
+                    dayPanel.Children.Add(SelectableText($"ingredients:{i}:{slot}", string.Join(", ", recipe.Ingredients), _template.MealFontSize));
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name =>
                     _ingredients.FirstOrDefault(ingredient => string.Equals(ingredient.Name, name, StringComparison.OrdinalIgnoreCase))?.Allergens ?? []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(L.Allergen).ToList();
-                if (allergens.Count > 0) dayPanel.Children.Add(new TextBlock { Text = "⚠ " + string.Join(", ", allergens), FontSize = _template.MealFontSize, FontFamily = font, Foreground = new SolidColorBrush(Colors.Black), TextWrapping = TextWrapping.Wrap });
+                if (allergens.Count > 0) dayPanel.Children.Add(SelectableText($"allergens:{i}:{slot}", "⚠ " + string.Join(", ", allergens), _template.MealFontSize));
             }
             Grid.SetColumn(dayPanel, i % columns); Grid.SetRow(dayPanel, i / columns); days.Children.Add(dayPanel);
         }
@@ -225,6 +303,7 @@ public sealed partial class TemplateBuilderPage : Page
 
     private void HeaderDisplay_Click(object sender, RoutedEventArgs e)
     {
+        SelectElement("header");
         _editingHeader = true;
         UpdatePreview();
         HeaderBox.Focus(FocusState.Programmatic);
@@ -238,6 +317,7 @@ public sealed partial class TemplateBuilderPage : Page
 
     private void FooterDisplay_Click(object sender, RoutedEventArgs e)
     {
+        SelectElement("footer");
         _editingFooter = true;
         UpdatePreview();
         FooterBox.Focus(FocusState.Programmatic);

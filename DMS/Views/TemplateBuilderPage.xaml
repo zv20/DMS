@@ -19,6 +19,13 @@
             <StackPanel Spacing="8">
                 <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                        <TextBlock x:Name="SelectedElementLabel" VerticalAlignment="Bottom" Margin="0,0,8,8" />
+                        <ComboBox x:Name="SelectedFontBox" Width="150" />
+                        <NumberBox x:Name="SelectedSizeBox" Width="110" Minimum="7" Maximum="72" SpinButtonPlacementMode="Compact" />
+                        <TextBox x:Name="SelectedColorBox" Width="110" PlaceholderText="#000000" />
+                        <ToggleButton x:Name="SelectedBoldButton" Content="B" FontWeight="Bold" VerticalAlignment="Bottom" />
+                        <ToggleButton x:Name="SelectedItalicButton" Content="I" FontStyle="Italic" VerticalAlignment="Bottom" />
+                        <ToggleButton x:Name="SelectedUnderlineButton" Content="U" VerticalAlignment="Bottom" />
                         <ComboBox x:Name="FontBox" Width="170" />
                         <NumberBox x:Name="HeaderSizeBox" Width="115" Minimum="8" Maximum="72" SpinButtonPlacementMode="Compact" />
                         <ToggleButton x:Name="HeaderBoldButton" Content="B" FontWeight="Bold" VerticalAlignment="Bottom" />

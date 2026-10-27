@@ -28,7 +28,19 @@ public sealed class MenuTemplate
     public string? BackgroundImageDataUri { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
     public bool NativeStyleInitialized { get; set; }
+    // Keys identify a weekday and slot, so formatting follows the template across weeks.
+    public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
     // Retains an imported browser template intact while its richer layer model
     // is being ported to native WinUI controls.
     public string? LegacyDataJson { get; set; }
+}
+
+public sealed class TemplateTextStyle
+{
+    public string FontFamily { get; set; } = "Arial";
+    public double FontSize { get; set; } = 11;
+    public string Color { get; set; } = "#000000";
+    public bool Bold { get; set; }
+    public bool Italic { get; set; }
+    public bool Underline { get; set; }
 }
