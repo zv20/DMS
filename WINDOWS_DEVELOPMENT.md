@@ -29,22 +29,28 @@ Visual Studio adapter; xUnit v3 is a separate framework migration.
 
 ## Menu templates and output
 
-The template editor previews a chosen saved week and stores common formatting,
-visibility settings, and one embedded PNG/JPEG background image (up to 1 MB).
+The template editor previews a chosen saved week and stores formatting and
+visibility settings. New templates can use a movable A4 canvas with positioned
+text and embedded image layers. Existing flowing templates retain their old layout
+until the user enables the canvas. Canvas templates use saved page positions
+instead of the output dialog's margin setting.
 The planner's Print / Export dialog renders the selected saved week and template
 through WebView2. It needs the WebView2 Runtime and supports A4 PDF, print, and
 single-page PNG; an overflowing PNG is rejected instead of silently cropped.
 
 This is not complete browser-editor parity. In particular, formatting a text
-selection, independently positioned multi-image layers, and several per-section
-fonts and border controls remain unimplemented. Imported browser JSON is retained,
+selection and several per-section fonts and border controls remain unimplemented.
+Imported browser JSON is retained,
 but rich HTML is reduced to plain text in the native editor, and image filenames
 cannot recover image files that were not included in an export. The output UI
 warns when an imported template may need adjustment.
 
 On Windows, exercise five-day menu navigation and category selection; save,
 reopen and copy templates; test all supported font, color, alignment and image
-options; preview two saved weeks; export PDF and PNG; print with an image; try a
+options; move and resize the header, date, day heading, menu, footer and multiple
+overlapping images; reorder layers; save and reopen the template; compare their
+positions with print, PDF and PNG; test a legacy template before and after enabling
+the canvas; preview two saved weeks; export PDF and PNG; print with an image; try a
 long menu, missing WebView2, malformed/legacy templates, missing images, and a
 cancelled file picker. Test light/dark and accent settings after switching
 languages and restarting. Use disposable data and verify the database and saved

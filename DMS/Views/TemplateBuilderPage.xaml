@@ -28,8 +28,14 @@
                         <ToggleButton x:Name="SelectedItalicButton" Content="I" FontStyle="Italic" />
                         <ToggleButton x:Name="SelectedUnderlineButton"><TextBlock Text="U" TextDecorations="Underline" /></ToggleButton>
                         <Border Width="1" Margin="3,4" Background="{ThemeResource SystemControlForegroundBaseLowBrush}" />
+                        <Button x:Name="EnableCanvasButton" Click="EnableCanvas_Click"><FontIcon Glyph="&#xE8A9;" /></Button>
+                        <Button x:Name="EditTextButton" Click="EditText_Click"><FontIcon Glyph="&#xE70F;" /></Button>
                         <Button x:Name="ImageButton" Click="Image_Click"><FontIcon Glyph="&#xEB9F;" /></Button>
                         <Button x:Name="ClearImageButton" Click="ClearImage_Click"><FontIcon Glyph="&#xE74D;" /></Button>
+                        <Button x:Name="ForwardButton" Click="Forward_Click"><FontIcon Glyph="&#xE74A;" /></Button>
+                        <Button x:Name="BackwardButton" Click="Backward_Click"><FontIcon Glyph="&#xE74B;" /></Button>
+                        <Button x:Name="RemoveLayerButton" Click="RemoveLayer_Click"><FontIcon Glyph="&#xE74D;" /></Button>
+                        <ComboBox x:Name="ImageLayerSelector" Width="120" SelectionChanged="ImageLayerSelector_SelectionChanged" />
                         <Button x:Name="PageOptionsButton">
                             <FontIcon Glyph="&#xE713;" />
                             <Button.Flyout>
@@ -77,10 +83,10 @@
 
         <!-- The page remains independently scrollable at smaller window sizes. -->
         <ScrollViewer Grid.Row="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
-            <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" Padding="38" HorizontalAlignment="Center">
+            <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" HorizontalAlignment="Center">
                 <Grid>
-                    <Image x:Name="PreviewImage" Stretch="UniformToFill" />
-                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Image x:Name="PreviewImage" Stretch="UniformToFill" Margin="38" />
+                    <Grid x:Name="LegacyPage" Margin="38" RowDefinitions="Auto,*,Auto" RowSpacing="8">
                         <Button x:Name="HeaderDisplayButton" Click="HeaderDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
                             <TextBlock x:Name="HeaderDisplay" TextWrapping="Wrap" />
                         </Button>
@@ -91,6 +97,7 @@
                         </Button>
                         <TextBox x:Name="FooterBox" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="FooterBox_LostFocus" />
                     </Grid>
+                    <Canvas x:Name="LayoutCanvas" Width="794" Height="1123" Visibility="Collapsed" />
                 </Grid>
             </Border>
         </ScrollViewer>

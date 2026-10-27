@@ -330,4 +330,15 @@
   <data name="TplMenuNames" xml:space="preserve"><value>Meal names</value></data>
   <data name="TplIngredientText" xml:space="preserve"><value>Ingredients</value></data>
   <data name="TplAllergenText" xml:space="preserve"><value>Allergens</value></data>
+  <data name="TplEnableCanvas" xml:space="preserve"><value>Enable movable layout</value></data>
+  <data name="TplCanvasHint" xml:space="preserve"><value>Select an object, then drag its border to move it or its corner to resize it.</value></data>
+  <data name="TplMoveObject" xml:space="preserve"><value>Move object</value></data>
+  <data name="TplResizeObject" xml:space="preserve"><value>Resize object</value></data>
+  <data name="TplBringForward" xml:space="preserve"><value>Bring forward</value></data>
+  <data name="TplSendBackward" xml:space="preserve"><value>Send backward</value></data>
+  <data name="TplRemoveLayer" xml:space="preserve"><value>Remove selected image</value></data>
+  <data name="TplEditText" xml:space="preserve"><value>Edit text</value></data>
+  <data name="TplLayoutImage" xml:space="preserve"><value>Image</value></data>
+  <data name="TplLayoutOverflow" xml:space="preserve"><value>Some content extends outside its box or page. Adjust the layout before printing.</value></data>
+  <data name="OutputCanvasMargins" xml:space="preserve"><value>Canvas templates use their saved positions; print margins do not move them.</value></data>
 </root>

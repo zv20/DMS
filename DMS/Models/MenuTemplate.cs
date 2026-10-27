@@ -30,9 +30,34 @@ public sealed class MenuTemplate
     public bool NativeStyleInitialized { get; set; }
     // Keys identify a weekday and slot, so formatting follows the template across weeks.
     public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
+    public bool LayoutEnabled { get; set; }
+    public Dictionary<string, TemplateLayoutElement> LayoutElements { get; set; } = new();
+    public List<TemplateImageLayer> ImageLayers { get; set; } = new();
     // Retains an imported browser template intact while its richer layer model
     // is being ported to native WinUI controls.
     public string? LegacyDataJson { get; set; }
+}
+
+// Page-relative coordinates in CSS pixels on an A4 page (794 x 1123).
+public sealed class TemplateLayoutElement
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Width { get; set; }
+    public double Height { get; set; }
+    public int ZIndex { get; set; } = 10;
+}
+
+public sealed class TemplateImageLayer
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string DataUri { get; set; } = string.Empty;
+    public double X { get; set; } = 250;
+    public double Y { get; set; } = 100;
+    public double Width { get; set; } = 200;
+    public double Height { get; set; } = 150;
+    public int ZIndex { get; set; } = 5;
+    public double Opacity { get; set; } = 1;
 }
 
 public sealed class TemplateTextStyle

@@ -10,6 +10,43 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void PositionedTemplateExportsSavedGeometryLayersAndStylesWithoutMutatingSource()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { LayoutEnabled = true, HeaderText = "<Weekly>", ShowIngredients = true };
+        template.LayoutElements["header"] = new TemplateLayoutElement { X = 125, Y = 55, Width = 320, Height = 45, ZIndex = 12 };
+        template.LayoutElements["menu:0"] = new TemplateLayoutElement { X = 80, Y = 200, Width = 500, Height = 160 };
+        template.TextStyles["menu:0"] = new TemplateTextStyle { FontFamily = "Georgia", FontSize = 16, Color = "#123456" };
+        template.ImageLayers.Add(new TemplateImageLayer { DataUri = "data:image/png;base64,AAAA", X = 33, Y = 44, Width = 150, Height = 80, ZIndex = 2, Opacity = .5 });
+        template.ImageLayers.Add(new TemplateImageLayer { DataUri = "https://example.invalid/image.png" });
+        var saved = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(System.Text.Json.JsonSerializer.Serialize(template))!;
+        var recipes = new List<Recipe> { new() { Id = 7, Name = "Stew <unsafe>", Ingredients = ["Beans"] } };
+        var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot2", RecipeId = 7 } };
+        var html = MenuOutputService.BuildHtml(saved, monday, entries, recipes);
+        Assert.Contains("data-element=\"header\" style=\"position:absolute;left:125px;top:55px;width:320px;min-height:45px;z-index:12", html);
+        Assert.Contains("data-element=\"menu:0\" style=\"position:absolute;left:80px;top:200px;width:500px;min-height:160px", html);
+        Assert.Contains("left:33px;top:44px;width:150px;height:80px;z-index:2;opacity:0.5", html);
+        Assert.Contains("font-family:'Georgia';font-size:16px;color:#123456", html);
+        Assert.Contains("&lt;Weekly&gt;", html);
+        Assert.Contains("Stew &lt;unsafe&gt;", html);
+        Assert.DoesNotContain("example.invalid", html);
+        Assert.Equal(2, saved.LayoutElements.Count); // Missing positions use defaults without mutating the template.
+    }
+
+    [Fact]
+    public void PositionedTemplateClampsUntrustedCoordinatesAndColors()
+    {
+        var template = new MenuTemplate { LayoutEnabled = true };
+        template.LayoutElements["header"] = new TemplateLayoutElement { X = double.NaN, Y = -20, Width = 9000, Height = 40, ZIndex = int.MaxValue };
+        template.TextStyles["header"] = new TemplateTextStyle { FontFamily = "bad'font", Color = "red;bad", FontSize = 9999 };
+        var html = MenuOutputService.BuildHtml(template, new DateTime(2026, 10, 26), [], []);
+        Assert.Contains("left:0px;top:0px;width:794px;min-height:40px;z-index:1000", html);
+        Assert.Contains("font-family:'Arial';font-size:72px;color:#000000", html);
+        Assert.DoesNotContain("bad'font", html);
+        Assert.DoesNotContain("red;bad", html);
+    }
+
+    [Fact]
     public void WeekdayGroupsHaveIndependentStylesAndOverrideLegacyDayStyle()
     {
         var monday = new DateTime(2026, 10, 26);

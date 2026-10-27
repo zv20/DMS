@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Input;
 using DMS.Models;
 using DMS.Services;
 using System.Text.Json;
@@ -15,7 +16,7 @@ using L = DMS.Services.Localization;
 
 namespace DMS.Views;
 
-public sealed partial class TemplateBuilderPage : Page
+public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private MenuTemplate _template = new();
@@ -31,6 +32,9 @@ public sealed partial class TemplateBuilderPage : Page
     private bool _editingFooter;
     private string? _selectedElement;
     private bool _bindingSelection;
+    private string? _selectedImageId;
+    private bool _bindingLayers;
+    private bool _dirty, _confirming, _switching, _saving, _layoutOverflow;
     private static readonly string[] Alignments = ["left", "center", "right"];
     private static readonly string[] Layouts = ["compact", "detailed", "detailed-2col"];
     private static readonly string[] Fonts = ["Arial", "Times New Roman", "Georgia", "Comic Sans MS", "Verdana", "Courier New", "Trebuchet MS", "Tahoma"];
@@ -62,6 +66,9 @@ public sealed partial class TemplateBuilderPage : Page
         NameTool(SelectedFontBox, "TplFont"); NameTool(SelectedSizeBox, "TplSelectedSize"); NameTool(SelectedColorBox, "TplSelectedColor");
         NameTool(SelectedBoldButton, "TplBold"); NameTool(SelectedItalicButton, "TplItalic"); NameTool(SelectedUnderlineButton, "TplUnderline");
         NameTool(ImageButton, "TplImage"); NameTool(ClearImageButton, "TplImageClear");
+        NameTool(EnableCanvasButton, "TplEnableCanvas"); NameTool(EditTextButton, "TplEditText");
+        NameTool(ForwardButton, "TplBringForward"); NameTool(BackwardButton, "TplSendBackward"); NameTool(RemoveLayerButton, "TplRemoveLayer");
+        NameTool(ImageLayerSelector, "TplLayoutImage"); ImageLayerSelector.PlaceholderText = L.Get("TplLayoutImage");
         NameTool(PageOptionsButton, "TplPageOptions"); NameTool(VisibilityButton, "TplVisibilityOptions");
         ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
         ToolTipService.SetToolTip(FooterDisplayButton, L.Get("TplEditFooter"));
@@ -119,7 +126,13 @@ public sealed partial class TemplateBuilderPage : Page
         _selectedElement = null;
         _template = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(template)) ?? new MenuTemplate();
         _template.TextStyles ??= new();
+        _template.LayoutElements ??= new(); _template.ImageLayers ??= new();
+        if (originalName == null) TemplateLayout.EnsureInitialized(_template);
+        else if (_template.LayoutEnabled) TemplateLayout.EnsureInitialized(_template);
+        _template.ImageLayers.RemoveAll(layer => layer == null || string.IsNullOrEmpty(layer.DataUri));
+        _selectedImageId = null;
         _loadedName = originalName;
+        _dirty = false;
         TemplateCompatibility.ApplyLegacyDefaults(_template);
         NameBox.Text = _template.Name; HeaderBox.Text = _template.HeaderText; FooterBox.Text = _template.FooterText;
         HeaderColorBox.Text = _template.HeaderColor; BackgroundColorBox.Text = _template.BackgroundColor;
@@ -156,6 +169,7 @@ public sealed partial class TemplateBuilderPage : Page
 
     private void SelectElement(string? key, string? legacyKey = null)
     {
+        _selectedImageId = null;
         _selectedElement = key;
         _bindingSelection = true;
         var enabled = key != null;
@@ -193,6 +207,7 @@ public sealed partial class TemplateBuilderPage : Page
         if (IsColor(SelectedColorBox.Text)) style.Color = SelectedColorBox.Text;
         style.Bold = SelectedBoldButton.IsChecked == true; style.Italic = SelectedItalicButton.IsChecked == true; style.Underline = SelectedUnderlineButton.IsChecked == true;
         _template.TextStyles[_selectedElement] = style;
+        _dirty = true;
         UpdatePreview();
     }
 
@@ -200,7 +215,8 @@ public sealed partial class TemplateBuilderPage : Page
     {
         var label = DisplayText(key, text, size, bold, legacyKey);
         var button = new Button { Content = label, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(2), BorderThickness = new Thickness(_selectedElement == key ? 1 : 0),
+            Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(_template.LayoutEnabled ? 0 : 2), MinHeight = _template.LayoutEnabled ? 0 : 32, MinWidth = 0,
+            BorderThickness = new Thickness(!_template.LayoutEnabled && _selectedElement == key ? 1 : 0),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue) };
         button.Click += (_, _) => SelectElement(key, legacyKey);
         return button;
@@ -220,6 +236,7 @@ public sealed partial class TemplateBuilderPage : Page
     private void OnEdited()
     {
         if (_binding) return;
+        _dirty = true;
         ReadFields();
         UpdatePreview();
     }
@@ -267,7 +284,25 @@ public sealed partial class TemplateBuilderPage : Page
     private void UpdatePreview()
     {
         if (_binding) return;
+        LegacyPage.Visibility = _template.LayoutEnabled ? Visibility.Collapsed : Visibility.Visible;
+        LayoutCanvas.Visibility = _template.LayoutEnabled ? Visibility.Visible : Visibility.Collapsed;
+        EnableCanvasButton.IsEnabled = !_template.LayoutEnabled;
+        EditTextButton.IsEnabled = _template.LayoutEnabled && (_selectedElement == "header" || _selectedElement == "footer");
+        ForwardButton.IsEnabled = BackwardButton.IsEnabled = _template.LayoutEnabled && (_selectedImageId != null || _selectedElement != null);
+        RemoveLayerButton.IsEnabled = _template.LayoutEnabled && _selectedImageId != null;
+        ImageLayerSelector.Visibility = _template.LayoutEnabled ? Visibility.Visible : Visibility.Collapsed;
+        _bindingLayers = true;
+        ImageLayerSelector.Items.Clear();
+        for (var layerIndex = 0; layerIndex < _template.ImageLayers.Count; layerIndex++)
+        {
+            var layer = _template.ImageLayers[layerIndex];
+            var option = new ComboBoxItem { Content = $"{L.Get("TplLayoutImage")} {layerIndex + 1}", Tag = layer.Id };
+            ImageLayerSelector.Items.Add(option);
+            if (layer.Id == _selectedImageId) ImageLayerSelector.SelectedItem = option;
+        }
+        _bindingLayers = false;
         PreviewBorder.Background = new SolidColorBrush(ParseColor(_template.BackgroundColor, Colors.White));
+        PreviewImage.Margin = _template.LayoutEnabled ? new Thickness(0) : new Thickness(38);
         PreviewImage.Opacity = _template.BackgroundImageOpacity;
         if (_previewImageRequest != _template.BackgroundImageDataUri)
         {
@@ -331,6 +366,7 @@ public sealed partial class TemplateBuilderPage : Page
         }
         PreviewPanel.Children.Add(days);
         if (_entries.Count == 0) PreviewPanel.Children.Add(new TextBlock { Text = L.Get("TplNoMeals"), Foreground = new SolidColorBrush(Colors.Gray) });
+        if (_template.LayoutEnabled) UpdateLayoutCanvas(monday);
     }
 
     private void HeaderDisplay_Click(object sender, RoutedEventArgs e)
@@ -361,6 +397,189 @@ public sealed partial class TemplateBuilderPage : Page
         UpdatePreview();
     }
 
+    private void EnableCanvas_Click(object sender, RoutedEventArgs e)
+    {
+        TemplateLayout.EnsureInitialized(_template);
+        _dirty = true;
+        UpdatePreview();
+        StatusText.Text = L.Get("TplCanvasHint");
+    }
+
+    private async void EditText_Click(object sender, RoutedEventArgs e)
+    {
+        var header = _selectedElement == "header";
+        if (!header && _selectedElement != "footer") return;
+        var field = new TextBox { Text = header ? HeaderBox.Text : FooterBox.Text, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinWidth = 300 };
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get(header ? "TplHeader" : "TplFooter"), Content = field,
+            PrimaryButtonText = L.Get("TplSave"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            if (header) HeaderBox.Text = field.Text; else FooterBox.Text = field.Text;
+        }
+    }
+
+    private void UpdateLayoutCanvas(DateTime monday)
+    {
+        _layoutOverflow = false;
+        LayoutCanvas.Children.Clear();
+        foreach (var image in _template.ImageLayers)
+        {
+            var picture = new Image { Stretch = Stretch.Fill, Opacity = Math.Clamp(double.IsFinite(image.Opacity) ? image.Opacity : 1, 0, 1) };
+            _ = LoadCanvasImageAsync(picture, image.DataUri);
+            var select = new Button { Content = picture, Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
+            select.Click += (_, _) => { SelectElement(null); _selectedImageId = image.Id; UpdatePreview(); };
+            PlaceCanvasFrame(image.X, image.Y, image.Width, image.Height, image.ZIndex, select, _selectedImageId == image.Id,
+                (x, y, w, h) => { image.X = x; image.Y = y; image.Width = w; image.Height = h; });
+        }
+        if (_template.ShowHeader)
+        {
+            var text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
+            var button = SelectableText("header", text, _template.HeaderFontSize);
+            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(_template.HeaderAlignment);
+            PlaceTextFrame("header", button);
+        }
+        if (_template.ShowDateRange)
+        {
+            var dateButton = SelectableText("date", $"{monday:d} – {monday.AddDays(4):d}", 14);
+            if (dateButton.Content is TextBlock dateLabel) dateLabel.TextAlignment = TextAlignment.Center;
+            PlaceTextFrame("date", dateButton);
+        }
+        for (var i = 0; i < 5; i++)
+        {
+            var day = monday.AddDays(i);
+            PlaceTextFrame($"heading:{i}", SelectableText($"heading:{i}", day.ToString("dddd, d MMMM"), 15, true, $"day:{i}"));
+            var panel = new StackPanel { Spacing = 3 };
+            foreach (var entry in _entries.Where(e => e.Date.Date == day).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
+            {
+                var recipe = _recipes.FirstOrDefault(r => r.Id == entry.RecipeId);
+                if (recipe == null) continue;
+                var slot = MenuOutputService.SlotOrder(entry.Slot);
+                var name = $"{slot}. {recipe.Name}";
+                if (_template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) name += $" ({recipe.PortionSize})";
+                if (_template.ShowCalories && recipe.Calories > 0) name += $" · {recipe.Calories} kcal";
+                panel.Children.Add(SelectableText($"menu:{i}", name, _template.MealFontSize, legacyKey: $"meal:{i}:{slot}"));
+                if (_template.ShowIngredients && recipe.Ingredients.Count > 0)
+                    panel.Children.Add(SelectableText($"ingredient-group:{i}", string.Join(", ", recipe.Ingredients), _template.MealFontSize, legacyKey: $"ingredients:{i}:{slot}"));
+                var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => _ingredients.FirstOrDefault(ingredient => string.Equals(ingredient.Name, name, StringComparison.OrdinalIgnoreCase))?.Allergens ?? []))
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Select(L.Allergen).ToList();
+                if (allergens.Count > 0) panel.Children.Add(SelectableText($"allergen-group:{i}", "⚠ " + string.Join(", ", allergens), _template.MealFontSize, legacyKey: $"allergens:{i}:{slot}"));
+            }
+            if (panel.Children.Count == 0) panel.Children.Add(SelectableText($"menu:{i}", L.Get("TplNoMeals"), _template.MealFontSize));
+            PlaceTextFrame($"menu:{i}", panel);
+        }
+        if (_template.ShowFooter)
+        {
+            var text = string.IsNullOrEmpty(_template.FooterText) ? L.Get("TplEditFooter") : _template.FooterText;
+            var button = SelectableText("footer", text, _template.FooterFontSize);
+            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(_template.FooterAlignment);
+            PlaceTextFrame("footer", button);
+        }
+        if (_layoutOverflow) StatusText.Text = L.Get("TplLayoutOverflow");
+        else if (StatusText.Text == L.Get("TplLayoutOverflow")) StatusText.Text = "";
+    }
+
+    private void PlaceTextFrame(string key, FrameworkElement content)
+    {
+        if (!_template.LayoutElements.TryGetValue(key, out var item) || item == null) return;
+        var selected = _selectedElement == key || (key.StartsWith("menu:") && (_selectedElement == key.Replace("menu:", "ingredient-group:") || _selectedElement == key.Replace("menu:", "allergen-group:")));
+        PlaceCanvasFrame(item.X, item.Y, item.Width, item.Height, item.ZIndex, content, selected,
+            (x, y, w, h) => { item.X = x; item.Y = y; item.Width = w; item.Height = h; });
+    }
+
+    private void PlaceCanvasFrame(double x, double y, double width, double height, int z, FrameworkElement content, bool selected, Action<double, double, double, double> save)
+    {
+        x = double.IsFinite(x) ? Math.Clamp(x, 0, 774) : 0; y = double.IsFinite(y) ? Math.Clamp(y, 0, 1103) : 0;
+        width = double.IsFinite(width) ? Math.Clamp(width, 20, 794 - x) : 100; height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123 - y) : 30;
+        var frame = new Grid { Width = width, Height = height, Background = new SolidColorBrush(Colors.Transparent) };
+        if (content is not Button { Content: Image })
+        {
+            content.Measure(new Windows.Foundation.Size(width, double.PositiveInfinity));
+            if (content.DesiredSize.Height > height + 1) _layoutOverflow = true;
+        }
+        frame.Children.Add(content);
+        if (selected)
+        {
+            frame.Children.Add(new Border { BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1), IsHitTestVisible = false });
+            var move = new Border { Width = 18, Height = 18, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Background = new SolidColorBrush(Colors.DodgerBlue), Child = new TextBlock { Text = "✥", Foreground = new SolidColorBrush(Colors.White), HorizontalAlignment = HorizontalAlignment.Center } };
+            var resize = new Border { Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Background = new SolidColorBrush(Colors.DodgerBlue), Child = new TextBlock { Text = "◢", Foreground = new SolidColorBrush(Colors.White), HorizontalAlignment = HorizontalAlignment.Center } };
+            ToolTipService.SetToolTip(move, L.Get("TplMoveObject")); ToolTipService.SetToolTip(resize, L.Get("TplResizeObject"));
+            AttachDrag(move, false); AttachDrag(resize, true);
+            frame.Children.Add(move); frame.Children.Add(resize);
+        }
+        Canvas.SetLeft(frame, x); Canvas.SetTop(frame, y); Canvas.SetZIndex(frame, Math.Clamp(z, 1, 1000)); LayoutCanvas.Children.Add(frame);
+
+        void AttachDrag(Border handle, bool resizing)
+        {
+            Windows.Foundation.Point start = default;
+            double initialX = 0, initialY = 0, initialWidth = 0, initialHeight = 0;
+            bool dragging = false;
+            handle.PointerPressed += (_, e) => { if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed) return; start = e.GetCurrentPoint(LayoutCanvas).Position; initialX = x; initialY = y; initialWidth = width; initialHeight = height; dragging = handle.CapturePointer(e.Pointer); e.Handled = true; };
+            handle.PointerMoved += (_, e) =>
+            {
+                if (!dragging) return;
+                var point = e.GetCurrentPoint(LayoutCanvas).Position;
+                if (resizing) { width = Math.Clamp(initialWidth + point.X - start.X, 20, 794 - x); height = Math.Clamp(initialHeight + point.Y - start.Y, 20, 1123 - y); frame.Width = width; frame.Height = height; }
+                else { x = Math.Clamp(initialX + point.X - start.X, 0, 794 - width); y = Math.Clamp(initialY + point.Y - start.Y, 0, 1123 - height); Canvas.SetLeft(frame, x); Canvas.SetTop(frame, y); }
+                save(x, y, width, height); _dirty = true; e.Handled = true;
+            };
+            handle.PointerReleased += (_, e) => { if (!dragging) return; dragging = false; handle.ReleasePointerCapture(e.Pointer); UpdatePreview(); e.Handled = true; };
+            handle.PointerCaptureLost += (_, _) => { dragging = false; };
+        }
+    }
+
+    private static async Task LoadCanvasImageAsync(Image target, string dataUri)
+    {
+        try
+        {
+            var comma = dataUri.IndexOf(','); if (comma < 0) return;
+            var bytes = Convert.FromBase64String(dataUri[(comma + 1)..]);
+            using var stream = new InMemoryRandomAccessStream(); using var writer = new DataWriter(stream.GetOutputStreamAt(0));
+            writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
+            var bitmap = new BitmapImage(); await bitmap.SetSourceAsync(stream); target.Source = bitmap;
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or System.Runtime.InteropServices.COMException) { }
+    }
+
+    private void ImageLayerSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_bindingLayers || ImageLayerSelector.SelectedItem is not ComboBoxItem { Tag: string id }) return;
+        SelectElement(null); _selectedImageId = id; UpdatePreview();
+    }
+
+    private string? SelectedLayoutKey()
+    {
+        if (_selectedElement == null) return null;
+        if (_selectedElement.StartsWith("ingredient-group:")) return _selectedElement.Replace("ingredient-group:", "menu:");
+        if (_selectedElement.StartsWith("allergen-group:")) return _selectedElement.Replace("allergen-group:", "menu:");
+        return _selectedElement;
+    }
+
+    private void ChangeLayerOrder(int direction)
+    {
+        var all = _template.LayoutElements.Select(pair => (Id: pair.Key, Z: pair.Value.ZIndex, Set: (Action<int>)(z => pair.Value.ZIndex = z)))
+            .Concat(_template.ImageLayers.Select(layer => (Id: "image:" + layer.Id, Z: layer.ZIndex, Set: (Action<int>)(z => layer.ZIndex = z))))
+            .OrderBy(layer => layer.Z).ThenBy(layer => layer.Id, StringComparer.Ordinal).ToList();
+        var selected = _selectedImageId != null ? "image:" + _selectedImageId : SelectedLayoutKey();
+        var index = all.FindIndex(layer => layer.Id == selected);
+        var target = index + direction;
+        if (index < 0 || target < 0 || target >= all.Count) return;
+        (all[index], all[target]) = (all[target], all[index]);
+        for (var i = 0; i < all.Count; i++) all[i].Set(i + 1);
+        _dirty = true;
+        UpdatePreview();
+    }
+
+    private void Forward_Click(object sender, RoutedEventArgs e) => ChangeLayerOrder(1);
+    private void Backward_Click(object sender, RoutedEventArgs e) => ChangeLayerOrder(-1);
+    private void RemoveLayer_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedImageId == null) return;
+        _template.ImageLayers.RemoveAll(layer => layer.Id == _selectedImageId);
+        _dirty = true;
+        _selectedImageId = null;
+        UpdatePreview();
+    }
+
     private async Task UpdateImageAsync(string? dataUri)
     {
         if (string.IsNullOrEmpty(dataUri)) { PreviewImage.Source = null; return; }
@@ -384,11 +603,53 @@ public sealed partial class TemplateBuilderPage : Page
         return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
     }
 
-    private void New_Click(object sender, RoutedEventArgs e) { TemplateSelector.SelectedItem = null; SetTemplate(new MenuTemplate { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95"), FooterText = L.Get("String_Text_Prepared_with_care_by_DMS_082a78") }, null); }
-    private void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!_binding && TemplateSelector.SelectedItem is MenuTemplate template) SetTemplate(template, template.Name); }
+    public async Task<bool> CanLeaveAsync()
+    {
+        if (_saving || _switching || _confirming) return false;
+        return await ConfirmDiscardAsync();
+    }
+
+    private async Task<bool> ConfirmDiscardAsync()
+    {
+        if (!_dirty) return true;
+        if (_confirming) return false;
+        _confirming = true;
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"), Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        finally { _confirming = false; }
+    }
+
+    private async void New_Click(object sender, RoutedEventArgs e)
+    {
+        if (_switching || _saving || _confirming) return;
+        _switching = true;
+        try
+        {
+            if (!await ConfirmDiscardAsync()) return;
+            _binding = true; TemplateSelector.SelectedItem = null; _binding = false;
+            SetTemplate(new MenuTemplate { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95"), FooterText = L.Get("String_Text_Prepared_with_care_by_DMS_082a78") }, null);
+        }
+        finally { _switching = false; }
+    }
+    private async void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding || TemplateSelector.SelectedItem is not MenuTemplate template) return;
+        if (_switching || _saving || _confirming) { RestoreTemplateSelection(); return; }
+        _switching = true; TemplateSelector.IsEnabled = false;
+        try { if (await ConfirmDiscardAsync()) SetTemplate(template, template.Name); else RestoreTemplateSelection(); }
+        finally { TemplateSelector.IsEnabled = true; _switching = false; }
+    }
+    private void RestoreTemplateSelection()
+    {
+        _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
+    }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (_saving || _switching || _confirming) return;
         ReadFields();
         if (string.IsNullOrWhiteSpace(_template.Name)) { StatusText.Text = L.Get("Text_Template_name_is_required_0e3ca2"); return; }
         if (!IsColor(HeaderColorBox.Text) || !IsColor(BackgroundColorBox.Text)) { StatusText.Text = L.Get("TplInvalidColor"); return; }
@@ -396,14 +657,18 @@ public sealed partial class TemplateBuilderPage : Page
         if (_template.IsPreset && string.Equals(_loadedName, _template.Name, StringComparison.OrdinalIgnoreCase)) { StatusText.Text = L.Get("TplPresetSave"); return; }
         try
         {
+            _saving = true;
+            IsEnabled = false;
             if (!string.Equals(_loadedName, _template.Name, StringComparison.OrdinalIgnoreCase)) _template.IsPreset = false;
             await _database.SaveTemplateAsync(_template);
             _loadedName = _template.Name;
             _templates = await _database.GetAllTemplatesAsync();
             _binding = true; TemplateSelector.ItemsSource = _templates; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
             StatusText.Text = L.Get("TplSaved");
+            _dirty = false;
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        finally { IsEnabled = true; _saving = false; }
     }
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
@@ -427,10 +692,19 @@ public sealed partial class TemplateBuilderPage : Page
             if ((await file.GetBasicPropertiesAsync()).Size > 1024 * 1024) { StatusText.Text = L.Get("TplTooLarge"); return; }
             var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
             var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
-            _template.BackgroundImageDataUri = $"data:{(file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg")};base64,{Convert.ToBase64String(bytes)}";
+            var data = $"data:{(file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg")};base64,{Convert.ToBase64String(bytes)}";
+            if (_template.LayoutEnabled)
+            {
+                var size = (_template.BackgroundImageDataUri?.Length ?? 0) + _template.ImageLayers.Sum(layer => layer.DataUri?.Length ?? 0) + data.Length;
+                if (size > 1_400_000) { StatusText.Text = L.Get("OutputImageTooLarge"); return; }
+                var layer = new TemplateImageLayer { DataUri = data };
+                _template.ImageLayers.Add(layer); _selectedElement = null; _selectedImageId = layer.Id;
+            }
+            else _template.BackgroundImageDataUri = data;
+            _dirty = true;
             UpdatePreview();
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
     }
-    private void ClearImage_Click(object sender, RoutedEventArgs e) { _template.BackgroundImageDataUri = null; UpdatePreview(); }
+    private void ClearImage_Click(object sender, RoutedEventArgs e) { _template.BackgroundImageDataUri = null; _dirty = true; UpdatePreview(); }
 }
