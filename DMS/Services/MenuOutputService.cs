@@ -66,22 +66,57 @@ public static class MenuOutputService
         previewArea.Children.Add(pagePreview);
         Grid.SetRow(optionScroll, 0); Grid.SetRow(actionScroll, 1); Grid.SetRow(status, 2); Grid.SetRow(previewArea, 3);
         panel.Children.Add(optionScroll); panel.Children.Add(actionScroll); panel.Children.Add(status); panel.Children.Add(previewArea);
-        var dialog = new ContentDialog { XamlRoot = root, Title = Localization.Get("OutputPreviewExport"),
-            Content = panel, CloseButtonText = Localization.Get("OutputClose"), MaxWidth = 1100 };
-        dialog.Resources["ContentDialogMaxWidth"] = 1100.0;
-        void ResizeDialog()
+        if (App.CurrentWindow.Content is not Grid windowRoot)
+            throw new InvalidOperationException("The app window cannot display the preview.");
+
+        // A regular ContentDialog imposes internal size limits that can clip the
+        // document. An in-window overlay gives the preview the actual window space.
+        var dismissed = new TaskCompletionSource<bool>();
+        var close = new Button { Content = Localization.Get("OutputClose"), HorizontalAlignment = HorizontalAlignment.Right };
+        var heading = new Grid { ColumnSpacing = 12 };
+        heading.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        heading.Children.Add(new TextBlock { Text = Localization.Get("OutputPreviewExport"), FontSize = 20,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap });
+        Grid.SetColumn(close, 1);
+        heading.Children.Add(close);
+        var cardContent = new Grid { RowSpacing = 12, Padding = new Thickness(20) };
+        cardContent.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        cardContent.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        Grid.SetRow(panel, 1);
+        cardContent.Children.Add(heading);
+        cardContent.Children.Add(panel);
+        var cardColor = windowRoot.ActualTheme == ElementTheme.Light
+            ? Windows.UI.Color.FromArgb(255, 250, 250, 250)
+            : Windows.UI.Color.FromArgb(255, 40, 40, 40);
+        var card = new Border { Child = cardContent, CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(cardColor),
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        var overlay = new Grid { Background = new SolidColorBrush(Windows.UI.Color.FromArgb(160, 0, 0, 0)) };
+        overlay.Children.Add(card);
+        Grid.SetRowSpan(overlay, Math.Max(1, windowRoot.RowDefinitions.Count));
+        Grid.SetColumnSpan(overlay, Math.Max(1, windowRoot.ColumnDefinitions.Count));
+        Canvas.SetZIndex(overlay, 1000);
+        void ResizeOverlay()
         {
-            var width = Math.Max(0, Math.Min(root.Size.Width - 40, 1040));
-            dialog.Width = width;
-            var actualDialogWidth = dialog.ActualWidth > 0 ? Math.Min(width, dialog.ActualWidth) : width;
-            panel.Width = Math.Max(0, actualDialogWidth - 64);
-            // Leave space for the dialog title, action button and margins.
-            panel.Height = Math.Max(160, Math.Min(root.Size.Height - 200, 850));
+            card.Width = Math.Max(0, Math.Min(root.Size.Width - 32, 1100));
+            card.Height = Math.Max(0, Math.Min(root.Size.Height - 32, 1000));
         }
-        Windows.Foundation.TypedEventHandler<XamlRoot, XamlRootChangedEventArgs> rootChanged = (_, _) => ResizeDialog();
-        dialog.SizeChanged += (_, args) => panel.Width = Math.Max(0, args.NewSize.Width - 64);
+        Windows.Foundation.TypedEventHandler<XamlRoot, XamlRootChangedEventArgs> rootChanged = (_, _) => ResizeOverlay();
+        var ownerWindow = App.CurrentWindow;
+        Windows.Foundation.TypedEventHandler<object, WindowEventArgs> windowClosed = (_, _) => dismissed.TrySetResult(true);
+        close.Click += (_, _) => dismissed.TrySetResult(true);
+        overlay.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Escape && close.IsEnabled)
+            {
+                args.Handled = true;
+                dismissed.TrySetResult(true);
+            }
+        };
         root.Changed += rootChanged;
-        ResizeDialog();
+        ownerWindow.Closed += windowClosed;
+        ResizeOverlay();
         bool ready = false;
         void SetReady(bool value) { ready = value; print.IsEnabled = pdf.IsEnabled = png.IsEnabled = value; }
         void Refresh()
@@ -129,7 +164,7 @@ public static class MenuOutputService
         {
             if (!ready || weekBox.SelectedItem is not ComboBoxItem { Tag: DateTime selectedWeek }) return;
             SetReady(false);
-            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = false;
+            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = close.IsEnabled = false;
             try
             {
                 var file = await PickAsync("PDF", ".pdf", selectedWeek);
@@ -144,13 +179,13 @@ public static class MenuOutputService
                 status.Text = Localization.Get(success ? "OutputPdfSaved" : "OutputPdfFailed");
             }
             catch (Exception ex) { status.Text = ex.Message; }
-            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = true; SetReady(true); }
+            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = close.IsEnabled = true; SetReady(true); }
         };
         png.Click += async (_, _) =>
         {
             if (!ready || weekBox.SelectedItem is not ComboBoxItem { Tag: DateTime selectedWeek }) return;
             SetReady(false);
-            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = false;
+            weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = close.IsEnabled = false;
             try
             {
                 // CapturePreview captures the viewport. Refuse cropped output for an overflowing document.
@@ -172,13 +207,20 @@ public static class MenuOutputService
                 status.Text = Localization.Get("OutputImageSaved");
             }
             catch (Exception ex) { status.Text = ex.Message; }
-            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = true; SetReady(true); }
+            finally { weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = close.IsEnabled = true; SetReady(true); }
         };
-        try { await dialog.ShowAsync(); }
+        try
+        {
+            // Add only after the WebView's Loaded handler has been registered.
+            windowRoot.Children.Add(overlay);
+            await dismissed.Task;
+        }
         finally
         {
             root.Changed -= rootChanged;
+            ownerWindow.Closed -= windowClosed;
             view.Close();
+            windowRoot.Children.Remove(overlay);
         }
     }
 
