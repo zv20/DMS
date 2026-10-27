@@ -83,6 +83,15 @@ public class DatabaseService : IDatabaseService, IDisposable
             _initialized = true;
             _logger.LogInformation("Database initialized");
         }
+        catch
+        {
+            if (_connection != null)
+            {
+                await _connection.DisposeAsync();
+                _connection = null;
+            }
+            throw;
+        }
         finally
         {
             _initLock.Release();

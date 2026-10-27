@@ -234,4 +234,6 @@
   <data name="AllergenSulphites" xml:space="preserve"><value>Sulphur dioxide and sulphites</value></data>
   <data name="AllergenLupin" xml:space="preserve"><value>Lupin</value></data>
   <data name="AllergenMolluscs" xml:space="preserve"><value>Molluscs</value></data>
+  <data name="StartupRecipes" xml:space="preserve"><value>Loading your recipes...</value></data>
+  <data name="StartupIngredients" xml:space="preserve"><value>Preparing your ingredients...</value></data>
 </root>

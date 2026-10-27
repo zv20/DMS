@@ -15,6 +15,7 @@ public sealed partial class MainWindow : Window
     {
         _openSettings = openSettings;
         this.InitializeComponent();
+        WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
         this.ExtendsContentIntoTitleBar = true;

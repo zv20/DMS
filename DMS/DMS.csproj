@@ -6,6 +6,7 @@
     <RootNamespace>DMS</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- This is an unpackaged WinUI 3 app. Auto-initialize the Windows App SDK
          and copy its framework runtime beside the executable. -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -30,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

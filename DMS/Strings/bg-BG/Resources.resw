@@ -234,4 +234,6 @@
   <data name="AllergenSulphites" xml:space="preserve"><value>Серен диоксид и сулфити</value></data>
   <data name="AllergenLupin" xml:space="preserve"><value>Лупина</value></data>
   <data name="AllergenMolluscs" xml:space="preserve"><value>Мекотели</value></data>
+  <data name="StartupRecipes" xml:space="preserve"><value>Зареждане на рецепти...</value></data>
+  <data name="StartupIngredients" xml:space="preserve"><value>Подготвяне на съставки...</value></data>
 </root>
