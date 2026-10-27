@@ -23,15 +23,15 @@
         <ListView
             x:Name="IngredientsListView"
             Grid.Row="1"
-            Padding="16"
+            Padding="8"
             SelectionMode="None"
             IsItemClickEnabled="True"
             ItemClick="IngredientsListView_ItemClick">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:IngredientItemViewModel">
-                    <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="12,8">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                            <StackPanel Spacing="4">
+                    <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <StackPanel Spacing="2">
                                 <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="16" />
                                 <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                             </StackPanel>

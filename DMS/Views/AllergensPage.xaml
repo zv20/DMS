@@ -23,14 +23,14 @@
         <ListView
             x:Name="AllergensListView"
             Grid.Row="1"
-            Padding="16"
+            Padding="8"
             SelectionMode="None"
             IsItemClickEnabled="True"
             ItemClick="AllergensListView_ItemClick">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:AllergenItemViewModel">
-                    <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="12,8">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <Border BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                             <!-- Color Indicator -->
                             <Border Width="24" Height="24" Background="{x:Bind ColorBrush}" CornerRadius="4" VerticalAlignment="Center" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1" />
                             <StackPanel Spacing="4" VerticalAlignment="Center" Grid.Column="1">
