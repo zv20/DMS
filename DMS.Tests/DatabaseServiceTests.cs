@@ -29,6 +29,25 @@ public sealed class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task EmptyMenuSlotCategorySurvivesReopenAndBackup()
+    {
+        var day = new DateTime(2026, 10, 26);
+        var backupPath = Path.Combine(_testDirectory, "category-backup.db");
+        using (var database = CreateDatabase())
+        {
+            await database.SaveMenuCategoryAsync(day, "slot1", "dessert");
+            await database.CreateBackupAsync(backupPath);
+            await database.SaveMenuCategoryAsync(day, "slot1", "soup");
+            await database.RestoreFromAsync(backupPath);
+            Assert.Equal("dessert", await database.GetMenuCategoryAsync(day, "slot1"));
+            Assert.Empty(await database.GetMenuAsync(day, day));
+        }
+        using var reopened = CreateDatabase();
+        Assert.Equal("dessert", await reopened.GetMenuCategoryAsync(day, "slot1"));
+        Assert.Single(await reopened.GetMenuCategoriesAsync());
+    }
+
+    [Fact]
     public async Task BackupAndRestoreReturnTheOriginalData()
     {
         using var database = CreateDatabase();

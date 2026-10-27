@@ -23,6 +23,9 @@ public interface IDatabaseService
     Task<List<MenuEntry>> GetMenuAsync(DateTime start, DateTime end);
     Task SaveMenuEntryAsync(MenuEntry entry);
     Task DeleteMenuEntryAsync(DateTime date, string slot);
+    Task<string?> GetMenuCategoryAsync(DateTime date, string slot);
+    Task<List<MenuSlotCategory>> GetMenuCategoriesAsync();
+    Task SaveMenuCategoryAsync(DateTime date, string slot, string category);
     Task<AppSettings?> GetSettingsAsync();
     Task SaveSettingsAsync(AppSettings settings);
     Task<List<MenuTemplate>> GetAllTemplatesAsync();
@@ -135,6 +138,12 @@ public class DatabaseService : IDatabaseService, IDisposable
                 recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE RESTRICT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 UNIQUE(date, slot)
+            )",
+            @"CREATE TABLE IF NOT EXISTS menu_slot_categories (
+                date TEXT NOT NULL,
+                slot TEXT NOT NULL,
+                category TEXT NOT NULL,
+                PRIMARY KEY(date, slot)
             )",
             @"CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -531,6 +540,39 @@ public class DatabaseService : IDatabaseService, IDisposable
         cmd.CommandText = "DELETE FROM menu WHERE date = @date AND slot = @slot";
         cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
         cmd.Parameters.AddWithValue("@slot", slot);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<string?> GetMenuCategoryAsync(DateTime date, string slot)
+    {
+        await InitializeAsync();
+        using var cmd = _connection!.CreateCommand();
+        cmd.CommandText = "SELECT category FROM menu_slot_categories WHERE date=@date AND slot=@slot";
+        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
+        cmd.Parameters.AddWithValue("@slot", slot);
+        return await cmd.ExecuteScalarAsync() as string;
+    }
+
+    public async Task<List<MenuSlotCategory>> GetMenuCategoriesAsync()
+    {
+        await InitializeAsync();
+        using var cmd = _connection!.CreateCommand();
+        cmd.CommandText = "SELECT date, slot, category FROM menu_slot_categories ORDER BY date, slot";
+        using var reader = await cmd.ExecuteReaderAsync();
+        var result = new List<MenuSlotCategory>();
+        while (await reader.ReadAsync()) result.Add(new MenuSlotCategory { Date = DateTime.Parse(reader.GetString(0)), Slot = reader.GetString(1), Category = reader.GetString(2) });
+        return result;
+    }
+
+    public async Task SaveMenuCategoryAsync(DateTime date, string slot, string category)
+    {
+        await InitializeAsync();
+        using var cmd = _connection!.CreateCommand();
+        cmd.CommandText = @"INSERT INTO menu_slot_categories(date, slot, category) VALUES(@date, @slot, @category)
+                            ON CONFLICT(date, slot) DO UPDATE SET category=@category";
+        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
+        cmd.Parameters.AddWithValue("@slot", slot);
+        cmd.Parameters.AddWithValue("@category", category);
         await cmd.ExecuteNonQueryAsync();
     }
 

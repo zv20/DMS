@@ -127,6 +127,7 @@ public sealed partial class SettingsPage : Page
                 Allergens = allergens,
                 Templates = templates,
                 MenuEntries = menuEntries,
+                MenuCategories = await _databaseService.GetMenuCategoriesAsync(),
                 Settings = settings
             };
 
@@ -275,6 +276,15 @@ public sealed partial class SettingsPage : Page
                         await _databaseService.SaveMenuEntryAsync(entry);
                         importedMenus++;
                     }
+                }
+            }
+
+            if (TryGetPropertyIgnoreCase(importData, "MenuCategories", out var categoriesElement))
+            {
+                foreach (var categoryJson in categoriesElement.EnumerateArray())
+                {
+                    var category = JsonSerializer.Deserialize<MenuSlotCategory>(categoryJson.GetRawText(), ImportJsonOptions);
+                    if (category != null) await _databaseService.SaveMenuCategoryAsync(category.Date, category.Slot, category.Category);
                 }
             }
 
@@ -443,6 +453,8 @@ public sealed partial class SettingsPage : Page
                 if (!DateTime.TryParse(day.Name, out var date) || day.Value.ValueKind != JsonValueKind.Object) continue;
                 foreach (var slot in day.Value.EnumerateObject())
                 {
+                    var category = GetString(slot.Value, "category") ?? GetString(slot.Value, "type");
+                    if (category != null) await _databaseService.SaveMenuCategoryAsync(date, slot.Name, category);
                     var sourceRecipeId = GetString(slot.Value, "recipe");
                     if (sourceRecipeId == null || !recipeIds.TryGetValue(sourceRecipeId, out var recipeId)) continue;
                     await _databaseService.SaveMenuEntryAsync(new MenuEntry { Date = date, Slot = slot.Name, RecipeId = recipeId });
