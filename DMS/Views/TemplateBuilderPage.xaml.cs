@@ -21,6 +21,7 @@ public sealed partial class TemplateBuilderPage : Page
     private MenuTemplate _template = new();
     private List<MenuTemplate> _templates = [];
     private List<Recipe> _recipes = [];
+    private List<Ingredient> _ingredients = [];
     private List<MenuEntry> _entries = [];
     private string? _loadedName;
     private bool _binding = true;
@@ -82,6 +83,7 @@ public sealed partial class TemplateBuilderPage : Page
         {
             _templates = await _database.GetAllTemplatesAsync();
             _recipes = await _database.GetAllRecipesAsync();
+            _ingredients = await _database.GetAllIngredientsAsync();
             TemplateSelector.ItemsSource = _templates;
             SetTemplate(new MenuTemplate(), null);
             await LoadWeekAsync();
@@ -205,11 +207,15 @@ public sealed partial class TemplateBuilderPage : Page
             {
                 var recipe = _recipes.FirstOrDefault(r => r.Id == entry.RecipeId);
                 if (recipe == null) continue;
-                var text = recipe.Name;
+                var text = $"{L.Category(recipe.Category)}: {recipe.Name}";
                 if (_template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) text += $" ({recipe.PortionSize})";
                 if (_template.ShowCalories && recipe.Calories > 0) text += $" · {recipe.Calories} kcal";
                 if (_template.ShowIngredients && recipe.Ingredients.Count > 0) text += (_template.TemplateStyle == "compact" ? " · " : "\n") + string.Join(", ", recipe.Ingredients);
                 dayPanel.Children.Add(new TextBlock { Text = text, FontSize = _template.MealFontSize, FontFamily = font, Foreground = new SolidColorBrush(Colors.Black), TextWrapping = TextWrapping.Wrap });
+                var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name =>
+                    _ingredients.FirstOrDefault(ingredient => string.Equals(ingredient.Name, name, StringComparison.OrdinalIgnoreCase))?.Allergens ?? []))
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Select(L.Allergen).ToList();
+                if (allergens.Count > 0) dayPanel.Children.Add(new TextBlock { Text = "⚠ " + string.Join(", ", allergens), FontSize = _template.MealFontSize, FontFamily = font, Foreground = new SolidColorBrush(Colors.Black), TextWrapping = TextWrapping.Wrap });
             }
             Grid.SetColumn(dayPanel, i % columns); Grid.SetRow(dayPanel, i / columns); days.Children.Add(dayPanel);
         }

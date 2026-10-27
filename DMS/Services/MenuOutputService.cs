@@ -269,7 +269,7 @@ public static class MenuOutputService
             foreach (var entry in dayEntries)
             {
                 var recipe = byId[entry.RecipeId];
-                sb.Append("<div class='meal'>").Append(SlotOrder(entry.Slot)).Append(". ").Append(H(recipe.Name));
+                sb.Append("<div class='meal'>").Append(H(Localization.Category(recipe.Category))).Append(": ").Append(H(recipe.Name));
                 if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) sb.Append(" <span class='detail'>").Append(H(recipe.PortionSize)).Append("</span>");
                 if (template.TemplateStyle != "compact")
                 {

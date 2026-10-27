@@ -53,17 +53,17 @@
             <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" Padding="38" HorizontalAlignment="Center">
                 <Grid>
                     <Image x:Name="PreviewImage" Stretch="UniformToFill" />
-                    <StackPanel Spacing="8">
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
                         <Button x:Name="HeaderDisplayButton" Click="HeaderDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
                             <TextBlock x:Name="HeaderDisplay" TextWrapping="Wrap" />
                         </Button>
                         <TextBox x:Name="HeaderBox" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="HeaderBox_LostFocus" />
-                        <StackPanel x:Name="PreviewPanel" Spacing="8" />
-                        <Button x:Name="FooterDisplayButton" Click="FooterDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
+                        <StackPanel x:Name="PreviewPanel" Grid.Row="1" Spacing="8" />
+                        <Button x:Name="FooterDisplayButton" Grid.Row="2" Click="FooterDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
                             <TextBlock x:Name="FooterDisplay" TextWrapping="Wrap" />
                         </Button>
-                        <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="FooterBox_LostFocus" />
-                    </StackPanel>
+                        <TextBox x:Name="FooterBox" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="FooterBox_LostFocus" />
+                    </Grid>
                 </Grid>
             </Border>
         </ScrollViewer>
