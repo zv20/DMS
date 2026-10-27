@@ -5,6 +5,9 @@ Visual Studio opens these files as name/value tables. You can also edit their XM
 
 Keep resource names identical in both files. Add new keys to both; remove a key
 only after removing its references from XAML and C#. English is the fallback.
+Do not use the same key as both a standalone value and the prefix of a dotted
+property (for example, `Greeting` and `Greeting.Text` conflict in the PRI).
+Use a distinct name such as `String_Greeting` for the standalone value.
 XAML `x:Uid` uses keys such as `NavRecipes.Content`. C# uses
 `Localization.Get("key")` or `Localization.Format("key", values...)`.
 Keep numbered placeholders such as `{0}` unchanged in translations.

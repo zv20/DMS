@@ -35,7 +35,7 @@ public static class MenuOutputService
         var templates = await database.GetAllTemplatesAsync();
         foreach (var template in templates) TemplateCompatibility.ApplyLegacyDefaults(template);
         templates.Insert(0, new MenuTemplate { Name = Localization.Get("OutputDefaultTemplate"),
-            HeaderText = Localization.Get("Text_Weekly_Menu_69fa95"), FooterText = Localization.Get("Text_Prepared_with_care_by_DMS_082a78") });
+            HeaderText = Localization.Get("String_Text_Weekly_Menu_69fa95"), FooterText = Localization.Get("String_Text_Prepared_with_care_by_DMS_082a78") });
         var weekBox = new ComboBox { Header = Localization.Get("OutputWeek"), MinWidth = 230 };
         foreach (var week in weeks) weekBox.Items.Add(new ComboBoxItem { Tag = week, Content = $"{week:d} – {week.AddDays(4):d}" });
         weekBox.SelectedIndex = Math.Max(0, weeks.IndexOf(Monday(preferredDate)));

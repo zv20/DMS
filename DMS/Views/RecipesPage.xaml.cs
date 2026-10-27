@@ -72,7 +72,7 @@ public sealed partial class RecipesPage : Page
         {
             _filteredRecipes.Add(recipe);
         }
-        EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
+        EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("String_Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
         EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyStatePanel.Visibility = _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         RecipesListView.Visibility = _filteredRecipes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -121,7 +121,7 @@ public sealed partial class RecipesPage : Page
             {
                 Title = L.Get("Text_Delete_Recipe_f011c8"),
                 Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450"),
-                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
                 CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
@@ -226,7 +226,7 @@ public sealed partial class RecipesPage : Page
         RebuildAllergensFromIngredients();
         var ingredientsLabel = new TextBlock { Text = L.Get("Text_Ingredients_f9e84e"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
-        var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
+        var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
         var ingredientList = new ListView { ItemsSource = selectedIngredients, IsItemClickEnabled = true, MaxHeight = 90 };
         ingredientSearch.TextChanged += (sender, args) =>
         {
@@ -259,7 +259,7 @@ public sealed partial class RecipesPage : Page
         // Allergens: searchable dropdown plus removable selected list.
         var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
-        var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find) };
+        var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find) };
         var allergenList = new ListView { ItemsSource = selectedAllergenItems, DisplayMemberPath = "DisplayName", IsItemClickEnabled = true, MaxHeight = 90 };
         allergenSearch.DisplayMemberPath = "DisplayName";
         allergenSearch.TextMemberPath = "DisplayName";

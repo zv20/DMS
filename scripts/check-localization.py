@@ -4,6 +4,20 @@ import re
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def scope_conflicts(keys):
+    """PRI treats dot/slash-separated names as a tree of scopes and leaves."""
+    normalized = {key.casefold() for key in keys}
+    return sorted((key, key[:i]) for key in keys for i, char in enumerate(key)
+                  if char in "./" and key[:i].casefold() in normalized)
+
+
+# Regression examples for the collision that causes PRI175 / PRI278.
+assert scope_conflicts({"Greeting", "Greeting.Text"})
+assert scope_conflicts({"folder/item", "folder/item/child"})
+assert not scope_conflicts({"GreetingValue", "Greeting.Text"})
+
 catalogs = {}
 for language in ("en-US", "bg-BG"):
     path = ROOT / "DMS" / "Strings" / language / "Resources.resw"
@@ -11,6 +25,8 @@ for language in ("en-US", "bg-BG"):
     values = {item.attrib["name"]: item.findtext("value") for item in items}
     assert len(values) == len(items), f"Duplicate keys in {language}"
     assert all(values.values()), f"Empty translations in {language}"
+    conflicts = scope_conflicts(values)
+    assert not conflicts, f"Resource/scope conflicts in {language}: {conflicts}"
     catalogs[language] = values
 
 english, bulgarian = catalogs.values()
@@ -30,4 +46,4 @@ for path in (ROOT / "DMS").rglob("*.xaml"):
             prefix = element.attrib[uid] + "."
             assert any(key.startswith(prefix) for key in english), f"Missing UID {prefix} in {path}"
 
-print(f"PASS: {len(english)} matching EN/BG keys, placeholders, code references, and XAML UIDs")
+print(f"PASS: {len(english)} matching EN/BG keys, PRI scopes, placeholders, code references, and XAML UIDs")

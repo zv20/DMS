@@ -222,7 +222,7 @@ public sealed partial class TemplateBuilderPage : Page
         return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
     }
 
-    private void New_Click(object sender, RoutedEventArgs e) { TemplateSelector.SelectedItem = null; SetTemplate(new MenuTemplate { HeaderText = L.Get("Text_Weekly_Menu_69fa95"), FooterText = L.Get("Text_Prepared_with_care_by_DMS_082a78") }, null); }
+    private void New_Click(object sender, RoutedEventArgs e) { TemplateSelector.SelectedItem = null; SetTemplate(new MenuTemplate { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95"), FooterText = L.Get("String_Text_Prepared_with_care_by_DMS_082a78") }, null); }
     private void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!_binding && TemplateSelector.SelectedItem is MenuTemplate template) SetTemplate(template, template.Name); }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -248,7 +248,7 @@ public sealed partial class TemplateBuilderPage : Page
     {
         if (_loadedName == null) return;
         if (_template.IsPreset) { StatusText.Text = L.Get("Text_Preset_templates_cannot_be_deleted_0a9c55"); return; }
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"), Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"), Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try { await _database.DeleteTemplateAsync(_loadedName); _templates = await _database.GetAllTemplatesAsync(); TemplateSelector.ItemsSource = _templates; SetTemplate(new MenuTemplate(), null); }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }

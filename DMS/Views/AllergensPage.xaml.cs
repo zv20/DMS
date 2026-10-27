@@ -93,7 +93,7 @@ public sealed partial class AllergensPage : Page
             {
                 Title = L.Get("Text_Delete_Allergen_7b0000"),
                 Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"),
-                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
                 CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot

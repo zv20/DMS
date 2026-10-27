@@ -9,38 +9,38 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>📅 Планиране на меню</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>🍽️ Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>📝 Редактор на шаблони</value></data>
-  <data name="Text_About_3e3c26" xml:space="preserve"><value>ℹ️ За приложението</value></data>
+  <data name="String_Text_About_3e3c26" xml:space="preserve"><value>ℹ️ За приложението</value></data>
   <data name="Text_About_3e3c26.Text" xml:space="preserve"><value>ℹ️ За приложението</value></data>
-  <data name="Text_Accent_Color_2bef52" xml:space="preserve"><value>Акцентен цвят</value></data>
+  <data name="String_Text_Accent_Color_2bef52" xml:space="preserve"><value>Акцентен цвят</value></data>
   <data name="Text_Accent_Color_2bef52.Header" xml:space="preserve"><value>Акцентен цвят</value></data>
   <data name="Text_Add_61cc55" xml:space="preserve"><value>Добави</value></data>
   <data name="Text_Add_Allergen_3f78ad" xml:space="preserve"><value>Добавяне на алерген</value></data>
-  <data name="Text_Add_Allergen_a0c094" xml:space="preserve"><value>➕ Добавяне на алерген</value></data>
+  <data name="String_Text_Add_Allergen_a0c094" xml:space="preserve"><value>➕ Добавяне на алерген</value></data>
   <data name="Text_Add_Allergen_a0c094.Content" xml:space="preserve"><value>➕ Добавяне на алерген</value></data>
   <data name="Text_Add_Ingredient_73b214" xml:space="preserve"><value>Добавяне на съставка</value></data>
-  <data name="Text_Add_Ingredient_bc5b34" xml:space="preserve"><value>➕ Добавяне на съставка</value></data>
+  <data name="String_Text_Add_Ingredient_bc5b34" xml:space="preserve"><value>➕ Добавяне на съставка</value></data>
   <data name="Text_Add_Ingredient_bc5b34.Content" xml:space="preserve"><value>➕ Добавяне на съставка</value></data>
-  <data name="Text_Add_Recipe_09855a" xml:space="preserve"><value>➕ Добавяне на рецепта</value></data>
+  <data name="String_Text_Add_Recipe_09855a" xml:space="preserve"><value>➕ Добавяне на рецепта</value></data>
   <data name="Text_Add_Recipe_09855a.Content" xml:space="preserve"><value>➕ Добавяне на рецепта</value></data>
   <data name="Text_Add_Recipe_aa1d63" xml:space="preserve"><value>Добавяне на рецепта</value></data>
   <data name="Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715" xml:space="preserve"><value>Име на алергена (напр. глутен, мляко, ядки)</value></data>
   <data name="Text_Allergen_name_is_required_94160b" xml:space="preserve"><value>Въведете име на алергена</value></data>
   <data name="Text_Allergens_50e1ad" xml:space="preserve"><value>⚠️ Алергени</value></data>
   <data name="Text_Allergens_537261" xml:space="preserve"><value>Алергени</value></data>
-  <data name="Text_Appearance_be0e75" xml:space="preserve"><value>🎨 Външен вид</value></data>
+  <data name="String_Text_Appearance_be0e75" xml:space="preserve"><value>🎨 Външен вид</value></data>
   <data name="Text_Appearance_be0e75.Text" xml:space="preserve"><value>🎨 Външен вид</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете този алерген?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази съставка?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази рецепта?</value></data>
-  <data name="Text_Background_Color_874df4" xml:space="preserve"><value>Цвят на фона</value></data>
+  <data name="String_Text_Background_Color_874df4" xml:space="preserve"><value>Цвят на фона</value></data>
   <data name="Text_Background_Color_874df4.Text" xml:space="preserve"><value>Цвят на фона</value></data>
   <data name="Text_Backup_Complete_8b1525" xml:space="preserve"><value>Резервното копие е създадено</value></data>
   <data name="Text_Backup_Failed_fcbe1a" xml:space="preserve"><value>Неуспешно създаване на резервно копие</value></data>
-  <data name="Text_Blue_b81516" xml:space="preserve"><value>🔵 Син</value></data>
+  <data name="String_Text_Blue_b81516" xml:space="preserve"><value>🔵 Син</value></data>
   <data name="Text_Blue_b81516.Content" xml:space="preserve"><value>🔵 Син</value></data>
-  <data name="Text_Built_for_meal_planning_and_recipe_management_49409f" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
+  <data name="String_Text_Built_for_meal_planning_and_recipe_management_49409f" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
   <data name="Text_Built_for_meal_planning_and_recipe_management_49409f.Text" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
-  <data name="Text_Bulgarian_a7a43a" xml:space="preserve"><value>Български</value></data>
+  <data name="String_Text_Bulgarian_a7a43a" xml:space="preserve"><value>Български</value></data>
   <data name="Text_Bulgarian_a7a43a.Content" xml:space="preserve"><value>Български</value></data>
   <data name="Text_Calories_3e62ec" xml:space="preserve"><value>Калории</value></data>
   <data name="Text_Cancel_77dfd2" xml:space="preserve"><value>Отказ</value></data>
@@ -48,59 +48,59 @@
   <data name="Text_Category_a3c686" xml:space="preserve"><value>Категория</value></data>
   <data name="Text_Choose_a_background_color_96d4ed" xml:space="preserve"><value>Изберете цвят на фона:</value></data>
   <data name="Text_Clear_719ea3" xml:space="preserve"><value>Изчисти</value></data>
-  <data name="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" xml:space="preserve"><value>Натиснете „Добавяне на алерген“, за да добавите първия алерген</value></data>
+  <data name="String_Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" xml:space="preserve"><value>Натиснете „Добавяне на алерген“, за да добавите първия алерген</value></data>
   <data name="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d.Text" xml:space="preserve"><value>Натиснете „Добавяне на алерген“, за да добавите първия алерген</value></data>
-  <data name="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" xml:space="preserve"><value>Натиснете „Добавяне на съставка“, за да добавите първата съставка</value></data>
+  <data name="String_Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" xml:space="preserve"><value>Натиснете „Добавяне на съставка“, за да добавите първата съставка</value></data>
   <data name="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b.Text" xml:space="preserve"><value>Натиснете „Добавяне на съставка“, за да добавите първата съставка</value></data>
-  <data name="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" xml:space="preserve"><value>Натиснете „Добавяне на рецепта“, за да добавите първата рецепта</value></data>
+  <data name="String_Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" xml:space="preserve"><value>Натиснете „Добавяне на рецепта“, за да добавите първата рецепта</value></data>
   <data name="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d.Text" xml:space="preserve"><value>Натиснете „Добавяне на рецепта“, за да добавите първата рецепта</value></data>
   <data name="Text_Color_1d0c83" xml:space="preserve"><value>Цвят</value></data>
   <data name="Text_Cooking_steps_c3f1dd" xml:space="preserve"><value>Стъпки за приготвяне...</value></data>
-  <data name="Text_Create_Backup_67fc28" xml:space="preserve"><value>💾 Създаване на резервно копие</value></data>
+  <data name="String_Text_Create_Backup_67fc28" xml:space="preserve"><value>💾 Създаване на резервно копие</value></data>
   <data name="Text_Create_Backup_67fc28.Content" xml:space="preserve"><value>💾 Създаване на резервно копие</value></data>
   <data name="Text_Create_allergens_first_from_the_Allergens_page_e8f6ca" xml:space="preserve"><value>Първо добавете алергени от страницата „Алергени“.</value></data>
-  <data name="Text_Dark_9cc40d" xml:space="preserve"><value>🌙 Тъмна</value></data>
+  <data name="String_Text_Dark_9cc40d" xml:space="preserve"><value>🌙 Тъмна</value></data>
   <data name="Text_Dark_9cc40d.Content" xml:space="preserve"><value>🌙 Тъмна</value></data>
-  <data name="Text_Data_Management_a0cf50" xml:space="preserve"><value>💾 Управление на данни</value></data>
+  <data name="String_Text_Data_Management_a0cf50" xml:space="preserve"><value>💾 Управление на данни</value></data>
   <data name="Text_Data_Management_a0cf50.Text" xml:space="preserve"><value>💾 Управление на данни</value></data>
-  <data name="Text_Database_0038a1" xml:space="preserve"><value>🗄️ База данни</value></data>
+  <data name="String_Text_Database_0038a1" xml:space="preserve"><value>🗄️ База данни</value></data>
   <data name="Text_Database_0038a1.Text" xml:space="preserve"><value>🗄️ База данни</value></data>
   <data name="Text_Database_backup_created_successfully_2b90d0" xml:space="preserve"><value>Резервното копие на базата данни е създадено успешно.</value></data>
   <data name="Text_Database_indexes_rebuilt_1fdc67" xml:space="preserve"><value>Индексите на базата данни са преизградени.</value></data>
   <data name="Text_Database_optimized_successfully_4e0a52" xml:space="preserve"><value>Базата данни е оптимизирана успешно.</value></data>
   <data name="Text_Database_restored_successfully_Reopen_any_active_pages__48a860" xml:space="preserve"><value>Базата данни е възстановена успешно. Отворете отново страниците, за да обновите данните им.</value></data>
-  <data name="Text_Delete_8fb0a9" xml:space="preserve"><value>🗑️ Изтриване</value></data>
+  <data name="String_Text_Delete_8fb0a9" xml:space="preserve"><value>🗑️ Изтриване</value></data>
   <data name="Text_Delete_8fb0a9.Content" xml:space="preserve"><value>🗑️ Изтриване</value></data>
   <data name="Text_Delete_Allergen_7b0000" xml:space="preserve"><value>Изтриване на алерген</value></data>
   <data name="Text_Delete_Ingredient_79a0ab" xml:space="preserve"><value>Изтриване на съставка</value></data>
   <data name="Text_Delete_Recipe_f011c8" xml:space="preserve"><value>Изтриване на рецепта</value></data>
   <data name="Text_Delete_Template_c07327" xml:space="preserve"><value>Изтриване на шаблон</value></data>
-  <data name="Text_Delete_f6fdbe" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="String_Text_Delete_f6fdbe" xml:space="preserve"><value>Изтрий</value></data>
   <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Изтрий</value></data>
   <data name="Text_Dessert_40f9c1" xml:space="preserve"><value>Десерт</value></data>
   <data name="Text_Done_e9b450" xml:space="preserve"><value>Готово</value></data>
-  <data name="Text_Edit_530164" xml:space="preserve"><value>Редактирай</value></data>
+  <data name="String_Text_Edit_530164" xml:space="preserve"><value>Редактирай</value></data>
   <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Редактирай</value></data>
   <data name="Text_Edit_Allergen_54f3c1" xml:space="preserve"><value>Редактиране на алерген</value></data>
   <data name="Text_Edit_Ingredient_098e94" xml:space="preserve"><value>Редактиране на съставка</value></data>
   <data name="Text_Edit_Recipe_838f93" xml:space="preserve"><value>Редактиране на рецепта</value></data>
-  <data name="Text_English_531f36" xml:space="preserve"><value>English</value></data>
+  <data name="String_Text_English_531f36" xml:space="preserve"><value>English</value></data>
   <data name="Text_English_531f36.Content" xml:space="preserve"><value>English</value></data>
   <data name="Text_Error_7f2f6a" xml:space="preserve"><value>Грешка</value></data>
   <data name="Text_Export_Complete_7f2e84" xml:space="preserve"><value>Експортирането завърши</value></data>
-  <data name="Text_Export_Data_f821f4" xml:space="preserve"><value>📤 Експортиране на данни</value></data>
+  <data name="String_Text_Export_Data_f821f4" xml:space="preserve"><value>📤 Експортиране на данни</value></data>
   <data name="Text_Export_Data_f821f4.Content" xml:space="preserve"><value>📤 Експортиране на данни</value></data>
   <data name="Text_Export_Failed_6aa6a7" xml:space="preserve"><value>Неуспешно експортиране</value></data>
-  <data name="Text_Footer_Text_9b1025" xml:space="preserve"><value>Текст в долния колонтитул</value></data>
+  <data name="String_Text_Footer_Text_9b1025" xml:space="preserve"><value>Текст в долния колонтитул</value></data>
   <data name="Text_Footer_Text_9b1025.Text" xml:space="preserve"><value>Текст в долния колонтитул</value></data>
-  <data name="Text_Green_f66748" xml:space="preserve"><value>🟢 Зелен</value></data>
+  <data name="String_Text_Green_f66748" xml:space="preserve"><value>🟢 Зелен</value></data>
   <data name="Text_Green_f66748.Content" xml:space="preserve"><value>🟢 Зелен</value></data>
-  <data name="Text_Header_Text_f7593e" xml:space="preserve"><value>Текст в горния колонтитул</value></data>
+  <data name="String_Text_Header_Text_f7593e" xml:space="preserve"><value>Текст в горния колонтитул</value></data>
   <data name="Text_Header_Text_f7593e.Text" xml:space="preserve"><value>Текст в горния колонтитул</value></data>
   <data name="Text_Hex_Color_52aa66" xml:space="preserve"><value>Код на цвета</value></data>
   <data name="Text_Import_Complete_a5cb9b" xml:space="preserve"><value>Импортирането завърши</value></data>
   <data name="Text_Import_Data_0021d0" xml:space="preserve"><value>Импортиране на данни</value></data>
-  <data name="Text_Import_Data_a624f8" xml:space="preserve"><value>📥 Импортиране на данни</value></data>
+  <data name="String_Text_Import_Data_a624f8" xml:space="preserve"><value>📥 Импортиране на данни</value></data>
   <data name="Text_Import_Data_a624f8.Content" xml:space="preserve"><value>📥 Импортиране на данни</value></data>
   <data name="Text_Import_Failed_4c1ed2" xml:space="preserve"><value>Неуспешно импортиране</value></data>
   <data name="Text_Import_d6fbc9" xml:space="preserve"><value>Импортирай</value></data>
@@ -109,106 +109,106 @@
   <data name="Text_Ingredients_6db95c" xml:space="preserve"><value>🥕 Съставки</value></data>
   <data name="Text_Ingredients_f9e84e" xml:space="preserve"><value>Съставки</value></data>
   <data name="Text_Instructions_ed58f2" xml:space="preserve"><value>Начин на приготвяне</value></data>
-  <data name="Text_Language_89b86a" xml:space="preserve"><value>Език</value></data>
+  <data name="String_Text_Language_89b86a" xml:space="preserve"><value>Език</value></data>
   <data name="Text_Language_89b86a.Header" xml:space="preserve"><value>Език</value></data>
-  <data name="Text_Language_Region_5d78df" xml:space="preserve"><value>🌐 Език и регион</value></data>
+  <data name="String_Text_Language_Region_5d78df" xml:space="preserve"><value>🌐 Език и регион</value></data>
   <data name="Text_Language_Region_5d78df.Text" xml:space="preserve"><value>🌐 Език и регион</value></data>
-  <data name="Text_Light_200060" xml:space="preserve"><value>☀️ Светла</value></data>
+  <data name="String_Text_Light_200060" xml:space="preserve"><value>☀️ Светла</value></data>
   <data name="Text_Light_200060.Content" xml:space="preserve"><value>☀️ Светла</value></data>
-  <data name="Text_Live_Preview_a62da9" xml:space="preserve"><value>Предварителен преглед</value></data>
+  <data name="String_Text_Live_Preview_a62da9" xml:space="preserve"><value>Предварителен преглед</value></data>
   <data name="Text_Live_Preview_a62da9.Text" xml:space="preserve"><value>Предварителен преглед</value></data>
-  <data name="Text_Load_Template_19a6c5" xml:space="preserve"><value>📂 Зареждане на шаблон</value></data>
+  <data name="String_Text_Load_Template_19a6c5" xml:space="preserve"><value>📂 Зареждане на шаблон</value></data>
   <data name="Text_Load_Template_19a6c5.Content" xml:space="preserve"><value>📂 Зареждане на шаблон</value></data>
   <data name="Text_Main_62bce9" xml:space="preserve"><value>Основно</value></data>
   <data name="Text_Menu_Planner_5afa46" xml:space="preserve"><value>📅 Планиране на меню</value></data>
-  <data name="Text_Monthly_d31edb" xml:space="preserve"><value>Месечно</value></data>
+  <data name="String_Text_Monthly_d31edb" xml:space="preserve"><value>Месечно</value></data>
   <data name="Text_Monthly_d31edb.Content" xml:space="preserve"><value>Месечно</value></data>
-  <data name="Text_My_Weekly_Menu_Template_b71513" xml:space="preserve"><value>Моят шаблон за седмично меню</value></data>
+  <data name="String_Text_My_Weekly_Menu_Template_b71513" xml:space="preserve"><value>Моят шаблон за седмично меню</value></data>
   <data name="Text_My_Weekly_Menu_Template_b71513.PlaceholderText" xml:space="preserve"><value>Моят шаблон за седмично меню</value></data>
   <data name="Text_Name_d145bb" xml:space="preserve"><value>Име *</value></data>
-  <data name="Text_New_Template_27a75c" xml:space="preserve"><value>➕ Нов шаблон</value></data>
+  <data name="String_Text_New_Template_27a75c" xml:space="preserve"><value>➕ Нов шаблон</value></data>
   <data name="Text_New_Template_27a75c.Content" xml:space="preserve"><value>➕ Нов шаблон</value></data>
   <data name="Text_No_allergens_238938" xml:space="preserve"><value>Няма алергени</value></data>
-  <data name="Text_No_allergens_yet_6f883b" xml:space="preserve"><value>Все още няма алергени</value></data>
+  <data name="String_Text_No_allergens_yet_6f883b" xml:space="preserve"><value>Все още няма алергени</value></data>
   <data name="Text_No_allergens_yet_6f883b.Text" xml:space="preserve"><value>Все още няма алергени</value></data>
-  <data name="Text_No_ingredients_yet_affb49" xml:space="preserve"><value>Все още няма съставки</value></data>
+  <data name="String_Text_No_ingredients_yet_affb49" xml:space="preserve"><value>Все още няма съставки</value></data>
   <data name="Text_No_ingredients_yet_affb49.Text" xml:space="preserve"><value>Все още няма съставки</value></data>
-  <data name="Text_No_recipes_yet_0e52a2" xml:space="preserve"><value>Все още няма рецепти</value></data>
+  <data name="String_Text_No_recipes_yet_0e52a2" xml:space="preserve"><value>Все още няма рецепти</value></data>
   <data name="Text_No_recipes_yet_0e52a2.Text" xml:space="preserve"><value>Все още няма рецепти</value></data>
   <data name="Text_OK_9ce3bd" xml:space="preserve"><value>Добре</value></data>
-  <data name="Text_Open_Data_Folder_7f4c75" xml:space="preserve"><value>📁 Отваряне на папката с данни</value></data>
+  <data name="String_Text_Open_Data_Folder_7f4c75" xml:space="preserve"><value>📁 Отваряне на папката с данни</value></data>
   <data name="Text_Open_Data_Folder_7f4c75.Content" xml:space="preserve"><value>📁 Отваряне на папката с данни</value></data>
-  <data name="Text_Orange_ed1c11" xml:space="preserve"><value>🟠 Оранжев</value></data>
+  <data name="String_Text_Orange_ed1c11" xml:space="preserve"><value>🟠 Оранжев</value></data>
   <data name="Text_Orange_ed1c11.Content" xml:space="preserve"><value>🟠 Оранжев</value></data>
   <data name="Text_Other_6e6a6f" xml:space="preserve"><value>Друго</value></data>
   <data name="Text_Pick_Background_Color_cb6f4f" xml:space="preserve"><value>Избор на цвят на фона</value></data>
-  <data name="Text_Pick_Color_aa15a3" xml:space="preserve"><value>Избор на цвят</value></data>
+  <data name="String_Text_Pick_Color_aa15a3" xml:space="preserve"><value>Избор на цвят</value></data>
   <data name="Text_Pick_Color_aa15a3.Content" xml:space="preserve"><value>Избор на цвят</value></data>
   <data name="Text_Plan_menu_0031d0" xml:space="preserve"><value>＋ Планиране на меню</value></data>
   <data name="Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b" xml:space="preserve"><value>Въведете валиден код на цвят (напр. #3498db)</value></data>
   <data name="Text_Portion_Size_4c79c6" xml:space="preserve"><value>Грамаж</value></data>
-  <data name="Text_Prepared_with_care_by_DMS_082a78" xml:space="preserve"><value>Изготвено с грижа от DMS</value></data>
+  <data name="String_Text_Prepared_with_care_by_DMS_082a78" xml:space="preserve"><value>Изготвено с грижа от DMS</value></data>
   <data name="Text_Prepared_with_care_by_DMS_082a78.PlaceholderText" xml:space="preserve"><value>Изготвено с грижа от DMS</value></data>
   <data name="Text_Preset_templates_cannot_be_deleted_0a9c55" xml:space="preserve"><value>Вградените шаблони не могат да бъдат изтрити</value></data>
-  <data name="Text_Purple_a14112" xml:space="preserve"><value>🟣 Лилав</value></data>
+  <data name="String_Text_Purple_a14112" xml:space="preserve"><value>🟣 Лилав</value></data>
   <data name="Text_Purple_a14112.Content" xml:space="preserve"><value>🟣 Лилав</value></data>
   <data name="Text_Recipe_is_in_use_d1249f" xml:space="preserve"><value>Рецептата се използва</value></data>
   <data name="Text_Recipe_name_bcb84d" xml:space="preserve"><value>Име на рецептата</value></data>
   <data name="Text_Recipe_name_is_required_75e015" xml:space="preserve"><value>Въведете име на рецептата</value></data>
   <data name="Text_Recipes_b1513f" xml:space="preserve"><value>🍽️ Рецепти</value></data>
-  <data name="Text_Red_6f6efe" xml:space="preserve"><value>🔴 Червен</value></data>
+  <data name="String_Text_Red_6f6efe" xml:space="preserve"><value>🔴 Червен</value></data>
   <data name="Text_Red_6f6efe.Content" xml:space="preserve"><value>🔴 Червен</value></data>
-  <data name="Text_Reindex_70aa2b" xml:space="preserve"><value>📇 Преизграждане на индексите</value></data>
+  <data name="String_Text_Reindex_70aa2b" xml:space="preserve"><value>📇 Преизграждане на индексите</value></data>
   <data name="Text_Reindex_70aa2b.Content" xml:space="preserve"><value>📇 Преизграждане на индексите</value></data>
   <data name="Text_Reindex_Complete_6eb4e1" xml:space="preserve"><value>Индексите са преизградени</value></data>
   <data name="Text_Reindex_failed_f6512f" xml:space="preserve"><value>Неуспешно преизграждане на индексите</value></data>
   <data name="Text_Restore_3cbe6d" xml:space="preserve"><value>Възстанови</value></data>
-  <data name="Text_Restore_Backup_0e7200" xml:space="preserve"><value>🔄 Възстановяване на резервно копие</value></data>
+  <data name="String_Text_Restore_Backup_0e7200" xml:space="preserve"><value>🔄 Възстановяване на резервно копие</value></data>
   <data name="Text_Restore_Backup_0e7200.Content" xml:space="preserve"><value>🔄 Възстановяване на резервно копие</value></data>
   <data name="Text_Restore_Complete_6ad3ae" xml:space="preserve"><value>Възстановяването завърши</value></data>
   <data name="Text_Restore_Database_04f0a6" xml:space="preserve"><value>Възстановяване на базата данни</value></data>
   <data name="Text_Restore_Failed_b6bce7" xml:space="preserve"><value>Неуспешно възстановяване</value></data>
-  <data name="Text_Save_Template_913ba6" xml:space="preserve"><value>💾 Запазване на шаблон</value></data>
+  <data name="String_Text_Save_Template_913ba6" xml:space="preserve"><value>💾 Запазване на шаблон</value></data>
   <data name="Text_Save_Template_913ba6.Content" xml:space="preserve"><value>💾 Запазване на шаблон</value></data>
   <data name="Text_Save_efc007" xml:space="preserve"><value>Запази</value></data>
   <data name="Text_Saved_499dc6" xml:space="preserve"><value>✓ Запазено</value></data>
-  <data name="Text_Search_allergens_c1743a" xml:space="preserve"><value>Търсене на алергени...</value></data>
+  <data name="String_Text_Search_allergens_c1743a" xml:space="preserve"><value>Търсене на алергени...</value></data>
   <data name="Text_Search_allergens_c1743a.PlaceholderText" xml:space="preserve"><value>Търсене на алергени...</value></data>
-  <data name="Text_Search_ingredients_540992" xml:space="preserve"><value>Търсене на съставки...</value></data>
+  <data name="String_Text_Search_ingredients_540992" xml:space="preserve"><value>Търсене на съставки...</value></data>
   <data name="Text_Search_ingredients_540992.PlaceholderText" xml:space="preserve"><value>Търсене на съставки...</value></data>
-  <data name="Text_Search_recipes_ba1ee4" xml:space="preserve"><value>Търсене на рецепти...</value></data>
+  <data name="String_Text_Search_recipes_ba1ee4" xml:space="preserve"><value>Търсене на рецепти...</value></data>
   <data name="Text_Search_recipes_ba1ee4.PlaceholderText" xml:space="preserve"><value>Търсене на рецепти...</value></data>
   <data name="Text_Select_category_a2a5ca" xml:space="preserve"><value>Изберете категория</value></data>
   <data name="Text_Select_recipe_c2831b" xml:space="preserve"><value>Изберете рецепта…</value></data>
-  <data name="Text_Select_template_3b4dfd" xml:space="preserve"><value>Изберете шаблон...</value></data>
+  <data name="String_Text_Select_template_3b4dfd" xml:space="preserve"><value>Изберете шаблон...</value></data>
   <data name="Text_Select_template_3b4dfd.PlaceholderText" xml:space="preserve"><value>Изберете шаблон...</value></data>
   <data name="Text_Settings_c7f73b" xml:space="preserve"><value>Настройки</value></data>
   <data name="Text_Soup_e373ab" xml:space="preserve"><value>Супа</value></data>
-  <data name="Text_System_Default_363703" xml:space="preserve"><value>💻 Системна настройка</value></data>
+  <data name="String_Text_System_Default_363703" xml:space="preserve"><value>💻 Системна настройка</value></data>
   <data name="Text_System_Default_363703.Content" xml:space="preserve"><value>💻 Системна настройка</value></data>
-  <data name="Text_Teal_ee7cb9" xml:space="preserve"><value>🟢 Синьо-зелен</value></data>
+  <data name="String_Text_Teal_ee7cb9" xml:space="preserve"><value>🟢 Синьо-зелен</value></data>
   <data name="Text_Teal_ee7cb9.Content" xml:space="preserve"><value>🟢 Синьо-зелен</value></data>
   <data name="Text_Template_Builder_86b3c0" xml:space="preserve"><value>📝 Редактор на шаблони</value></data>
-  <data name="Text_Template_Name_48c554" xml:space="preserve"><value>Име на шаблона</value></data>
+  <data name="String_Text_Template_Name_48c554" xml:space="preserve"><value>Име на шаблона</value></data>
   <data name="Text_Template_Name_48c554.Text" xml:space="preserve"><value>Име на шаблона</value></data>
   <data name="Text_Template_name_is_required_0e3ca2" xml:space="preserve"><value>Въведете име на шаблона</value></data>
   <data name="Text_The_selected_file_is_not_a_DMS_backup_df8918" xml:space="preserve"><value>Избраният файл не е резервно копие на DMS.</value></data>
-  <data name="Text_Theme_a797e3" xml:space="preserve"><value>Тема</value></data>
+  <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Тема</value></data>
   <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Тема</value></data>
   <data name="Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0" xml:space="preserve"><value>Импортираните данни ще бъдат добавени към съществуващите. Дублираните имена ще бъдат пропуснати. Продължаване?</value></data>
   <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>Това ще оптимизира размера на базата данни. Продължаване?</value></data>
-  <data name="Text_Today_24345a" xml:space="preserve"><value>Днес</value></data>
+  <data name="String_Text_Today_24345a" xml:space="preserve"><value>Днес</value></data>
   <data name="Text_Today_24345a.Content" xml:space="preserve"><value>Днес</value></data>
   <data name="Text_Vacuum_5fe15d" xml:space="preserve"><value>Оптимизирай</value></data>
   <data name="Text_Vacuum_Complete_43b708" xml:space="preserve"><value>Оптимизирането завърши</value></data>
   <data name="Text_Vacuum_Database_0a823e" xml:space="preserve"><value>Оптимизиране на базата данни</value></data>
-  <data name="Text_Vacuum_Database_c3255f" xml:space="preserve"><value>🧹 Оптимизиране на базата данни</value></data>
+  <data name="String_Text_Vacuum_Database_c3255f" xml:space="preserve"><value>🧹 Оптимизиране на базата данни</value></data>
   <data name="Text_Vacuum_Database_c3255f.Content" xml:space="preserve"><value>🧹 Оптимизиране на базата данни</value></data>
-  <data name="Text_Week_Structure_0043f9" xml:space="preserve"><value>Структура на седмицата</value></data>
+  <data name="String_Text_Week_Structure_0043f9" xml:space="preserve"><value>Структура на седмицата</value></data>
   <data name="Text_Week_Structure_0043f9.Text" xml:space="preserve"><value>Структура на седмицата</value></data>
-  <data name="Text_Weekly_158f3d" xml:space="preserve"><value>Седмично</value></data>
+  <data name="String_Text_Weekly_158f3d" xml:space="preserve"><value>Седмично</value></data>
   <data name="Text_Weekly_158f3d.Content" xml:space="preserve"><value>Седмично</value></data>
-  <data name="Text_Weekly_Menu_69fa95" xml:space="preserve"><value>Седмично меню</value></data>
+  <data name="String_Text_Weekly_Menu_69fa95" xml:space="preserve"><value>Седмично меню</value></data>
   <data name="Text_Weekly_Menu_69fa95.PlaceholderText" xml:space="preserve"><value>Седмично меню</value></data>
   <data name="Text_e_g_2_servings_29af24" xml:space="preserve"><value>напр. 250 г</value></data>
   <data name="DatabaseInfo" xml:space="preserve"><value>Местоположение: {0}&#10;Размер: {1}&#10;Последна промяна: {2:g}</value></data>
