@@ -9,16 +9,18 @@ using Microsoft.UI.Text;
 
 namespace DMS.Views;
 
-public sealed partial class IngredientsPage : Page
+public sealed partial class IngredientsPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private ObservableCollection<IngredientItemViewModel> _ingredients = new();
     private ObservableCollection<IngredientItemViewModel> _filteredIngredients = new();
+    private readonly SideEditorController _editor;
 
     public IngredientsPage()
     {
         this.InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
+        _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         IngredientsListView.ItemsSource = _filteredIngredients;
         Loaded += IngredientsPage_Loaded;
     }
@@ -62,14 +64,14 @@ public sealed partial class IngredientsPage : Page
 
     private async void AddIngredientButton_Click(object sender, RoutedEventArgs e)
     {
-        await ShowIngredientDialogAsync(null);
+        await _editor.OpenAsync(() => ShowIngredientEditorAsync(null));
     }
 
     private async void IngredientsListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is IngredientItemViewModel ingredient)
         {
-            await ShowIngredientDialogAsync(ingredient);
+            await _editor.OpenAsync(() => ShowIngredientEditorAsync(ingredient));
         }
     }
 
@@ -78,7 +80,7 @@ public sealed partial class IngredientsPage : Page
         if (sender is Button btn && btn.Tag is int id)
         {
             var ingredient = _ingredients.FirstOrDefault(r => r.Id == id);
-            if (ingredient != null) await ShowIngredientDialogAsync(ingredient);
+            if (ingredient != null) await _editor.OpenAsync(() => ShowIngredientEditorAsync(ingredient));
         }
     }
 
@@ -100,27 +102,22 @@ public sealed partial class IngredientsPage : Page
             if (result == ContentDialogResult.Primary)
             {
                 await _database.DeleteIngredientAsync(id);
+                if (_editor.EditingId == id) _editor.Close();
                 await LoadIngredientsAsync();
             }
         }
     }
 
-    private async Task ShowIngredientDialogAsync(IngredientItemViewModel? existingIngredient)
+    public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
+
+    private async Task ShowIngredientEditorAsync(IngredientItemViewModel? existingIngredient)
     {
         var isEditing = existingIngredient != null;
         var ingredient = existingIngredient?.ToIngredient() ?? new Ingredient();
         var allergens = await _database.GetAllAllergensAsync();
 
-        var dialog = new ContentDialog
-        {
-            Title = isEditing ? L.Get("Text_Edit_Ingredient_098e94") : L.Get("Text_Add_Ingredient_73b214"),
-            PrimaryButtonText = L.Get("Text_Save_efc007"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = this.XamlRoot
-        };
-
-        var panel = new StackPanel { Spacing = 12, Width = 400 };
+        EditorContent.Children.Clear();
+        var panel = EditorContent;
 
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = ingredient.Name, PlaceholderText = L.Get("Text_Ingredient_name_6f2b4d") };
@@ -152,35 +149,32 @@ public sealed partial class IngredientsPage : Page
             });
         }
 
-        dialog.Content = panel;
-
-        dialog.PrimaryButtonClick += async (s, args) =>
+        // Keep unknown saved allergens instead of dropping them during an unrelated edit.
+        var unmatchedAllergens = ingredient.Allergens.Where(name => !allergens.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))).ToList();
+        nameBox.TextChanged += (_, _) => _editor.MarkDirty();
+        allergenList.SelectionChanged += (_, _) => _editor.MarkDirty();
+        _editor.Present(isEditing ? L.Get("Text_Edit_Ingredient_098e94") : L.Get("Text_Add_Ingredient_73b214"), isEditing ? ingredient.Id : null, async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
             {
-                args.Cancel = true;
-                var errorDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Error_7f2f6a"),
-                    Content = L.Get("Text_Ingredient_name_is_required_468003"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await errorDialog.ShowAsync();
-                return;
+                _editor.SetError(L.Get("Text_Ingredient_name_is_required_468003"));
+                nameBox.Focus(FocusState.Programmatic);
+                return false;
             }
 
             ingredient.Name = nameBox.Text.Trim();
             ingredient.Allergens = allergenList.SelectedItems
                 .OfType<Allergen>()
                 .Select(selected => selected.Name)
+                .Concat(unmatchedAllergens)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            await _database.SaveIngredientAsync(ingredient);
+            ingredient.Id = await _database.SaveIngredientAsync(ingredient);
             await LoadIngredientsAsync();
-        };
-
-        await dialog.ShowAsync();
+            return true;
+        });
+        nameBox.Focus(FocusState.Programmatic);
     }
 }
 

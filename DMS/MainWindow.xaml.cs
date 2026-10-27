@@ -53,24 +53,32 @@ public sealed partial class MainWindow : Window
         if (pageType != null && ContentFrame != null)
         {
             if (ContentFrame.CurrentSourcePageType == pageType) return;
-            if (ContentFrame.Content is RecipesPage recipes && pageType != typeof(RecipesPage))
+            if (ContentFrame.Content is IUnsavedEditor editor)
             {
+                var currentTag = ContentFrame.Content switch
+                {
+                    RecipesPage => "recipes",
+                    IngredientsPage => "ingredients",
+                    AllergensPage => "allergens",
+                    _ => ""
+                };
                 if (_navigationPending)
                 {
-                    NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "recipes"));
+                    NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, currentTag));
                     return;
                 }
                 _navigationPending = true;
                 try
                 {
-                    if (!await recipes.CanLeaveAsync())
+                    if (!await editor.CanLeaveAsync())
                     {
-                        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "recipes"));
+                        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, currentTag));
                         return;
                     }
                 }
                 finally { _navigationPending = false; }
             }
+            NavView.SelectedItem = args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer;
             ContentFrame.Navigate(pageType);
         }
     }

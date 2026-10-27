@@ -307,4 +307,6 @@
   <data name="RecipeDiscardMessage" xml:space="preserve"><value>You have unsaved recipe changes. Discard them?</value></data>
   <data name="RecipeDiscardButton" xml:space="preserve"><value>Discard</value></data>
   <data name="RecipeCloseEditor" xml:space="preserve"><value>Close recipe editor</value></data>
+  <data name="SideEditorClose" xml:space="preserve"><value>Close editor</value></data>
+  <data name="SideEditorDiscardMessage" xml:space="preserve"><value>You have unsaved changes. Discard them?</value></data>
 </root>

@@ -12,16 +12,18 @@ using Microsoft.UI.Text;
 
 namespace DMS.Views;
 
-public sealed partial class AllergensPage : Page
+public sealed partial class AllergensPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private ObservableCollection<AllergenItemViewModel> _allergens = new();
     private ObservableCollection<AllergenItemViewModel> _filteredAllergens = new();
+    private readonly SideEditorController _editor;
 
     public AllergensPage()
     {
         this.InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
+        _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         AllergensListView.ItemsSource = _filteredAllergens;
         Loaded += AllergensPage_Loaded;
     }
@@ -63,25 +65,25 @@ public sealed partial class AllergensPage : Page
         ApplyFilter();
     }
 
-    private void AddAllergenButton_Click(object sender, RoutedEventArgs e)
+    private async void AddAllergenButton_Click(object sender, RoutedEventArgs e)
     {
-        ShowAllergenDialog(null);
+        await _editor.OpenAsync(() => ShowAllergenEditorAsync(null));
     }
 
-    private void AllergensListView_ItemClick(object sender, ItemClickEventArgs e)
+    private async void AllergensListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is AllergenItemViewModel allergen)
         {
-            ShowAllergenDialog(allergen);
+            await _editor.OpenAsync(() => ShowAllergenEditorAsync(allergen));
         }
     }
 
-    private void EditAllergenButton_Click(object sender, RoutedEventArgs e)
+    private async void EditAllergenButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is int id)
         {
             var allergen = _allergens.FirstOrDefault(r => r.Id == id);
-            if (allergen != null) ShowAllergenDialog(allergen);
+            if (allergen != null) await _editor.OpenAsync(() => ShowAllergenEditorAsync(allergen));
         }
     }
 
@@ -103,26 +105,21 @@ public sealed partial class AllergensPage : Page
             if (result == ContentDialogResult.Primary)
             {
                 await _database.DeleteAllergenAsync(id);
+                if (_editor.EditingId == id) _editor.Close();
                 await LoadAllergensAsync();
             }
         }
     }
 
-    private void ShowAllergenDialog(AllergenItemViewModel? existingAllergen)
+    public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
+
+    private Task ShowAllergenEditorAsync(AllergenItemViewModel? existingAllergen)
     {
         var isEditing = existingAllergen != null;
         var allergen = existingAllergen?.ToAllergen() ?? new Allergen();
 
-        var dialog = new ContentDialog
-        {
-            Title = isEditing ? L.Get("Text_Edit_Allergen_54f3c1") : L.Get("Text_Add_Allergen_3f78ad"),
-            PrimaryButtonText = L.Get("Text_Save_efc007"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = this.XamlRoot
-        };
-
-        var panel = new StackPanel { Spacing = 12, Width = 400 };
+        EditorContent.Children.Clear();
+        var panel = EditorContent;
 
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = allergen.Name, PlaceholderText = L.Get("Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715") };
@@ -193,48 +190,34 @@ public sealed partial class AllergensPage : Page
             };
             quickColorsPanel.Children.Add(btn);
         }
-        panel.Children.Add(quickColorsPanel);
-
-        dialog.Content = panel;
-
-        dialog.PrimaryButtonClick += async (s, args) =>
+        panel.Children.Add(new ScrollViewer { Content = quickColorsPanel, HorizontalScrollMode = ScrollMode.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollMode = ScrollMode.Disabled });
+        nameBox.TextChanged += (_, _) => _editor.MarkDirty();
+        colorBox.TextChanged += (_, _) => _editor.MarkDirty();
+        _editor.Present(isEditing ? L.Get("Text_Edit_Allergen_54f3c1") : L.Get("Text_Add_Allergen_3f78ad"), isEditing ? allergen.Id : null, async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
             {
-                args.Cancel = true;
-                var errorDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Error_7f2f6a"),
-                    Content = L.Get("Text_Allergen_name_is_required_94160b"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await errorDialog.ShowAsync();
-                return;
+                _editor.SetError(L.Get("Text_Allergen_name_is_required_94160b"));
+                nameBox.Focus(FocusState.Programmatic);
+                return false;
             }
 
-            if (!colorBox.Text.StartsWith("#") || colorBox.Text.Length != 7)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(colorBox.Text.Trim(), "^#[0-9a-fA-F]{6}$"))
             {
-                args.Cancel = true;
-                var errorDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Error_7f2f6a"),
-                    Content = L.Get("Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await errorDialog.ShowAsync();
-                return;
+                _editor.SetError(L.Get("Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b"));
+                colorBox.Focus(FocusState.Programmatic);
+                return false;
             }
 
             allergen.Name = nameBox.Text.Trim();
             allergen.Color = colorBox.Text.Trim();
 
-            await _database.SaveAllergenAsync(allergen);
+            allergen.Id = await _database.SaveAllergenAsync(allergen);
             await LoadAllergensAsync();
-        };
-
-        _ = dialog.ShowAsync();
+            return true;
+        });
+        nameBox.Focus(FocusState.Programmatic);
+        return Task.CompletedTask;
     }
 
     private static Color ParseColorHex(string hex)

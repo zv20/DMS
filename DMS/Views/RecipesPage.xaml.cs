@@ -11,7 +11,7 @@ using Microsoft.UI.Text;
 
 namespace DMS.Views;
 
-public sealed partial class RecipesPage : Page
+public sealed partial class RecipesPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private ObservableCollection<RecipeItemViewModel> _recipes = new();

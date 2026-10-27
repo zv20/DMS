@@ -307,4 +307,6 @@
   <data name="RecipeDiscardMessage" xml:space="preserve"><value>Имате незапазени промени по рецептата. Да бъдат ли отхвърлени?</value></data>
   <data name="RecipeDiscardButton" xml:space="preserve"><value>Отхвърли</value></data>
   <data name="RecipeCloseEditor" xml:space="preserve"><value>Затвори редактора на рецепта</value></data>
+  <data name="SideEditorClose" xml:space="preserve"><value>Затвори редактора</value></data>
+  <data name="SideEditorDiscardMessage" xml:space="preserve"><value>Имате незапазени промени. Да бъдат ли отхвърлени?</value></data>
 </root>
