@@ -45,7 +45,7 @@ internal sealed class MenuPreviewDocumentSource : IDisposable
         var valid = _document != null && string.Equals(args.Request.Uri, _currentUri, StringComparison.Ordinal);
         // The response retains this in-memory stream for the lifetime of the
         // WebView request. It owns no file or operating-system handles.
-        var stream = new MemoryStream(valid ? _document! : Array.Empty<byte>(), writable: false);
+        var stream = new MemoryStream(valid ? _document! : Array.Empty<byte>(), writable: false).AsRandomAccessStream();
         args.Response = _view.Environment.CreateWebResourceResponse(stream, valid ? 200 : 404,
             valid ? "OK" : "Not Found",
             "Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n" +
