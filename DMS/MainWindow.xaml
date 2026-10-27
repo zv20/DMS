@@ -32,12 +32,6 @@
             </Grid>
         </Border>
 
-        <!-- Client-area controls must not be children of AppTitleBar, because
-             SetTitleBar makes that entire element a non-client drag region. -->
-        <StackPanel Grid.Row="0" Canvas.ZIndex="10" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,140,0" VerticalAlignment="Center" Spacing="12">
-            <TextBlock x:Uid="SyncIndicator" Text="✓ Saved" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" />
-        </StackPanel>
-
         <!-- Main Content -->
         <NavigationView
             x:Name="NavView"
