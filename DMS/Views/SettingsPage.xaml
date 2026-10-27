@@ -7,10 +7,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <ScrollViewer Padding="32">
-        <StackPanel Spacing="24" MaxWidth="600">
+    <ScrollViewer x:Name="SettingsScrollViewer" Padding="24" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="SettingsCards" ColumnSpacing="16" RowSpacing="16" HorizontalAlignment="Stretch">
             <!-- Language Section -->
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
+            <Border x:Name="LanguageCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="12">
                     <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Language_Region_5d78df" />
                     <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
@@ -22,7 +22,7 @@
             </Border>
 
             <!-- Theme Section -->
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
+            <Border x:Name="AppearanceCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="12">
                     <TextBlock Text="🎨 Appearance" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Appearance_be0e75" />
                     <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
@@ -43,21 +43,21 @@
             </Border>
 
             <!-- Data Management Section -->
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
+            <Border x:Name="DataCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="12">
                     <TextBlock Text="💾 Data Management" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Data_Management_a0cf50" />
                     
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel Spacing="8">
                         <Button x:Name="ExportButton" Content="📤 Export Data" Click="ExportButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Export_Data_f821f4" />
                         <Button x:Name="ImportButton" Content="📥 Import Data" Click="ImportButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Import_Data_a624f8" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <StackPanel Spacing="8" Margin="0,8,0,0">
                         <Button x:Name="BackupButton" Content="💾 Create Backup" Click="BackupButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Create_Backup_67fc28" />
                         <Button x:Name="RestoreButton" Content="🔄 Restore Backup" Click="RestoreButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Restore_Backup_0e7200" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <StackPanel Spacing="8" Margin="0,8,0,0">
                         <Button x:Name="OpenDataFolderButton" Content="📁 Open Data Folder" Click="OpenDataFolderButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Open_Data_Folder_7f4c75" />
                         <TextBlock x:Name="DataFolderText" VerticalAlignment="Center" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" MaxWidth="400" />
                     </StackPanel>
@@ -65,12 +65,12 @@
             </Border>
 
             <!-- Database Section -->
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
+            <Border x:Name="DatabaseCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="12">
                     <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Database_0038a1" />
                     <TextBlock x:Name="DatabaseInfoText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
                     
-                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <StackPanel Spacing="8" Margin="0,8,0,0">
                         <Button x:Name="VacuumButton" Content="🧹 Vacuum Database" Click="VacuumButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Vacuum_Database_c3255f" />
                         <Button x:Name="ReindexButton" Content="📇 Reindex" Click="ReindexButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Reindex_70aa2b" />
                     </StackPanel>
@@ -78,17 +78,17 @@
             </Border>
 
             <!-- About Section -->
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
+            <Border x:Name="AboutCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="8">
                     <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_About_3e3c26" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <TextBlock Text="DMS (Diet Management System)" FontWeight="SemiBold" />
                         <TextBlock Text="v1.0.0" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
-                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
                     <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0"  x:Uid="Text_Built_for_meal_planning_and_recipe_management_49409f" />
                 </StackPanel>
             </Border>
-        </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>

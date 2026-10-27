@@ -20,17 +20,41 @@ public sealed partial class SettingsPage : Page
     private readonly ISettingsService _settingsService;
     private readonly IDatabaseService _databaseService;
     private bool _suppressSettingChanges = true;
+    private int _cardColumns;
 
     public SettingsPage()
     {
         this.InitializeComponent();
         _settingsService = App.Services.GetRequiredService<ISettingsService>();
         _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);
         Loaded += SettingsPage_Loaded;
+    }
+
+    private void ArrangeCards(double width)
+    {
+        // Leave room for the outer padding and keep each card readable in both languages.
+        var available = Math.Max(0, width - 48);
+        var columns = available >= 1200 ? 3 : available >= 780 ? 2 : 1;
+        if (_cardColumns == columns) return;
+        _cardColumns = columns;
+        var cards = new[] { LanguageCard, AppearanceCard, DataCard, DatabaseCard, AboutCard };
+        SettingsCards.ColumnDefinitions.Clear();
+        SettingsCards.RowDefinitions.Clear();
+        for (var i = 0; i < columns; i++)
+            SettingsCards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        for (var i = 0; i < (cards.Length + columns - 1) / columns; i++)
+            SettingsCards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < cards.Length; i++)
+        {
+            Grid.SetColumn(cards[i], i % columns);
+            Grid.SetRow(cards[i], i / columns);
+        }
     }
 
     private async void SettingsPage_Loaded(object sender, RoutedEventArgs e)
     {
+        ArrangeCards(SettingsScrollViewer.ActualWidth);
         await LoadSettingsAsync();
     }
 
