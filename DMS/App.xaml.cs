@@ -45,6 +45,7 @@ public partial class App : Application
             if (startup.IsClosed) return;
             language = settings.Language;
             Localization.Apply(language);
+            AppearanceService.ApplyAccent(settings.AccentColor);
             var database = Services.GetRequiredService<IDatabaseService>();
             startup.ShowLoading(Localization.Get("StartupRecipes"));
             await database.GetAllRecipesAsync();

@@ -236,4 +236,69 @@
   <data name="AllergenMolluscs" xml:space="preserve"><value>Мекотели</value></data>
   <data name="StartupRecipes" xml:space="preserve"><value>Зареждане на рецепти...</value></data>
   <data name="StartupIngredients" xml:space="preserve"><value>Подготвяне на съставки...</value></data>
+  <data name="MenuOutput.Content" xml:space="preserve"><value>Печат / Експорт</value></data>
+  <data name="RecipeAllCategories" xml:space="preserve"><value>Всички категории</value></data>
+  <data name="RecipeSortName" xml:space="preserve"><value>Име</value></data>
+  <data name="RecipeSortCategory" xml:space="preserve"><value>Категория</value></data>
+  <data name="RecipeSortPortion" xml:space="preserve"><value>Грамаж</value></data>
+  <data name="RecipeSortAllergens" xml:space="preserve"><value>Алергени</value></data>
+  <data name="RecipeNoMatches" xml:space="preserve"><value>Няма намерени рецепти</value></data>
+  <data name="TplNew" xml:space="preserve"><value>Нов</value></data>
+  <data name="TplSave" xml:space="preserve"><value>Запази шаблона</value></data>
+  <data name="TplDelete" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="TplSelect" xml:space="preserve"><value>Изберете шаблон</value></data>
+  <data name="TplName" xml:space="preserve"><value>Име на шаблона</value></data>
+  <data name="TplHeader" xml:space="preserve"><value>Текст на заглавието</value></data>
+  <data name="TplFooter" xml:space="preserve"><value>Текст в края</value></data>
+  <data name="TplFont" xml:space="preserve"><value>Шрифт</value></data>
+  <data name="TplLayout" xml:space="preserve"><value>Оформление</value></data>
+  <data name="TplHeaderSize" xml:space="preserve"><value>Размер на заглавието</value></data>
+  <data name="TplMealSize" xml:space="preserve"><value>Размер на ястията</value></data>
+  <data name="TplFooterSize" xml:space="preserve"><value>Размер на текста в края</value></data>
+  <data name="TplHeaderColor" xml:space="preserve"><value>Цвят на заглавието (hex)</value></data>
+  <data name="TplBackgroundColor" xml:space="preserve"><value>Цвят на фона (hex)</value></data>
+  <data name="TplImage" xml:space="preserve"><value>Изберете изображение</value></data>
+  <data name="TplImageClear" xml:space="preserve"><value>Премахване на изображението</value></data>
+  <data name="TplOpacity" xml:space="preserve"><value>Прозрачност на изображението</value></data>
+  <data name="TplShowHeader" xml:space="preserve"><value>Покажи заглавието</value></data>
+  <data name="TplShowDate" xml:space="preserve"><value>Покажи датите</value></data>
+  <data name="TplShowIngredients" xml:space="preserve"><value>Покажи съставките</value></data>
+  <data name="TplShowCalories" xml:space="preserve"><value>Покажи калориите</value></data>
+  <data name="TplShowPortions" xml:space="preserve"><value>Покажи грамажа</value></data>
+  <data name="TplShowFooter" xml:space="preserve"><value>Покажи текста в края</value></data>
+  <data name="TplPreview" xml:space="preserve"><value>Преглед на седмица</value></data>
+  <data name="TplLeft" xml:space="preserve"><value>Вляво</value></data>
+  <data name="TplCenter" xml:space="preserve"><value>По средата</value></data>
+  <data name="TplRight" xml:space="preserve"><value>Вдясно</value></data>
+  <data name="TplCompact" xml:space="preserve"><value>Компактно</value></data>
+  <data name="TplDetailed" xml:space="preserve"><value>Подробно</value></data>
+  <data name="TplTwoColumns" xml:space="preserve"><value>Подробно, две колони</value></data>
+  <data name="TplLegacy" xml:space="preserve"><value>Този импортиран шаблон запазва оригиналните настройки от браузъра. Форматираният текст и слоевете с изображения може да изискват настройка.</value></data>
+  <data name="TplInvalidColor" xml:space="preserve"><value>Въведете цветове във формат #RRGGBB.</value></data>
+  <data name="TplSaved" xml:space="preserve"><value>Шаблонът е запазен.</value></data>
+  <data name="TplNoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица.</value></data>
+  <data name="TplDeletePrompt" xml:space="preserve"><value>Да се изтрие ли избраният шаблон?</value></data>
+  <data name="TplTooLarge" xml:space="preserve"><value>Изберете изображение, по-малко от 1 MB.</value></data>
+  <data name="TplDuplicate" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
+  <data name="TplPresetSave" xml:space="preserve"><value>Изберете ново име, за да запазите копие на вграден шаблон.</value></data>
+  <data name="TplError" xml:space="preserve"><value>Действието не може да бъде завършено: {0}</value></data>
+  <data name="OutputTitle" xml:space="preserve"><value>Извеждане на меню</value></data>
+  <data name="OutputNoRecipes" xml:space="preserve"><value>Добавете рецепти към менюто за делничен ден, преди да отпечатате.</value></data>
+  <data name="OutputClose" xml:space="preserve"><value>Затвори</value></data>
+  <data name="OutputDefaultTemplate" xml:space="preserve"><value>Стандартен шаблон</value></data>
+  <data name="OutputWeek" xml:space="preserve"><value>Седмица</value></data>
+  <data name="OutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
+  <data name="OutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="OutputSavePdf" xml:space="preserve"><value>Запази PDF</value></data>
+  <data name="OutputSaveImage" xml:space="preserve"><value>Запази изображение</value></data>
+  <data name="OutputPreviewExport" xml:space="preserve"><value>Преглед и извеждане на меню</value></data>
+  <data name="OutputPreparing" xml:space="preserve"><value>Подготвяне на прегледа...</value></data>
+  <data name="OutputImageTooLarge" xml:space="preserve"><value>Изображението в шаблона е твърде голямо. Изберете по-малко изображение в редактора.</value></data>
+  <data name="OutputPreviewFailed" xml:space="preserve"><value>Прегледът не може да бъде зареден.</value></data>
+  <data name="OutputWebViewRequired" xml:space="preserve"><value>Прегледът изисква WebView2: </value></data>
+  <data name="OutputPdfSaved" xml:space="preserve"><value>PDF е запазен.</value></data>
+  <data name="OutputPdfFailed" xml:space="preserve"><value>Неуспешно запазване на PDF.</value></data>
+  <data name="OutputImageOverflow" xml:space="preserve"><value>Менюто е по-дълго от едно изображение. Използвайте PDF или намалете размера на текста.</value></data>
+  <data name="OutputImageSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="OutputMargins" xml:space="preserve"><value>Полета</value></data>
 </root>

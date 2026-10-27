@@ -236,4 +236,69 @@
   <data name="AllergenMolluscs" xml:space="preserve"><value>Molluscs</value></data>
   <data name="StartupRecipes" xml:space="preserve"><value>Loading your recipes...</value></data>
   <data name="StartupIngredients" xml:space="preserve"><value>Preparing your ingredients...</value></data>
+  <data name="MenuOutput.Content" xml:space="preserve"><value>Print / Export</value></data>
+  <data name="RecipeAllCategories" xml:space="preserve"><value>All categories</value></data>
+  <data name="RecipeSortName" xml:space="preserve"><value>Name</value></data>
+  <data name="RecipeSortCategory" xml:space="preserve"><value>Category</value></data>
+  <data name="RecipeSortPortion" xml:space="preserve"><value>Portion size</value></data>
+  <data name="RecipeSortAllergens" xml:space="preserve"><value>Allergens</value></data>
+  <data name="RecipeNoMatches" xml:space="preserve"><value>No matching recipes</value></data>
+  <data name="TplNew" xml:space="preserve"><value>New</value></data>
+  <data name="TplSave" xml:space="preserve"><value>Save template</value></data>
+  <data name="TplDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="TplSelect" xml:space="preserve"><value>Select template</value></data>
+  <data name="TplName" xml:space="preserve"><value>Template name</value></data>
+  <data name="TplHeader" xml:space="preserve"><value>Header text</value></data>
+  <data name="TplFooter" xml:space="preserve"><value>Footer text</value></data>
+  <data name="TplFont" xml:space="preserve"><value>Font</value></data>
+  <data name="TplLayout" xml:space="preserve"><value>Layout</value></data>
+  <data name="TplHeaderSize" xml:space="preserve"><value>Header size</value></data>
+  <data name="TplMealSize" xml:space="preserve"><value>Meal size</value></data>
+  <data name="TplFooterSize" xml:space="preserve"><value>Footer size</value></data>
+  <data name="TplHeaderColor" xml:space="preserve"><value>Header color (hex)</value></data>
+  <data name="TplBackgroundColor" xml:space="preserve"><value>Background color (hex)</value></data>
+  <data name="TplImage" xml:space="preserve"><value>Choose image</value></data>
+  <data name="TplImageClear" xml:space="preserve"><value>Remove image</value></data>
+  <data name="TplOpacity" xml:space="preserve"><value>Image opacity</value></data>
+  <data name="TplShowHeader" xml:space="preserve"><value>Show header</value></data>
+  <data name="TplShowDate" xml:space="preserve"><value>Show dates</value></data>
+  <data name="TplShowIngredients" xml:space="preserve"><value>Show ingredients</value></data>
+  <data name="TplShowCalories" xml:space="preserve"><value>Show calories</value></data>
+  <data name="TplShowPortions" xml:space="preserve"><value>Show portions</value></data>
+  <data name="TplShowFooter" xml:space="preserve"><value>Show footer</value></data>
+  <data name="TplPreview" xml:space="preserve"><value>Preview week</value></data>
+  <data name="TplLeft" xml:space="preserve"><value>Left</value></data>
+  <data name="TplCenter" xml:space="preserve"><value>Center</value></data>
+  <data name="TplRight" xml:space="preserve"><value>Right</value></data>
+  <data name="TplCompact" xml:space="preserve"><value>Compact</value></data>
+  <data name="TplDetailed" xml:space="preserve"><value>Detailed</value></data>
+  <data name="TplTwoColumns" xml:space="preserve"><value>Detailed, two columns</value></data>
+  <data name="TplLegacy" xml:space="preserve"><value>This imported template retains its original browser settings. Rich text and image layers may need adjustment in the native editor.</value></data>
+  <data name="TplInvalidColor" xml:space="preserve"><value>Enter colors as #RRGGBB.</value></data>
+  <data name="TplSaved" xml:space="preserve"><value>Template saved.</value></data>
+  <data name="TplNoMeals" xml:space="preserve"><value>No planned meals in this week.</value></data>
+  <data name="TplDeletePrompt" xml:space="preserve"><value>Delete the selected template?</value></data>
+  <data name="TplTooLarge" xml:space="preserve"><value>Choose an image smaller than 1 MB.</value></data>
+  <data name="TplDuplicate" xml:space="preserve"><value>A template with this name already exists.</value></data>
+  <data name="TplPresetSave" xml:space="preserve"><value>Choose a new name to save a copy of a preset.</value></data>
+  <data name="TplError" xml:space="preserve"><value>Unable to complete this action: {0}</value></data>
+  <data name="OutputTitle" xml:space="preserve"><value>Menu output</value></data>
+  <data name="OutputNoRecipes" xml:space="preserve"><value>Add recipes to a weekday menu before printing.</value></data>
+  <data name="OutputClose" xml:space="preserve"><value>Close</value></data>
+  <data name="OutputDefaultTemplate" xml:space="preserve"><value>Default template</value></data>
+  <data name="OutputWeek" xml:space="preserve"><value>Week</value></data>
+  <data name="OutputTemplate" xml:space="preserve"><value>Template</value></data>
+  <data name="OutputPrint" xml:space="preserve"><value>Print</value></data>
+  <data name="OutputSavePdf" xml:space="preserve"><value>Save PDF</value></data>
+  <data name="OutputSaveImage" xml:space="preserve"><value>Save image</value></data>
+  <data name="OutputPreviewExport" xml:space="preserve"><value>Preview and export menu</value></data>
+  <data name="OutputPreparing" xml:space="preserve"><value>Preparing preview...</value></data>
+  <data name="OutputImageTooLarge" xml:space="preserve"><value>This template image is too large to preview. Choose a smaller image in the template editor.</value></data>
+  <data name="OutputPreviewFailed" xml:space="preserve"><value>Preview could not be loaded.</value></data>
+  <data name="OutputWebViewRequired" xml:space="preserve"><value>Preview needs the WebView2 runtime: </value></data>
+  <data name="OutputPdfSaved" xml:space="preserve"><value>PDF saved.</value></data>
+  <data name="OutputPdfFailed" xml:space="preserve"><value>PDF export failed.</value></data>
+  <data name="OutputImageOverflow" xml:space="preserve"><value>The menu is longer than one image. Use PDF or reduce the template text size.</value></data>
+  <data name="OutputImageSaved" xml:space="preserve"><value>Image saved.</value></data>
+  <data name="OutputMargins" xml:space="preserve"><value>Margins</value></data>
 </root>

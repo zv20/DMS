@@ -46,6 +46,7 @@ public sealed partial class SettingsPage : Page
             // Theme (stored in settings)
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
             ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[2];
+            AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
 
             // Data folder
             var dbPath = _databaseService.GetDatabasePath();
@@ -86,17 +87,40 @@ public sealed partial class SettingsPage : Page
         if (_suppressSettingChanges) return;
         if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string theme)
         {
-            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-            settings.Theme = theme;
-            await _databaseService.SaveSettingsAsync(settings);
-            
+            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+            try
+            {
+                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+                settings.Theme = theme;
+                await _databaseService.SaveSettingsAsync(settings);
+                AppearanceService.ApplyTheme(App.CurrentWindow, theme);
+                AppearanceStatus.Text = "";
+            }
+            catch (Exception ex) { AppearanceStatus.Text = L.Format("SaveError", ex.Message); }
+            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
     }
 
-    private void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // Would need to implement accent color change via theme resources
-        // For now just show a message
+        if (_suppressSettingChanges) return;
+        if (AccentColorComboBox.SelectedItem is ComboBoxItem item && item.Tag is string accent)
+        {
+            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+            try
+            {
+                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+                settings.AccentColor = accent;
+                await _databaseService.SaveSettingsAsync(settings);
+                AppearanceService.ApplyAccent(accent);
+                App.ReloadLanguage(); // Reload the current page so theme resources are resolved again.
+            }
+            catch (Exception ex)
+            {
+                AppearanceStatus.Text = L.Format("SaveError", ex.Message);
+                ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true;
+            }
+        }
     }
 
     private async void ExportButton_Click(object sender, RoutedEventArgs e)

@@ -17,6 +17,9 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
             <Button x:Name="AddRecipeButton" Content="➕ Add Recipe" Click="AddRecipeButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Recipe_09855a" />
             <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search recipes..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_recipes_ba1ee4" />
+            <ComboBox x:Name="CategoryFilter" Width="160" SelectionChanged="Filter_SelectionChanged" />
+            <ComboBox x:Name="SortField" Width="160" SelectionChanged="Filter_SelectionChanged" />
+            <Button x:Name="SortDirectionButton" Content="↑" Click="SortDirection_Click" />
         </StackPanel>
 
         <!-- Recipe List -->
@@ -59,8 +62,8 @@
             Spacing="16"
             Visibility="Collapsed">
             <TextBlock Text="🍽️" FontSize="64" />
-            <TextBlock Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
-            <TextBlock Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
+            <TextBlock x:Name="EmptyStateTitle" Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
+            <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
         </StackPanel>
     </Grid>
 </Page>

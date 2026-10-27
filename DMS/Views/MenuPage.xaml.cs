@@ -15,6 +15,7 @@ public sealed partial class MenuPage : Page
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
     private bool _busy;
+    private bool _outputOpen;
     private List<Recipe> _recipes = [];
     private List<MenuEntry> _entries = [];
 
@@ -30,6 +31,19 @@ public sealed partial class MenuPage : Page
     private async void Previous_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(-1) : _date.AddDays(-7); await RefreshAsync(); }
     private async void Next_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(1) : _date.AddDays(7); await RefreshAsync(); }
     private async void Today_Click(object sender, RoutedEventArgs e) { _date = DateTime.Today; await RefreshAsync(); }
+    private async void Output_Click(object sender, RoutedEventArgs e)
+    {
+        if (_outputOpen) return;
+        _outputOpen = true;
+        if (sender is Button button) button.IsEnabled = false;
+        try { await MenuOutputService.ShowAsync(XamlRoot, _date); }
+        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
+        finally
+        {
+            if (sender is Button outputButton) outputButton.IsEnabled = true;
+            _outputOpen = false;
+        }
+    }
 
     private async Task RefreshAsync()
     {
@@ -40,15 +54,17 @@ public sealed partial class MenuPage : Page
             _recipes = await _database.GetAllRecipesAsync();
             var first = _monthly ? new DateTime(_date.Year, _date.Month, 1) : WeekStart(_date);
             var start = WeekStart(first);
-            var end = _monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(6);
-            _entries = await _database.GetMenuAsync(start, end);
+            var end = _monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(4);
+            var calendarEnd = _monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
+            _entries = await _database.GetMenuAsync(start, calendarEnd);
             PeriodLabel.Text = _monthly ? first.ToString("MMMM yyyy") : $"{start:dd MMM} – {end:dd MMM yyyy}";
             CalendarGrid.Children.Clear();
             CalendarGrid.RowDefinitions.Clear();
             CalendarGrid.ColumnDefinitions.Clear();
-            for (var i = 0; i < 7; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 155 });
-            var days = _monthly ? ((end - start).Days / 7 + 1) * 7 : 7;
-            for (var row = 0; row < days / 7; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var columns = _monthly ? 7 : 5;
+            for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 155 });
+            var days = _monthly ? ((end - start).Days / 7 + 1) * 7 : 5;
+            for (var row = 0; row < days / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             for (var i = 0; i < days; i++)
             {
                 var day = start.AddDays(i);
@@ -64,8 +80,8 @@ public sealed partial class MenuPage : Page
                 }
                 else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot));
                 var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = _monthly && day.Month != first.Month ? 0.5 : 1 };
-                Grid.SetColumn(border, i % 7);
-                Grid.SetRow(border, i / 7);
+                Grid.SetColumn(border, i % columns);
+                Grid.SetRow(border, i / columns);
                 CalendarGrid.Children.Add(border);
             }
         }

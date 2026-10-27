@@ -38,6 +38,7 @@
                         <ComboBoxItem Tag="red" Content="🔴 Red"  x:Uid="Text_Red_6f6efe" />
                         <ComboBoxItem Tag="teal" Content="🟢 Teal"  x:Uid="Text_Teal_ee7cb9" />
                     </ComboBox>
+                    <TextBlock x:Name="AppearanceStatus" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 

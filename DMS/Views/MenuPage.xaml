@@ -3,6 +3,7 @@
   <StackPanel Orientation="Horizontal" Padding="16" Spacing="8">
    <Button Content="Monthly" Click="Monthly_Click" x:Uid="Text_Monthly_d31edb" /><Button Content="Weekly" Click="Weekly_Click" x:Uid="Text_Weekly_158f3d" />
    <Button Content="←" Click="Previous_Click"/><Button Content="Today" Click="Today_Click" x:Uid="Text_Today_24345a" /><Button Content="→" Click="Next_Click"/>
+   <Button Content="Print / Export" Click="Output_Click" x:Uid="MenuOutput" />
    <TextBlock x:Name="PeriodLabel" VerticalAlignment="Center" FontSize="18"/>
   </StackPanel>
   <ScrollViewer Grid.Row="1" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto">

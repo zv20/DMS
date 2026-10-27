@@ -10,6 +10,22 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void MenuOutputUsesSavedWeekAndEscapesUserContent()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { HeaderText = "<script>bad()</script>", TemplateStyle = "detailed", BackgroundImageDataUri = "https://example.invalid/image.png" };
+        var recipes = new List<Recipe> { new() { Id = 7, Name = "Soup <img onerror=bad>", Ingredients = ["Beans"] } };
+        var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot2", RecipeId = 7 }, new() { Date = monday.AddDays(7), Slot = "slot1", RecipeId = 7 } };
+        var html = MenuOutputService.BuildHtml(template, monday, entries, recipes);
+        Assert.Contains("&lt;script&gt;bad()&lt;/script&gt;", html);
+        Assert.Contains("Soup &lt;img onerror=bad&gt;", html);
+        Assert.Contains("2. Soup", html);
+        Assert.DoesNotContain("<script>bad()", html);
+        Assert.DoesNotContain("example.invalid", html);
+        Assert.DoesNotContain(monday.AddDays(7).ToString("dddd, d MMMM"), html);
+    }
+
+    [Fact]
     public async Task RecipeAssignedToMenuCannotBeDeleted()
     {
         using var database = CreateDatabase();
@@ -32,17 +48,19 @@ public sealed class DatabaseServiceTests : IDisposable
     public async Task LanguageChangePreservesOtherSettingsAndSurvivesReload()
     {
         using var database = CreateDatabase();
-        await database.SaveSettingsAsync(new AppSettings { Language = "bg", Theme = "dark" });
+        await database.SaveSettingsAsync(new AppSettings { Language = "bg", Theme = "dark", AccentColor = "teal" });
         var settings = new SettingsService(database);
         await settings.LoadAsync();
         await settings.SetLanguageAsync("en");
         Assert.Equal("en", settings.GetLanguage());
         Assert.Equal("dark", (await database.GetSettingsAsync())!.Theme);
+        Assert.Equal("teal", (await database.GetSettingsAsync())!.AccentColor);
         var reopened = new SettingsService(database);
         Assert.Equal("en", (await reopened.LoadAsync()).Language);
         await reopened.SetLanguageAsync("bg");
         Assert.Equal("bg", (await database.GetSettingsAsync())!.Language);
         Assert.Equal("dark", (await database.GetSettingsAsync())!.Theme);
+        Assert.Equal("teal", (await database.GetSettingsAsync())!.AccentColor);
     }
 
     [Fact]

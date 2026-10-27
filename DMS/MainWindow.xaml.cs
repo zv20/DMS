@@ -23,8 +23,10 @@ public sealed partial class MainWindow : Window
         this.SystemBackdrop = new MicaBackdrop();
     }
 
-    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
+    private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
+        var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
+        AppearanceService.ApplyTheme(this, settings?.Theme ?? "system");
         // Navigate to Menu by default - ensure ContentFrame is ready
         if (ContentFrame != null)
         {

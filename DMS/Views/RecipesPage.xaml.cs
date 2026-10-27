@@ -16,12 +16,21 @@ public sealed partial class RecipesPage : Page
     private readonly IDatabaseService _database;
     private ObservableCollection<RecipeItemViewModel> _recipes = new();
     private ObservableCollection<RecipeItemViewModel> _filteredRecipes = new();
+    private bool _filtersReady;
+    private bool _sortAscending = true;
 
     public RecipesPage()
     {
         this.InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
         RecipesListView.ItemsSource = _filteredRecipes;
+        CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
+        foreach (var category in new[] { "soup", "main", "dessert", "other" })
+            CategoryFilter.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
+        foreach (var sort in new[] { ("name", "RecipeSortName"), ("category", "RecipeSortCategory"), ("portion", "RecipeSortPortion"), ("allergens", "RecipeSortAllergens") })
+            SortField.Items.Add(new ComboBoxItem { Tag = sort.Item1, Content = L.Get(sort.Item2) });
+        CategoryFilter.SelectedIndex = SortField.SelectedIndex = 0;
+        _filtersReady = true;
         Loaded += RecipesPage_Loaded;
     }
 
@@ -43,23 +52,42 @@ public sealed partial class RecipesPage : Page
 
     private void ApplyFilter()
     {
-        var query = SearchBox.Text?.ToLowerInvariant() ?? "";
-        _filteredRecipes.Clear();
-        foreach (var recipe in _recipes)
+        if (!_filtersReady) return;
+        var query = SearchBox.Text?.Trim() ?? "";
+        var category = (CategoryFilter.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        var sort = (SortField.SelectedItem as ComboBoxItem)?.Tag as string ?? "name";
+        string SortKey(RecipeItemViewModel item) => sort switch
         {
-            if (string.IsNullOrEmpty(query) ||
-                recipe.Name.ToLowerInvariant().Contains(query) ||
-                recipe.Category.ToLowerInvariant().Contains(query))
-            {
-                _filteredRecipes.Add(recipe);
-            }
+            "category" => item.CategoryDisplay,
+            "portion" => item.PortionSize,
+            "allergens" => item.AllergensDisplay,
+            _ => item.Name
+        };
+        var items = _recipes.Where(recipe =>
+            (category.Length == 0 || recipe.Category.Equals(category, StringComparison.OrdinalIgnoreCase)) &&
+            (query.Length == 0 || recipe.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) || recipe.CategoryDisplay.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
+        items = _sortAscending ? items.OrderBy(SortKey, StringComparer.CurrentCultureIgnoreCase) : items.OrderByDescending(SortKey, StringComparer.CurrentCultureIgnoreCase);
+        _filteredRecipes.Clear();
+        foreach (var recipe in items)
+        {
+            _filteredRecipes.Add(recipe);
         }
+        EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
+        EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyStatePanel.Visibility = _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         RecipesListView.Visibility = _filteredRecipes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
+        ApplyFilter();
+    }
+
+    private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilter();
+    private void SortDirection_Click(object sender, RoutedEventArgs e)
+    {
+        _sortAscending = !_sortAscending;
+        SortDirectionButton.Content = _sortAscending ? "↑" : "↓";
         ApplyFilter();
     }
 
@@ -148,8 +176,15 @@ public sealed partial class RecipesPage : Page
         var categoryBox = new ComboBox { Header = L.Get("Text_Category_a3c686"), PlaceholderText = L.Get("Text_Select_category_a2a5ca") };
         foreach (var category in new[] { "soup", "main", "dessert", "other" })
             categoryBox.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
-        categoryBox.SelectedItem = categoryBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == recipe.Category)
-            ?? categoryBox.Items[3];
+        var currentCategory = categoryBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item =>
+            string.Equals((string)item.Tag, recipe.Category, StringComparison.OrdinalIgnoreCase));
+        if (currentCategory == null && !string.IsNullOrWhiteSpace(recipe.Category))
+        {
+            // Keep legacy/custom categories until the user explicitly changes them.
+            currentCategory = new ComboBoxItem { Tag = recipe.Category, Content = recipe.Category };
+            categoryBox.Items.Add(currentCategory);
+        }
+        categoryBox.SelectedItem = currentCategory ?? categoryBox.Items[3];
         panel.Children.Add(categoryBox);
 
         // Portion Size
