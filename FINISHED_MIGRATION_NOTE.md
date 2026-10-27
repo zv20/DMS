@@ -1,5 +1,9 @@
 # DMS Windows UI3 Migration – Finished Notes
 
+> Historical migration notes: version numbers, build conclusions, and next steps below
+> describe an earlier state. See [WINDOWS_DEVELOPMENT.md](WINDOWS_DEVELOPMENT.md)
+> and the project files for current targets and pending Windows verification.
+
 ## Project Overview
 - **Project name:** DMS (all references to "KitchenPro" removed – none found)
 - **Target platform:** Native Windows UI3 (WinUI 3) using .NET 8 & Microsoft.WindowsAppSDK

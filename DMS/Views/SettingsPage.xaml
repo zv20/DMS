@@ -84,7 +84,7 @@
                         <TextBlock Text="DMS (Diet Management System)" FontWeight="SemiBold" />
                         <TextBlock Text="v1.0.0" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
-                    <TextBlock Text="WinUI 3 • .NET 8 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                     <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0"  x:Uid="Text_Built_for_meal_planning_and_recipe_management_49409f" />
                 </StackPanel>
             </Border>
