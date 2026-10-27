@@ -18,6 +18,11 @@ public sealed partial class RecipesPage : Page
     private ObservableCollection<RecipeItemViewModel> _filteredRecipes = new();
     private bool _filtersReady;
     private bool _sortAscending = true;
+    private bool _editorDirty;
+    private bool _openingEditor;
+    private bool _savingEditor;
+    private bool _confirmingDiscard;
+    private int? _editingRecipeId;
 
     public RecipesPage()
     {
@@ -31,6 +36,7 @@ public sealed partial class RecipesPage : Page
             SortField.Items.Add(new ComboBoxItem { Tag = sort.Item1, Content = L.Get(sort.Item2) });
         CategoryFilter.SelectedIndex = SortField.SelectedIndex = 0;
         _filtersReady = true;
+        SizeChanged += (_, _) => { if (RecipeEditor.Visibility == Visibility.Visible) ResizeEditor(); };
         Loaded += RecipesPage_Loaded;
     }
 
@@ -93,14 +99,14 @@ public sealed partial class RecipesPage : Page
 
     private async void AddRecipeButton_Click(object sender, RoutedEventArgs e)
     {
-        await ShowRecipeDialogAsync(null);
+        await OpenRecipeEditorAsync(null);
     }
 
     private async void RecipesListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is RecipeItemViewModel recipe)
         {
-            await ShowRecipeDialogAsync(recipe);
+            await OpenRecipeEditorAsync(recipe);
         }
     }
 
@@ -109,7 +115,7 @@ public sealed partial class RecipesPage : Page
         if (sender is Button btn && btn.Tag is int id)
         {
             var recipe = _recipes.FirstOrDefault(r => r.Id == id);
-            if (recipe != null) await ShowRecipeDialogAsync(recipe);
+            if (recipe != null) await OpenRecipeEditorAsync(recipe);
         }
     }
 
@@ -133,6 +139,7 @@ public sealed partial class RecipesPage : Page
                 try
                 {
                     await _database.DeleteRecipeAsync(id);
+                    if (_editingRecipeId == id) HideRecipeEditor();
                     await LoadRecipesAsync();
                 }
                 catch (InvalidOperationException ex)
@@ -150,23 +157,68 @@ public sealed partial class RecipesPage : Page
         }
     }
 
-    private async Task ShowRecipeDialogAsync(RecipeItemViewModel? existingRecipe)
+    private async void EditorClose_Click(object sender, RoutedEventArgs e)
     {
+        if (!_savingEditor && !_openingEditor && await ConfirmDiscardAsync()) HideRecipeEditor();
+    }
+
+    private async Task<bool> ConfirmDiscardAsync()
+    {
+        if (!_editorDirty) return true;
+        if (_confirmingDiscard) return false;
+        _confirmingDiscard = true;
+        try
+        {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = L.Get("RecipeDiscardTitle"),
+            Content = L.Get("RecipeDiscardMessage"),
+            PrimaryButtonText = L.Get("RecipeDiscardButton"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+            DefaultButton = ContentDialogButton.Close
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        finally { _confirmingDiscard = false; }
+    }
+
+    private void ResizeEditor() => EditorColumn.Width = new GridLength(Math.Min(420, Math.Max(220, ActualWidth * 0.55)));
+
+    public async Task<bool> CanLeaveAsync()
+    {
+        if (_savingEditor || _openingEditor || _confirmingDiscard) return false;
+        return await ConfirmDiscardAsync();
+    }
+
+    private void HideRecipeEditor()
+    {
+        RecipeEditor.Visibility = Visibility.Collapsed;
+        EditorColumn.Width = new GridLength(0);
+        EditorContent.Children.Clear();
+        _saveRecipe = null;
+        _editingRecipeId = null;
+        _editorDirty = false;
+    }
+
+    private async Task OpenRecipeEditorAsync(RecipeItemViewModel? existingRecipe)
+    {
+        if (_openingEditor || _savingEditor) return;
+        _openingEditor = true;
+        try
+        {
+        if (!await ConfirmDiscardAsync()) return;
         var isEditing = existingRecipe != null;
         var recipe = existingRecipe?.ToRecipe() ?? new Recipe();
         var availableIngredients = await _database.GetAllIngredientsAsync();
         var availableAllergens = await _database.GetAllAllergensAsync();
-
-        var dialog = new ContentDialog
-        {
-            Title = isEditing ? L.Get("Text_Edit_Recipe_838f93") : L.Get("Text_Add_Recipe_aa1d63"),
-            PrimaryButtonText = L.Get("Text_Save_efc007"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = this.XamlRoot
-        };
-
-        var panel = new StackPanel { Spacing = 12, Width = 500 };
+        EditorContent.Children.Clear();
+        EditorStatus.Text = "";
+        EditorTitle.Text = isEditing ? L.Get("Text_Edit_Recipe_838f93") : L.Get("Text_Add_Recipe_aa1d63");
+        EditorSaveButton.Content = L.Get("Text_Save_efc007");
+        EditorCancelButton.Content = L.Get("Text_Cancel_77dfd2");
+        ToolTipService.SetToolTip(EditorCloseButton, L.Get("RecipeCloseEditor"));
+        var panel = EditorContent;
 
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = recipe.Name, PlaceholderText = L.Get("Text_Recipe_name_bcb84d") };
@@ -290,37 +342,68 @@ public sealed partial class RecipesPage : Page
         panel.Children.Add(allergenSearch);
         panel.Children.Add(allergenList);
 
-        dialog.Content = panel;
+        _editingRecipeId = isEditing ? recipe.Id : null;
+        _editorDirty = false;
+        nameBox.TextChanged += (_, _) => _editorDirty = true;
+        categoryBox.SelectionChanged += (_, _) => _editorDirty = true;
+        portionBox.TextChanged += (_, _) => _editorDirty = true;
+        caloriesBox.ValueChanged += (_, _) => _editorDirty = true;
+        instructionsBox.TextChanged += (_, _) => _editorDirty = true;
+        selectedIngredients.CollectionChanged += (_, _) => _editorDirty = true;
+        selectedAllergens.CollectionChanged += (_, _) => _editorDirty = true;
 
-        dialog.PrimaryButtonClick += async (s, args) =>
+        // Replace the previous editor's save handler when switching recipes.
+        EditorSaveButton.Click -= EditorSave_Click;
+        _saveRecipe = async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
             {
-                args.Cancel = true;
-                var errorDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Error_7f2f6a"),
-                    Content = L.Get("Text_Recipe_name_is_required_75e015"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await errorDialog.ShowAsync();
+                EditorStatus.Text = L.Get("Text_Recipe_name_is_required_75e015");
+                nameBox.Focus(FocusState.Programmatic);
                 return;
             }
 
             recipe.Name = nameBox.Text.Trim();
             recipe.Category = (categoryBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "other";
             recipe.PortionSize = portionBox.Text?.Trim() ?? "";
-            recipe.Calories = (int)caloriesBox.Value;
+            recipe.Calories = double.IsFinite(caloriesBox.Value) ? (int)caloriesBox.Value : 0;
             recipe.Instructions = instructionsBox.Text?.Trim() ?? "";
             recipe.Ingredients = selectedIngredients.ToList();
             recipe.Allergens = selectedAllergens.ToList();
 
-            await _database.SaveRecipeAsync(recipe);
+            recipe.Id = await _database.SaveRecipeAsync(recipe);
+            _editorDirty = false;
             await LoadRecipesAsync();
+            HideRecipeEditor();
         };
+        EditorSaveButton.Click += EditorSave_Click;
+        ResizeEditor();
+        RecipeEditor.Visibility = Visibility.Visible;
+        nameBox.Focus(FocusState.Programmatic);
+        }
+        catch (Exception ex)
+        {
+            EditorStatus.Text = L.Format("ErrorDetail", ex.Message);
+            ResizeEditor();
+            RecipeEditor.Visibility = Visibility.Visible;
+        }
+        finally { _openingEditor = false; }
+    }
 
-        await dialog.ShowAsync();
+    private Func<Task>? _saveRecipe;
+
+    private async void EditorSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (_savingEditor || _openingEditor || _confirmingDiscard || _saveRecipe == null) return;
+        _savingEditor = true;
+        EditorSaveButton.IsEnabled = EditorCancelButton.IsEnabled = EditorCloseButton.IsEnabled = false;
+        try { await _saveRecipe(); }
+        catch (Exception ex) { EditorStatus.Text = L.Format("ErrorDetail", ex.Message); }
+        finally
+        {
+            EditorSaveButton.IsEnabled = EditorCancelButton.IsEnabled = EditorCloseButton.IsEnabled = true;
+            _savingEditor = false;
+        }
     }
 }
 

@@ -10,6 +10,7 @@ namespace DMS;
 public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
+    private bool _navigationPending;
 
     public MainWindow(bool openSettings = false)
     {
@@ -35,17 +36,10 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    private async void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.IsSettingsInvoked)
-        {
-            ContentFrame?.Navigate(typeof(SettingsPage));
-            return;
-        }
-        if (args.InvokedItemContainer is not NavigationViewItem item) return;
-        if (item.Tag is not string tag) return;
-
-        Type? pageType = tag switch
+        var tag = (args.InvokedItemContainer as NavigationViewItem)?.Tag as string;
+        Type? pageType = args.IsSettingsInvoked ? typeof(SettingsPage) : tag switch
         {
             "menu" => typeof(MenuPage),
             "recipes" => typeof(RecipesPage),
@@ -58,6 +52,25 @@ public sealed partial class MainWindow : Window
 
         if (pageType != null && ContentFrame != null)
         {
+            if (ContentFrame.CurrentSourcePageType == pageType) return;
+            if (ContentFrame.Content is RecipesPage recipes && pageType != typeof(RecipesPage))
+            {
+                if (_navigationPending)
+                {
+                    NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "recipes"));
+                    return;
+                }
+                _navigationPending = true;
+                try
+                {
+                    if (!await recipes.CanLeaveAsync())
+                    {
+                        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "recipes"));
+                        return;
+                    }
+                }
+                finally { _navigationPending = false; }
+            }
             ContentFrame.Navigate(pageType);
         }
     }

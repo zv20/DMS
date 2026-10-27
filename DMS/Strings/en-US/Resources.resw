@@ -303,4 +303,8 @@
   <data name="OutputMargins" xml:space="preserve"><value>Margins</value></data>
   <data name="ImportMissingIngredients" xml:space="preserve"><value>{0} ingredient references were not present in the backup. Review these recipes: {1}. The original references were preserved.</value></data>
   <data name="ImportErrorRecovery" xml:space="preserve"><value>Import failed: {0}&#10;Some changes may have been applied. A database backup from before the import is available at: {1}</value></data>
+  <data name="RecipeDiscardTitle" xml:space="preserve"><value>Discard changes?</value></data>
+  <data name="RecipeDiscardMessage" xml:space="preserve"><value>You have unsaved recipe changes. Discard them?</value></data>
+  <data name="RecipeDiscardButton" xml:space="preserve"><value>Discard</value></data>
+  <data name="RecipeCloseEditor" xml:space="preserve"><value>Close recipe editor</value></data>
 </root>

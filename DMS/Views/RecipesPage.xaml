@@ -8,19 +8,25 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="EditorColumn" Width="0" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
+        <ScrollViewer Grid.Row="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+        <StackPanel Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
             <Button x:Name="AddRecipeButton" Content="➕ Add Recipe" Click="AddRecipeButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Recipe_09855a" />
             <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search recipes..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_recipes_ba1ee4" />
             <ComboBox x:Name="CategoryFilter" Width="160" SelectionChanged="Filter_SelectionChanged" />
             <ComboBox x:Name="SortField" Width="160" SelectionChanged="Filter_SelectionChanged" />
             <Button x:Name="SortDirectionButton" Content="↑" Click="SortDirection_Click" />
         </StackPanel>
+        </ScrollViewer>
 
         <!-- Recipe List -->
         <ListView
@@ -65,5 +71,25 @@
             <TextBlock x:Name="EmptyStateTitle" Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
             <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
         </StackPanel>
+        <Border x:Name="RecipeEditor" Grid.Column="1" Grid.RowSpan="2" Visibility="Collapsed"
+                BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock x:Name="EditorTitle" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <Button x:Name="EditorCloseButton" Grid.Column="1" Content="✕" Click="EditorClose_Click" />
+                </Grid>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+                    <StackPanel x:Name="EditorContent" Spacing="12" />
+                </ScrollViewer>
+                <StackPanel Grid.Row="2" Spacing="8">
+                    <TextBlock x:Name="EditorStatus" TextWrapping="Wrap" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="EditorSaveButton" Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Name="EditorCancelButton" Click="EditorClose_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Page>

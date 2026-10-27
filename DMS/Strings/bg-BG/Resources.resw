@@ -303,4 +303,8 @@
   <data name="OutputMargins" xml:space="preserve"><value>Полета</value></data>
   <data name="ImportMissingIngredients" xml:space="preserve"><value>В резервното копие липсват {0} препратки към съставки. Проверете рецептите: {1}. Оригиналните препратки са запазени.</value></data>
   <data name="ImportErrorRecovery" xml:space="preserve"><value>Импортирането е неуспешно: {0}&#10;Възможно е част от промените да са приложени. Резервното копие на базата данни преди импортирането е тук: {1}</value></data>
+  <data name="RecipeDiscardTitle" xml:space="preserve"><value>Да се отхвърлят ли промените?</value></data>
+  <data name="RecipeDiscardMessage" xml:space="preserve"><value>Имате незапазени промени по рецептата. Да бъдат ли отхвърлени?</value></data>
+  <data name="RecipeDiscardButton" xml:space="preserve"><value>Отхвърли</value></data>
+  <data name="RecipeCloseEditor" xml:space="preserve"><value>Затвори редактора на рецепта</value></data>
 </root>
