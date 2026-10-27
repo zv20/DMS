@@ -249,6 +249,8 @@ public static class MenuOutputService
             var family = fonts.Contains(style.FontFamily, StringComparer.OrdinalIgnoreCase) ? style.FontFamily : "Arial";
             return $"font-family:'{H(family)}';font-size:{Size(style.FontSize, 11)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}";
         }
+        string DayTextStyle(int day, string element) =>
+            template.TextStyles != null && template.TextStyles.ContainsKey($"block:{day}") ? TextStyle($"block:{day}") : TextStyle(element);
         var background = Color(template.BackgroundColor, "#ffffff");
         var headerColor = Color(template.HeaderColor, "#D2691E");
         var margin = Math.Clamp(marginMm, 0, 25).ToString(CultureInfo.InvariantCulture);
@@ -271,29 +273,29 @@ public static class MenuOutputService
             var day = week.Date.AddDays(i);
             var dayEntries = entries.Where(e => e.Date.Date == day && byId.ContainsKey(e.RecipeId)).OrderBy(e => SlotOrder(e.Slot)).ToList();
             if (dayEntries.Count == 0) continue;
-            sb.Append("<section><h2 style=\"").Append(TextStyle($"day:{i}")).Append("\">").Append(H(day.ToString("dddd, d MMMM"))).Append("</h2>");
+            sb.Append("<section><h2 style=\"").Append(DayTextStyle(i, $"day:{i}")).Append("\">").Append(H(day.ToString("dddd, d MMMM"))).Append("</h2>");
             foreach (var entry in dayEntries)
             {
                 var recipe = byId[entry.RecipeId];
                 var slot = SlotOrder(entry.Slot);
-                sb.Append("<div class='meal'><span style=\"").Append(TextStyle($"meal:{i}:{slot}")).Append("\">").Append(slot).Append(". ").Append(H(recipe.Name)).Append("</span>");
-                if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) sb.Append(" <span class='detail'>").Append(H(recipe.PortionSize)).Append("</span>");
+                sb.Append("<div class='meal'><span style=\"").Append(DayTextStyle(i, $"meal:{i}:{slot}")).Append("\">").Append(slot).Append(". ").Append(H(recipe.Name)).Append("</span>");
+                if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) sb.Append(" <span class='detail' style=\"").Append(DayTextStyle(i, "")).Append("\">").Append(H(recipe.PortionSize)).Append("</span>");
                 if (template.TemplateStyle != "compact")
                 {
-                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='detail' style=\"").Append(TextStyle($"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
-                    if (template.ShowCalories && recipe.Calories > 0) sb.Append("<div class='detail'>").Append(recipe.Calories).Append(" kcal</div>");
+                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='detail' style=\"").Append(DayTextStyle(i, $"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
+                    if (template.ShowCalories && recipe.Calories > 0) sb.Append("<div class='detail' style=\"").Append(DayTextStyle(i, "")).Append("\">").Append(recipe.Calories).Append(" kcal</div>");
                 }
                 else
                 {
-                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append(" <span class='detail' style=\"").Append(TextStyle($"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</span>");
-                    if (template.ShowCalories && recipe.Calories > 0) sb.Append(" <span class='detail'>").Append(recipe.Calories).Append(" kcal</span>");
+                    if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append(" <span class='detail' style=\"").Append(DayTextStyle(i, $"ingredients:{i}:{slot}")).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</span>");
+                    if (template.ShowCalories && recipe.Calories > 0) sb.Append(" <span class='detail' style=\"").Append(DayTextStyle(i, "")).Append("\">").Append(recipe.Calories).Append(" kcal</span>");
                 }
                 // The old model flattened inherited and manual allergens. Retain those values and
                 // include current ingredient allergens so later ingredient edits cannot hide a risk.
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name =>
                     ingredientByName.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                if (allergens.Count > 0) sb.Append("<div class='detail' style=\"").Append(TextStyle($"allergens:{i}:{slot}")).Append("\">⚠ ").Append(H(string.Join(", ", allergens.Select(Localization.Allergen)))).Append("</div>");
+                if (allergens.Count > 0) sb.Append("<div class='detail' style=\"").Append(DayTextStyle(i, $"allergens:{i}:{slot}")).Append("\">⚠ ").Append(H(string.Join(", ", allergens.Select(Localization.Allergen)))).Append("</div>");
                 sb.Append("</div>");
             }
             sb.Append("</section>");

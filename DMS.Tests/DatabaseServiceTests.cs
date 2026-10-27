@@ -10,6 +10,24 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void DayBlockStyleAppliesToAllDetailsWithoutChangingOtherDays()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { TemplateStyle = "detailed" };
+        template.TextStyles["block:0"] = new TemplateTextStyle { FontFamily = "Georgia", FontSize = 19, Color = "#123456", Bold = true };
+        template.TextStyles["meal:0:1"] = new TemplateTextStyle { FontFamily = "Arial", FontSize = 9, Color = "#abcdef" };
+        var recipe = new Recipe { Id = 1, Name = "Soup", Ingredients = ["Beans"], Allergens = ["Milk"], Calories = 100, PortionSize = "200g" };
+        var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot1", RecipeId = 1 }, new() { Date = monday.AddDays(1), Slot = "slot1", RecipeId = 1 } };
+        var html = MenuOutputService.BuildHtml(template, monday, entries, [recipe]);
+        var mondayHtml = html.Split("<section>")[1];
+        var tuesdayHtml = html.Split("<section>")[2];
+        var css = "font-family:'Georgia';font-size:19px;color:#123456;font-weight:bold";
+        Assert.True(mondayHtml.Split(css).Length - 1 >= 6);
+        Assert.DoesNotContain("#abcdef", mondayHtml);
+        Assert.DoesNotContain(css, tuesdayHtml);
+    }
+
+    [Fact]
     public void MenuOutputUsesSavedElementStylesAndRejectsUnsafeCss()
     {
         var monday = new DateTime(2026, 10, 26);
