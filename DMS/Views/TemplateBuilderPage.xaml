@@ -1,64 +1,71 @@
 <Page x:Class="DMS.Views.TemplateBuilderPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid RowDefinitions="Auto,*">
-        <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto">
-            <StackPanel Orientation="Horizontal" Padding="16,12" Spacing="8">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- File actions and document selection. -->
+        <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+            <StackPanel Orientation="Horizontal" Padding="16,10" Spacing="8">
                 <Button x:Name="NewButton" Click="New_Click" />
                 <Button x:Name="SaveButton" Click="Save_Click" Style="{StaticResource AccentButtonStyle}" />
-                <ComboBox x:Name="TemplateSelector" Width="240" SelectionChanged="TemplateSelector_SelectionChanged" DisplayMemberPath="Name" />
+                <ComboBox x:Name="TemplateSelector" Width="200" SelectionChanged="TemplateSelector_SelectionChanged" DisplayMemberPath="Name" />
+                <TextBox x:Name="NameBox" Width="200" />
                 <Button x:Name="DeleteButton" Click="Delete_Click" />
+                <CalendarDatePicker x:Name="PreviewDate" DateChanged="PreviewDate_DateChanged" />
             </StackPanel>
         </ScrollViewer>
-        <Grid Grid.Row="1" ColumnDefinitions="360,*" ColumnSpacing="16" Padding="16,0,16,16">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="10">
-                    <TextBox x:Name="NameBox" />
-                    <TextBox x:Name="HeaderBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="68" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <ToggleButton x:Name="HeaderBoldButton" Content="B" FontWeight="Bold" />
-                        <ToggleButton x:Name="HeaderItalicButton" Content="I" FontStyle="Italic" />
-                        <ToggleButton x:Name="HeaderUnderlineButton" Content="U" />
-                        <ComboBox x:Name="HeaderAlignmentBox" Width="150" />
+
+        <!-- Formatting and page tools, available above the document canvas. -->
+        <Border Grid.Row="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="16,8">
+            <StackPanel Spacing="8">
+                <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                        <ComboBox x:Name="FontBox" Width="170" />
+                        <NumberBox x:Name="HeaderSizeBox" Width="115" Minimum="8" Maximum="72" SpinButtonPlacementMode="Compact" />
+                        <ToggleButton x:Name="HeaderBoldButton" Content="B" FontWeight="Bold" VerticalAlignment="Bottom" />
+                        <ToggleButton x:Name="HeaderItalicButton" Content="I" FontStyle="Italic" VerticalAlignment="Bottom" />
+                        <ToggleButton x:Name="HeaderUnderlineButton" Content="U" VerticalAlignment="Bottom" />
+                        <ComboBox x:Name="HeaderAlignmentBox" Width="130" />
+                        <TextBox x:Name="HeaderColorBox" Width="120" PlaceholderText="#D2691E" />
+                        <NumberBox x:Name="MealSizeBox" Width="115" Minimum="7" Maximum="36" SpinButtonPlacementMode="Compact" />
+                        <ComboBox x:Name="LayoutBox" Width="170" />
+                        <ComboBox x:Name="FooterAlignmentBox" Width="130" />
+                        <NumberBox x:Name="FooterSizeBox" Width="115" Minimum="7" Maximum="36" SpinButtonPlacementMode="Compact" />
+                        <TextBox x:Name="BackgroundColorBox" Width="120" PlaceholderText="#FFFFFF" />
+                        <Button x:Name="ImageButton" Click="Image_Click" VerticalAlignment="Bottom" />
+                        <Button x:Name="ClearImageButton" Click="ClearImage_Click" VerticalAlignment="Bottom" />
+                        <Slider x:Name="ImageOpacitySlider" Width="120" Minimum="0" Maximum="100" StepFrequency="5" />
                     </StackPanel>
-                    <ComboBox x:Name="FontBox" HorizontalAlignment="Stretch" />
-                    <ComboBox x:Name="LayoutBox" HorizontalAlignment="Stretch" />
-                    <NumberBox x:Name="HeaderSizeBox" Minimum="8" Maximum="72" SpinButtonPlacementMode="Inline" />
-                    <NumberBox x:Name="MealSizeBox" Minimum="7" Maximum="36" SpinButtonPlacementMode="Inline" />
-                    <TextBox x:Name="HeaderColorBox" PlaceholderText="#D2691E" />
-                    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" />
-                    <ComboBox x:Name="FooterAlignmentBox" HorizontalAlignment="Stretch" />
-                    <NumberBox x:Name="FooterSizeBox" Minimum="7" Maximum="36" SpinButtonPlacementMode="Inline" />
-                    <TextBox x:Name="BackgroundColorBox" PlaceholderText="#FFFFFF" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="ImageButton" Click="Image_Click" />
-                        <Button x:Name="ClearImageButton" Click="ClearImage_Click" />
-                    </StackPanel>
-                    <Slider x:Name="ImageOpacitySlider" Minimum="0" Maximum="100" StepFrequency="5" />
-                    <CheckBox x:Name="ShowHeaderBox" />
-                    <CheckBox x:Name="ShowDateBox" />
-                    <CheckBox x:Name="ShowIngredientsBox" />
-                    <CheckBox x:Name="ShowCaloriesBox" />
-                    <CheckBox x:Name="ShowPortionsBox" />
-                    <CheckBox x:Name="ShowFooterBox" />
-                    <TextBlock x:Name="LegacyNote" TextWrapping="Wrap" Visibility="Collapsed" />
-                    <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
-                </StackPanel>
-            </ScrollViewer>
-            <Grid Grid.Column="1" RowDefinitions="Auto,*">
-                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
-                    <TextBlock x:Name="PreviewLabel" VerticalAlignment="Center" />
-                    <CalendarDatePicker x:Name="PreviewDate" DateChanged="PreviewDate_DateChanged" />
-                </StackPanel>
-                <ScrollViewer Grid.Row="1" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Border x:Name="PreviewBorder" Width="650" MinHeight="800" Background="White" Padding="32">
-                        <Grid>
-                            <Image x:Name="PreviewImage" Stretch="UniformToFill" />
-                            <StackPanel x:Name="PreviewPanel" Spacing="8" />
-                        </Grid>
-                    </Border>
                 </ScrollViewer>
-            </Grid>
-        </Grid>
+                <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <CheckBox x:Name="ShowHeaderBox" /><CheckBox x:Name="ShowDateBox" />
+                        <CheckBox x:Name="ShowIngredientsBox" /><CheckBox x:Name="ShowCaloriesBox" />
+                        <CheckBox x:Name="ShowPortionsBox" /><CheckBox x:Name="ShowFooterBox" />
+                    </StackPanel>
+                </ScrollViewer>
+                <TextBlock x:Name="LegacyNote" TextWrapping="Wrap" Visibility="Collapsed" />
+                <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!-- The page remains independently scrollable at smaller window sizes. -->
+        <ScrollViewer Grid.Row="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
+            <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" Padding="38" HorizontalAlignment="Center">
+                <Grid>
+                    <Image x:Name="PreviewImage" Stretch="UniformToFill" />
+                    <StackPanel Spacing="8">
+                        <Button x:Name="HeaderDisplayButton" Click="HeaderDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
+                            <TextBlock x:Name="HeaderDisplay" TextWrapping="Wrap" />
+                        </Button>
+                        <TextBox x:Name="HeaderBox" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="HeaderBox_LostFocus" />
+                        <StackPanel x:Name="PreviewPanel" Spacing="8" />
+                        <Button x:Name="FooterDisplayButton" Click="FooterDisplay_Click" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0" MinHeight="32">
+                            <TextBlock x:Name="FooterDisplay" TextWrapping="Wrap" />
+                        </Button>
+                        <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="FooterBox_LostFocus" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ScrollViewer>
     </Grid>
 </Page>

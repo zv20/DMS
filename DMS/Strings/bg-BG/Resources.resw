@@ -310,4 +310,11 @@
   <data name="SideEditorClose" xml:space="preserve"><value>Затвори редактора</value></data>
   <data name="SideEditorDiscardMessage" xml:space="preserve"><value>Имате незапазени промени. Да бъдат ли отхвърлени?</value></data>
   <data name="RecipeRemoveIngredient" xml:space="preserve"><value>Премахни съставката: {0}</value></data>
+  <data name="TplHeaderAlignment" xml:space="preserve"><value>Подравняване на заглавието</value></data>
+  <data name="TplFooterAlignment" xml:space="preserve"><value>Подравняване на долния текст</value></data>
+  <data name="TplEditHeader" xml:space="preserve"><value>Натиснете, за да редактирате заглавието</value></data>
+  <data name="TplEditFooter" xml:space="preserve"><value>Натиснете, за да редактирате долния текст</value></data>
+  <data name="TplHeaderBold" xml:space="preserve"><value>Получерно заглавие</value></data>
+  <data name="TplHeaderItalic" xml:space="preserve"><value>Заглавие в курсив</value></data>
+  <data name="TplHeaderUnderline" xml:space="preserve"><value>Подчертано заглавие</value></data>
 </root>

@@ -310,4 +310,11 @@
   <data name="SideEditorClose" xml:space="preserve"><value>Close editor</value></data>
   <data name="SideEditorDiscardMessage" xml:space="preserve"><value>You have unsaved changes. Discard them?</value></data>
   <data name="RecipeRemoveIngredient" xml:space="preserve"><value>Remove ingredient: {0}</value></data>
+  <data name="TplHeaderAlignment" xml:space="preserve"><value>Header alignment</value></data>
+  <data name="TplFooterAlignment" xml:space="preserve"><value>Footer alignment</value></data>
+  <data name="TplEditHeader" xml:space="preserve"><value>Click to edit header</value></data>
+  <data name="TplEditFooter" xml:space="preserve"><value>Click to edit footer</value></data>
+  <data name="TplHeaderBold" xml:space="preserve"><value>Bold header</value></data>
+  <data name="TplHeaderItalic" xml:space="preserve"><value>Italic header</value></data>
+  <data name="TplHeaderUnderline" xml:space="preserve"><value>Underline header</value></data>
 </root>

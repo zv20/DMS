@@ -26,6 +26,8 @@ public sealed partial class TemplateBuilderPage : Page
     private bool _binding = true;
     private int _previewGeneration;
     private string? _previewImageRequest;
+    private bool _editingHeader;
+    private bool _editingFooter;
     private static readonly string[] Alignments = ["left", "center", "right"];
     private static readonly string[] Layouts = ["compact", "detailed", "detailed-2col"];
     private static readonly string[] Fonts = ["Arial", "Times New Roman", "Georgia", "Comic Sans MS", "Verdana", "Courier New", "Trebuchet MS", "Tahoma"];
@@ -42,15 +44,23 @@ public sealed partial class TemplateBuilderPage : Page
     {
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave"); DeleteButton.Content = L.Get("TplDelete");
         TemplateSelector.PlaceholderText = L.Get("TplSelect"); NameBox.Header = L.Get("TplName");
-        HeaderBox.Header = L.Get("TplHeader"); FooterBox.Header = L.Get("TplFooter");
+        HeaderBox.PlaceholderText = L.Get("TplHeader"); FooterBox.PlaceholderText = L.Get("TplFooter");
         FontBox.Header = L.Get("TplFont"); LayoutBox.Header = L.Get("TplLayout");
+        HeaderAlignmentBox.Header = L.Get("TplHeaderAlignment"); FooterAlignmentBox.Header = L.Get("TplFooterAlignment");
         HeaderSizeBox.Header = L.Get("TplHeaderSize"); MealSizeBox.Header = L.Get("TplMealSize"); FooterSizeBox.Header = L.Get("TplFooterSize");
         HeaderColorBox.Header = L.Get("TplHeaderColor"); BackgroundColorBox.Header = L.Get("TplBackgroundColor");
         ImageButton.Content = L.Get("TplImage"); ClearImageButton.Content = L.Get("TplImageClear"); ImageOpacitySlider.Header = L.Get("TplOpacity");
         ShowHeaderBox.Content = L.Get("TplShowHeader"); ShowDateBox.Content = L.Get("TplShowDate");
         ShowIngredientsBox.Content = L.Get("TplShowIngredients"); ShowCaloriesBox.Content = L.Get("TplShowCalories");
         ShowPortionsBox.Content = L.Get("TplShowPortions"); ShowFooterBox.Content = L.Get("TplShowFooter");
-        PreviewLabel.Text = L.Get("TplPreview"); LegacyNote.Text = L.Get("TplLegacy");
+        PreviewDate.Header = L.Get("TplPreview"); LegacyNote.Text = L.Get("TplLegacy");
+        ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
+        ToolTipService.SetToolTip(FooterDisplayButton, L.Get("TplEditFooter"));
+        ToolTipService.SetToolTip(HeaderBoldButton, L.Get("TplHeaderBold"));
+        ToolTipService.SetToolTip(HeaderItalicButton, L.Get("TplHeaderItalic"));
+        ToolTipService.SetToolTip(HeaderUnderlineButton, L.Get("TplHeaderUnderline"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(HeaderDisplayButton, L.Get("TplEditHeader"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FooterDisplayButton, L.Get("TplEditFooter"));
         foreach (var alignment in new[] { "TplLeft", "TplCenter", "TplRight" }) { HeaderAlignmentBox.Items.Add(L.Get(alignment)); FooterAlignmentBox.Items.Add(L.Get(alignment)); }
         foreach (var layout in new[] { "TplCompact", "TplDetailed", "TplTwoColumns" }) LayoutBox.Items.Add(L.Get(layout));
         foreach (var font in Fonts) FontBox.Items.Add(font);
@@ -82,6 +92,7 @@ public sealed partial class TemplateBuilderPage : Page
     private void SetTemplate(MenuTemplate template, string? originalName)
     {
         _binding = true;
+        _editingHeader = _editingFooter = false;
         _template = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(template)) ?? new MenuTemplate();
         _loadedName = originalName;
         TemplateCompatibility.ApplyLegacyDefaults(_template);
@@ -161,15 +172,23 @@ public sealed partial class TemplateBuilderPage : Page
         }
         PreviewPanel.Children.Clear();
         var font = new FontFamily(_template.FontFamily);
-        if (_template.ShowHeader)
-        {
-            PreviewPanel.Children.Add(new TextBlock { Text = _template.HeaderText, FontFamily = font, FontSize = _template.HeaderFontSize,
-                FontWeight = _template.HeaderBold ? FontWeights.Bold : FontWeights.Normal,
-                FontStyle = _template.HeaderItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
-                TextDecorations = _template.HeaderUnderline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None,
-                Foreground = new SolidColorBrush(ParseColor(_template.HeaderColor, Colors.Black)), TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignmentFor(_template.HeaderAlignment) });
-        }
+        HeaderDisplay.Text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
+        HeaderDisplay.FontFamily = HeaderBox.FontFamily = font;
+        HeaderDisplay.FontSize = HeaderBox.FontSize = _template.HeaderFontSize;
+        HeaderDisplay.FontWeight = HeaderBox.FontWeight = _template.HeaderBold ? FontWeights.Bold : FontWeights.Normal;
+        HeaderDisplay.FontStyle = HeaderBox.FontStyle = _template.HeaderItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
+        HeaderDisplay.TextDecorations = _template.HeaderUnderline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None;
+        HeaderDisplay.Foreground = HeaderBox.Foreground = new SolidColorBrush(ParseColor(_template.HeaderColor, Colors.Black));
+        HeaderDisplay.TextAlignment = HeaderBox.TextAlignment = TextAlignmentFor(_template.HeaderAlignment);
+        HeaderDisplayButton.Visibility = _template.ShowHeader && !_editingHeader ? Visibility.Visible : Visibility.Collapsed;
+        HeaderBox.Visibility = _template.ShowHeader && _editingHeader ? Visibility.Visible : Visibility.Collapsed;
+        FooterDisplay.Text = string.IsNullOrEmpty(_template.FooterText) ? L.Get("TplEditFooter") : _template.FooterText;
+        FooterDisplay.FontFamily = FooterBox.FontFamily = font;
+        FooterDisplay.FontSize = FooterBox.FontSize = _template.FooterFontSize;
+        FooterDisplay.Foreground = FooterBox.Foreground = new SolidColorBrush(Colors.Black);
+        FooterDisplay.TextAlignment = FooterBox.TextAlignment = TextAlignmentFor(_template.FooterAlignment);
+        FooterDisplayButton.Visibility = _template.ShowFooter && !_editingFooter ? Visibility.Visible : Visibility.Collapsed;
+        FooterBox.Visibility = _template.ShowFooter && _editingFooter ? Visibility.Visible : Visibility.Collapsed;
         var date = PreviewDate.Date?.DateTime.Date ?? DateTime.Today;
         var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
         if (_template.ShowDateRange) PreviewPanel.Children.Add(new TextBlock { Text = $"{monday:d} – {monday.AddDays(4):d}", TextAlignment = TextAlignment.Center, Foreground = new SolidColorBrush(Colors.Black) });
@@ -196,7 +215,32 @@ public sealed partial class TemplateBuilderPage : Page
         }
         PreviewPanel.Children.Add(days);
         if (_entries.Count == 0) PreviewPanel.Children.Add(new TextBlock { Text = L.Get("TplNoMeals"), Foreground = new SolidColorBrush(Colors.Gray) });
-        if (_template.ShowFooter) PreviewPanel.Children.Add(new TextBlock { Text = _template.FooterText, FontFamily = font, FontSize = _template.FooterFontSize, Foreground = new SolidColorBrush(Colors.Black), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignmentFor(_template.FooterAlignment) });
+    }
+
+    private void HeaderDisplay_Click(object sender, RoutedEventArgs e)
+    {
+        _editingHeader = true;
+        UpdatePreview();
+        HeaderBox.Focus(FocusState.Programmatic);
+    }
+
+    private void HeaderBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        _editingHeader = false;
+        UpdatePreview();
+    }
+
+    private void FooterDisplay_Click(object sender, RoutedEventArgs e)
+    {
+        _editingFooter = true;
+        UpdatePreview();
+        FooterBox.Focus(FocusState.Programmatic);
+    }
+
+    private void FooterBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        _editingFooter = false;
+        UpdatePreview();
     }
 
     private async Task UpdateImageAsync(string? dataUri)
