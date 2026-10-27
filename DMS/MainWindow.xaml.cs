@@ -19,11 +19,6 @@ public sealed partial class MainWindow : Window
 
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        // Set default language from settings
-        var settings = App.Services.GetRequiredService<ISettingsService>();
-        var lang = settings.GetLanguage();
-        LanguageSelector.SelectedIndex = lang == "en" ? 1 : 0;
-
         // Navigate to Menu by default - ensure ContentFrame is ready
         if (ContentFrame != null)
         {
@@ -34,6 +29,11 @@ public sealed partial class MainWindow : Window
 
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
+        if (args.IsSettingsInvoked)
+        {
+            ContentFrame?.Navigate(typeof(SettingsPage));
+            return;
+        }
         if (args.InvokedItemContainer is not NavigationViewItem item) return;
         if (item.Tag is not string tag) return;
 
@@ -54,13 +54,4 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (LanguageSelector.SelectedItem is ComboBoxItem item && item.Tag is string lang)
-        {
-            var settings = App.Services.GetRequiredService<ISettingsService>();
-            settings.SetLanguage(lang);
-            // TODO: Apply language change (reload resources)
-        }
-    }
 }
