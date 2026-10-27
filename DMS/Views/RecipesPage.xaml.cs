@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -90,10 +91,10 @@ public sealed partial class RecipesPage : Page
         {
             var dialog = new ContentDialog
             {
-                Title = "Delete Recipe",
-                Content = "Are you sure you want to delete this recipe?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Delete_Recipe_f011c8"),
+                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450"),
+                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -110,9 +111,9 @@ public sealed partial class RecipesPage : Page
                 {
                     var blockedDialog = new ContentDialog
                     {
-                        Title = "Recipe is in use",
+                        Title = L.Get("Text_Recipe_is_in_use_d1249f"),
                         Content = ex.Message,
-                        CloseButtonText = "OK",
+                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
                         XamlRoot = this.XamlRoot
                     };
                     await blockedDialog.ShowAsync();
@@ -130,9 +131,9 @@ public sealed partial class RecipesPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = isEditing ? "Edit Recipe" : "Add Recipe",
-            PrimaryButtonText = "Save",
-            CloseButtonText = "Cancel",
+            Title = isEditing ? L.Get("Text_Edit_Recipe_838f93") : L.Get("Text_Add_Recipe_aa1d63"),
+            PrimaryButtonText = L.Get("Text_Save_efc007"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
@@ -140,29 +141,27 @@ public sealed partial class RecipesPage : Page
         var panel = new StackPanel { Spacing = 12, Width = 500 };
 
         // Name
-        var nameBox = new TextBox { Header = "Name *", Text = recipe.Name, PlaceholderText = "Recipe name" };
+        var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = recipe.Name, PlaceholderText = L.Get("Text_Recipe_name_bcb84d") };
         panel.Children.Add(nameBox);
 
         // Category
-        var categoryBox = new ComboBox { Header = "Category", PlaceholderText = "Select category" };
-        categoryBox.Items.Add("soup");
-        categoryBox.Items.Add("main");
-        categoryBox.Items.Add("dessert");
-        categoryBox.Items.Add("other");
-        categoryBox.SelectedItem = recipe.Category;
-        categoryBox.IsEditable = true;
+        var categoryBox = new ComboBox { Header = L.Get("Text_Category_a3c686"), PlaceholderText = L.Get("Text_Select_category_a2a5ca") };
+        foreach (var category in new[] { "soup", "main", "dessert", "other" })
+            categoryBox.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
+        categoryBox.SelectedItem = categoryBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == recipe.Category)
+            ?? categoryBox.Items[3];
         panel.Children.Add(categoryBox);
 
         // Portion Size
-        var portionBox = new TextBox { Header = "Portion Size", Text = recipe.PortionSize, PlaceholderText = "e.g., 2 servings" };
+        var portionBox = new TextBox { Header = L.Get("Text_Portion_Size_4c79c6"), Text = recipe.PortionSize, PlaceholderText = L.Get("Text_e_g_2_servings_29af24") };
         panel.Children.Add(portionBox);
 
         // Calories
-        var caloriesBox = new NumberBox { Header = "Calories", Value = recipe.Calories, Minimum = 0, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
+        var caloriesBox = new NumberBox { Header = L.Get("Text_Calories_3e62ec"), Value = recipe.Calories, Minimum = 0, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         panel.Children.Add(caloriesBox);
 
         // Instructions
-        var instructionsBox = new TextBox { Header = "Instructions", Text = recipe.Instructions, PlaceholderText = "Cooking steps...", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
+        var instructionsBox = new TextBox { Header = L.Get("Text_Instructions_ed58f2"), Text = recipe.Instructions, PlaceholderText = L.Get("Text_Cooking_steps_c3f1dd"), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         panel.Children.Add(instructionsBox);
 
         // Ingredients: searchable dropdown plus removable selected list.
@@ -175,21 +174,24 @@ public sealed partial class RecipesPage : Page
             .Where(name => !inheritedAllergens.Contains(name))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var selectedAllergens = new ObservableCollection<string>();
+        var selectedAllergenItems = new ObservableCollection<Allergen>();
         void RebuildAllergensFromIngredients()
         {
             selectedAllergens.Clear();
+            selectedAllergenItems.Clear();
             foreach (var allergen in selectedIngredients
                 .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
                 .Concat(manualAllergens)
                 .Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 selectedAllergens.Add(allergen);
+                selectedAllergenItems.Add(availableAllergens.FirstOrDefault(item => item.Name == allergen) ?? new Allergen { Name = allergen });
             }
         }
         RebuildAllergensFromIngredients();
-        var ingredientsLabel = new TextBlock { Text = "Ingredients", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        var ingredientsLabel = new TextBlock { Text = L.Get("Text_Ingredients_f9e84e"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
-        var ingredientSearch = new AutoSuggestBox { PlaceholderText = "Search ingredients...", QueryIcon = new SymbolIcon(Symbol.Find) };
+        var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
         var ingredientList = new ListView { ItemsSource = selectedIngredients, IsItemClickEnabled = true, MaxHeight = 90 };
         ingredientSearch.TextChanged += (sender, args) =>
         {
@@ -220,32 +222,33 @@ public sealed partial class RecipesPage : Page
         panel.Children.Add(ingredientList);
 
         // Allergens: searchable dropdown plus removable selected list.
-        var allergensLabel = new TextBlock { Text = "Allergens", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
-        var allergenSearch = new AutoSuggestBox { PlaceholderText = "Search allergens...", QueryIcon = new SymbolIcon(Symbol.Find) };
-        var allergenList = new ListView { ItemsSource = selectedAllergens, IsItemClickEnabled = true, MaxHeight = 90 };
+        var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find) };
+        var allergenList = new ListView { ItemsSource = selectedAllergenItems, DisplayMemberPath = "DisplayName", IsItemClickEnabled = true, MaxHeight = 90 };
+        allergenSearch.DisplayMemberPath = "DisplayName";
+        allergenSearch.TextMemberPath = "DisplayName";
         allergenSearch.TextChanged += (sender, args) =>
         {
             var query = allergenSearch.Text.Trim();
             allergenSearch.ItemsSource = availableAllergens
-                .Where(item => !selectedAllergens.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
-                .Select(item => item.Name)
+                .Where(item => !selectedAllergens.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
         };
         allergenSearch.SuggestionChosen += (sender, args) =>
         {
-            if (args.SelectedItem is string name)
+            if (args.SelectedItem is Allergen allergen)
             {
-                manualAllergens.Add(name);
+                manualAllergens.Add(allergen.Name);
                 RebuildAllergensFromIngredients();
             }
             allergenSearch.Text = string.Empty;
         };
         allergenList.ItemClick += (sender, args) =>
         {
-            if (args.ClickedItem is string name)
+            if (args.ClickedItem is Allergen allergen)
             {
-                manualAllergens.Remove(name);
+                manualAllergens.Remove(allergen.Name);
                 RebuildAllergensFromIngredients();
             }
         };
@@ -261,9 +264,9 @@ public sealed partial class RecipesPage : Page
                 args.Cancel = true;
                 var errorDialog = new ContentDialog
                 {
-                    Title = "Error",
-                    Content = "Recipe name is required",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Error_7f2f6a"),
+                    Content = L.Get("Text_Recipe_name_is_required_75e015"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await errorDialog.ShowAsync();
@@ -271,7 +274,7 @@ public sealed partial class RecipesPage : Page
             }
 
             recipe.Name = nameBox.Text.Trim();
-            recipe.Category = categoryBox.SelectedItem?.ToString() ?? categoryBox.Text ?? "other";
+            recipe.Category = (categoryBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "other";
             recipe.PortionSize = portionBox.Text?.Trim() ?? "";
             recipe.Calories = (int)caloriesBox.Value;
             recipe.Instructions = instructionsBox.Text?.Trim() ?? "";
@@ -291,6 +294,7 @@ public class RecipeItemViewModel : INotifyPropertyChanged
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Category { get; set; } = "other";
+    public string CategoryDisplay => L.Category(Category);
     public string PortionSize { get; set; } = "";
     public int Calories { get; set; }
     public string Instructions { get; set; } = "";
@@ -299,7 +303,7 @@ public class RecipeItemViewModel : INotifyPropertyChanged
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
-    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {allergen}"));
+    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {L.Allergen(allergen)}"));
 
     private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
     {

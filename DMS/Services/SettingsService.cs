@@ -5,7 +5,7 @@ namespace DMS.Services;
 public interface ISettingsService
 {
     string GetLanguage();
-    void SetLanguage(string language);
+    Task SetLanguageAsync(string language);
     Task<AppSettings> LoadAsync();
     Task SaveAsync(AppSettings settings);
 }
@@ -23,10 +23,13 @@ public sealed class SettingsService : ISettingsService
 
     public string GetLanguage() => _language;
 
-    public void SetLanguage(string language)
+    public async Task SetLanguageAsync(string language)
     {
-        _language = language is "bg" or "en" ? language : DefaultLanguage;
-        _ = SaveAsync(new AppSettings { Language = _language });
+        var selected = language is "bg" or "en" ? language : DefaultLanguage;
+        var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+        settings.Language = selected;
+        await SaveAsync(settings);
+        _language = selected;
     }
 
     public async Task<AppSettings> LoadAsync()

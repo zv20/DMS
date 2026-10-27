@@ -6,4 +6,6 @@ public sealed class Allergen
     public string Name { get; set; } = string.Empty;
     public string Color { get; set; } = "#3498db";
     public string Icon { get; set; } = "⚠️";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DisplayName => DMS.Services.Localization.Allergen(Name);
 }

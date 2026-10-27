@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,10 +88,10 @@ public sealed partial class IngredientsPage : Page
         {
             var dialog = new ContentDialog
             {
-                Title = "Delete Ingredient",
-                Content = "Are you sure you want to delete this ingredient?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Delete_Ingredient_79a0ab"),
+                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"),
+                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -112,9 +113,9 @@ public sealed partial class IngredientsPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = isEditing ? "Edit Ingredient" : "Add Ingredient",
-            PrimaryButtonText = "Save",
-            CloseButtonText = "Cancel",
+            Title = isEditing ? L.Get("Text_Edit_Ingredient_098e94") : L.Get("Text_Add_Ingredient_73b214"),
+            PrimaryButtonText = L.Get("Text_Save_efc007"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
@@ -122,16 +123,16 @@ public sealed partial class IngredientsPage : Page
         var panel = new StackPanel { Spacing = 12, Width = 400 };
 
         // Name
-        var nameBox = new TextBox { Header = "Name *", Text = ingredient.Name, PlaceholderText = "Ingredient name" };
+        var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = ingredient.Name, PlaceholderText = L.Get("Text_Ingredient_name_6f2b4d") };
         panel.Children.Add(nameBox);
 
         // Allergens
-        var allergensLabel = new TextBlock { Text = "Allergens", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
         var allergenList = new ListView
         {
             ItemsSource = allergens,
-            DisplayMemberPath = "Name",
+            DisplayMemberPath = "DisplayName",
             SelectionMode = ListViewSelectionMode.Multiple,
             MaxHeight = 180,
             BorderThickness = new Thickness(1),
@@ -146,7 +147,7 @@ public sealed partial class IngredientsPage : Page
         {
             panel.Children.Add(new TextBlock
             {
-                Text = "Create allergens first from the Allergens page.",
+                Text = L.Get("Text_Create_allergens_first_from_the_Allergens_page_e8f6ca"),
                 Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
             });
         }
@@ -160,9 +161,9 @@ public sealed partial class IngredientsPage : Page
                 args.Cancel = true;
                 var errorDialog = new ContentDialog
                 {
-                    Title = "Error",
-                    Content = "Ingredient name is required",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Error_7f2f6a"),
+                    Content = L.Get("Text_Ingredient_name_is_required_468003"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await errorDialog.ShowAsync();
@@ -190,8 +191,8 @@ public class IngredientItemViewModel
     public List<string> Allergens { get; set; } = new();
 
     public string AllergensDisplay => Allergens.Count > 0
-        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {allergen}"))
-        : "No allergens";
+        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {L.Allergen(allergen)}"))
+        : L.Get("Text_No_allergens_238938");
 
     private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
     {

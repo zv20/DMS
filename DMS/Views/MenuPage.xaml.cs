@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +11,7 @@ public sealed partial class MenuPage : Page
 {
     private readonly IDatabaseService _database;
     private static readonly string[] Categories = ["soup", "main", "dessert", "other"];
-    private static readonly string[] Labels = ["🥣 Soup", "🍽️ Main", "🍰 Dessert", "➕ Other"];
+    private static string[] Labels => ["🥣 " + L.Category("soup"), "🍽️ " + L.Category("main"), "🍰 " + L.Category("dessert"), "➕ " + L.Category("other")];
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
     private bool _busy;
@@ -57,7 +58,7 @@ public sealed partial class MenuPage : Page
                 {
                     var names = _entries.Where(e => e.Date.Date == day.Date).Select(e => _recipes.FirstOrDefault(r => r.Id == e.RecipeId)?.Name).Where(n => n != null);
                     var summary = string.Join("\n", names);
-                    var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : "＋ Plan menu", TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80 };
+                    var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80 };
                     button.Click += async (_, _) => { _date = day; _monthly = false; await RefreshAsync(); };
                     panel.Children.Add(button);
                 }
@@ -68,7 +69,7 @@ public sealed partial class MenuPage : Page
                 CalendarGrid.Children.Add(border);
             }
         }
-        catch (Exception ex) { PeriodLabel.Text = $"Unable to load menu: {ex.Message}"; }
+        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
         finally { _busy = false; }
     }
 
@@ -82,7 +83,7 @@ public sealed partial class MenuPage : Page
         var category = await _database.GetMenuCategoryAsync(day, slot) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), HorizontalAlignment = HorizontalAlignment.Stretch };
-        var search = new AutoSuggestBox { PlaceholderText = "Select recipe…", Text = current?.Name ?? "", FontSize = 13, DisplayMemberPath = "Name", TextMemberPath = "Name" };
+        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 13, DisplayMemberPath = "Name", TextMemberPath = "Name" };
         var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap };
         bool saving = false;
         async Task SaveAsync(Recipe? recipe)
@@ -105,9 +106,9 @@ public sealed partial class MenuPage : Page
                     if (entry != null && entry.Slot != slot) await _database.DeleteMenuEntryAsync(day, entry.Slot);
                     entry = replacement;
                 }
-                status.Text = "✓ Saved";
+                status.Text = L.Get("Text_Saved_499dc6");
             }
-            catch (Exception ex) { status.Text = $"Save failed: {ex.Message}"; }
+            catch (Exception ex) { status.Text = L.Format("SaveError", ex.Message); }
             finally { saving = false; select.IsEnabled = search.IsEnabled = true; }
         }
         void Suggest() => search.ItemsSource = _recipes.Where(r => r.Category.Equals(category, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
@@ -129,7 +130,7 @@ public sealed partial class MenuPage : Page
         };
         panel.Children.Add(select);
         panel.Children.Add(search);
-        var clear = new Button { Content = "Clear", FontSize = 11, Padding = new Thickness(6, 2, 6, 2) };
+        var clear = new Button { Content = L.Get("Text_Clear_719ea3"), FontSize = 11, Padding = new Thickness(6, 2, 6, 2) };
         clear.Click += async (_, _) => { search.Text = ""; await SaveAsync(null); };
         panel.Children.Add(clear);
         panel.Children.Add(status);

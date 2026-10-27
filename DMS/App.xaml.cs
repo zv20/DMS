@@ -17,7 +17,7 @@ public partial class App : Application
         this.InitializeComponent();
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         var services = ConfigureServices();
         Services = services;
@@ -25,11 +25,22 @@ public partial class App : Application
 
         Logger.LogInformation("DMS starting...");
 
+        var settings = await services.GetRequiredService<ISettingsService>().LoadAsync();
+        Localization.Apply(settings.Language);
+
         var window = new MainWindow();
         CurrentWindow = window;
         window.Activate();
 
         Logger.LogInformation("MainWindow activated");
+    }
+
+    public static void ReloadLanguage()
+    {
+        var previous = CurrentWindow;
+        CurrentWindow = new MainWindow(openSettings: true);
+        CurrentWindow.Activate();
+        previous.Close();
     }
 
     private static IServiceProvider ConfigureServices()

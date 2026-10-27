@@ -15,11 +15,11 @@
 
         <!-- Toolbar -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
-            <Button x:Name="NewTemplateButton" Content="➕ New Template" Click="NewTemplateButton_Click" Style="{StaticResource AccentButtonStyle}" />
-            <Button x:Name="SaveTemplateButton" Content="💾 Save Template" Click="SaveTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}" Margin="8,0,0,0" />
-            <Button x:Name="LoadTemplateButton" Content="📂 Load Template" Click="LoadTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}" />
-            <ComboBox x:Name="TemplateSelector" Width="250" PlaceholderText="Select template..." SelectionChanged="TemplateSelector_SelectionChanged" Margin="16,0,0,0" />
-            <Button x:Name="DeleteTemplateButton" Content="🗑️ Delete" Click="DeleteTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Margin="8,0,0,0" />
+            <Button x:Name="NewTemplateButton" Content="➕ New Template" Click="NewTemplateButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_New_Template_27a75c" />
+            <Button x:Name="SaveTemplateButton" Content="💾 Save Template" Click="SaveTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}" Margin="8,0,0,0"  x:Uid="Text_Save_Template_913ba6" />
+            <Button x:Name="LoadTemplateButton" Content="📂 Load Template" Click="LoadTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Load_Template_19a6c5" />
+            <ComboBox x:Name="TemplateSelector" Width="250" PlaceholderText="Select template..." SelectionChanged="TemplateSelector_SelectionChanged" Margin="16,0,0,0"  x:Uid="Text_Select_template_3b4dfd" />
+            <Button x:Name="DeleteTemplateButton" Content="🗑️ Delete" Click="DeleteTemplateButton_Click" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Margin="8,0,0,0"  x:Uid="Text_Delete_8fb0a9" />
         </StackPanel>
 
         <!-- Main Content -->
@@ -35,34 +35,34 @@
                 <StackPanel Spacing="16">
                     <!-- Template Name -->
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Template Name" Style="{StaticResource PageTitleTextStyle}" FontSize="14" />
-                        <TextBox x:Name="TemplateNameBox" PlaceholderText="My Weekly Menu Template" />
+                        <TextBlock Text="Template Name" Style="{StaticResource PageTitleTextStyle}" FontSize="14"  x:Uid="Text_Template_Name_48c554" />
+                        <TextBox x:Name="TemplateNameBox" PlaceholderText="My Weekly Menu Template"  x:Uid="Text_My_Weekly_Menu_Template_b71513" />
                     </StackPanel>
 
                     <!-- Header Text -->
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Header Text" Style="{StaticResource PageTitleTextStyle}" FontSize="14" />
-                        <TextBox x:Name="HeaderTextBox" PlaceholderText="Weekly Menu" />
+                        <TextBlock Text="Header Text" Style="{StaticResource PageTitleTextStyle}" FontSize="14"  x:Uid="Text_Header_Text_f7593e" />
+                        <TextBox x:Name="HeaderTextBox" PlaceholderText="Weekly Menu"  x:Uid="Text_Weekly_Menu_69fa95" />
                     </StackPanel>
 
                     <!-- Footer Text -->
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Footer Text" Style="{StaticResource PageTitleTextStyle}" FontSize="14" />
-                        <TextBox x:Name="FooterTextBox" PlaceholderText="Prepared with care by DMS" />
+                        <TextBlock Text="Footer Text" Style="{StaticResource PageTitleTextStyle}" FontSize="14"  x:Uid="Text_Footer_Text_9b1025" />
+                        <TextBox x:Name="FooterTextBox" PlaceholderText="Prepared with care by DMS"  x:Uid="Text_Prepared_with_care_by_DMS_082a78" />
                     </StackPanel>
 
                     <!-- Background Color -->
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Background Color" Style="{StaticResource PageTitleTextStyle}" FontSize="14" />
+                        <TextBlock Text="Background Color" Style="{StaticResource PageTitleTextStyle}" FontSize="14"  x:Uid="Text_Background_Color_874df4" />
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <TextBox x:Name="BackgroundColorBox" Text="#FFFFFF" Width="150" PlaceholderText="#FFFFFF" />
                             <Border x:Name="BgColorPreview" Width="40" Height="40" Background="White" CornerRadius="4" BorderBrush="Gray" BorderThickness="1" />
-                            <Button Content="Pick Color" Click="PickBackgroundColor_Click" Style="{StaticResource ButtonRevealStyle}" />
+                            <Button Content="Pick Color" Click="PickBackgroundColor_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Pick_Color_aa15a3" />
                         </StackPanel>
                     </StackPanel>
 
                     <!-- Week Structure -->
-                    <TextBlock Text="Week Structure" Style="{StaticResource PageTitleTextStyle}" FontSize="14" />
+                    <TextBlock Text="Week Structure" Style="{StaticResource PageTitleTextStyle}" FontSize="14"  x:Uid="Text_Week_Structure_0043f9" />
                     <StackPanel x:Name="WeekStructurePanel" Spacing="8" />
                 </StackPanel>
             </ScrollViewer>
@@ -73,7 +73,7 @@
             <!-- Live Preview -->
             <Border Grid.Column="2" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="16">
                 <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0" Text="Live Preview" Style="{StaticResource PageTitleTextStyle}" FontSize="14" Margin="0,0,0,12" />
+                    <TextBlock Grid.Row="0" Text="Live Preview" Style="{StaticResource PageTitleTextStyle}" FontSize="14" Margin="0,0,0,12"  x:Uid="Text_Live_Preview_a62da9" />
                     <ScrollViewer Grid.Row="1" VerticalScrollMode="Auto">
                         <Border x:Name="PreviewBorder" Background="White" CornerRadius="4" Padding="16">
                             <StackPanel x:Name="PreviewPanel" Spacing="12" />

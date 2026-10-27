@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22621.0</TargetPlatformMinVersion>
     <RootNamespace>DMS</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- This is an unpackaged WinUI 3 app. Auto-initialize the Windows App SDK
          and copy its framework runtime beside the executable. -->

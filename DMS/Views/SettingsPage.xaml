@@ -12,30 +12,31 @@
             <!-- Language Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}" />
-                    <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged">
-                        <ComboBoxItem Tag="bg" Content="🇧🇬 Bulgarian" />
-                        <ComboBoxItem Tag="en" Content="🇺🇸 English" />
+                    <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Language_Region_5d78df" />
+                    <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
+                        <ComboBoxItem Tag="bg" Content="🇧🇬 Bulgarian"  x:Uid="Text_Bulgarian_a7a43a" />
+                        <ComboBoxItem Tag="en" Content="🇺🇸 English"  x:Uid="Text_English_531f36" />
                     </ComboBox>
+                    <TextBlock x:Name="LanguageStatus" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
             <!-- Theme Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="🎨 Appearance" Style="{StaticResource PageTitleTextStyle}" />
-                    <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged">
-                        <ComboBoxItem Tag="light" Content="☀️ Light" />
-                        <ComboBoxItem Tag="dark" Content="🌙 Dark" />
-                        <ComboBoxItem Tag="system" Content="💻 System Default" />
+                    <TextBlock Text="🎨 Appearance" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Appearance_be0e75" />
+                    <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
+                        <ComboBoxItem Tag="light" Content="☀️ Light"  x:Uid="Text_Light_200060" />
+                        <ComboBoxItem Tag="dark" Content="🌙 Dark"  x:Uid="Text_Dark_9cc40d" />
+                        <ComboBoxItem Tag="system" Content="💻 System Default"  x:Uid="Text_System_Default_363703" />
                     </ComboBox>
-                    <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AccentColorComboBox_SelectionChanged" Margin="0,8,0,0">
-                        <ComboBoxItem Tag="blue" Content="🔵 Blue" />
-                        <ComboBoxItem Tag="green" Content="🟢 Green" />
-                        <ComboBoxItem Tag="purple" Content="🟣 Purple" />
-                        <ComboBoxItem Tag="orange" Content="🟠 Orange" />
-                        <ComboBoxItem Tag="red" Content="🔴 Red" />
-                        <ComboBoxItem Tag="teal" Content="🟢 Teal" />
+                    <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AccentColorComboBox_SelectionChanged" Margin="0,8,0,0" x:Uid="Text_Accent_Color_2bef52">
+                        <ComboBoxItem Tag="blue" Content="🔵 Blue"  x:Uid="Text_Blue_b81516" />
+                        <ComboBoxItem Tag="green" Content="🟢 Green"  x:Uid="Text_Green_f66748" />
+                        <ComboBoxItem Tag="purple" Content="🟣 Purple"  x:Uid="Text_Purple_a14112" />
+                        <ComboBoxItem Tag="orange" Content="🟠 Orange"  x:Uid="Text_Orange_ed1c11" />
+                        <ComboBoxItem Tag="red" Content="🔴 Red"  x:Uid="Text_Red_6f6efe" />
+                        <ComboBoxItem Tag="teal" Content="🟢 Teal"  x:Uid="Text_Teal_ee7cb9" />
                     </ComboBox>
                 </StackPanel>
             </Border>
@@ -43,20 +44,20 @@
             <!-- Data Management Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="💾 Data Management" Style="{StaticResource PageTitleTextStyle}" />
+                    <TextBlock Text="💾 Data Management" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Data_Management_a0cf50" />
                     
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="ExportButton" Content="📤 Export Data" Click="ExportButton_Click" Style="{StaticResource AccentButtonStyle}" />
-                        <Button x:Name="ImportButton" Content="📥 Import Data" Click="ImportButton_Click" Style="{StaticResource ButtonRevealStyle}" />
+                        <Button x:Name="ExportButton" Content="📤 Export Data" Click="ExportButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Export_Data_f821f4" />
+                        <Button x:Name="ImportButton" Content="📥 Import Data" Click="ImportButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Import_Data_a624f8" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                        <Button x:Name="BackupButton" Content="💾 Create Backup" Click="BackupButton_Click" Style="{StaticResource ButtonRevealStyle}" />
-                        <Button x:Name="RestoreButton" Content="🔄 Restore Backup" Click="RestoreButton_Click" Style="{StaticResource ButtonRevealStyle}" />
+                        <Button x:Name="BackupButton" Content="💾 Create Backup" Click="BackupButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Create_Backup_67fc28" />
+                        <Button x:Name="RestoreButton" Content="🔄 Restore Backup" Click="RestoreButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Restore_Backup_0e7200" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                        <Button x:Name="OpenDataFolderButton" Content="📁 Open Data Folder" Click="OpenDataFolderButton_Click" Style="{StaticResource ButtonRevealStyle}" />
+                        <Button x:Name="OpenDataFolderButton" Content="📁 Open Data Folder" Click="OpenDataFolderButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Open_Data_Folder_7f4c75" />
                         <TextBlock x:Name="DataFolderText" VerticalAlignment="Center" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" MaxWidth="400" />
                     </StackPanel>
                 </StackPanel>
@@ -65,12 +66,12 @@
             <!-- Database Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}" />
+                    <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Database_0038a1" />
                     <TextBlock x:Name="DatabaseInfoText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
                     
                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                        <Button x:Name="VacuumButton" Content="🧹 Vacuum Database" Click="VacuumButton_Click" Style="{StaticResource ButtonRevealStyle}" />
-                        <Button x:Name="ReindexButton" Content="📇 Reindex" Click="ReindexButton_Click" Style="{StaticResource ButtonRevealStyle}" />
+                        <Button x:Name="VacuumButton" Content="🧹 Vacuum Database" Click="VacuumButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Vacuum_Database_c3255f" />
+                        <Button x:Name="ReindexButton" Content="📇 Reindex" Click="ReindexButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Reindex_70aa2b" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -78,13 +79,13 @@
             <!-- About Section -->
             <Border Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}" />
+                    <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_About_3e3c26" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <TextBlock Text="DMS (Diet Management System)" FontWeight="SemiBold" />
                         <TextBlock Text="v1.0.0" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
                     <TextBlock Text="WinUI 3 • .NET 8 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
-                    <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0" />
+                    <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0"  x:Uid="Text_Built_for_meal_planning_and_recipe_management_49409f" />
                 </StackPanel>
             </Border>
         </StackPanel>

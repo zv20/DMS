@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -45,8 +46,8 @@ public sealed partial class TemplateBuilderPage : Page
         _currentTemplate = new MenuTemplate
         {
             Name = "",
-            HeaderText = "Weekly Menu",
-            FooterText = "Prepared with care by DMS",
+            HeaderText = L.Get("Text_Weekly_Menu_69fa95"),
+            FooterText = L.Get("Text_Prepared_with_care_by_DMS_082a78"),
             BackgroundColor = "#FFFFFF"
         };
         TemplateSelector.SelectedItem = null;
@@ -95,20 +96,20 @@ public sealed partial class TemplateBuilderPage : Page
     {
         WeekStructurePanel.Children.Clear();
 
-        var slots = new[] { "Breakfast", "Lunch", "Dinner", "Snack" };
-        var slotIcons = new[] { "🌅", "🌞", "🌙", "🍪" };
+        var slots = new[] { "soup", "main", "dessert", "other" };
+        var slotIcons = new[] { "🥣", "🍽️", "🍰", "➕" };
 
         foreach (var slot in slots)
         {
             var slotPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             var iconText = new TextBlock { Text = slotIcons[Array.IndexOf(slots, slot)], FontSize = 16, VerticalAlignment = VerticalAlignment.Center, Width = 30 };
-            var labelText = new TextBlock { Text = slot, FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Width = 80 };
+            var labelText = new TextBlock { Text = L.Category(slot), FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Width = 100 };
             
             var comboBox = new ComboBox 
             { 
                 Width = 300, 
-                PlaceholderText = $"Recipe for {slot}",
-                ItemsSource = _recipes,
+                PlaceholderText = L.Format("RecipeFor", L.Category(slot)),
+                ItemsSource = _recipes.Where(recipe => recipe.Category == slot).ToList(),
                 DisplayMemberPath = "Name"
             };
             
@@ -142,8 +143,8 @@ public sealed partial class TemplateBuilderPage : Page
         PreviewPanel.Children.Add(headerPanel);
 
         // Week grid preview
-        var dayNames = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-        var slots = new[] { "Breakfast", "Lunch", "Dinner", "Snack" };
+        var dayNames = Enumerable.Range(0, 7).Select(i => new DateTime(2026, 10, 26).AddDays(i).ToString("ddd")).ToArray();
+        var slots = new[] { L.Category("soup"), L.Category("main"), L.Category("dessert"), L.Category("other") };
 
         for (int row = 0; row < slots.Length; row++)
         {
@@ -218,7 +219,7 @@ public sealed partial class TemplateBuilderPage : Page
         // Simple color picker dialog
         var colors = new[] { "#FFFFFF", "#F8F9FA", "#E8F5E9", "#E3F2FD", "#FFF3E0", "#FCE4EC", "#F3E5F5", "#E0F2F1" };
         var panel = new StackPanel { Spacing = 8 };
-        panel.Children.Add(new TextBlock { Text = "Choose a background color:", FontSize = 14, FontWeight = FontWeights.SemiBold });
+        panel.Children.Add(new TextBlock { Text = L.Get("Text_Choose_a_background_color_96d4ed"), FontSize = 14, FontWeight = FontWeights.SemiBold });
         
         var colorGrid = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         foreach (var color in colors)
@@ -248,9 +249,9 @@ public sealed partial class TemplateBuilderPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = "Pick Background Color",
+            Title = L.Get("Text_Pick_Background_Color_cb6f4f"),
             Content = panel,
-            CloseButtonText = "Done",
+            CloseButtonText = L.Get("Text_Done_e9b450"),
             XamlRoot = this.XamlRoot
         };
         _ = dialog.ShowAsync();
@@ -264,9 +265,9 @@ public sealed partial class TemplateBuilderPage : Page
         {
             var errorDialog = new ContentDialog
             {
-                Title = "Error",
-                Content = "Template name is required",
-                CloseButtonText = "OK",
+                Title = L.Get("Text_Error_7f2f6a"),
+                Content = L.Get("Text_Template_name_is_required_0e3ca2"),
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await errorDialog.ShowAsync();
@@ -297,9 +298,9 @@ public sealed partial class TemplateBuilderPage : Page
             {
                 var errorDialog = new ContentDialog
                 {
-                    Title = "Cannot Delete",
-                    Content = "Preset templates cannot be deleted",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Cannot_Delete_9635fe"),
+                    Content = L.Get("Text_Preset_templates_cannot_be_deleted_0a9c55"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await errorDialog.ShowAsync();
@@ -308,10 +309,10 @@ public sealed partial class TemplateBuilderPage : Page
 
             var dialog = new ContentDialog
             {
-                Title = "Delete Template",
-                Content = $"Delete template '{template.Name}'?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Delete_Template_c07327"),
+                Content = L.Format("DeleteTemplatePrompt", template.Name),
+                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };

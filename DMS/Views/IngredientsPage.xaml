@@ -15,8 +15,8 @@
 
         <!-- Toolbar -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
-            <Button x:Name="AddIngredientButton" Content="➕ Add Ingredient" Click="AddIngredientButton_Click" Style="{StaticResource AccentButtonStyle}" />
-            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search ingredients..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged" />
+            <Button x:Name="AddIngredientButton" Content="➕ Add Ingredient" Click="AddIngredientButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Ingredient_bc5b34" />
+            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search ingredients..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_ingredients_540992" />
         </StackPanel>
 
         <!-- Ingredient List -->
@@ -36,8 +36,8 @@
                                 <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="1" VerticalAlignment="Center">
-                                <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditIngredientButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" />
-                                <Button Content="🗑️" ToolTipService.ToolTip="Delete" Click="DeleteIngredientButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditIngredientButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Edit_530164" />
+                                <Button Content="🗑️" ToolTipService.ToolTip="Delete" Click="DeleteIngredientButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}"  x:Uid="Text_Delete_f6fdbe" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -54,8 +54,8 @@
             Spacing="16"
             Visibility="Collapsed">
             <TextBlock Text="🥕" FontSize="64" />
-            <TextBlock Text="No ingredients yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-            <TextBlock Text="Click 'Add Ingredient' to create your first ingredient" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center" />
+            <TextBlock Text="No ingredients yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_ingredients_yet_affb49" />
+            <TextBlock Text="Click 'Add Ingredient' to create your first ingredient" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" />
         </StackPanel>
     </Grid>
 </Page>

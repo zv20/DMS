@@ -29,6 +29,23 @@ public sealed class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LanguageChangePreservesOtherSettingsAndSurvivesReload()
+    {
+        using var database = CreateDatabase();
+        await database.SaveSettingsAsync(new AppSettings { Language = "bg", Theme = "dark" });
+        var settings = new SettingsService(database);
+        await settings.LoadAsync();
+        await settings.SetLanguageAsync("en");
+        Assert.Equal("en", settings.GetLanguage());
+        Assert.Equal("dark", (await database.GetSettingsAsync())!.Theme);
+        var reopened = new SettingsService(database);
+        Assert.Equal("en", (await reopened.LoadAsync()).Language);
+        await reopened.SetLanguageAsync("bg");
+        Assert.Equal("bg", (await database.GetSettingsAsync())!.Language);
+        Assert.Equal("dark", (await database.GetSettingsAsync())!.Theme);
+    }
+
+    [Fact]
     public async Task EmptyMenuSlotCategorySurvivesReopenAndBackup()
     {
         var day = new DateTime(2026, 10, 26);

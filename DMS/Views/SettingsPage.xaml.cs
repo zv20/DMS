@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ public sealed partial class SettingsPage : Page
 
     private readonly ISettingsService _settingsService;
     private readonly IDatabaseService _databaseService;
-    private bool _suppressSettingChanges;
+    private bool _suppressSettingChanges = true;
 
     public SettingsPage()
     {
@@ -52,7 +53,7 @@ public sealed partial class SettingsPage : Page
 
             // Database info
             var dbInfo = new FileInfo(dbPath);
-            DatabaseInfoText.Text = $"Location: {dbPath}\nSize: {FormatFileSize(dbInfo.Length)}\nLast Modified: {dbInfo.LastWriteTime:yyyy-MM-dd HH:mm}";
+            DatabaseInfoText.Text = L.Format("DatabaseInfo", dbPath, FormatFileSize(dbInfo.Length), dbInfo.LastWriteTime);
         }
         finally
         {
@@ -60,13 +61,23 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_suppressSettingChanges) return;
         if (LanguageComboBox.SelectedItem is ComboBoxItem item && item.Tag is string lang)
         {
-            _settingsService.SetLanguage(lang);
-            
+            LanguageComboBox.IsEnabled = false;
+            try
+            {
+                await _settingsService.SetLanguageAsync(lang);
+                Localization.Apply(lang);
+                App.ReloadLanguage();
+            }
+            catch (Exception ex)
+            {
+                LanguageStatus.Text = L.Format("SaveError", ex.Message);
+                LanguageComboBox.IsEnabled = true;
+            }
         }
     }
 
@@ -136,9 +147,9 @@ public sealed partial class SettingsPage : Page
 
             var exportSuccessDialog = new ContentDialog
             {
-                Title = "Export Complete",
-                Content = $"Exported {recipes.Count} recipes, {ingredients.Count} ingredients, {allergens.Count} allergens, {menuEntries.Count} menu entries, and {templates.Count} templates.",
-                CloseButtonText = "OK",
+                Title = L.Get("Text_Export_Complete_7f2e84"),
+                Content = L.Format("ExportSummary", recipes.Count, ingredients.Count, allergens.Count, menuEntries.Count, templates.Count),
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await exportSuccessDialog.ShowAsync();
@@ -147,9 +158,9 @@ public sealed partial class SettingsPage : Page
         {
             var exportErrorDialog = new ContentDialog
             {
-                Title = "Export Failed",
-                Content = $"Error: {ex.Message}",
-                CloseButtonText = "OK",
+                Title = L.Get("Text_Export_Failed_6aa6a7"),
+                Content = L.Format("ErrorDetail", ex.Message),
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await exportErrorDialog.ShowAsync();
@@ -178,10 +189,10 @@ public sealed partial class SettingsPage : Page
     {
         var importDialog = new ContentDialog
         {
-            Title = "Import Data",
-            Content = "This will add imported data to your existing data. Duplicate names will be skipped. Continue?",
-            PrimaryButtonText = "Import",
-            CloseButtonText = "Cancel",
+            Title = L.Get("Text_Import_Data_0021d0"),
+            Content = L.Get("Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0"),
+            PrimaryButtonText = L.Get("Text_Import_d6fbc9"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
@@ -195,7 +206,7 @@ public sealed partial class SettingsPage : Page
             using var document = JsonDocument.Parse(json);
             var importData = document.RootElement;
             if (importData.ValueKind != JsonValueKind.Object)
-                throw new InvalidDataException("The selected file is not a DMS backup.");
+                throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
 
             if (LooksLikeLegacyBrowserBackup(importData))
             {
@@ -315,9 +326,9 @@ public sealed partial class SettingsPage : Page
         {
             var importErrorDialog = new ContentDialog
             {
-                Title = "Import Failed",
-                Content = $"Error: {ex.Message}",
-                CloseButtonText = "OK",
+                Title = L.Get("Text_Import_Failed_4c1ed2"),
+                Content = L.Format("ErrorDetail", ex.Message),
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await importErrorDialog.ShowAsync();
@@ -499,9 +510,9 @@ public sealed partial class SettingsPage : Page
     {
         var importSuccessDialog = new ContentDialog
         {
-            Title = "Import Complete",
-            Content = $"Imported: {result.Recipes} recipes, {result.Ingredients} ingredients, {result.Allergens} allergens, {result.MenuEntries} menu entries, {result.Templates} templates.",
-            CloseButtonText = "OK",
+            Title = L.Get("Text_Import_Complete_a5cb9b"),
+            Content = L.Format("ImportSummary", result.Recipes, result.Ingredients, result.Allergens, result.MenuEntries, result.Templates),
+            CloseButtonText = L.Get("Text_OK_9ce3bd"),
             XamlRoot = this.XamlRoot
         };
         await importSuccessDialog.ShowAsync();
@@ -558,9 +569,9 @@ public sealed partial class SettingsPage : Page
 
                 var backupDialog = new ContentDialog
                 {
-                    Title = "Backup Complete",
-                    Content = "Database backup created successfully.",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Backup_Complete_8b1525"),
+                    Content = L.Get("Text_Database_backup_created_successfully_2b90d0"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await backupDialog.ShowAsync();
@@ -569,9 +580,9 @@ public sealed partial class SettingsPage : Page
             {
                 var backupErrorDialog = new ContentDialog
                 {
-                    Title = "Backup Failed",
-                    Content = $"Error: {ex.Message}",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Backup_Failed_fcbe1a"),
+                    Content = L.Format("ErrorDetail", ex.Message),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await backupErrorDialog.ShowAsync();
@@ -595,10 +606,10 @@ public sealed partial class SettingsPage : Page
         {
             var restoreConfirmDialog = new ContentDialog
             {
-                Title = "Restore Database",
-                Content = "⚠️ This will REPLACE your current database. All current data will be lost. Are you sure?",
-                PrimaryButtonText = "Restore",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Restore_Database_04f0a6"),
+                Content = L.Get("RestoreWarning"),
+                PrimaryButtonText = L.Get("Text_Restore_3cbe6d"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -612,9 +623,9 @@ public sealed partial class SettingsPage : Page
                     
                     var restoreSuccessDialog = new ContentDialog
                     {
-                        Title = "Restore Complete",
-                        Content = "Database restored successfully. Reopen any active pages to refresh their data.",
-                        CloseButtonText = "OK",
+                        Title = L.Get("Text_Restore_Complete_6ad3ae"),
+                        Content = L.Get("Text_Database_restored_successfully_Reopen_any_active_pages__48a860"),
+                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
                         XamlRoot = this.XamlRoot
                     };
                     await restoreSuccessDialog.ShowAsync();
@@ -623,9 +634,9 @@ public sealed partial class SettingsPage : Page
                 {
                     var restoreErrorDialog = new ContentDialog
                     {
-                        Title = "Restore Failed",
-                        Content = $"Error: {ex.Message}",
-                        CloseButtonText = "OK",
+                        Title = L.Get("Text_Restore_Failed_b6bce7"),
+                        Content = L.Format("ErrorDetail", ex.Message),
+                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
                         XamlRoot = this.XamlRoot
                     };
                     await restoreErrorDialog.ShowAsync();
@@ -650,10 +661,10 @@ public sealed partial class SettingsPage : Page
         {
             var vacDialog = new ContentDialog
             {
-                Title = "Vacuum Database",
-                Content = "This will optimize the database file size. Continue?",
-                PrimaryButtonText = "Vacuum",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Vacuum_Database_0a823e"),
+                Content = L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"),
+                PrimaryButtonText = L.Get("Text_Vacuum_5fe15d"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 XamlRoot = this.XamlRoot
             };
 
@@ -663,9 +674,9 @@ public sealed partial class SettingsPage : Page
                 await _databaseService.VacuumAsync();
                 var doneDialog = new ContentDialog
                 {
-                    Title = "Vacuum Complete",
-                    Content = "Database optimized successfully.",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Vacuum_Complete_43b708"),
+                    Content = L.Get("Text_Database_optimized_successfully_4e0a52"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await doneDialog.ShowAsync();
@@ -675,9 +686,9 @@ public sealed partial class SettingsPage : Page
         {
             var errorDialog = new ContentDialog
             {
-                Title = "Error",
+                Title = L.Get("Text_Error_7f2f6a"),
                 Content = ex.Message,
-                CloseButtonText = "OK",
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await errorDialog.ShowAsync();
@@ -691,9 +702,9 @@ public sealed partial class SettingsPage : Page
             await _databaseService.ReindexAsync();
         var reindexDialog = new ContentDialog
         {
-            Title = "Reindex Complete",
-            Content = "Database indexes rebuilt.",
-            CloseButtonText = "OK",
+            Title = L.Get("Text_Reindex_Complete_6eb4e1"),
+            Content = L.Get("Text_Database_indexes_rebuilt_1fdc67"),
+            CloseButtonText = L.Get("Text_OK_9ce3bd"),
             XamlRoot = this.XamlRoot
         };
         await reindexDialog.ShowAsync();
@@ -702,9 +713,9 @@ public sealed partial class SettingsPage : Page
         {
             var errorDialog = new ContentDialog
             {
-                Title = "Reindex failed",
+                Title = L.Get("Text_Reindex_failed_f6512f"),
                 Content = ex.Message,
-                CloseButtonText = "OK",
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
             await errorDialog.ShowAsync();

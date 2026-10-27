@@ -9,9 +9,14 @@ namespace DMS;
 
 public sealed partial class MainWindow : Window
 {
-    public MainWindow()
+    private readonly bool _openSettings;
+
+    public MainWindow(bool openSettings = false)
     {
+        _openSettings = openSettings;
         this.InitializeComponent();
+        if (NavView.SettingsItem is NavigationViewItem settingsItem)
+            settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
@@ -22,8 +27,8 @@ public sealed partial class MainWindow : Window
         // Navigate to Menu by default - ensure ContentFrame is ready
         if (ContentFrame != null)
         {
-            NavView.SelectedItem = NavView.MenuItems[0];
-            ContentFrame.Navigate(typeof(MenuPage));
+            NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
+            ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage));
         }
     }
 

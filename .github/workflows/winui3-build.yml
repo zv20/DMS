@@ -28,6 +28,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore DMS.sln
 
+      - name: Check English and Bulgarian resources
+        run: python scripts/check-localization.py
+
       - name: Build DMS and tests
         run: dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 

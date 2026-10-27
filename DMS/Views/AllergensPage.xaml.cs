@@ -1,3 +1,4 @@
+using L = DMS.Services.Localization;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -48,7 +49,7 @@ public sealed partial class AllergensPage : Page
         foreach (var allergen in _allergens)
         {
             if (string.IsNullOrEmpty(query) ||
-                allergen.Name.ToLowerInvariant().Contains(query))
+                allergen.Name.ToLowerInvariant().Contains(query) || allergen.DisplayName.ToLowerInvariant().Contains(query))
             {
                 _filteredAllergens.Add(allergen);
             }
@@ -90,10 +91,10 @@ public sealed partial class AllergensPage : Page
         {
             var deleteDialog = new ContentDialog
             {
-                Title = "Delete Allergen",
-                Content = "Are you sure you want to delete this allergen?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
+                Title = L.Get("Text_Delete_Allergen_7b0000"),
+                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"),
+                PrimaryButtonText = L.Get("Text_Delete_f6fdbe"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -114,9 +115,9 @@ public sealed partial class AllergensPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = isEditing ? "Edit Allergen" : "Add Allergen",
-            PrimaryButtonText = "Save",
-            CloseButtonText = "Cancel",
+            Title = isEditing ? L.Get("Text_Edit_Allergen_54f3c1") : L.Get("Text_Add_Allergen_3f78ad"),
+            PrimaryButtonText = L.Get("Text_Save_efc007"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
@@ -124,17 +125,17 @@ public sealed partial class AllergensPage : Page
         var panel = new StackPanel { Spacing = 12, Width = 400 };
 
         // Name
-        var nameBox = new TextBox { Header = "Name *", Text = allergen.Name, PlaceholderText = "Allergen name (e.g., Gluten, Dairy, Nuts)" };
+        var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = allergen.Name, PlaceholderText = L.Get("Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715") };
         panel.Children.Add(nameBox);
 
         // Color Picker
-        var colorLabel = new TextBlock { Text = "Color", FontSize = 14, FontWeight = FontWeights.SemiBold };
+        var colorLabel = new TextBlock { Text = L.Get("Text_Color_1d0c83"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(colorLabel);
         
         var colorPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         var colorBox = new TextBox 
         { 
-            Header = "Hex Color", 
+            Header = L.Get("Text_Hex_Color_52aa66"),
             Text = allergen.Color, 
             PlaceholderText = "#3498db",
             Width = 150
@@ -203,9 +204,9 @@ public sealed partial class AllergensPage : Page
                 args.Cancel = true;
                 var errorDialog = new ContentDialog
                 {
-                    Title = "Error",
-                    Content = "Allergen name is required",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Error_7f2f6a"),
+                    Content = L.Get("Text_Allergen_name_is_required_94160b"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await errorDialog.ShowAsync();
@@ -217,9 +218,9 @@ public sealed partial class AllergensPage : Page
                 args.Cancel = true;
                 var errorDialog = new ContentDialog
                 {
-                    Title = "Error",
-                    Content = "Please enter a valid hex color (e.g., #3498db)",
-                    CloseButtonText = "OK",
+                    Title = L.Get("Text_Error_7f2f6a"),
+                    Content = L.Get("Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
                     XamlRoot = this.XamlRoot
                 };
                 await errorDialog.ShowAsync();
@@ -248,6 +249,7 @@ public sealed partial class AllergensPage : Page
 
 public class AllergenItemViewModel
 {
+    public string DisplayName => L.Allergen(Name);
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Color { get; set; } = "#3498db";

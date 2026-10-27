@@ -15,8 +15,8 @@
 
         <!-- Toolbar -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
-            <Button x:Name="AddRecipeButton" Content="➕ Add Recipe" Click="AddRecipeButton_Click" Style="{StaticResource AccentButtonStyle}" />
-            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search recipes..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged" />
+            <Button x:Name="AddRecipeButton" Content="➕ Add Recipe" Click="AddRecipeButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Recipe_09855a" />
+            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search recipes..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_recipes_ba1ee4" />
         </StackPanel>
 
         <!-- Recipe List -->
@@ -34,15 +34,15 @@
                             <StackPanel Spacing="2">
                                 <TextBlock Text="{x:Bind Name}" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" FontSize="16" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{x:Bind Category}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                                    <TextBlock Text="{x:Bind CategoryDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                                     <TextBlock Text="{x:Bind PortionDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                                     <TextBlock Text="{x:Bind CaloriesDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
                                 </StackPanel>
                                 <TextBlock Text="{x:Bind AllergensDisplay}" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="1" VerticalAlignment="Center">
-                                <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditRecipeButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" />
-                                <Button Content="🗑️" ToolTipService.ToolTip="Delete" Click="DeleteRecipeButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                <Button Content="✏️" ToolTipService.ToolTip="Edit" Click="EditRecipeButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Edit_530164" />
+                                <Button Content="🗑️" ToolTipService.ToolTip="Delete" Click="DeleteRecipeButton_Click" Tag="{x:Bind Id}" Style="{StaticResource ButtonRevealStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}"  x:Uid="Text_Delete_f6fdbe" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -59,8 +59,8 @@
             Spacing="16"
             Visibility="Collapsed">
             <TextBlock Text="🍽️" FontSize="64" />
-            <TextBlock Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-            <TextBlock Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center" />
+            <TextBlock Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
+            <TextBlock Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
         </StackPanel>
     </Grid>
 </Page>
