@@ -10,6 +10,27 @@ public sealed class DatabaseServiceTests : IDisposable
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), "DMS.Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void WeekdayGroupsHaveIndependentStylesAndOverrideLegacyDayStyle()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { TemplateStyle = "detailed" };
+        template.TextStyles["block:0"] = new TemplateTextStyle { Color = "#101010" };
+        template.TextStyles["heading:0"] = new TemplateTextStyle { Color = "#111111" };
+        template.TextStyles["menu:0"] = new TemplateTextStyle { Color = "#222222" };
+        template.TextStyles["ingredient-group:0"] = new TemplateTextStyle { Color = "#333333" };
+        template.TextStyles["allergen-group:0"] = new TemplateTextStyle { Color = "#444444" };
+        var recipes = new List<Recipe> { new() { Id = 1, Name = "Soup", Ingredients = ["Beans"], Allergens = ["Milk"] }, new() { Id = 2, Name = "Main", Ingredients = ["Rice"], Allergens = ["Eggs"] } };
+        var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot1", RecipeId = 1 }, new() { Date = monday, Slot = "slot2", RecipeId = 2 } };
+        var restored = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(System.Text.Json.JsonSerializer.Serialize(template))!;
+        var html = MenuOutputService.BuildHtml(restored, monday, entries, recipes);
+        Assert.Contains("color:#111111", html);
+        Assert.Equal(2, html.Split("color:#222222").Length - 1);
+        Assert.Equal(2, html.Split("color:#333333").Length - 1);
+        Assert.Equal(2, html.Split("color:#444444").Length - 1);
+        Assert.DoesNotContain("color:#101010", html);
+    }
+
+    [Fact]
     public void DayBlockStyleAppliesToAllDetailsWithoutChangingOtherDays()
     {
         var monday = new DateTime(2026, 10, 26);

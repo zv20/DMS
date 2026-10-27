@@ -326,4 +326,8 @@
   <data name="TplUnderline" xml:space="preserve"><value>Подчертаване</value></data>
   <data name="TplPageOptions" xml:space="preserve"><value>Настройки на страницата и шаблона</value></data>
   <data name="TplVisibilityOptions" xml:space="preserve"><value>Показване или скриване на подробности за менюто</value></data>
+  <data name="TplDayHeading" xml:space="preserve"><value>Заглавие на деня</value></data>
+  <data name="TplMenuNames" xml:space="preserve"><value>Имена на ястията</value></data>
+  <data name="TplIngredientText" xml:space="preserve"><value>Съставки</value></data>
+  <data name="TplAllergenText" xml:space="preserve"><value>Алергени</value></data>
 </root>

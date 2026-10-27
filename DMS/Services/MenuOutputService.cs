@@ -249,8 +249,14 @@ public static class MenuOutputService
             var family = fonts.Contains(style.FontFamily, StringComparer.OrdinalIgnoreCase) ? style.FontFamily : "Arial";
             return $"font-family:'{H(family)}';font-size:{Size(style.FontSize, 11)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}";
         }
-        string DayTextStyle(int day, string element) =>
-            template.TextStyles != null && template.TextStyles.ContainsKey($"block:{day}") ? TextStyle($"block:{day}") : TextStyle(element);
+        string DayTextStyle(int day, string element)
+        {
+            var group = element.StartsWith("day:") ? "heading" : element.StartsWith("ingredients:") ? "ingredient-group" : element.StartsWith("allergens:") ? "allergen-group" : "menu";
+            var groupKey = $"{group}:{day}";
+            if (template.TextStyles != null && template.TextStyles.ContainsKey(groupKey)) return TextStyle(groupKey);
+            if (template.TextStyles != null && template.TextStyles.ContainsKey($"block:{day}")) return TextStyle($"block:{day}");
+            return TextStyle(element);
+        }
         var background = Color(template.BackgroundColor, "#ffffff");
         var headerColor = Color(template.HeaderColor, "#D2691E");
         var margin = Math.Clamp(marginMm, 0, 25).ToString(CultureInfo.InvariantCulture);

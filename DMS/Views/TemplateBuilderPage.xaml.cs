@@ -142,6 +142,10 @@ public sealed partial class TemplateBuilderPage : Page
     private TemplateTextStyle StyleFor(string key, double size, bool bold = false)
     {
         if (_template.TextStyles.TryGetValue(key, out var style) && style != null) return style;
+        var parts = key.Split(':');
+        if (parts.Length == 2 && (parts[0] is "heading" or "menu" or "ingredient-group" or "allergen-group") &&
+            _template.TextStyles.TryGetValue($"block:{parts[1]}", out var inherited) && inherited != null)
+            return new TemplateTextStyle { FontFamily = inherited.FontFamily, FontSize = inherited.FontSize, Color = inherited.Color, Bold = inherited.Bold, Italic = inherited.Italic, Underline = inherited.Underline };
         return key switch
         {
             "header" => new TemplateTextStyle { FontFamily = _template.FontFamily, FontSize = _template.HeaderFontSize, Color = _template.HeaderColor, Bold = _template.HeaderBold, Italic = _template.HeaderItalic, Underline = _template.HeaderUnderline },
@@ -150,19 +154,27 @@ public sealed partial class TemplateBuilderPage : Page
         };
     }
 
-    private void SelectElement(string? key)
+    private void SelectElement(string? key, string? legacyKey = null)
     {
         _selectedElement = key;
         _bindingSelection = true;
         var enabled = key != null;
         SelectedFontBox.IsEnabled = SelectedSizeBox.IsEnabled = SelectedColorBox.IsEnabled = enabled;
         SelectedBoldButton.IsEnabled = SelectedItalicButton.IsEnabled = SelectedUnderlineButton.IsEnabled = enabled;
-        SelectedElementLabel.Text = enabled && key!.StartsWith("block:") && int.TryParse(key[6..], out var index)
-            ? (PreviewDate.Date?.DateTime.Date ?? DateTime.Today).AddDays(-((7 + (int)(PreviewDate.Date?.DateTime.Date ?? DateTime.Today).DayOfWeek - 1) % 7) + index).ToString("dddd")
-            : enabled ? L.Get("TplSelectedElement") : L.Get("TplSelectElement");
+        var kind = key?.Split(':')[0];
+        SelectedElementLabel.Text = kind switch
+        {
+            "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
+            "ingredient-group" => L.Get("TplIngredientText"), "allergen-group" => L.Get("TplAllergenText"),
+            _ => enabled ? L.Get("TplSelectedElement") : L.Get("TplSelectElement")
+        };
         if (key != null)
         {
-            var style = StyleFor(key, key.StartsWith("day") ? 15 : key == "date" ? 14 : _template.MealFontSize, key.StartsWith("day"));
+            var heading = key.StartsWith("heading:");
+            var parts = key.Split(':');
+            var useLegacy = parts.Length == 2 && legacyKey != null && !_template.TextStyles.ContainsKey(key)
+                && !_template.TextStyles.ContainsKey($"block:{parts[1]}") && _template.TextStyles.ContainsKey(legacyKey);
+            var style = StyleFor(useLegacy ? legacyKey! : key, heading ? 15 : key == "date" ? 14 : _template.MealFontSize, heading);
             SelectedFontBox.SelectedIndex = Math.Max(0, Array.FindIndex(Fonts, f => string.Equals(f, style.FontFamily, StringComparison.OrdinalIgnoreCase)));
             SelectedSizeBox.Value = style.FontSize;
             SelectedColorBox.Text = style.Color;
@@ -184,19 +196,20 @@ public sealed partial class TemplateBuilderPage : Page
         UpdatePreview();
     }
 
-    private Button SelectableText(string key, string text, double size, bool bold = false)
+    private Button SelectableText(string key, string text, double size, bool bold = false, string? legacyKey = null)
     {
-        var label = DisplayText(key, text, size, bold);
+        var label = DisplayText(key, text, size, bold, legacyKey);
         var button = new Button { Content = label, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
             Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(2), BorderThickness = new Thickness(_selectedElement == key ? 1 : 0),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue) };
-        button.Click += (_, _) => SelectElement(key);
+        button.Click += (_, _) => SelectElement(key, legacyKey);
         return button;
     }
 
-    private TextBlock DisplayText(string key, string text, double size, bool bold = false, string? blockKey = null)
+    private TextBlock DisplayText(string key, string text, double size, bool bold = false, string? legacyKey = null)
     {
-        if (blockKey != null && _template.TextStyles.ContainsKey(blockKey)) key = blockKey;
+        var parts = key.Split(':');
+        if (!_template.TextStyles.ContainsKey(key) && parts.Length == 2 && !_template.TextStyles.ContainsKey($"block:{parts[1]}") && legacyKey != null && _template.TextStyles.ContainsKey(legacyKey)) key = legacyKey;
         var style = StyleFor(key, size, bold);
         return new TextBlock { Text = text, FontFamily = new FontFamily(style.FontFamily), FontSize = style.FontSize,
             Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal,
@@ -294,9 +307,9 @@ public sealed partial class TemplateBuilderPage : Page
         for (var i = 0; i < 5; i++)
         {
             var day = monday.AddDays(i);
-            var blockKey = $"block:{i}";
             var dayPanel = new StackPanel { Spacing = 3 };
-            dayPanel.Children.Add(DisplayText($"day:{i}", day.ToString("dddd, d MMMM"), 15, true, blockKey));
+            dayPanel.Children.Add(SelectableText($"heading:{i}", day.ToString("dddd, d MMMM"), 15, true, $"day:{i}"));
+            var menuPanel = new StackPanel { Spacing = 3 };
             foreach (var entry in _entries.Where(e => e.Date.Date == day).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
             {
                 var recipe = _recipes.FirstOrDefault(r => r.Id == entry.RecipeId);
@@ -305,19 +318,16 @@ public sealed partial class TemplateBuilderPage : Page
                 var text = $"{slot}. {recipe.Name}";
                 if (_template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) text += $" ({recipe.PortionSize})";
                 if (_template.ShowCalories && recipe.Calories > 0) text += $" · {recipe.Calories} kcal";
-                dayPanel.Children.Add(DisplayText($"meal:{i}:{slot}", text, _template.MealFontSize, blockKey: blockKey));
+                menuPanel.Children.Add(SelectableText($"menu:{i}", text, _template.MealFontSize, legacyKey: $"meal:{i}:{slot}"));
                 if (_template.ShowIngredients && recipe.Ingredients.Count > 0)
-                    dayPanel.Children.Add(DisplayText($"ingredients:{i}:{slot}", string.Join(", ", recipe.Ingredients), _template.MealFontSize, blockKey: blockKey));
+                    menuPanel.Children.Add(SelectableText($"ingredient-group:{i}", string.Join(", ", recipe.Ingredients), _template.MealFontSize, legacyKey: $"ingredients:{i}:{slot}"));
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name =>
                     _ingredients.FirstOrDefault(ingredient => string.Equals(ingredient.Name, name, StringComparison.OrdinalIgnoreCase))?.Allergens ?? []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(L.Allergen).ToList();
-                if (allergens.Count > 0) dayPanel.Children.Add(DisplayText($"allergens:{i}:{slot}", "⚠ " + string.Join(", ", allergens), _template.MealFontSize, blockKey: blockKey));
+                if (allergens.Count > 0) menuPanel.Children.Add(SelectableText($"allergen-group:{i}", "⚠ " + string.Join(", ", allergens), _template.MealFontSize, legacyKey: $"allergens:{i}:{slot}"));
             }
-            var dayButton = new Button { Content = dayPanel, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(6), BorderBrush = new SolidColorBrush(Colors.DodgerBlue),
-                BorderThickness = new Thickness(_selectedElement == blockKey ? 1 : 0) };
-            dayButton.Click += (_, _) => SelectElement(blockKey);
-            Grid.SetColumn(dayButton, i % columns); Grid.SetRow(dayButton, i / columns); days.Children.Add(dayButton);
+            if (menuPanel.Children.Count > 0) dayPanel.Children.Add(new Border { BorderBrush = new SolidColorBrush(Colors.LightGray), BorderThickness = new Thickness(1), Padding = new Thickness(5), Child = menuPanel });
+            Grid.SetColumn(dayPanel, i % columns); Grid.SetRow(dayPanel, i / columns); days.Children.Add(dayPanel);
         }
         PreviewPanel.Children.Add(days);
         if (_entries.Count == 0) PreviewPanel.Children.Add(new TextBlock { Text = L.Get("TplNoMeals"), Foreground = new SolidColorBrush(Colors.Gray) });
