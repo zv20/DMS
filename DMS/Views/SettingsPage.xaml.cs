@@ -224,6 +224,7 @@ public sealed partial class SettingsPage : Page
         var result = await importDialog.ShowAsync();
         if (result != ContentDialogResult.Primary) return;
 
+        string? preImportBackup = null;
         try
         {
             var json = await Windows.Storage.FileIO.ReadTextAsync(file);
@@ -234,19 +235,45 @@ public sealed partial class SettingsPage : Page
 
             if (LooksLikeLegacyBrowserBackup(importData))
             {
+                preImportBackup = await CreatePreImportBackupAsync();
                 var legacyResult = await ImportLegacyBrowserBackupAsync(importData);
                 await ShowImportSuccessAsync(legacyResult);
                 return;
             }
 
+            var recognized = false;
+            foreach (var field in new[] { "Recipes", "Ingredients", "Allergens", "MenuEntries", "MenuCategories", "Templates" })
+            {
+                if (!TryGetPropertyIgnoreCase(importData, field, out var value)) continue;
+                recognized = true;
+                if (value.ValueKind != JsonValueKind.Array)
+                    throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
+            }
+            if (TryGetPropertyIgnoreCase(importData, "Settings", out var importedSettings))
+            {
+                recognized = true;
+                if (importedSettings.ValueKind is not JsonValueKind.Object and not JsonValueKind.Null)
+                    throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
+            }
+            if (!recognized) throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
+            preImportBackup = await CreatePreImportBackupAsync();
+
             int importedRecipes = 0, importedIngredients = 0, importedAllergens = 0, importedMenus = 0, importedTemplates = 0;
             var existingRecipes = (await _databaseService.GetAllRecipesAsync())
-                .ToDictionary(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase);
+                .GroupBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
             var existingIngredients = (await _databaseService.GetAllIngredientsAsync())
                 .ToDictionary(ingredient => ingredient.Name, StringComparer.OrdinalIgnoreCase);
             var existingAllergens = (await _databaseService.GetAllAllergensAsync())
                 .ToDictionary(allergen => allergen.Name, StringComparer.OrdinalIgnoreCase);
             var recipeIdMap = new Dictionary<int, int>();
+            var existingMenuKeys = (await _databaseService.GetMenuAsync(DateTime.MinValue, DateTime.MaxValue))
+                .Select(entry => (entry.Date.Date, entry.Slot.ToLowerInvariant())).ToHashSet();
+            var protectedMenuKeys = existingMenuKeys.ToHashSet();
+            var existingCategoryKeys = (await _databaseService.GetMenuCategoriesAsync())
+                .Select(category => (category.Date.Date, category.Slot.ToLowerInvariant())).ToHashSet();
+            var existingTemplateNames = (await _databaseService.GetAllTemplatesAsync())
+                .Select(template => template.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             if (TryGetPropertyIgnoreCase(importData, "Recipes", out var recipesElement))
             {
@@ -304,11 +331,15 @@ public sealed partial class SettingsPage : Page
                 foreach (var menuJson in menuEntriesElement.EnumerateArray())
                 {
                     var entry = JsonSerializer.Deserialize<MenuEntry>(menuJson.GetRawText(), ImportJsonOptions);
-                    if (entry != null && recipeIdMap.TryGetValue(entry.RecipeId, out var destinationRecipeId))
+                    if (entry != null && !string.IsNullOrWhiteSpace(entry.Slot) &&
+                        !existingMenuKeys.Contains((entry.Date.Date, entry.Slot.ToLowerInvariant())) &&
+                        !existingCategoryKeys.Contains((entry.Date.Date, entry.Slot.ToLowerInvariant())) &&
+                        recipeIdMap.TryGetValue(entry.RecipeId, out var destinationRecipeId))
                     {
                         entry.Id = 0;
                         entry.RecipeId = destinationRecipeId;
                         await _databaseService.SaveMenuEntryAsync(entry);
+                        existingMenuKeys.Add((entry.Date.Date, entry.Slot.ToLowerInvariant()));
                         importedMenus++;
                     }
                 }
@@ -319,7 +350,13 @@ public sealed partial class SettingsPage : Page
                 foreach (var categoryJson in categoriesElement.EnumerateArray())
                 {
                     var category = JsonSerializer.Deserialize<MenuSlotCategory>(categoryJson.GetRawText(), ImportJsonOptions);
-                    if (category != null) await _databaseService.SaveMenuCategoryAsync(category.Date, category.Slot, category.Category);
+                    if (category != null && !string.IsNullOrWhiteSpace(category.Slot) &&
+                        !existingCategoryKeys.Contains((category.Date.Date, category.Slot.ToLowerInvariant())) &&
+                        !protectedMenuKeys.Contains((category.Date.Date, category.Slot.ToLowerInvariant())))
+                    {
+                        await _databaseService.SaveMenuCategoryAsync(category.Date, category.Slot, category.Category);
+                        existingCategoryKeys.Add((category.Date.Date, category.Slot.ToLowerInvariant()));
+                    }
                 }
             }
 
@@ -330,8 +367,13 @@ public sealed partial class SettingsPage : Page
                     var template = JsonSerializer.Deserialize<MenuTemplate>(templateJson.GetRawText(), ImportJsonOptions);
                     if (template != null && !string.IsNullOrWhiteSpace(template.Name))
                     {
-                        template.Name = $"{template.Name} (imported {DateTime.Now:yyyyMMdd})";
+                        var baseName = $"{template.Name} (imported {DateTime.Now:yyyyMMdd})";
+                        var candidate = baseName;
+                        var suffix = 2;
+                        while (existingTemplateNames.Contains(candidate)) candidate = $"{baseName} {suffix++}";
+                        template.Name = candidate;
                         await _databaseService.SaveTemplateAsync(template);
+                        existingTemplateNames.Add(candidate);
                         importedTemplates++;
                     }
                 }
@@ -351,7 +393,7 @@ public sealed partial class SettingsPage : Page
             var importErrorDialog = new ContentDialog
             {
                 Title = L.Get("Text_Import_Failed_4c1ed2"),
-                Content = L.Format("ErrorDetail", ex.Message),
+                Content = preImportBackup == null ? L.Format("ErrorDetail", ex.Message) : L.Format("ImportErrorRecovery", ex.Message, preImportBackup),
                 CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
@@ -359,8 +401,24 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    private async Task<string> CreatePreImportBackupAsync()
+    {
+        var databaseFolder = Path.GetDirectoryName(_databaseService.GetDatabasePath())
+            ?? throw new InvalidOperationException("Database folder is unavailable.");
+        var backupFolder = Path.Combine(databaseFolder, "ImportBackups");
+        Directory.CreateDirectory(backupFolder);
+        var path = Path.Combine(backupFolder, $"before-import-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db");
+        await _databaseService.CreateBackupAsync(path);
+        return path;
+    }
+
     private static bool TryGetPropertyIgnoreCase(JsonElement element, string name, out JsonElement value)
     {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            value = default;
+            return false;
+        }
         foreach (var property in element.EnumerateObject())
         {
             if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
@@ -376,12 +434,16 @@ public sealed partial class SettingsPage : Page
 
     private static bool LooksLikeLegacyBrowserBackup(JsonElement backup)
     {
-        if (!TryGetPropertyIgnoreCase(backup, "recipes", out var recipes) || recipes.ValueKind != JsonValueKind.Array)
-            return false;
-
-        return recipes.GetArrayLength() > 0
-            && recipes[0].TryGetProperty("id", out var id)
-            && id.ValueKind == JsonValueKind.String;
+        if (TryGetPropertyIgnoreCase(backup, "currentMenu", out var menu) && menu.ValueKind == JsonValueKind.Object) return true;
+        if (TryGetPropertyIgnoreCase(backup, "appSettings", out var settings) && settings.ValueKind == JsonValueKind.Object) return true;
+        if (TryGetPropertyIgnoreCase(backup, "templates", out var templates) && templates.ValueKind == JsonValueKind.Object) return true;
+        foreach (var collection in new[] { "recipes", "ingredients", "allergens" })
+        {
+            if (!TryGetPropertyIgnoreCase(backup, collection, out var items) || items.ValueKind != JsonValueKind.Array) continue;
+            foreach (var item in items.EnumerateArray())
+                if (item.ValueKind == JsonValueKind.Object && TryGetPropertyIgnoreCase(item, "id", out var id) && id.ValueKind == JsonValueKind.String) return true;
+        }
+        return false;
     }
 
     private async Task<ImportResult> ImportLegacyBrowserBackupAsync(JsonElement backup)
@@ -391,6 +453,12 @@ public sealed partial class SettingsPage : Page
         var ingredientAllergens = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var recipeIds = new Dictionary<string, int>(StringComparer.Ordinal);
         var result = new ImportResult();
+        var existingMenuKeys = (await _databaseService.GetMenuAsync(DateTime.MinValue, DateTime.MaxValue))
+            .Select(entry => (entry.Date.Date, entry.Slot.ToLowerInvariant())).ToHashSet();
+        var existingCategoryKeys = (await _databaseService.GetMenuCategoriesAsync())
+            .Select(category => (category.Date.Date, category.Slot.ToLowerInvariant())).ToHashSet();
+        var existingTemplateNames = (await _databaseService.GetAllTemplatesAsync())
+            .Select(template => template.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var existingAllergens = (await _databaseService.GetAllAllergensAsync())
             .Select(allergen => allergen.Name)
@@ -442,7 +510,8 @@ public sealed partial class SettingsPage : Page
         }
 
         var existingRecipes = (await _databaseService.GetAllRecipesAsync())
-            .ToDictionary(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase);
+            .GroupBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         if (TryGetPropertyIgnoreCase(backup, "recipes", out var recipes) && recipes.ValueKind == JsonValueKind.Array)
         {
             foreach (var rawRecipe in recipes.EnumerateArray())
@@ -460,6 +529,12 @@ public sealed partial class SettingsPage : Page
                     .ToList();
                 if (!existingRecipes.TryGetValue(name, out var recipe))
                 {
+                    var missing = sourceIngredients.Where(id => !ingredientNames.ContainsKey(id)).ToArray();
+                    if (missing.Length > 0)
+                    {
+                        result.MissingIngredientReferences += missing.Length;
+                        result.RecipesWithMissingIngredients.Add(name);
+                    }
                     recipe = new Recipe
                     {
                         Name = name,
@@ -488,11 +563,19 @@ public sealed partial class SettingsPage : Page
                 if (!DateTime.TryParse(day.Name, out var date) || day.Value.ValueKind != JsonValueKind.Object) continue;
                 foreach (var slot in day.Value.EnumerateObject())
                 {
+                    if (slot.Value.ValueKind != JsonValueKind.Object || string.IsNullOrWhiteSpace(slot.Name)) continue;
+                    var key = (date.Date, slot.Name.ToLowerInvariant());
+                    if (existingMenuKeys.Contains(key) || existingCategoryKeys.Contains(key)) continue;
                     var category = GetString(slot.Value, "category") ?? GetString(slot.Value, "type");
-                    if (category != null) await _databaseService.SaveMenuCategoryAsync(date, slot.Name, category);
+                    if (category != null)
+                    {
+                        await _databaseService.SaveMenuCategoryAsync(date, slot.Name, category);
+                        existingCategoryKeys.Add(key);
+                    }
                     var sourceRecipeId = GetString(slot.Value, "recipe");
                     if (sourceRecipeId == null || !recipeIds.TryGetValue(sourceRecipeId, out var recipeId)) continue;
                     await _databaseService.SaveMenuEntryAsync(new MenuEntry { Date = date, Slot = slot.Name, RecipeId = recipeId });
+                    existingMenuKeys.Add(key);
                     result.MenuEntries++;
                 }
             }
@@ -503,7 +586,7 @@ public sealed partial class SettingsPage : Page
             foreach (var templateProperty in templates.EnumerateObject())
             {
                 var sourceTemplate = templateProperty.Value;
-                if (sourceTemplate.ValueKind != JsonValueKind.Object) continue;
+                if (sourceTemplate.ValueKind != JsonValueKind.Object || !existingTemplateNames.Add(templateProperty.Name)) continue;
                 var template = new MenuTemplate
                 {
                     Name = templateProperty.Name,
@@ -535,7 +618,8 @@ public sealed partial class SettingsPage : Page
         var importSuccessDialog = new ContentDialog
         {
             Title = L.Get("Text_Import_Complete_a5cb9b"),
-            Content = L.Format("ImportSummary", result.Recipes, result.Ingredients, result.Allergens, result.MenuEntries, result.Templates),
+            Content = L.Format("ImportSummary", result.Recipes, result.Ingredients, result.Allergens, result.MenuEntries, result.Templates)
+                + (result.MissingIngredientReferences > 0 ? "\n\n" + L.Format("ImportMissingIngredients", result.MissingIngredientReferences, string.Join(", ", result.RecipesWithMissingIngredients)) : ""),
             CloseButtonText = L.Get("Text_OK_9ce3bd"),
             XamlRoot = this.XamlRoot
         };
@@ -547,8 +631,12 @@ public sealed partial class SettingsPage : Page
             ? value.GetString()
             : null;
 
-    private static int GetInt(JsonElement element, string propertyName) =>
-        TryGetPropertyIgnoreCase(element, propertyName, out var value) && value.TryGetInt32(out var number) ? number : 0;
+    private static int GetInt(JsonElement element, string propertyName)
+    {
+        if (!TryGetPropertyIgnoreCase(element, propertyName, out var value)) return 0;
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)) return number;
+        return value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out number) ? number : 0;
+    }
 
     private static IEnumerable<string> GetStringArray(JsonElement element, string propertyName) =>
         TryGetPropertyIgnoreCase(element, propertyName, out var array) && array.ValueKind == JsonValueKind.Array
@@ -557,7 +645,7 @@ public sealed partial class SettingsPage : Page
 
     private static IEnumerable<string> GetObjectIdArray(JsonElement element, string propertyName) =>
         TryGetPropertyIgnoreCase(element, propertyName, out var array) && array.ValueKind == JsonValueKind.Array
-            ? array.EnumerateArray().Select(item => GetString(item, "id")).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToArray()
+            ? array.EnumerateArray().Select(item => item.ValueKind == JsonValueKind.String ? item.GetString() : GetString(item, "id")).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToArray()
             : [];
 
     private sealed class ImportResult
@@ -570,6 +658,8 @@ public sealed partial class SettingsPage : Page
         public int Allergens { get; set; }
         public int MenuEntries { get; set; }
         public int Templates { get; set; }
+        public int MissingIngredientReferences { get; set; }
+        public List<string> RecipesWithMissingIngredients { get; } = new();
     }
 
     private async void BackupButton_Click(object sender, RoutedEventArgs e)

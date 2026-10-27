@@ -301,4 +301,6 @@
   <data name="OutputImageOverflow" xml:space="preserve"><value>Менюто е по-дълго от едно изображение. Използвайте PDF или намалете размера на текста.</value></data>
   <data name="OutputImageSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
   <data name="OutputMargins" xml:space="preserve"><value>Полета</value></data>
+  <data name="ImportMissingIngredients" xml:space="preserve"><value>В резервното копие липсват {0} препратки към съставки. Проверете рецептите: {1}. Оригиналните препратки са запазени.</value></data>
+  <data name="ImportErrorRecovery" xml:space="preserve"><value>Импортирането е неуспешно: {0}&#10;Възможно е част от промените да са приложени. Резервното копие на базата данни преди импортирането е тук: {1}</value></data>
 </root>
