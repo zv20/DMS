@@ -137,13 +137,13 @@ public sealed partial class SettingsPage : Page
                 settings.AccentColor = accent;
                 await _databaseService.SaveSettingsAsync(settings);
                 AppearanceService.ApplyAccent(accent);
-                App.ReloadLanguage(); // Reload the current page so theme resources are resolved again.
+                AppearanceStatus.Text = "";
             }
             catch (Exception ex)
             {
                 AppearanceStatus.Text = L.Format("SaveError", ex.Message);
-                ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true;
             }
+            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
     }
 
