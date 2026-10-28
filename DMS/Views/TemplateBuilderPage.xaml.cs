@@ -497,14 +497,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var source = header ? _template.HeaderRichText : _template.FooterRichText;
         var fallback = header ? _template.HeaderText : _template.FooterText;
         var editor = new RichEditBox { MinWidth = 440, MinHeight = 190, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true };
-        editor.Document.SetText(Windows.UI.Text.TextSetOptions.None, source?.Runs?.Count > 0 ? string.Concat(source.Runs.Select(run => run.Text)) : fallback);
+        editor.Document.SetText(TextSetOptions.None, source?.Runs?.Count > 0 ? string.Concat(source.Runs.Select(run => run.Text)) : fallback);
         ApplyRichRuns(editor, source);
         var bold = new Button { Content = "B", FontWeight = FontWeights.Bold };
         var italic = new Button { Content = "I", FontStyle = Windows.UI.Text.FontStyle.Italic };
         var underline = new Button { Content = new TextBlock { Text = "U", TextDecorations = Windows.UI.Text.TextDecorations.Underline } };
-        bold.Click += (_, _) => editor.Document.Selection.CharacterFormat.Bold = editor.Document.Selection.CharacterFormat.Bold == Windows.UI.Text.FormatEffect.On ? Windows.UI.Text.FormatEffect.Off : Windows.UI.Text.FormatEffect.On;
-        italic.Click += (_, _) => editor.Document.Selection.CharacterFormat.Italic = editor.Document.Selection.CharacterFormat.Italic == Windows.UI.Text.FormatEffect.On ? Windows.UI.Text.FormatEffect.Off : Windows.UI.Text.FormatEffect.On;
-        underline.Click += (_, _) => editor.Document.Selection.CharacterFormat.Underline = editor.Document.Selection.CharacterFormat.Underline == Windows.UI.Text.UnderlineType.None ? Windows.UI.Text.UnderlineType.Single : Windows.UI.Text.UnderlineType.None;
+        bold.Click += (_, _) => editor.Document.Selection.CharacterFormat.Bold = editor.Document.Selection.CharacterFormat.Bold == FormatEffect.On ? FormatEffect.Off : FormatEffect.On;
+        italic.Click += (_, _) => editor.Document.Selection.CharacterFormat.Italic = editor.Document.Selection.CharacterFormat.Italic == FormatEffect.On ? FormatEffect.Off : FormatEffect.On;
+        underline.Click += (_, _) => editor.Document.Selection.CharacterFormat.Underline = editor.Document.Selection.CharacterFormat.Underline == UnderlineType.None ? UnderlineType.Single : UnderlineType.None;
         var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
         toolbar.Children.Add(bold); toolbar.Children.Add(italic); toolbar.Children.Add(underline);
         NameTool(bold, "TplBold"); NameTool(italic, "TplItalic"); NameTool(underline, "TplUnderline");
@@ -530,19 +530,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var length = run.Text?.Length ?? 0;
             if (length == 0) continue;
             var format = editor.Document.GetRange(offset, offset + length).CharacterFormat;
-            if (!string.IsNullOrWhiteSpace(run.FontFamily)) format.FontName = run.FontFamily;
-            if (run.FontSize is double size && double.IsFinite(size)) format.FontSize = (float)Math.Clamp(size, 6, 72);
-            if (IsColor(run.Color)) format.ForegroundColor = ParseColor(run.Color!, Windows.UI.Colors.Black);
-            if (run.Bold is bool bold) format.Bold = bold ? Windows.UI.Text.FormatEffect.On : Windows.UI.Text.FormatEffect.Off;
-            if (run.Italic is bool italic) format.Italic = italic ? Windows.UI.Text.FormatEffect.On : Windows.UI.Text.FormatEffect.Off;
-            if (run.Underline is bool underline) format.Underline = underline ? Windows.UI.Text.UnderlineType.Single : Windows.UI.Text.UnderlineType.None;
+            if (!string.IsNullOrWhiteSpace(run.FontFamily)) format.Name = run.FontFamily;
+            if (run.FontSize is double size && double.IsFinite(size)) format.Size = (float)Math.Clamp(size, 6, 72);
+            if (IsColor(run.Color!)) format.ForegroundColor = ParseColor(run.Color!, Colors.Black);
+            if (run.Bold is bool bold) format.Bold = bold ? FormatEffect.On : FormatEffect.Off;
+            if (run.Italic is bool italic) format.Italic = italic ? FormatEffect.On : FormatEffect.Off;
+            if (run.Underline is bool underline) format.Underline = underline ? UnderlineType.Single : UnderlineType.None;
             offset += length;
         }
     }
 
     private static TemplateRichTextContent ReadRichRuns(RichEditBox editor)
     {
-        editor.Document.GetText(Windows.UI.Text.TextGetOptions.None, out var text);
+        editor.Document.GetText(TextGetOptions.None, out var text);
         var result = new TemplateRichTextContent();
         TemplateRichTextRun? previous = null;
         for (var index = 0; index < text.Length; index++)
@@ -551,11 +551,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var color = format.ForegroundColor;
             var run = new TemplateRichTextRun
             {
-                Text = text[index].ToString(), FontFamily = format.FontName, FontSize = format.FontSize,
+                Text = text[index].ToString(), FontFamily = format.Name, FontSize = format.Size,
                 Color = $"#{color.R:X2}{color.G:X2}{color.B:X2}",
-                Bold = format.Bold == Windows.UI.Text.FormatEffect.On,
-                Italic = format.Italic == Windows.UI.Text.FormatEffect.On,
-                Underline = format.Underline != Windows.UI.Text.UnderlineType.None
+                Bold = format.Bold == FormatEffect.On,
+                Italic = format.Italic == FormatEffect.On,
+                Underline = format.Underline != UnderlineType.None
             };
             if (previous != null && previous.FontFamily == run.FontFamily && previous.FontSize == run.FontSize && previous.Color == run.Color && previous.Bold == run.Bold && previous.Italic == run.Italic && previous.Underline == run.Underline) previous.Text += run.Text;
             else { result.Runs.Add(run); previous = run; }

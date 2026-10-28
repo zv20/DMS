@@ -3,7 +3,7 @@
 ; reveals the familiar location and shortcut pages without needing elevation.
 
 #ifndef MyAppVersion
-  #define MyAppVersion "2.0.0-beta.1"
+  #define MyAppVersion "2.0.0-beta.2"
 #endif
 
 [Setup]

@@ -10,7 +10,7 @@ The release workflow produces two unsigned Windows x64 downloads:
 
 The installer is built from `installer/DMS.iss` after the Windows release
 workflow has restored packages, built the app, and run all tests. A tag such as
-`v2.0.0-beta.1` triggers the workflow. Until a signing certificate is added,
+`v2.0.0-beta.2` triggers the workflow. Until a signing certificate is added,
 Windows may show an unsigned-app warning; do not describe an unsigned build as
 production-ready.
 
