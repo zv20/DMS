@@ -19,6 +19,7 @@ namespace DMS.Views;
 public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
+    private static readonly List<string> RecentColors = [];
     private MenuTemplate _template = new();
     private List<MenuTemplate> _templates = [];
     private List<Recipe> _recipes = [];
@@ -702,14 +703,25 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 UpdateCanvasFontSize(textKey, selected.FontSize);
             };
             size.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
-            var color = new TextBox { Width = compact ? 70 : 76, Text = style.Color, PlaceholderText = "#000000" };
-            color.LostFocus += (_, _) =>
+            var color = CreateColorTool("TplSelectedColor", style.Color, value =>
             {
-                if (_binding || !IsColor(color.Text)) return;
-                CaptureVisualUndo();
-                var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = color.Text; _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
-            };
-            panel.Children.Add(font); panel.Children.Add(size); panel.Children.Add(color);
+                var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = value; _template.TextStyles[textKey] = selected;
+            });
+            var appearanceKey = SelectedLayoutKey() ?? textKey;
+            _template.BlockAppearances ??= new();
+            _template.BlockAppearances.TryGetValue(appearanceKey, out var currentAppearance);
+            var backgroundColor = CreateColorTool("TplAppearanceBackground", currentAppearance?.BackgroundColor ?? "#FFFFFF", value =>
+            {
+                if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
+                item.BackgroundColor = value;
+            });
+            var borderColor = CreateColorTool("TplAppearanceBorder", currentAppearance?.BorderColor ?? "#000000", value =>
+            {
+                if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
+                item.BorderColor = value;
+                if (item.BorderThickness <= 0) item.BorderThickness = 1;
+            });
+            panel.Children.Add(font); panel.Children.Add(size); panel.Children.Add(color); panel.Children.Add(backgroundColor); panel.Children.Add(borderColor);
             AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
             AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
             AddFormatButton(panel, "U", "TplUnderline", style.Underline, value => SetContextualStyle(textKey, s => s.Underline = value));
@@ -778,7 +790,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         // are outside the selected rectangle.
         var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
         var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
-        var toolbarWidth = compact ? 450d : 510d;
+        var toolbarWidth = compact ? 510d : 570d;
         var toolbarHeight = compact ? 40d : 42d;
         const double gap = 8;
         var centeredLeft = Math.Clamp(x + (width - toolbarWidth) / 2, 0, TemplateLayout.PageWidth - toolbarWidth);
@@ -822,6 +834,47 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         };
         _dirty = true;
         UpdatePreview();
+    }
+
+    private Button CreateColorTool(string labelKey, string initial, Action<string> apply)
+    {
+        var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial, Colors.Black)), BorderBrush = new SolidColorBrush(Colors.Gray), BorderThickness = new Thickness(1) };
+        var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
+        NameTool(button, labelKey);
+        var picker = new ColorPicker { Color = ParseColor(initial, Colors.Black), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsAlphaSliderVisible = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
+        var recent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
+        var stack = new StackPanel { Spacing = 8 };
+        stack.Children.Add(picker);
+        stack.Children.Add(recent);
+        var flyout = new Flyout { Content = stack };
+        button.Flyout = flyout;
+        void ApplyColor(Windows.UI.Color chosen)
+        {
+            var value = $"#{chosen.R:X2}{chosen.G:X2}{chosen.B:X2}";
+            CaptureVisualUndo();
+            apply(value);
+            _dirty = true;
+            RecentColors.RemoveAll(c => string.Equals(c, value, StringComparison.OrdinalIgnoreCase));
+            RecentColors.Insert(0, value);
+            if (RecentColors.Count > 5) RecentColors.RemoveAt(5);
+            flyout.Hide();
+            UpdatePreview();
+        }
+        flyout.Opening += (_, _) =>
+        {
+            recent.Children.Clear();
+            foreach (var value in RecentColors.ToArray())
+            {
+                var choice = new Button { Content = new Border { Width = 20, Height = 20, Background = new SolidColorBrush(ParseColor(value, Colors.Black)) }, Padding = new Thickness(3), MinWidth = 0 };
+                ToolTipService.SetToolTip(choice, value);
+                choice.Click += (_, _) => ApplyColor(ParseColor(value, Colors.Black));
+                recent.Children.Add(choice);
+            }
+        };
+        var accept = new Button { Content = L.Get("TplSave") };
+        accept.Click += (_, _) => ApplyColor(picker.Color);
+        stack.Children.Add(accept);
+        return button;
     }
 
     private void AddFormatButton(Panel panel, string content, string tooltipKey, bool selected, Action<bool> apply)
