@@ -301,6 +301,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(_template.LayoutEnabled ? 0 : 2), MinHeight = _template.LayoutEnabled ? 0 : 32, MinWidth = 0,
             BorderThickness = new Thickness(!_template.LayoutEnabled && _selectedElement == key ? 1 : 0),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue) };
+        button.Tag = key;
+        if (_template.LayoutEnabled && _selectedElement == key)
+        {
+            button.BorderThickness = new Thickness(1);
+            button.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(35, 30, 144, 255));
+        }
         button.Click += (_, _) => SelectElement(key, legacyKey);
         if (_template.LayoutEnabled)
         {
@@ -693,6 +699,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 // Do not rebuild the canvas while NumberBox is focused: rebuilding removes
                 // the spinner that the user is actively clicking.
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true;
+                UpdateCanvasFontSize(textKey, selected.FontSize);
             };
             size.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
             var color = new TextBox { Width = compact ? 70 : 76, Text = style.Color, PlaceholderText = "#000000" };
@@ -823,6 +830,18 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         button.Checked += (_, _) => apply(true); button.Unchecked += (_, _) => apply(false);
         NameTool(button, tooltipKey);
         panel.Children.Add(button);
+    }
+
+    private void UpdateCanvasFontSize(string key, double size)
+    {
+        void Visit(DependencyObject node)
+        {
+            if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
+                text.FontSize = size;
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                Visit(VisualTreeHelper.GetChild(node, i));
+        }
+        Visit(LayoutCanvas);
     }
 
     private void SetContextualStyle(string key, Action<TemplateTextStyle> apply)
