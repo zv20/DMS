@@ -36,6 +36,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private bool _bindingLayers;
     private Button? _canvasSelectionButton;
     private FrameworkElement? _contextualToolbar;
+    private bool? _compactToolbarLayout;
     private readonly Stack<string> _undoHistory = new();
     private readonly Stack<string> _redoHistory = new();
     private bool _restoringHistory;
@@ -50,7 +51,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
         ConfigureControls();
+        SizeChanged += TemplateBuilderPage_SizeChanged;
         Loaded += async (_, _) => await LoadAsync();
+    }
+
+    private void TemplateBuilderPage_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var compact = e.NewSize.Width > 0 && e.NewSize.Width < 900;
+        if (_compactToolbarLayout == compact) return;
+        _compactToolbarLayout = compact;
+        if (_contextualToolbar == null) return;
+        LayoutCanvas.Children.Remove(_contextualToolbar);
+        _contextualToolbar = null;
+        UpdateContextualToolbar();
     }
 
     private void ConfigureControls()
@@ -640,6 +653,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _contextualToolbar = null;
         if (!_template.LayoutEnabled) return;
 
+        var compact = ActualWidth > 0 && ActualWidth < 900;
+        _compactToolbarLayout = compact;
+
         var textKey = _selectedElement;
         var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
         var layoutKey = SelectedLayoutKey();
@@ -647,12 +663,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (textKey == null && image == null) return;
         if (image == null && element == null) return;
 
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = compact ? 2 : 3 };
         var toolbar = new Border
         {
             Background = new SolidColorBrush(Windows.UI.Color.FromArgb(245, 35, 35, 35)),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4), Padding = new Thickness(5), Child = panel
+            CornerRadius = new CornerRadius(4), Padding = new Thickness(compact ? 3 : 4), Child = panel
         };
         ToolTipService.SetToolTip(toolbar, L.Get("TplSelectedElement"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toolbar, L.Get("TplSelectedElement"));
@@ -660,7 +676,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (textKey != null)
         {
             var style = StyleFor(textKey, _template.MealFontSize);
-            var font = new ComboBox { Width = 112, SelectedItem = style.FontFamily };
+            var font = new ComboBox { Width = compact ? 78 : 94, SelectedItem = style.FontFamily };
             foreach (var family in Fonts) font.Items.Add(family);
             font.SelectedItem = Fonts.Contains(style.FontFamily, StringComparer.OrdinalIgnoreCase) ? style.FontFamily : Fonts[0];
             font.SelectionChanged += (_, _) =>
@@ -669,14 +685,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 CaptureVisualUndo();
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.FontFamily = family; _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
             };
-            var size = new NumberBox { Width = 68, Minimum = 7, Maximum = 72, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = style.FontSize };
+            var size = new NumberBox { Width = compact ? 54 : 60, Minimum = 7, Maximum = 72, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = style.FontSize };
             size.ValueChanged += (_, _) =>
             {
                 if (_binding) return;
                 CaptureVisualUndo();
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
             };
-            var color = new TextBox { Width = 82, Text = style.Color, PlaceholderText = "#000000" };
+            var color = new TextBox { Width = compact ? 70 : 76, Text = style.Color, PlaceholderText = "#000000" };
             color.LostFocus += (_, _) =>
             {
                 if (_binding || !IsColor(color.Text)) return;
@@ -687,7 +703,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
             AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
             AddFormatButton(panel, "U", "TplUnderline", style.Underline, value => SetContextualStyle(textKey, s => s.Underline = value));
-            var align = new ComboBox { Width = 78 };
+            var align = new ComboBox { Width = compact ? 62 : 70 };
             align.Items.Add(L.Get("TplLeft")); align.Items.Add(L.Get("TplCenter")); align.Items.Add(L.Get("TplRight"));
             align.SelectedIndex = Array.IndexOf(Alignments, AlignmentFor(textKey, style));
             align.SelectionChanged += (_, _) => { if (!_binding && align.SelectedIndex >= 0) SetSelectedAlignment(Alignments[align.SelectedIndex]); };
@@ -724,19 +740,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         else if (image != null)
         {
-            var opacity = new Slider { Width = 105, Minimum = 0, Maximum = 100, StepFrequency = 5, Value = Math.Clamp(image.Opacity * 100, 0, 100) };
+            var opacity = new Slider { Width = compact ? 72 : 90, Minimum = 0, Maximum = 100, StepFrequency = 5, Value = Math.Clamp(image.Opacity * 100, 0, 100) };
             var opacitySnapshot = false;
             opacity.ValueChanged += (_, _) => { if (!_binding) { if (!opacitySnapshot) { CaptureVisualUndo(); opacitySnapshot = true; } image.Opacity = opacity.Value / 100; _dirty = true; } };
             opacity.PointerReleased += (_, _) => { opacitySnapshot = false; UpdatePreview(); };
-            var fit = new ComboBox { Width = 84 };
+            var fit = new ComboBox { Width = compact ? 70 : 80 };
             fit.Items.Add(L.Get("TplFitFill")); fit.Items.Add(L.Get("TplFitContain")); fit.Items.Add(L.Get("TplFitCover"));
             fit.SelectedIndex = image.FitMode switch { "contain" => 1, "cover" => 2, _ => 0 };
             fit.SelectionChanged += (_, _) => { if (_binding || fit.SelectedIndex < 0) return; CaptureVisualUndo(); image.FitMode = fit.SelectedIndex switch { 1 => "contain", 2 => "cover", _ => "fill" }; _dirty = true; UpdatePreview(); };
-            var locked = new ToggleSwitch { IsOn = image.LockAspectRatio, MinWidth = 42, OnContent = "↔", OffContent = "↔" };
+            var locked = new ToggleSwitch { IsOn = image.LockAspectRatio, MinWidth = compact ? 34 : 38, OnContent = "↔", OffContent = "↔" };
             locked.Toggled += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.LockAspectRatio = locked.IsOn; _dirty = true; };
-            var rotation = new NumberBox { Width = 65, Minimum = -360, Maximum = 360, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = image.RotationDegrees };
+            var rotation = new NumberBox { Width = compact ? 55 : 60, Minimum = -360, Maximum = 360, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = image.RotationDegrees };
             rotation.ValueChanged += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.RotationDegrees = double.IsFinite(rotation.Value) ? Math.Clamp(rotation.Value, -360, 360) : 0; _dirty = true; UpdatePreview(); };
-            var alt = new TextBox { Width = 105, Text = image.AltText, PlaceholderText = L.Get("TplImageAlt") };
+            var alt = new TextBox { Width = compact ? 70 : 90, Text = image.AltText, PlaceholderText = L.Get("TplImageAlt") };
             alt.LostFocus += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.AltText = (alt.Text ?? string.Empty).Trim()[..Math.Min(300, (alt.Text ?? string.Empty).Trim().Length)]; _dirty = true; };
             var back = new Button { Content = new FontIcon { Glyph = "\uE74B" } }; back.Click += (_, _) => ChangeLayerOrder(-1);
             var forward = new Button { Content = new FontIcon { Glyph = "\uE74A" } }; forward.Click += (_, _) => ChangeLayerOrder(1);
@@ -751,7 +767,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         // are outside the selected rectangle.
         var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
         var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
-        const double toolbarWidth = 620, toolbarHeight = 44, gap = 8;
+        var toolbarWidth = compact ? 450d : 510d;
+        var toolbarHeight = compact ? 40d : 42d;
+        const double gap = 8;
         var centeredLeft = Math.Clamp(x + (width - toolbarWidth) / 2, 0, TemplateLayout.PageWidth - toolbarWidth);
         var right = (Left: x + width + gap, Top: y);
         var leftSide = (Left: x - toolbarWidth - gap, Top: y);
