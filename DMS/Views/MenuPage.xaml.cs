@@ -63,13 +63,17 @@ public sealed partial class MenuPage : Page
             CalendarGrid.Children.Clear();
             CalendarGrid.RowDefinitions.Clear();
             CalendarGrid.ColumnDefinitions.Clear();
-            var columns = _monthly ? 7 : _weekendPlanningEnabled ? 7 : 5;
+            var columns = _weekendPlanningEnabled ? 7 : 5;
             for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 155 });
             var days = _monthly ? ((end - start).Days / 7 + 1) * 7 : _weekendPlanningEnabled ? 7 : 5;
-            for (var row = 0; row < days / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            for (var i = 0; i < days; i++)
+            var displayedDays = Enumerable.Range(0, days)
+                .Select(offset => start.AddDays(offset))
+                .Where(day => _weekendPlanningEnabled || day.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
+                .ToList();
+            for (var row = 0; row < (displayedDays.Count + columns - 1) / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var i = 0; i < displayedDays.Count; i++)
             {
-                var day = start.AddDays(i);
+                var day = displayedDays[i];
                 var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
                 var isDisabledWeekend = isWeekend && !_weekendPlanningEnabled;
                 var panel = new StackPanel { Spacing = 8 };
@@ -85,7 +89,7 @@ public sealed partial class MenuPage : Page
                     panel.Children.Add(button);
                 }
                 else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot));
-                var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (_monthly && day.Month != first.Month) ? 0.4 : 1 };
+                var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), MinHeight = _monthly ? 155 : 0, Opacity = isDisabledWeekend || (_monthly && day.Month != first.Month) ? 0.4 : 1 };
                 Grid.SetColumn(border, i % columns);
                 Grid.SetRow(border, i / columns);
                 CalendarGrid.Children.Add(border);
