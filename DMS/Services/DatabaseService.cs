@@ -75,7 +75,10 @@ public class DatabaseService : IDatabaseService, IDisposable
         {
             if (_initialized) return;
 
-            _connection = new SqliteConnection($"Data Source={_dbPath}");
+            // The app owns one long-lived connection. Disabling ADO.NET pooling
+            // makes backup/restore and test cleanup release WAL handles promptly
+            // on Windows instead of leaving files locked by a pooled connection.
+            _connection = new SqliteConnection($"Data Source={_dbPath};Pooling=False");
             await _connection.OpenAsync();
 
             await ConfigureConnectionAsync();
@@ -682,7 +685,7 @@ public class DatabaseService : IDatabaseService, IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
         await InitializeAsync();
 
-        await using var destination = new SqliteConnection($"Data Source={destinationPath}");
+        await using var destination = new SqliteConnection($"Data Source={destinationPath};Pooling=False");
         await destination.OpenAsync();
         _connection!.BackupDatabase(destination);
         _logger.LogInformation("Created SQLite backup at {Path}", destinationPath);
@@ -704,7 +707,7 @@ public class DatabaseService : IDatabaseService, IDisposable
             DeleteIfPresent($"{_dbPath}-wal");
             DeleteIfPresent($"{_dbPath}-shm");
 
-            _connection = new SqliteConnection($"Data Source={_dbPath}");
+            _connection = new SqliteConnection($"Data Source={_dbPath};Pooling=False");
             await _connection.OpenAsync();
             await ConfigureConnectionAsync();
             await CreateSchemaAsync();

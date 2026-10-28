@@ -36,7 +36,7 @@ for key in english:
     assert placeholders(english[key]) == placeholders(bulgarian[key]), f"Placeholder mismatch: {key}"
 
 for path in (ROOT / "DMS").rglob("*.cs"):
-    for key in re.findall(r'(?:L|Localization)\.(?:Get|Format)\("([^\"]+)"', path.read_text()):
+    for key in re.findall(r'(?:L|Localization)\.(?:Get|Format)\("([^\"]+)"', path.read_text(encoding="utf-8")):
         assert key in english, f"Missing resource {key} in {path}"
 
 uid = "{http://schemas.microsoft.com/winfx/2006/xaml}Uid"

@@ -745,15 +745,23 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             panel.Children.Add(opacity); panel.Children.Add(fit); panel.Children.Add(locked); panel.Children.Add(rotation); panel.Children.Add(alt); panel.Children.Add(back); panel.Children.Add(forward); panel.Children.Add(remove);
         }
 
-        // The toolbar is a canvas overlay so it follows document coordinates and never escapes a parent flyout.
+        // Keep the current object visible while it is being edited. The old fallback
+        // clamped a wide toolbar across the selected object, which made live styling
+        // changes impossible to see. Prefer a side, then below/above; all candidates
+        // are outside the selected rectangle.
         var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
         var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
         const double toolbarWidth = 620, toolbarHeight = 44, gap = 8;
-        var left = x + width + gap;
-        if (left + toolbarWidth > TemplateLayout.PageWidth) left = x - toolbarWidth - gap;
-        if (left < 0) left = Math.Clamp(x, 0, TemplateLayout.PageWidth - toolbarWidth);
-        var top = y;
-        if (top + toolbarHeight > TemplateLayout.PageHeight) top = Math.Max(0, y + height - toolbarHeight);
+        var centeredLeft = Math.Clamp(x + (width - toolbarWidth) / 2, 0, TemplateLayout.PageWidth - toolbarWidth);
+        var right = (Left: x + width + gap, Top: y);
+        var leftSide = (Left: x - toolbarWidth - gap, Top: y);
+        var below = (Left: centeredLeft, Top: y + height + gap);
+        var above = (Left: centeredLeft, Top: y - toolbarHeight - gap);
+        bool Fits((double Left, double Top) point) => point.Left >= 0 && point.Top >= 0
+            && point.Left + toolbarWidth <= TemplateLayout.PageWidth && point.Top + toolbarHeight <= TemplateLayout.PageHeight;
+        var position = Fits(right) ? right : Fits(leftSide) ? leftSide : Fits(below) ? below : Fits(above) ? above : below;
+        var left = Math.Clamp(position.Left, 0, TemplateLayout.PageWidth - toolbarWidth);
+        var top = Math.Clamp(position.Top, 0, TemplateLayout.PageHeight - toolbarHeight);
         Canvas.SetLeft(toolbar, left); Canvas.SetTop(toolbar, top); Canvas.SetZIndex(toolbar, 3000);
         LayoutCanvas.Children.Add(toolbar);
         _contextualToolbar = toolbar;
