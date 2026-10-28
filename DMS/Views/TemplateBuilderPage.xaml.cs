@@ -38,6 +38,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private Button? _canvasSelectionButton;
     private FrameworkElement? _contextualToolbar;
     private bool? _compactToolbarLayout;
+    private bool _updatingZoom;
     private readonly Stack<string> _undoHistory = new();
     private readonly Stack<string> _redoHistory = new();
     private bool _restoringHistory;
@@ -91,6 +92,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         NameTool(ForwardButton, "TplBringForward"); NameTool(BackwardButton, "TplSendBackward"); NameTool(RemoveLayerButton, "TplRemoveLayer");
         NameTool(ImageLayerSelector, "TplLayoutImage"); ImageLayerSelector.PlaceholderText = L.Get("TplLayoutImage");
         NameTool(PageOptionsButton, "TplPageOptions"); NameTool(VisibilityButton, "TplVisibilityOptions");
+        NameTool(ZoomOutButton, "TplZoomOut"); NameTool(ZoomInButton, "TplZoomIn");
+        NameTool(ZoomResetButton, "TplZoomReset"); NameTool(CanvasZoomSlider, "TplZoom");
         ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
         ToolTipService.SetToolTip(FooterDisplayButton, L.Get("TplEditFooter"));
         NameTool(HeaderBoldButton, "TplHeaderBold"); NameTool(HeaderItalicButton, "TplHeaderItalic"); NameTool(HeaderUnderlineButton, "TplHeaderUnderline");
@@ -118,6 +121,31 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ImageOpacitySlider.ValueChanged += (_, _) => OnEdited();
         PreviewDate.Date = DateTimeOffset.Now;
         UpdateUndoRedoButtons();
+    }
+
+    private void SetCanvasZoom(double percent)
+    {
+        percent = Math.Clamp(percent, 50, 200);
+        CanvasScrollViewer.ChangeView(null, null, (float)(percent / 100), true);
+    }
+
+    private void ZoomOut_Click(object sender, RoutedEventArgs e) => SetCanvasZoom(CanvasScrollViewer.ZoomFactor * 100 - 10);
+    private void ZoomIn_Click(object sender, RoutedEventArgs e) => SetCanvasZoom(CanvasScrollViewer.ZoomFactor * 100 + 10);
+    private void ZoomReset_Click(object sender, RoutedEventArgs e) => SetCanvasZoom(100);
+
+    private void CanvasZoomSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (!_updatingZoom && CanvasScrollViewer != null) SetCanvasZoom(e.NewValue);
+    }
+
+    private void CanvasScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (CanvasZoomSlider == null || ZoomResetButton == null) return;
+        var percent = Math.Round(CanvasScrollViewer.ZoomFactor * 100);
+        _updatingZoom = true;
+        CanvasZoomSlider.Value = percent;
+        _updatingZoom = false;
+        ZoomResetButton.Content = $"{percent:0}%";
     }
 
     private void CaptureVisualUndo()

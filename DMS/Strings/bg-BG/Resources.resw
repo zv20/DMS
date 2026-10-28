@@ -326,6 +326,10 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
+  <data name="TplZoom" xml:space="preserve"><value>Мащаб на страницата</value></data>
+  <data name="TplZoomIn" xml:space="preserve"><value>Увеличаване</value></data>
+  <data name="TplZoomOut" xml:space="preserve"><value>Намаляване</value></data>
+  <data name="TplZoomReset" xml:space="preserve"><value>Мащаб 100%</value></data>
   <data name="TplDefaultColors" xml:space="preserve"><value>Основни цветове</value></data>
   <data name="TplRecentColors" xml:space="preserve"><value>Последни цветове</value></data>
   <data name="TplResetColor" xml:space="preserve"><value>Нулиране</value></data>

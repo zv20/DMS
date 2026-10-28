@@ -326,6 +326,10 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Selected text</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Text size</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Text color</value></data>
+  <data name="TplZoom" xml:space="preserve"><value>Canvas zoom</value></data>
+  <data name="TplZoomIn" xml:space="preserve"><value>Zoom in</value></data>
+  <data name="TplZoomOut" xml:space="preserve"><value>Zoom out</value></data>
+  <data name="TplZoomReset" xml:space="preserve"><value>Reset zoom to 100%</value></data>
   <data name="TplDefaultColors" xml:space="preserve"><value>Default colors</value></data>
   <data name="TplRecentColors" xml:space="preserve"><value>Recent colors</value></data>
   <data name="TplResetColor" xml:space="preserve"><value>Reset</value></data>
