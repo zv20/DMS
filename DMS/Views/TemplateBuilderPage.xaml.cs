@@ -706,6 +706,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var color = CreateColorTool("TplSelectedColor", style.Color, value =>
             {
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = value; _template.TextStyles[textKey] = selected;
+                UpdateCanvasTextColor(textKey, value);
             });
             var appearanceKey = SelectedLayoutKey() ?? textKey;
             _template.BlockAppearances ??= new();
@@ -714,12 +715,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
                 item.BackgroundColor = value;
+                UpdateCanvasAppearance(appearanceKey, item);
             });
             var borderColor = CreateColorTool("TplAppearanceBorder", currentAppearance?.BorderColor ?? "#000000", value =>
             {
                 if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
                 item.BorderColor = value;
                 if (item.BorderThickness <= 0) item.BorderThickness = 1;
+                UpdateCanvasAppearance(appearanceKey, item);
             });
             panel.Children.Add(font); panel.Children.Add(size); panel.Children.Add(color); panel.Children.Add(backgroundColor); panel.Children.Add(borderColor);
             AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
@@ -848,18 +851,28 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         stack.Children.Add(recent);
         var flyout = new Flyout { Content = stack };
         button.Flyout = flyout;
+        var changed = false;
         void ApplyColor(Windows.UI.Color chosen)
         {
             var value = $"#{chosen.R:X2}{chosen.G:X2}{chosen.B:X2}";
-            CaptureVisualUndo();
+            if (!changed) CaptureVisualUndo();
+            changed = true;
             apply(value);
             _dirty = true;
+            swatch.Background = new SolidColorBrush(chosen);
+        }
+        void RememberColor()
+        {
+            if (!changed) return;
+            var chosen = picker.Color;
+            var value = $"#{chosen.R:X2}{chosen.G:X2}{chosen.B:X2}";
             RecentColors.RemoveAll(c => string.Equals(c, value, StringComparison.OrdinalIgnoreCase));
             RecentColors.Insert(0, value);
             if (RecentColors.Count > 5) RecentColors.RemoveAt(5);
-            flyout.Hide();
-            UpdatePreview();
+            changed = false;
         }
+        picker.ColorChanged += (_, args) => ApplyColor(args.NewColor);
+        flyout.Closed += (_, _) => RememberColor();
         flyout.Opening += (_, _) =>
         {
             recent.Children.Clear();
@@ -867,12 +880,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 var choice = new Button { Content = new Border { Width = 20, Height = 20, Background = new SolidColorBrush(ParseColor(value, Colors.Black)) }, Padding = new Thickness(3), MinWidth = 0 };
                 ToolTipService.SetToolTip(choice, value);
-                choice.Click += (_, _) => ApplyColor(ParseColor(value, Colors.Black));
+                choice.Click += (_, _) => { picker.Color = ParseColor(value, Colors.Black); };
                 recent.Children.Add(choice);
             }
         };
         var accept = new Button { Content = L.Get("TplSave") };
-        accept.Click += (_, _) => ApplyColor(picker.Color);
+        accept.Click += (_, _) => flyout.Hide();
         stack.Children.Add(accept);
         return button;
     }
@@ -897,6 +910,35 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Visit(LayoutCanvas);
     }
 
+    private void UpdateCanvasTextColor(string key, string color)
+    {
+        void Visit(DependencyObject node)
+        {
+            if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
+                text.Foreground = new SolidColorBrush(ParseColor(color, Colors.Black));
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++) Visit(VisualTreeHelper.GetChild(node, i));
+        }
+        Visit(LayoutCanvas);
+    }
+
+    private void UpdateCanvasAppearance(string key, TemplateBlockAppearance appearance)
+    {
+        foreach (var frame in LayoutCanvas.Children.OfType<Grid>().Where(frame => Equals(frame.Tag, "frame:" + key)))
+        {
+            var decoration = frame.Children.OfType<Border>().FirstOrDefault(border => Equals(border.Tag, "appearance"));
+            if (decoration == null)
+            {
+                decoration = new Border { Tag = "appearance", IsHitTestVisible = false };
+                frame.Children.Insert(0, decoration);
+            }
+            decoration.Background = new SolidColorBrush(ParseColor(appearance.BackgroundColor ?? "#FFFFFF", Colors.Transparent));
+            if (appearance.BackgroundColor == null) decoration.Background = null;
+            decoration.BorderBrush = appearance.BorderColor == null ? null : new SolidColorBrush(ParseColor(appearance.BorderColor, Colors.Transparent));
+            decoration.BorderThickness = new Thickness(Math.Clamp(appearance.BorderThickness, 0, 20));
+            decoration.CornerRadius = new CornerRadius(Math.Clamp(appearance.CornerRadius, 0, 100));
+        }
+    }
+
     private void SetContextualStyle(string key, Action<TemplateTextStyle> apply)
     {
         if (_binding) return;
@@ -918,7 +960,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         x = double.IsFinite(x) ? Math.Clamp(x, 0, 774) : 0; y = double.IsFinite(y) ? Math.Clamp(y, 0, 1103) : 0;
         width = double.IsFinite(width) ? Math.Clamp(width, 20, 794 - x) : 100; height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123 - y) : 30;
-        var frame = new Grid { Width = width, Height = height, Background = new SolidColorBrush(Colors.Transparent) };
+        var frame = new Grid { Width = width, Height = height, Tag = "frame:" + objectKey, Background = new SolidColorBrush(Colors.Transparent) };
         frame.PointerPressed += (_, e) =>
         {
             // A transparent frame still receives input, so treat its unused space as
@@ -932,7 +974,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (!objectKey.StartsWith("image:", StringComparison.Ordinal) && _template.BlockAppearances != null && _template.BlockAppearances.TryGetValue(objectKey, out var appearance) && appearance != null)
         {
             frame.Opacity = Math.Clamp(double.IsFinite(appearance.Opacity) ? appearance.Opacity : 1, 0, 1);
-            frame.Children.Add(new Border { Background = appearance.BackgroundColor is { } background && IsColor(background) ? new SolidColorBrush(ParseColor(background, Colors.Transparent)) : null,
+            frame.Children.Add(new Border { Tag = "appearance", Background = appearance.BackgroundColor is { } background && IsColor(background) ? new SolidColorBrush(ParseColor(background, Colors.Transparent)) : null,
                 BorderBrush = appearance.BorderColor is { } border && IsColor(border) ? new SolidColorBrush(ParseColor(border, Colors.Transparent)) : null,
                 BorderThickness = new Thickness(Math.Clamp(double.IsFinite(appearance.BorderThickness) ? appearance.BorderThickness : 0, 0, 20)),
                 CornerRadius = new CornerRadius(Math.Clamp(double.IsFinite(appearance.CornerRadius) ? appearance.CornerRadius : 0, 0, 100)),
