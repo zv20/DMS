@@ -1,8 +1,9 @@
 <Page x:Class="DMS.Views.TemplateBuilderPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,*">
         <!-- Document actions. -->
+        <StackPanel>
         <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
             <StackPanel Orientation="Horizontal" Padding="12,6" Spacing="6">
                 <Button x:Name="NewButton" Click="New_Click"><FontIcon Glyph="&#xE710;" /></Button>
@@ -16,12 +17,16 @@
                 <CalendarDatePicker x:Name="PreviewDate" DateChanged="PreviewDate_DateChanged" />
             </StackPanel>
         </ScrollViewer>
+        <TextBlock x:Name="LegacyNote" TextWrapping="Wrap" Visibility="Collapsed" Margin="12,0" />
+        <TextBlock x:Name="StatusText" TextWrapping="Wrap" Margin="12,0" />
+        </StackPanel>
 
-        <!-- Page-level actions stay here; selected-object formatting lives beside the canvas selection. -->
-        <Border Grid.Row="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="12,5">
+        <!-- Page tools sit alongside the document; selected-object tools remain on the canvas. -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+        <Border Grid.Column="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="6,8">
             <StackPanel Spacing="4">
-                <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
+                <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical" Spacing="5">
                         <TextBlock x:Name="SelectedElementLabel" Visibility="Collapsed" />
                         <ComboBox x:Name="SelectedFontBox" Width="145" Visibility="Collapsed" />
                         <NumberBox x:Name="SelectedSizeBox" Width="90" Minimum="7" Maximum="72" SpinButtonPlacementMode="Compact" Visibility="Collapsed" />
@@ -77,13 +82,10 @@
                         </Button>
                     </StackPanel>
                 </ScrollViewer>
-                <TextBlock x:Name="LegacyNote" TextWrapping="Wrap" Visibility="Collapsed" />
-                <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
             </StackPanel>
         </Border>
 
-        <!-- The inspector shares the workspace with the independently scrollable page. -->
-        <Grid Grid.Row="2" x:Name="EditorWorkspace" ColumnDefinitions="*,Auto">
+        <!-- The page remains independently scrollable at smaller window sizes. -->
         <ScrollViewer Grid.Column="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
             <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" HorizontalAlignment="Center">
                 <Grid>
@@ -104,19 +106,6 @@
                 </Grid>
             </Border>
         </ScrollViewer>
-        <Border x:Name="InspectorPanel" Grid.Column="1" Width="230" Visibility="Collapsed"
-                Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"
-                BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1,0,0,0">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" Padding="12">
-                <StackPanel Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock x:Name="InspectorTitle" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="✕" Click="CloseInspector_Click" />
-                    </Grid>
-                    <StackPanel x:Name="InspectorContent" Spacing="8" />
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
         </Grid>
     </Grid>
 </Page>

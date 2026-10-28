@@ -36,7 +36,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _selectedImageId;
     private bool _bindingLayers;
     private Button? _canvasSelectionButton;
-    private bool _rebuildingInspector;
+    private FrameworkElement? _contextualToolbar;
+    private bool? _compactToolbarLayout;
     private readonly Stack<string> _undoHistory = new();
     private readonly Stack<string> _redoHistory = new();
     private bool _restoringHistory;
@@ -57,13 +58,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void TemplateBuilderPage_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var overlay = e.NewSize.Width < 700;
-        Grid.SetColumn(InspectorPanel, overlay ? 0 : 1);
-        InspectorPanel.HorizontalAlignment = overlay ? HorizontalAlignment.Right : HorizontalAlignment.Stretch;
-        Canvas.SetZIndex(InspectorPanel, 1);
+        var compact = e.NewSize.Width > 0 && e.NewSize.Width < 900;
+        if (_compactToolbarLayout == compact) return;
+        _compactToolbarLayout = compact;
+        if (_contextualToolbar == null) return;
+        LayoutCanvas.Children.Remove(_contextualToolbar);
+        _contextualToolbar = null;
+        UpdateContextualToolbar();
     }
-
-    private void CloseInspector_Click(object sender, RoutedEventArgs e) => SelectElement(null);
 
     private void ConfigureControls()
     {
@@ -655,13 +657,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void UpdateContextualToolbar()
     {
-        _rebuildingInspector = true;
-        InspectorContent.Children.Clear();
-        _rebuildingInspector = false;
-        InspectorPanel.Visibility = Visibility.Collapsed;
+        _contextualToolbar = null;
         if (!_template.LayoutEnabled) return;
 
-        const bool compact = false;
+        var compact = ActualWidth > 0 && ActualWidth < 900;
+        _compactToolbarLayout = compact;
 
         var textKey = _selectedElement;
         var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
@@ -670,8 +670,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (textKey == null && image == null) return;
         if (image == null && element == null) return;
 
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        InspectorTitle.Text = image != null ? L.Get("TplLayoutImage") : SelectedElementLabel.Text;
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = compact ? 2 : 3 };
+        var toolbar = new Border
+        {
+            Background = new SolidColorBrush(Windows.UI.Color.FromArgb(245, 35, 35, 35)),
+            BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4), Padding = new Thickness(compact ? 3 : 4), Child = panel
+        };
+        ToolTipService.SetToolTip(toolbar, L.Get("TplSelectedElement"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toolbar, L.Get("TplSelectedElement"));
 
         if (textKey != null)
         {
@@ -695,7 +702,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true;
                 UpdateCanvasFontSize(textKey, selected.FontSize);
             };
-            size.LostFocus += (_, _) => { if (!_binding && !_rebuildingInspector) UpdatePreview(); };
+            size.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
             var color = CreateColorTool("TplSelectedColor", style.Color, value =>
             {
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = value; _template.TextStyles[textKey] = selected;
@@ -795,7 +802,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             locked.Toggled += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.LockAspectRatio = locked.IsOn; _dirty = true; };
             var rotation = new NumberBox { Width = compact ? 55 : 60, Minimum = -360, Maximum = 360, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = image.RotationDegrees };
             rotation.ValueChanged += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.RotationDegrees = double.IsFinite(rotation.Value) ? Math.Clamp(rotation.Value, -360, 360) : 0; _dirty = true; };
-            rotation.LostFocus += (_, _) => { if (!_binding && !_rebuildingInspector) UpdatePreview(); };
+            rotation.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
             var alt = new TextBox { Width = compact ? 70 : 90, Text = image.AltText, PlaceholderText = L.Get("TplImageAlt") };
             alt.LostFocus += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.AltText = (alt.Text ?? string.Empty).Trim()[..Math.Min(300, (alt.Text ?? string.Empty).Trim().Length)]; _dirty = true; };
             var back = new Button { Content = new FontIcon { Glyph = "\uE74B" } }; back.Click += (_, _) => ChangeLayerOrder(-1);
@@ -805,19 +812,30 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             panel.Children.Add(opacity); panel.Children.Add(fit); panel.Children.Add(locked); panel.Children.Add(rotation); panel.Children.Add(alt); panel.Children.Add(back); panel.Children.Add(forward); panel.Children.Add(remove);
         }
 
-        // Arrange related controls in short rows within the side inspector.
-        var controls = panel.Children.ToArray();
-        panel.Children.Clear();
-        var groupSizes = textKey != null ? new[] { 2, 3, 3, 2, 2 } : new[] { 2, 2, 1, 3 };
-        var offset = 0;
-        foreach (var count in groupSizes)
-        {
-            if (offset >= controls.Length) break;
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            for (var i = 0; i < count && offset < controls.Length; i++) row.Children.Add(controls[offset++]);
-            InspectorContent.Children.Add(row);
-        }
-        InspectorPanel.Visibility = Visibility.Visible;
+        // Keep the current object visible while it is being edited. The old fallback
+        // clamped a wide toolbar across the selected object, which made live styling
+        // changes impossible to see. Prefer a side, then below/above; all candidates
+        // are outside the selected rectangle.
+        var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
+        var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
+        // Measure the actual controls so placement accounts for their minimum sizes.
+        toolbar.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var toolbarWidth = Math.Min(TemplateLayout.PageWidth, toolbar.DesiredSize.Width);
+        var toolbarHeight = Math.Min(TemplateLayout.PageHeight, toolbar.DesiredSize.Height);
+        const double gap = 8;
+        var centeredLeft = Math.Clamp(x + (width - toolbarWidth) / 2, 0, TemplateLayout.PageWidth - toolbarWidth);
+        var right = (Left: x + width + gap, Top: y);
+        var leftSide = (Left: x - toolbarWidth - gap, Top: y);
+        var below = (Left: centeredLeft, Top: y + height + gap);
+        var above = (Left: centeredLeft, Top: y - toolbarHeight - gap);
+        bool Fits((double Left, double Top) point) => point.Left >= 0 && point.Top >= 0
+            && point.Left + toolbarWidth <= TemplateLayout.PageWidth && point.Top + toolbarHeight <= TemplateLayout.PageHeight;
+        var position = Fits(right) ? right : Fits(leftSide) ? leftSide : Fits(below) ? below : Fits(above) ? above : below;
+        var left = Math.Clamp(position.Left, 0, TemplateLayout.PageWidth - toolbarWidth);
+        var top = Math.Clamp(position.Top, 0, TemplateLayout.PageHeight - toolbarHeight);
+        Canvas.SetLeft(toolbar, left); Canvas.SetTop(toolbar, top); Canvas.SetZIndex(toolbar, 3000);
+        LayoutCanvas.Children.Add(toolbar);
+        _contextualToolbar = toolbar;
     }
 
     private async Task OpenAppearanceEditorAsync(string key)
@@ -1039,7 +1057,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Windows.Foundation.Point start = default;
             double initialX = 0, initialY = 0, initialWidth = 0, initialHeight = 0;
             bool dragging = false;
-            handle.PointerPressed += (_, e) => { if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed) return; CaptureVisualUndo(); start = e.GetCurrentPoint(LayoutCanvas).Position; initialX = x; initialY = y; initialWidth = width; initialHeight = height; dragging = handle.CapturePointer(e.Pointer); e.Handled = true; };
+            handle.PointerPressed += (_, e) => { if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed) return; CaptureVisualUndo(); start = e.GetCurrentPoint(LayoutCanvas).Position; initialX = x; initialY = y; initialWidth = width; initialHeight = height; dragging = handle.CapturePointer(e.Pointer); if (_contextualToolbar != null) _contextualToolbar.Visibility = Visibility.Collapsed; e.Handled = true; };
             handle.PointerMoved += (_, e) =>
             {
                 if (!dragging) return;
