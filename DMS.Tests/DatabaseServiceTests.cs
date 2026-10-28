@@ -58,6 +58,30 @@ public sealed class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void PositionedTemplateMarksContentThatExceedsAdaptiveMenuLimit()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { LayoutEnabled = true, MenuBlockSizing = new TemplateMenuBlockSizing { Enabled = true, MinimumHeight = 40, MaximumHeight = 50 } };
+        template.LayoutElements["menu:0"] = new TemplateLayoutElement { X = 40, Y = 165, Width = 100, Height = 135 };
+        var recipe = new Recipe { Id = 7, Name = new string('W', 500), Ingredients = [new string('I', 500)] };
+        var html = MenuOutputService.BuildHtml(template, monday, [new MenuEntry { Date = monday, Slot = "slot1", RecipeId = 7 }], [recipe]);
+        Assert.Contains("data-element=\"menu:0\" data-layout-overflow=\"true\"", html);
+        Assert.Contains("min-height:50px", html);
+    }
+
+    [Fact]
+    public void PositionedTemplateAppliesOnlySafeSavedBlockAppearance()
+    {
+        var template = new MenuTemplate { LayoutEnabled = true };
+        template.BlockAppearances["header"] = new TemplateBlockAppearance { BackgroundColor = "#123456", BorderColor = "#abcdef", BorderThickness = 2, CornerRadius = 8, Padding = 6, Opacity = .7 };
+        template.BlockAppearances["date"] = new TemplateBlockAppearance { BackgroundColor = "bad;css", BorderColor = "red", BorderThickness = 99, CornerRadius = -1, Padding = double.NaN, Opacity = 99 };
+        var html = MenuOutputService.BuildHtml(template, new DateTime(2026, 10, 26), [], []);
+        Assert.Contains("background-color:#123456;border:2px solid #abcdef;border-radius:8px;padding:6px;opacity:0.7", html);
+        Assert.Contains("background-color:transparent;border:20px solid transparent;border-radius:0px;padding:0px;opacity:1", html);
+        Assert.DoesNotContain("bad;css", html);
+    }
+
+    [Fact]
     public void WeekdayGroupsHaveIndependentStylesAndOverrideLegacyDayStyle()
     {
         var monday = new DateTime(2026, 10, 26);

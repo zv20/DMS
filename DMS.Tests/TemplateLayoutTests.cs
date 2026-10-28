@@ -40,6 +40,32 @@ public sealed class TemplateLayoutTests
     }
 
     [Fact]
+    public void MenuSizingKeepsExistingTemplatesFixedAndBoundsOptInGrowth()
+    {
+        var template = new MenuTemplate();
+        TemplateLayout.EnsureInitialized(template);
+        var element = template.LayoutElements["menu:0"];
+
+        Assert.Equal(135, TemplateLayout.ResolveMenuHeight(template, element, 300).Height);
+
+        template.MenuBlockSizing = new TemplateMenuBlockSizing { Enabled = true, MinimumHeight = 110, MaximumHeight = 155 };
+        var bounded = TemplateLayout.ResolveMenuHeight(template, element, 300);
+        Assert.Equal(155, bounded.Height);
+        Assert.True(bounded.Overflowed);
+        Assert.Equal(110, TemplateLayout.ResolveMenuHeight(template, element, 10).Height);
+    }
+
+    [Fact]
+    public void MenuSizingPolicySurvivesJsonRoundTrip()
+    {
+        var template = new MenuTemplate { MenuBlockSizing = new TemplateMenuBlockSizing { Enabled = true, MinimumHeight = 95, MaximumHeight = 150 } };
+        var restored = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(template))!;
+        Assert.True(restored.MenuBlockSizing.Enabled);
+        Assert.Equal(95, restored.MenuBlockSizing.MinimumHeight);
+        Assert.Equal(150, restored.MenuBlockSizing.MaximumHeight);
+    }
+
+    [Fact]
     public async Task SavedLayoutSurvivesDatabaseReopen()
     {
         var directory = Path.Combine(Path.GetTempPath(), "DMS.LayoutTests", Guid.NewGuid().ToString("N"));

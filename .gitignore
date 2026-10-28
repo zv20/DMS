@@ -20,6 +20,7 @@ node_modules/
 dist/
 build/
 /release/
+/artifacts/
 /data/images
 
 # .NET Build outputs

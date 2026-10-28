@@ -345,4 +345,22 @@
   <data name="OutputLayoutCheckFailed" xml:space="preserve"><value>Оформлението не можа да бъде проверено. Прегледайте внимателно преди печат.</value></data>
   <data name="TplImageLimit" xml:space="preserve"><value>Изберете изображение до 4 MB.</value></data>
   <data name="TplImagesTotalLimit" xml:space="preserve"><value>Общият размер на данните за изображенията надвишава 16 MB. Премахнете изображения или изберете по-малки файлове.</value></data>
+  <data name="TplMenuAutoFit" xml:space="preserve"><value>Разрешаване на разширяване на блока с менюто</value></data>
+  <data name="TplMenuAutoFitHint" xml:space="preserve"><value>Позволява на блоковете с меню за деня да се разширяват в запазените си граници при по-дълги имена на рецепти. Другите блокове не се преместват автоматично.</value></data>
+  <data name="TplUndo" xml:space="preserve"><value>Отмяна на визуална промяна в шаблона</value></data>
+  <data name="TplRedo" xml:space="preserve"><value>Повторение на визуална промяна в шаблона</value></data>
+  <data name="TplRichEdit" xml:space="preserve"><value>Редактиране на форматиран текст в заглавие или долен колонтитул</value></data>
+  <data name="TplAppearance" xml:space="preserve"><value>Външен вид на блока</value></data>
+  <data name="TplAppearanceBackground" xml:space="preserve"><value>Цвят на фон (#RRGGBB, по избор)</value></data>
+  <data name="TplAppearanceBorder" xml:space="preserve"><value>Цвят на рамката (#RRGGBB, по избор)</value></data>
+  <data name="TplAppearanceThickness" xml:space="preserve"><value>Дебелина на рамката</value></data>
+  <data name="TplAppearanceRadius" xml:space="preserve"><value>Радиус на ъглите</value></data>
+  <data name="TplAppearancePadding" xml:space="preserve"><value>Вътрешно отстояние</value></data>
+  <data name="TplImageFit" xml:space="preserve"><value>Побиране на изображението</value></data>
+  <data name="TplFitFill" xml:space="preserve"><value>Запълване</value></data>
+  <data name="TplFitContain" xml:space="preserve"><value>Побиране</value></data>
+  <data name="TplFitCover" xml:space="preserve"><value>Покриване</value></data>
+  <data name="TplLockAspect" xml:space="preserve"><value>Заключване на пропорциите на изображението</value></data>
+  <data name="TplRotation" xml:space="preserve"><value>Завъртане на изображението</value></data>
+  <data name="TplImageAlt" xml:space="preserve"><value>Описание на изображението</value></data>
 </root>

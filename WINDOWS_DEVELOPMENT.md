@@ -44,12 +44,11 @@ overlap text; images outside the page are flagged. Preview documents are supplie
 in memory rather than through WebView2's size-limited NavigateToString API. Image
 imports are limited to 4 MiB each and 16 MiB of combined encoded image data.
 
-This is not complete browser-editor parity. In particular, formatting a text
-selection and several per-section fonts and border controls remain unimplemented.
-Imported browser JSON is retained,
-but rich HTML is reduced to plain text in the native editor, and image filenames
-cannot recover image files that were not included in an export. The output UI
-warns when an imported template may need adjustment.
+Canvas templates support contextual text formatting, per-block backgrounds and
+borders, rich header/footer runs, image fit/rotation/layer controls, bounded menu
+auto-fit, and a 50-step visual undo/redo history. Imported browser JSON is
+retained, but image filenames cannot recover image files that were not included
+in an export. The output UI warns when an imported template may need adjustment.
 
 On Windows, exercise five-day menu navigation and category selection; save,
 reopen and copy templates; test all supported font, color, alignment and image

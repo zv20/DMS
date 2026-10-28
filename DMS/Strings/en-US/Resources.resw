@@ -345,4 +345,22 @@
   <data name="OutputLayoutCheckFailed" xml:space="preserve"><value>Could not check the page layout. Review the preview carefully before printing.</value></data>
   <data name="TplImageLimit" xml:space="preserve"><value>Choose an image no larger than 4 MB.</value></data>
   <data name="TplImagesTotalLimit" xml:space="preserve"><value>The combined image data exceeds the 16 MB limit. Remove images or choose smaller files.</value></data>
+  <data name="TplMenuAutoFit" xml:space="preserve"><value>Allow menu block growth</value></data>
+  <data name="TplMenuAutoFitHint" xml:space="preserve"><value>Allow weekday menu blocks to grow within their saved bounds for longer recipe names. Content never moves other blocks automatically.</value></data>
+  <data name="TplUndo" xml:space="preserve"><value>Undo template visual change</value></data>
+  <data name="TplRedo" xml:space="preserve"><value>Redo template visual change</value></data>
+  <data name="TplRichEdit" xml:space="preserve"><value>Edit rich header or footer text</value></data>
+  <data name="TplAppearance" xml:space="preserve"><value>Block appearance</value></data>
+  <data name="TplAppearanceBackground" xml:space="preserve"><value>Background color (#RRGGBB, optional)</value></data>
+  <data name="TplAppearanceBorder" xml:space="preserve"><value>Border color (#RRGGBB, optional)</value></data>
+  <data name="TplAppearanceThickness" xml:space="preserve"><value>Border thickness</value></data>
+  <data name="TplAppearanceRadius" xml:space="preserve"><value>Corner radius</value></data>
+  <data name="TplAppearancePadding" xml:space="preserve"><value>Inner padding</value></data>
+  <data name="TplImageFit" xml:space="preserve"><value>Image fit</value></data>
+  <data name="TplFitFill" xml:space="preserve"><value>Fill</value></data>
+  <data name="TplFitContain" xml:space="preserve"><value>Contain</value></data>
+  <data name="TplFitCover" xml:space="preserve"><value>Cover</value></data>
+  <data name="TplLockAspect" xml:space="preserve"><value>Lock image aspect ratio</value></data>
+  <data name="TplRotation" xml:space="preserve"><value>Image rotation</value></data>
+  <data name="TplImageAlt" xml:space="preserve"><value>Image description</value></data>
 </root>

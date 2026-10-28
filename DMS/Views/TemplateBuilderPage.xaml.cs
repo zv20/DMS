@@ -35,6 +35,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _selectedImageId;
     private bool _bindingLayers;
     private Button? _canvasSelectionButton;
+    private FrameworkElement? _contextualToolbar;
+    private readonly Stack<string> _undoHistory = new();
+    private readonly Stack<string> _redoHistory = new();
+    private bool _restoringHistory;
     private readonly List<Microsoft.UI.Xaml.Shapes.Line> _snapGuides = [];
     private bool _dirty, _confirming, _switching, _saving, _layoutOverflow;
     private static readonly string[] Alignments = ["left", "center", "right"];
@@ -64,6 +68,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         LegacyNote.Text = L.Get("TplLegacy");
         SelectedElementLabel.Text = L.Get("TplSelectElement");
         NameTool(NewButton, "TplNew"); NameTool(SaveButton, "TplSave"); NameTool(DeleteButton, "TplDelete");
+        NameTool(UndoButton, "TplUndo"); NameTool(RedoButton, "TplRedo");
         NameTool(TemplateSelector, "TplSelect"); NameTool(NameBox, "TplName"); NameTool(PreviewDate, "TplPreview");
         NameTool(SelectedFontBox, "TplFont"); NameTool(SelectedSizeBox, "TplSelectedSize"); NameTool(SelectedColorBox, "TplSelectedColor");
         NameTool(SelectedBoldButton, "TplBold"); NameTool(SelectedItalicButton, "TplItalic"); NameTool(SelectedUnderlineButton, "TplUnderline");
@@ -98,6 +103,50 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         ImageOpacitySlider.ValueChanged += (_, _) => OnEdited();
         PreviewDate.Date = DateTimeOffset.Now;
+        UpdateUndoRedoButtons();
+    }
+
+    private void CaptureVisualUndo()
+    {
+        if (_binding || _restoringHistory) return;
+        _undoHistory.Push(JsonSerializer.Serialize(_template));
+        if (_undoHistory.Count > 50)
+        {
+            var keep = _undoHistory.Take(50).Reverse().ToArray();
+            _undoHistory.Clear();
+            foreach (var item in keep) _undoHistory.Push(item);
+        }
+        _redoHistory.Clear();
+        UpdateUndoRedoButtons();
+    }
+
+    private void UpdateUndoRedoButtons()
+    {
+        UndoButton.IsEnabled = _undoHistory.Count > 0;
+        RedoButton.IsEnabled = _redoHistory.Count > 0;
+    }
+
+    private void RestoreVisualSnapshot(string snapshot)
+    {
+        var restored = JsonSerializer.Deserialize<MenuTemplate>(snapshot);
+        if (restored == null) return;
+        _restoringHistory = true;
+        try { SetTemplate(restored, _loadedName); _dirty = true; }
+        finally { _restoringHistory = false; UpdateUndoRedoButtons(); }
+    }
+
+    private void Undo_Click(object sender, RoutedEventArgs e)
+    {
+        if (_undoHistory.Count == 0) return;
+        _redoHistory.Push(JsonSerializer.Serialize(_template));
+        RestoreVisualSnapshot(_undoHistory.Pop());
+    }
+
+    private void Redo_Click(object sender, RoutedEventArgs e)
+    {
+        if (_redoHistory.Count == 0) return;
+        _undoHistory.Push(JsonSerializer.Serialize(_template));
+        RestoreVisualSnapshot(_redoHistory.Pop());
     }
 
     private static void NameTool(FrameworkElement element, string resourceKey)
@@ -160,7 +209,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var parts = key.Split(':');
         if (parts.Length == 2 && (parts[0] is "heading" or "menu" or "ingredient-group" or "allergen-group") &&
             _template.TextStyles.TryGetValue($"block:{parts[1]}", out var inherited) && inherited != null)
-            return new TemplateTextStyle { FontFamily = inherited.FontFamily, FontSize = inherited.FontSize, Color = inherited.Color, Bold = inherited.Bold, Italic = inherited.Italic, Underline = inherited.Underline };
+            return new TemplateTextStyle { FontFamily = inherited.FontFamily, FontSize = inherited.FontSize, Color = inherited.Color, Bold = inherited.Bold, Italic = inherited.Italic, Underline = inherited.Underline, Alignment = inherited.Alignment };
         return key switch
         {
             "header" => new TemplateTextStyle { FontFamily = _template.FontFamily, FontSize = _template.HeaderFontSize, Color = _template.HeaderColor, Bold = _template.HeaderBold, Italic = _template.HeaderItalic, Underline = _template.HeaderUnderline },
@@ -214,6 +263,24 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         UpdatePreview();
     }
 
+    private string AlignmentFor(string key, TemplateTextStyle style) => style.Alignment is "left" or "center" or "right"
+        ? style.Alignment
+        : key == "header" ? _template.HeaderAlignment
+        : key == "footer" ? _template.FooterAlignment
+        : key == "date" ? "center"
+        : "left";
+
+    private void SetSelectedAlignment(string alignment)
+    {
+        if (_binding || _selectedElement == null || alignment is not ("left" or "center" or "right")) return;
+        CaptureVisualUndo();
+        var style = StyleFor(_selectedElement, _template.MealFontSize);
+        style.Alignment = alignment;
+        _template.TextStyles[_selectedElement] = style;
+        _dirty = true;
+        UpdatePreview();
+    }
+
     private Button SelectableText(string key, string text, double size, bool bold = false, string? legacyKey = null)
     {
         var label = DisplayText(key, text, size, bold, legacyKey);
@@ -238,12 +305,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         return new TextBlock { Text = text, FontFamily = new FontFamily(style.FontFamily), FontSize = style.FontSize,
             Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal,
             FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
-            TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, TextWrapping = TextWrapping.Wrap };
+            TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignmentFor(AlignmentFor(key, style)) };
     }
 
     private void OnEdited()
     {
         if (_binding) return;
+        CaptureVisualUndo();
         _dirty = true;
         ReadFields();
         UpdatePreview();
@@ -298,7 +367,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         EditTextButton.IsEnabled = _template.LayoutEnabled && (_selectedElement == "header" || _selectedElement == "footer");
         ForwardButton.IsEnabled = BackwardButton.IsEnabled = _template.LayoutEnabled && (_selectedImageId != null || _selectedElement != null);
         RemoveLayerButton.IsEnabled = _template.LayoutEnabled && _selectedImageId != null;
-        ImageLayerSelector.Visibility = _template.LayoutEnabled ? Visibility.Visible : Visibility.Collapsed;
+        // Layer selection now happens by clicking an image on the canvas; keep this legacy
+        // global selector hidden so it cannot duplicate the contextual editor.
+        ImageLayerSelector.Visibility = Visibility.Collapsed;
         _bindingLayers = true;
         ImageLayerSelector.Items.Clear();
         for (var layerIndex = 0; layerIndex < _template.ImageLayers.Count; layerIndex++)
@@ -407,6 +478,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void EnableCanvas_Click(object sender, RoutedEventArgs e)
     {
+        CaptureVisualUndo();
         TemplateLayout.EnsureInitialized(_template);
         _dirty = true;
         UpdatePreview();
@@ -417,13 +489,78 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         var header = _selectedElement == "header";
         if (!header && _selectedElement != "footer") return;
-        var field = new TextBox { Text = header ? HeaderBox.Text : FooterBox.Text, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinWidth = 300 };
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get(header ? "TplHeader" : "TplFooter"), Content = field,
+        await OpenRichEditorAsync(header);
+    }
+
+    private async Task OpenRichEditorAsync(bool header)
+    {
+        var source = header ? _template.HeaderRichText : _template.FooterRichText;
+        var fallback = header ? _template.HeaderText : _template.FooterText;
+        var editor = new RichEditBox { MinWidth = 440, MinHeight = 190, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true };
+        editor.Document.SetText(Windows.UI.Text.TextSetOptions.None, source?.Runs?.Count > 0 ? string.Concat(source.Runs.Select(run => run.Text)) : fallback);
+        ApplyRichRuns(editor, source);
+        var bold = new Button { Content = "B", FontWeight = FontWeights.Bold };
+        var italic = new Button { Content = "I", FontStyle = Windows.UI.Text.FontStyle.Italic };
+        var underline = new Button { Content = new TextBlock { Text = "U", TextDecorations = Windows.UI.Text.TextDecorations.Underline } };
+        bold.Click += (_, _) => editor.Document.Selection.CharacterFormat.Bold = editor.Document.Selection.CharacterFormat.Bold == Windows.UI.Text.FormatEffect.On ? Windows.UI.Text.FormatEffect.Off : Windows.UI.Text.FormatEffect.On;
+        italic.Click += (_, _) => editor.Document.Selection.CharacterFormat.Italic = editor.Document.Selection.CharacterFormat.Italic == Windows.UI.Text.FormatEffect.On ? Windows.UI.Text.FormatEffect.Off : Windows.UI.Text.FormatEffect.On;
+        underline.Click += (_, _) => editor.Document.Selection.CharacterFormat.Underline = editor.Document.Selection.CharacterFormat.Underline == Windows.UI.Text.UnderlineType.None ? Windows.UI.Text.UnderlineType.Single : Windows.UI.Text.UnderlineType.None;
+        var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
+        toolbar.Children.Add(bold); toolbar.Children.Add(italic); toolbar.Children.Add(underline);
+        NameTool(bold, "TplBold"); NameTool(italic, "TplItalic"); NameTool(underline, "TplUnderline");
+        var content = new StackPanel { Spacing = 8 }; content.Children.Add(toolbar); content.Children.Add(editor);
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get(header ? "TplHeader" : "TplFooter"), Content = content,
             PrimaryButtonText = L.Get("TplSave"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        CaptureVisualUndo();
+        var rich = ReadRichRuns(editor);
+        var plain = string.Concat(rich.Runs.Select(run => run.Text));
+        if (header) { _template.HeaderRichText = rich.Runs.Count == 0 ? null : rich; _template.HeaderText = HeaderBox.Text = plain; }
+        else { _template.FooterRichText = rich.Runs.Count == 0 ? null : rich; _template.FooterText = FooterBox.Text = plain; }
+        _dirty = true;
+        UpdatePreview();
+    }
+
+    private static void ApplyRichRuns(RichEditBox editor, TemplateRichTextContent? content)
+    {
+        if (content?.Runs == null || content.Runs.Count == 0) return;
+        var offset = 0;
+        foreach (var run in content.Runs)
         {
-            if (header) HeaderBox.Text = field.Text; else FooterBox.Text = field.Text;
+            var length = run.Text?.Length ?? 0;
+            if (length == 0) continue;
+            var format = editor.Document.GetRange(offset, offset + length).CharacterFormat;
+            if (!string.IsNullOrWhiteSpace(run.FontFamily)) format.FontName = run.FontFamily;
+            if (run.FontSize is double size && double.IsFinite(size)) format.FontSize = (float)Math.Clamp(size, 6, 72);
+            if (IsColor(run.Color)) format.ForegroundColor = ParseColor(run.Color!, Windows.UI.Colors.Black);
+            if (run.Bold is bool bold) format.Bold = bold ? Windows.UI.Text.FormatEffect.On : Windows.UI.Text.FormatEffect.Off;
+            if (run.Italic is bool italic) format.Italic = italic ? Windows.UI.Text.FormatEffect.On : Windows.UI.Text.FormatEffect.Off;
+            if (run.Underline is bool underline) format.Underline = underline ? Windows.UI.Text.UnderlineType.Single : Windows.UI.Text.UnderlineType.None;
+            offset += length;
         }
+    }
+
+    private static TemplateRichTextContent ReadRichRuns(RichEditBox editor)
+    {
+        editor.Document.GetText(Windows.UI.Text.TextGetOptions.None, out var text);
+        var result = new TemplateRichTextContent();
+        TemplateRichTextRun? previous = null;
+        for (var index = 0; index < text.Length; index++)
+        {
+            var format = editor.Document.GetRange(index, index + 1).CharacterFormat;
+            var color = format.ForegroundColor;
+            var run = new TemplateRichTextRun
+            {
+                Text = text[index].ToString(), FontFamily = format.FontName, FontSize = format.FontSize,
+                Color = $"#{color.R:X2}{color.G:X2}{color.B:X2}",
+                Bold = format.Bold == Windows.UI.Text.FormatEffect.On,
+                Italic = format.Italic == Windows.UI.Text.FormatEffect.On,
+                Underline = format.Underline != Windows.UI.Text.UnderlineType.None
+            };
+            if (previous != null && previous.FontFamily == run.FontFamily && previous.FontSize == run.FontSize && previous.Color == run.Color && previous.Bold == run.Bold && previous.Italic == run.Italic && previous.Underline == run.Underline) previous.Text += run.Text;
+            else { result.Runs.Add(run); previous = run; }
+        }
+        return result;
     }
 
     private void UpdateLayoutCanvas(DateTime monday)
@@ -434,7 +571,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _snapGuides.Clear();
         foreach (var image in _template.ImageLayers)
         {
-            var picture = new Image { Stretch = Stretch.Fill, Opacity = Math.Clamp(double.IsFinite(image.Opacity) ? image.Opacity : 1, 0, 1) };
+            var picture = new Image { Stretch = image.FitMode switch { "contain" => Stretch.Uniform, "cover" => Stretch.UniformToFill, _ => Stretch.Fill }, Opacity = Math.Clamp(double.IsFinite(image.Opacity) ? image.Opacity : 1, 0, 1),
+                RenderTransformOrigin = new Windows.Foundation.Point(.5, .5), RenderTransform = new RotateTransform { Angle = double.IsFinite(image.RotationDegrees) ? Math.Clamp(image.RotationDegrees, -360, 360) : 0 } };
             _ = LoadCanvasImageAsync(picture, image.DataUri);
             var select = new Button { Content = picture, Background = new SolidColorBrush(Colors.Transparent), Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
             select.KeyDown += CanvasObject_KeyDown;
@@ -447,13 +585,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         {
             var text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
             var button = SelectableText("header", text, _template.HeaderFontSize);
-            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(_template.HeaderAlignment);
+            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(AlignmentFor("header", StyleFor("header", _template.HeaderFontSize)));
             PlaceTextFrame("header", button);
         }
         if (_template.ShowDateRange)
         {
             var dateButton = SelectableText("date", $"{monday:d} – {monday.AddDays(4):d}", 14);
-            if (dateButton.Content is TextBlock dateLabel) dateLabel.TextAlignment = TextAlignment.Center;
+            if (dateButton.Content is TextBlock dateLabel) dateLabel.TextAlignment = TextAlignmentFor(AlignmentFor("date", StyleFor("date", 14)));
             PlaceTextFrame("date", dateButton);
         }
         for (var i = 0; i < 5; i++)
@@ -483,11 +621,187 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         {
             var text = string.IsNullOrEmpty(_template.FooterText) ? L.Get("TplEditFooter") : _template.FooterText;
             var button = SelectableText("footer", text, _template.FooterFontSize);
-            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(_template.FooterAlignment);
+            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(AlignmentFor("footer", StyleFor("footer", _template.FooterFontSize)));
             PlaceTextFrame("footer", button);
         }
         if (_layoutOverflow) StatusText.Text = L.Get("TplLayoutOverflow");
         else if (StatusText.Text == L.Get("TplLayoutOverflow")) StatusText.Text = "";
+        UpdateContextualToolbar();
+    }
+
+    private void LayoutCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        // Child controls select themselves. Only a bare canvas press clears the active object.
+        if (ReferenceEquals(e.OriginalSource, LayoutCanvas)) SelectElement(null);
+    }
+
+    private void UpdateContextualToolbar()
+    {
+        _contextualToolbar = null;
+        if (!_template.LayoutEnabled) return;
+
+        var textKey = _selectedElement;
+        var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
+        var layoutKey = SelectedLayoutKey();
+        var element = layoutKey != null && _template.LayoutElements.TryGetValue(layoutKey, out var found) ? found : null;
+        if (textKey == null && image == null) return;
+        if (image == null && element == null) return;
+
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var toolbar = new Border
+        {
+            Background = new SolidColorBrush(Windows.UI.Color.FromArgb(245, 35, 35, 35)),
+            BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4), Padding = new Thickness(5), Child = panel
+        };
+        ToolTipService.SetToolTip(toolbar, L.Get("TplSelectedElement"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toolbar, L.Get("TplSelectedElement"));
+
+        if (textKey != null)
+        {
+            var style = StyleFor(textKey, _template.MealFontSize);
+            var font = new ComboBox { Width = 112, SelectedItem = style.FontFamily };
+            foreach (var family in Fonts) font.Items.Add(family);
+            font.SelectedItem = Fonts.Contains(style.FontFamily, StringComparer.OrdinalIgnoreCase) ? style.FontFamily : Fonts[0];
+            font.SelectionChanged += (_, _) =>
+            {
+                if (_binding || font.SelectedItem is not string family) return;
+                CaptureVisualUndo();
+                var selected = StyleFor(textKey, _template.MealFontSize); selected.FontFamily = family; _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
+            };
+            var size = new NumberBox { Width = 68, Minimum = 7, Maximum = 72, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = style.FontSize };
+            size.ValueChanged += (_, _) =>
+            {
+                if (_binding) return;
+                CaptureVisualUndo();
+                var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
+            };
+            var color = new TextBox { Width = 82, Text = style.Color, PlaceholderText = "#000000" };
+            color.LostFocus += (_, _) =>
+            {
+                if (_binding || !IsColor(color.Text)) return;
+                CaptureVisualUndo();
+                var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = color.Text; _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
+            };
+            panel.Children.Add(font); panel.Children.Add(size); panel.Children.Add(color);
+            AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
+            AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
+            AddFormatButton(panel, "U", "TplUnderline", style.Underline, value => SetContextualStyle(textKey, s => s.Underline = value));
+            var align = new ComboBox { Width = 78 };
+            align.Items.Add(L.Get("TplLeft")); align.Items.Add(L.Get("TplCenter")); align.Items.Add(L.Get("TplRight"));
+            align.SelectedIndex = Array.IndexOf(Alignments, AlignmentFor(textKey, style));
+            align.SelectionChanged += (_, _) => { if (!_binding && align.SelectedIndex >= 0) SetSelectedAlignment(Alignments[align.SelectedIndex]); };
+            NameTool(font, "TplFont"); NameTool(size, "TplSelectedSize"); NameTool(color, "TplSelectedColor");
+            NameTool(align, "TplHeaderAlignment");
+            panel.Children.Add(align);
+            var appearance = new Button { Content = new FontIcon { Glyph = "\uE790" } };
+            appearance.Click += async (_, _) => await OpenAppearanceEditorAsync(SelectedLayoutKey() ?? textKey);
+            NameTool(appearance, "TplAppearance");
+            panel.Children.Add(appearance);
+            if (textKey is "header" or "footer")
+            {
+                var rich = new Button { Content = new FontIcon { Glyph = "\uE70F" } };
+                rich.Click += async (_, _) => await OpenRichEditorAsync(textKey == "header");
+                NameTool(rich, "TplRichEdit");
+                panel.Children.Add(rich);
+            }
+            if (textKey.StartsWith("menu:", StringComparison.Ordinal))
+            {
+                var sizing = _template.MenuBlockSizing ??= new TemplateMenuBlockSizing();
+                var autoFit = new ToggleSwitch { IsOn = sizing.Enabled, MinWidth = 42, OnContent = "↕", OffContent = "↕" };
+                autoFit.Toggled += (_, _) =>
+                {
+                    if (_binding) return;
+                    CaptureVisualUndo();
+                    sizing.Enabled = autoFit.IsOn;
+                    _dirty = true;
+                    UpdatePreview();
+                };
+                ToolTipService.SetToolTip(autoFit, L.Get("TplMenuAutoFitHint"));
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(autoFit, L.Get("TplMenuAutoFit"));
+                panel.Children.Add(autoFit);
+            }
+        }
+        else if (image != null)
+        {
+            var opacity = new Slider { Width = 105, Minimum = 0, Maximum = 100, StepFrequency = 5, Value = Math.Clamp(image.Opacity * 100, 0, 100) };
+            var opacitySnapshot = false;
+            opacity.ValueChanged += (_, _) => { if (!_binding) { if (!opacitySnapshot) { CaptureVisualUndo(); opacitySnapshot = true; } image.Opacity = opacity.Value / 100; _dirty = true; } };
+            opacity.PointerReleased += (_, _) => { opacitySnapshot = false; UpdatePreview(); };
+            var fit = new ComboBox { Width = 84 };
+            fit.Items.Add(L.Get("TplFitFill")); fit.Items.Add(L.Get("TplFitContain")); fit.Items.Add(L.Get("TplFitCover"));
+            fit.SelectedIndex = image.FitMode switch { "contain" => 1, "cover" => 2, _ => 0 };
+            fit.SelectionChanged += (_, _) => { if (_binding || fit.SelectedIndex < 0) return; CaptureVisualUndo(); image.FitMode = fit.SelectedIndex switch { 1 => "contain", 2 => "cover", _ => "fill" }; _dirty = true; UpdatePreview(); };
+            var locked = new ToggleSwitch { IsOn = image.LockAspectRatio, MinWidth = 42, OnContent = "↔", OffContent = "↔" };
+            locked.Toggled += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.LockAspectRatio = locked.IsOn; _dirty = true; };
+            var rotation = new NumberBox { Width = 65, Minimum = -360, Maximum = 360, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = image.RotationDegrees };
+            rotation.ValueChanged += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.RotationDegrees = double.IsFinite(rotation.Value) ? Math.Clamp(rotation.Value, -360, 360) : 0; _dirty = true; UpdatePreview(); };
+            var alt = new TextBox { Width = 105, Text = image.AltText, PlaceholderText = L.Get("TplImageAlt") };
+            alt.LostFocus += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.AltText = (alt.Text ?? string.Empty).Trim()[..Math.Min(300, (alt.Text ?? string.Empty).Trim().Length)]; _dirty = true; };
+            var back = new Button { Content = new FontIcon { Glyph = "\uE74B" } }; back.Click += (_, _) => ChangeLayerOrder(-1);
+            var forward = new Button { Content = new FontIcon { Glyph = "\uE74A" } }; forward.Click += (_, _) => ChangeLayerOrder(1);
+            var remove = new Button { Content = new FontIcon { Glyph = "\uE74D" } }; remove.Click += (_, _) => RemoveLayer_Click(remove, new RoutedEventArgs());
+            NameTool(opacity, "TplOpacity"); NameTool(fit, "TplImageFit"); NameTool(locked, "TplLockAspect"); NameTool(rotation, "TplRotation"); NameTool(alt, "TplImageAlt"); NameTool(back, "TplSendBackward"); NameTool(forward, "TplBringForward"); NameTool(remove, "TplRemoveLayer");
+            panel.Children.Add(opacity); panel.Children.Add(fit); panel.Children.Add(locked); panel.Children.Add(rotation); panel.Children.Add(alt); panel.Children.Add(back); panel.Children.Add(forward); panel.Children.Add(remove);
+        }
+
+        // The toolbar is a canvas overlay so it follows document coordinates and never escapes a parent flyout.
+        var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
+        var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
+        const double toolbarWidth = 620, toolbarHeight = 44, gap = 8;
+        var left = x + width + gap;
+        if (left + toolbarWidth > TemplateLayout.PageWidth) left = x - toolbarWidth - gap;
+        if (left < 0) left = Math.Clamp(x, 0, TemplateLayout.PageWidth - toolbarWidth);
+        var top = y;
+        if (top + toolbarHeight > TemplateLayout.PageHeight) top = Math.Max(0, y + height - toolbarHeight);
+        Canvas.SetLeft(toolbar, left); Canvas.SetTop(toolbar, top); Canvas.SetZIndex(toolbar, 3000);
+        LayoutCanvas.Children.Add(toolbar);
+        _contextualToolbar = toolbar;
+    }
+
+    private async Task OpenAppearanceEditorAsync(string key)
+    {
+        _template.BlockAppearances ??= new();
+        _template.BlockAppearances.TryGetValue(key, out var current);
+        current ??= new TemplateBlockAppearance();
+        var background = new TextBox { Text = current.BackgroundColor ?? string.Empty, PlaceholderText = L.Get("TplAppearanceBackground") };
+        var border = new TextBox { Text = current.BorderColor ?? string.Empty, PlaceholderText = L.Get("TplAppearanceBorder") };
+        var thickness = new NumberBox { Value = current.BorderThickness, Minimum = 0, Maximum = 20, Header = L.Get("TplAppearanceThickness") };
+        var radius = new NumberBox { Value = current.CornerRadius, Minimum = 0, Maximum = 100, Header = L.Get("TplAppearanceRadius") };
+        var padding = new NumberBox { Value = current.Padding, Minimum = 0, Maximum = 100, Header = L.Get("TplAppearancePadding") };
+        var opacity = new Slider { Value = Math.Clamp(current.Opacity * 100, 0, 100), Minimum = 0, Maximum = 100, Header = L.Get("TplOpacity") };
+        var panel = new StackPanel { Width = 300, Spacing = 8 };
+        panel.Children.Add(background); panel.Children.Add(border); panel.Children.Add(thickness); panel.Children.Add(radius); panel.Children.Add(padding); panel.Children.Add(opacity);
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplAppearance"), Content = panel, PrimaryButtonText = L.Get("TplSave"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        var backgroundValue = background.Text.Trim(); var borderValue = border.Text.Trim();
+        if ((backgroundValue.Length > 0 && !IsColor(backgroundValue)) || (borderValue.Length > 0 && !IsColor(borderValue))) { StatusText.Text = L.Get("TplInvalidColor"); return; }
+        CaptureVisualUndo();
+        _template.BlockAppearances[key] = new TemplateBlockAppearance
+        {
+            BackgroundColor = backgroundValue.Length == 0 ? null : backgroundValue, BorderColor = borderValue.Length == 0 ? null : borderValue,
+            BorderThickness = Math.Clamp(SafeNumber(thickness.Value, 0), 0, 20), CornerRadius = Math.Clamp(SafeNumber(radius.Value, 0), 0, 100),
+            Padding = Math.Clamp(SafeNumber(padding.Value, 0), 0, 100), Opacity = Math.Clamp(opacity.Value / 100, 0, 1)
+        };
+        _dirty = true;
+        UpdatePreview();
+    }
+
+    private void AddFormatButton(Panel panel, string content, string tooltipKey, bool selected, Action<bool> apply)
+    {
+        var button = new Microsoft.UI.Xaml.Controls.Primitives.ToggleButton { Content = content, IsChecked = selected, MinWidth = 28 };
+        button.Checked += (_, _) => apply(true); button.Unchecked += (_, _) => apply(false);
+        NameTool(button, tooltipKey);
+        panel.Children.Add(button);
+    }
+
+    private void SetContextualStyle(string key, Action<TemplateTextStyle> apply)
+    {
+        if (_binding) return;
+        CaptureVisualUndo();
+        var style = StyleFor(key, _template.MealFontSize); apply(style); _template.TextStyles[key] = style;
+        _dirty = true;
+        UpdatePreview();
     }
 
     private void PlaceTextFrame(string key, FrameworkElement content)
@@ -503,6 +817,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         x = double.IsFinite(x) ? Math.Clamp(x, 0, 774) : 0; y = double.IsFinite(y) ? Math.Clamp(y, 0, 1103) : 0;
         width = double.IsFinite(width) ? Math.Clamp(width, 20, 794 - x) : 100; height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123 - y) : 30;
         var frame = new Grid { Width = width, Height = height, Background = new SolidColorBrush(Colors.Transparent) };
+        if (!objectKey.StartsWith("image:", StringComparison.Ordinal) && _template.BlockAppearances != null && _template.BlockAppearances.TryGetValue(objectKey, out var appearance) && appearance != null)
+        {
+            frame.Opacity = Math.Clamp(double.IsFinite(appearance.Opacity) ? appearance.Opacity : 1, 0, 1);
+            frame.Children.Add(new Border { Background = appearance.BackgroundColor is { } background && IsColor(background) ? new SolidColorBrush(ParseColor(background, Colors.Transparent)) : null,
+                BorderBrush = appearance.BorderColor is { } border && IsColor(border) ? new SolidColorBrush(ParseColor(border, Colors.Transparent)) : null,
+                BorderThickness = new Thickness(Math.Clamp(double.IsFinite(appearance.BorderThickness) ? appearance.BorderThickness : 0, 0, 20)),
+                CornerRadius = new CornerRadius(Math.Clamp(double.IsFinite(appearance.CornerRadius) ? appearance.CornerRadius : 0, 0, 100)),
+                Padding = new Thickness(Math.Clamp(double.IsFinite(appearance.Padding) ? appearance.Padding : 0, 0, 100)), IsHitTestVisible = false });
+            content.Margin = new Thickness(Math.Clamp(double.IsFinite(appearance.Padding) ? appearance.Padding : 0, 0, 100));
+        }
         if (content is not Button { Content: Image })
         {
             content.Measure(new Windows.Foundation.Size(width, double.PositiveInfinity));
@@ -525,12 +849,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Windows.Foundation.Point start = default;
             double initialX = 0, initialY = 0, initialWidth = 0, initialHeight = 0;
             bool dragging = false;
-            handle.PointerPressed += (_, e) => { if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed) return; start = e.GetCurrentPoint(LayoutCanvas).Position; initialX = x; initialY = y; initialWidth = width; initialHeight = height; dragging = handle.CapturePointer(e.Pointer); e.Handled = true; };
+            handle.PointerPressed += (_, e) => { if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed) return; CaptureVisualUndo(); start = e.GetCurrentPoint(LayoutCanvas).Position; initialX = x; initialY = y; initialWidth = width; initialHeight = height; dragging = handle.CapturePointer(e.Pointer); if (_contextualToolbar != null) _contextualToolbar.Visibility = Visibility.Collapsed; e.Handled = true; };
             handle.PointerMoved += (_, e) =>
             {
                 if (!dragging) return;
                 var point = e.GetCurrentPoint(LayoutCanvas).Position;
-                if (resizing) { width = Math.Clamp(initialWidth + point.X - start.X, 20, 794 - x); height = Math.Clamp(initialHeight + point.Y - start.Y, 20, 1123 - y); frame.Width = width; frame.Height = height; }
+                if (resizing) { width = Math.Clamp(initialWidth + point.X - start.X, 20, 794 - x); var locked = objectKey.StartsWith("image:", StringComparison.Ordinal) ? _template.ImageLayers.FirstOrDefault(layer => "image:" + layer.Id == objectKey)?.LockAspectRatio == true : false; height = locked ? Math.Clamp(width * initialHeight / Math.Max(1, initialWidth), 20, 1123 - y) : Math.Clamp(initialHeight + point.Y - start.Y, 20, 1123 - y); frame.Width = width; frame.Height = height; }
                 else
                 {
                     x = Math.Clamp(initialX + point.X - start.X, 0, 794 - width); y = Math.Clamp(initialY + point.Y - start.Y, 0, 1123 - height);
@@ -573,6 +897,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void CanvasObject_KeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            SelectElement(null);
+            e.Handled = true;
+            return;
+        }
         var (dx, dy) = e.Key switch
         {
             Windows.System.VirtualKey.Left => (-1, 0), Windows.System.VirtualKey.Right => (1, 0),
@@ -656,6 +986,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var index = all.FindIndex(layer => layer.Id == selected);
         var target = index + direction;
         if (index < 0 || target < 0 || target >= all.Count) return;
+        CaptureVisualUndo();
         (all[index], all[target]) = (all[target], all[index]);
         for (var i = 0; i < all.Count; i++) all[i].Set(i + 1);
         _dirty = true;
@@ -667,6 +998,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void RemoveLayer_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedImageId == null) return;
+        CaptureVisualUndo();
         _template.ImageLayers.RemoveAll(layer => layer.Id == _selectedImageId);
         _dirty = true;
         _selectedImageId = null;
