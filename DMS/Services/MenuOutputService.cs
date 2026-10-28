@@ -93,6 +93,7 @@ public static class MenuOutputService
             if (!page) return null;
             const bounds = page.getBoundingClientRect();
             const nodes = [...page.querySelectorAll('.box')].filter(x => x.textContent.trim().length > 0);
+            if (nodes.some(x => x.dataset.layoutOverflow === 'true')) return true;
             const rects = nodes.map(x => x.getBoundingClientRect());
             const outside = r => r.left < bounds.left - 1 || r.top < bounds.top - 1 || r.right > bounds.left + 795 || r.bottom > bounds.top + 1124;
             if (rects.some(outside)) return true;
@@ -111,8 +112,7 @@ public static class MenuOutputService
         var entries = await database.GetMenuAsync(DateTime.MinValue, DateTime.MaxValue);
         var recipes = await database.GetAllRecipesAsync();
         var ingredients = await database.GetAllIngredientsAsync();
-        var weeks = entries.Where(e => e.Date.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
-            .Select(e => Monday(e.Date)).Distinct().OrderByDescending(d => d).ToList();
+        var weeks = entries.Select(e => Monday(e.Date)).Distinct().OrderByDescending(d => d).ToList();
         if (weeks.Count == 0)
         {
             await new ContentDialog { XamlRoot = root, Title = Localization.Get("OutputTitle"),
@@ -221,6 +221,8 @@ public static class MenuOutputService
             SetReady(false);
             UpdateMarginAvailability();
             if (view.CoreWebView2 == null || documentSource == null || weekBox.SelectedItem is not ComboBoxItem weekItem || weekItem.Tag is not DateTime week || templateBox.SelectedItem is not MenuTemplate template) return;
+            foreach (var option in weekBox.Items.OfType<ComboBoxItem>())
+                if (option.Tag is DateTime day) option.Content = $"{day:d} – {day.AddDays(template.IncludeWeekend ? 6 : 4):d}";
             status.Text = Localization.Get("OutputPreparing");
             var margin = margins.SelectedIndex switch { 0 => 5, 2 => 15, _ => 10 };
             var html = BuildHtml(template, week, entries, recipes, ingredients, margin);
@@ -284,7 +286,7 @@ public static class MenuOutputService
             weekBox.IsEnabled = templateBox.IsEnabled = margins.IsEnabled = close.IsEnabled = false;
             try
             {
-                var file = await PickAsync("PDF", ".pdf", selectedWeek);
+                var file = await PickAsync("PDF", ".pdf", selectedWeek, (templateBox.SelectedItem as MenuTemplate)?.IncludeWeekend == true);
                 if (file == null) return;
                 var settings = view.CoreWebView2.Environment.CreatePrintSettings();
                 settings.PageWidth = 210.0 / 25.4;
@@ -312,7 +314,7 @@ public static class MenuOutputService
                     status.Text = Localization.Get("OutputImageOverflow");
                     return;
                 }
-                var file = await PickAsync("PNG", ".png", selectedWeek);
+                var file = await PickAsync("PNG", ".png", selectedWeek, (templateBox.SelectedItem as MenuTemplate)?.IncludeWeekend == true);
                 if (file == null) return;
                 using var image = new InMemoryRandomAccessStream();
                 await view.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, image);
@@ -342,10 +344,10 @@ public static class MenuOutputService
         }
     }
 
-    private static async Task<StorageFile?> PickAsync(string type, string extension, DateTime selectedWeek)
+    private static async Task<StorageFile?> PickAsync(string type, string extension, DateTime selectedWeek, bool includeWeekend)
     {
         var start = Monday(selectedWeek);
-        var end = start.AddDays(4);
+        var end = start.AddDays(includeWeekend ? 6 : 4);
         var filename = $"{start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} - {end.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
         var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = filename };
         picker.FileTypeChoices.Add(type, new[] { extension });
@@ -388,12 +390,12 @@ public static class MenuOutputService
         if (validImage) sb.Append("<div class='background' style=\"background-image:url('").Append(H(image)).Append("');opacity:").Append((double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1).ToString(CultureInfo.InvariantCulture)).Append("\"></div>");
         sb.Append("<div class='content'>");
         if (template.ShowHeader) sb.Append("<h1 style=\"text-align:").Append(Align(template.HeaderAlignment)).Append(";color:").Append(headerColor).Append(";font-size:").Append(Size(template.HeaderFontSize,24)).Append("px;font-weight:").Append(template.HeaderBold ? "bold" : "normal").Append(";font-style:").Append(template.HeaderItalic ? "italic" : "normal").Append(";text-decoration:").Append(template.HeaderUnderline ? "underline" : "none").Append(';').Append(TextStyle("header")).Append("\">").Append(RichTextOrPlain(template.HeaderRichText, template.HeaderText)).Append("</h1>");
-        if (template.ShowDateRange) sb.Append("<div style=\"text-align:center;").Append(TextStyle("date")).Append("\">").Append(H($"{week:d} – {week.AddDays(4):d}")).Append("</div>");
+        if (template.ShowDateRange) sb.Append("<div style=\"text-align:center;").Append(TextStyle("date")).Append("\">").Append(H($"{week:d} – {week.AddDays(template.IncludeWeekend ? 6 : 4):d}")).Append("</div>");
         sb.Append("<div style='font-size:").Append(Size(template.MealFontSize, 11)).Append("px' class='").Append(template.TemplateStyle == "detailed-2col" ? "columns" : "").Append("'>");
         var byId = recipes.ToDictionary(r => r.Id);
         var ingredientByName = (ingredients ?? Array.Empty<Ingredient>()).GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < (template.IncludeWeekend ? 7 : 5); i++)
         {
             var day = week.Date.AddDays(i);
             var dayEntries = entries.Where(e => e.Date.Date == day && byId.ContainsKey(e.RecipeId)).OrderBy(e => SlotOrder(e.Slot)).ToList();
@@ -437,6 +439,7 @@ public static class MenuOutputService
         var template = source;
         var defaults = new MenuTemplate();
         TemplateLayout.EnsureInitialized(defaults);
+        if (template.IncludeWeekend) TemplateLayout.InitializeSevenDayLayout(defaults);
         static string H(string? value) => WebUtility.HtmlEncode(value ?? "");
         static string Color(string? value, string fallback) => value != null && System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$") ? value : fallback;
         static string Num(double value, double fallback, double min, double max) => (double.IsFinite(value) ? Math.Clamp(value, min, max) : fallback).ToString(CultureInfo.InvariantCulture);
@@ -455,7 +458,7 @@ public static class MenuOutputService
             var opacity = Num(appearance.Opacity, 1, 0, 1);
             return $";background-color:{background};border:{borderThickness}px solid {borderColor};border-radius:{radius}px;padding:{padding}px;opacity:{opacity}";
         }
-        string Css(TemplateTextStyle style) => $"font-family:'{H(Font(style.FontFamily))}';font-size:{Num(style.FontSize, 11, 6, 72)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}" + (style.Alignment is "left" or "center" or "right" ? $";text-align:{style.Alignment}" : "");
+        string Css(TemplateTextStyle style, double scale = 1) => $"font-family:'{H(Font(style.FontFamily))}';font-size:{Num(style.FontSize * scale, 11, 3, 72)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}" + (style.Alignment is "left" or "center" or "right" ? $";text-align:{style.Alignment}" : "");
         TemplateTextStyle Style(string key, double size, bool bold = false, string? legacy = null)
         {
             if (template.TextStyles != null && template.TextStyles.TryGetValue(key, out var found) && found != null) return found;
@@ -475,15 +478,23 @@ public static class MenuOutputService
             if (layer == null || !ValidImage(layer.DataUri)) continue;
             sb.Append("<img alt='").Append(H(ImageAlt(layer))).Append("' src=\"").Append(H(layer.DataUri)).Append("\" style=\"position:absolute;left:").Append(Num(layer.X, 0, 0, 794)).Append("px;top:").Append(Num(layer.Y, 0, 0, 1123)).Append("px;width:").Append(Num(layer.Width, 100, 1, 794)).Append("px;height:").Append(Num(layer.Height, 100, 1, 1123)).Append("px;z-index:").Append(Math.Clamp(layer.ZIndex, 1, 1000)).Append(";opacity:").Append(Num(layer.Opacity, 1, 0, 1)).Append(ImagePresentation(layer)).Append("\">");
         }
+        foreach (var layer in template.TextLayers ?? [])
+        {
+            if (layer == null) continue;
+            var position = new TemplateLayoutElement { X = layer.X, Y = layer.Y, Width = layer.Width, Height = layer.Height, ZIndex = layer.ZIndex };
+            sb.Append("<div class='box' data-element=\"").Append(H("text:" + layer.Id)).Append("\" style=\"")
+                .Append(Position(position)).Append(';').Append(Css(layer.Style ?? new TemplateTextStyle())).Append(Appearance("text:" + layer.Id))
+                .Append("\">").Append(H(layer.Text)).Append("</div>");
+        }
         TemplateLayoutElement Element(string key) => template.LayoutElements != null && template.LayoutElements.TryGetValue(key, out var element) && element != null ? element : defaults.LayoutElements[key];
         void Box(string key, string text, TemplateTextStyle style, string align = "left", TemplateRichTextContent? richText = null) => sb.Append("<div class='box' data-element=\"").Append(H(key)).Append("\" style=\"").Append(Position(Element(key))).Append(';').Append(Css(style)).Append(";text-align:").Append(Align(align)).Append(Appearance(key)).Append("\">").Append(RichTextOrPlain(richText, text)).Append("</div>");
         var headerDefault = new TemplateTextStyle { FontFamily = template.FontFamily, FontSize = template.HeaderFontSize, Color = template.HeaderColor, Bold = template.HeaderBold, Italic = template.HeaderItalic, Underline = template.HeaderUnderline };
         var headerStyle = template.TextStyles != null && template.TextStyles.TryGetValue("header", out var header) && header != null ? header : headerDefault;
         if (template.ShowHeader) Box("header", template.HeaderText, headerStyle, headerStyle.Alignment ?? template.HeaderAlignment, template.HeaderRichText);
-        if (template.ShowDateRange) Box("date", $"{week:d} – {week.AddDays(4):d}", Style("date", 14), "center");
+        if (template.ShowDateRange) Box("date", $"{week:d} – {week.AddDays(template.IncludeWeekend ? 6 : 4):d}", Style("date", 14), "center");
         var byId = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
         var ingredientByName = (ingredients ?? Array.Empty<Ingredient>()).GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < (template.IncludeWeekend ? 7 : 5); i++)
         {
             var day = week.Date.AddDays(i);
             Box($"heading:{i}", day.ToString("dddd, d MMMM"), Style($"heading:{i}", 15, true, $"day:{i}"));
@@ -504,7 +515,17 @@ public static class MenuOutputService
                 if (estimatedAllergens.Count > 0) menuLines.Add(("⚠ " + string.Join(", ", estimatedAllergens), Style($"allergen-group:{i}", template.MealFontSize, legacy: $"allergens:{i}:{slot}").FontSize));
             }
             var menuElement = Element(key);
-            var resolution = TemplateLayout.ResolveMenuHeight(template, menuElement, TemplateLayout.EstimateTextHeight(menuLines, menuElement.Width));
+            var neighbors = new List<TemplateLayoutElement>();
+            if (template.ShowHeader) neighbors.Add(Element("header"));
+            if (template.ShowDateRange) neighbors.Add(Element("date"));
+            if (template.ShowFooter) neighbors.Add(Element("footer"));
+            for (var neighbor = 0; neighbor < (template.IncludeWeekend ? 7 : 5); neighbor++)
+            {
+                neighbors.Add(Element($"heading:{neighbor}"));
+                if (neighbor != i) neighbors.Add(Element($"menu:{neighbor}"));
+            }
+            var available = TemplateLayout.AvailableHeight(menuElement, neighbors);
+            var resolution = TemplateLayout.ResolveMenuFit(template, menuElement, TemplateLayout.EstimateTextHeight(menuLines, menuElement.Width), available);
             sb.Append("<div class='box").Append(template.MenuBlockSizing?.Enabled == true ? " menu-box" : "").Append(resolution.Overflowed ? " menu-overflow" : "").Append("' data-element=\"").Append(key).Append("\"")
                 .Append(resolution.Overflowed ? " data-layout-overflow=\"true\"" : "")
                 .Append(" style=\"").Append(Position(menuElement, resolution.Height)).Append(Appearance(key)).Append("\">");
@@ -515,11 +536,11 @@ public static class MenuOutputService
                 var name = $"{slot}. {recipe.Name}";
                 if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) name += $" ({recipe.PortionSize})";
                 if (template.ShowCalories && recipe.Calories > 0) name += $" · {recipe.Calories} kcal";
-                sb.Append("<div class='meal'><div class='line' style=\"").Append(Css(Style(key, template.MealFontSize, legacy: $"meal:{i}:{slot}"))).Append("\">").Append(H(name)).Append("</div>");
-                if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"ingredient-group:{i}", template.MealFontSize, legacy: $"ingredients:{i}:{slot}"))).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
+                sb.Append("<div class='meal'><div class='line' style=\"").Append(Css(Style(key, template.MealFontSize, legacy: $"meal:{i}:{slot}"), resolution.FontScale)).Append("\">").Append(H(name)).Append("</div>");
+                if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"ingredient-group:{i}", template.MealFontSize, legacy: $"ingredients:{i}:{slot}"), resolution.FontScale)).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredientByName.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToList();
-                if (allergens.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"allergen-group:{i}", template.MealFontSize, legacy: $"allergens:{i}:{slot}"))).Append("\">⚠ ").Append(H(string.Join(", ", allergens))).Append("</div>");
+                if (allergens.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"allergen-group:{i}", template.MealFontSize, legacy: $"allergens:{i}:{slot}"), resolution.FontScale)).Append("\">⚠ ").Append(H(string.Join(", ", allergens))).Append("</div>");
                 sb.Append("</div>");
             }
             sb.Append("</div>");

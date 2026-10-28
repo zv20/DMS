@@ -326,6 +326,31 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
+  <data name="TplSelectionDate" xml:space="preserve"><value>Период от дати</value></data>
+  <data name="TplSelectionEditableHint" xml:space="preserve"><value>Текст в шаблона: щракнете и пишете, за да го промените.</value></data>
+  <data name="TplSelectionLinkedHint" xml:space="preserve"><value>Генерирано от избраната седмица. Форматирайте тук; променяйте менюто в планирането.</value></data>
+  <data name="TplSelectionImageHint" xml:space="preserve"><value>Изображение в шаблона: преместете, преоразмерете или променете външния му вид.</value></data>
+  <data name="TplWeekendLayout" xml:space="preserve"><value>Промяна на уикенда</value></data>
+  <data name="TplWeekendEnableWarning" xml:space="preserve"><value>Включването на уикенда заменя позициите на всички дни със седемдневно оформление. Заглавието, долният колонтитул и изображенията остават на мястото си. Промяната може да се отмени.</value></data>
+  <data name="TplWeekendDisableWarning" xml:space="preserve"><value>Да се скрият ли дните през уикенда? Позициите на дните ще бъдат запазени.</value></data>
+  <data name="TplWeekendEnable" xml:space="preserve"><value>Седем дни</value></data>
+  <data name="TplWeekendDisable" xml:space="preserve"><value>Делнични дни</value></data>
+  <data name="TplSizingTitle" xml:space="preserve"><value>Размер на блока за меню</value></data>
+  <data name="TplSizingMode" xml:space="preserve"><value>Побиране на съдържанието</value></data>
+  <data name="TplSizingFixed" xml:space="preserve"><value>Фиксиран размер</value></data>
+  <data name="TplSizingFlexible" xml:space="preserve"><value>Гъвкава височина</value></data>
+  <data name="TplSizingShrink" xml:space="preserve"><value>Намаляване на текста</value></data>
+  <data name="TplSizingMinHeight" xml:space="preserve"><value>Минимална височина</value></data>
+  <data name="TplSizingMaxHeight" xml:space="preserve"><value>Максимална височина</value></data>
+  <data name="TplSizingMinScale" xml:space="preserve"><value>Минимален размер на текста (%)</value></data>
+  <data name="TplSizingAllDays" xml:space="preserve"><value>Тези настройки важат за блоковете на всички дни.</value></data>
+  <data name="TplSizingApply" xml:space="preserve"><value>Приложи</value></data>
+  <data name="TplApplyWeekdayStyle" xml:space="preserve"><value>Приложи този стил на текста за всички дни</value></data>
+  <data name="TplAddText" xml:space="preserve"><value>Добави текстово поле</value></data>
+  <data name="TplNewText" xml:space="preserve"><value>Нов текст</value></data>
+  <data name="TplRemoveText" xml:space="preserve"><value>Премахни текстовото поле</value></data>
+  <data name="TplLockPosition" xml:space="preserve"><value>Заключи позицията и размера</value></data>
+  <data name="TplUnlockPosition" xml:space="preserve"><value>Отключи позицията и размера</value></data>
   <data name="TplZoom" xml:space="preserve"><value>Мащаб на страницата</value></data>
   <data name="TplZoomIn" xml:space="preserve"><value>Увеличаване</value></data>
   <data name="TplZoomOut" xml:space="preserve"><value>Намаляване</value></data>

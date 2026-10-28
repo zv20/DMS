@@ -10,7 +10,10 @@ Run `DMS` in the x64 Debug configuration from Visual Studio, then tick these off
 - [ ] Select a text block: test its contextual font, size, color, style, alignment, appearance, and Undo/Redo controls.
 - [ ] Edit a header or footer with mixed bold/italic/underline text; save and reopen the template.
 - [ ] Select an image: test contain/cover/fill, aspect lock, rotation, description, opacity, and layer order.
-- [ ] Turn on menu Auto-fit and use a deliberately long Bulgarian and English recipe name; confirm the warning appears instead of overlapping another day.
+- [ ] Test fixed, flexible, and shrink sizing with short and long Bulgarian and English recipes. Compare the canvas and print preview; check the warning when text cannot fit.
+- [ ] Copy a weekday text style to all days, then change one day and verify the others retain their style after saving and reopening.
+- [ ] Add a free text box, edit and format it, move it, lock its position, and verify it persists and prints. Test image and text layer order.
+- [ ] Enable the seven-day template layout after reviewing its rearrangement warning. Add weekend recipes and verify Saturday and Sunday in the canvas, print preview, PDF, PNG, and filenames. Test an older five-day template too.
 - [ ] Compare the canvas with Print Preview, PDF export, and PNG export. Check no content is cropped and the saved date range is used in the filename.
 - [ ] Run `dotnet test DMS.sln --configuration Debug -p:Platform=x64` after the build succeeds.
 

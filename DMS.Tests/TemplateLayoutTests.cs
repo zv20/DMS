@@ -66,6 +66,45 @@ public sealed class TemplateLayoutTests
     }
 
     [Fact]
+    public void FixedAndFlexibleModesWarnWhenSpaceIsInsufficient()
+    {
+        var template = new MenuTemplate();
+        var element = new TemplateLayoutElement { Height = 100 };
+        var fixedResult = TemplateLayout.ResolveMenuFit(template, element, 120);
+        Assert.Equal(100, fixedResult.Height);
+        Assert.True(fixedResult.Overflowed);
+
+        template.MenuBlockSizing = new TemplateMenuBlockSizing { Mode = "flexible", MinimumHeight = 80, MaximumHeight = 160 };
+        var bounded = TemplateLayout.ResolveMenuFit(template, element, 140, 120);
+        Assert.Equal(120, bounded.Height);
+        Assert.True(bounded.Overflowed);
+        Assert.Equal(80, TemplateLayout.ResolveMenuFit(template, element, 50, 120).Height);
+    }
+
+    [Fact]
+    public void ShrinkModeRespectsMinimumScaleAndWarnsIfStillTooLong()
+    {
+        var template = new MenuTemplate { MenuBlockSizing = new TemplateMenuBlockSizing { Mode = "shrink", MinimumFontScale = .8 } };
+        var element = new TemplateLayoutElement { Height = 100 };
+        var fits = TemplateLayout.ResolveMenuFit(template, element, 110);
+        Assert.InRange(fits.FontScale, .90, .92);
+        Assert.False(fits.Overflowed);
+        var overflow = TemplateLayout.ResolveMenuFit(template, element, 160);
+        Assert.Equal(.8, overflow.FontScale);
+        Assert.True(overflow.Overflowed);
+    }
+
+    [Fact]
+    public void AvailableHeightStopsAtOverlappingNextBlockOrPageEdge()
+    {
+        var box = new TemplateLayoutElement { X = 40, Y = 900, Width = 300, Height = 100 };
+        var footer = new TemplateLayoutElement { X = 40, Y = 1010, Width = 300, Height = 30 };
+        var beside = new TemplateLayoutElement { X = 400, Y = 920, Width = 100, Height = 30 };
+        Assert.Equal(110, TemplateLayout.AvailableHeight(box, [footer, beside]));
+        Assert.Equal(223, TemplateLayout.AvailableHeight(box, [beside]));
+    }
+
+    [Fact]
     public async Task SavedLayoutSurvivesDatabaseReopen()
     {
         var directory = Path.Combine(Path.GetTempPath(), "DMS.LayoutTests", Guid.NewGuid().ToString("N"));

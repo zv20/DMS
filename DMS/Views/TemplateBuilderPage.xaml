@@ -19,6 +19,10 @@
         </ScrollViewer>
         <TextBlock x:Name="LegacyNote" TextWrapping="Wrap" Visibility="Collapsed" Margin="12,0" />
         <TextBlock x:Name="StatusText" TextWrapping="Wrap" Margin="12,0" />
+        <StackPanel x:Name="SelectionInfo" Margin="12,2,12,4" Visibility="Collapsed">
+            <TextBlock x:Name="SelectionPath" TextWrapping="Wrap" FontWeight="SemiBold" />
+            <TextBlock x:Name="SelectionHint" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+        </StackPanel>
         </StackPanel>
 
         <!-- Page tools sit alongside the document; selected-object tools remain on the canvas. -->
@@ -37,6 +41,7 @@
                         <Button x:Name="EnableCanvasButton" Click="EnableCanvas_Click"><FontIcon Glyph="&#xE8A9;" /></Button>
                         <Button x:Name="EditTextButton" Click="EditText_Click"><FontIcon Glyph="&#xE70F;" /></Button>
                         <Button x:Name="ImageButton" Click="Image_Click"><FontIcon Glyph="&#xEB9F;" /></Button>
+                        <Button x:Name="AddTextButton" Click="AddText_Click"><FontIcon Glyph="&#xE8D2;" /></Button>
                         <Button x:Name="ClearImageButton" Click="ClearImage_Click"><FontIcon Glyph="&#xE74D;" /></Button>
                         <Button x:Name="ForwardButton" Click="Forward_Click" Visibility="Collapsed"><FontIcon Glyph="&#xE74A;" /></Button>
                         <Button x:Name="BackwardButton" Click="Backward_Click" Visibility="Collapsed"><FontIcon Glyph="&#xE74B;" /></Button>
@@ -48,6 +53,7 @@
                                 <Flyout>
                                     <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
                                         <StackPanel Width="260" Spacing="8">
+                                            <Button x:Name="WeekendLayoutButton" Click="WeekendLayout_Click" />
                                             <ComboBox x:Name="FontBox" />
                                             <NumberBox x:Name="HeaderSizeBox" Minimum="8" Maximum="72" SpinButtonPlacementMode="Compact" />
                                             <StackPanel Orientation="Horizontal" Spacing="5">

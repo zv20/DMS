@@ -70,6 +70,59 @@ public sealed class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void PositionedMenuShrinkScalesTextAndReportsOverflowAtMinimumScale()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { LayoutEnabled = true, MenuBlockSizing = new TemplateMenuBlockSizing { Mode = "shrink", MinimumFontScale = .75 } };
+        template.LayoutElements["menu:0"] = new TemplateLayoutElement { X = 40, Y = 165, Width = 100, Height = 40 };
+        template.TextStyles["menu:0"] = new TemplateTextStyle { FontSize = 20 };
+        var entry = new MenuEntry { Date = monday, Slot = "slot1", RecipeId = 7 };
+        var html = MenuOutputService.BuildHtml(template, monday, [entry], [new Recipe { Id = 7, Name = new string('W', 300) }]);
+        Assert.Contains("font-size:15px", html);
+        Assert.Contains("data-element=\"menu:0\" data-layout-overflow=\"true\"", html);
+    }
+
+    [Fact]
+    public void FlexibleMenuWarnsWhenLongContentWouldReachFooter()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var template = new MenuTemplate { LayoutEnabled = true, MenuBlockSizing = new TemplateMenuBlockSizing { Mode = "flexible", MinimumHeight = 40, MaximumHeight = 200 } };
+        template.LayoutElements["menu:0"] = new TemplateLayoutElement { X = 40, Y = 900, Width = 200, Height = 100 };
+        template.LayoutElements["footer"] = new TemplateLayoutElement { X = 40, Y = 990, Width = 200, Height = 30 };
+        var entry = new MenuEntry { Date = monday, Slot = "slot1", RecipeId = 7 };
+        var html = MenuOutputService.BuildHtml(template, monday, [entry], [new Recipe { Id = 7, Name = new string('W', 500) }]);
+        Assert.Contains("data-element=\"menu:0\" data-layout-overflow=\"true\"", html);
+        Assert.Contains("min-height:90px", html);
+        Assert.Contains("data-element=\"footer\"", html);
+    }
+
+    [Fact]
+    public void WeekendOutputIsIncludedOnlyWhenTemplateEnablesIt()
+    {
+        var monday = new DateTime(2026, 10, 26);
+        var entry = new MenuEntry { Date = monday.AddDays(5), Slot = "slot1", RecipeId = 7 };
+        var recipes = new[] { new Recipe { Id = 7, Name = "Weekend recipe" } };
+        var template = new MenuTemplate { LayoutEnabled = true };
+        Assert.DoesNotContain("Weekend recipe", MenuOutputService.BuildHtml(template, monday, [entry], recipes));
+        template.IncludeWeekend = true;
+        var html = MenuOutputService.BuildHtml(template, monday, [entry], recipes);
+        Assert.Contains("Weekend recipe", html);
+        Assert.Contains("data-element=\"heading:5\"", html);
+        Assert.Contains("data-element=\"heading:6\"", html);
+    }
+
+    [Fact]
+    public void AdditionalTextLayersAreSafelyEncodedInPositionedOutput()
+    {
+        var template = new MenuTemplate { LayoutEnabled = true };
+        template.TextLayers.Add(new TemplateTextLayer { Id = "note", Text = "<note>", X = 20, Y = 30, Style = new TemplateTextStyle { Color = "#123456" } });
+        var html = MenuOutputService.BuildHtml(template, new DateTime(2026, 10, 26), [], []);
+        Assert.Contains("data-element=\"text:note\"", html);
+        Assert.Contains("&lt;note&gt;", html);
+        Assert.Contains("color:#123456", html);
+    }
+
+    [Fact]
     public void PositionedTemplateAppliesOnlySafeSavedBlockAppearance()
     {
         var template = new MenuTemplate { LayoutEnabled = true };

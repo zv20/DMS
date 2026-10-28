@@ -326,6 +326,31 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Selected text</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Text size</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Text color</value></data>
+  <data name="TplSelectionDate" xml:space="preserve"><value>Date range</value></data>
+  <data name="TplSelectionEditableHint" xml:space="preserve"><value>Template text: click and type to edit.</value></data>
+  <data name="TplSelectionLinkedHint" xml:space="preserve"><value>Generated from the selected week. Format it here; change menu data in the planner.</value></data>
+  <data name="TplSelectionImageHint" xml:space="preserve"><value>Template image: move, resize, or adjust its appearance.</value></data>
+  <data name="TplWeekendLayout" xml:space="preserve"><value>Change weekend layout</value></data>
+  <data name="TplWeekendEnableWarning" xml:space="preserve"><value>Enabling weekends replaces all weekday positions with a seven-day layout. Header, footer and images stay in place. This can be undone.</value></data>
+  <data name="TplWeekendDisableWarning" xml:space="preserve"><value>Hide weekend days? Existing day positions will be preserved.</value></data>
+  <data name="TplWeekendEnable" xml:space="preserve"><value>Use seven days</value></data>
+  <data name="TplWeekendDisable" xml:space="preserve"><value>Use weekdays</value></data>
+  <data name="TplSizingTitle" xml:space="preserve"><value>Menu block sizing</value></data>
+  <data name="TplSizingMode" xml:space="preserve"><value>How content fits</value></data>
+  <data name="TplSizingFixed" xml:space="preserve"><value>Fixed size</value></data>
+  <data name="TplSizingFlexible" xml:space="preserve"><value>Flexible height</value></data>
+  <data name="TplSizingShrink" xml:space="preserve"><value>Shrink text to fit</value></data>
+  <data name="TplSizingMinHeight" xml:space="preserve"><value>Minimum height</value></data>
+  <data name="TplSizingMaxHeight" xml:space="preserve"><value>Maximum height</value></data>
+  <data name="TplSizingMinScale" xml:space="preserve"><value>Minimum text size (%)</value></data>
+  <data name="TplSizingAllDays" xml:space="preserve"><value>These settings apply to all weekday menu blocks.</value></data>
+  <data name="TplSizingApply" xml:space="preserve"><value>Apply</value></data>
+  <data name="TplApplyWeekdayStyle" xml:space="preserve"><value>Apply this text style to all days</value></data>
+  <data name="TplAddText" xml:space="preserve"><value>Add text box</value></data>
+  <data name="TplNewText" xml:space="preserve"><value>New text</value></data>
+  <data name="TplRemoveText" xml:space="preserve"><value>Remove text box</value></data>
+  <data name="TplLockPosition" xml:space="preserve"><value>Lock position and size</value></data>
+  <data name="TplUnlockPosition" xml:space="preserve"><value>Unlock position and size</value></data>
   <data name="TplZoom" xml:space="preserve"><value>Canvas zoom</value></data>
   <data name="TplZoomIn" xml:space="preserve"><value>Zoom in</value></data>
   <data name="TplZoomOut" xml:space="preserve"><value>Zoom out</value></data>

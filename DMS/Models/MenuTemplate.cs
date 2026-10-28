@@ -28,6 +28,8 @@ public sealed class MenuTemplate
     public bool ShowHeader { get; set; } = true;
     public bool ShowFooter { get; set; } = true;
     public bool ShowDateRange { get; set; } = true;
+    // Seven-day pages are an explicit template choice; old templates remain five-day.
+    public bool IncludeWeekend { get; set; }
     public bool ShowIngredients { get; set; } = true;
     public bool ShowCalories { get; set; } = true;
     public bool ShowPortions { get; set; } = true;
@@ -46,6 +48,8 @@ public sealed class MenuTemplate
     // When enabled, weekday menu boxes may grow only within the configured bounds.
     public TemplateMenuBlockSizing MenuBlockSizing { get; set; } = new();
     public List<TemplateImageLayer> ImageLayers { get; set; } = new();
+    // Additional template-owned text, independent of weekly menu data.
+    public List<TemplateTextLayer> TextLayers { get; set; } = new();
     // Retains an imported browser template intact while its richer layer model
     // is being ported to native WinUI controls.
     public string? LegacyDataJson { get; set; }
@@ -59,6 +63,7 @@ public sealed class TemplateLayoutElement
     public double Width { get; set; }
     public double Height { get; set; }
     public int ZIndex { get; set; } = 10;
+    public bool IsPositionLocked { get; set; }
 }
 
 public sealed class TemplateMenuBlockSizing
@@ -69,6 +74,10 @@ public sealed class TemplateMenuBlockSizing
     // If a menu cannot fit inside MaximumHeight, output remains deterministic and
     // marks the box for the existing layout diagnostic instead of moving other objects.
     public string OverflowBehavior { get; set; } = "warn";
+    // Null retains the original Enabled flag for existing saved templates.
+    // Explicit modes: fixed, flexible, and shrink.
+    public string? Mode { get; set; }
+    public double MinimumFontScale { get; set; } = 0.85;
 }
 
 public sealed class TemplateImageLayer
@@ -86,8 +95,23 @@ public sealed class TemplateImageLayer
     public string FitMode { get; set; } = "fill";
     // This is an editor constraint; rendering uses the persisted dimensions.
     public bool LockAspectRatio { get; set; }
+    public bool IsPositionLocked { get; set; }
     public double RotationDegrees { get; set; }
     public string AltText { get; set; } = string.Empty;
+}
+
+/// <summary>An optional, independently positioned text box on the template.</summary>
+public sealed class TemplateTextLayer
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Text { get; set; } = string.Empty;
+    public double X { get; set; } = 40;
+    public double Y { get; set; } = 200;
+    public double Width { get; set; } = 300;
+    public double Height { get; set; } = 60;
+    public int ZIndex { get; set; } = 10;
+    public bool IsPositionLocked { get; set; }
+    public TemplateTextStyle Style { get; set; } = new();
 }
 
 public sealed class TemplatePageSettings

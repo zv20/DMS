@@ -37,6 +37,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private bool _bindingLayers;
     private Button? _canvasSelectionButton;
     private RichEditBox? _canvasTextEditor;
+    private TextBox? _canvasFreeTextEditor;
     private FrameworkElement? _contextualToolbar;
     private bool? _compactToolbarLayout;
     private bool _updatingZoom;
@@ -89,10 +90,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         NameTool(SelectedFontBox, "TplFont"); NameTool(SelectedSizeBox, "TplSelectedSize"); NameTool(SelectedColorBox, "TplSelectedColor");
         NameTool(SelectedBoldButton, "TplBold"); NameTool(SelectedItalicButton, "TplItalic"); NameTool(SelectedUnderlineButton, "TplUnderline");
         NameTool(ImageButton, "TplImage"); NameTool(ClearImageButton, "TplImageClear");
+        NameTool(AddTextButton, "TplAddText");
         NameTool(EnableCanvasButton, "TplEnableCanvas"); NameTool(EditTextButton, "TplEditText");
         NameTool(ForwardButton, "TplBringForward"); NameTool(BackwardButton, "TplSendBackward"); NameTool(RemoveLayerButton, "TplRemoveLayer");
         NameTool(ImageLayerSelector, "TplLayoutImage"); ImageLayerSelector.PlaceholderText = L.Get("TplLayoutImage");
         NameTool(PageOptionsButton, "TplPageOptions"); NameTool(VisibilityButton, "TplVisibilityOptions");
+        WeekendLayoutButton.Content = L.Get("TplWeekendLayout");
         NameTool(ZoomOutButton, "TplZoomOut"); NameTool(ZoomInButton, "TplZoomIn");
         NameTool(ZoomResetButton, "TplZoomReset"); NameTool(CanvasZoomSlider, "TplZoom");
         ToolTipService.SetToolTip(HeaderDisplayButton, L.Get("TplEditHeader"));
@@ -220,7 +223,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _selectedElement = null;
         _template = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(template)) ?? new MenuTemplate();
         _template.TextStyles ??= new();
-        _template.LayoutElements ??= new(); _template.ImageLayers ??= new();
+        _template.LayoutElements ??= new(); _template.ImageLayers ??= new(); _template.TextLayers ??= new();
         if (originalName == null) TemplateLayout.EnsureInitialized(_template);
         else if (_template.LayoutEnabled) TemplateLayout.EnsureInitialized(_template);
         _template.ImageLayers.RemoveAll(layer => layer == null || string.IsNullOrEmpty(layer.DataUri));
@@ -248,6 +251,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private TemplateTextStyle StyleFor(string key, double size, bool bold = false)
     {
+        if (key.StartsWith("text:", StringComparison.Ordinal))
+        {
+            var layer = _template.TextLayers?.FirstOrDefault(item => "text:" + item.Id == key);
+            if (layer != null) return layer.Style ??= new TemplateTextStyle();
+        }
         if (_template.TextStyles.TryGetValue(key, out var style) && style != null) return style;
         var parts = key.Split(':');
         if (parts.Length == 2 && (parts[0] is "heading" or "menu" or "ingredient-group" or "allergen-group") &&
@@ -293,6 +301,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_template.LayoutEnabled && key != null)
         {
             if (_canvasTextEditor != null) _canvasTextEditor.Focus(FocusState.Programmatic);
+            else if (_canvasFreeTextEditor != null) _canvasFreeTextEditor.Focus(FocusState.Programmatic);
             else _canvasSelectionButton?.Focus(FocusState.Programmatic);
         }
     }
@@ -403,7 +412,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
         try
         {
-            var entries = await _database.GetMenuAsync(monday, monday.AddDays(4));
+            var entries = await _database.GetMenuAsync(monday, monday.AddDays(_template.IncludeWeekend ? 6 : 4));
             if (generation != _previewGeneration) return;
             _entries = entries;
             UpdatePreview();
@@ -466,12 +475,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         FooterBox.Visibility = _template.ShowFooter && _editingFooter ? Visibility.Visible : Visibility.Collapsed;
         var date = PreviewDate.Date?.DateTime.Date ?? DateTime.Today;
         var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
-        if (_template.ShowDateRange) PreviewPanel.Children.Add(SelectableText("date", $"{monday:d} – {monday.AddDays(4):d}", 14));
+        if (_template.ShowDateRange) PreviewPanel.Children.Add(SelectableText("date", $"{monday:d} – {monday.AddDays(_template.IncludeWeekend ? 6 : 4):d}", 14));
         var days = new Grid { ColumnSpacing = 12, RowSpacing = 12 };
         var columns = _template.TemplateStyle == "detailed-2col" ? 2 : 1;
         for (var column = 0; column < columns; column++) days.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        for (var row = 0; row < (5 + columns - 1) / columns; row++) days.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        for (var i = 0; i < 5; i++)
+        var dayCount = _template.IncludeWeekend ? 7 : 5;
+        for (var row = 0; row < (dayCount + columns - 1) / columns; row++) days.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < dayCount; i++)
         {
             var day = monday.AddDays(i);
             var dayPanel = new StackPanel { Spacing = 3 };
@@ -624,6 +634,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         LayoutCanvas.Children.Clear();
         _canvasSelectionButton = null;
         _canvasTextEditor = null;
+        _canvasFreeTextEditor = null;
         _snapGuides.Clear();
         foreach (var image in _template.ImageLayers)
         {
@@ -637,6 +648,25 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             PlaceCanvasFrame("image:" + image.Id, image.X, image.Y, image.Width, image.Height, image.ZIndex, select, _selectedImageId == image.Id,
                 (x, y, w, h) => { image.X = x; image.Y = y; image.Width = w; image.Height = h; });
         }
+        foreach (var layer in _template.TextLayers ?? [])
+        {
+            var key = "text:" + layer.Id;
+            FrameworkElement content;
+            if (_selectedElement == key)
+            {
+                var box = new TextBox { Text = layer.Text, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true,
+                    Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0), Padding = new Thickness(0),
+                    FontFamily = new FontFamily(layer.Style.FontFamily), FontSize = layer.Style.FontSize,
+                    Foreground = new SolidColorBrush(ParseColor(layer.Style.Color, Colors.Black)) };
+                var captured = false;
+                box.TextChanged += (_, _) => { if (!captured) { CaptureVisualUndo(); captured = true; } layer.Text = box.Text; _dirty = true; };
+                _canvasFreeTextEditor = box;
+                content = box;
+            }
+            else content = SelectableText(key, layer.Text, layer.Style.FontSize);
+            PlaceCanvasFrame(key, layer.X, layer.Y, layer.Width, layer.Height, layer.ZIndex, content, _selectedElement == key,
+                (x, y, w, h) => { layer.X = x; layer.Y = y; layer.Width = w; layer.Height = h; });
+        }
         if (_template.ShowHeader)
         {
             var text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
@@ -644,11 +674,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         if (_template.ShowDateRange)
         {
-            var dateButton = SelectableText("date", $"{monday:d} – {monday.AddDays(4):d}", 14);
+            var dateButton = SelectableText("date", $"{monday:d} – {monday.AddDays(_template.IncludeWeekend ? 6 : 4):d}", 14);
             if (dateButton.Content is TextBlock dateLabel) dateLabel.TextAlignment = TextAlignmentFor(AlignmentFor("date", StyleFor("date", 14)));
             PlaceTextFrame("date", dateButton);
         }
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < (_template.IncludeWeekend ? 7 : 5); i++)
         {
             var day = monday.AddDays(i);
             PlaceTextFrame($"heading:{i}", SelectableText($"heading:{i}", day.ToString("dddd, d MMMM"), 15, true, $"day:{i}"));
@@ -668,8 +698,26 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(L.Allergen).ToList();
                 if (allergens.Count > 0) panel.Children.Add(SelectableText($"allergen-group:{i}", "⚠ " + string.Join(", ", allergens), _template.MealFontSize, legacyKey: $"allergens:{i}:{slot}"));
             }
-            if (panel.Children.Count == 0) panel.Children.Add(SelectableText($"menu:{i}", L.Get("TplNoMeals"), _template.MealFontSize));
-            PlaceTextFrame($"menu:{i}", panel);
+            var menuKey = $"menu:{i}";
+            var menuElement = _template.LayoutElements[menuKey];
+            var lines = panel.Children.OfType<Button>().Select(button => button.Content).OfType<TextBlock>()
+                .Select(label => (label.Text, label.FontSize)).ToList();
+            var neighbors = new List<TemplateLayoutElement>();
+            if (_template.ShowHeader) neighbors.Add(_template.LayoutElements["header"]);
+            if (_template.ShowDateRange) neighbors.Add(_template.LayoutElements["date"]);
+            if (_template.ShowFooter) neighbors.Add(_template.LayoutElements["footer"]);
+            for (var neighbor = 0; neighbor < (_template.IncludeWeekend ? 7 : 5); neighbor++)
+            {
+                neighbors.Add(_template.LayoutElements[$"heading:{neighbor}"]);
+                if (neighbor != i) neighbors.Add(_template.LayoutElements[$"menu:{neighbor}"]);
+            }
+            var fit = TemplateLayout.ResolveMenuFit(_template, menuElement,
+                TemplateLayout.EstimateTextHeight(lines, menuElement.Width), TemplateLayout.AvailableHeight(menuElement, neighbors));
+            if (fit.Overflowed) _layoutOverflow = true;
+            foreach (var label in panel.Children.OfType<Button>().Select(button => button.Content).OfType<TextBlock>())
+                label.FontSize *= fit.FontScale;
+            if (panel.Children.Count == 0) panel.Children.Add(SelectableText(menuKey, L.Get("TplNoMeals"), _template.MealFontSize));
+            PlaceTextFrame(menuKey, panel, fit.Height);
         }
         if (_template.ShowFooter)
         {
@@ -685,6 +733,77 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         // Child controls select themselves. Only a bare canvas press clears the active object.
         if (ReferenceEquals(e.OriginalSource, LayoutCanvas)) SelectElement(null);
+    }
+
+    private void AddText_Click(object sender, RoutedEventArgs e)
+    {
+        CaptureVisualUndo();
+        TemplateLayout.EnsureInitialized(_template);
+        var layer = new TemplateTextLayer { Text = L.Get("TplNewText") };
+        _template.TextLayers.Add(layer);
+        _dirty = true;
+        SelectElement("text:" + layer.Id);
+    }
+
+    private async void WeekendLayout_Click(object sender, RoutedEventArgs e)
+    {
+        PageOptionsButton.Flyout?.Hide();
+        var enabling = !_template.IncludeWeekend;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot, Title = L.Get("TplWeekendLayout"),
+            Content = L.Get(enabling ? "TplWeekendEnableWarning" : "TplWeekendDisableWarning"),
+            PrimaryButtonText = L.Get(enabling ? "TplWeekendEnable" : "TplWeekendDisable"),
+            CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        CaptureVisualUndo();
+        if (enabling) TemplateLayout.InitializeSevenDayLayout(_template);
+        else _template.IncludeWeekend = false;
+        _dirty = true;
+        await LoadWeekAsync();
+    }
+
+    private async Task EditMenuSizingAsync()
+    {
+        var sizing = _template.MenuBlockSizing ??= new TemplateMenuBlockSizing();
+        var modes = new[] { "fixed", "flexible", "shrink" };
+        var mode = new ComboBox { Header = L.Get("TplSizingMode"), HorizontalAlignment = HorizontalAlignment.Stretch };
+        mode.Items.Add(L.Get("TplSizingFixed")); mode.Items.Add(L.Get("TplSizingFlexible")); mode.Items.Add(L.Get("TplSizingShrink"));
+        mode.SelectedIndex = Math.Max(0, Array.IndexOf(modes, sizing.Mode ?? (sizing.Enabled ? "flexible" : "fixed")));
+        var min = new NumberBox { Header = L.Get("TplSizingMinHeight"), Minimum = 20, Maximum = TemplateLayout.PageHeight, Value = sizing.MinimumHeight };
+        var max = new NumberBox { Header = L.Get("TplSizingMaxHeight"), Minimum = 20, Maximum = TemplateLayout.PageHeight, Value = sizing.MaximumHeight };
+        var scale = new NumberBox { Header = L.Get("TplSizingMinScale"), Minimum = 50, Maximum = 100, Value = sizing.MinimumFontScale * 100 };
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(new TextBlock { Text = L.Get("TplSizingAllDays"), TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(mode); panel.Children.Add(min); panel.Children.Add(max); panel.Children.Add(scale);
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplSizingTitle"), Content = panel,
+            PrimaryButtonText = L.Get("TplSizingApply"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            if (!double.IsFinite(min.Value) || !double.IsFinite(max.Value) || min.Value > max.Value || !double.IsFinite(scale.Value))
+            { args.Cancel = true; return; }
+            CaptureVisualUndo();
+            sizing.Mode = modes[Math.Clamp(mode.SelectedIndex, 0, 2)];
+            sizing.Enabled = sizing.Mode == "flexible";
+            sizing.MinimumHeight = min.Value; sizing.MaximumHeight = max.Value;
+            sizing.MinimumFontScale = Math.Clamp(scale.Value / 100, .5, 1);
+            _dirty = true;
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary) UpdatePreview();
+    }
+
+    private void ApplyStyleToAllDays(string key)
+    {
+        var parts = key.Split(':');
+        if (parts.Length != 2) return;
+        var style = StyleFor(key, _template.MealFontSize, parts[0] == "heading");
+        CaptureVisualUndo();
+        for (var i = 0; i < 7; i++)
+            _template.TextStyles[$"{parts[0]}:{i}"] = new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize,
+                Color = style.Color, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
+        _dirty = true;
+        UpdatePreview();
     }
 
     private RichEditBox CreateCanvasTextEditor(bool header)
@@ -725,6 +844,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void UpdateContextualToolbar()
     {
         _contextualToolbar = null;
+        SelectionInfo.Visibility = Visibility.Collapsed;
         if (!_template.LayoutEnabled) return;
 
         var compact = ActualWidth > 0 && ActualWidth < 900;
@@ -733,16 +853,36 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var textKey = _selectedElement;
         var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
         var layoutKey = SelectedLayoutKey();
-        var element = layoutKey != null && _template.LayoutElements.TryGetValue(layoutKey, out var found) ? found : null;
+        var textLayer = textKey?.StartsWith("text:", StringComparison.Ordinal) == true ? _template.TextLayers.FirstOrDefault(layer => "text:" + layer.Id == textKey) : null;
+        var element = textLayer != null ? new TemplateLayoutElement { X = textLayer.X, Y = textLayer.Y, Width = textLayer.Width, Height = textLayer.Height } : layoutKey != null && _template.LayoutElements.TryGetValue(layoutKey, out var found) ? found : null;
         if (textKey == null && image == null) return;
         if (image == null && element == null) return;
+
+        var section = textKey?.Split(':') ?? [];
+        var label = section.FirstOrDefault() switch
+        {
+            "header" => L.Get("TplHeader"), "footer" => L.Get("TplFooter"),
+            "date" => L.Get("TplSelectionDate"), "heading" => L.Get("TplDayHeading"),
+            "menu" => L.Get("TplMenuNames"), "ingredient-group" => L.Get("TplIngredientText"),
+            "allergen-group" => L.Get("TplAllergenText"), "text" => L.Get("TplNewText"), _ => L.Get("TplLayoutImage")
+        };
+        if (section.Length == 2 && int.TryParse(section[1], out var index) && index >= 0 && index < 7)
+        {
+            var day = PreviewDate.Date?.DateTime.Date ?? DateTime.Today;
+            var monday = day.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
+            label = $"{monday.AddDays(index):dddd} › {label}";
+        }
+        SelectionPath.Text = label;
+        SelectionHint.Text = L.Get(image != null ? "TplSelectionImageHint" : textKey is "header" or "footer" || textLayer != null ? "TplSelectionEditableHint" : "TplSelectionLinkedHint");
+        SelectionInfo.Visibility = Visibility.Visible;
 
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = compact ? 2 : 3 };
         var toolbar = new Border
         {
             Background = new SolidColorBrush(Windows.UI.Color.FromArgb(245, 35, 35, 35)),
             BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4), Padding = new Thickness(compact ? 3 : 4), Child = panel
+            CornerRadius = new CornerRadius(4), Padding = new Thickness(compact ? 3 : 4),
+            Child = new ScrollViewer { MaxWidth = 700, HorizontalScrollMode = ScrollMode.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollMode = ScrollMode.Disabled, Content = panel }
         };
         ToolTipService.SetToolTip(toolbar, L.Get("TplSelectedElement"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toolbar, L.Get("TplSelectedElement"));
@@ -840,19 +980,32 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             }
             if (textKey.StartsWith("menu:", StringComparison.Ordinal))
             {
-                var sizing = _template.MenuBlockSizing ??= new TemplateMenuBlockSizing();
-                var autoFit = new ToggleSwitch { IsOn = sizing.Enabled, MinWidth = 42, OnContent = "↕", OffContent = "↕" };
-                autoFit.Toggled += (_, _) =>
+                var sizingButton = new Button { Content = new FontIcon { Glyph = "\uE8A7" } };
+                NameTool(sizingButton, "TplSizingTitle");
+                sizingButton.Click += async (_, _) => await EditMenuSizingAsync();
+                panel.Children.Add(sizingButton);
+            }
+            var parts = textKey.Split(':');
+            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredient-group" or "allergen-group")
+            {
+                var applyAll = new Button { Content = new FontIcon { Glyph = "\uE8C8" } };
+                NameTool(applyAll, "TplApplyWeekdayStyle");
+                applyAll.Click += (_, _) => ApplyStyleToAllDays(textKey);
+                panel.Children.Add(applyAll);
+            }
+            if (textLayer != null)
+            {
+                var removeText = new Button { Content = new FontIcon { Glyph = "\uE74D" } };
+                NameTool(removeText, "TplRemoveText");
+                removeText.Click += (_, _) =>
                 {
-                    if (_binding) return;
                     CaptureVisualUndo();
-                    sizing.Enabled = autoFit.IsOn;
+                    _template.TextLayers.Remove(textLayer);
+                    _template.TextStyles.Remove(textKey);
                     _dirty = true;
-                    UpdatePreview();
+                    SelectElement(null);
                 };
-                ToolTipService.SetToolTip(autoFit, L.Get("TplMenuAutoFitHint"));
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(autoFit, L.Get("TplMenuAutoFit"));
-                panel.Children.Add(autoFit);
+                panel.Children.Add(removeText);
             }
         }
         else if (image != null)
@@ -878,6 +1031,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             NameTool(opacity, "TplOpacity"); NameTool(fit, "TplImageFit"); NameTool(locked, "TplLockAspect"); NameTool(rotation, "TplRotation"); NameTool(alt, "TplImageAlt"); NameTool(back, "TplSendBackward"); NameTool(forward, "TplBringForward"); NameTool(remove, "TplRemoveLayer");
             panel.Children.Add(opacity); panel.Children.Add(fit); panel.Children.Add(locked); panel.Children.Add(rotation); panel.Children.Add(alt); panel.Children.Add(back); panel.Children.Add(forward); panel.Children.Add(remove);
         }
+
+        var positionLocked = image?.IsPositionLocked ?? textLayer?.IsPositionLocked ?? element?.IsPositionLocked ?? false;
+        var lockButton = new Button { Content = new FontIcon { Glyph = positionLocked ? "\uE72E" : "\uE785" } };
+        NameTool(lockButton, positionLocked ? "TplUnlockPosition" : "TplLockPosition");
+        lockButton.Click += (_, _) =>
+        {
+            CaptureVisualUndo();
+            if (image != null) image.IsPositionLocked = !positionLocked;
+            else if (textLayer != null) textLayer.IsPositionLocked = !positionLocked;
+            else if (layoutKey != null && _template.LayoutElements.TryGetValue(layoutKey, out var saved)) saved.IsPositionLocked = !positionLocked;
+            _dirty = true; UpdatePreview();
+        };
+        panel.Children.Add(lockButton);
 
         // Keep the current object visible while it is being edited. The old fallback
         // clamped a wide toolbar across the selected object, which made live styling
@@ -1022,6 +1188,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void UpdateCanvasFontSize(string key, double size)
     {
         if (_canvasTextEditor is { Tag: string tag } editor && tag == key) editor.FontSize = size;
+        if (_canvasFreeTextEditor != null && _selectedElement == key) _canvasFreeTextEditor.FontSize = size;
         void Visit(DependencyObject node)
         {
             if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
@@ -1035,6 +1202,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void UpdateCanvasTextColor(string key, string color)
     {
         if (_canvasTextEditor is { Tag: string tag } editor && tag == key) editor.Foreground = new SolidColorBrush(ParseColor(color, Colors.Black));
+        if (_canvasFreeTextEditor != null && _selectedElement == key) _canvasFreeTextEditor.Foreground = new SolidColorBrush(ParseColor(color, Colors.Black));
         void Visit(DependencyObject node)
         {
             if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
@@ -1071,12 +1239,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         UpdatePreview();
     }
 
-    private void PlaceTextFrame(string key, FrameworkElement content)
+    private void PlaceTextFrame(string key, FrameworkElement content, double? displayHeight = null)
     {
         if (!_template.LayoutElements.TryGetValue(key, out var item) || item == null) return;
         var selected = _selectedElement == key || (key.StartsWith("menu:") && (_selectedElement == key.Replace("menu:", "ingredient-group:") || _selectedElement == key.Replace("menu:", "allergen-group:")));
-        PlaceCanvasFrame(key, item.X, item.Y, item.Width, item.Height, item.ZIndex, content, selected,
-            (x, y, w, h) => { item.X = x; item.Y = y; item.Width = w; item.Height = h; });
+        PlaceCanvasFrame(key, item.X, item.Y, item.Width, displayHeight ?? item.Height, item.ZIndex, content, selected,
+            (x, y, w, h) => { item.X = x; item.Y = y; item.Width = w; if (displayHeight == null || Math.Abs(h - displayHeight.Value) > 0.01) item.Height = h; });
     }
 
     private void PlaceCanvasFrame(string objectKey, double x, double y, double width, double height, int z, FrameworkElement content, bool selected, Action<double, double, double, double> save)
@@ -1110,14 +1278,20 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (content.DesiredSize.Height > height + 1) _layoutOverflow = true;
         }
         frame.Children.Add(content);
+        var positionLocked = objectKey.StartsWith("image:", StringComparison.Ordinal) ? _template.ImageLayers.FirstOrDefault(layer => "image:" + layer.Id == objectKey)?.IsPositionLocked == true
+            : objectKey.StartsWith("text:", StringComparison.Ordinal) ? _template.TextLayers.FirstOrDefault(layer => "text:" + layer.Id == objectKey)?.IsPositionLocked == true
+            : _template.LayoutElements.TryGetValue(objectKey, out var layout) && layout.IsPositionLocked;
         if (selected)
         {
             frame.Children.Add(new Border { BorderBrush = new SolidColorBrush(Colors.DodgerBlue), BorderThickness = new Thickness(1), IsHitTestVisible = false });
+            if (!positionLocked)
+            {
             var move = new Border { Width = 18, Height = 18, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Background = new SolidColorBrush(Colors.DodgerBlue), Child = new TextBlock { Text = "✥", Foreground = new SolidColorBrush(Colors.White), HorizontalAlignment = HorizontalAlignment.Center } };
             var resize = new Border { Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Background = new SolidColorBrush(Colors.DodgerBlue), Child = new TextBlock { Text = "◢", Foreground = new SolidColorBrush(Colors.White), HorizontalAlignment = HorizontalAlignment.Center } };
             ToolTipService.SetToolTip(move, L.Get("TplMoveObject")); ToolTipService.SetToolTip(resize, L.Get("TplResizeObject"));
             AttachDrag(move, false); AttachDrag(resize, true);
             frame.Children.Add(move); frame.Children.Add(resize);
+            }
         }
         Canvas.SetLeft(frame, x); Canvas.SetTop(frame, y); Canvas.SetZIndex(frame, Math.Clamp(z, 1, 1000)); LayoutCanvas.Children.Add(frame);
 
@@ -1189,15 +1363,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (dx == 0 && dy == 0) return;
         var image = _selectedImageId == null ? null : _template.ImageLayers.FirstOrDefault(layer => layer.Id == _selectedImageId);
         var key = SelectedLayoutKey();
+        var textLayer = key?.StartsWith("text:", StringComparison.Ordinal) == true ? _template.TextLayers.FirstOrDefault(layer => "text:" + layer.Id == key) : null;
         var item = key != null && _template.LayoutElements.TryGetValue(key, out var selected) ? selected : null;
-        if (image == null && item == null) return;
-        var x = image?.X ?? item!.X; var y = image?.Y ?? item!.Y;
-        var width = image?.Width ?? item!.Width; var height = image?.Height ?? item!.Height;
+        if (image == null && item == null && textLayer == null) return;
+        if (image?.IsPositionLocked == true || item?.IsPositionLocked == true || textLayer?.IsPositionLocked == true) return;
+        var x = image?.X ?? textLayer?.X ?? item!.X; var y = image?.Y ?? textLayer?.Y ?? item!.Y;
+        var width = image?.Width ?? textLayer?.Width ?? item!.Width; var height = image?.Height ?? textLayer?.Height ?? item!.Height;
         width = double.IsFinite(width) ? Math.Clamp(width, 20, 794) : 100;
         height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123) : 30;
         x = Math.Clamp((double.IsFinite(x) ? x : 0) + dx, 0, 794 - width);
         y = Math.Clamp((double.IsFinite(y) ? y : 0) + dy, 0, 1123 - height);
-        if (image != null) { image.X = x; image.Y = y; } else { item!.X = x; item.Y = y; }
+        if (image != null) { image.X = x; image.Y = y; } else if (textLayer != null) { textLayer.X = x; textLayer.Y = y; } else { item!.X = x; item.Y = y; }
         _dirty = true;
         UpdatePreview();
         _canvasSelectionButton?.Focus(FocusState.Programmatic);
@@ -1218,6 +1394,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (pair.Key != selectedKey && pair.Value != null) AddGuides(pair.Value.X, pair.Value.Y, pair.Value.Width, pair.Value.Height);
         foreach (var layer in _template.ImageLayers)
             if (layer != null && "image:" + layer.Id != selectedKey) AddGuides(layer.X, layer.Y, layer.Width, layer.Height);
+        foreach (var layer in _template.TextLayers)
+            if (layer != null && "text:" + layer.Id != selectedKey) AddGuides(layer.X, layer.Y, layer.Width, layer.Height);
 
         static (double Position, double? Guide) Closest(double position, double size, double limit, List<double> guides)
         {
@@ -1258,6 +1436,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         var all = _template.LayoutElements.Select(pair => (Id: pair.Key, Z: pair.Value.ZIndex, Set: (Action<int>)(z => pair.Value.ZIndex = z)))
             .Concat(_template.ImageLayers.Select(layer => (Id: "image:" + layer.Id, Z: layer.ZIndex, Set: (Action<int>)(z => layer.ZIndex = z))))
+            .Concat(_template.TextLayers.Select(layer => (Id: "text:" + layer.Id, Z: layer.ZIndex, Set: (Action<int>)(z => layer.ZIndex = z))))
             .OrderBy(layer => layer.Z).ThenBy(layer => layer.Id, StringComparer.Ordinal).ToList();
         var selected = _selectedImageId != null ? "image:" + _selectedImageId : SelectedLayoutKey();
         var index = all.FindIndex(layer => layer.Id == selected);
