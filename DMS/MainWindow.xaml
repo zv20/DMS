@@ -36,18 +36,31 @@
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
-            PaneDisplayMode="Left"
+            PaneDisplayMode="LeftCompact"
+            CompactPaneLength="64"
+            OpenPaneLength="300"
+            IsPaneOpen="True"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
             Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Uid="NavMenu" Tag="menu" Content="📅 Menu Planner" />
-                <NavigationViewItem x:Uid="NavRecipes" Tag="recipes" Content="🍽️ Recipes" />
-                <NavigationViewItem x:Uid="NavIngredients" Tag="ingredients" Content="🥕 Ingredients" />
-                <NavigationViewItem x:Uid="NavAllergens" Tag="allergens" Content="⚠️ Allergens" />
+                <NavigationViewItem x:Uid="NavMenu" Tag="menu" Content="Menu Planner">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Calendar" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Uid="NavRecipes" Tag="recipes" Content="Recipes">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Library" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Uid="NavIngredients" Tag="ingredients" Content="Ingredients">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Bullets" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Uid="NavAllergens" Tag="allergens" Content="Allergens">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Important" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItemSeparator />
-                <NavigationViewItem x:Uid="NavTemplateBuilder" Tag="templateBuilder" Content="📝 Template Builder" />
+                <NavigationViewItem x:Uid="NavTemplateBuilder" Tag="templateBuilder" Content="Template Builder">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <!-- Frame for page navigation -->

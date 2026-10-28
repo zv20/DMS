@@ -4,11 +4,11 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
-  <data name="NavAllergens.Content" xml:space="preserve"><value>⚠️ Алергени</value></data>
-  <data name="NavIngredients.Content" xml:space="preserve"><value>🥕 Съставки</value></data>
-  <data name="NavMenu.Content" xml:space="preserve"><value>📅 Планиране на меню</value></data>
-  <data name="NavRecipes.Content" xml:space="preserve"><value>🍽️ Рецепти</value></data>
-  <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>📝 Редактор на шаблони</value></data>
+  <data name="NavAllergens.Content" xml:space="preserve"><value>Алергени</value></data>
+  <data name="NavIngredients.Content" xml:space="preserve"><value>Съставки</value></data>
+  <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
+  <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
+  <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
   <data name="String_Text_About_3e3c26" xml:space="preserve"><value>ℹ️ За приложението</value></data>
   <data name="Text_About_3e3c26.Text" xml:space="preserve"><value>ℹ️ За приложението</value></data>
   <data name="String_Text_Accent_Color_2bef52" xml:space="preserve"><value>Акцентен цвят</value></data>
