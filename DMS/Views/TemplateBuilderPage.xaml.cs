@@ -748,8 +748,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
             AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
             AddFormatButton(panel, "U", "TplUnderline", style.Underline, value => SetContextualStyle(textKey, s => s.Underline = value));
-            var align = new ComboBox { Width = compact ? 62 : 70 };
-            align.Items.Add(L.Get("TplLeft")); align.Items.Add(L.Get("TplCenter")); align.Items.Add(L.Get("TplRight"));
+            var align = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
+            foreach (var (glyph, label) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
+            {
+                var option = new ComboBoxItem { Content = new FontIcon { Glyph = glyph, FontSize = 16 } };
+                NameTool(option, label);
+                align.Items.Add(option);
+            }
             align.SelectedIndex = Array.IndexOf(Alignments, AlignmentFor(textKey, style));
             align.SelectionChanged += (_, _) => { if (!_binding && align.SelectedIndex >= 0) SetSelectedAlignment(Alignments[align.SelectedIndex]); };
             NameTool(font, "TplFont"); NameTool(size, "TplSelectedSize"); NameTool(color, "TplSelectedColor");
@@ -813,8 +818,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         // are outside the selected rectangle.
         var x = image?.X ?? element!.X; var y = image?.Y ?? element!.Y;
         var width = image?.Width ?? element!.Width; var height = image?.Height ?? element!.Height;
-        var toolbarWidth = compact ? 510d : 570d;
-        var toolbarHeight = compact ? 40d : 42d;
+        // Measure the actual controls so placement accounts for their minimum sizes.
+        toolbar.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var toolbarWidth = Math.Min(TemplateLayout.PageWidth, toolbar.DesiredSize.Width);
+        var toolbarHeight = Math.Min(TemplateLayout.PageHeight, toolbar.DesiredSize.Height);
         const double gap = 8;
         var centeredLeft = Math.Clamp(x + (width - toolbarWidth) / 2, 0, TemplateLayout.PageWidth - toolbarWidth);
         var right = (Left: x + width + gap, Top: y);
