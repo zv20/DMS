@@ -42,6 +42,16 @@
                 </StackPanel>
             </Border>
 
+            <!-- Planning Section -->
+            <Border x:Name="PlanningCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📅 Planning" Style="{StaticResource PageTitleTextStyle}" x:Uid="Text_Planning_53aa11" />
+                    <ToggleSwitch x:Name="WeekendPlanningToggle" Header="Weekend menus" OffContent="Weekdays only" OnContent="Include Saturday and Sunday" Toggled="WeekendPlanningToggle_Toggled" x:Uid="Text_Weekend_Planning_53aa12" />
+                    <TextBlock Text="Weekend days are disabled by default." Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" x:Uid="Text_Weekend_Planning_Hint_53aa13" />
+                    <TextBlock x:Name="PlanningStatus" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <!-- Data Management Section -->
             <Border x:Name="DataCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" Padding="24" VerticalAlignment="Stretch">
                 <StackPanel Spacing="12">

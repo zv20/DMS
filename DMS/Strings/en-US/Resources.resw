@@ -9,6 +9,11 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Menu Planner</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
+  <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Planning</value></data>
+  <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Weekend menus</value></data>
+  <data name="Text_Weekend_Planning_53aa12.OffContent" xml:space="preserve"><value>Weekdays only</value></data>
+  <data name="Text_Weekend_Planning_53aa12.OnContent" xml:space="preserve"><value>Include Saturday and Sunday</value></data>
+  <data name="Text_Weekend_Planning_Hint_53aa13.Text" xml:space="preserve"><value>Weekend days are disabled by default.</value></data>
   <data name="String_Text_About_3e3c26" xml:space="preserve"><value>ℹ️ About</value></data>
   <data name="Text_About_3e3c26.Text" xml:space="preserve"><value>ℹ️ About</value></data>
   <data name="String_Text_Accent_Color_2bef52" xml:space="preserve"><value>Accent Color</value></data>

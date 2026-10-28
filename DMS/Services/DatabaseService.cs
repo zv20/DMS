@@ -605,6 +605,7 @@ public class DatabaseService : IDatabaseService, IDisposable
                 case "language": settings.Language = value; break;
                 case "theme": settings.Theme = value; break;
                 case "accent_color": settings.AccentColor = value; break;
+                case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
                 case "data_folder": settings.DataFolder = value; break;
             }
         }
@@ -622,6 +623,7 @@ public class DatabaseService : IDatabaseService, IDisposable
             ("language", settings.Language),
             ("theme", settings.Theme),
             ("accent_color", settings.AccentColor),
+            ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("data_folder", settings.DataFolder ?? "")
         };
 

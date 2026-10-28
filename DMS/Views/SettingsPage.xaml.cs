@@ -38,7 +38,7 @@ public sealed partial class SettingsPage : Page
         var columns = available >= 1200 ? 3 : available >= 780 ? 2 : 1;
         if (_cardColumns == columns) return;
         _cardColumns = columns;
-        var cards = new[] { LanguageCard, AppearanceCard, DataCard, DatabaseCard, AboutCard };
+        var cards = new[] { LanguageCard, AppearanceCard, PlanningCard, DataCard, DatabaseCard, AboutCard };
         SettingsCards.ColumnDefinitions.Clear();
         SettingsCards.RowDefinitions.Clear();
         for (var i = 0; i < columns; i++)
@@ -71,6 +71,7 @@ public sealed partial class SettingsPage : Page
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
             ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[2];
             AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
+            WeekendPlanningToggle.IsOn = settings.WeekendPlanningEnabled;
 
             // Data folder
             var dbPath = _databaseService.GetDatabasePath();
@@ -145,6 +146,21 @@ public sealed partial class SettingsPage : Page
             }
             finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
+    }
+
+    private async void WeekendPlanningToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressSettingChanges) return;
+        WeekendPlanningToggle.IsEnabled = false;
+        try
+        {
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            settings.WeekendPlanningEnabled = WeekendPlanningToggle.IsOn;
+            await _databaseService.SaveSettingsAsync(settings);
+            PlanningStatus.Text = "";
+        }
+        catch (Exception ex) { PlanningStatus.Text = L.Format("SaveError", ex.Message); }
+        finally { WeekendPlanningToggle.IsEnabled = true; }
     }
 
     private async void ExportButton_Click(object sender, RoutedEventArgs e)
