@@ -690,8 +690,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 if (_binding) return;
                 CaptureVisualUndo();
-                var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true; UpdatePreview();
+                // Do not rebuild the canvas while NumberBox is focused: rebuilding removes
+                // the spinner that the user is actively clicking.
+                var selected = StyleFor(textKey, _template.MealFontSize); selected.FontSize = SafeNumber(size.Value, 11); _template.TextStyles[textKey] = selected; _dirty = true;
             };
+            size.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
             var color = new TextBox { Width = compact ? 70 : 76, Text = style.Color, PlaceholderText = "#000000" };
             color.LostFocus += (_, _) =>
             {
@@ -751,7 +754,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var locked = new ToggleSwitch { IsOn = image.LockAspectRatio, MinWidth = compact ? 34 : 38, OnContent = "↔", OffContent = "↔" };
             locked.Toggled += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.LockAspectRatio = locked.IsOn; _dirty = true; };
             var rotation = new NumberBox { Width = compact ? 55 : 60, Minimum = -360, Maximum = 360, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Value = image.RotationDegrees };
-            rotation.ValueChanged += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.RotationDegrees = double.IsFinite(rotation.Value) ? Math.Clamp(rotation.Value, -360, 360) : 0; _dirty = true; UpdatePreview(); };
+            rotation.ValueChanged += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.RotationDegrees = double.IsFinite(rotation.Value) ? Math.Clamp(rotation.Value, -360, 360) : 0; _dirty = true; };
+            rotation.LostFocus += (_, _) => { if (!_binding) UpdatePreview(); };
             var alt = new TextBox { Width = compact ? 70 : 90, Text = image.AltText, PlaceholderText = L.Get("TplImageAlt") };
             alt.LostFocus += (_, _) => { if (_binding) return; CaptureVisualUndo(); image.AltText = (alt.Text ?? string.Empty).Trim()[..Math.Min(300, (alt.Text ?? string.Empty).Trim().Length)]; _dirty = true; };
             var back = new Button { Content = new FontIcon { Glyph = "\uE74B" } }; back.Click += (_, _) => ChangeLayerOrder(-1);
@@ -843,6 +847,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         x = double.IsFinite(x) ? Math.Clamp(x, 0, 774) : 0; y = double.IsFinite(y) ? Math.Clamp(y, 0, 1103) : 0;
         width = double.IsFinite(width) ? Math.Clamp(width, 20, 794 - x) : 100; height = double.IsFinite(height) ? Math.Clamp(height, 20, 1123 - y) : 30;
         var frame = new Grid { Width = width, Height = height, Background = new SolidColorBrush(Colors.Transparent) };
+        frame.PointerPressed += (_, e) =>
+        {
+            // A transparent frame still receives input, so treat its unused space as
+            // canvas space and clear the active contextual toolbar.
+            if (ReferenceEquals(e.OriginalSource, frame))
+            {
+                SelectElement(null);
+                e.Handled = true;
+            }
+        };
         if (!objectKey.StartsWith("image:", StringComparison.Ordinal) && _template.BlockAppearances != null && _template.BlockAppearances.TryGetValue(objectKey, out var appearance) && appearance != null)
         {
             frame.Opacity = Math.Clamp(double.IsFinite(appearance.Opacity) ? appearance.Opacity : 1, 0, 1);
