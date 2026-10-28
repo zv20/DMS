@@ -17,6 +17,7 @@ public sealed partial class MenuPage : Page
     private bool _busy;
     private bool _outputOpen;
     private bool _weekendPlanningEnabled;
+    private bool _compactHeader;
     private List<Recipe> _recipes = [];
     private List<MenuEntry> _entries = [];
 
@@ -32,6 +33,40 @@ public sealed partial class MenuPage : Page
     private async void Previous_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(-1) : _date.AddDays(-7); await RefreshAsync(); }
     private async void Next_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(1) : _date.AddDays(7); await RefreshAsync(); }
     private async void Today_Click(object sender, RoutedEventArgs e) { _date = DateTime.Today; await RefreshAsync(); }
+
+    private void MenuHeader_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var compact = e.NewSize.Width < 700;
+        if (_compactHeader == compact) return;
+        _compactHeader = compact;
+        MenuHeader.RowDefinitions.Clear();
+        if (compact)
+        {
+            MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(PeriodLabel, 1); Grid.SetColumn(PeriodLabel, 0); Grid.SetColumnSpan(PeriodLabel, 3);
+            PeriodLabel.HorizontalAlignment = HorizontalAlignment.Left;
+            PeriodLabel.Margin = new Thickness(0, 8, 0, 0);
+        }
+        else
+        {
+            MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(PeriodLabel, 0); Grid.SetColumn(PeriodLabel, 1); Grid.SetColumnSpan(PeriodLabel, 1);
+            PeriodLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            PeriodLabel.Margin = new Thickness();
+        }
+    }
+
+    private void CalendarScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e) => ResizeCalendarCards();
+
+    private void ResizeCalendarCards()
+    {
+        if (CalendarGrid.ColumnDefinitions.Count == 0 || CalendarScrollViewer.ActualWidth <= 0) return;
+        var columns = CalendarGrid.ColumnDefinitions.Count;
+        var width = Math.Max(92, (CalendarScrollViewer.ActualWidth - 32 - ((columns - 1) * 8)) / columns);
+        foreach (var card in CalendarGrid.Children.OfType<Border>())
+            card.MinHeight = _monthly ? Math.Min(155, width) : 0;
+    }
     private async void Output_Click(object sender, RoutedEventArgs e)
     {
         if (_outputOpen) return;
@@ -64,7 +99,7 @@ public sealed partial class MenuPage : Page
             CalendarGrid.RowDefinitions.Clear();
             CalendarGrid.ColumnDefinitions.Clear();
             var columns = _weekendPlanningEnabled ? 7 : 5;
-            for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 155 });
+            for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
             var days = _monthly ? ((end - start).Days / 7 + 1) * 7 : _weekendPlanningEnabled ? 7 : 5;
             var displayedDays = Enumerable.Range(0, days)
                 .Select(offset => start.AddDays(offset))
@@ -89,11 +124,12 @@ public sealed partial class MenuPage : Page
                     panel.Children.Add(button);
                 }
                 else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot));
-                var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), MinHeight = _monthly ? 155 : 0, Opacity = isDisabledWeekend || (_monthly && day.Month != first.Month) ? 0.4 : 1 };
+                var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (_monthly && day.Month != first.Month) ? 0.4 : 1 };
                 Grid.SetColumn(border, i % columns);
                 Grid.SetRow(border, i / columns);
                 CalendarGrid.Children.Add(border);
             }
+            ResizeCalendarCards();
         }
         catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
         finally { _busy = false; }

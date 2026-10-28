@@ -11,6 +11,7 @@ public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
     private bool _navigationPending;
+    private bool _paneCollapsedForSize;
 
     public MainWindow(bool openSettings = false)
     {
@@ -22,6 +23,22 @@ public sealed partial class MainWindow : Window
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
+        RootGrid.SizeChanged += RootGrid_SizeChanged;
+    }
+
+    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Preserve enough content width for planners and editors on narrow windows.
+        if (e.NewSize.Width < 850 && NavView.IsPaneOpen)
+        {
+            NavView.IsPaneOpen = false;
+            _paneCollapsedForSize = true;
+        }
+        else if (e.NewSize.Width >= 1050 && _paneCollapsedForSize)
+        {
+            NavView.IsPaneOpen = true;
+            _paneCollapsedForSize = false;
+        }
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
