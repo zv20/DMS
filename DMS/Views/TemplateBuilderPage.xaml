@@ -82,8 +82,9 @@
             </StackPanel>
         </Border>
 
-        <!-- The page remains independently scrollable at smaller window sizes. -->
-        <ScrollViewer Grid.Row="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
+        <!-- The inspector shares the workspace with the independently scrollable page. -->
+        <Grid Grid.Row="2" x:Name="EditorWorkspace" ColumnDefinitions="*,Auto">
+        <ScrollViewer Grid.Column="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
             <Border x:Name="PreviewBorder" Width="794" MinHeight="1123" Background="White" HorizontalAlignment="Center">
                 <Grid>
                     <Image x:Name="PreviewImage" Stretch="UniformToFill" Margin="38" />
@@ -98,10 +99,24 @@
                         </Button>
                         <TextBox x:Name="FooterBox" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Collapsed" LostFocus="FooterBox_LostFocus" />
                     </Grid>
-                    <Canvas x:Name="LayoutCanvas" Width="794" Height="1123" Visibility="Collapsed"
+                    <Canvas x:Name="LayoutCanvas" Width="794" Height="1123" Background="Transparent" Visibility="Collapsed"
                             PointerPressed="LayoutCanvas_PointerPressed" />
                 </Grid>
             </Border>
         </ScrollViewer>
+        <Border x:Name="InspectorPanel" Grid.Column="1" Width="230" Visibility="Collapsed"
+                Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1,0,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" Padding="12">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock x:Name="InspectorTitle" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="✕" Click="CloseInspector_Click" />
+                    </Grid>
+                    <StackPanel x:Name="InspectorContent" Spacing="8" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        </Grid>
     </Grid>
 </Page>
