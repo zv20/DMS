@@ -18,15 +18,13 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <ScrollViewer Grid.Row="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
-        <StackPanel Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
+        <Grid x:Name="RecipeToolbar" Grid.Row="0" Padding="16,16,16,8" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8" SizeChanged="RecipeToolbar_SizeChanged">
             <Button x:Name="AddRecipeButton" Content="➕ Add Recipe" Click="AddRecipeButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Recipe_09855a" />
-            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search recipes..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_recipes_ba1ee4" />
-            <ComboBox x:Name="CategoryFilter" Width="160" SelectionChanged="Filter_SelectionChanged" />
-            <ComboBox x:Name="SortField" Width="160" SelectionChanged="Filter_SelectionChanged" />
-            <Button x:Name="SortDirectionButton" Content="↑" Click="SortDirection_Click" />
-        </StackPanel>
-        </ScrollViewer>
+            <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Search recipes..." QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_recipes_ba1ee4" />
+            <ComboBox x:Name="CategoryFilter" Grid.Column="2" Width="160" SelectionChanged="Filter_SelectionChanged" />
+            <ComboBox x:Name="SortField" Grid.Column="3" Width="160" SelectionChanged="Filter_SelectionChanged" />
+            <Button x:Name="SortDirectionButton" Grid.Column="4" Content="↑" Click="SortDirection_Click" />
+        </Grid>
 
         <!-- Recipe List -->
         <ListView

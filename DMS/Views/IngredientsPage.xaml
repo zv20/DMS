@@ -15,10 +15,10 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Padding="16,16,16,8" Spacing="8">
+        <Grid Grid.Row="0" Padding="16,16,16,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
             <Button x:Name="AddIngredientButton" Content="➕ Add Ingredient" Click="AddIngredientButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Ingredient_bc5b34" />
-            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search ingredients..." Width="300" QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_ingredients_540992" />
-        </StackPanel>
+            <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Search ingredients..." QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_ingredients_540992" />
+        </Grid>
 
         <!-- Ingredient List -->
         <ListView

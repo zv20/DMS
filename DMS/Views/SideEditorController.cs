@@ -65,7 +65,15 @@ internal sealed class SideEditorController
 
     public void MarkDirty() => _dirty = true;
     public void SetError(string message) => _status.Text = message;
-    private void Resize() => _column.Width = new GridLength(Math.Min(420, Math.Max(220, _page.ActualWidth * 0.55)));
+    private void Resize()
+    {
+        // A side pane is useful on desktop. On a narrow window it becomes a full-page
+        // editor so neither the form nor the list is squeezed into an unusable width.
+        var width = _page.ActualWidth;
+        _column.Width = new GridLength(width < 720
+            ? width
+            : Math.Min(420, Math.Max(220, width * 0.55)));
+    }
 
     public void Close()
     {

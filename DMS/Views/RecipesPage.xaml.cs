@@ -22,6 +22,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private bool _openingEditor;
     private bool _savingEditor;
     private bool _confirmingDiscard;
+    private int _toolbarLayout = -1;
     private int? _editingRecipeId;
 
     public RecipesPage()
@@ -43,6 +44,31 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private async void RecipesPage_Loaded(object sender, RoutedEventArgs e)
     {
         await LoadRecipesAsync();
+    }
+
+    private void RecipeToolbar_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var layout = e.NewSize.Width < 500 ? 2 : e.NewSize.Width < 760 ? 1 : 0;
+        if (_toolbarLayout == layout) return;
+        _toolbarLayout = layout;
+        RecipeToolbar.RowDefinitions.Clear();
+        for (var row = 0; row <= layout; row++) RecipeToolbar.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        Grid.SetRow(AddRecipeButton, 0); Grid.SetColumn(AddRecipeButton, 0); Grid.SetColumnSpan(AddRecipeButton, 1);
+        Grid.SetRow(SearchBox, 0); Grid.SetColumn(SearchBox, 1); Grid.SetColumnSpan(SearchBox, layout == 0 ? 1 : 4);
+        if (layout == 0)
+        {
+            CategoryFilter.Width = SortField.Width = 160;
+            Grid.SetRow(CategoryFilter, 0); Grid.SetColumn(CategoryFilter, 2); Grid.SetColumnSpan(CategoryFilter, 1);
+            Grid.SetRow(SortField, 0); Grid.SetColumn(SortField, 3); Grid.SetColumnSpan(SortField, 1);
+            Grid.SetRow(SortDirectionButton, 0); Grid.SetColumn(SortDirectionButton, 4); Grid.SetColumnSpan(SortDirectionButton, 1);
+            return;
+        }
+
+        CategoryFilter.Width = SortField.Width = double.NaN;
+        Grid.SetRow(CategoryFilter, 1); Grid.SetColumn(CategoryFilter, 0); Grid.SetColumnSpan(CategoryFilter, layout == 1 ? 2 : 5);
+        Grid.SetRow(SortField, layout == 1 ? 1 : 2); Grid.SetColumn(SortField, layout == 1 ? 2 : 0); Grid.SetColumnSpan(SortField, layout == 1 ? 2 : 4);
+        Grid.SetRow(SortDirectionButton, layout == 1 ? 1 : 2); Grid.SetColumn(SortDirectionButton, 4); Grid.SetColumnSpan(SortDirectionButton, 1);
     }
 
     private async Task LoadRecipesAsync()
