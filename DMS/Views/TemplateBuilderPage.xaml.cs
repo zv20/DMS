@@ -36,6 +36,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _selectedImageId;
     private bool _bindingLayers;
     private Button? _canvasSelectionButton;
+    private RichEditBox? _canvasTextEditor;
     private FrameworkElement? _contextualToolbar;
     private bool? _compactToolbarLayout;
     private bool _updatingZoom;
@@ -289,7 +290,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         _bindingSelection = false;
         UpdatePreview();
-        if (_template.LayoutEnabled && key != null) _canvasSelectionButton?.Focus(FocusState.Programmatic);
+        if (_template.LayoutEnabled && key != null)
+        {
+            if (_canvasTextEditor != null) _canvasTextEditor.Focus(FocusState.Programmatic);
+            else _canvasSelectionButton?.Focus(FocusState.Programmatic);
+        }
     }
 
     private void SelectedStyleChanged()
@@ -591,6 +596,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private static TemplateRichTextContent ReadRichRuns(RichEditBox editor)
     {
         editor.Document.GetText(TextGetOptions.None, out var text);
+        // RichEdit adds one terminal paragraph marker that is not part of the content.
+        if (text.EndsWith("\r", StringComparison.Ordinal)) text = text[..^1];
         var result = new TemplateRichTextContent();
         TemplateRichTextRun? previous = null;
         for (var index = 0; index < text.Length; index++)
@@ -616,6 +623,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _layoutOverflow = false;
         LayoutCanvas.Children.Clear();
         _canvasSelectionButton = null;
+        _canvasTextEditor = null;
         _snapGuides.Clear();
         foreach (var image in _template.ImageLayers)
         {
@@ -632,9 +640,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_template.ShowHeader)
         {
             var text = string.IsNullOrEmpty(_template.HeaderText) ? L.Get("TplEditHeader") : _template.HeaderText;
-            var button = SelectableText("header", text, _template.HeaderFontSize);
-            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(AlignmentFor("header", StyleFor("header", _template.HeaderFontSize)));
-            PlaceTextFrame("header", button);
+            PlaceTextFrame("header", _selectedElement == "header" ? CreateCanvasTextEditor(true) : SelectableText("header", text, _template.HeaderFontSize));
         }
         if (_template.ShowDateRange)
         {
@@ -668,9 +674,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_template.ShowFooter)
         {
             var text = string.IsNullOrEmpty(_template.FooterText) ? L.Get("TplEditFooter") : _template.FooterText;
-            var button = SelectableText("footer", text, _template.FooterFontSize);
-            if (button.Content is TextBlock label) label.TextAlignment = TextAlignmentFor(AlignmentFor("footer", StyleFor("footer", _template.FooterFontSize)));
-            PlaceTextFrame("footer", button);
+            PlaceTextFrame("footer", _selectedElement == "footer" ? CreateCanvasTextEditor(false) : SelectableText("footer", text, _template.FooterFontSize));
         }
         if (_layoutOverflow) StatusText.Text = L.Get("TplLayoutOverflow");
         else if (StatusText.Text == L.Get("TplLayoutOverflow")) StatusText.Text = "";
@@ -681,6 +685,41 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         // Child controls select themselves. Only a bare canvas press clears the active object.
         if (ReferenceEquals(e.OriginalSource, LayoutCanvas)) SelectElement(null);
+    }
+
+    private RichEditBox CreateCanvasTextEditor(bool header)
+    {
+        var key = header ? "header" : "footer";
+        var style = StyleFor(key, header ? _template.HeaderFontSize : _template.FooterFontSize);
+        var rich = header ? _template.HeaderRichText : _template.FooterRichText;
+        var text = header ? _template.HeaderText : _template.FooterText;
+        var editor = new RichEditBox
+        {
+            Tag = key, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap,
+            Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0),
+            Padding = new Thickness(0), FontFamily = new FontFamily(style.FontFamily), FontSize = style.FontSize,
+            Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)),
+            FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal,
+            FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal
+        };
+        editor.Document.SetText(TextSetOptions.None, rich?.Runs?.Count > 0 ? string.Concat(rich.Runs.Select(run => run.Text)) : text);
+        ApplyRichRuns(editor, rich);
+        var undoCaptured = false;
+        editor.TextChanged += (_, _) =>
+        {
+            if (!undoCaptured) { CaptureVisualUndo(); undoCaptured = true; }
+            var updated = ReadRichRuns(editor);
+            var plain = string.Concat(updated.Runs.Select(run => run.Text));
+            if (header) { _template.HeaderText = plain; _template.HeaderRichText = rich == null || updated.Runs.Count == 0 ? null : updated; }
+            else { _template.FooterText = plain; _template.FooterRichText = rich == null || updated.Runs.Count == 0 ? null : updated; }
+            var wasBinding = _binding;
+            _binding = true;
+            if (header) HeaderBox.Text = plain; else FooterBox.Text = plain;
+            _binding = wasBinding;
+            _dirty = true;
+        };
+        _canvasTextEditor = editor;
+        return editor;
     }
 
     private void UpdateContextualToolbar()
@@ -982,6 +1021,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void UpdateCanvasFontSize(string key, double size)
     {
+        if (_canvasTextEditor is { Tag: string tag } editor && tag == key) editor.FontSize = size;
         void Visit(DependencyObject node)
         {
             if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
@@ -994,6 +1034,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void UpdateCanvasTextColor(string key, string color)
     {
+        if (_canvasTextEditor is { Tag: string tag } editor && tag == key) editor.Foreground = new SolidColorBrush(ParseColor(color, Colors.Black));
         void Visit(DependencyObject node)
         {
             if (node is Button { Tag: string tag, Content: TextBlock text } && tag == key)
