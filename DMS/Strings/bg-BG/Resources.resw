@@ -326,6 +326,9 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
+  <data name="TplDefaultColors" xml:space="preserve"><value>Основни цветове</value></data>
+  <data name="TplRecentColors" xml:space="preserve"><value>Последни цветове</value></data>
+  <data name="TplResetColor" xml:space="preserve"><value>Нулиране</value></data>
   <data name="TplBold" xml:space="preserve"><value>Получер</value></data>
   <data name="TplItalic" xml:space="preserve"><value>Курсив</value></data>
   <data name="TplUnderline" xml:space="preserve"><value>Подчертаване</value></data>

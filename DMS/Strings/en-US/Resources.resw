@@ -326,6 +326,9 @@
   <data name="TplSelectedElement" xml:space="preserve"><value>Selected text</value></data>
   <data name="TplSelectedSize" xml:space="preserve"><value>Text size</value></data>
   <data name="TplSelectedColor" xml:space="preserve"><value>Text color</value></data>
+  <data name="TplDefaultColors" xml:space="preserve"><value>Default colors</value></data>
+  <data name="TplRecentColors" xml:space="preserve"><value>Recent colors</value></data>
+  <data name="TplResetColor" xml:space="preserve"><value>Reset</value></data>
   <data name="TplBold" xml:space="preserve"><value>Bold</value></data>
   <data name="TplItalic" xml:space="preserve"><value>Italic</value></data>
   <data name="TplUnderline" xml:space="preserve"><value>Underline</value></data>

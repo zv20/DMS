@@ -707,7 +707,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 var selected = StyleFor(textKey, _template.MealFontSize); selected.Color = value; _template.TextStyles[textKey] = selected;
                 UpdateCanvasTextColor(textKey, value);
-            });
+            }, () =>
+            {
+                var selected = StyleFor(textKey, _template.MealFontSize);
+                selected.Color = textKey == "header" ? _template.HeaderColor : "#000000";
+                _template.TextStyles[textKey] = selected;
+                UpdateCanvasTextColor(textKey, selected.Color);
+            }, textKey == "header" ? _template.HeaderColor : "#000000");
             var appearanceKey = SelectedLayoutKey() ?? textKey;
             _template.BlockAppearances ??= new();
             _template.BlockAppearances.TryGetValue(appearanceKey, out var currentAppearance);
@@ -716,14 +722,28 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
                 item.BackgroundColor = value;
                 UpdateCanvasAppearance(appearanceKey, item);
-            });
+            }, () =>
+            {
+                if (_template.BlockAppearances.TryGetValue(appearanceKey, out var item))
+                {
+                    item.BackgroundColor = null;
+                    UpdateCanvasAppearance(appearanceKey, item);
+                }
+            }, "#FFFFFF");
             var borderColor = CreateColorTool("TplAppearanceBorder", currentAppearance?.BorderColor ?? "#000000", value =>
             {
                 if (!_template.BlockAppearances.TryGetValue(appearanceKey, out var item)) _template.BlockAppearances[appearanceKey] = item = new TemplateBlockAppearance();
                 item.BorderColor = value;
                 if (item.BorderThickness <= 0) item.BorderThickness = 1;
                 UpdateCanvasAppearance(appearanceKey, item);
-            });
+            }, () =>
+            {
+                if (_template.BlockAppearances.TryGetValue(appearanceKey, out var item))
+                {
+                    item.BorderColor = null;
+                    UpdateCanvasAppearance(appearanceKey, item);
+                }
+            }, "#000000");
             panel.Children.Add(font); panel.Children.Add(size); panel.Children.Add(color); panel.Children.Add(backgroundColor); panel.Children.Add(borderColor);
             AddFormatButton(panel, "B", "TplBold", style.Bold, value => SetContextualStyle(textKey, s => s.Bold = value));
             AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
@@ -839,15 +859,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         UpdatePreview();
     }
 
-    private Button CreateColorTool(string labelKey, string initial, Action<string> apply)
+    private Button CreateColorTool(string labelKey, string initial, Action<string> apply, Action reset, string resetColor)
     {
         var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial, Colors.Black)), BorderBrush = new SolidColorBrush(Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
         NameTool(button, labelKey);
         var picker = new ColorPicker { Color = ParseColor(initial, Colors.Black), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsAlphaSliderVisible = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
+        var defaults = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
         var recent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
         var stack = new StackPanel { Spacing = 8 };
         stack.Children.Add(picker);
+        stack.Children.Add(new TextBlock { Text = L.Get("TplDefaultColors") });
+        stack.Children.Add(defaults);
+        stack.Children.Add(new TextBlock { Text = L.Get("TplRecentColors") });
         stack.Children.Add(recent);
         var flyout = new Flyout { Content = stack };
         button.Flyout = flyout;
@@ -871,22 +895,45 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (RecentColors.Count > 5) RecentColors.RemoveAt(5);
             changed = false;
         }
-        picker.ColorChanged += (_, args) => ApplyColor(args.NewColor);
+        var resetting = false;
+        picker.ColorChanged += (_, args) => { if (!resetting) ApplyColor(args.NewColor); };
         flyout.Closed += (_, _) => RememberColor();
+        Button ColorChoice(string value)
+        {
+            var choice = new Button { Content = new Border { Width = 20, Height = 20, Background = new SolidColorBrush(ParseColor(value, Colors.Black)), BorderBrush = new SolidColorBrush(Colors.Gray), BorderThickness = new Thickness(1) }, Padding = new Thickness(3), MinWidth = 0 };
+            ToolTipService.SetToolTip(choice, value);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(choice, value);
+            choice.Click += (_, _) => picker.Color = ParseColor(value, Colors.Black);
+            return choice;
+        }
+        foreach (var value in new[] { "#FFFFFF", "#000000", "#FF0000", "#008000", "#0067C0" })
+            defaults.Children.Add(ColorChoice(value));
         flyout.Opening += (_, _) =>
         {
             recent.Children.Clear();
             foreach (var value in RecentColors.ToArray())
             {
-                var choice = new Button { Content = new Border { Width = 20, Height = 20, Background = new SolidColorBrush(ParseColor(value, Colors.Black)) }, Padding = new Thickness(3), MinWidth = 0 };
-                ToolTipService.SetToolTip(choice, value);
-                choice.Click += (_, _) => { picker.Color = ParseColor(value, Colors.Black); };
-                recent.Children.Add(choice);
+                recent.Children.Add(ColorChoice(value));
             }
         };
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var resetButton = new Button { Content = L.Get("TplResetColor") };
+        resetButton.Click += (_, _) =>
+        {
+            if (!changed) CaptureVisualUndo();
+            reset();
+            _dirty = true;
+            changed = false;
+            resetting = true;
+            picker.Color = ParseColor(resetColor, Colors.Black);
+            resetting = false;
+            swatch.Background = new SolidColorBrush(picker.Color);
+        };
+        actions.Children.Add(resetButton);
         var accept = new Button { Content = L.Get("TplSave") };
         accept.Click += (_, _) => flyout.Hide();
-        stack.Children.Add(accept);
+        actions.Children.Add(accept);
+        stack.Children.Add(actions);
         return button;
     }
 
