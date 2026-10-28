@@ -82,7 +82,7 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_About_3e3c26" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
-                        <TextBlock Text="DMS (Diet Management System)" FontWeight="SemiBold" />
+                        <TextBlock Text="DMS" FontWeight="SemiBold" />
                         <TextBlock Text="v1.0.0" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
                     <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
