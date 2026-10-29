@@ -11,9 +11,8 @@
   <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
-    <TextBox x:Name="NameBox" TextChanged="Fields_Changed" /><TextBox x:Name="HeaderBox" TextChanged="Fields_Changed" />
-    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1500" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
-    <TextBox x:Name="NoticeBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="500" TextChanged="Fields_Changed" />
+    <TextBox x:Name="HeaderBox" TextChanged="Fields_Changed" />
+    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="MealSpacingBox" Minimum="0" Maximum="20" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="FontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />

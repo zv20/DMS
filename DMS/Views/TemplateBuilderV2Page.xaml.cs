@@ -41,9 +41,9 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _database = App.Services.GetRequiredService<IDatabaseService>();
         PageTitle.Text = L.Get("TplV2Title"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
-        WeekPicker.Header = L.Get("TplPreview"); NameBox.Header = L.Get("TplName");
+        WeekPicker.Header = L.Get("TplPreview");
         HeaderBox.Header = L.Get("TplHeader"); FooterBox.Header = L.Get("TplFooter");
-        NoticeBox.Header = L.Get("TplV2Notice"); DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
+        DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
         FooterHint.Text = L.Get("TplV2FooterHint"); DayHint.Text = L.Get("TplV2DayHint");
         FontBox.Header = L.Get("TplV2FontSize"); MinimumFontBox.Header = L.Get("TplV2MinimumFont");
         AllowShrinkBox.Content = L.Get("TplV2AllowShrink");
@@ -117,11 +117,12 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     {
         _binding = true;
         _document = JsonSerializer.Deserialize<TemplateV2Document>(JsonSerializer.Serialize(template.V2 ?? new TemplateV2Document())) ?? new();
+        _document.MergeLegacyFooterNotice();
         var heights = new double?[5];
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(5, _document.DayHeights.Length));
         _document.DayHeights = heights;
-        _loadedName = name; NameBox.Text = template.Name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
-        NoticeBox.Text = _document.FooterNoticeText; DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
+        _loadedName = name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
+        DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         HeaderReflectionBox.IsChecked = _document.ShowHeaderReflection;
         RefreshDecorationList();
@@ -166,17 +167,28 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving) return;
-        var name = NameBox.Text.Trim();
-        if (name.Length == 0) { StatusText.Text = L.Get("TplV2NameRequired"); return; }
+        if (_saving || _switching) return;
         if (!double.IsFinite(FontBox.Value) || !double.IsFinite(MinimumFontBox.Value) || MinimumFontBox.Value > FontBox.Value)
         { StatusText.Text = L.Get("TplV2FontInvalid"); return; }
         _saving = true; SaveButton.IsEnabled = false;
         try
         {
             var all = await _database.GetAllTemplatesAsync();
-            if (all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)))
-            { StatusText.Text = L.Get("TplV2NameExists"); return; }
+            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _loadedName ?? "" };
+            var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+            var content = new StackPanel { Spacing = 8 };
+            content.Children.Add(nameBox); content.Children.Add(error);
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplSave"), Content = content,
+                PrimaryButtonText = L.Get("TplSave"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Primary };
+            string name = "";
+            dialog.PrimaryButtonClick += (_, args) =>
+            {
+                name = nameBox.Text.Trim();
+                var message = name.Length == 0 ? "TplV2NameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)) ? "TplV2NameExists" : null;
+                if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
+                if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             await _database.SaveTemplateAsync(new MenuTemplate { Name = name, V2 = _document });
             _loadedName = name; _dirty = false;
             await ReloadTemplatesAsync();
@@ -220,7 +232,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private void Fields_Changed(object sender, TextChangedEventArgs e)
     {
         if (_binding) return;
-        _document.HeaderText = HeaderBox.Text; _document.FooterText = FooterBox.Text; _document.FooterNoticeText = NoticeBox.Text;
+        _document.HeaderText = HeaderBox.Text; _document.FooterText = FooterBox.Text;
         _dirty = true; Render();
     }
 
