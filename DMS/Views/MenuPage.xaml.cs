@@ -16,7 +16,7 @@ public sealed partial class MenuPage : Page
     private bool _monthly = true;
     private bool _busy;
     private bool _weekendPlanningEnabled;
-    private bool _compactHeader;
+    private int _headerLayout = -1;
     private List<Recipe> _recipes = [];
     private List<MenuEntry> _entries = [];
 
@@ -35,14 +35,20 @@ public sealed partial class MenuPage : Page
 
     private void MenuHeader_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var compact = e.NewSize.Width < 700;
-        if (_compactHeader == compact) return;
-        _compactHeader = compact;
+        var layout = e.NewSize.Width < 500 ? 2 : e.NewSize.Width < 700 ? 1 : 0;
+        if (_headerLayout == layout) return;
+        _headerLayout = layout;
         MenuHeader.RowDefinitions.Clear();
-        if (compact)
+        if (layout > 0)
         {
             MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            if (layout == 2) MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetColumnSpan(HeaderScroll, layout == 2 ? 3 : 1);
+            Grid.SetRow(OutputButton, layout == 2 ? 2 : 0); Grid.SetColumn(OutputButton, layout == 2 ? 0 : 2);
+            Grid.SetColumnSpan(OutputButton, layout == 2 ? 3 : 1);
+            OutputButton.HorizontalAlignment = layout == 2 ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+            OutputButton.Margin = layout == 2 ? new Thickness(0, 8, 0, 0) : new Thickness();
             Grid.SetRow(PeriodLabel, 1); Grid.SetColumn(PeriodLabel, 0); Grid.SetColumnSpan(PeriodLabel, 3);
             PeriodLabel.HorizontalAlignment = HorizontalAlignment.Left;
             PeriodLabel.Margin = new Thickness(0, 8, 0, 0);
@@ -50,6 +56,9 @@ public sealed partial class MenuPage : Page
         else
         {
             MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetColumnSpan(HeaderScroll, 1);
+            Grid.SetRow(OutputButton, 0); Grid.SetColumn(OutputButton, 2); Grid.SetColumnSpan(OutputButton, 1);
+            OutputButton.HorizontalAlignment = HorizontalAlignment.Stretch; OutputButton.Margin = new Thickness();
             Grid.SetRow(PeriodLabel, 0); Grid.SetColumn(PeriodLabel, 1); Grid.SetColumnSpan(PeriodLabel, 1);
             PeriodLabel.HorizontalAlignment = HorizontalAlignment.Center;
             PeriodLabel.Margin = new Thickness();
@@ -60,8 +69,16 @@ public sealed partial class MenuPage : Page
 
     private void ResizeCalendarCards()
     {
-        if (CalendarGrid.ColumnDefinitions.Count == 0 || CalendarScrollViewer.ActualWidth <= 0) return;
-        var columns = CalendarGrid.ColumnDefinitions.Count;
+        if (CalendarGrid.Children.Count == 0 || CalendarScrollViewer.ActualWidth <= 0) return;
+        var columns = ResponsiveLayout.PlannerColumns(CalendarScrollViewer.ActualWidth, _weekendPlanningEnabled ? 7 : 5, _monthly);
+        if (CalendarGrid.ColumnDefinitions.Count != columns || CalendarGrid.RowDefinitions.Count != (CalendarGrid.Children.Count + columns - 1) / columns)
+        {
+            CalendarGrid.ColumnDefinitions.Clear();
+            CalendarGrid.RowDefinitions.Clear();
+            for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+            for (var row = 0; row < (CalendarGrid.Children.Count + columns - 1) / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var i = 0; i < CalendarGrid.Children.Count; i++) { Grid.SetColumn(CalendarGrid.Children[i], i % columns); Grid.SetRow(CalendarGrid.Children[i], i / columns); }
+        }
         var width = Math.Max(92, (CalendarScrollViewer.ActualWidth - 32 - ((columns - 1) * 8)) / columns);
         foreach (var card in CalendarGrid.Children.OfType<Border>())
             card.MinHeight = _monthly ? Math.Min(155, width) : 0;
@@ -105,7 +122,7 @@ public sealed partial class MenuPage : Page
                 var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
                 var isDisabledWeekend = isWeekend && !_weekendPlanningEnabled;
                 var panel = new StackPanel { Spacing = 8 };
-                panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = 14 });
+                panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = 14, TextWrapping = TextWrapping.Wrap });
                 if (_monthly)
                 {
                     var names = isDisabledWeekend

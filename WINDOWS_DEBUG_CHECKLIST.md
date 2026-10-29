@@ -11,6 +11,7 @@ data or make a backup before testing import, restore, conversion or deletion.
 ## Data and planner
 
 - [ ] Create and reopen an ingredient, allergen and recipe, and assign four meals to a menu.
+- [ ] Resize the app from wide to narrow and short and back. Check navigation, planner headers and weekly/monthly cards with weekends on and off; days should reflow in date order without losing an active edit or save. Verify recipe, ingredient and allergen toolbars and editors, Settings, template builder and Print / Export remain usable in both languages.
 - [ ] Back up and restore a disposable SQLite database, and import/export representative JSON including browser data. Verify the pre-import backup, recovery from invalid JSON, and persisted values after restart.
 
 ## Template builder

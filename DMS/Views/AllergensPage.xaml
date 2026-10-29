@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <Grid Grid.Row="0" Padding="16,16,16,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+        <Grid x:Name="ListToolbar" Grid.Row="0" Padding="16,16,16,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
             <Button x:Name="AddAllergenButton" Content="➕ Add Allergen" Click="AddAllergenButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Add_Allergen_a0c094" />
             <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Search allergens..." QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_allergens_c1743a" />
         </Grid>

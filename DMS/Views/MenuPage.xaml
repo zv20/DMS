@@ -1,11 +1,12 @@
 <Page x:Class="DMS.Views.MenuPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
  <Grid RowDefinitions="Auto,*">
   <Grid x:Name="MenuHeader" Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" SizeChanged="MenuHeader_SizeChanged">
-   <StackPanel x:Name="HeaderActions" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+   <ScrollViewer x:Name="HeaderScroll" Grid.Column="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+   <StackPanel x:Name="HeaderActions" Orientation="Horizontal" Spacing="8">
     <Button Content="Monthly" Click="Monthly_Click" x:Uid="Text_Monthly_d31edb" /><Button Content="Weekly" Click="Weekly_Click" x:Uid="Text_Weekly_158f3d" />
     <Button Content="←" Click="Previous_Click"/><Button Content="Today" Click="Today_Click" x:Uid="Text_Today_24345a" /><Button Content="→" Click="Next_Click"/>
-   </StackPanel>
-   <TextBlock x:Name="PeriodLabel" Grid.Column="1" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Center"/>
+   </StackPanel></ScrollViewer>
+   <TextBlock x:Name="PeriodLabel" Grid.Column="1" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Center" TextWrapping="Wrap"/>
    <Button x:Name="OutputButton" Grid.Column="2" Content="Print / Export" Click="Output_Click" x:Uid="MenuOutput" />
   </Grid>
   <ScrollViewer x:Name="CalendarScrollViewer" Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" SizeChanged="CalendarScrollViewer_SizeChanged">

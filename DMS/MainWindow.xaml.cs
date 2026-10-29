@@ -29,6 +29,8 @@ public sealed partial class MainWindow : Window
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        var paneMode = e.NewSize.Width < 600 ? NavigationViewPaneDisplayMode.LeftMinimal : NavigationViewPaneDisplayMode.LeftCompact;
+        if (NavView.PaneDisplayMode != paneMode) NavView.PaneDisplayMode = paneMode;
         // Preserve enough content width for planners and editors on narrow windows.
         if (e.NewSize.Width < 850 && NavView.IsPaneOpen)
         {

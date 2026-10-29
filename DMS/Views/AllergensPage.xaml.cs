@@ -22,6 +22,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
     public AllergensPage()
     {
         this.InitializeComponent();
+        ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<IDatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         AllergensListView.ItemsSource = _filteredAllergens;

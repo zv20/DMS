@@ -73,7 +73,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         PageScroll.ViewChanged += (_, _) => { UpdateCanvasZoom(); PositionContextTools(); };
         InlineEditor.TextChanged += InlineEditor_TextChanged;
         InlineEditor.LostFocus += (_, _) => RefreshInlineText();
-        Workspace.SizeChanged += (_, _) => PositionContextTools();
+        Workspace.SizeChanged += (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
         AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
         KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
@@ -89,6 +89,18 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _fixedBoxes.Add(fixedBox); _dayBoxes.Add(height); _dayRows.Add(row); row.Children.Add(fixedBox); row.Children.Add(height); DayControls.Children.Add(row);
         }
         Loaded += async (_, _) => await InitializeAsync();
+    }
+
+    private void ResizeWorkspace(double width, double height)
+    {
+        var compact = width < 700;
+        Grid.SetColumn(SettingsPanel, compact ? 0 : 1);
+        Grid.SetColumnSpan(SettingsPanel, compact ? 2 : 1);
+        Grid.SetRow(SettingsPanel, compact ? 2 : 0);
+        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 3);
+        SettingsPanel.Width = compact ? double.NaN : 270;
+        SettingsPanel.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
+        SettingsPanel.MaxHeight = compact ? Math.Clamp(height * 0.35, 72, 240) : double.PositiveInfinity;
     }
 
     private void SetCanvasZoom(double percent)

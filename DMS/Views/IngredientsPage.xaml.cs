@@ -19,6 +19,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     public IngredientsPage()
     {
         this.InitializeComponent();
+        ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<IDatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         IngredientsListView.ItemsSource = _filteredIngredients;

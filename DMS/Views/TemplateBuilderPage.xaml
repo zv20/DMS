@@ -15,9 +15,9 @@
     <CalendarDatePicker x:Name="WeekPicker" VerticalAlignment="Bottom" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>
-  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
-   <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid><Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
+   <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid><Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
     <Expander x:Name="LayoutHeading" IsExpanded="True" HorizontalAlignment="Stretch">
      <StackPanel Spacing="10">
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
