@@ -72,7 +72,7 @@ public static class TemplateV2Renderer
         headerPanel.Children.Add(header);
         if (reflectionHeight > 0)
         {
-            var reflection = StyledText(template.HeaderText, GetTextStyle(template, "header"));
+            var reflection = StyledText(template.HeaderText ?? "", GetTextStyle(template, "header"));
             reflection.Opacity = .18;
             reflection.RenderTransformOrigin = new Point(.5, .5);
             reflection.RenderTransform = new ScaleTransform { ScaleY = -1 };
