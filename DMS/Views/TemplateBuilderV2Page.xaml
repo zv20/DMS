@@ -16,6 +16,7 @@
     <NumberBox x:Name="FontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="MinimumFontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
     <CheckBox x:Name="AllowShrinkBox" Checked="Shrink_Changed" Unchecked="Shrink_Changed" />
+    <CheckBox x:Name="HideEmptyDaysBox" Checked="HideEmptyDays_Changed" Unchecked="HideEmptyDays_Changed" />
     <ComboBox x:Name="FontFamilyBox" HorizontalAlignment="Stretch" SelectionChanged="FontFamily_Changed" />
     <StackPanel x:Name="ColorControls" Spacing="6" />
     <Button x:Name="ChooseImageButton" Click="ChooseImage_Click" />

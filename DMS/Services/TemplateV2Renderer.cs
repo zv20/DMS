@@ -11,7 +11,7 @@ using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
-public sealed record TemplateV2PageResult(FrameworkElement Page, bool Overflowed, Task ImagesReady);
+public sealed record TemplateV2PageResult(FrameworkElement Page, bool Overflowed, Task ImagesReady, bool HasMeals, DateTime? FirstDay, DateTime? LastDay);
 
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateV2Renderer
@@ -19,20 +19,24 @@ public static class TemplateV2Renderer
     public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients)
     {
         const double width = 714;
-        const double daySpace = 1123 - 80 - 60 - 36 - 70 - 24;
+        const double dayArea = 1123 - 80 - 60 - 36 - 70;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
+        var populated = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, true);
+        var visible = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays);
+        var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
+        var daySpace = dayArea - Math.Max(0, visible.Length - 1) * 6;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         var floor = double.IsFinite(template.MinimumFontSize) ? Math.Clamp(template.MinimumFontSize, 10, 36) : 14;
         var ceiling = double.IsFinite(template.MaximumFontSize) ? Math.Clamp(template.MaximumFontSize, floor, 48) : Math.Max(18, floor);
         var start = double.IsFinite(template.FontSize) ? Math.Clamp(template.FontSize, floor, ceiling) : floor;
         StackPanel[] panels = [];
         double[] required = [];
-        TemplateV2Layout.Result fit = new(new double[5], true);
+        TemplateV2Layout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
-            panels = Enumerable.Range(0, 5).Select(day => BuildDay(monday.AddDays(day), entries, recipeMap, ingredientMap, font, template.FontFamily, template.BodyColor)).ToArray();
+            panels = visible.Select(day => BuildDay(monday.AddDays(day), entries, recipeMap, ingredientMap, font, template.FontFamily, template.BodyColor)).ToArray();
             required = panels.Select(panel => { panel.Measure(new Size(width - 18, double.PositiveInfinity)); return panel.DesiredSize.Height + 18; }).ToArray();
-            fit = TemplateV2Layout.Resolve(required, template.DayHeights, daySpace);
+            fit = TemplateV2Layout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink) break;
         }
         var family = new FontFamily(string.IsNullOrWhiteSpace(template.FontFamily) ? "Arial" : template.FontFamily);
@@ -44,7 +48,7 @@ public static class TemplateV2Renderer
         // three-line allowance; do not silently truncate the supplied content.
         var overflow = fit.Overflowed || header.DesiredSize.Height > 60 || footer.DesiredSize.Height > 3 * 13 * 1.4 || (template.FooterText ?? "").Split('\n').Length > 3;
         var days = new Grid { RowSpacing = 6 };
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < visible.Length; i++)
         {
             days.RowDefinitions.Add(new RowDefinition { Height = new GridLength(fit.DayHeights[i]) });
             var dayOverflow = required[i] > fit.DayHeights[i] + .5;
@@ -53,9 +57,11 @@ public static class TemplateV2Renderer
             Grid.SetRow(border, i); days.Children.Add(border);
         }
         var grid = new Grid();
-        foreach (var height in new[] { 60d, 36d, daySpace + 24, 70d }) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(height) });
+        foreach (var height in new[] { 60d, 36d, dayArea, 70d }) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(height) });
         grid.Children.Add(header);
-        var date = new TextBlock { Text = $"{monday:d} – {monday.AddDays(4):d}", FontFamily = family, FontSize = 14, Foreground = new SolidColorBrush(ParseColor(template.BodyColor, Colors.Black)), TextAlignment = TextAlignment.Center };
+        DateTime? first = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[0] : 0) : null;
+        DateTime? last = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[^1] : 4) : null;
+        var date = new TextBlock { Text = first is DateTime startDate && last is DateTime endDate ? startDate == endDate ? $"{startDate:d}" : $"{startDate:d} – {endDate:d}" : "", FontFamily = family, FontSize = 14, Foreground = new SolidColorBrush(ParseColor(template.BodyColor, Colors.Black)), TextAlignment = TextAlignment.Center };
         Grid.SetRow(date, 1); grid.Children.Add(date);
         Grid.SetRow(days, 2); grid.Children.Add(days);
         Grid.SetRow(footer, 3); grid.Children.Add(footer);
@@ -65,7 +71,7 @@ public static class TemplateV2Renderer
         var inset = new Border { Padding = new Thickness(40), Child = grid };
         content.Children.Add(inset);
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(ParseColor(template.BackgroundColor, Colors.White)), Child = content };
-        return new TemplateV2PageResult(page, overflow, LoadImageAsync(backgroundImage, template.BackgroundImageDataUri));
+        return new TemplateV2PageResult(page, overflow, LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), populated.Length > 0, first, last);
     }
 
     private static StackPanel BuildDay(DateTime day, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, string family, string color)

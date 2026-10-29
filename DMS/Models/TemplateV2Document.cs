@@ -9,6 +9,7 @@ public sealed class TemplateV2Document
     public double MinimumFontSize { get; set; } = 14;
     public double MaximumFontSize { get; set; } = 18;
     public bool AllowFontShrink { get; set; } = true;
+    public bool HideEmptyDays { get; set; } = true;
     public string FontFamily { get; set; } = "Arial";
     public string HeaderColor { get; set; } = "#000000";
     public string BodyColor { get; set; } = "#000000";

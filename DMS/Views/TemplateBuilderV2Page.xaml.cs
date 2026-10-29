@@ -40,6 +40,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         FooterHint.Text = L.Get("TplV2FooterHint"); DayHint.Text = L.Get("TplV2DayHint");
         FontBox.Header = L.Get("TplV2FontSize"); MinimumFontBox.Header = L.Get("TplV2MinimumFont");
         AllowShrinkBox.Content = L.Get("TplV2AllowShrink");
+        HideEmptyDaysBox.Content = L.Get("TplV2HideEmptyDays");
         FontFamilyBox.Header = L.Get("TplFont"); foreach (var family in Fonts) FontFamilyBox.Items.Add(family);
         ChooseImageButton.Content = L.Get("TplV2BackgroundImage"); ClearImageButton.Content = L.Get("TplV2ClearBackground");
         ImageOpacitySlider.Header = L.Get("TplV2ImageOpacity");
@@ -86,6 +87,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _loadedName = name; NameBox.Text = template.Name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
         FontBox.Value = _document.FontSize; MinimumFontBox.Value = _document.MinimumFontSize;
         AllowShrinkBox.IsChecked = _document.AllowFontShrink;
+        HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
         FontFamilyBox.SelectedItem = Fonts.Contains(_document.FontFamily, StringComparer.OrdinalIgnoreCase) ? _document.FontFamily : Fonts[0];
         ImageOpacitySlider.Value = Math.Clamp(_document.BackgroundImageOpacity * 100, 0, 100);
         UpdateColorButtons();
@@ -205,6 +207,14 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _dirty = true; Render();
     }
 
+    private void HideEmptyDays_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        _document.HideEmptyDays = HideEmptyDaysBox.IsChecked == true;
+        _dirty = true;
+        Render();
+    }
+
     private void FontFamily_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (_binding || FontFamilyBox.SelectedItem is not string family) return;
@@ -283,7 +293,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             PageHost.Content = result.Page;
             StatusText.Text = L.Get("OutputPreparing");
             await result.ImagesReady;
-            if (generation == _renderGeneration) StatusText.Text = L.Get(result.Overflowed ? "TplV2Overflow" : "TplV2BuilderHint");
+            if (generation == _renderGeneration) StatusText.Text = L.Get(!result.HasMeals ? "TplV2NoMeals" : result.Overflowed ? "TplV2Overflow" : "TplV2BuilderHint");
         }
         catch (Exception ex) { if (generation == _renderGeneration) StatusText.Text = L.Format("TplError", ex.Message); }
     }

@@ -1,3 +1,5 @@
+using DMS.Models;
+
 namespace DMS.Services;
 
 public static class TemplateV2Layout
@@ -8,17 +10,24 @@ public static class TemplateV2Layout
     public const double DayMaxHeight = 350;
     public sealed record Result(double[] DayHeights, bool Overflowed);
 
+    public static int[] VisibleDayIndexes(DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, bool hideEmpty)
+    {
+        if (!hideEmpty) return Enumerable.Range(0, 5).ToArray();
+        var recipeIds = recipes.Select(recipe => recipe.Id).ToHashSet();
+        return Enumerable.Range(0, 5).Where(day => entries.Any(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeIds.Contains(entry.RecipeId))).ToArray();
+    }
+
     /// <summary>Keep explicitly sized blocks unchanged; allocate the remaining height to automatic blocks.</summary>
     public static Result Resolve(double[] requiredHeights, double?[]? fixedHeights, double availableHeight, double minHeight = DayMinHeight, double maxHeight = DayMaxHeight)
     {
-        if (requiredHeights.Length != 5) throw new ArgumentException("Exactly five days are required.", nameof(requiredHeights));
+        if (requiredHeights.Length > 5) throw new ArgumentException("At most five days are supported.", nameof(requiredHeights));
         minHeight = double.IsFinite(minHeight) ? Math.Clamp(minHeight, 1, PageHeight) : DayMinHeight;
         maxHeight = double.IsFinite(maxHeight) ? Math.Clamp(maxHeight, minHeight, PageHeight) : DayMaxHeight;
         availableHeight = double.IsFinite(availableHeight) ? Math.Max(0, availableHeight) : 0;
-        var heights = new double[5];
+        var heights = new double[requiredHeights.Length];
         var automatic = new List<int>();
-        var required = new double[5];
-        for (var i = 0; i < 5; i++)
+        var required = new double[requiredHeights.Length];
+        for (var i = 0; i < requiredHeights.Length; i++)
         {
             required[i] = double.IsFinite(requiredHeights[i]) ? Math.Max(0, requiredHeights[i]) : maxHeight;
             var pinned = fixedHeights != null && i < fixedHeights.Length ? fixedHeights[i] : null;
@@ -35,7 +44,7 @@ public static class TemplateV2Layout
             var desired = Math.Clamp(required[i], minHeight, maxHeight);
             heights[i] += (desired - minHeight) * fraction;
         }
-        var overflow = heights.Sum() > availableHeight + .5 || Enumerable.Range(0, 5).Any(i => required[i] > heights[i] + .5);
+        var overflow = heights.Sum() > availableHeight + .5 || Enumerable.Range(0, heights.Length).Any(i => required[i] > heights[i] + .5);
         return new(heights, overflow);
     }
 }

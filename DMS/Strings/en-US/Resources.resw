@@ -36,6 +36,8 @@
   <data name="TplV2NameExists" xml:space="preserve"><value>That template name is already in use.</value></data>
   <data name="TplV2BuilderHint" xml:space="preserve"><value>Select a week to preview your template.</value></data>
   <data name="TplV2AllowShrink" xml:space="preserve"><value>Allow text to shrink down to the minimum size</value></data>
+  <data name="TplV2HideEmptyDays" xml:space="preserve"><value>Hide days without meals</value></data>
+  <data name="TplV2NoMeals" xml:space="preserve"><value>No meals are planned for this week. Add meals before printing or exporting.</value></data>
   <data name="TplV2HeaderColor" xml:space="preserve"><value>Header color</value></data>
   <data name="TplV2BodyColor" xml:space="preserve"><value>Menu color</value></data>
   <data name="TplV2FooterColor" xml:space="preserve"><value>Footer color</value></data>

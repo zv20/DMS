@@ -36,6 +36,8 @@
   <data name="TplV2NameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
   <data name="TplV2BuilderHint" xml:space="preserve"><value>Изберете седмица за преглед на шаблона.</value></data>
   <data name="TplV2AllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
+  <data name="TplV2HideEmptyDays" xml:space="preserve"><value>Скрий дните без ястия</value></data>
+  <data name="TplV2NoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица. Добавете ястия преди печат или експорт.</value></data>
   <data name="TplV2HeaderColor" xml:space="preserve"><value>Цвят на заглавието</value></data>
   <data name="TplV2BodyColor" xml:space="preserve"><value>Цвят на менюто</value></data>
   <data name="TplV2FooterColor" xml:space="preserve"><value>Цвят на долния колонтитул</value></data>

@@ -31,6 +31,7 @@ public sealed partial class TemplateV2OutputPage : Page
     private bool _loaded;
     private int _generation;
     private DateTime _monday;
+    private DateTime? _firstDay, _lastDay;
     private TemplateV2Document? _document;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
@@ -102,12 +103,13 @@ public sealed partial class TemplateV2OutputPage : Page
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.V2; _entries = entries; _recipes = recipes; _ingredients = ingredients;
             var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients);
+            _firstDay = result.FirstDay; _lastDay = result.LastDay;
             _previewPage = result.Page;
             PreviewHost.Content = _previewPage;
             await result.ImagesReady;
             if (!_loaded || generation != _generation) return;
-            StatusText.Text = L.Get(result.Overflowed ? "V2OutputOverflow" : "V2OutputReady");
-            SetReady(!result.Overflowed);
+            StatusText.Text = L.Get(!result.HasMeals ? "TplV2NoMeals" : result.Overflowed ? "V2OutputOverflow" : "V2OutputReady");
+            SetReady(result.HasMeals && !result.Overflowed);
         }
         catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
         finally { _refreshGate.Release(); }
@@ -141,7 +143,7 @@ public sealed partial class TemplateV2OutputPage : Page
     {
         var source = _printDocument?.DocumentSource;
         if (source == null) return;
-        var task = e.Request.CreatePrintTask($"{_monday:dd-MM-yyyy} - {_monday.AddDays(4):dd-MM-yyyy}", args => args.SetSource(source));
+        var task = e.Request.CreatePrintTask(OutputDateName(), args => args.SetSource(source));
         try { task.Options.MediaSize = PrintMediaSize.IsoA4; task.Options.Orientation = PrintOrientation.Portrait; }
         catch (Exception) { /* The printer may not support these defaults. */ }
         task.Completed += (_, args) => DispatcherQueue.TryEnqueue(() =>
@@ -208,7 +210,7 @@ public sealed partial class TemplateV2OutputPage : Page
         _busy = true; SetReady(true);
         try
         {
-            var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = $"{_monday:dd-MM-yyyy} - {_monday.AddDays(4):dd-MM-yyyy}" };
+            var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = OutputDateName() };
             picker.FileTypeChoices.Add("PNG", new[] { ".png" });
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
@@ -229,4 +231,8 @@ public sealed partial class TemplateV2OutputPage : Page
         catch (Exception ex) { StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
         finally { _busy = false; SetReady(_ready); }
     }
+
+    private string OutputDateName() => _firstDay is DateTime first && _lastDay is DateTime last
+        ? first == last ? $"{first:dd-MM-yyyy}" : $"{first:dd-MM-yyyy} - {last:dd-MM-yyyy}"
+        : $"{_monday:dd-MM-yyyy}";
 }
