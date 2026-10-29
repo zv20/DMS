@@ -173,6 +173,9 @@
   <data name="Text_Ingredients_f9e84e" xml:space="preserve"><value>Съставки</value></data>
   <data name="Text_Instructions_ed58f2" xml:space="preserve"><value>Начин на приготвяне</value></data>
   <data name="String_Text_Language_89b86a" xml:space="preserve"><value>Език</value></data>
+  <data name="LanguageReloadTitle" xml:space="preserve"><value>Промяна на езика?</value></data>
+  <data name="LanguageReloadMessage" xml:space="preserve"><value>Прозорецът на приложението ще се презареди, за да се приложи избраният език. Желаете ли да продължите?</value></data>
+  <data name="LanguageReloadConfirm" xml:space="preserve"><value>Презареди</value></data>
   <data name="Text_Language_89b86a.Header" xml:space="preserve"><value>Език</value></data>
   <data name="String_Text_Language_Region_5d78df" xml:space="preserve"><value>🌐 Език и регион</value></data>
   <data name="Text_Language_Region_5d78df.Text" xml:space="preserve"><value>🌐 Език и регион</value></data>

@@ -2,6 +2,7 @@ using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 using System.Diagnostics;
@@ -92,19 +93,50 @@ public sealed partial class SettingsPage : Page
         if (_suppressSettingChanges) return;
         if (LanguageComboBox.SelectedItem is ComboBoxItem item && item.Tag is string lang)
         {
+            var previousLanguage = _settingsService.GetLanguage();
+            if (lang == previousLanguage) return;
             LanguageComboBox.IsEnabled = false;
+            var saved = false;
             try
             {
+                var dialog = new ContentDialog
+                {
+                    XamlRoot = XamlRoot,
+                    Title = L.Get("LanguageReloadTitle"),
+                    Content = L.Get("LanguageReloadMessage"),
+                    PrimaryButtonText = L.Get("LanguageReloadConfirm"),
+                    CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                    DefaultButton = ContentDialogButton.Close
+                };
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    RestoreLanguageSelection(previousLanguage);
+                    return;
+                }
                 await _settingsService.SetLanguageAsync(lang);
+                saved = true;
                 Localization.Apply(lang);
                 App.ReloadLanguage();
             }
             catch (Exception ex)
             {
+                if (saved)
+                {
+                    try { await _settingsService.SetLanguageAsync(previousLanguage); Localization.Apply(previousLanguage); }
+                    catch (Exception rollbackError) { App.Logger.LogError(rollbackError, "Unable to restore the previous language"); }
+                }
+                RestoreLanguageSelection(_settingsService.GetLanguage());
                 LanguageStatus.Text = L.Format("SaveError", ex.Message);
-                LanguageComboBox.IsEnabled = true;
             }
+            finally { LanguageComboBox.IsEnabled = true; }
         }
+    }
+
+    private void RestoreLanguageSelection(string language)
+    {
+        _suppressSettingChanges = true;
+        try { LanguageComboBox.SelectedItem = LanguageComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == language); }
+        finally { _suppressSettingChanges = false; }
     }
 
     private async void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

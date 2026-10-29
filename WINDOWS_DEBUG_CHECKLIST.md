@@ -4,6 +4,7 @@ Run `DMS` in the x64 Debug configuration from Visual Studio. Use disposable test
 data or make a backup before testing import, restore, conversion or deletion.
 
 - [ ] Check startup, taskbar icon, EN/BG switching and restart.
+- [ ] Change the language in Settings and cancel the reload confirmation. Confirm the original language remains selected after reopening Settings and restarting. Confirm a language change, verify the window reloads in the selected language, and restart to verify it persists.
 - [ ] Create and reopen an ingredient, allergen and recipe, and assign four meals to a menu.
 - [ ] Confirm Print / Export is accessed from the planner button, opens in a centered popup for the chosen week, and closes back to the planner. Resize the window and confirm the entire preview fits.
 - [ ] Click the canvas header and footer to edit; format, zoom, save, reopen and confirm the values persist. Click outside the canvas or press Escape and confirm its toolbar closes.

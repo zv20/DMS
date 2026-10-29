@@ -173,6 +173,9 @@
   <data name="Text_Ingredients_f9e84e" xml:space="preserve"><value>Ingredients</value></data>
   <data name="Text_Instructions_ed58f2" xml:space="preserve"><value>Instructions</value></data>
   <data name="String_Text_Language_89b86a" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageReloadTitle" xml:space="preserve"><value>Change language?</value></data>
+  <data name="LanguageReloadMessage" xml:space="preserve"><value>The app window will reload to apply the selected language. Continue?</value></data>
+  <data name="LanguageReloadConfirm" xml:space="preserve"><value>Reload</value></data>
   <data name="Text_Language_89b86a.Header" xml:space="preserve"><value>Language</value></data>
   <data name="String_Text_Language_Region_5d78df" xml:space="preserve"><value>🌐 Language &amp; Region</value></data>
   <data name="Text_Language_Region_5d78df.Text" xml:space="preserve"><value>🌐 Language &amp; Region</value></data>
