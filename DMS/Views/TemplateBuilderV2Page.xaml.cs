@@ -56,6 +56,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         PageScroll.ViewChanged += (_, _) => PositionContextTools();
         Workspace.SizeChanged += (_, _) => PositionContextTools();
         PageHost.PointerPressed += PageHost_PointerPressed;
+        KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
         for (var i = 0; i < 5; i++)
         {
