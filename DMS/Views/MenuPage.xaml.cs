@@ -77,7 +77,14 @@ public sealed partial class MenuPage : Page
             CalendarGrid.RowDefinitions.Clear();
             for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
             for (var row = 0; row < (CalendarGrid.Children.Count + columns - 1) / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            for (var i = 0; i < CalendarGrid.Children.Count; i++) { Grid.SetColumn(CalendarGrid.Children[i], i % columns); Grid.SetRow(CalendarGrid.Children[i], i / columns); }
+            for (var i = 0; i < CalendarGrid.Children.Count; i++)
+            {
+                if (CalendarGrid.Children[i] is FrameworkElement card)
+                {
+                    Grid.SetColumn(card, i % columns);
+                    Grid.SetRow(card, i / columns);
+                }
+            }
         }
         var width = Math.Max(92, (CalendarScrollViewer.ActualWidth - 32 - ((columns - 1) * 8)) / columns);
         foreach (var card in CalendarGrid.Children.OfType<Border>())
