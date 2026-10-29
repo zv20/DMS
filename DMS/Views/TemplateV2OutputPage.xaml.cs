@@ -19,9 +19,12 @@ namespace DMS.Views;
 public sealed partial class TemplateV2OutputPage : Page
 {
     private readonly IDatabaseService _database;
+    private static readonly string[] PngExtensions = [".png"];
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private readonly Microsoft.UI.Dispatching.DispatcherQueue _uiQueue;
     private PrintManager? _printManager;
     private PrintDocument? _printDocument;
+    private IPrintDocumentSource? _printSource;
     private FrameworkElement? _printPage;
     private FrameworkElement? _nativePage;
     private Viewbox? _printViewbox;
@@ -40,6 +43,7 @@ public sealed partial class TemplateV2OutputPage : Page
     public TemplateV2OutputPage()
     {
         InitializeComponent();
+        _uiQueue = DispatcherQueue;
         _database = App.Services.GetRequiredService<IDatabaseService>();
         TitleText.Text = L.Get("V2OutputTitle");
         TemplateSelector.Header = L.Get("V2OutputTemplate");
@@ -121,6 +125,8 @@ public sealed partial class TemplateV2OutputPage : Page
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
         _printManager = PrintManagerInterop.GetForWindow(hwnd);
         _printDocument = new PrintDocument();
+        // Read XAML's DocumentSource on its owning UI thread, not in the print event.
+        _printSource = _printDocument.DocumentSource;
         _printManager.PrintTaskRequested += PrintTaskRequested;
         _printDocument.Paginate += Paginate;
         _printDocument.GetPreviewPage += GetPreviewPage;
@@ -129,24 +135,24 @@ public sealed partial class TemplateV2OutputPage : Page
 
     private void UnregisterPrinting()
     {
-        if (_printManager != null) _printManager.PrintTaskRequested -= PrintTaskRequested;
+        if (_printManager is { } manager) manager.PrintTaskRequested -= PrintTaskRequested;
         if (_printDocument != null)
         {
             _printDocument.Paginate -= Paginate;
             _printDocument.GetPreviewPage -= GetPreviewPage;
             _printDocument.AddPages -= AddPages;
         }
-        _printManager = null; _printDocument = null; _printPage = null; _nativePage = null; _printViewbox = null;
+        _printManager = null; _printDocument = null; _printSource = null; _printPage = null; _nativePage = null; _printViewbox = null;
     }
 
     private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
     {
-        var source = _printDocument?.DocumentSource;
+        var source = _printSource;
         if (source == null) return;
         var task = e.Request.CreatePrintTask(OutputDateName(), args => args.SetSource(source));
         try { task.Options.MediaSize = PrintMediaSize.IsoA4; task.Options.Orientation = PrintOrientation.Portrait; }
         catch (Exception) { /* The printer may not support these defaults. */ }
-        task.Completed += (_, args) => DispatcherQueue.TryEnqueue(() =>
+        task.Completed += (_, args) => _uiQueue.TryEnqueue(() =>
         {
             if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("V2OutputPrintFailed");
         });
@@ -155,7 +161,7 @@ public sealed partial class TemplateV2OutputPage : Page
     private void Paginate(object sender, PaginateEventArgs e)
     {
         if (_nativePage == null) return;
-        if (_printViewbox != null) _printViewbox.Child = null;
+        if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
         var description = ((PrintTaskOptions)e.PrintTaskOptions).GetPageDescription(0);
         var area = description.ImageableRect;
         var width = area.Width > 0 ? area.Width : description.PageSize.Width;
@@ -211,7 +217,7 @@ public sealed partial class TemplateV2OutputPage : Page
         try
         {
             var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = OutputDateName() };
-            picker.FileTypeChoices.Add("PNG", new[] { ".png" });
+            picker.FileTypeChoices.Add("PNG", PngExtensions);
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
