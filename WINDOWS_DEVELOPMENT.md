@@ -29,6 +29,13 @@ Visual Studio adapter; xUnit v3 is a separate framework migration.
 
 ## Menu templates and output
 
+Template Builder V2 and Print / Export V2 use a shared native WinUI A4 renderer.
+V2 templates are stored separately from V1 selections in the same template database
+and included in existing backup/export. The V2 output page prevents printing and
+PNG export when the page overflows. PDF uses the Windows print dialog: choose
+Microsoft Print to PDF. Native print, PDF and PNG require Windows validation;
+printer imageable margins may scale the document. See WINDOWS_DEBUG_CHECKLIST.md.
+
 The template editor previews a chosen saved week and stores formatting and
 visibility settings. New templates can use a movable A4 canvas with positioned
 text and embedded image layers. Existing flowing templates retain their old layout

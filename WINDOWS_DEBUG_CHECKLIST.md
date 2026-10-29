@@ -18,3 +18,12 @@ Run `DMS` in the x64 Debug configuration from Visual Studio, then tick these off
 - [ ] Run `dotnet test DMS.sln --configuration Debug -p:Platform=x64` after the build succeeds.
 
 Use disposable test data or make a backup before testing import/restore.
+
+## Template Builder V2 and native output
+
+- [ ] Create and save a V2 template, switch away and reopen it. Verify header, three-line footer, colors, font, background image and fixed day heights persist.
+- [ ] Confirm a V1 and V2 template cannot overwrite each other by using the same name. Verify unsaved changes are protected when navigating away.
+- [ ] Preview a short week and a long week with shrink on and off. Fixed day heights must stay fixed; overflow must disable export.
+- [ ] On Print / Export V2, select the same template and week and compare wrapping and placement with the builder preview.
+- [ ] Export PNG, then select Microsoft Print to PDF in the PDF print dialog, and print to an A4 printer. Compare all three with the builder and check image quality and margins.
+- [ ] Reopen V1 templates and the original print page to confirm they remain separate and unaffected.

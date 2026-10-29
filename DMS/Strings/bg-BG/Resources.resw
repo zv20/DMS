@@ -10,8 +10,41 @@
   <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
   <data name="NavTemplateBuilderV2.Content" xml:space="preserve"><value>Редактор на шаблони V2</value></data>
+  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Печат / Експорт V2</value></data>
+  <data name="V2OutputTitle" xml:space="preserve"><value>Печат / Експорт V2</value></data>
+  <data name="V2OutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="V2OutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
+  <data name="V2OutputPng" xml:space="preserve"><value>Запази като PNG</value></data>
+  <data name="V2OutputNoTemplate" xml:space="preserve"><value>Запазете шаблон V2 преди печат или експорт.</value></data>
+  <data name="V2OutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="V2OutputReady" xml:space="preserve"><value>Готово за печат или експорт.</value></data>
+  <data name="V2OutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
+  <data name="V2OutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
+  <data name="V2OutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="V2OutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
+  <data name="V2OutputWeek" xml:space="preserve"><value>Седмица</value></data>
+  <data name="V2OutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
+  <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
   <data name="TplV2Title" xml:space="preserve"><value>Редактор на шаблони V2</value></data>
-  <data name="TplV2Overflow" xml:space="preserve"><value>Част от менюто не се побира на страницата при минималния размер на шрифта. Превъртете в червения блок, за да го видите; печатът все още не е наличен.</value></data>
+  <data name="TplV2FooterHint" xml:space="preserve"><value>Долен колонтитул: до три реда.</value></data>
+  <data name="TplV2DayHint" xml:space="preserve"><value>Изберете ден, за да фиксирате височината му; останалите се настройват автоматично.</value></data>
+  <data name="TplV2FontSize" xml:space="preserve"><value>Предпочитан размер на шрифта</value></data>
+  <data name="TplV2MinimumFont" xml:space="preserve"><value>Минимален размер на шрифта</value></data>
+  <data name="TplV2NameRequired" xml:space="preserve"><value>Въведете име на шаблона.</value></data>
+  <data name="TplV2FooterLimit" xml:space="preserve"><value>Долният колонтитул може да съдържа най-много три реда.</value></data>
+  <data name="TplV2FontInvalid" xml:space="preserve"><value>Минималният размер на шрифта не може да надвишава предпочитания.</value></data>
+  <data name="TplV2NameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
+  <data name="TplV2BuilderHint" xml:space="preserve"><value>Изберете седмица за преглед на шаблона.</value></data>
+  <data name="TplV2AllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
+  <data name="TplV2HeaderColor" xml:space="preserve"><value>Цвят на заглавието</value></data>
+  <data name="TplV2BodyColor" xml:space="preserve"><value>Цвят на менюто</value></data>
+  <data name="TplV2FooterColor" xml:space="preserve"><value>Цвят на долния колонтитул</value></data>
+  <data name="TplV2BackgroundColor" xml:space="preserve"><value>Фон на страницата</value></data>
+  <data name="TplV2BackgroundImage" xml:space="preserve"><value>Изберете изображение за фон</value></data>
+  <data name="TplV2ClearBackground" xml:space="preserve"><value>Премахни фоновото изображение</value></data>
+  <data name="TplV2ImageOpacity" xml:space="preserve"><value>Непрозрачност на изображението</value></data>
+  <data name="V2OutputImageSizeError" xml:space="preserve"><value>Изображението не може да бъде създадено с необходимата разделителна способност.</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Част от съдържанието не се побира. Променете шаблона или менюто преди печат или експорт.</value></data>
   <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Планиране</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Меню за уикенда</value></data>

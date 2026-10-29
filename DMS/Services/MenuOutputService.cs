@@ -119,7 +119,7 @@ public static class MenuOutputService
                 Content = Localization.Get("OutputNoRecipes"), CloseButtonText = Localization.Get("OutputClose") }.ShowAsync();
             return;
         }
-        var templates = await database.GetAllTemplatesAsync();
+        var templates = (await database.GetAllTemplatesAsync()).Where(t => t.V2 == null).ToList();
         foreach (var template in templates) TemplateCompatibility.ApplyLegacyDefaults(template);
         templates.Insert(0, new MenuTemplate { Name = Localization.Get("OutputDefaultTemplate"),
             HeaderText = Localization.Get("String_Text_Weekly_Menu_69fa95"), FooterText = Localization.Get("String_Text_Prepared_with_care_by_DMS_082a78") });

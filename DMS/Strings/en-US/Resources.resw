@@ -10,8 +10,41 @@
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
   <data name="NavTemplateBuilderV2.Content" xml:space="preserve"><value>Template Builder V2</value></data>
+  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Print / Export V2</value></data>
+  <data name="V2OutputTitle" xml:space="preserve"><value>Print / Export V2</value></data>
+  <data name="V2OutputPrint" xml:space="preserve"><value>Print</value></data>
+  <data name="V2OutputPdf" xml:space="preserve"><value>Save as PDF</value></data>
+  <data name="V2OutputPng" xml:space="preserve"><value>Save as PNG</value></data>
+  <data name="V2OutputNoTemplate" xml:space="preserve"><value>Save a V2 template before printing or exporting.</value></data>
+  <data name="V2OutputOverflow" xml:space="preserve"><value>The content does not fit on the page. Adjust the template or menu before printing or exporting.</value></data>
+  <data name="V2OutputReady" xml:space="preserve"><value>Ready to print or export.</value></data>
+  <data name="V2OutputFailure" xml:space="preserve"><value>Could not complete the operation: {0}</value></data>
+  <data name="V2OutputPrintPdfHint" xml:space="preserve"><value>Choose Microsoft Print to PDF in the print dialog.</value></data>
+  <data name="V2OutputSaved" xml:space="preserve"><value>Image saved.</value></data>
+  <data name="V2OutputTemplate" xml:space="preserve"><value>Template</value></data>
+  <data name="V2OutputWeek" xml:space="preserve"><value>Week</value></data>
+  <data name="V2OutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>
+  <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Printing is not available on this system.</value></data>
   <data name="TplV2Title" xml:space="preserve"><value>Template Builder V2</value></data>
-  <data name="TplV2Overflow" xml:space="preserve"><value>Some menu content does not fit on the page at the minimum preview font size. Scroll inside the red block to see it; printing is not yet available.</value></data>
+  <data name="TplV2FooterHint" xml:space="preserve"><value>Footer: up to three lines.</value></data>
+  <data name="TplV2DayHint" xml:space="preserve"><value>Check a day to keep its height fixed; unchecked days adjust automatically.</value></data>
+  <data name="TplV2FontSize" xml:space="preserve"><value>Preferred font size</value></data>
+  <data name="TplV2MinimumFont" xml:space="preserve"><value>Minimum font size</value></data>
+  <data name="TplV2NameRequired" xml:space="preserve"><value>Enter a template name.</value></data>
+  <data name="TplV2FooterLimit" xml:space="preserve"><value>The footer can contain at most three lines.</value></data>
+  <data name="TplV2FontInvalid" xml:space="preserve"><value>The minimum font size must not exceed the preferred size.</value></data>
+  <data name="TplV2NameExists" xml:space="preserve"><value>That template name is already in use.</value></data>
+  <data name="TplV2BuilderHint" xml:space="preserve"><value>Select a week to preview your template.</value></data>
+  <data name="TplV2AllowShrink" xml:space="preserve"><value>Allow text to shrink down to the minimum size</value></data>
+  <data name="TplV2HeaderColor" xml:space="preserve"><value>Header color</value></data>
+  <data name="TplV2BodyColor" xml:space="preserve"><value>Menu color</value></data>
+  <data name="TplV2FooterColor" xml:space="preserve"><value>Footer color</value></data>
+  <data name="TplV2BackgroundColor" xml:space="preserve"><value>Page background</value></data>
+  <data name="TplV2BackgroundImage" xml:space="preserve"><value>Choose background image</value></data>
+  <data name="TplV2ClearBackground" xml:space="preserve"><value>Remove background image</value></data>
+  <data name="TplV2ImageOpacity" xml:space="preserve"><value>Image opacity</value></data>
+  <data name="V2OutputImageSizeError" xml:space="preserve"><value>The image could not be rendered at the required resolution.</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Some content does not fit. Adjust the template or menu before printing or exporting.</value></data>
   <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Experimental A4 weekly layout. Editing, saving, and printing are not yet available.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Planning</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Weekend menus</value></data>

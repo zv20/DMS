@@ -206,7 +206,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         try
         {
-            _templates = await _database.GetAllTemplatesAsync();
+            _templates = (await _database.GetAllTemplatesAsync()).Where(t => t.V2 == null).ToList();
             _recipes = await _database.GetAllRecipesAsync();
             _ingredients = await _database.GetAllIngredientsAsync();
             TemplateSelector.ItemsSource = _templates;
@@ -1534,16 +1534,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ReadFields();
         if (string.IsNullOrWhiteSpace(_template.Name)) { StatusText.Text = L.Get("Text_Template_name_is_required_0e3ca2"); return; }
         if (!IsColor(HeaderColorBox.Text) || !IsColor(BackgroundColorBox.Text)) { StatusText.Text = L.Get("TplInvalidColor"); return; }
-        if (_templates.Any(t => string.Equals(t.Name, _template.Name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.OrdinalIgnoreCase))) { StatusText.Text = L.Get("TplDuplicate"); return; }
         if (_template.IsPreset && string.Equals(_loadedName, _template.Name, StringComparison.OrdinalIgnoreCase)) { StatusText.Text = L.Get("TplPresetSave"); return; }
         try
         {
             _saving = true;
             IsEnabled = false;
+            var allTemplates = await _database.GetAllTemplatesAsync();
+            if (allTemplates.Any(t => string.Equals(t.Name, _template.Name, StringComparison.OrdinalIgnoreCase) && (t.V2 != null || !string.Equals(t.Name, _loadedName, StringComparison.OrdinalIgnoreCase)))) { StatusText.Text = L.Get("TplDuplicate"); return; }
             if (!string.Equals(_loadedName, _template.Name, StringComparison.OrdinalIgnoreCase)) _template.IsPreset = false;
             await _database.SaveTemplateAsync(_template);
             _loadedName = _template.Name;
-            _templates = await _database.GetAllTemplatesAsync();
+            _templates = (await _database.GetAllTemplatesAsync()).Where(t => t.V2 == null).ToList();
             _binding = true; TemplateSelector.ItemsSource = _templates; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
             StatusText.Text = L.Get("TplSaved");
             _dirty = false;
@@ -1558,7 +1559,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_template.IsPreset) { StatusText.Text = L.Get("Text_Preset_templates_cannot_be_deleted_0a9c55"); return; }
         var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"), Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-        try { await _database.DeleteTemplateAsync(_loadedName); _templates = await _database.GetAllTemplatesAsync(); TemplateSelector.ItemsSource = _templates; SetTemplate(new MenuTemplate(), null); }
+        try { await _database.DeleteTemplateAsync(_loadedName); _templates = (await _database.GetAllTemplatesAsync()).Where(t => t.V2 == null).ToList(); TemplateSelector.ItemsSource = _templates; SetTemplate(new MenuTemplate(), null); }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
     }
 

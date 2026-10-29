@@ -2,6 +2,8 @@ namespace DMS.Models;
 
 public sealed class MenuTemplate
 {
+    // V2 documents are stored alongside existing templates without changing V1 data.
+    public TemplateV2Document? V2 { get; set; }
     public string Name { get; set; } = string.Empty;
     public bool IsPreset { get; set; }
     public string HeaderText { get; set; } = "Weekly Menu";
