@@ -3,6 +3,7 @@ using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
@@ -77,10 +78,27 @@ public static class TemplateV2Renderer
             var recipe = recipes[entry.RecipeId];
             var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredients.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                 .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray();
-            var meal = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
-            if (recipe.Ingredients.Count > 0) meal += " — " + string.Join(", ", recipe.Ingredients);
-            if (allergens.Length > 0) meal += " · ⚠ " + string.Join(", ", allergens);
-            Add(meal);
+            var meal = new TextBlock { FontFamily = new FontFamily(string.IsNullOrWhiteSpace(family) ? "Arial" : family), FontSize = size, Foreground = new SolidColorBrush(ParseColor(color, Colors.Black)), TextWrapping = TextWrapping.Wrap };
+            var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
+            if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
+            if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
+            meal.Inlines.Add(new Run { Text = title });
+            if (recipe.Ingredients.Count > 0) meal.Inlines.Add(new Run { Text = " — " });
+            for (var i = 0; i < recipe.Ingredients.Count; i++)
+            {
+                var name = recipe.Ingredients[i];
+                if (i > 0) meal.Inlines.Add(new Run { Text = ", " });
+                var run = new Run { Text = name };
+                if (ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0)
+                {
+                    var underlined = new Underline();
+                    underlined.Inlines.Add(run);
+                    meal.Inlines.Add(underlined);
+                }
+                else meal.Inlines.Add(run);
+            }
+            if (allergens.Length > 0) meal.Inlines.Add(new Run { Text = " · ⚠ " + string.Join(", ", allergens) });
+            panel.Children.Add(meal);
         }
         return panel;
     }
