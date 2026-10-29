@@ -60,7 +60,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         WeekPicker.Date = DateTimeOffset.Now;
         PageScroll.ViewChanged += (_, _) => PositionContextTools();
         Workspace.SizeChanged += (_, _) => PositionContextTools();
-        PageHost.PointerPressed += PageHost_PointerPressed;
+        AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
         KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
         for (var i = 0; i < 5; i++)
@@ -380,9 +380,23 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         return null;
     }
 
-    private void PageHost_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private void Page_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        // Selectable blocks handle their own input; a bare page click dismisses the tools.
+        if (_selectedBlock == null) return;
+
+        // Selectable blocks handle the press before it reaches the page. Keep their
+        // new selection, and keep the tools open while interacting with the toolbar.
+        var overSelectableBlock = false;
+        for (var current = e.OriginalSource as DependencyObject; current != null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current == SelectionToolbar) return;
+            if (current is FrameworkElement { Tag: string }) overSelectableBlock = true;
+            if (current == PageHost)
+            {
+                if (overSelectableBlock) return;
+                break;
+            }
+        }
         DismissContextTools();
     }
 
