@@ -310,6 +310,7 @@
   <data name="RecipeSortAllergens" xml:space="preserve"><value>Алергени</value></data>
   <data name="RecipeNoMatches" xml:space="preserve"><value>Няма намерени рецепти</value></data>
   <data name="TplNew" xml:space="preserve"><value>Нов</value></data>
+  <data name="TplFileMenu" xml:space="preserve"><value>Файл</value></data>
   <data name="TplSave" xml:space="preserve"><value>Запази шаблона</value></data>
   <data name="TplDelete" xml:space="preserve"><value>Изтрий</value></data>
   <data name="TplSelect" xml:space="preserve"><value>Изберете шаблон</value></data>

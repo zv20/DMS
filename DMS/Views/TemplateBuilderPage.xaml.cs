@@ -45,8 +45,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
         PageTitle.Text = L.Get("TplBuilderTitle"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
-        NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
-        DeleteButton.Content = L.Get("String_Text_Delete_f6fdbe");
+        FileMenuLabel.Text = L.Get("TplFileMenu");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));
+        NewButton.Text = L.Get("TplNew"); SaveButton.Text = L.Get("TplSave");
+        DeleteButton.Text = L.Get("String_Text_Delete_f6fdbe");
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
         InlineEditHint.Text = L.Get("TplBuilderInlineEditHint"); DayHint.Text = L.Get("TplBuilderDayHint");
