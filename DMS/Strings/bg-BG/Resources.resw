@@ -9,6 +9,10 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="NavTemplateBuilderV2.Content" xml:space="preserve"><value>Редактор на шаблони V2</value></data>
+  <data name="TplV2Title" xml:space="preserve"><value>Редактор на шаблони V2</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Част от менюто не се побира на страницата при минималния размер на шрифта. Превъртете в червения блок, за да го видите; печатът все още не е наличен.</value></data>
+  <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Планиране</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Меню за уикенда</value></data>
   <data name="Text_Weekend_Planning_53aa12.OffContent" xml:space="preserve"><value>Само делнични дни</value></data>

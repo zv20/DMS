@@ -9,6 +9,10 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Menu Planner</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
+  <data name="NavTemplateBuilderV2.Content" xml:space="preserve"><value>Template Builder V2</value></data>
+  <data name="TplV2Title" xml:space="preserve"><value>Template Builder V2</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Some menu content does not fit on the page at the minimum preview font size. Scroll inside the red block to see it; printing is not yet available.</value></data>
+  <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Experimental A4 weekly layout. Editing, saving, and printing are not yet available.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Planning</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Weekend menus</value></data>
   <data name="Text_Weekend_Planning_53aa12.OffContent" xml:space="preserve"><value>Weekdays only</value></data>

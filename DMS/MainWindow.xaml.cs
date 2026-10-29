@@ -63,6 +63,7 @@ public sealed partial class MainWindow : Window
             "ingredients" => typeof(IngredientsPage),
             "allergens" => typeof(AllergensPage),
             "templateBuilder" => typeof(TemplateBuilderPage),
+            "templateBuilderV2" => typeof(TemplateBuilderV2Page),
             "settings" => typeof(SettingsPage),
             _ => null
         };
@@ -77,6 +78,7 @@ public sealed partial class MainWindow : Window
                     RecipesPage => "recipes",
                     IngredientsPage => "ingredients",
                     AllergensPage => "allergens",
+                    TemplateBuilderPage => "templateBuilder",
                     _ => ""
                 };
                 if (_navigationPending)
