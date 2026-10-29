@@ -1,4 +1,8 @@
-# dotnet-windows-appsdk-ci
+# Historical Windows App SDK CI skill
+
+> Historical reference only. This obsolete skill describes earlier SDK versions
+> and recommends suppressing restore failures. Do not use it for current DMS
+> builds. See ../../WINDOWS_DEVELOPMENT.md and the current release workflow.
 
 ## Description
 .NET Windows App SDK build on github-actions runners.

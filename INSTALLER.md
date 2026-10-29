@@ -1,6 +1,6 @@
 # DMS Windows installer
 
-The release workflow produces two unsigned Windows x64 downloads:
+The release workflow is configured to produce two unsigned Windows x64 downloads:
 
 - `DMS-Setup-<version>.exe` — the recommended per-user installer. Its default
   path is `%LOCALAPPDATA%\Programs\DMS`, so it does not ask for administrator
@@ -14,7 +14,7 @@ workflow has restored packages, built the app, and run all tests. A tag such as
 Windows may show an unsigned-app warning; do not describe an unsigned build as
 production-ready.
 
-Language selection and importing browser JSON backups remain first-run app
-features because they need the application's migration and validation logic.
-The installer intentionally does not copy an unvalidated data file into the
-user's live database.
+Language selection and browser JSON import are available in the application's
+Settings. The installer does not copy an unvalidated data file into the live
+database. Check the specific tag's workflow and release assets to verify an
+actual release; workflow configuration alone is not evidence of a successful build.

@@ -3,9 +3,17 @@
 Run `DMS` in the x64 Debug configuration from Visual Studio. Use disposable test
 data or make a backup before testing import, restore, conversion or deletion.
 
+## Startup and language
+
 - [ ] Check startup, taskbar icon, EN/BG switching and restart.
 - [ ] Change the language in Settings and cancel the reload confirmation. Confirm the original language remains selected after reopening Settings and restarting. Confirm a language change, verify the window reloads in the selected language, and restart to verify it persists.
+## Data and planner
+
 - [ ] Create and reopen an ingredient, allergen and recipe, and assign four meals to a menu.
+- [ ] Back up and restore a disposable SQLite database, and import/export representative JSON including browser data. Verify the pre-import backup, recovery from invalid JSON, and persisted values after restart.
+
+## Template builder
+
 - [ ] Confirm Print / Export is accessed from the planner button, opens in a centered popup for the chosen week, and closes back to the planner. Resize the window and confirm the entire preview fits.
 - [ ] Click the canvas header and footer to edit; format, zoom, save, reopen and confirm the values persist. Click outside the canvas or press Escape and confirm its toolbar closes.
 - [ ] Open the template builder's File menu and confirm it opens below the button when space permits. Verify New, Saved templates, Save and Delete, including the current-template checkmark, unsaved-change confirmation and disabled Delete for new or preset templates. Check the menu in both languages and with keyboard navigation.
@@ -16,6 +24,13 @@ data or make a backup before testing import, restore, conversion or deletion.
 - [ ] Test contextual fonts, colors, alignment, allergen emphasis, day spacing and title reflection. Add multiple images and test reserved text-safe columns.
 - [ ] Open an older template in the builder. Review the conversion warning, save a copy under a new name, and verify the original remains in the database and backup. Compare the copy carefully; unsupported legacy styling and layout may differ.
 - [ ] Check saving under an existing name, saving a separate copy, cancellation, unsaved-change protection, and deleting a disposable saved template.
+## Print and export
+
 - [ ] Compare the selected template and week in the builder, output preview, PNG, Microsoft Print to PDF and an A4 printer. Check overflow blocks output and files contain the date range.
+## Cancellation and automated tests
+
 - [ ] Cancel a file picker and the print dialog, then close and reopen the popup. During export or an active print job, confirm the popup stays open until the operation finishes.
 - [ ] Run `dotnet test DMS.sln --configuration Debug -p:Platform=x64` after the build succeeds.
+
+Record the commit, Windows version, date, checks run and observed results separately.
+Unchecked items are planned checks, not evidence of a pass.

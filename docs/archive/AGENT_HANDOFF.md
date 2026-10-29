@@ -1,5 +1,8 @@
 # 🤝 DMS — Agent Handoff Document
 
+> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../../WINDOWS_DEVELOPMENT.md).
+
+
 > **Last Updated:** February 22, 2026  
 > **Repo:** [zv20/DMS](https://github.com/zv20/DMS)  
 > **Active branch:** `beta`  

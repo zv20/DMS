@@ -6,7 +6,7 @@
 .DS_Store
 **/.DS_Store
 
-# Node modules (if added in future)
+# Local Node dependencies
 node_modules/
 
 # IDE files

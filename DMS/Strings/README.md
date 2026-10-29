@@ -15,8 +15,9 @@ Keep numbered placeholders such as `{0}` unchanged in translations.
 Run `python3 scripts/check-localization.py` from the repository root to check
 matching keys, placeholders, code references, and XAML resource identifiers.
 
-Settings saves the selected language and rebuilds the window. Startup applies
-that preference before constructing the interface. Dates and numbers follow the
+Settings asks for confirmation before saving a language change and rebuilding
+the window; cancelling retains the current language. Startup applies the saved
+preference before constructing the interface. Dates and numbers follow the
 chosen culture. User recipe/ingredient names and saved template content are not
 translated. Built-in allergen labels and category labels are translated for
 display; stored names and category identifiers stay unchanged.
