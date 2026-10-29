@@ -28,8 +28,8 @@
   <data name="TplLegacyConvertButton" xml:space="preserve"><value>Отваряне на копие</value></data>
   <data name="TplLegacyCopySuffix" xml:space="preserve"><value>копие</value></data>
   <data name="TplBuilderInlineEditHint" xml:space="preserve"><value>Щракнете върху блок, за да го форматирате, или върху заглавието или текста в края, за да ги редактирате. Щракнете върху полето на страницата за цвят на фона и побиране на текста.</value></data>
-  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Оформление</value></data>
-  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Изображения</value></data>
+  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Настройки на страницата</value></data>
+  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Настройки на изображенията</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Височина на дните</value></data>
   <data name="TplBuilderPageSection" xml:space="preserve"><value>Страница</value></data>
   <data name="TplBuilderFooterHint" xml:space="preserve"><value>Бележките споделят страницата с менюто. При липса на място се показва предупреждение.</value></data>

@@ -50,7 +50,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
         InlineEditHint.Text = L.Get("TplBuilderInlineEditHint"); DayHint.Text = L.Get("TplBuilderDayHint");
-        LayoutHeading.Text = L.Get("TplBuilderLayoutSection"); ImagesHeading.Text = L.Get("TplBuilderImagesSection");
+        LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); ImagesHeading.Header = L.Get("TplBuilderImagesSection");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
         ChooseImageButton.Content = L.Get("TplBuilderBackgroundImage"); ClearImageButton.Content = L.Get("TplBuilderClearBackground");

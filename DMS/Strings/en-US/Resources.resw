@@ -28,8 +28,8 @@
   <data name="TplLegacyConvertButton" xml:space="preserve"><value>Open copy</value></data>
   <data name="TplLegacyCopySuffix" xml:space="preserve"><value>copy</value></data>
   <data name="TplBuilderInlineEditHint" xml:space="preserve"><value>Click a block to format it, or the header or footer to edit its text. Click a page margin for background color and text fitting.</value></data>
-  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Layout</value></data>
-  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Images</value></data>
+  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Canvas settings</value></data>
+  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Image settings</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Day heights</value></data>
   <data name="TplBuilderPageSection" xml:space="preserve"><value>Page</value></data>
   <data name="TplBuilderFooterHint" xml:space="preserve"><value>Footer notes share the page with the menu. A warning appears if they do not fit.</value></data>
