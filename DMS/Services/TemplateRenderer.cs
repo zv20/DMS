@@ -11,19 +11,19 @@ using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
-public sealed record TemplateV2PageResult(FrameworkElement Page, bool Overflowed, Task ImagesReady, bool HasMeals, DateTime? FirstDay, DateTime? LastDay);
+public sealed record TemplatePageResult(FrameworkElement Page, bool Overflowed, Task ImagesReady, bool HasMeals, DateTime? FirstDay, DateTime? LastDay);
 
 /// <summary>The same native page is used for the editor and output.</summary>
-public static class TemplateV2Renderer
+public static class TemplateRenderer
 {
-    public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false)
+    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false)
     {
-        var insets = TemplateV2Images.GetInsets(template.DecorativeImages);
+        var insets = TemplatePageImages.GetInsets(template.DecorativeImages);
         var width = Math.Max(1, 714 - insets.Left - insets.Right);
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
-        var populated = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
-        var visible = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
+        var populated = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
+        var visible = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 6;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -45,12 +45,12 @@ public static class TemplateV2Renderer
         var daySpace = Math.Max(0, dayArea - Math.Max(0, visible.Length - 1) * dayGap);
         StackPanel[] panels = [];
         double[] required = [];
-        TemplateV2Layout.Result fit = new(new double[visible.Length], true);
+        TemplatePageLayout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
             panels = visible.Select(day => BuildDay(monday.AddDays(day), day, entries, recipeMap, ingredientMap, font, template, onSelected)).ToArray();
             required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
-            fit = TemplateV2Layout.Resolve(required, fixedHeights, daySpace);
+            fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink) break;
         }
         // Long footers consume available day space but are never silently clipped.
@@ -102,15 +102,16 @@ public static class TemplateV2Renderer
         var backgroundImage = new Image { Stretch = Stretch.UniformToFill, Opacity = double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1, IsHitTestVisible = false };
         var content = new Grid();
         content.Children.Add(backgroundImage);
-        var decorations = TemplateV2Images.CreateLayer(template.DecorativeImages);
+        var decorations = TemplatePageImages.CreateLayer(template.DecorativeImages);
         content.Children.Add(decorations.Layer);
         var inset = new Border { Padding = new Thickness(40 + insets.Left, 40, 40 + insets.Right, 40), Child = grid };
         content.Children.Add(inset);
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(ParseColor(template.BackgroundColor, Colors.White)), Child = content };
-        return new TemplateV2PageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady), populated.Length > 0, first, last);
+        Selectable(page, "page", onSelected);
+        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady), populated.Length > 0, first, last);
     }
 
-    public static TemplateTextStyle GetTextStyle(TemplateV2Document template, string key)
+    public static TemplateTextStyle GetTextStyle(TemplateDocument template, string key)
     {
         var group = key.Split(':')[0];
         TemplateTextStyle? style = null;
@@ -135,26 +136,26 @@ public static class TemplateV2Renderer
         element.PointerPressed += (_, e) => { onSelected(key, element); e.Handled = true; };
     }
 
-    private static TemplateBlockAppearance? DayAppearance(TemplateV2Document template, int day)
+    private static TemplateBlockAppearance? DayAppearance(TemplateDocument template, int day)
     {
         if (template.BlockAppearances == null) return null;
         if (template.BlockAppearances.TryGetValue($"day:{day}", out var specific) && specific != null) return specific;
         return template.BlockAppearances.TryGetValue("day", out var shared) ? shared : null;
     }
 
-    private static double DayPadding(TemplateV2Document template, int day)
+    private static double DayPadding(TemplateDocument template, int day)
     {
         var padding = DayAppearance(template, day)?.Padding ?? 8;
         return double.IsFinite(padding) ? Math.Clamp(padding, 0, 40) : 8;
     }
 
-    private static double DayBorderThickness(TemplateV2Document template, int day)
+    private static double DayBorderThickness(TemplateDocument template, int day)
     {
         var thickness = DayAppearance(template, day)?.BorderThickness ?? 0;
         return double.IsFinite(thickness) ? Math.Clamp(thickness, 0, 20) : 1;
     }
 
-    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateV2Document template, Action<string, FrameworkElement>? onSelected)
+    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected)
     {
         var panel = new StackPanel { Spacing = double.IsFinite(template.MealLineSpacing) ? Math.Clamp(template.MealLineSpacing, 0, 20) : 2 };
         var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;

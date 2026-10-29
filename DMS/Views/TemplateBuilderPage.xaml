@@ -1,4 +1,4 @@
-<Page x:Class="DMS.Views.TemplateBuilderV2Page" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Page x:Class="DMS.Views.TemplateBuilderPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
  <Grid RowDefinitions="Auto,*,Auto" Background="Transparent">
   <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
@@ -11,14 +11,11 @@
   <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
+    <TextBlock x:Name="LayoutHeading" FontWeight="SemiBold" />
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="MealSpacingBox" Minimum="0" Maximum="20" ValueChanged="Numbers_Changed" />
-    <NumberBox x:Name="FontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
-    <NumberBox x:Name="MinimumFontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
-    <CheckBox x:Name="AllowShrinkBox" Checked="Shrink_Changed" Unchecked="Shrink_Changed" />
     <CheckBox x:Name="HideEmptyDaysBox" Checked="HideEmptyDays_Changed" Unchecked="HideEmptyDays_Changed" />
-    <ComboBox x:Name="FontFamilyBox" HorizontalAlignment="Stretch" SelectionChanged="FontFamily_Changed" />
-    <StackPanel x:Name="ColorControls" Spacing="6" />
+    <TextBlock x:Name="ImagesHeading" FontWeight="SemiBold" Margin="0,12,0,0" />
     <Button x:Name="ChooseImageButton" Click="ChooseImage_Click" />
     <Button x:Name="ClearImageButton" Click="ClearImage_Click" />
     <Slider x:Name="ImageOpacitySlider" Minimum="0" Maximum="100" StepFrequency="5" ValueChanged="ImageOpacity_Changed" />
@@ -30,7 +27,7 @@
     <NumberBox x:Name="DecorationWidth" Minimum="1" Maximum="794" ValueChanged="Decoration_Changed" />
     <NumberBox x:Name="DecorationHeight" Minimum="1" Maximum="1123" ValueChanged="Decoration_Changed" />
     <CheckBox x:Name="DecorationReserve" Checked="DecorationReserve_Changed" Unchecked="DecorationReserve_Changed" />
-    <CheckBox x:Name="HeaderReflectionBox" Checked="Reflection_Changed" Unchecked="Reflection_Changed" />
+    <TextBlock x:Name="DayHeightsHeading" FontWeight="SemiBold" Margin="0,12,0,0" />
     <TextBlock x:Name="DayHint" TextWrapping="Wrap" /><StackPanel x:Name="DayControls" Spacing="6" />
    </StackPanel></ScrollViewer></Border>
    <Canvas x:Name="SelectionOverlay" Grid.Column="0" Canvas.ZIndex="10">

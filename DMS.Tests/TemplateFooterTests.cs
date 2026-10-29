@@ -3,7 +3,7 @@ using Xunit;
 
 namespace DMS.Tests;
 
-public sealed class TemplateV2FooterTests
+public sealed class TemplateFooterTests
 {
     [Theory]
     [InlineData("Footer", "Notice", "Footer\nNotice")]
@@ -15,7 +15,7 @@ public sealed class TemplateV2FooterTests
     [InlineData("", "", "")]
     public void LegacyNoticeIsMergedWithoutDiscardingText(string footer, string notice, string expected)
     {
-        var document = new TemplateV2Document { FooterText = footer, FooterNoticeText = notice };
+        var document = new TemplateDocument { FooterText = footer, FooterNoticeText = notice };
 
         document.MergeLegacyFooterNotice();
         document.MergeLegacyFooterNotice();

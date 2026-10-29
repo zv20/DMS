@@ -2,7 +2,7 @@ using DMS.Models;
 
 namespace DMS.Services;
 
-public static class TemplateV2Layout
+public static class TemplatePageLayout
 {
     public const double PageWidth = 794;
     public const double PageHeight = 1123;

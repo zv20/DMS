@@ -1,7 +1,7 @@
 namespace DMS.Models;
 
 /// <summary>A decorative image positioned in page-relative A4 logical pixels.</summary>
-public sealed class TemplateV2Image
+public sealed class TemplateImage
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string DataUri { get; set; } = string.Empty;

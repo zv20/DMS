@@ -3,20 +3,20 @@ using DMS.Models;
 
 namespace DMS.Services;
 
-/// <summary>Creates an approximate V2 copy without changing the original template.</summary>
-public static class TemplateV2Conversion
+/// <summary>Creates an approximate editable copy without changing the original template.</summary>
+public static class TemplateConversion
 {
-    public static MenuTemplate ToV2Copy(MenuTemplate source)
+    public static MenuTemplate ToEditableCopy(MenuTemplate source)
     {
         ArgumentNullException.ThrowIfNull(source);
         var copy = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(source))
             ?? throw new InvalidOperationException("Could not copy the template.");
-        if (copy.V2 != null) return copy;
+        if (copy.Document != null) return copy;
 
         TemplateCompatibility.ApplyLegacyDefaults(copy);
         var font = string.IsNullOrWhiteSpace(copy.FontFamily) ? "Arial" : copy.FontFamily;
         var mealSize = SafeSize(copy.MealFontSize, 11, 10, 18);
-        var v2 = new TemplateV2Document
+        var document = new TemplateDocument
         {
             HeaderText = copy.ShowHeader ? PlainText(copy.HeaderRichText, copy.HeaderText) : "",
             FooterText = copy.ShowFooter ? PlainText(copy.FooterRichText, copy.FooterText) : "",
@@ -28,14 +28,14 @@ public static class TemplateV2Conversion
             BackgroundImageDataUri = copy.BackgroundImageDataUri,
             BackgroundImageOpacity = double.IsFinite(copy.BackgroundImageOpacity) ? Math.Clamp(copy.BackgroundImageOpacity, 0, 1) : 1
         };
-        v2.TextStyles["header"] = new TemplateTextStyle
+        document.TextStyles["header"] = new TemplateTextStyle
         {
             FontFamily = font, FontSize = SafeSize(copy.HeaderFontSize, 24, 7, 48), Color = copy.HeaderColor,
             Alignment = copy.HeaderAlignment, Bold = copy.HeaderBold, Italic = copy.HeaderItalic, Underline = copy.HeaderUnderline
         };
-        v2.TextStyles["footer"] = new TemplateTextStyle
+        document.TextStyles["footer"] = new TemplateTextStyle
         {
-            FontFamily = font, FontSize = SafeSize(copy.FooterFontSize, 9, 7, 48), Color = v2.FooterColor,
+            FontFamily = font, FontSize = SafeSize(copy.FooterFontSize, 9, 7, 48), Color = document.FooterColor,
             Alignment = copy.FooterAlignment
         };
         // Shared keys have the same meaning in both editors. Slot-specific and
@@ -49,14 +49,14 @@ public static class TemplateV2Conversion
                 if (parts.Length == 1 && parts[0] is ("header" or "date" or "footer") ||
                     parts.Length == 2 && parts[0] is ("heading" or "menu" or "ingredients" or "allergens") &&
                     int.TryParse(parts[1], out var day) && day is >= 0 and < 7)
-                    v2.TextStyles[key] = new TemplateTextStyle
+                    document.TextStyles[key] = new TemplateTextStyle
                     {
                         FontFamily = style.FontFamily, FontSize = SafeSize(style.FontSize, 11, 7, 48), Color = style.Color,
                         Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment
                     };
             }
         }
-        copy.V2 = v2;
+        copy.Document = document;
         return copy;
     }
 

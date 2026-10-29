@@ -7,8 +7,8 @@ using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
-/// <summary>Shared decorative-image layout and decoding for the native V2 page.</summary>
-public static class TemplateV2Images
+/// <summary>Shared decorative-image layout and decoding for the native template page.</summary>
+public static class TemplatePageImages
 {
     private const double Margin = 40;
     private const double Gap = 8;
@@ -21,7 +21,7 @@ public static class TemplateV2Images
     /// text cannot overlap reserved art, even when weekdays resize between weeks.
     /// Invalid or impossible geometry is reported rather than quietly hiding text.
     /// </summary>
-    public static Insets GetInsets(IEnumerable<TemplateV2Image>? images)
+    public static Insets GetInsets(IEnumerable<TemplateImage>? images)
     {
         var left = 0d; var right = 0d; var invalid = false;
         foreach (var image in images ?? [])
@@ -29,23 +29,23 @@ public static class TemplateV2Images
             if (image == null || !ValidGeometry(image)) { invalid = true; continue; }
             if (!image.ReserveTextSpace) continue;
             var rightEdge = image.X + image.Width;
-            if (rightEdge <= Margin || image.X >= TemplateV2Layout.PageWidth - Margin) continue;
-            if (image.X + image.Width / 2 <= TemplateV2Layout.PageWidth / 2)
+            if (rightEdge <= Margin || image.X >= TemplatePageLayout.PageWidth - Margin) continue;
+            if (image.X + image.Width / 2 <= TemplatePageLayout.PageWidth / 2)
                 left = Math.Max(left, Math.Max(0, rightEdge - Margin + Gap));
             else
-                right = Math.Max(right, Math.Max(0, TemplateV2Layout.PageWidth - Margin - image.X + Gap));
+                right = Math.Max(right, Math.Max(0, TemplatePageLayout.PageWidth - Margin - image.X + Gap));
         }
-        return new Insets(left, right, invalid || TemplateV2Layout.PageWidth - 2 * Margin - left - right < MinTextWidth);
+        return new Insets(left, right, invalid || TemplatePageLayout.PageWidth - 2 * Margin - left - right < MinTextWidth);
     }
 
-    public static bool ValidGeometry(TemplateV2Image image) =>
+    public static bool ValidGeometry(TemplateImage image) =>
         double.IsFinite(image.X) && double.IsFinite(image.Y) && double.IsFinite(image.Width) && double.IsFinite(image.Height) &&
         image.X >= 0 && image.Y >= 0 && image.Width > 0 && image.Height > 0 &&
-        image.X + image.Width <= TemplateV2Layout.PageWidth && image.Y + image.Height <= TemplateV2Layout.PageHeight;
+        image.X + image.Width <= TemplatePageLayout.PageWidth && image.Y + image.Height <= TemplatePageLayout.PageHeight;
 
-    public static ImageLayer CreateLayer(IEnumerable<TemplateV2Image>? images)
+    public static ImageLayer CreateLayer(IEnumerable<TemplateImage>? images)
     {
-        var canvas = new Canvas { Width = TemplateV2Layout.PageWidth, Height = TemplateV2Layout.PageHeight, IsHitTestVisible = false };
+        var canvas = new Canvas { Width = TemplatePageLayout.PageWidth, Height = TemplatePageLayout.PageHeight, IsHitTestVisible = false };
         var loads = new List<Task>();
         foreach (var item in images ?? [])
         {

@@ -1,7 +1,7 @@
 namespace DMS.Models;
 
 /// <summary>Editable configuration for the constrained A4 weekly document.</summary>
-public sealed class TemplateV2Document
+public sealed class TemplateDocument
 {
     public string HeaderText { get; set; } = "Weekly Menu";
     public bool ShowHeaderReflection { get; set; }
@@ -22,7 +22,7 @@ public sealed class TemplateV2Document
     public double BackgroundImageOpacity { get; set; } = 1;
     public double DaySpacing { get; set; } = 6;
     public double MealLineSpacing { get; set; } = 2;
-    public List<TemplateV2Image> DecorativeImages { get; set; } = new();
+    public List<TemplateImage> DecorativeImages { get; set; } = new();
     // Null means automatic; an explicit value is retained rather than silently resized.
     public double?[] DayHeights { get; set; } = new double?[7];
     // Keys: header/date/footer, or heading/menu/ingredients/allergens with

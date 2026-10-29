@@ -13,7 +13,7 @@ public sealed class NavigationService : INavigationService
         "recipes" => typeof(Views.RecipesPage),
         "ingredients" => typeof(Views.IngredientsPage),
         "allergens" => typeof(Views.AllergensPage),
-        "templateBuilder" => typeof(Views.TemplateBuilderV2Page),
+        "templateBuilder" => typeof(Views.TemplateBuilderPage),
         "settings" => typeof(Views.SettingsPage),
         _ => null
     };

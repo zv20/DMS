@@ -63,7 +63,7 @@ public sealed partial class MainWindow : Window
             "recipes" => typeof(RecipesPage),
             "ingredients" => typeof(IngredientsPage),
             "allergens" => typeof(AllergensPage),
-            "templateBuilder" => typeof(TemplateBuilderV2Page),
+            "templateBuilder" => typeof(TemplateBuilderPage),
             "settings" => typeof(SettingsPage),
             _ => null
         };
@@ -78,7 +78,7 @@ public sealed partial class MainWindow : Window
                     RecipesPage => "recipes",
                     IngredientsPage => "ingredients",
                     AllergensPage => "allergens",
-                    TemplateBuilderV2Page => "templateBuilder",
+                    TemplateBuilderPage => "templateBuilder",
                     _ => ""
                 };
                 if (_navigationPending)
@@ -109,8 +109,8 @@ public sealed partial class MainWindow : Window
         OutputOverlay.Visibility = Visibility.Visible;
         try
         {
-            if (!OutputFrame.Navigate(typeof(TemplateV2OutputPage), date)) throw new InvalidOperationException("Unable to open the print preview.");
-            if (OutputFrame.Content is TemplateV2OutputPage page)
+            if (!OutputFrame.Navigate(typeof(TemplateOutputPage), date)) throw new InvalidOperationException("Unable to open the print preview.");
+            if (OutputFrame.Content is TemplateOutputPage page)
             {
                 page.CloseAvailabilityChanged += OutputCloseAvailabilityChanged;
                 CloseOutputButton.IsEnabled = page.CanClose;
@@ -139,7 +139,7 @@ public sealed partial class MainWindow : Window
 
     private void CloseMenuOutput()
     {
-        if (OutputFrame.Content is TemplateV2OutputPage page)
+        if (OutputFrame.Content is TemplateOutputPage page)
         {
             if (!page.CanClose) return;
             page.CloseAvailabilityChanged -= OutputCloseAvailabilityChanged;

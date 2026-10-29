@@ -1,4 +1,4 @@
-<Page x:Class="DMS.Views.TemplateV2OutputPage"
+<Page x:Class="DMS.Views.TemplateOutputPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid RowDefinitions="Auto,Auto,*">

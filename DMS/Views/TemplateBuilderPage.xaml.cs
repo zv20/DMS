@@ -14,14 +14,14 @@ using L = DMS.Services.Localization;
 
 namespace DMS.Views;
 
-public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
+public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private readonly List<NumberBox> _dayBoxes = [];
     private readonly List<CheckBox> _fixedBoxes = [];
     private readonly List<StackPanel> _dayRows = [];
     private readonly List<MenuTemplate> _templates = [];
-    private TemplateV2Document _document = new();
+    private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
     private bool _legacySource;
@@ -38,31 +38,26 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
     private DateTime _monday;
-    private readonly Dictionary<string, Button> _colorButtons = [];
     private static readonly string[] Fonts = ["Arial", "Times New Roman", "Georgia", "Verdana", "Tahoma", "Courier New"];
 
-    public TemplateBuilderV2Page()
+    public TemplateBuilderPage()
     {
         InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
-        PageTitle.Text = L.Get("TplV2Title"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
+        PageTitle.Text = L.Get("TplBuilderTitle"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
         DeleteButton.Content = L.Get("String_Text_Delete_f6fdbe");
         WeekPicker.Header = L.Get("TplPreview");
-        DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
-        InlineEditHint.Text = L.Get("TplV2InlineEditHint"); DayHint.Text = L.Get("TplV2DayHint");
-        FontBox.Header = L.Get("TplV2FontSize"); MinimumFontBox.Header = L.Get("TplV2MinimumFont");
-        AllowShrinkBox.Content = L.Get("TplV2AllowShrink");
-        HideEmptyDaysBox.Content = L.Get("TplV2HideEmptyDays");
-        FontFamilyBox.Header = L.Get("TplFont"); foreach (var family in Fonts) FontFamilyBox.Items.Add(family);
-        ChooseImageButton.Content = L.Get("TplV2BackgroundImage"); ClearImageButton.Content = L.Get("TplV2ClearBackground");
-        ImageOpacitySlider.Header = L.Get("TplV2ImageOpacity");
-        AddDecorationButton.Content = L.Get("TplV2AddDecoration"); RemoveDecorationButton.Content = L.Get("TplV2RemoveDecoration");
-        DecorationSelector.Header = L.Get("TplV2Decorations"); DecorationX.Header = L.Get("TplV2ImageX"); DecorationY.Header = L.Get("TplV2ImageY");
-        DecorationWidth.Header = L.Get("TplV2ImageWidth"); DecorationHeight.Header = L.Get("TplV2ImageHeight"); DecorationReserve.Content = L.Get("TplV2ReserveSpace");
-        HeaderReflectionBox.Content = L.Get("TplV2HeaderReflection");
-        foreach (var (key, label) in new[] { ("header", "TplV2HeaderColor"), ("body", "TplV2BodyColor"), ("footer", "TplV2FooterColor"), ("allergen", "TplV2AllergenAccent"), ("background", "TplV2BackgroundColor") })
-            AddColorControl(key, label);
+        DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
+        InlineEditHint.Text = L.Get("TplBuilderInlineEditHint"); DayHint.Text = L.Get("TplBuilderDayHint");
+        LayoutHeading.Text = L.Get("TplBuilderLayoutSection"); ImagesHeading.Text = L.Get("TplBuilderImagesSection");
+        DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
+        HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
+        ChooseImageButton.Content = L.Get("TplBuilderBackgroundImage"); ClearImageButton.Content = L.Get("TplBuilderClearBackground");
+        ImageOpacitySlider.Header = L.Get("TplBuilderImageOpacity");
+        AddDecorationButton.Content = L.Get("TplBuilderAddDecoration"); RemoveDecorationButton.Content = L.Get("TplBuilderRemoveDecoration");
+        DecorationSelector.Header = L.Get("TplBuilderDecorations"); DecorationX.Header = L.Get("TplBuilderImageX"); DecorationY.Header = L.Get("TplBuilderImageY");
+        DecorationWidth.Header = L.Get("TplBuilderImageWidth"); DecorationHeight.Header = L.Get("TplBuilderImageHeight"); DecorationReserve.Content = L.Get("TplBuilderReserveSpace");
         WeekPicker.Date = DateTimeOffset.Now;
         foreach (var (control, label) in new (FrameworkElement, string)[] { (ZoomOutButton, "TplZoomOut"), (ZoomInButton, "TplZoomIn"), (ZoomResetButton, "TplZoomReset"), (CanvasZoomSlider, "TplZoom") })
         {
@@ -112,7 +107,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
     }
 
-    private static MenuTemplate NewTemplate() => new() { V2 = new TemplateV2Document { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } };
+    private static MenuTemplate NewTemplate() => new() { Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } };
 
     private async Task ReloadTemplatesAsync()
     {
@@ -123,12 +118,12 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
 
     private void SetDocument(MenuTemplate template, string? name)
     {
-        var loadedTemplate = TemplateV2Conversion.ToV2Copy(template);
+        var loadedTemplate = TemplateConversion.ToEditableCopy(template);
         _binding = true;
         DismissContextTools();
-        _legacySource = template.V2 == null && name != null;
+        _legacySource = template.Document == null && name != null;
         _loadedTemplate = loadedTemplate;
-        _document = _loadedTemplate.V2 ?? new();
+        _document = _loadedTemplate.Document ?? new();
         _document.MergeLegacyFooterNotice();
         var heights = new double?[7];
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
@@ -137,14 +132,9 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
-        HeaderReflectionBox.IsChecked = _document.ShowHeaderReflection;
         RefreshDecorationList();
-        FontBox.Value = _document.FontSize; MinimumFontBox.Value = _document.MinimumFontSize;
-        AllowShrinkBox.IsChecked = _document.AllowFontShrink;
         HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
-        FontFamilyBox.SelectedItem = Fonts.Contains(_document.FontFamily, StringComparer.OrdinalIgnoreCase) ? _document.FontFamily : Fonts[0];
         ImageOpacitySlider.Value = Math.Clamp(_document.BackgroundImageOpacity * 100, 0, 100);
-        UpdateColorButtons();
         for (var i = 0; i < 7; i++)
         {
             _fixedBoxes[i].IsChecked = heights[i].HasValue;
@@ -165,7 +155,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
                 _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
                 return;
             }
-            if (chosen.V2 == null)
+            if (chosen.Document == null)
             {
                 var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLegacyConvertTitle"), Content = L.Get("TplLegacyConvertMessage"),
                     PrimaryButtonText = L.Get("TplLegacyConvertButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
@@ -196,8 +186,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     {
         if (_saving || _switching) return;
         UpdateInlineText();
-        if (!double.IsFinite(FontBox.Value) || !double.IsFinite(MinimumFontBox.Value) || MinimumFontBox.Value > FontBox.Value)
-        { StatusText.Text = L.Get("TplV2FontInvalid"); return; }
+        if (!double.IsFinite(_document.FontSize) || !double.IsFinite(_document.MinimumFontSize) || _document.MinimumFontSize > _document.FontSize)
+        { StatusText.Text = L.Get("TplBuilderFontInvalid"); return; }
         _saving = true; SaveButton.IsEnabled = false;
         try
         {
@@ -212,13 +202,13 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             dialog.PrimaryButtonClick += (_, args) =>
             {
                 name = nameBox.Text.Trim();
-                var message = name.Length == 0 ? "TplV2NameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && (_legacySource || !string.Equals(t.Name, _loadedName, StringComparison.Ordinal))) ? "TplV2NameExists" : null;
+                var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && (_legacySource || !string.Equals(t.Name, _loadedName, StringComparison.Ordinal))) ? "TplBuilderNameExists" : null;
                 if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             var saved = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(_loadedTemplate)) ?? new MenuTemplate();
-            saved.Name = name; saved.V2 = _document;
+            saved.Name = name; saved.Document = _document;
             if (_legacySource || !string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved; _legacySource = false;
@@ -290,8 +280,6 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private void Numbers_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (_binding) return;
-        if (double.IsFinite(FontBox.Value)) _document.FontSize = FontBox.Value;
-        if (double.IsFinite(MinimumFontBox.Value)) _document.MinimumFontSize = MinimumFontBox.Value;
         if (double.IsFinite(DaySpacingBox.Value)) _document.DaySpacing = DaySpacingBox.Value;
         if (double.IsFinite(MealSpacingBox.Value)) _document.MealLineSpacing = MealSpacingBox.Value;
         _dirty = true; Render();
@@ -304,25 +292,12 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _dirty = true; Render();
     }
 
-    private void Shrink_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_binding) return;
-        _document.AllowFontShrink = AllowShrinkBox.IsChecked == true;
-        _dirty = true; Render();
-    }
-
     private void HideEmptyDays_Changed(object sender, RoutedEventArgs e)
     {
         if (_binding) return;
         _document.HideEmptyDays = HideEmptyDaysBox.IsChecked == true;
         _dirty = true;
         Render();
-    }
-
-    private void FontFamily_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (_binding || FontFamilyBox.SelectedItem is not string family) return;
-        _document.FontFamily = family; _dirty = true; Render();
     }
 
     private void ImageOpacity_Changed(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
@@ -368,7 +343,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
             var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
             var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
-            var image = new TemplateV2Image { DataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", AltText = file.DisplayName };
+            var image = new TemplateImage { DataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", AltText = file.DisplayName };
             _document.DecorativeImages.Add(image);
             _dirty = true; RefreshDecorationList(image.Id); Render();
         }
@@ -380,13 +355,13 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var wasBinding = _binding; _binding = true;
         DecorationSelector.Items.Clear();
         foreach (var item in _document.DecorativeImages)
-            DecorationSelector.Items.Add(new ComboBoxItem { Tag = item.Id, Content = string.IsNullOrWhiteSpace(item.AltText) ? L.Get("TplV2Decorations") : item.AltText });
+            DecorationSelector.Items.Add(new ComboBoxItem { Tag = item.Id, Content = string.IsNullOrWhiteSpace(item.AltText) ? L.Get("TplBuilderDecorations") : item.AltText });
         DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId));
         _binding = wasBinding;
         ShowSelectedDecoration();
     }
 
-    private TemplateV2Image? SelectedDecoration() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
+    private TemplateImage? SelectedDecoration() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
         ? _document.DecorativeImages.FirstOrDefault(item => item.Id == id) : null;
 
     private void DecorationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!_binding) ShowSelectedDecoration(); }
@@ -413,44 +388,12 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (SelectedDecoration() is not { } image) return;
         _document.DecorativeImages.Remove(image); _dirty = true; RefreshDecorationList(); Render();
     }
-    private void Reflection_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_binding) return;
-        _document.ShowHeaderReflection = HeaderReflectionBox.IsChecked == true; _dirty = true; Render();
-    }
-
-    private void AddColorControl(string key, string label)
-    {
-        var button = new Button { HorizontalAlignment = HorizontalAlignment.Stretch };
-        var picker = new ColorPicker { ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsAlphaSliderVisible = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
-        var flyout = new Flyout { Content = picker };
-        button.Flyout = flyout;
-        flyout.Opening += (_, _) => { _binding = true; picker.Color = ParseColor(ColorFor(key)); _binding = false; };
-        picker.ColorChanged += (_, args) =>
-        {
-            if (_binding) return;
-            var c = args.NewColor; var value = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-            switch (key) { case "header": _document.HeaderColor = value; break; case "body": _document.BodyColor = value; break; case "footer": _document.FooterColor = value; break; case "allergen": _document.AllergenAccentColor = value; break; default: _document.BackgroundColor = value; break; }
-            _dirty = true; UpdateColorButtons(); Render();
-        };
-        var row = new StackPanel { Spacing = 3 };
-        row.Children.Add(new TextBlock { Text = L.Get(label) }); row.Children.Add(button);
-        ColorControls.Children.Add(row); _colorButtons[key] = button;
-    }
-
-    private string ColorFor(string key) => key switch { "header" => _document.HeaderColor, "body" => _document.BodyColor, "footer" => _document.FooterColor, "allergen" => _document.AllergenAccentColor, _ => _document.BackgroundColor };
     private static Windows.UI.Color ParseColor(string? value)
     {
         if (value is { Length: 7 } && value[0] == '#' && uint.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
             return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
         return Microsoft.UI.Colors.Black;
     }
-    private void UpdateColorButtons()
-    {
-        foreach (var (key, button) in _colorButtons)
-            button.Content = new Border { Height = 18, MinWidth = 80, Background = new SolidColorBrush(ParseColor(ColorFor(key))), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
-    }
-
     private static string AnchorKey(string key) => key.StartsWith("ingredients:") || key.StartsWith("allergens:") ? "menu:" + key.Split(':')[1] : key;
 
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
@@ -559,7 +502,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             if (_editingBlock == _selectedBlock)
             {
                 _selectionAnchor.Opacity = 0;
-                var style = TemplateV2Renderer.GetTextStyle(_document, _selectedBlock);
+                var style = TemplateRenderer.GetTextStyle(_document, _selectedBlock);
                 InlineEditor.Width = SelectionOutline.Width; InlineEditor.Height = SelectionOutline.Height;
                 Canvas.SetLeft(InlineEditor, origin.X); Canvas.SetTop(InlineEditor, origin.Y);
                 InlineEditor.FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily);
@@ -598,7 +541,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var parts = key.Split(':');
         var sectionName = parts[0] switch
         {
-            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplV2Notice"),
+            "page" => L.Get("TplBuilderPageSection"),
+            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplBuilderNotice"),
             "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
             "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
             "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")
@@ -620,7 +564,34 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             ContextTools.Children.Add(section);
         }
 
-        if (key.StartsWith("day:", StringComparison.Ordinal))
+        if (key == "page")
+        {
+            AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, value =>
+            {
+                _document.BackgroundColor = value; _dirty = true; Render();
+            });
+            var shrink = new CheckBox { Content = L.Get("TplBuilderAllowShrink"), IsChecked = _document.AllowFontShrink, VerticalAlignment = VerticalAlignment.Center };
+            var minimumSize = new NumberBox { Width = 80, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
+                IsEnabled = _document.AllowFontShrink, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            ToolTipService.SetToolTip(minimumSize, L.Get("TplBuilderMinimumFont"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(minimumSize, L.Get("TplBuilderMinimumFont"));
+            void ChangeShrink(bool enabled)
+            {
+                if (_contextBinding) return;
+                minimumSize.IsEnabled = enabled;
+                _document.AllowFontShrink = enabled; _dirty = true; Render();
+            }
+            shrink.Checked += (_, _) => ChangeShrink(true);
+            shrink.Unchecked += (_, _) => ChangeShrink(false);
+            minimumSize.ValueChanged += (_, _) =>
+            {
+                if (_contextBinding || !double.IsFinite(minimumSize.Value)) return;
+                _document.MinimumFontSize = minimumSize.Value; _dirty = true; Render();
+            };
+            ContextTools.Children.Add(shrink);
+            ContextTools.Children.Add(minimumSize);
+        }
+        else if (key.StartsWith("day:", StringComparison.Ordinal))
         {
             _document.BlockAppearances ??= new();
             _document.BlockAppearances.TryGetValue(key, out var appearance);
@@ -646,9 +617,10 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         }
         else
         {
-            var style = TemplateV2Renderer.GetTextStyle(_document, key);
+            var style = TemplateRenderer.GetTextStyle(_document, key);
             var font = new ComboBox { Width = 115, ItemsSource = Fonts, SelectedItem = style.FontFamily };
             ToolTipService.SetToolTip(font, L.Get("TplFont"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(font, L.Get("TplFont"));
             font.SelectionChanged += (_, _) => { if (!_contextBinding && font.SelectedItem is string family) EditTextStyle(key, s => s.FontFamily = family); };
             ContextTools.Children.Add(font);
             var size = new NumberBox { Width = 70, Minimum = 7, Maximum = 48, Value = style.FontSize, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
@@ -660,6 +632,16 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             AddStyleToggle("B", "TplBold", style.Bold, value => EditTextStyle(key, s => s.Bold = value));
             AddStyleToggle("I", "TplItalic", style.Italic, value => EditTextStyle(key, s => s.Italic = value));
             AddStyleToggle("U", "TplUnderline", style.Underline, value => EditTextStyle(key, s => s.Underline = value));
+            if (key == "header")
+                AddStyleToggle("↕", "TplBuilderHeaderReflection", _document.ShowHeaderReflection, value =>
+                {
+                    _document.ShowHeaderReflection = value; _dirty = true; Render();
+                });
+            if (parts[0] is "ingredients" or "allergens")
+                AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, value =>
+                {
+                    _document.AllergenAccentColor = value; _dirty = true; Render();
+                });
             if (parts[0] is not ("ingredients" or "allergens"))
             {
             var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
@@ -681,7 +663,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(all, L.Get("TplApplyWeekdayStyle"));
                 all.Click += (_, _) =>
                 {
-                    var current = TemplateV2Renderer.GetTextStyle(_document, key);
+                    var current = TemplateRenderer.GetTextStyle(_document, key);
                     _document.TextStyles ??= new();
                     for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.TextStyles[$"{parts[0]}:{day}"] = CopyStyle(current);
                     _dirty = true; Render();
@@ -696,7 +678,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
 
     private void EditTextStyle(string key, Action<TemplateTextStyle> change)
     {
-        var style = TemplateV2Renderer.GetTextStyle(_document, key);
+        var style = TemplateRenderer.GetTextStyle(_document, key);
         change(style);
         _document.TextStyles ??= new();
         _document.TextStyles[key] = style;
@@ -752,7 +734,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var generation = ++_renderGeneration;
         try
         {
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled);
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled);
             result.Page.Loaded += (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
@@ -764,7 +746,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
                 DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
             StatusText.Text = L.Get("OutputPreparing");
             await result.ImagesReady;
-            if (generation == _renderGeneration) StatusText.Text = L.Get(!result.HasMeals ? "TplV2NoMeals" : result.Overflowed ? "TplV2Overflow" : "TplV2BuilderHint");
+            if (generation == _renderGeneration) StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TplBuilderOverflow" : "TplBuilderBuilderHint");
         }
         catch (Exception ex) { if (generation == _renderGeneration) StatusText.Text = L.Format("TplError", ex.Message); }
     }

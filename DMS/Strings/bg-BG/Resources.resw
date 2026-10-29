@@ -9,60 +9,64 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
-  <data name="V2OutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
-  <data name="V2OutputPrint" xml:space="preserve"><value>Печат</value></data>
-  <data name="V2OutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
-  <data name="V2OutputPng" xml:space="preserve"><value>Запази като PNG</value></data>
-  <data name="V2OutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>
-  <data name="V2OutputReady" xml:space="preserve"><value>Готово за печат или експорт.</value></data>
-  <data name="V2OutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
-  <data name="V2OutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
-  <data name="V2OutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
-  <data name="V2OutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
-  <data name="V2OutputWeek" xml:space="preserve"><value>Седмица</value></data>
-  <data name="V2OutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
-  <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
-  <data name="TplV2Title" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TemplateOutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
+  <data name="TemplateOutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="TemplateOutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
+  <data name="TemplateOutputPng" xml:space="preserve"><value>Запази като PNG</value></data>
+  <data name="TemplateOutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="TemplateOutputReady" xml:space="preserve"><value>Готово за печат или експорт.</value></data>
+  <data name="TemplateOutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
+  <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
+  <data name="TemplateOutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="TemplateOutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
+  <data name="TemplateOutputWeek" xml:space="preserve"><value>Седмица</value></data>
+  <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
+  <data name="TemplateOutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
+  <data name="TplBuilderTitle" xml:space="preserve"><value>Редактор на шаблони</value></data>
   <data name="TplLegacyConvertTitle" xml:space="preserve"><value>Отваряне на стар шаблон</value></data>
   <data name="TplLegacyConvertMessage" xml:space="preserve"><value>Ще се създаде приблизително копие за редактиране. Разположението, форматирането, изображенията и някои настройки може да се различават. Оригиналният шаблон остава непроменен; запазете копието с ново име и проверете прегледа преди печат.</value></data>
   <data name="TplLegacyConvertButton" xml:space="preserve"><value>Отваряне на копие</value></data>
   <data name="TplLegacyCopySuffix" xml:space="preserve"><value>копие</value></data>
-  <data name="TplV2InlineEditHint" xml:space="preserve"><value>Щракнете върху заглавието или текста в края, за да ги редактирате.</value></data>
-  <data name="TplV2FooterHint" xml:space="preserve"><value>Бележките споделят страницата с менюто. При липса на място се показва предупреждение.</value></data>
-  <data name="TplV2Notice" xml:space="preserve"><value>Заключително съобщение</value></data>
-  <data name="TplV2AddDecoration" xml:space="preserve"><value>Добави декоративно изображение</value></data>
-  <data name="TplV2RemoveDecoration" xml:space="preserve"><value>Премахни избраното изображение</value></data>
-  <data name="TplV2Decorations" xml:space="preserve"><value>Декоративни изображения</value></data>
-  <data name="TplV2ImageX" xml:space="preserve"><value>Разстояние на изображението отляво</value></data>
-  <data name="TplV2ImageY" xml:space="preserve"><value>Разстояние на изображението отгоре</value></data>
-  <data name="TplV2ImageWidth" xml:space="preserve"><value>Ширина на изображението</value></data>
-  <data name="TplV2ImageHeight" xml:space="preserve"><value>Височина на изображението</value></data>
-  <data name="TplV2ReserveSpace" xml:space="preserve"><value>Остави колона за изображението, без застъпване на текста</value></data>
-  <data name="TplV2HeaderReflection" xml:space="preserve"><value>Отражение на заглавието</value></data>
-  <data name="TplV2DaySpacing" xml:space="preserve"><value>Разстояние между дните</value></data>
-  <data name="TplV2MealSpacing" xml:space="preserve"><value>Разстояние между ястията</value></data>
-  <data name="TplV2AllergenAccent" xml:space="preserve"><value>Цвят на съставките с алергени</value></data>
-  <data name="TplV2DayHint" xml:space="preserve"><value>Изберете ден, за да фиксирате височината му; останалите се настройват автоматично.</value></data>
-  <data name="TplV2FontSize" xml:space="preserve"><value>Предпочитан размер на шрифта</value></data>
-  <data name="TplV2MinimumFont" xml:space="preserve"><value>Минимален размер на шрифта</value></data>
-  <data name="TplV2NameRequired" xml:space="preserve"><value>Въведете име на шаблона.</value></data>
-  <data name="TplV2FooterLimit" xml:space="preserve"><value>Долният колонтитул може да съдържа най-много три реда.</value></data>
-  <data name="TplV2FontInvalid" xml:space="preserve"><value>Минималният размер на шрифта не може да надвишава предпочитания.</value></data>
-  <data name="TplV2NameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
-  <data name="TplV2BuilderHint" xml:space="preserve"><value>Изберете седмица за преглед на шаблона.</value></data>
-  <data name="TplV2AllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
-  <data name="TplV2HideEmptyDays" xml:space="preserve"><value>Скрий дните без ястия</value></data>
-  <data name="TplV2NoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица. Добавете ястия преди печат или експорт.</value></data>
-  <data name="TplV2HeaderColor" xml:space="preserve"><value>Цвят на заглавието</value></data>
-  <data name="TplV2BodyColor" xml:space="preserve"><value>Цвят на менюто</value></data>
-  <data name="TplV2FooterColor" xml:space="preserve"><value>Цвят на долния колонтитул</value></data>
-  <data name="TplV2BackgroundColor" xml:space="preserve"><value>Фон на страницата</value></data>
-  <data name="TplV2BackgroundImage" xml:space="preserve"><value>Изберете изображение за фон</value></data>
-  <data name="TplV2ClearBackground" xml:space="preserve"><value>Премахни фоновото изображение</value></data>
-  <data name="TplV2ImageOpacity" xml:space="preserve"><value>Непрозрачност на изображението</value></data>
-  <data name="V2OutputImageSizeError" xml:space="preserve"><value>Изображението не може да бъде създадено с необходимата разделителна способност.</value></data>
-  <data name="TplV2Overflow" xml:space="preserve"><value>Част от съдържанието не се побира. Превъртете в червения ден, за да видите всички ястия; променете шаблона или менюто преди печат или експорт.</value></data>
-  <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
+  <data name="TplBuilderInlineEditHint" xml:space="preserve"><value>Щракнете върху блок, за да го форматирате, или върху заглавието или текста в края, за да ги редактирате. Щракнете върху полето на страницата за цвят на фона и побиране на текста.</value></data>
+  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Оформление</value></data>
+  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Изображения</value></data>
+  <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Височина на дните</value></data>
+  <data name="TplBuilderPageSection" xml:space="preserve"><value>Страница</value></data>
+  <data name="TplBuilderFooterHint" xml:space="preserve"><value>Бележките споделят страницата с менюто. При липса на място се показва предупреждение.</value></data>
+  <data name="TplBuilderNotice" xml:space="preserve"><value>Заключително съобщение</value></data>
+  <data name="TplBuilderAddDecoration" xml:space="preserve"><value>Добави декоративно изображение</value></data>
+  <data name="TplBuilderRemoveDecoration" xml:space="preserve"><value>Премахни избраното изображение</value></data>
+  <data name="TplBuilderDecorations" xml:space="preserve"><value>Декоративни изображения</value></data>
+  <data name="TplBuilderImageX" xml:space="preserve"><value>Разстояние на изображението отляво</value></data>
+  <data name="TplBuilderImageY" xml:space="preserve"><value>Разстояние на изображението отгоре</value></data>
+  <data name="TplBuilderImageWidth" xml:space="preserve"><value>Ширина на изображението</value></data>
+  <data name="TplBuilderImageHeight" xml:space="preserve"><value>Височина на изображението</value></data>
+  <data name="TplBuilderReserveSpace" xml:space="preserve"><value>Остави колона за изображението, без застъпване на текста</value></data>
+  <data name="TplBuilderHeaderReflection" xml:space="preserve"><value>Отражение на заглавието</value></data>
+  <data name="TplBuilderDaySpacing" xml:space="preserve"><value>Разстояние между дните</value></data>
+  <data name="TplBuilderMealSpacing" xml:space="preserve"><value>Разстояние между ястията</value></data>
+  <data name="TplBuilderAllergenAccent" xml:space="preserve"><value>Цвят на съставките с алергени (всички дни)</value></data>
+  <data name="TplBuilderDayHint" xml:space="preserve"><value>Изберете ден, за да фиксирате височината му; останалите се настройват автоматично.</value></data>
+  <data name="TplBuilderFontSize" xml:space="preserve"><value>Предпочитан размер на шрифта</value></data>
+  <data name="TplBuilderMinimumFont" xml:space="preserve"><value>Минимален размер на шрифта</value></data>
+  <data name="TplBuilderNameRequired" xml:space="preserve"><value>Въведете име на шаблона.</value></data>
+  <data name="TplBuilderFooterLimit" xml:space="preserve"><value>Долният колонтитул може да съдържа най-много три реда.</value></data>
+  <data name="TplBuilderFontInvalid" xml:space="preserve"><value>Минималният размер на шрифта не може да надвишава предпочитания.</value></data>
+  <data name="TplBuilderNameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
+  <data name="TplBuilderBuilderHint" xml:space="preserve"><value>Изберете седмица за преглед на шаблона.</value></data>
+  <data name="TplBuilderAllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
+  <data name="TplBuilderHideEmptyDays" xml:space="preserve"><value>Скрий дните без ястия</value></data>
+  <data name="TplBuilderNoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица. Добавете ястия преди печат или експорт.</value></data>
+  <data name="TplBuilderHeaderColor" xml:space="preserve"><value>Цвят на заглавието</value></data>
+  <data name="TplBuilderBodyColor" xml:space="preserve"><value>Цвят на менюто</value></data>
+  <data name="TplBuilderFooterColor" xml:space="preserve"><value>Цвят на долния колонтитул</value></data>
+  <data name="TplBuilderBackgroundColor" xml:space="preserve"><value>Фон на страницата</value></data>
+  <data name="TplBuilderBackgroundImage" xml:space="preserve"><value>Изберете изображение за фон</value></data>
+  <data name="TplBuilderClearBackground" xml:space="preserve"><value>Премахни фоновото изображение</value></data>
+  <data name="TplBuilderImageOpacity" xml:space="preserve"><value>Непрозрачност на изображението</value></data>
+  <data name="TemplateOutputImageSizeError" xml:space="preserve"><value>Изображението не може да бъде създадено с необходимата разделителна способност.</value></data>
+  <data name="TplBuilderOverflow" xml:space="preserve"><value>Част от съдържанието не се побира. Превъртете в червения ден, за да видите всички ястия; променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="TplBuilderScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Планиране</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Меню за уикенда</value></data>
   <data name="Text_Weekend_Planning_53aa12.OffContent" xml:space="preserve"><value>Само делнични дни</value></data>

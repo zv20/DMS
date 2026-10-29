@@ -16,8 +16,8 @@ using L = DMS.Services.Localization;
 
 namespace DMS.Views;
 
-/// <summary>Prints the same native page renderer used in the V2 editor.</summary>
-public sealed partial class TemplateV2OutputPage : Page
+/// <summary>Prints the same native page renderer used in the template editor.</summary>
+public sealed partial class TemplateOutputPage : Page
 {
     private readonly IDatabaseService _database;
     private static readonly string[] PngExtensions = [".png"];
@@ -38,7 +38,7 @@ public sealed partial class TemplateV2OutputPage : Page
     private int _generation;
     private DateTime _monday;
     private DateTime? _firstDay, _lastDay;
-    private TemplateV2Document? _document;
+    private TemplateDocument? _document;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -46,17 +46,17 @@ public sealed partial class TemplateV2OutputPage : Page
     public bool CanClose => !_busy && System.Threading.Volatile.Read(ref _activePrintTasks) == 0;
     public event Action<bool>? CloseAvailabilityChanged;
 
-    public TemplateV2OutputPage()
+    public TemplateOutputPage()
     {
         InitializeComponent();
         _uiQueue = DispatcherQueue;
         _database = App.Services.GetRequiredService<IDatabaseService>();
-        TitleText.Text = L.Get("V2OutputTitle");
-        TemplateSelector.Header = L.Get("V2OutputTemplate");
-        WeekPicker.Header = L.Get("V2OutputWeek");
-        PrintButton.Content = L.Get("V2OutputPrint");
-        PdfButton.Content = L.Get("V2OutputPdf");
-        PngButton.Content = L.Get("V2OutputPng");
+        TitleText.Text = L.Get("TemplateOutputTitle");
+        TemplateSelector.Header = L.Get("TemplateOutputTemplate");
+        WeekPicker.Header = L.Get("TemplateOutputWeek");
+        PrintButton.Content = L.Get("TemplateOutputPrint");
+        PdfButton.Content = L.Get("TemplateOutputPdf");
+        PngButton.Content = L.Get("TemplateOutputPng");
         WeekPicker.Date = DateTimeOffset.Now;
         Loaded += Page_Loaded;
         Unloaded += Page_Unloaded;
@@ -75,13 +75,13 @@ public sealed partial class TemplateV2OutputPage : Page
         {
             // A machine with no printing support can still export a PNG.
             try { RegisterPrinting(); } catch (Exception) { UnregisterPrinting(); }
-            var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.V2 != null).ToList();
+            var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.Document != null).ToList();
             if (!_loaded) return;
-            templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), V2 = new TemplateV2Document { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
+            templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;
             TemplateSelector.SelectedIndex = 0;
         }
-        catch (Exception ex) { StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
+        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -107,7 +107,7 @@ public sealed partial class TemplateV2OutputPage : Page
     {
         var generation = ++_generation;
         SetReady(false);
-        if (TemplateSelector.SelectedItem is not MenuTemplate { V2: not null } template) return;
+        if (TemplateSelector.SelectedItem is not MenuTemplate { Document: not null } template) return;
         var date = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
         var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
         await _refreshGate.WaitAsync();
@@ -119,17 +119,17 @@ public sealed partial class TemplateV2OutputPage : Page
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
             if (!_loaded || generation != _generation) return;
-            _monday = monday; _document = template.V2; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            _monday = monday; _document = template.Document; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
             _firstDay = result.FirstDay; _lastDay = result.LastDay;
             _previewPage = result.Page;
             PreviewHost.Content = _previewPage;
             await result.ImagesReady;
             if (!_loaded || generation != _generation) return;
-            StatusText.Text = L.Get(!result.HasMeals ? "TplV2NoMeals" : result.Overflowed ? "V2OutputOverflow" : "V2OutputReady");
+            StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
             SetReady(result.HasMeals && !result.Overflowed);
         }
-        catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
+        catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
         finally { _refreshGate.Release(); }
     }
 
@@ -170,7 +170,7 @@ public sealed partial class TemplateV2OutputPage : Page
             System.Threading.Interlocked.Decrement(ref _activePrintTasks);
             _uiQueue.TryEnqueue(() =>
             {
-                if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("V2OutputPrintFailed");
+                if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("TemplateOutputPrintFailed");
                 CloseAvailabilityChanged?.Invoke(CanClose);
             });
         };
@@ -217,17 +217,17 @@ public sealed partial class TemplateV2OutputPage : Page
         _busy = true; SetReady(true);
         try
         {
-            if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("V2OutputPrintUnsupported"));
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
             await result.ImagesReady;
             if (!_loaded) return;
-            if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("V2OutputOverflow"); return; }
+            if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
             _nativePage = result.Page;
-            if (pdf) StatusText.Text = L.Get("V2OutputPrintPdfHint");
+            if (pdf) StatusText.Text = L.Get("TemplateOutputPrintPdfHint");
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
-        catch (Exception ex) { StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
+        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
         finally { _busy = false; SetReady(_ready); }
     }
 
@@ -244,7 +244,7 @@ public sealed partial class TemplateV2OutputPage : Page
             if (file == null) return;
             var bitmap = new RenderTargetBitmap();
             await bitmap.RenderAsync(_previewPage, 1588, 2246);
-            if (bitmap.PixelWidth != 1588 || bitmap.PixelHeight != 2246) throw new InvalidOperationException(L.Get("V2OutputImageSizeError"));
+            if (bitmap.PixelWidth != 1588 || bitmap.PixelHeight != 2246) throw new InvalidOperationException(L.Get("TemplateOutputImageSizeError"));
             var pixels = await bitmap.GetPixelsAsync();
             var bytes = new byte[pixels.Length];
             using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
@@ -253,9 +253,9 @@ public sealed partial class TemplateV2OutputPage : Page
             var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
             encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
             await encoder.FlushAsync();
-            StatusText.Text = L.Get("V2OutputSaved");
+            StatusText.Text = L.Get("TemplateOutputSaved");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
+        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
         finally { _busy = false; SetReady(_ready); }
     }
 
