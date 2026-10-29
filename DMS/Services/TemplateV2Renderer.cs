@@ -97,7 +97,7 @@ public static class TemplateV2Renderer
                 }
                 else meal.Inlines.Add(run);
             }
-            if (allergens.Length > 0) meal.Inlines.Add(new Run { Text = " · ⚠ " + string.Join(", ", allergens) });
+            if (allergens.Length > 0) meal.Inlines.Add(new Run { Text = " · " + string.Join(", ", allergens) });
             panel.Children.Add(meal);
         }
         return panel;
