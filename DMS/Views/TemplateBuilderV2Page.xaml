@@ -8,9 +8,9 @@
     <CalendarDatePicker x:Name="WeekPicker" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>
-  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto">
+  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
-   <Border Grid.Column="1" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
+   <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
     <TextBox x:Name="NameBox" TextChanged="Fields_Changed" /><TextBox x:Name="HeaderBox" TextChanged="Fields_Changed" />
     <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1500" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
     <TextBox x:Name="NoticeBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="500" TextChanged="Fields_Changed" />
@@ -42,6 +42,14 @@
      <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled"><StackPanel x:Name="ContextTools" Orientation="Horizontal" Spacing="4" /></ScrollViewer>
     </Border>
    </Canvas>
+   <ScrollViewer Grid.Row="1" HorizontalContentAlignment="Stretch" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
+    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="6" Padding="8,4">
+     <Button x:Name="ZoomOutButton" Content="−" />
+     <Slider x:Name="CanvasZoomSlider" Width="120" Minimum="50" Maximum="200" StepFrequency="10" Value="100" />
+     <Button x:Name="ZoomResetButton" Content="100%" />
+     <Button x:Name="ZoomInButton" Content="+" />
+    </StackPanel>
+   </ScrollViewer>
   </Grid>
   <TextBlock x:Name="StatusText" Grid.Row="2" Margin="12,6" TextWrapping="Wrap" />
  </Grid>

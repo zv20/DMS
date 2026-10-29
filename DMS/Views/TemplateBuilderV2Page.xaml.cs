@@ -27,7 +27,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private int _renderGeneration;
     private string? _selectedBlock;
     private FrameworkElement? _selectionAnchor;
-    private bool _contextBinding;
+    private bool _contextBinding, _updatingZoom;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -58,7 +58,16 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         foreach (var (key, label) in new[] { ("header", "TplV2HeaderColor"), ("body", "TplV2BodyColor"), ("footer", "TplV2FooterColor"), ("allergen", "TplV2AllergenAccent"), ("background", "TplV2BackgroundColor") })
             AddColorControl(key, label);
         WeekPicker.Date = DateTimeOffset.Now;
-        PageScroll.ViewChanged += (_, _) => PositionContextTools();
+        foreach (var (control, label) in new (FrameworkElement, string)[] { (ZoomOutButton, "TplZoomOut"), (ZoomInButton, "TplZoomIn"), (ZoomResetButton, "TplZoomReset"), (CanvasZoomSlider, "TplZoom") })
+        {
+            ToolTipService.SetToolTip(control, L.Get(label));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(control, L.Get(label));
+        }
+        ZoomOutButton.Click += (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 - 10);
+        ZoomInButton.Click += (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 + 10);
+        ZoomResetButton.Click += (_, _) => SetCanvasZoom(100);
+        CanvasZoomSlider.ValueChanged += (_, e) => { if (!_updatingZoom) SetCanvasZoom(e.NewValue); };
+        PageScroll.ViewChanged += (_, _) => { UpdateCanvasZoom(); PositionContextTools(); };
         Workspace.SizeChanged += (_, _) => PositionContextTools();
         AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
         KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
@@ -75,6 +84,18 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             _fixedBoxes.Add(fixedBox); _dayBoxes.Add(height); row.Children.Add(fixedBox); row.Children.Add(height); DayControls.Children.Add(row);
         }
         Loaded += async (_, _) => await InitializeAsync();
+    }
+
+    private void SetCanvasZoom(double percent)
+        => PageScroll.ChangeView(null, null, (float)(Math.Clamp(percent, 50, 200) / 100), true);
+
+    private void UpdateCanvasZoom()
+    {
+        var percent = Math.Round(PageScroll.ZoomFactor * 100);
+        _updatingZoom = true;
+        CanvasZoomSlider.Value = percent;
+        _updatingZoom = false;
+        ZoomResetButton.Content = $"{percent:0}%";
     }
 
     private async Task InitializeAsync()
