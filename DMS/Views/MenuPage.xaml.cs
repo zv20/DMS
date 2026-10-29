@@ -68,8 +68,11 @@ public sealed partial class MenuPage : Page
     }
     private void Output_Click(object sender, RoutedEventArgs e)
     {
-        if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date);
+        try { if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date); }
+        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
     }
+
+    public void FocusOutputButton() => OutputButton.Focus(FocusState.Programmatic);
 
     private async Task RefreshAsync()
     {

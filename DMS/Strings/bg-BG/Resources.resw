@@ -9,7 +9,6 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
-  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="V2OutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="V2OutputPrint" xml:space="preserve"><value>Печат</value></data>
   <data name="V2OutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>

@@ -14,7 +14,6 @@ public sealed class NavigationService : INavigationService
         "ingredients" => typeof(Views.IngredientsPage),
         "allergens" => typeof(Views.AllergensPage),
         "templateBuilder" => typeof(Views.TemplateBuilderV2Page),
-        "templateV2Output" => typeof(Views.TemplateV2OutputPage),
         "settings" => typeof(Views.SettingsPage),
         _ => null
     };

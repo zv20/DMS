@@ -13,8 +13,8 @@
             </StackPanel>
         </ScrollViewer>
         <TextBlock x:Name="StatusText" Grid.Row="1" Margin="16,0,16,8" TextWrapping="Wrap" />
-        <ScrollViewer Grid.Row="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="24">
-            <ContentControl x:Name="PreviewHost" HorizontalAlignment="Center" />
-        </ScrollViewer>
+        <Viewbox Grid.Row="2" Margin="16" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ContentControl x:Name="PreviewHost" />
+        </Viewbox>
     </Grid>
 </Page>

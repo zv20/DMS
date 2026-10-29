@@ -9,7 +9,6 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Menu Planner</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Print / Export</value></data>
   <data name="V2OutputTitle" xml:space="preserve"><value>Print / Export</value></data>
   <data name="V2OutputPrint" xml:space="preserve"><value>Print</value></data>
   <data name="V2OutputPdf" xml:space="preserve"><value>Save as PDF</value></data>

@@ -30,7 +30,7 @@ Visual Studio adapter; xUnit v3 is a separate framework migration.
 ## Menu templates and output
 
 Template Builder and Print / Export use the same native WinUI A4 renderer. The
-planner button opens Print / Export for the selected date. Output provides a
+planner button opens a Print / Export popup for the selected date. Output provides a
 default template, and saved templates can be selected. Output is blocked if the
 page overflows. PDF uses the Windows print dialog: choose Microsoft Print to PDF.
 Printer imageable margins may scale the document.

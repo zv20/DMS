@@ -20,6 +20,7 @@ public sealed partial class MainWindow : Window
         WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
+        CloseOutputButton.Content = Localization.Get("OutputClose");
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
@@ -63,7 +64,6 @@ public sealed partial class MainWindow : Window
             "ingredients" => typeof(IngredientsPage),
             "allergens" => typeof(AllergensPage),
             "templateBuilder" => typeof(TemplateBuilderV2Page),
-            "templateV2Output" => typeof(TemplateV2OutputPage),
             "settings" => typeof(SettingsPage),
             _ => null
         };
@@ -104,8 +104,50 @@ public sealed partial class MainWindow : Window
 
     public void OpenMenuOutput(DateTime date)
     {
-        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "templateV2Output"));
-        ContentFrame.Navigate(typeof(TemplateV2OutputPage), date);
+        if (OutputOverlay.Visibility == Visibility.Visible) return;
+        NavView.IsEnabled = false;
+        OutputOverlay.Visibility = Visibility.Visible;
+        try
+        {
+            if (!OutputFrame.Navigate(typeof(TemplateV2OutputPage), date)) throw new InvalidOperationException("Unable to open the print preview.");
+            if (OutputFrame.Content is TemplateV2OutputPage page)
+            {
+                page.CloseAvailabilityChanged += OutputCloseAvailabilityChanged;
+                CloseOutputButton.IsEnabled = page.CanClose;
+            }
+            CloseOutputButton.Focus(FocusState.Programmatic);
+        }
+        catch
+        {
+            OutputFrame.Content = null;
+            OutputOverlay.Visibility = Visibility.Collapsed;
+            NavView.IsEnabled = true;
+            throw;
+        }
+    }
+
+    private void OutputCloseAvailabilityChanged(bool available) => CloseOutputButton.IsEnabled = available;
+
+    private void CloseOutput_Click(object sender, RoutedEventArgs e) => CloseMenuOutput();
+
+    private void OutputOverlay_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Escape || !CloseOutputButton.IsEnabled) return;
+        e.Handled = true;
+        CloseMenuOutput();
+    }
+
+    private void CloseMenuOutput()
+    {
+        if (OutputFrame.Content is TemplateV2OutputPage page)
+        {
+            if (!page.CanClose) return;
+            page.CloseAvailabilityChanged -= OutputCloseAvailabilityChanged;
+        }
+        OutputFrame.Content = null;
+        OutputOverlay.Visibility = Visibility.Collapsed;
+        NavView.IsEnabled = true;
+        if (ContentFrame.Content is MenuPage menu) menu.FocusOutputButton();
     }
 
 }

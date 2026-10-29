@@ -32,6 +32,7 @@ public sealed partial class TemplateV2OutputPage : Page
     private FrameworkElement? _previewPage;
     private bool _ready;
     private bool _busy;
+    private int _activePrintTasks;
     private bool _loaded;
     private bool _weekendEnabled;
     private int _generation;
@@ -41,6 +42,9 @@ public sealed partial class TemplateV2OutputPage : Page
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
+
+    public bool CanClose => !_busy && System.Threading.Volatile.Read(ref _activePrintTasks) == 0;
+    public event Action<bool>? CloseAvailabilityChanged;
 
     public TemplateV2OutputPage()
     {
@@ -96,6 +100,7 @@ public sealed partial class TemplateV2OutputPage : Page
         PrintButton.IsEnabled = PdfButton.IsEnabled = ready && !_busy && _printManager != null;
         PngButton.IsEnabled = ready && !_busy;
         TemplateSelector.IsEnabled = WeekPicker.IsEnabled = !_busy;
+        CloseAvailabilityChanged?.Invoke(CanClose);
     }
 
     private async Task RefreshAsync()
@@ -159,12 +164,19 @@ public sealed partial class TemplateV2OutputPage : Page
         var source = _printSource;
         if (source == null) return;
         var task = e.Request.CreatePrintTask(OutputDateName(), args => args.SetSource(source));
+        System.Threading.Interlocked.Increment(ref _activePrintTasks);
+        task.Completed += (_, args) =>
+        {
+            System.Threading.Interlocked.Decrement(ref _activePrintTasks);
+            _uiQueue.TryEnqueue(() =>
+            {
+                if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("V2OutputPrintFailed");
+                CloseAvailabilityChanged?.Invoke(CanClose);
+            });
+        };
+        _uiQueue.TryEnqueue(() => CloseAvailabilityChanged?.Invoke(CanClose));
         try { task.Options.MediaSize = PrintMediaSize.IsoA4; task.Options.Orientation = PrintOrientation.Portrait; }
         catch (Exception) { /* The printer may not support these defaults. */ }
-        task.Completed += (_, args) => _uiQueue.TryEnqueue(() =>
-        {
-            if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("V2OutputPrintFailed");
-        });
     }
 
     private void Paginate(object sender, PaginateEventArgs e)
