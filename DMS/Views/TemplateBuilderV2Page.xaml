@@ -11,8 +11,6 @@
   <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
-    <TextBox x:Name="HeaderBox" TextChanged="Fields_Changed" />
-    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="MealSpacingBox" Minimum="0" Maximum="20" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="FontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
@@ -37,6 +35,7 @@
    </StackPanel></ScrollViewer></Border>
    <Canvas x:Name="SelectionOverlay" Grid.Column="0" Canvas.ZIndex="10">
     <Border x:Name="SelectionOutline" IsHitTestVisible="False" BorderBrush="DodgerBlue" BorderThickness="2" Visibility="Collapsed" />
+    <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Padding="0" Visibility="Collapsed" />
     <Border x:Name="SelectionToolbar" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1" CornerRadius="6" Padding="5" Visibility="Collapsed">
      <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled"><StackPanel x:Name="ContextTools" Orientation="Horizontal" Spacing="4" /></ScrollViewer>
     </Border>
@@ -50,6 +49,9 @@
     </StackPanel>
    </ScrollViewer>
   </Grid>
-  <TextBlock x:Name="StatusText" Grid.Row="2" Margin="12,6" TextWrapping="Wrap" />
+  <StackPanel Grid.Row="2" Margin="12,6" Spacing="2">
+   <TextBlock x:Name="InlineEditHint" TextWrapping="Wrap" />
+   <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
+  </StackPanel>
  </Grid>
 </Page>

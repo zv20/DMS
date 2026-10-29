@@ -28,6 +28,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private string? _selectedBlock;
     private FrameworkElement? _selectionAnchor;
     private bool _contextBinding, _updatingZoom;
+    private string? _editingBlock;
+    private bool _inlineTextChanged;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -42,9 +44,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         PageTitle.Text = L.Get("TplV2Title"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
         WeekPicker.Header = L.Get("TplPreview");
-        HeaderBox.Header = L.Get("TplHeader"); FooterBox.Header = L.Get("TplFooter");
         DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
-        FooterHint.Text = L.Get("TplV2FooterHint"); DayHint.Text = L.Get("TplV2DayHint");
+        InlineEditHint.Text = L.Get("TplV2InlineEditHint"); DayHint.Text = L.Get("TplV2DayHint");
         FontBox.Header = L.Get("TplV2FontSize"); MinimumFontBox.Header = L.Get("TplV2MinimumFont");
         AllowShrinkBox.Content = L.Get("TplV2AllowShrink");
         HideEmptyDaysBox.Content = L.Get("TplV2HideEmptyDays");
@@ -68,6 +69,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         ZoomResetButton.Click += (_, _) => SetCanvasZoom(100);
         CanvasZoomSlider.ValueChanged += (_, e) => { if (!_updatingZoom) SetCanvasZoom(e.NewValue); };
         PageScroll.ViewChanged += (_, _) => { UpdateCanvasZoom(); PositionContextTools(); };
+        InlineEditor.TextChanged += InlineEditor_TextChanged;
+        InlineEditor.LostFocus += (_, _) => RefreshInlineText();
         Workspace.SizeChanged += (_, _) => PositionContextTools();
         AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
         KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
@@ -116,17 +119,17 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private void SetDocument(MenuTemplate template, string? name)
     {
         _binding = true;
+        DismissContextTools();
         _document = JsonSerializer.Deserialize<TemplateV2Document>(JsonSerializer.Serialize(template.V2 ?? new TemplateV2Document())) ?? new();
         _document.MergeLegacyFooterNotice();
         var heights = new double?[5];
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(5, _document.DayHeights.Length));
         _document.DayHeights = heights;
-        _loadedName = name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
+        _loadedName = name;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         HeaderReflectionBox.IsChecked = _document.ShowHeaderReflection;
         RefreshDecorationList();
-        DismissContextTools();
         FontBox.Value = _document.FontSize; MinimumFontBox.Value = _document.MinimumFontSize;
         AllowShrinkBox.IsChecked = _document.AllowFontShrink;
         HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
@@ -168,6 +171,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
         if (_saving || _switching) return;
+        UpdateInlineText();
         if (!double.IsFinite(FontBox.Value) || !double.IsFinite(MinimumFontBox.Value) || MinimumFontBox.Value > FontBox.Value)
         { StatusText.Text = L.Get("TplV2FontInvalid"); return; }
         _saving = true; SaveButton.IsEnabled = false;
@@ -202,6 +206,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     public Task<bool> CanLeaveAsync() => _saving || _switching ? Task.FromResult(false) : ConfirmDiscardAsync();
     private async Task<bool> ConfirmDiscardAsync()
     {
+        UpdateInlineText();
         if (!_dirty) return true;
         var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"), Content = L.Get("SideEditorDiscardMessage"),
             PrimaryButtonText = L.Get("RecipeDiscardButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
@@ -227,13 +232,6 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             Render();
         }
         catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("MenuLoadError", ex.Message); }
-    }
-
-    private void Fields_Changed(object sender, TextChangedEventArgs e)
-    {
-        if (_binding) return;
-        _document.HeaderText = HeaderBox.Text; _document.FooterText = FooterBox.Text;
-        _dirty = true; Render();
     }
 
     private void Numbers_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
@@ -422,7 +420,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var overSelectableBlock = false;
         for (var current = e.OriginalSource as DependencyObject; current != null; current = VisualTreeHelper.GetParent(current))
         {
-            if (current == SelectionToolbar) return;
+            if (current == SelectionToolbar || current == InlineEditor) return;
             if (current is FrameworkElement { Tag: string }) overSelectableBlock = true;
             if (current == PageHost)
             {
@@ -435,6 +433,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
 
     private void DismissContextTools()
     {
+        StopInlineEditing();
         _selectedBlock = null;
         _selectionAnchor = null;
         SelectionToolbar.Visibility = Visibility.Collapsed;
@@ -444,10 +443,52 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
 
     private void SelectCanvasBlock(string key, FrameworkElement anchor)
     {
+        StopInlineEditing();
         _selectedBlock = key;
         _selectionAnchor = anchor;
         BuildContextTools();
         PositionContextTools();
+        if (key is "header" or "footer")
+            DispatcherQueue.TryEnqueue(() => { if (_selectedBlock == key && _selectionAnchor != null) StartInlineEditing(key); });
+    }
+
+    private void StartInlineEditing(string key)
+    {
+        _editingBlock = key;
+        InlineEditor.Text = key == "header" ? _document.HeaderText ?? "" : _document.FooterText ?? "";
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(InlineEditor, L.Get(key == "header" ? "TplHeader" : "TplFooter"));
+        InlineEditor.Visibility = Visibility.Visible;
+        PositionContextTools();
+        InlineEditor.Focus(FocusState.Programmatic);
+    }
+
+    private void InlineEditor_TextChanged(object sender, TextChangedEventArgs e) => UpdateInlineText();
+
+    private void UpdateInlineText()
+    {
+        if (_editingBlock == "header" && _document.HeaderText != InlineEditor.Text) _document.HeaderText = InlineEditor.Text;
+        else if (_editingBlock == "footer" && _document.FooterText != InlineEditor.Text) _document.FooterText = InlineEditor.Text;
+        else return;
+        _dirty = true;
+        _inlineTextChanged = true;
+    }
+
+    private void RefreshInlineText()
+    {
+        UpdateInlineText();
+        if (!_inlineTextChanged) return;
+        _inlineTextChanged = false;
+        // Let the pointer event finish before replacing the rendered page.
+        DispatcherQueue.TryEnqueue(() => Render());
+    }
+
+    private void StopInlineEditing()
+    {
+        UpdateInlineText();
+        if (_selectionAnchor != null && _editingBlock != null) _selectionAnchor.Opacity = 1;
+        _editingBlock = null;
+        InlineEditor.Visibility = Visibility.Collapsed;
+        RefreshInlineText();
     }
 
     private void PositionContextTools()
@@ -455,12 +496,27 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (_selectedBlock == null || _selectionAnchor == null || SelectionOverlay.ActualWidth <= 0) return;
         try
         {
+            SelectionOverlay.Clip = new RectangleGeometry { Rect = new Rect(0, 0, SelectionOverlay.ActualWidth, SelectionOverlay.ActualHeight) };
             var origin = _selectionAnchor.TransformToVisual(SelectionOverlay).TransformPoint(new Point(0, 0));
             var zoom = PageScroll.ZoomFactor;
             SelectionOutline.Width = Math.Max(0, _selectionAnchor.ActualWidth * zoom);
             SelectionOutline.Height = Math.Max(0, _selectionAnchor.ActualHeight * zoom);
             Canvas.SetLeft(SelectionOutline, origin.X); Canvas.SetTop(SelectionOutline, origin.Y);
             SelectionOutline.Visibility = Visibility.Visible;
+            if (_editingBlock == _selectedBlock)
+            {
+                _selectionAnchor.Opacity = 0;
+                var style = TemplateV2Renderer.GetTextStyle(_document, _selectedBlock);
+                InlineEditor.Width = SelectionOutline.Width; InlineEditor.Height = SelectionOutline.Height;
+                Canvas.SetLeft(InlineEditor, origin.X); Canvas.SetTop(InlineEditor, origin.Y);
+                InlineEditor.FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily);
+                InlineEditor.FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * zoom : 14 * zoom, 6, 144);
+                InlineEditor.FontWeight = style.Bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+                InlineEditor.FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
+                InlineEditor.Foreground = new SolidColorBrush(ParseColor(style.Color));
+                InlineEditor.TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left };
+                InlineEditor.VerticalContentAlignment = _editingBlock == "footer" ? VerticalAlignment.Bottom : VerticalAlignment.Top;
+            }
             SelectionToolbar.MaxWidth = Math.Max(100, SelectionOverlay.ActualWidth - 12);
             SelectionToolbar.Measure(new Size(SelectionToolbar.MaxWidth, double.PositiveInfinity));
             var width = Math.Min(SelectionToolbar.DesiredSize.Width, SelectionToolbar.MaxWidth);
