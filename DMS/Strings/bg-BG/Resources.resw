@@ -26,7 +26,20 @@
   <data name="V2OutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
   <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
   <data name="TplV2Title" xml:space="preserve"><value>Редактор на шаблони V2</value></data>
-  <data name="TplV2FooterHint" xml:space="preserve"><value>Долен колонтитул: до три реда.</value></data>
+  <data name="TplV2FooterHint" xml:space="preserve"><value>Бележките споделят страницата с менюто. При липса на място се показва предупреждение.</value></data>
+  <data name="TplV2Notice" xml:space="preserve"><value>Заключително съобщение</value></data>
+  <data name="TplV2AddDecoration" xml:space="preserve"><value>Добави декоративно изображение</value></data>
+  <data name="TplV2RemoveDecoration" xml:space="preserve"><value>Премахни избраното изображение</value></data>
+  <data name="TplV2Decorations" xml:space="preserve"><value>Декоративни изображения</value></data>
+  <data name="TplV2ImageX" xml:space="preserve"><value>Разстояние на изображението отляво</value></data>
+  <data name="TplV2ImageY" xml:space="preserve"><value>Разстояние на изображението отгоре</value></data>
+  <data name="TplV2ImageWidth" xml:space="preserve"><value>Ширина на изображението</value></data>
+  <data name="TplV2ImageHeight" xml:space="preserve"><value>Височина на изображението</value></data>
+  <data name="TplV2ReserveSpace" xml:space="preserve"><value>Остави колона за изображението, без застъпване на текста</value></data>
+  <data name="TplV2HeaderReflection" xml:space="preserve"><value>Отражение на заглавието</value></data>
+  <data name="TplV2DaySpacing" xml:space="preserve"><value>Разстояние между дните</value></data>
+  <data name="TplV2MealSpacing" xml:space="preserve"><value>Разстояние между ястията</value></data>
+  <data name="TplV2AllergenAccent" xml:space="preserve"><value>Цвят на съставките с алергени</value></data>
   <data name="TplV2DayHint" xml:space="preserve"><value>Изберете ден, за да фиксирате височината му; останалите се настройват автоматично.</value></data>
   <data name="TplV2FontSize" xml:space="preserve"><value>Предпочитан размер на шрифта</value></data>
   <data name="TplV2MinimumFont" xml:space="preserve"><value>Минимален размер на шрифта</value></data>

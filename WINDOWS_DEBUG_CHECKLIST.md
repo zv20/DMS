@@ -27,3 +27,5 @@ Use disposable test data or make a backup before testing import/restore.
 - [ ] On Print / Export V2, select the same template and week and compare wrapping and placement with the builder preview.
 - [ ] Export PNG, then select Microsoft Print to PDF in the PDF print dialog, and print to an A4 printer. Compare all three with the builder and check image quality and margins.
 - [ ] Reopen V1 templates and the original print page to confirm they remain separate and unaffected.
+- [ ] In V2, verify borderless weekdays, colored bold/underlined allergen ingredients, extended footer and final notice, spacing, and optional title reflection.
+- [ ] Add multiple decorative images, adjust position and size, and test reserved text-safe columns. Verify the preview, PNG, PDF, and print agree; confirm invalid geometry/overflow prevents output.

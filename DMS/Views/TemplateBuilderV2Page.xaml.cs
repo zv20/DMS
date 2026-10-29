@@ -43,6 +43,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
         WeekPicker.Header = L.Get("TplPreview"); NameBox.Header = L.Get("TplName");
         HeaderBox.Header = L.Get("TplHeader"); FooterBox.Header = L.Get("TplFooter");
+        NoticeBox.Header = L.Get("TplV2Notice"); DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
         FooterHint.Text = L.Get("TplV2FooterHint"); DayHint.Text = L.Get("TplV2DayHint");
         FontBox.Header = L.Get("TplV2FontSize"); MinimumFontBox.Header = L.Get("TplV2MinimumFont");
         AllowShrinkBox.Content = L.Get("TplV2AllowShrink");
@@ -50,7 +51,11 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         FontFamilyBox.Header = L.Get("TplFont"); foreach (var family in Fonts) FontFamilyBox.Items.Add(family);
         ChooseImageButton.Content = L.Get("TplV2BackgroundImage"); ClearImageButton.Content = L.Get("TplV2ClearBackground");
         ImageOpacitySlider.Header = L.Get("TplV2ImageOpacity");
-        foreach (var (key, label) in new[] { ("header", "TplV2HeaderColor"), ("body", "TplV2BodyColor"), ("footer", "TplV2FooterColor"), ("background", "TplV2BackgroundColor") })
+        AddDecorationButton.Content = L.Get("TplV2AddDecoration"); RemoveDecorationButton.Content = L.Get("TplV2RemoveDecoration");
+        DecorationSelector.Header = L.Get("TplV2Decorations"); DecorationX.Header = L.Get("TplV2ImageX"); DecorationY.Header = L.Get("TplV2ImageY");
+        DecorationWidth.Header = L.Get("TplV2ImageWidth"); DecorationHeight.Header = L.Get("TplV2ImageHeight"); DecorationReserve.Content = L.Get("TplV2ReserveSpace");
+        HeaderReflectionBox.Content = L.Get("TplV2HeaderReflection");
+        foreach (var (key, label) in new[] { ("header", "TplV2HeaderColor"), ("body", "TplV2BodyColor"), ("footer", "TplV2FooterColor"), ("allergen", "TplV2AllergenAccent"), ("background", "TplV2BackgroundColor") })
             AddColorControl(key, label);
         WeekPicker.Date = DateTimeOffset.Now;
         PageScroll.ViewChanged += (_, _) => PositionContextTools();
@@ -95,6 +100,10 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(5, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name; NameBox.Text = template.Name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
+        NoticeBox.Text = _document.FooterNoticeText; DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
+        _document.DecorativeImages ??= new();
+        HeaderReflectionBox.IsChecked = _document.ShowHeaderReflection;
+        RefreshDecorationList();
         DismissContextTools();
         FontBox.Value = _document.FontSize; MinimumFontBox.Value = _document.MinimumFontSize;
         AllowShrinkBox.IsChecked = _document.AllowFontShrink;
@@ -139,8 +148,6 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (_saving) return;
         var name = NameBox.Text.Trim();
         if (name.Length == 0) { StatusText.Text = L.Get("TplV2NameRequired"); return; }
-        if (FooterBox.Text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Length > 3)
-        { StatusText.Text = L.Get("TplV2FooterLimit"); return; }
         if (!double.IsFinite(FontBox.Value) || !double.IsFinite(MinimumFontBox.Value) || MinimumFontBox.Value > FontBox.Value)
         { StatusText.Text = L.Get("TplV2FontInvalid"); return; }
         _saving = true; SaveButton.IsEnabled = false;
@@ -192,7 +199,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private void Fields_Changed(object sender, TextChangedEventArgs e)
     {
         if (_binding) return;
-        _document.HeaderText = HeaderBox.Text; _document.FooterText = FooterBox.Text;
+        _document.HeaderText = HeaderBox.Text; _document.FooterText = FooterBox.Text; _document.FooterNoticeText = NoticeBox.Text;
         _dirty = true; Render();
     }
 
@@ -201,6 +208,8 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (_binding) return;
         if (double.IsFinite(FontBox.Value)) _document.FontSize = FontBox.Value;
         if (double.IsFinite(MinimumFontBox.Value)) _document.MinimumFontSize = MinimumFontBox.Value;
+        if (double.IsFinite(DaySpacingBox.Value)) _document.DaySpacing = DaySpacingBox.Value;
+        if (double.IsFinite(MealSpacingBox.Value)) _document.MealLineSpacing = MealSpacingBox.Value;
         _dirty = true; Render();
     }
 
@@ -262,6 +271,70 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _document.BackgroundImageDataUri = null; _dirty = true; Render();
     }
 
+    private async void AddDecoration_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var picker = new FileOpenPicker();
+            picker.FileTypeFilter.Add(".png"); picker.FileTypeFilter.Add(".jpg"); picker.FileTypeFilter.Add(".jpeg");
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
+            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
+            var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
+            var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+            var image = new TemplateV2Image { DataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", AltText = file.DisplayName };
+            _document.DecorativeImages.Add(image);
+            _dirty = true; RefreshDecorationList(image.Id); Render();
+        }
+        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+    }
+
+    private void RefreshDecorationList(string? selectedId = null)
+    {
+        var wasBinding = _binding; _binding = true;
+        DecorationSelector.Items.Clear();
+        foreach (var item in _document.DecorativeImages)
+            DecorationSelector.Items.Add(new ComboBoxItem { Tag = item.Id, Content = string.IsNullOrWhiteSpace(item.AltText) ? L.Get("TplV2Decorations") : item.AltText });
+        DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId));
+        _binding = wasBinding;
+        ShowSelectedDecoration();
+    }
+
+    private TemplateV2Image? SelectedDecoration() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
+        ? _document.DecorativeImages.FirstOrDefault(item => item.Id == id) : null;
+
+    private void DecorationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!_binding) ShowSelectedDecoration(); }
+    private void ShowSelectedDecoration()
+    {
+        var image = SelectedDecoration(); var wasBinding = _binding; _binding = true;
+        foreach (var control in new Control[] { DecorationX, DecorationY, DecorationWidth, DecorationHeight, DecorationReserve, RemoveDecorationButton }) control.IsEnabled = image != null;
+        if (image != null) { DecorationX.Value = image.X; DecorationY.Value = image.Y; DecorationWidth.Value = image.Width; DecorationHeight.Value = image.Height; DecorationReserve.IsChecked = image.ReserveTextSpace; }
+        _binding = wasBinding;
+    }
+    private void Decoration_Changed(NumberBox sender, NumberBoxValueChangedEventArgs e)
+    {
+        if (_binding || SelectedDecoration() is not { } image || !double.IsFinite(e.NewValue)) return;
+        image.X = DecorationX.Value; image.Y = DecorationY.Value; image.Width = DecorationWidth.Value; image.Height = DecorationHeight.Value;
+        _dirty = true; Render();
+    }
+    private void DecorationReserve_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding || SelectedDecoration() is not { } image) return;
+        image.ReserveTextSpace = DecorationReserve.IsChecked == true; _dirty = true; Render();
+    }
+    private void RemoveDecoration_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedDecoration() is not { } image) return;
+        _document.DecorativeImages.Remove(image); _dirty = true; RefreshDecorationList(); Render();
+    }
+    private void Reflection_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        _document.ShowHeaderReflection = HeaderReflectionBox.IsChecked == true; _dirty = true; Render();
+    }
+
     private void AddColorControl(string key, string label)
     {
         var button = new Button { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -273,7 +346,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         {
             if (_binding) return;
             var c = args.NewColor; var value = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-            switch (key) { case "header": _document.HeaderColor = value; break; case "body": _document.BodyColor = value; break; case "footer": _document.FooterColor = value; break; default: _document.BackgroundColor = value; break; }
+            switch (key) { case "header": _document.HeaderColor = value; break; case "body": _document.BodyColor = value; break; case "footer": _document.FooterColor = value; break; case "allergen": _document.AllergenAccentColor = value; break; default: _document.BackgroundColor = value; break; }
             _dirty = true; UpdateColorButtons(); Render();
         };
         var row = new StackPanel { Spacing = 3 };
@@ -281,7 +354,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         ColorControls.Children.Add(row); _colorButtons[key] = button;
     }
 
-    private string ColorFor(string key) => key switch { "header" => _document.HeaderColor, "body" => _document.BodyColor, "footer" => _document.FooterColor, _ => _document.BackgroundColor };
+    private string ColorFor(string key) => key switch { "header" => _document.HeaderColor, "body" => _document.BodyColor, "footer" => _document.FooterColor, "allergen" => _document.AllergenAccentColor, _ => _document.BackgroundColor };
     private static Windows.UI.Color ParseColor(string? value)
     {
         if (value is { Length: 7 } && value[0] == '#' && uint.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
@@ -369,7 +442,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var parts = key.Split(':');
         var sectionName = parts[0] switch
         {
-            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"),
+            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplV2Notice"),
             "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
             "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
             "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")

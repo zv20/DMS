@@ -26,7 +26,20 @@
   <data name="V2OutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>
   <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Printing is not available on this system.</value></data>
   <data name="TplV2Title" xml:space="preserve"><value>Template Builder V2</value></data>
-  <data name="TplV2FooterHint" xml:space="preserve"><value>Footer: up to three lines.</value></data>
+  <data name="TplV2FooterHint" xml:space="preserve"><value>Footer notes share the page with the menu. A warning appears if they do not fit.</value></data>
+  <data name="TplV2Notice" xml:space="preserve"><value>Final notice</value></data>
+  <data name="TplV2AddDecoration" xml:space="preserve"><value>Add decorative image</value></data>
+  <data name="TplV2RemoveDecoration" xml:space="preserve"><value>Remove selected image</value></data>
+  <data name="TplV2Decorations" xml:space="preserve"><value>Decorative images</value></data>
+  <data name="TplV2ImageX" xml:space="preserve"><value>Image position from left</value></data>
+  <data name="TplV2ImageY" xml:space="preserve"><value>Image position from top</value></data>
+  <data name="TplV2ImageWidth" xml:space="preserve"><value>Image width</value></data>
+  <data name="TplV2ImageHeight" xml:space="preserve"><value>Image height</value></data>
+  <data name="TplV2ReserveSpace" xml:space="preserve"><value>Reserve a text-safe column for this image</value></data>
+  <data name="TplV2HeaderReflection" xml:space="preserve"><value>Reflect header text</value></data>
+  <data name="TplV2DaySpacing" xml:space="preserve"><value>Space between days</value></data>
+  <data name="TplV2MealSpacing" xml:space="preserve"><value>Space between meals</value></data>
+  <data name="TplV2AllergenAccent" xml:space="preserve"><value>Allergen ingredient color</value></data>
   <data name="TplV2DayHint" xml:space="preserve"><value>Check a day to keep its height fixed; unchecked days adjust automatically.</value></data>
   <data name="TplV2FontSize" xml:space="preserve"><value>Preferred font size</value></data>
   <data name="TplV2MinimumFont" xml:space="preserve"><value>Minimum font size</value></data>

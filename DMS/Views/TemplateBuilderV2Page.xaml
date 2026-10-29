@@ -12,7 +12,10 @@
    <ScrollViewer x:Name="PageScroll" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border Grid.Column="1" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
     <TextBox x:Name="NameBox" TextChanged="Fields_Changed" /><TextBox x:Name="HeaderBox" TextChanged="Fields_Changed" />
-    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="300" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
+    <TextBox x:Name="FooterBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1500" TextChanged="Fields_Changed" /><TextBlock x:Name="FooterHint" TextWrapping="Wrap" />
+    <TextBox x:Name="NoticeBox" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="500" TextChanged="Fields_Changed" />
+    <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
+    <NumberBox x:Name="MealSpacingBox" Minimum="0" Maximum="20" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="FontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
     <NumberBox x:Name="MinimumFontBox" Minimum="10" Maximum="18" SpinButtonPlacementMode="Compact" ValueChanged="Numbers_Changed" />
     <CheckBox x:Name="AllowShrinkBox" Checked="Shrink_Changed" Unchecked="Shrink_Changed" />
@@ -22,6 +25,15 @@
     <Button x:Name="ChooseImageButton" Click="ChooseImage_Click" />
     <Button x:Name="ClearImageButton" Click="ClearImage_Click" />
     <Slider x:Name="ImageOpacitySlider" Minimum="0" Maximum="100" StepFrequency="5" ValueChanged="ImageOpacity_Changed" />
+    <Button x:Name="AddDecorationButton" Click="AddDecoration_Click" />
+    <ComboBox x:Name="DecorationSelector" SelectionChanged="DecorationSelector_SelectionChanged" HorizontalAlignment="Stretch" />
+    <Button x:Name="RemoveDecorationButton" Click="RemoveDecoration_Click" />
+    <NumberBox x:Name="DecorationX" Minimum="0" Maximum="794" ValueChanged="Decoration_Changed" />
+    <NumberBox x:Name="DecorationY" Minimum="0" Maximum="1123" ValueChanged="Decoration_Changed" />
+    <NumberBox x:Name="DecorationWidth" Minimum="1" Maximum="794" ValueChanged="Decoration_Changed" />
+    <NumberBox x:Name="DecorationHeight" Minimum="1" Maximum="1123" ValueChanged="Decoration_Changed" />
+    <CheckBox x:Name="DecorationReserve" Checked="DecorationReserve_Changed" Unchecked="DecorationReserve_Changed" />
+    <CheckBox x:Name="HeaderReflectionBox" Checked="Reflection_Changed" Unchecked="Reflection_Changed" />
     <TextBlock x:Name="DayHint" TextWrapping="Wrap" /><StackPanel x:Name="DayControls" Spacing="6" />
    </StackPanel></ScrollViewer></Border>
    <Canvas x:Name="SelectionOverlay" Grid.Column="0" Canvas.ZIndex="10">

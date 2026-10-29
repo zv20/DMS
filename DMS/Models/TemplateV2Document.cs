@@ -4,7 +4,9 @@ namespace DMS.Models;
 public sealed class TemplateV2Document
 {
     public string HeaderText { get; set; } = "Weekly Menu";
+    public bool ShowHeaderReflection { get; set; }
     public string FooterText { get; set; } = "";
+    public string FooterNoticeText { get; set; } = "";
     public double FontSize { get; set; } = 16;
     public double MinimumFontSize { get; set; } = 14;
     public double MaximumFontSize { get; set; } = 18;
@@ -13,10 +15,14 @@ public sealed class TemplateV2Document
     public string FontFamily { get; set; } = "Arial";
     public string HeaderColor { get; set; } = "#000000";
     public string BodyColor { get; set; } = "#000000";
+    public string AllergenAccentColor { get; set; } = "#C60000";
     public string FooterColor { get; set; } = "#000000";
     public string BackgroundColor { get; set; } = "#FFFFFF";
     public string? BackgroundImageDataUri { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
+    public double DaySpacing { get; set; } = 6;
+    public double MealLineSpacing { get; set; } = 2;
+    public List<TemplateV2Image> DecorativeImages { get; set; } = new();
     // Null means automatic; an explicit value is retained rather than silently resized.
     public double?[] DayHeights { get; set; } = new double?[5];
     // Keys: header/date/footer, or heading/menu/ingredients/allergens with
