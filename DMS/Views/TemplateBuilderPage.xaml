@@ -4,7 +4,7 @@
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
     <DropDownButton x:Name="FileMenuButton" VerticalAlignment="Bottom">
      <DropDownButton.Content><StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE700;" FontSize="14" /><TextBlock x:Name="FileMenuLabel" /></StackPanel></DropDownButton.Content>
-     <DropDownButton.Flyout><MenuFlyout>
+     <DropDownButton.Flyout><MenuFlyout Placement="BottomEdgeAlignedLeft">
       <MenuFlyoutItem x:Name="NewButton" Click="New_Click" />
       <MenuFlyoutSubItem x:Name="SavedTemplatesMenu" />
       <MenuFlyoutItem x:Name="SaveButton" Click="Save_Click" />
