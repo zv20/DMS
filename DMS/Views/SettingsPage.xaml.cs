@@ -21,6 +21,7 @@ public sealed partial class SettingsPage : Page
     private readonly ISettingsService _settingsService;
     private readonly IDatabaseService _databaseService;
     private bool _suppressSettingChanges = true;
+    private string _selectedTheme = "default";
     private int _cardColumns;
 
     public SettingsPage()
@@ -28,6 +29,7 @@ public sealed partial class SettingsPage : Page
         this.InitializeComponent();
         _settingsService = App.Services.GetRequiredService<ISettingsService>();
         _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        ClassicAccentHint.Text = L.Get("ThemeClassicAccentHint");
         SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);
         Loaded += SettingsPage_Loaded;
     }
@@ -70,8 +72,10 @@ public sealed partial class SettingsPage : Page
 
             // Theme (stored in settings)
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[2];
+            _selectedTheme = settings.Theme;
+            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[0];
             AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
+            UpdateAccentAvailability(settings.Theme);
             WeekendPlanningToggle.IsOn = settings.WeekendPlanningEnabled;
 
             // Data folder
@@ -150,12 +154,26 @@ public sealed partial class SettingsPage : Page
                 var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
                 settings.Theme = theme;
                 await _databaseService.SaveSettingsAsync(settings);
-                AppearanceService.ApplyTheme(App.CurrentWindow, theme);
+                AppearanceService.ApplyTheme(App.CurrentWindow, theme, settings.AccentColor);
+                _selectedTheme = theme;
                 AppearanceStatus.Text = "";
             }
-            catch (Exception ex) { AppearanceStatus.Text = L.Format("SaveError", ex.Message); }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
+            catch (Exception ex)
+            {
+                _suppressSettingChanges = true;
+                try { ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedTheme) ?? ThemeComboBox.Items[0]; }
+                finally { _suppressSettingChanges = false; }
+                AppearanceStatus.Text = L.Format("SaveError", ex.Message);
+            }
+            finally { ThemeComboBox.IsEnabled = true; UpdateAccentAvailability((ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()); }
         }
+    }
+
+    private void UpdateAccentAvailability(string? theme)
+    {
+        var classic = theme == "default";
+        AccentColorComboBox.IsEnabled = !classic;
+        ClassicAccentHint.Visibility = classic ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

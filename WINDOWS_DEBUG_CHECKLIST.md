@@ -6,6 +6,7 @@ data or make a backup before testing import, restore, conversion or deletion.
 ## Startup and language
 
 - [ ] Check startup, taskbar icon, EN/BG switching and restart.
+- [ ] In Appearance, check Default uses the original orange (#FD7E14), light gray (#F8F9FA) and white palette, and explains why the accent selector is unavailable. Change to Light, Dark and System and verify the saved custom accent is restored. Restart with each theme; check both languages and Windows high contrast.
 - [ ] Change the language in Settings and cancel the reload confirmation. Confirm the original language remains selected after reopening Settings and restarting. Confirm a language change, verify the window reloads in the selected language, and restart to verify it persists.
 ## Data and planner
 

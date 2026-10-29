@@ -261,6 +261,8 @@
   <data name="Text_The_selected_file_is_not_a_DMS_backup_df8918" xml:space="preserve"><value>The selected file is not a DMS backup.</value></data>
   <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Theme</value></data>
   <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Theme</value></data>
+  <data name="ThemeClassicDefault.Content" xml:space="preserve"><value>Default</value></data>
+  <data name="ThemeClassicAccentHint" xml:space="preserve"><value>Default uses the original DMS orange. Choose Light, Dark, or System to use a custom accent.</value></data>
   <data name="Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0" xml:space="preserve"><value>This will add imported data to your existing data. Duplicate names will be skipped. Continue?</value></data>
   <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>This will optimize the database file size. Continue?</value></data>
   <data name="String_Text_Today_24345a" xml:space="preserve"><value>Today</value></data>

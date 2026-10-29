@@ -245,6 +245,22 @@ public sealed class DatabaseServiceTests : IDisposable
         Assert.Equal("teal", (await database.GetSettingsAsync())!.AccentColor);
     }
 
+    [Theory]
+    [InlineData("default")]
+    [InlineData("light")]
+    [InlineData("dark")]
+    [InlineData("system")]
+    public async Task ThemeAndCustomAccentSurviveDatabaseReopen(string theme)
+    {
+        using (var database = CreateDatabase())
+            await database.SaveSettingsAsync(new AppSettings { Theme = theme, AccentColor = "teal" });
+
+        using var reopened = CreateDatabase();
+        var settings = await reopened.GetSettingsAsync();
+        Assert.Equal(theme, settings!.Theme);
+        Assert.Equal("teal", settings.AccentColor);
+    }
+
     [Fact]
     public async Task EmptyMenuSlotCategorySurvivesReopenAndBackup()
     {

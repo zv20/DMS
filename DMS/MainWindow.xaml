@@ -16,7 +16,7 @@
 
         <!-- Title Bar / Header -->
         <Border x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Height="48">
-            <Grid>
+            <Grid Background="{ThemeResource DmsClassicSurfaceOverlayBrush}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -33,16 +33,17 @@
         </Border>
 
         <!-- Main Content -->
+        <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Border Background="{ThemeResource DmsClassicPageOverlayBrush}" />
         <NavigationView
             x:Name="NavView"
-            Grid.Row="1"
             PaneDisplayMode="LeftCompact"
             CompactPaneLength="64"
             OpenPaneLength="300"
             IsPaneOpen="True"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
-            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            Background="Transparent">
 
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="NavMenu" Tag="menu" Content="Menu Planner">
@@ -66,6 +67,7 @@
             <!-- Frame for page navigation -->
             <Frame x:Name="ContentFrame" Margin="0" />
         </NavigationView>
+        </Grid>
         <Grid x:Name="OutputOverlay" Grid.Row="1" Background="#99000000" Visibility="Collapsed" KeyDown="OutputOverlay_KeyDown">
             <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8" Margin="16" MaxWidth="1150" MaxHeight="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid RowDefinitions="Auto,*">

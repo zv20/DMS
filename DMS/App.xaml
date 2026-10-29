@@ -10,6 +10,8 @@
             <SolidColorBrush x:Key="DmsAccentBrush" Color="#FF0067C0" />
             <SolidColorBrush x:Key="DmsAccentHoverBrush" Color="#FF1A78C8" />
             <SolidColorBrush x:Key="DmsAccentPressedBrush" Color="#FF005AAB" />
+            <SolidColorBrush x:Key="DmsClassicPageOverlayBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DmsClassicSurfaceOverlayBrush" Color="Transparent" />
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <ResourceDictionary Source="Styles/Styles.xaml" />

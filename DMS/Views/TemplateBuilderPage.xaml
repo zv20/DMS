@@ -17,7 +17,7 @@
   </ScrollViewer>
   <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
-   <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
+   <Border Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid><Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12"><StackPanel Spacing="10">
     <Expander x:Name="LayoutHeading" IsExpanded="True" HorizontalAlignment="Stretch">
      <StackPanel Spacing="10">
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" ValueChanged="Numbers_Changed" />
@@ -42,7 +42,7 @@
     <CheckBox x:Name="DecorationReserve" Checked="DecorationReserve_Changed" Unchecked="DecorationReserve_Changed" />
      </StackPanel>
     </Expander>
-   </StackPanel></ScrollViewer></Border>
+   </StackPanel></ScrollViewer></Grid></Border>
    <Canvas x:Name="SelectionOverlay" Grid.Column="0" Canvas.ZIndex="10">
     <Border x:Name="SelectionOutline" IsHitTestVisible="False" BorderBrush="DodgerBlue" BorderThickness="2" Visibility="Collapsed" />
     <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Padding="0" Visibility="Collapsed" />

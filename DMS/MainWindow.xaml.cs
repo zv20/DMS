@@ -45,7 +45,7 @@ public sealed partial class MainWindow : Window
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
-        AppearanceService.ApplyTheme(this, settings?.Theme ?? "system");
+        AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
         // Navigate to Menu by default - ensure ContentFrame is ready
         if (ContentFrame != null)
         {

@@ -261,6 +261,8 @@
   <data name="Text_The_selected_file_is_not_a_DMS_backup_df8918" xml:space="preserve"><value>Избраният файл не е резервно копие на DMS.</value></data>
   <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Тема</value></data>
   <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Тема</value></data>
+  <data name="ThemeClassicDefault.Content" xml:space="preserve"><value>По подразбиране</value></data>
+  <data name="ThemeClassicAccentHint" xml:space="preserve"><value>Темата по подразбиране използва оригиналния оранжев цвят на DMS. Изберете светла, тъмна или системна тема, за да използвате друг акцентен цвят.</value></data>
   <data name="Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0" xml:space="preserve"><value>Импортираните данни ще бъдат добавени към съществуващите. Дублираните имена ще бъдат пропуснати. Продължаване?</value></data>
   <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>Това ще оптимизира размера на базата данни. Продължаване?</value></data>
   <data name="String_Text_Today_24345a" xml:space="preserve"><value>Днес</value></data>
