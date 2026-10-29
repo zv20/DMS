@@ -4,7 +4,7 @@
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
     <TextBlock x:Name="PageTitle" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
     <ComboBox x:Name="TemplateSelector" Width="190" DisplayMemberPath="Name" SelectionChanged="TemplateSelector_SelectionChanged" />
-    <Button x:Name="NewButton" Click="New_Click" /><Button x:Name="SaveButton" Click="Save_Click" Style="{StaticResource AccentButtonStyle}" />
+    <Button x:Name="NewButton" Click="New_Click" /><Button x:Name="SaveButton" Click="Save_Click" Style="{StaticResource AccentButtonStyle}" /><Button x:Name="DeleteButton" Click="Delete_Click" IsEnabled="False" />
     <CalendarDatePicker x:Name="WeekPicker" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>

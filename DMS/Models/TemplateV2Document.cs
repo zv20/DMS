@@ -24,9 +24,9 @@ public sealed class TemplateV2Document
     public double MealLineSpacing { get; set; } = 2;
     public List<TemplateV2Image> DecorativeImages { get; set; } = new();
     // Null means automatic; an explicit value is retained rather than silently resized.
-    public double?[] DayHeights { get; set; } = new double?[5];
+    public double?[] DayHeights { get; set; } = new double?[7];
     // Keys: header/date/footer, or heading/menu/ingredients/allergens with
-    // optional :0 through :4 weekday overrides. Missing values retain V2 defaults.
+    // optional :0 through :6 day overrides. Missing values retain defaults.
     public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
     public Dictionary<string, TemplateBlockAppearance> BlockAppearances { get; set; } = new();
 

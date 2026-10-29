@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Printing;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Printing;
@@ -32,6 +33,7 @@ public sealed partial class TemplateV2OutputPage : Page
     private bool _ready;
     private bool _busy;
     private bool _loaded;
+    private bool _weekendEnabled;
     private int _generation;
     private DateTime _monday;
     private DateTime? _firstDay, _lastDay;
@@ -56,6 +58,12 @@ public sealed partial class TemplateV2OutputPage : Page
         Unloaded += Page_Unloaded;
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        if (e.Parameter is DateTime date) WeekPicker.Date = new DateTimeOffset(date.Date);
+    }
+
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
         _loaded = true;
@@ -65,8 +73,8 @@ public sealed partial class TemplateV2OutputPage : Page
             try { RegisterPrinting(); } catch (Exception) { UnregisterPrinting(); }
             var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.V2 != null).ToList();
             if (!_loaded) return;
+            templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), V2 = new TemplateV2Document { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;
-            if (templates.Count == 0) { StatusText.Text = L.Get("V2OutputNoTemplate"); return; }
             TemplateSelector.SelectedIndex = 0;
         }
         catch (Exception ex) { StatusText.Text = L.Format("V2OutputFailure", ex.Message); }
@@ -101,12 +109,13 @@ public sealed partial class TemplateV2OutputPage : Page
         try
         {
             if (!_loaded || generation != _generation) return;
-            var entries = await _database.GetMenuAsync(monday, monday.AddDays(4));
+            var weekendEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
+            var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
             if (!_loaded || generation != _generation) return;
-            _monday = monday; _document = template.V2; _entries = entries; _recipes = recipes; _ingredients = ingredients;
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients);
+            _monday = monday; _document = template.V2; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
             _firstDay = result.FirstDay; _lastDay = result.LastDay;
             _previewPage = result.Page;
             PreviewHost.Content = _previewPage;
@@ -197,7 +206,7 @@ public sealed partial class TemplateV2OutputPage : Page
         try
         {
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("V2OutputPrintUnsupported"));
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients);
+            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
             await result.ImagesReady;
             if (!_loaded) return;
             if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("V2OutputOverflow"); return; }

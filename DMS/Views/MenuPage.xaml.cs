@@ -15,7 +15,6 @@ public sealed partial class MenuPage : Page
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
     private bool _busy;
-    private bool _outputOpen;
     private bool _weekendPlanningEnabled;
     private bool _compactHeader;
     private List<Recipe> _recipes = [];
@@ -67,18 +66,9 @@ public sealed partial class MenuPage : Page
         foreach (var card in CalendarGrid.Children.OfType<Border>())
             card.MinHeight = _monthly ? Math.Min(155, width) : 0;
     }
-    private async void Output_Click(object sender, RoutedEventArgs e)
+    private void Output_Click(object sender, RoutedEventArgs e)
     {
-        if (_outputOpen) return;
-        _outputOpen = true;
-        if (sender is Button button) button.IsEnabled = false;
-        try { await MenuOutputService.ShowAsync(XamlRoot, _date); }
-        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
-        finally
-        {
-            if (sender is Button outputButton) outputButton.IsEnabled = true;
-            _outputOpen = false;
-        }
+        if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date);
     }
 
     private async Task RefreshAsync()

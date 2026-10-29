@@ -10,17 +10,18 @@ public static class TemplateV2Layout
     public const double DayMaxHeight = 350;
     public sealed record Result(double[] DayHeights, bool Overflowed);
 
-    public static int[] VisibleDayIndexes(DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, bool hideEmpty)
+    public static int[] VisibleDayIndexes(DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, bool hideEmpty, bool includeWeekend = false)
     {
-        if (!hideEmpty) return Enumerable.Range(0, 5).ToArray();
+        var count = includeWeekend ? 7 : 5;
+        if (!hideEmpty) return Enumerable.Range(0, count).ToArray();
         var recipeIds = recipes.Select(recipe => recipe.Id).ToHashSet();
-        return Enumerable.Range(0, 5).Where(day => entries.Any(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeIds.Contains(entry.RecipeId))).ToArray();
+        return Enumerable.Range(0, count).Where(day => entries.Any(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeIds.Contains(entry.RecipeId))).ToArray();
     }
 
     /// <summary>Keep explicitly sized blocks unchanged; allocate the remaining height to automatic blocks.</summary>
     public static Result Resolve(double[] requiredHeights, double?[]? fixedHeights, double availableHeight, double minHeight = DayMinHeight, double maxHeight = DayMaxHeight)
     {
-        if (requiredHeights.Length > 5) throw new ArgumentException("At most five days are supported.", nameof(requiredHeights));
+        if (requiredHeights.Length > 7) throw new ArgumentException("At most seven days are supported.", nameof(requiredHeights));
         minHeight = double.IsFinite(minHeight) ? Math.Clamp(minHeight, 1, PageHeight) : DayMinHeight;
         maxHeight = double.IsFinite(maxHeight) ? Math.Clamp(maxHeight, minHeight, PageHeight) : DayMaxHeight;
         availableHeight = double.IsFinite(availableHeight) ? Math.Max(0, availableHeight) : 0;

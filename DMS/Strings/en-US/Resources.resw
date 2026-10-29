@@ -9,13 +9,11 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Menu Planner</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="NavTemplateBuilderV2.Content" xml:space="preserve"><value>Template Builder V2</value></data>
-  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Print / Export V2</value></data>
-  <data name="V2OutputTitle" xml:space="preserve"><value>Print / Export V2</value></data>
+  <data name="NavTemplateV2Output.Content" xml:space="preserve"><value>Print / Export</value></data>
+  <data name="V2OutputTitle" xml:space="preserve"><value>Print / Export</value></data>
   <data name="V2OutputPrint" xml:space="preserve"><value>Print</value></data>
   <data name="V2OutputPdf" xml:space="preserve"><value>Save as PDF</value></data>
   <data name="V2OutputPng" xml:space="preserve"><value>Save as PNG</value></data>
-  <data name="V2OutputNoTemplate" xml:space="preserve"><value>Save a V2 template before printing or exporting.</value></data>
   <data name="V2OutputOverflow" xml:space="preserve"><value>The content does not fit on the page. Adjust the template or menu before printing or exporting.</value></data>
   <data name="V2OutputReady" xml:space="preserve"><value>Ready to print or export.</value></data>
   <data name="V2OutputFailure" xml:space="preserve"><value>Could not complete the operation: {0}</value></data>
@@ -25,7 +23,11 @@
   <data name="V2OutputWeek" xml:space="preserve"><value>Week</value></data>
   <data name="V2OutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>
   <data name="V2OutputPrintUnsupported" xml:space="preserve"><value>Printing is not available on this system.</value></data>
-  <data name="TplV2Title" xml:space="preserve"><value>Template Builder V2</value></data>
+  <data name="TplV2Title" xml:space="preserve"><value>Template Builder</value></data>
+  <data name="TplLegacyConvertTitle" xml:space="preserve"><value>Open older template</value></data>
+  <data name="TplLegacyConvertMessage" xml:space="preserve"><value>This creates an approximate editable copy. Some layout, formatting, images and display options may differ. Your original template stays unchanged; save the copy under a new name and review the preview before printing.</value></data>
+  <data name="TplLegacyConvertButton" xml:space="preserve"><value>Open copy</value></data>
+  <data name="TplLegacyCopySuffix" xml:space="preserve"><value>copy</value></data>
   <data name="TplV2InlineEditHint" xml:space="preserve"><value>Click the header or footer to edit its text.</value></data>
   <data name="TplV2FooterHint" xml:space="preserve"><value>Footer notes share the page with the menu. A warning appears if they do not fit.</value></data>
   <data name="TplV2Notice" xml:space="preserve"><value>Final notice</value></data>

@@ -62,8 +62,7 @@ public sealed partial class MainWindow : Window
             "recipes" => typeof(RecipesPage),
             "ingredients" => typeof(IngredientsPage),
             "allergens" => typeof(AllergensPage),
-            "templateBuilder" => typeof(TemplateBuilderPage),
-            "templateBuilderV2" => typeof(TemplateBuilderV2Page),
+            "templateBuilder" => typeof(TemplateBuilderV2Page),
             "templateV2Output" => typeof(TemplateV2OutputPage),
             "settings" => typeof(SettingsPage),
             _ => null
@@ -79,8 +78,7 @@ public sealed partial class MainWindow : Window
                     RecipesPage => "recipes",
                     IngredientsPage => "ingredients",
                     AllergensPage => "allergens",
-                    TemplateBuilderPage => "templateBuilder",
-                    TemplateBuilderV2Page => "templateBuilderV2",
+                    TemplateBuilderV2Page => "templateBuilder",
                     _ => ""
                 };
                 if (_navigationPending)
@@ -102,6 +100,12 @@ public sealed partial class MainWindow : Window
             NavView.SelectedItem = args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer;
             ContentFrame.Navigate(pageType);
         }
+    }
+
+    public void OpenMenuOutput(DateTime date)
+    {
+        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, "templateV2Output"));
+        ContentFrame.Navigate(typeof(TemplateV2OutputPage), date);
     }
 
 }

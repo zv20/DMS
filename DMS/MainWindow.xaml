@@ -61,10 +61,7 @@
                 <NavigationViewItem x:Uid="NavTemplateBuilder" Tag="templateBuilder" Content="Template Builder">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavTemplateBuilderV2" Tag="templateBuilderV2" Content="Template Builder V2">
-                    <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavTemplateV2Output" Tag="templateV2Output" Content="Print / Export V2">
+                <NavigationViewItem x:Uid="NavTemplateV2Output" Tag="templateV2Output" Content="Print / Export">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Print" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

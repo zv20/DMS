@@ -16,14 +16,14 @@ public sealed record TemplateV2PageResult(FrameworkElement Page, bool Overflowed
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateV2Renderer
 {
-    public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null)
+    public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false)
     {
         var insets = TemplateV2Images.GetInsets(template.DecorativeImages);
         var width = Math.Max(1, 714 - insets.Left - insets.Right);
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
-        var populated = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, true);
-        var visible = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays);
+        var populated = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
+        var visible = TemplateV2Layout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 6;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -85,7 +85,7 @@ public static class TemplateV2Renderer
         Selectable(headerCell, "header", onSelected);
         grid.Children.Add(headerCell);
         DateTime? first = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[0] : 0) : null;
-        DateTime? last = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[^1] : 4) : null;
+        DateTime? last = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[^1] : includeWeekend ? 6 : 4) : null;
         var date = StyledText(first is DateTime startDate && last is DateTime endDate ? startDate == endDate ? $"{startDate:d}" : $"{startDate:d} – {endDate:d}" : "", GetTextStyle(template, "date"));
         date.Measure(new Size(width, double.PositiveInfinity));
         overflow |= date.DesiredSize.Height > 36;

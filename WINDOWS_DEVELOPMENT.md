@@ -29,43 +29,19 @@ Visual Studio adapter; xUnit v3 is a separate framework migration.
 
 ## Menu templates and output
 
-Template Builder V2 and Print / Export V2 use a shared native WinUI A4 renderer.
-V2 templates are stored separately from V1 selections in the same template database
-and included in existing backup/export. The V2 output page prevents printing and
-PNG export when the page overflows. PDF uses the Windows print dialog: choose
-Microsoft Print to PDF. Native print, PDF and PNG require Windows validation;
-printer imageable margins may scale the document. See WINDOWS_DEBUG_CHECKLIST.md.
+Template Builder and Print / Export use the same native WinUI A4 renderer. The
+planner button opens Print / Export for the selected date. Output provides a
+default template, and saved templates can be selected. Output is blocked if the
+page overflows. PDF uses the Windows print dialog: choose Microsoft Print to PDF.
+Printer imageable margins may scale the document.
 
-The template editor previews a chosen saved week and stores formatting and
-visibility settings. New templates can use a movable A4 canvas with positioned
-text and embedded image layers. Existing flowing templates retain their old layout
-until the user enables the canvas. Canvas templates use saved page positions
-instead of the output dialog's margin setting.
-The planner's Print / Export dialog renders the selected saved week and template
-through WebView2. It needs the WebView2 Runtime and supports A4 PDF, print, and
-single-page PNG; an overflowing PNG is rejected instead of silently cropped.
-The canvas snaps moving objects to guides and supports one-pixel arrow-key nudges
-when an object has focus. The output preview checks rendered text for overlaps and
-box/page overflow and warns without preventing print. Images may intentionally
-overlap text; images outside the page are flagged. Preview documents are supplied
-in memory rather than through WebView2's size-limited NavigateToString API. Image
-imports are limited to 4 MiB each and 16 MiB of combined encoded image data.
+Weekend menus are included when weekend planning is enabled in Settings. Empty
+days can be hidden, and fixed day heights are preserved. Test both short and long
+weeks: seven full days may exceed the single-page limit and require adjustments.
 
-Canvas templates support contextual text formatting, per-block backgrounds and
-borders, rich header/footer runs, image fit/rotation/layer controls, bounded menu
-auto-fit, and a 50-step visual undo/redo history. Imported browser JSON is
-retained, but image filenames cannot recover image files that were not included
-in an export. The output UI warns when an imported template may need adjustment.
-
-On Windows, exercise five-day menu navigation and category selection; save,
-reopen and copy templates; test all supported font, color, alignment and image
-options; move and resize the header, date, day heading, menu, footer and multiple
-overlapping images; test snapping, keyboard nudging, overlap and overflow warnings,
-including weeks with long recipes; reorder layers; save and reopen the template; compare their
-positions with print, PDF and PNG; test a legacy template before and after enabling
-the canvas; preview two saved weeks; export PDF and PNG; print with an image; try a
-long menu, missing WebView2, malformed/legacy templates, missing images, and a
-cancelled file picker. Test light/dark and accent settings after switching
-languages and restarting. Use disposable data and verify the database and saved
-files. Run `node scripts/test-template-layout-diagnostics.js` for a small mocked
-geometry check. No Windows results have yet been recorded for this implementation.
+Older templates remain in the database and backups. Opening one in the builder
+creates an approximate editable copy and requires a new name to save. The original
+is not overwritten. Some legacy geometry, rich text, image layers and visibility
+options cannot be reproduced; review the copy before printing. Legacy HTML
+rendering code remains for compatibility regression tests, not as an app output
+path. Refer to WINDOWS_DEBUG_CHECKLIST.md for the required Windows checks.

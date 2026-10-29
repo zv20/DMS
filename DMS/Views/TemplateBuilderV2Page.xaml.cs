@@ -19,9 +19,12 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private readonly IDatabaseService _database;
     private readonly List<NumberBox> _dayBoxes = [];
     private readonly List<CheckBox> _fixedBoxes = [];
+    private readonly List<StackPanel> _dayRows = [];
     private readonly List<MenuTemplate> _templates = [];
     private TemplateV2Document _document = new();
+    private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
+    private bool _legacySource;
     private bool _binding = true, _dirty, _saving, _switching;
     private int _generation;
     private int _renderGeneration;
@@ -30,6 +33,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private bool _contextBinding, _updatingZoom;
     private string? _editingBlock;
     private bool _inlineTextChanged;
+    private bool _weekendEnabled;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -43,6 +47,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         _database = App.Services.GetRequiredService<IDatabaseService>();
         PageTitle.Text = L.Get("TplV2Title"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
         NewButton.Content = L.Get("TplNew"); SaveButton.Content = L.Get("TplSave");
+        DeleteButton.Content = L.Get("String_Text_Delete_f6fdbe");
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplV2DaySpacing"); MealSpacingBox.Header = L.Get("TplV2MealSpacing");
         InlineEditHint.Text = L.Get("TplV2InlineEditHint"); DayHint.Text = L.Get("TplV2DayHint");
@@ -75,7 +80,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
         KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 7; i++)
         {
             var day = i;
             var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -84,7 +89,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             fixedBox.Checked += (_, _) => { height.IsEnabled = true; DayChanged(day); };
             fixedBox.Unchecked += (_, _) => { height.IsEnabled = false; DayChanged(day); };
             height.ValueChanged += (_, _) => DayChanged(day);
-            _fixedBoxes.Add(fixedBox); _dayBoxes.Add(height); row.Children.Add(fixedBox); row.Children.Add(height); DayControls.Children.Add(row);
+            _fixedBoxes.Add(fixedBox); _dayBoxes.Add(height); _dayRows.Add(row); row.Children.Add(fixedBox); row.Children.Add(height); DayControls.Children.Add(row);
         }
         Loaded += async (_, _) => await InitializeAsync();
     }
@@ -112,20 +117,24 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private async Task ReloadTemplatesAsync()
     {
         var all = await _database.GetAllTemplatesAsync();
-        _templates.Clear(); _templates.AddRange(all.Where(t => t.V2 != null));
+        _templates.Clear(); _templates.AddRange(all);
         _binding = true; TemplateSelector.ItemsSource = null; TemplateSelector.ItemsSource = _templates; _binding = false;
     }
 
     private void SetDocument(MenuTemplate template, string? name)
     {
+        var loadedTemplate = TemplateV2Conversion.ToV2Copy(template);
         _binding = true;
         DismissContextTools();
-        _document = JsonSerializer.Deserialize<TemplateV2Document>(JsonSerializer.Serialize(template.V2 ?? new TemplateV2Document())) ?? new();
+        _legacySource = template.V2 == null && name != null;
+        _loadedTemplate = loadedTemplate;
+        _document = _loadedTemplate.V2 ?? new();
         _document.MergeLegacyFooterNotice();
-        var heights = new double?[5];
-        if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(5, _document.DayHeights.Length));
+        var heights = new double?[7];
+        if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name;
+        DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         HeaderReflectionBox.IsChecked = _document.ShowHeaderReflection;
@@ -136,7 +145,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         FontFamilyBox.SelectedItem = Fonts.Contains(_document.FontFamily, StringComparer.OrdinalIgnoreCase) ? _document.FontFamily : Fonts[0];
         ImageOpacitySlider.Value = Math.Clamp(_document.BackgroundImageOpacity * 100, 0, 100);
         UpdateColorButtons();
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 7; i++)
         {
             _fixedBoxes[i].IsChecked = heights[i].HasValue;
             _dayBoxes[i].Value = heights[i] ?? 160;
@@ -156,7 +165,22 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
                 _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
                 return;
             }
+            if (chosen.V2 == null)
+            {
+                var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLegacyConvertTitle"), Content = L.Get("TplLegacyConvertMessage"),
+                    PrimaryButtonText = L.Get("TplLegacyConvertButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
+                    return;
+                }
+            }
             SetDocument(chosen, chosen.Name);
+        }
+        catch (Exception ex)
+        {
+            _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
+            StatusText.Text = L.Format("TplError", ex.Message);
         }
         finally { _switching = false; }
     }
@@ -178,7 +202,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         try
         {
             var all = await _database.GetAllTemplatesAsync();
-            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _loadedName ?? "" };
+            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _legacySource ? $"{_loadedName} - {L.Get("TplLegacyCopySuffix")}" : _loadedName ?? "" };
             var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
             var content = new StackPanel { Spacing = 8 };
             content.Children.Add(nameBox); content.Children.Add(error);
@@ -188,19 +212,47 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             dialog.PrimaryButtonClick += (_, args) =>
             {
                 name = nameBox.Text.Trim();
-                var message = name.Length == 0 ? "TplV2NameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)) ? "TplV2NameExists" : null;
+                var message = name.Length == 0 ? "TplV2NameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && (_legacySource || !string.Equals(t.Name, _loadedName, StringComparison.Ordinal))) ? "TplV2NameExists" : null;
                 if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            await _database.SaveTemplateAsync(new MenuTemplate { Name = name, V2 = _document });
+            var saved = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(_loadedTemplate)) ?? new MenuTemplate();
+            saved.Name = name; saved.V2 = _document;
+            if (_legacySource || !string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
+            await _database.SaveTemplateAsync(saved);
+            _loadedTemplate = saved; _legacySource = false;
             _loadedName = name; _dirty = false;
+            DeleteButton.IsEnabled = !saved.IsPreset;
             await ReloadTemplatesAsync();
             _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == name); _binding = false;
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
         catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
         finally { _saving = false; SaveButton.IsEnabled = true; }
+    }
+
+    private async void Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        var name = _loadedName;
+        _saving = true; DeleteButton.IsEnabled = false; SaveButton.IsEnabled = false;
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
+                Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            await _database.DeleteTemplateAsync(name);
+            await ReloadTemplatesAsync();
+            SetDocument(NewTemplate(), null);
+        }
+        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        finally
+        {
+            _saving = false; SaveButton.IsEnabled = true;
+            DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+        }
     }
 
     public Task<bool> CanLeaveAsync() => _saving || _switching ? Task.FromResult(false) : ConfirmDiscardAsync();
@@ -223,12 +275,13 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var monday = day.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
         try
         {
-            var entries = await _database.GetMenuAsync(monday, monday.AddDays(4));
+            var weekendEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
+            var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
             if (generation != _generation) return;
-            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients;
-            for (var i = 0; i < 5; i++) _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd");
+            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
             Render();
         }
         catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("MenuLoadError", ex.Message); }
@@ -550,7 +603,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
             "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")
         };
-        if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 5)
+        if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 7)
             sectionName = $"{_monday.AddDays(dayIndex):dddd} › {sectionName}";
         ContextTools.Children.Add(new TextBlock { Text = sectionName, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) });
         if (parts.Length == 2 && parts[0] is "menu" or "ingredients" or "allergens")
@@ -586,7 +639,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             allDays.Click += (_, _) =>
             {
                 var current = _document.BlockAppearances.TryGetValue(key, out var saved) && saved != null ? saved : appearance;
-                for (var day = 0; day < 5; day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
+                for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
                 _dirty = true; Render();
             };
             ContextTools.Children.Add(allDays);
@@ -630,7 +683,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
                 {
                     var current = TemplateV2Renderer.GetTextStyle(_document, key);
                     _document.TextStyles ??= new();
-                    for (var day = 0; day < 5; day++) _document.TextStyles[$"{parts[0]}:{day}"] = CopyStyle(current);
+                    for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.TextStyles[$"{parts[0]}:{day}"] = CopyStyle(current);
                     _dirty = true; Render();
                 };
                 ContextTools.Children.Add(all);
@@ -699,7 +752,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         var generation = ++_renderGeneration;
         try
         {
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock);
+            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled);
             result.Page.Loaded += (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
