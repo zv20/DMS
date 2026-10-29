@@ -25,11 +25,12 @@ public static class TemplateV2Renderer
         var ceiling = double.IsFinite(template.MaximumFontSize) ? Math.Clamp(template.MaximumFontSize, floor, 48) : Math.Max(18, floor);
         var start = double.IsFinite(template.FontSize) ? Math.Clamp(template.FontSize, floor, ceiling) : floor;
         StackPanel[] panels = [];
+        double[] required = [];
         TemplateV2Layout.Result fit = new(new double[5], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
             panels = Enumerable.Range(0, 5).Select(day => BuildDay(monday.AddDays(day), entries, recipeMap, ingredientMap, font, template.FontFamily, template.BodyColor)).ToArray();
-            var required = panels.Select(panel => { panel.Measure(new Size(width - 18, double.PositiveInfinity)); return panel.DesiredSize.Height + 16; }).ToArray();
+            required = panels.Select(panel => { panel.Measure(new Size(width - 18, double.PositiveInfinity)); return panel.DesiredSize.Height + 18; }).ToArray();
             fit = TemplateV2Layout.Resolve(required, template.DayHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink) break;
         }
@@ -45,7 +46,9 @@ public static class TemplateV2Renderer
         for (var i = 0; i < 5; i++)
         {
             days.RowDefinitions.Add(new RowDefinition { Height = new GridLength(fit.DayHeights[i]) });
-            var border = new Border { Child = panels[i], Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = new SolidColorBrush(Colors.LightGray), CornerRadius = new CornerRadius(4) };
+            var dayOverflow = required[i] > fit.DayHeights[i] + .5;
+            var scroller = new ScrollViewer { Content = panels[i], VerticalScrollMode = dayOverflow ? ScrollMode.Auto : ScrollMode.Disabled, VerticalScrollBarVisibility = dayOverflow ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Disabled };
+            var border = new Border { Child = scroller, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = new SolidColorBrush(dayOverflow ? Colors.Red : Colors.LightGray), CornerRadius = new CornerRadius(4) };
             Grid.SetRow(border, i); days.Children.Add(border);
         }
         var grid = new Grid();
@@ -72,11 +75,12 @@ public static class TemplateV2Renderer
         foreach (var entry in entries.Where(e => e.Date.Date == day.Date && recipes.ContainsKey(e.RecipeId)).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
         {
             var recipe = recipes[entry.RecipeId];
-            Add($"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}");
-            if (recipe.Ingredients.Count > 0) Add(string.Join(", ", recipe.Ingredients));
             var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredients.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                 .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray();
-            if (allergens.Length > 0) Add("⚠ " + string.Join(", ", allergens));
+            var meal = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
+            if (recipe.Ingredients.Count > 0) meal += " — " + string.Join(", ", recipe.Ingredients);
+            if (allergens.Length > 0) meal += " · ⚠ " + string.Join(", ", allergens);
+            Add(meal);
         }
         return panel;
     }

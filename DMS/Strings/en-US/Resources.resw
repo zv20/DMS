@@ -44,7 +44,7 @@
   <data name="TplV2ClearBackground" xml:space="preserve"><value>Remove background image</value></data>
   <data name="TplV2ImageOpacity" xml:space="preserve"><value>Image opacity</value></data>
   <data name="V2OutputImageSizeError" xml:space="preserve"><value>The image could not be rendered at the required resolution.</value></data>
-  <data name="TplV2Overflow" xml:space="preserve"><value>Some content does not fit. Adjust the template or menu before printing or exporting.</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Some content does not fit. Scroll inside a red day to see all meals; adjust the template or menu before printing or exporting.</value></data>
   <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Experimental A4 weekly layout. Editing, saving, and printing are not yet available.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Planning</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Weekend menus</value></data>

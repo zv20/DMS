@@ -44,7 +44,7 @@
   <data name="TplV2ClearBackground" xml:space="preserve"><value>Премахни фоновото изображение</value></data>
   <data name="TplV2ImageOpacity" xml:space="preserve"><value>Непрозрачност на изображението</value></data>
   <data name="V2OutputImageSizeError" xml:space="preserve"><value>Изображението не може да бъде създадено с необходимата разделителна способност.</value></data>
-  <data name="TplV2Overflow" xml:space="preserve"><value>Част от съдържанието не се побира. Променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="TplV2Overflow" xml:space="preserve"><value>Част от съдържанието не се побира. Превъртете в червения ден, за да видите всички ястия; променете шаблона или менюто преди печат или експорт.</value></data>
   <data name="TplV2ScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
   <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Планиране</value></data>
   <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Меню за уикенда</value></data>
