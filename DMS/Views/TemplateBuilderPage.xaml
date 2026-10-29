@@ -2,17 +2,16 @@
  <Grid RowDefinitions="Auto,*,Auto" Background="Transparent">
   <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
-    <TextBlock x:Name="PageTitle" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Bottom" Margin="0,0,0,4" />
     <DropDownButton x:Name="FileMenuButton" VerticalAlignment="Bottom">
      <DropDownButton.Content><StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE700;" FontSize="14" /><TextBlock x:Name="FileMenuLabel" /></StackPanel></DropDownButton.Content>
      <DropDownButton.Flyout><MenuFlyout>
       <MenuFlyoutItem x:Name="NewButton" Click="New_Click" />
+      <MenuFlyoutSubItem x:Name="SavedTemplatesMenu" />
       <MenuFlyoutItem x:Name="SaveButton" Click="Save_Click" />
       <MenuFlyoutSeparator />
       <MenuFlyoutItem x:Name="DeleteButton" Click="Delete_Click" IsEnabled="False" />
      </MenuFlyout></DropDownButton.Flyout>
     </DropDownButton>
-    <ComboBox x:Name="TemplateSelector" Width="190" VerticalAlignment="Bottom" DisplayMemberPath="Name" SelectionChanged="TemplateSelector_SelectionChanged" />
     <CalendarDatePicker x:Name="WeekPicker" VerticalAlignment="Bottom" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>

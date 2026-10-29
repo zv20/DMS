@@ -44,8 +44,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
-        PageTitle.Text = L.Get("TplBuilderTitle"); TemplateSelector.PlaceholderText = L.Get("TplSelect");
         FileMenuLabel.Text = L.Get("TplFileMenu");
+        SavedTemplatesMenu.Text = L.Get("TplSavedTemplates");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));
         NewButton.Text = L.Get("TplNew"); SaveButton.Text = L.Get("TplSave");
         DeleteButton.Text = L.Get("String_Text_Delete_f6fdbe");
@@ -115,7 +115,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         var all = await _database.GetAllTemplatesAsync();
         _templates.Clear(); _templates.AddRange(all);
-        _binding = true; TemplateSelector.ItemsSource = null; TemplateSelector.ItemsSource = _templates; _binding = false;
+        RefreshSavedTemplatesMenu();
+    }
+
+    private void RefreshSavedTemplatesMenu()
+    {
+        SavedTemplatesMenu.Items.Clear();
+        SavedTemplatesMenu.IsEnabled = _templates.Count > 0;
+        foreach (var template in _templates)
+        {
+            var item = new ToggleMenuFlyoutItem { Text = template.Name, IsChecked = string.Equals(template.Name, _loadedName, StringComparison.Ordinal) };
+            item.Click += async (_, _) => await SelectTemplateAsync(template);
+            SavedTemplatesMenu.Items.Add(item);
+        }
     }
 
     private void SetDocument(MenuTemplate template, string? name)
@@ -146,15 +158,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _dirty = false; _binding = false; Render();
     }
 
-    private async void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async Task SelectTemplateAsync(MenuTemplate chosen)
     {
-        if (_binding || _switching || TemplateSelector.SelectedItem is not MenuTemplate chosen) return;
+        if (_binding || _switching || _saving) { RefreshSavedTemplatesMenu(); return; }
+        if (string.Equals(chosen.Name, _loadedName, StringComparison.Ordinal)) { RefreshSavedTemplatesMenu(); return; }
         _switching = true;
         try
         {
             if (!await ConfirmDiscardAsync())
             {
-                _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
                 return;
             }
             if (chosen.Document == null)
@@ -163,7 +175,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     PrimaryButtonText = L.Get("TplLegacyConvertButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
                 if (await dialog.ShowAsync() != ContentDialogResult.Primary)
                 {
-                    _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
                     return;
                 }
             }
@@ -171,17 +182,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         catch (Exception ex)
         {
-            _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == _loadedName); _binding = false;
             StatusText.Text = L.Format("TplError", ex.Message);
         }
-        finally { _switching = false; }
+        finally { _switching = false; RefreshSavedTemplatesMenu(); }
     }
 
     private async void New_Click(object sender, RoutedEventArgs e)
     {
         if (_saving || _switching || !await ConfirmDiscardAsync()) return;
-        _binding = true; TemplateSelector.SelectedItem = null; _binding = false;
         SetDocument(NewTemplate(), null);
+        RefreshSavedTemplatesMenu();
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -217,7 +227,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _loadedName = name; _dirty = false;
             DeleteButton.IsEnabled = !saved.IsPreset;
             await ReloadTemplatesAsync();
-            _binding = true; TemplateSelector.SelectedItem = _templates.FirstOrDefault(t => t.Name == name); _binding = false;
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
         catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
