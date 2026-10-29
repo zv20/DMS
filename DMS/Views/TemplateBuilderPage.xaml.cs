@@ -956,10 +956,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             AddFormatButton(panel, "I", "TplItalic", style.Italic, value => SetContextualStyle(textKey, s => s.Italic = value));
             AddFormatButton(panel, "U", "TplUnderline", style.Underline, value => SetContextualStyle(textKey, s => s.Underline = value));
             var align = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
-            foreach (var (glyph, label) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
+            foreach (var (glyph, alignmentLabel) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
             {
                 var option = new ComboBoxItem { Content = new FontIcon { Glyph = glyph, FontSize = 16 } };
-                NameTool(option, label);
+                NameTool(option, alignmentLabel);
                 align.Items.Add(option);
             }
             align.SelectedIndex = Array.IndexOf(Alignments, AlignmentFor(textKey, style));
