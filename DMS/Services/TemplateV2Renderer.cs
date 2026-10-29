@@ -16,7 +16,7 @@ public sealed record TemplateV2PageResult(FrameworkElement Page, bool Overflowed
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateV2Renderer
 {
-    public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients)
+    public static TemplateV2PageResult Create(TemplateV2Document template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null)
     {
         const double width = 714;
         const double dayArea = 1123 - 80 - 60 - 36 - 70;
@@ -34,37 +34,47 @@ public static class TemplateV2Renderer
         TemplateV2Layout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
-            panels = visible.Select(day => BuildDay(monday.AddDays(day), entries, recipeMap, ingredientMap, font, template.FontFamily, template.BodyColor)).ToArray();
-            required = panels.Select(panel => { panel.Measure(new Size(width - 18, double.PositiveInfinity)); return panel.DesiredSize.Height + 18; }).ToArray();
+            panels = visible.Select(day => BuildDay(monday.AddDays(day), day, entries, recipeMap, ingredientMap, font, template, onSelected)).ToArray();
+            required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
             fit = TemplateV2Layout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink) break;
         }
-        var family = new FontFamily(string.IsNullOrWhiteSpace(template.FontFamily) ? "Arial" : template.FontFamily);
-        var header = new TextBlock { Text = template.HeaderText ?? "", FontFamily = family, FontSize = 24, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(ParseColor(template.HeaderColor, Colors.Black)), TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
-        var footer = new TextBlock { Text = template.FooterText ?? "", FontFamily = family, FontSize = 13, Foreground = new SolidColorBrush(ParseColor(template.FooterColor, Colors.Black)), TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Bottom };
+        var header = StyledText(template.HeaderText ?? "", GetTextStyle(template, "header"));
+        var footer = StyledText(template.FooterText ?? "", GetTextStyle(template, "footer"));
+        footer.VerticalAlignment = VerticalAlignment.Bottom;
         header.Measure(new Size(width, double.PositiveInfinity));
         footer.Measure(new Size(width, double.PositiveInfinity));
         // Detect wrapped footer text as well as explicit line breaks. Keep a
         // three-line allowance; do not silently truncate the supplied content.
-        var overflow = fit.Overflowed || header.DesiredSize.Height > 60 || footer.DesiredSize.Height > 3 * 13 * 1.4 || (template.FooterText ?? "").Split('\n').Length > 3;
+        var overflow = fit.Overflowed || header.DesiredSize.Height > 60 || footer.DesiredSize.Height > Math.Min(70, 3 * footer.FontSize * 1.4) || (template.FooterText ?? "").Split('\n').Length > 3;
         var days = new Grid { RowSpacing = 6 };
         for (var i = 0; i < visible.Length; i++)
         {
             days.RowDefinitions.Add(new RowDefinition { Height = new GridLength(fit.DayHeights[i]) });
             var dayOverflow = required[i] > fit.DayHeights[i] + .5;
             var scroller = new ScrollViewer { Content = panels[i], VerticalScrollMode = dayOverflow ? ScrollMode.Auto : ScrollMode.Disabled, VerticalScrollBarVisibility = dayOverflow ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Disabled };
-            var border = new Border { Child = scroller, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = new SolidColorBrush(dayOverflow ? Colors.Red : Colors.LightGray), CornerRadius = new CornerRadius(4) };
+            var appearance = DayAppearance(template, visible[i]);
+            var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray)), Background = new SolidColorBrush(ParseColor(appearance?.BackgroundColor, Colors.Transparent)), CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
+            Selectable(border, $"day:{visible[i]}", onSelected);
             Grid.SetRow(border, i); days.Children.Add(border);
         }
         var grid = new Grid();
         foreach (var height in new[] { 60d, 36d, dayArea, 70d }) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(height) });
-        grid.Children.Add(header);
+        var headerCell = new Border { Background = new SolidColorBrush(Colors.Transparent), Child = header };
+        Selectable(headerCell, "header", onSelected);
+        grid.Children.Add(headerCell);
         DateTime? first = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[0] : 0) : null;
         DateTime? last = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[^1] : 4) : null;
-        var date = new TextBlock { Text = first is DateTime startDate && last is DateTime endDate ? startDate == endDate ? $"{startDate:d}" : $"{startDate:d} – {endDate:d}" : "", FontFamily = family, FontSize = 14, Foreground = new SolidColorBrush(ParseColor(template.BodyColor, Colors.Black)), TextAlignment = TextAlignment.Center };
-        Grid.SetRow(date, 1); grid.Children.Add(date);
+        var date = StyledText(first is DateTime startDate && last is DateTime endDate ? startDate == endDate ? $"{startDate:d}" : $"{startDate:d} – {endDate:d}" : "", GetTextStyle(template, "date"));
+        date.Measure(new Size(width, double.PositiveInfinity));
+        overflow |= date.DesiredSize.Height > 36;
+        var dateCell = new Border { Background = new SolidColorBrush(Colors.Transparent), Child = date };
+        Selectable(dateCell, "date", onSelected);
+        Grid.SetRow(dateCell, 1); grid.Children.Add(dateCell);
         Grid.SetRow(days, 2); grid.Children.Add(days);
-        Grid.SetRow(footer, 3); grid.Children.Add(footer);
+        var footerCell = new Border { Background = new SolidColorBrush(Colors.Transparent), Child = footer };
+        Selectable(footerCell, "footer", onSelected);
+        Grid.SetRow(footerCell, 3); grid.Children.Add(footerCell);
         var backgroundImage = new Image { Stretch = Stretch.UniformToFill, Opacity = double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1, IsHitTestVisible = false };
         var content = new Grid();
         content.Children.Add(backgroundImage);
@@ -74,39 +84,91 @@ public static class TemplateV2Renderer
         return new TemplateV2PageResult(page, overflow, LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), populated.Length > 0, first, last);
     }
 
-    private static StackPanel BuildDay(DateTime day, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, string family, string color)
+    public static TemplateTextStyle GetTextStyle(TemplateV2Document template, string key)
+    {
+        var group = key.Split(':')[0];
+        TemplateTextStyle? style = null;
+        if (template.TextStyles != null && (!template.TextStyles.TryGetValue(key, out style) || style == null))
+            template.TextStyles.TryGetValue(group, out style);
+        style ??= new TemplateTextStyle
+        {
+            FontFamily = template.FontFamily, FontSize = group switch { "header" => 24, "footer" => 13, "date" => 14, "heading" => template.FontSize + 1, _ => template.FontSize },
+            Color = group == "header" ? template.HeaderColor : group == "footer" ? template.FooterColor : template.BodyColor,
+            Bold = group is "header" or "heading", Alignment = group is "header" or "footer" or "date" ? "center" : "left"
+        };
+        return new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize, Color = style.Color, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
+    }
+
+    private static TextBlock StyledText(string text, TemplateTextStyle style, double scale = 1)
+        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
+
+    private static void Selectable(FrameworkElement element, string key, Action<string, FrameworkElement>? onSelected)
+    {
+        element.Tag = key;
+        if (onSelected == null) return;
+        element.PointerPressed += (_, e) => { onSelected(key, element); e.Handled = true; };
+    }
+
+    private static TemplateBlockAppearance? DayAppearance(TemplateV2Document template, int day)
+    {
+        if (template.BlockAppearances == null) return null;
+        if (template.BlockAppearances.TryGetValue($"day:{day}", out var specific) && specific != null) return specific;
+        return template.BlockAppearances.TryGetValue("day", out var shared) ? shared : null;
+    }
+
+    private static double DayPadding(TemplateV2Document template, int day)
+    {
+        var padding = DayAppearance(template, day)?.Padding ?? 8;
+        return double.IsFinite(padding) ? Math.Clamp(padding, 0, 40) : 8;
+    }
+
+    private static double DayBorderThickness(TemplateV2Document template, int day)
+    {
+        var thickness = DayAppearance(template, day)?.BorderThickness ?? 1;
+        return double.IsFinite(thickness) ? Math.Clamp(thickness, 0, 20) : 1;
+    }
+
+    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateV2Document template, Action<string, FrameworkElement>? onSelected)
     {
         var panel = new StackPanel { Spacing = 2 };
-        void Add(string value, bool heading = false) => panel.Children.Add(new TextBlock { Text = value, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(family) ? "Arial" : family), FontSize = heading ? size + 1 : size, FontWeight = heading ? FontWeights.SemiBold : FontWeights.Normal, Foreground = new SolidColorBrush(ParseColor(color, Colors.Black)), TextWrapping = TextWrapping.Wrap });
-        Add(day.ToString("dddd, d MMMM"), true);
+        var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;
+        var heading = StyledText(day.ToString("dddd, d MMMM"), GetTextStyle(template, $"heading:{dayIndex}"), scale);
+        Selectable(heading, $"heading:{dayIndex}", onSelected);
+        panel.Children.Add(heading);
         foreach (var entry in entries.Where(e => e.Date.Date == day.Date && recipes.ContainsKey(e.RecipeId)).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
         {
             var recipe = recipes[entry.RecipeId];
             var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredients.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                 .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray();
-            var meal = new TextBlock { FontFamily = new FontFamily(string.IsNullOrWhiteSpace(family) ? "Arial" : family), FontSize = size, Foreground = new SolidColorBrush(ParseColor(color, Colors.Black)), TextWrapping = TextWrapping.Wrap };
+            var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
+            var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
+            var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
+            var meal = StyledText("", menuStyle, scale);
+            // Each inline owns its underline, including allergen-bearing ingredients.
+            meal.TextDecorations = Windows.UI.Text.TextDecorations.None;
+            Selectable(meal, $"menu:{dayIndex}", onSelected);
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
             if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
-            meal.Inlines.Add(new Run { Text = title });
-            if (recipe.Ingredients.Count > 0) meal.Inlines.Add(new Run { Text = " — " });
+            AddRun(meal, title, menuStyle, scale, false);
+            if (recipe.Ingredients.Count > 0) AddRun(meal, " — ", ingredientStyle, scale, false);
             for (var i = 0; i < recipe.Ingredients.Count; i++)
             {
                 var name = recipe.Ingredients[i];
-                if (i > 0) meal.Inlines.Add(new Run { Text = ", " });
-                var run = new Run { Text = name };
-                if (ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0)
-                {
-                    var underlined = new Underline();
-                    underlined.Inlines.Add(run);
-                    meal.Inlines.Add(underlined);
-                }
-                else meal.Inlines.Add(run);
+                if (i > 0) AddRun(meal, ", ", ingredientStyle, scale, false);
+                AddRun(meal, name, ingredientStyle, scale, ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0);
             }
-            if (allergens.Length > 0) meal.Inlines.Add(new Run { Text = " · " + string.Join(", ", allergens) });
+            if (allergens.Length > 0) AddRun(meal, " · " + string.Join(", ", allergens), allergenStyle, scale, false);
             panel.Children.Add(meal);
         }
         return panel;
+    }
+
+    private static void AddRun(TextBlock block, string text, TemplateTextStyle style, double scale, bool ingredientAllergen)
+    {
+        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)) };
+        if (ingredientAllergen || style.Underline) { var underline = new Underline(); underline.Inlines.Add(run); block.Inlines.Add(underline); }
+        else block.Inlines.Add(run);
     }
 
     private static Windows.UI.Color ParseColor(string? value, Windows.UI.Color fallback)

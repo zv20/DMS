@@ -3,7 +3,10 @@ using DMS.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Input;
+using Windows.Foundation;
 using System.Text.Json;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
@@ -22,6 +25,9 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
     private bool _binding = true, _dirty, _saving, _switching;
     private int _generation;
     private int _renderGeneration;
+    private string? _selectedBlock;
+    private FrameworkElement? _selectionAnchor;
+    private bool _contextBinding;
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -47,6 +53,9 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         foreach (var (key, label) in new[] { ("header", "TplV2HeaderColor"), ("body", "TplV2BodyColor"), ("footer", "TplV2FooterColor"), ("background", "TplV2BackgroundColor") })
             AddColorControl(key, label);
         WeekPicker.Date = DateTimeOffset.Now;
+        PageScroll.ViewChanged += (_, _) => PositionContextTools();
+        Workspace.SizeChanged += (_, _) => PositionContextTools();
+        PageHost.PointerPressed += PageHost_PointerPressed;
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
         for (var i = 0; i < 5; i++)
         {
@@ -85,6 +94,7 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(5, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name; NameBox.Text = template.Name; HeaderBox.Text = _document.HeaderText; FooterBox.Text = _document.FooterText;
+        DismissContextTools();
         FontBox.Value = _document.FontSize; MinimumFontBox.Value = _document.MinimumFontSize;
         AllowShrinkBox.IsChecked = _document.AllowFontShrink;
         HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
@@ -283,14 +293,245 @@ public sealed partial class TemplateBuilderV2Page : Page, IUnsavedEditor
             button.Content = new Border { Height = 18, MinWidth = 80, Background = new SolidColorBrush(ParseColor(ColorFor(key))), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
     }
 
+    private static string AnchorKey(string key) => key.StartsWith("ingredients:") || key.StartsWith("allergens:") ? "menu:" + key.Split(':')[1] : key;
+
+    private static FrameworkElement? FindAnchor(DependencyObject root, string key)
+    {
+        if (root is FrameworkElement { Tag: string tag } element && tag == key) return element;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var found = FindAnchor(VisualTreeHelper.GetChild(root, i), key);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private void PageHost_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        // Selectable blocks handle their own input; a bare page click dismisses the tools.
+        DismissContextTools();
+    }
+
+    private void DismissContextTools()
+    {
+        _selectedBlock = null;
+        _selectionAnchor = null;
+        SelectionToolbar.Visibility = Visibility.Collapsed;
+        SelectionOutline.Visibility = Visibility.Collapsed;
+        ContextTools.Children.Clear();
+    }
+
+    private void SelectCanvasBlock(string key, FrameworkElement anchor)
+    {
+        _selectedBlock = key;
+        _selectionAnchor = anchor;
+        BuildContextTools();
+        PositionContextTools();
+    }
+
+    private void PositionContextTools()
+    {
+        if (_selectedBlock == null || _selectionAnchor == null || SelectionOverlay.ActualWidth <= 0) return;
+        try
+        {
+            var origin = _selectionAnchor.TransformToVisual(SelectionOverlay).TransformPoint(new Point(0, 0));
+            var zoom = PageScroll.ZoomFactor;
+            SelectionOutline.Width = Math.Max(0, _selectionAnchor.ActualWidth * zoom);
+            SelectionOutline.Height = Math.Max(0, _selectionAnchor.ActualHeight * zoom);
+            Canvas.SetLeft(SelectionOutline, origin.X); Canvas.SetTop(SelectionOutline, origin.Y);
+            SelectionOutline.Visibility = Visibility.Visible;
+            SelectionToolbar.MaxWidth = Math.Max(100, SelectionOverlay.ActualWidth - 12);
+            SelectionToolbar.Measure(new Size(SelectionToolbar.MaxWidth, double.PositiveInfinity));
+            var width = Math.Min(SelectionToolbar.DesiredSize.Width, SelectionToolbar.MaxWidth);
+            var height = SelectionToolbar.DesiredSize.Height;
+            var below = origin.Y + _selectionAnchor.ActualHeight * zoom + 6;
+            var above = origin.Y - height - 6;
+            var top = below + height <= SelectionOverlay.ActualHeight ? below : above >= 0 ? above : Math.Max(0, SelectionOverlay.ActualHeight - height);
+            Canvas.SetLeft(SelectionToolbar, Math.Clamp(origin.X, 0, Math.Max(0, SelectionOverlay.ActualWidth - width)));
+            Canvas.SetTop(SelectionToolbar, Math.Max(0, top));
+            SelectionToolbar.Visibility = Visibility.Visible;
+        }
+        catch (ArgumentException) { SelectionToolbar.Visibility = SelectionOutline.Visibility = Visibility.Collapsed; }
+    }
+
+    private void BuildContextTools()
+    {
+        if (_selectedBlock == null) return;
+        var key = _selectedBlock;
+        _contextBinding = true;
+        ContextTools.Children.Clear();
+        var close = new Button { Content = "✕", Padding = new Thickness(5) };
+        ToolTipService.SetToolTip(close, L.Get("Text_Cancel_77dfd2"));
+        close.Click += (_, _) => DismissContextTools();
+        ContextTools.Children.Add(close);
+
+        var parts = key.Split(':');
+        var sectionName = parts[0] switch
+        {
+            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"),
+            "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
+            "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
+            "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")
+        };
+        if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 5)
+            sectionName = $"{_monday.AddDays(dayIndex):dddd} › {sectionName}";
+        ContextTools.Children.Add(new TextBlock { Text = sectionName, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) });
+        if (parts.Length == 2 && parts[0] is "menu" or "ingredients" or "allergens")
+        {
+            var section = new ComboBox { Width = 120 };
+            section.Items.Add(L.Get("TplMenuNames")); section.Items.Add(L.Get("TplIngredientText")); section.Items.Add(L.Get("TplAllergenText"));
+            section.SelectedIndex = parts[0] == "menu" ? 0 : parts[0] == "ingredients" ? 1 : 2;
+            section.SelectionChanged += (_, _) =>
+            {
+                if (_contextBinding || section.SelectedIndex < 0 || _selectionAnchor == null) return;
+                _selectedBlock = new[] { "menu", "ingredients", "allergens" }[section.SelectedIndex] + ":" + parts[1];
+                BuildContextTools(); PositionContextTools();
+            };
+            ContextTools.Children.Add(section);
+        }
+
+        if (key.StartsWith("day:", StringComparison.Ordinal))
+        {
+            _document.BlockAppearances ??= new();
+            _document.BlockAppearances.TryGetValue(key, out var appearance);
+            if (appearance == null) _document.BlockAppearances.TryGetValue("day", out appearance);
+            appearance ??= new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 };
+            AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", value => EditAppearance(key, a => a.BackgroundColor = value));
+            AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", value => EditAppearance(key, a => { a.BorderColor = value; if (a.BorderThickness <= 0) a.BorderThickness = 1; }));
+            var padding = new NumberBox { Width = 80, Minimum = 0, Maximum = 25, Value = appearance.Padding, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            ToolTipService.SetToolTip(padding, L.Get("TplAppearancePadding"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(padding, L.Get("TplAppearancePadding"));
+            padding.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(padding.Value)) EditAppearance(key, a => a.Padding = padding.Value); };
+            ContextTools.Children.Add(padding);
+            var allDays = new Button { Content = new FontIcon { Glyph = "\uE8C8" } };
+            ToolTipService.SetToolTip(allDays, L.Get("TplApplyWeekdayStyle"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(allDays, L.Get("TplApplyWeekdayStyle"));
+            allDays.Click += (_, _) =>
+            {
+                var current = _document.BlockAppearances.TryGetValue(key, out var saved) && saved != null ? saved : appearance;
+                for (var day = 0; day < 5; day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
+                _dirty = true; Render();
+            };
+            ContextTools.Children.Add(allDays);
+        }
+        else
+        {
+            var style = TemplateV2Renderer.GetTextStyle(_document, key);
+            var font = new ComboBox { Width = 115, ItemsSource = Fonts, SelectedItem = style.FontFamily };
+            ToolTipService.SetToolTip(font, L.Get("TplFont"));
+            font.SelectionChanged += (_, _) => { if (!_contextBinding && font.SelectedItem is string family) EditTextStyle(key, s => s.FontFamily = family); };
+            ContextTools.Children.Add(font);
+            var size = new NumberBox { Width = 70, Minimum = 7, Maximum = 48, Value = style.FontSize, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            ToolTipService.SetToolTip(size, L.Get("TplSelectedSize"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(size, L.Get("TplSelectedSize"));
+            size.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(size.Value)) EditTextStyle(key, s => s.FontSize = size.Value); };
+            ContextTools.Children.Add(size);
+            AddContextColor("TplSelectedColor", style.Color, value => EditTextStyle(key, s => s.Color = value));
+            AddStyleToggle("B", "TplBold", style.Bold, value => EditTextStyle(key, s => s.Bold = value));
+            AddStyleToggle("I", "TplItalic", style.Italic, value => EditTextStyle(key, s => s.Italic = value));
+            AddStyleToggle("U", "TplUnderline", style.Underline, value => EditTextStyle(key, s => s.Underline = value));
+            if (parts[0] is not ("ingredients" or "allergens"))
+            {
+            var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
+            foreach (var (glyph, tip) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
+            {
+                var item = new ComboBoxItem { Content = new FontIcon { Glyph = glyph, FontSize = 16 } };
+                ToolTipService.SetToolTip(item, L.Get(tip)); alignment.Items.Add(item);
+            }
+            var alignments = new[] { "left", "center", "right" };
+            alignment.SelectedIndex = Math.Max(0, Array.IndexOf(alignments, style.Alignment ?? "left"));
+            alignment.SelectionChanged += (_, _) => { if (!_contextBinding && alignment.SelectedIndex >= 0) EditTextStyle(key, s => s.Alignment = alignments[alignment.SelectedIndex]); };
+            ToolTipService.SetToolTip(alignment, L.Get("TplHeaderAlignment"));
+            ContextTools.Children.Add(alignment);
+            }
+            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredients" or "allergens")
+            {
+                var all = new Button { Content = new FontIcon { Glyph = "\uE8C8" } };
+                ToolTipService.SetToolTip(all, L.Get("TplApplyWeekdayStyle"));
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(all, L.Get("TplApplyWeekdayStyle"));
+                all.Click += (_, _) =>
+                {
+                    var current = TemplateV2Renderer.GetTextStyle(_document, key);
+                    _document.TextStyles ??= new();
+                    for (var day = 0; day < 5; day++) _document.TextStyles[$"{parts[0]}:{day}"] = CopyStyle(current);
+                    _dirty = true; Render();
+                };
+                ContextTools.Children.Add(all);
+            }
+        }
+        _contextBinding = false;
+    }
+
+    private static TemplateTextStyle CopyStyle(TemplateTextStyle s) => new() { FontFamily = s.FontFamily, FontSize = s.FontSize, Color = s.Color, Bold = s.Bold, Italic = s.Italic, Underline = s.Underline, Alignment = s.Alignment };
+
+    private void EditTextStyle(string key, Action<TemplateTextStyle> change)
+    {
+        var style = TemplateV2Renderer.GetTextStyle(_document, key);
+        change(style);
+        _document.TextStyles ??= new();
+        _document.TextStyles[key] = style;
+        _dirty = true;
+        Render();
+    }
+
+    private void EditAppearance(string key, Action<TemplateBlockAppearance> change)
+    {
+        _document.BlockAppearances ??= new();
+        if (!_document.BlockAppearances.TryGetValue(key, out var appearance) || appearance == null)
+        {
+            _document.BlockAppearances.TryGetValue("day", out var shared);
+            _document.BlockAppearances[key] = appearance = shared == null
+                ? new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 }
+                : new TemplateBlockAppearance { BackgroundColor = shared.BackgroundColor, BorderColor = shared.BorderColor, BorderThickness = shared.BorderThickness, CornerRadius = shared.CornerRadius, Padding = shared.Padding, Opacity = shared.Opacity };
+        }
+        change(appearance);
+        _dirty = true;
+        Render();
+    }
+
+    private void AddStyleToggle(string text, string label, bool initial, Action<bool> change)
+    {
+        var button = new ToggleButton { Content = text, IsChecked = initial, MinWidth = 32, Padding = new Thickness(6, 4, 6, 4) };
+        ToolTipService.SetToolTip(button, L.Get(label));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
+        button.Checked += (_, _) => { if (!_contextBinding) change(true); };
+        button.Unchecked += (_, _) => { if (!_contextBinding) change(false); };
+        ContextTools.Children.Add(button);
+    }
+
+    private void AddContextColor(string label, string initial, Action<string> change)
+    {
+        var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
+        var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
+        ToolTipService.SetToolTip(button, L.Get(label));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
+        var picker = new ColorPicker { Color = ParseColor(initial), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
+        picker.ColorChanged += (_, args) =>
+        {
+            var color = args.NewColor;
+            swatch.Background = new SolidColorBrush(color);
+            change($"#{color.R:X2}{color.G:X2}{color.B:X2}");
+        };
+        button.Flyout = new Flyout { Content = picker };
+        ContextTools.Children.Add(button);
+    }
+
     private async void Render()
     {
         if (_binding || _monday == default) return;
         var generation = ++_renderGeneration;
         try
         {
-            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients);
+            var result = TemplateV2Renderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock);
+            result.Page.Loaded += (_, _) =>
+            {
+                if (generation != _renderGeneration || _selectedBlock == null) return;
+                _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock));
+                PositionContextTools();
+            };
             PageHost.Content = result.Page;
+            if (_selectedBlock != null)
+                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
             StatusText.Text = L.Get("OutputPreparing");
             await result.ImagesReady;
             if (generation == _renderGeneration) StatusText.Text = L.Get(!result.HasMeals ? "TplV2NoMeals" : result.Overflowed ? "TplV2Overflow" : "TplV2BuilderHint");

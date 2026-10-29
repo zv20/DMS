@@ -19,4 +19,8 @@ public sealed class TemplateV2Document
     public double BackgroundImageOpacity { get; set; } = 1;
     // Null means automatic; an explicit value is retained rather than silently resized.
     public double?[] DayHeights { get; set; } = new double?[5];
+    // Keys: header/date/footer, or heading/menu/ingredients/allergens with
+    // optional :0 through :4 weekday overrides. Missing values retain V2 defaults.
+    public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
+    public Dictionary<string, TemplateBlockAppearance> BlockAppearances { get; set; } = new();
 }
