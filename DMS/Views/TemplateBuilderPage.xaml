@@ -14,6 +14,8 @@
       <MenuFlyoutSubItem x:Name="SavedTemplatesMenu" />
       <MenuFlyoutItem x:Name="SaveButton" Click="Save_Click" />
       <MenuFlyoutSeparator />
+      <MenuFlyoutItem x:Name="AddImageMenuItem" Click="AddDecoration_Click" />
+      <MenuFlyoutSeparator />
       <MenuFlyoutItem x:Name="DeleteButton" Click="Delete_Click" IsEnabled="False" />
      </MenuFlyout></DropDownButton.Flyout>
     </DropDownButton>
@@ -33,17 +35,7 @@
     </Expander>
     <Expander x:Name="ImagesHeading" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
      <StackPanel Spacing="10">
-    <Button x:Name="ChooseImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="ChooseImage_Click" />
-    <Button x:Name="ClearImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="ClearImage_Click" />
-    <Slider x:Name="ImageOpacitySlider" Minimum="0" Maximum="100" StepFrequency="5" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="ImageOpacity_Changed" />
-    <Button x:Name="AddDecorationButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="AddDecoration_Click" />
     <ComboBox x:Name="DecorationSelector" HeaderTemplate="{StaticResource SettingsLabelTemplate}" SelectionChanged="DecorationSelector_SelectionChanged" HorizontalAlignment="Stretch" />
-    <Button x:Name="RemoveDecorationButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="RemoveDecoration_Click" />
-    <NumberBox x:Name="DecorationX" Minimum="0" Maximum="794" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Decoration_Changed" />
-    <NumberBox x:Name="DecorationY" Minimum="0" Maximum="1123" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Decoration_Changed" />
-    <NumberBox x:Name="DecorationWidth" Minimum="1" Maximum="794" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Decoration_Changed" />
-    <NumberBox x:Name="DecorationHeight" Minimum="1" Maximum="1123" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Decoration_Changed" />
-    <CheckBox x:Name="DecorationReserve" MinWidth="0" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Checked="DecorationReserve_Changed" Unchecked="DecorationReserve_Changed" />
      </StackPanel>
     </Expander>
    </StackPanel></ScrollViewer>

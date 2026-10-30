@@ -297,6 +297,51 @@ public sealed class DatabaseServiceTests : IDisposable
         Assert.DoesNotContain(recipes, item => item.Name == "Temporary recipe");
     }
 
+    [Fact]
+    public async Task EmbeddedTemplateImagesSurviveReopenBackupRestoreAndJsonRoundTrip()
+    {
+        const string png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
+        var template = new MenuTemplate
+        {
+            Name = "Image backup test",
+            Document = new TemplateDocument
+            {
+                DecorativeImages = [new TemplateImage
+                {
+                    Id = "stored-image", DataUri = png, AltText = "Logo", X = 40, Y = 60,
+                    Width = 120, Height = 80, Opacity = 0.35, InFrontOfText = true,
+                    ReserveTextSpace = false, LockAspectRatio = false, FillFrame = true
+                }]
+            }
+        };
+        using (var database = CreateDatabase()) await database.SaveTemplateAsync(template);
+
+        using (var database = CreateDatabase())
+        {
+            var templates = await database.GetAllTemplatesAsync();
+            var saved = templates.Single(item => item.Name == template.Name);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(template.Document), System.Text.Json.JsonSerializer.Serialize(saved.Document));
+            var backupPath = Path.Combine(_testDirectory, "images-backup.db");
+            await database.CreateBackupAsync(backupPath);
+            await database.DeleteTemplateAsync(template.Name);
+            await database.RestoreFromAsync(backupPath);
+            var restored = (await database.GetAllTemplatesAsync()).Single(item => item.Name == template.Name);
+            Assert.Equal(png, restored.Document!.DecorativeImages.Single().DataUri);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(saved.Document), System.Text.Json.JsonSerializer.Serialize(restored.Document));
+
+            // The Settings export includes complete Templates; import deserializes
+            // the same MenuTemplate payload before writing it back to SQLite.
+            var exportJson = System.Text.Json.JsonSerializer.Serialize(new { Templates = new[] { restored } });
+            using var export = System.Text.Json.JsonDocument.Parse(exportJson);
+            var imported = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(export.RootElement.GetProperty("Templates")[0].GetRawText())!;
+            await database.DeleteTemplateAsync(template.Name);
+            await database.SaveTemplateAsync(imported);
+        }
+        using var reopened = CreateDatabase();
+        var final = (await reopened.GetAllTemplatesAsync()).Single(item => item.Name == template.Name);
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(template.Document), System.Text.Json.JsonSerializer.Serialize(final.Document));
+    }
+
     private DatabaseService CreateDatabase()
     {
         Directory.CreateDirectory(_testDirectory);

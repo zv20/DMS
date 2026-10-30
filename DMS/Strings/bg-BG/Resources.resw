@@ -312,6 +312,24 @@
   <data name="TplNew" xml:space="preserve"><value>Нов</value></data>
   <data name="TplFileMenu" xml:space="preserve"><value>Файл</value></data>
   <data name="TplSavedTemplates" xml:space="preserve"><value>Запазени шаблони</value></data>
+  <data name="TplAddImage" xml:space="preserve"><value>Добави изображение…</value></data>
+  <data name="TplImageBlock" xml:space="preserve"><value>Изображение</value></data>
+  <data name="TplImageBackground" xml:space="preserve"><value>Фоново изображение</value></data>
+  <data name="TplImageInvalid" xml:space="preserve"><value>Избраното изображение не може да бъде прочетено.</value></data>
+  <data name="TplImageAlignHorizontal" xml:space="preserve"><value>Хоризонтално подравняване към страницата</value></data>
+  <data name="TplImageAlignVertical" xml:space="preserve"><value>Вертикално подравняване към страницата</value></data>
+  <data name="TplImageTop" xml:space="preserve"><value>Горе</value></data>
+  <data name="TplImageMiddle" xml:space="preserve"><value>В средата</value></data>
+  <data name="TplImageBottom" xml:space="preserve"><value>Долу</value></data>
+  <data name="TplImageLockAspect" xml:space="preserve"><value>Запази пропорциите на изображението</value></data>
+  <data name="TplImageTransparency" xml:space="preserve"><value>Прозрачност (%)</value></data>
+  <data name="TplImageBehindText" xml:space="preserve"><value>Зад текста</value></data>
+  <data name="TplImageInFront" xml:space="preserve"><value>Пред текста</value></data>
+  <data name="TplImageKeepClear" xml:space="preserve"><value>Остави място за текста</value></data>
+  <data name="TplImageTextPlacement" xml:space="preserve"><value>Разположение на изображението спрямо текста</value></data>
+  <data name="TplImageMoveBackward" xml:space="preserve"><value>Постави зад другите изображения в този слой</value></data>
+  <data name="TplImageMoveForward" xml:space="preserve"><value>Постави пред другите изображения в този слой</value></data>
+  <data name="TplImageDelete" xml:space="preserve"><value>Изтрий изображението</value></data>
   <data name="TplSave" xml:space="preserve"><value>Запази шаблона</value></data>
   <data name="TplDelete" xml:space="preserve"><value>Изтрий</value></data>
   <data name="TplSelect" xml:space="preserve"><value>Изберете шаблон</value></data>

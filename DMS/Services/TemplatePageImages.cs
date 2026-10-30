@@ -43,15 +43,19 @@ public static class TemplatePageImages
         image.X >= 0 && image.Y >= 0 && image.Width > 0 && image.Height > 0 &&
         image.X + image.Width <= TemplatePageLayout.PageWidth && image.Y + image.Height <= TemplatePageLayout.PageHeight;
 
-    public static ImageLayer CreateLayer(IEnumerable<TemplateImage>? images)
+    public static ImageLayer CreateLayer(IEnumerable<TemplateImage>? images, Action<string, FrameworkElement>? onSelected = null)
     {
-        var canvas = new Canvas { Width = TemplatePageLayout.PageWidth, Height = TemplatePageLayout.PageHeight, IsHitTestVisible = false };
+        var canvas = new Canvas { Width = TemplatePageLayout.PageWidth, Height = TemplatePageLayout.PageHeight, IsHitTestVisible = onSelected != null };
         var loads = new List<Task>();
         foreach (var item in images ?? [])
         {
             if (item == null || !ValidGeometry(item)) continue;
-            var picture = new Image { Width = item.Width, Height = item.Height, Stretch = Stretch.Uniform,
+            var picture = new Image { Width = item.Width, Height = item.Height, Stretch = item.FillFrame ? Stretch.UniformToFill : Stretch.Uniform,
                 Opacity = double.IsFinite(item.Opacity) ? Math.Clamp(item.Opacity, 0, 1) : 1 };
+            var key = $"image:{item.Id}";
+            picture.Tag = key;
+            if (onSelected != null)
+                picture.PointerPressed += (_, e) => { onSelected(key, picture); e.Handled = true; };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picture, item.AltText ?? "");
             Canvas.SetLeft(picture, item.X); Canvas.SetTop(picture, item.Y);
             canvas.Children.Add(picture);

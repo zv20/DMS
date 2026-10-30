@@ -102,13 +102,15 @@ public static class TemplateRenderer
         var backgroundImage = new Image { Stretch = Stretch.UniformToFill, Opacity = double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1, IsHitTestVisible = false };
         var content = new Grid();
         content.Children.Add(backgroundImage);
-        var decorations = TemplatePageImages.CreateLayer(template.DecorativeImages);
+        var decorations = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && !image.InFrontOfText), onSelected);
         content.Children.Add(decorations.Layer);
         var inset = new Border { Padding = new Thickness(40 + insets.Left, 40, 40 + insets.Right, 40), Child = grid };
         content.Children.Add(inset);
+        var foreground = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && image.InFrontOfText), onSelected);
+        content.Children.Add(foreground.Layer);
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(ParseColor(template.BackgroundColor, Colors.White)), Child = content };
         Selectable(page, "page", onSelected);
-        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady), populated.Length > 0, first, last);
+        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
     }
 
     public static TemplateTextStyle GetTextStyle(TemplateDocument template, string key)

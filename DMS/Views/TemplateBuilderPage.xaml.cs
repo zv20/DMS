@@ -8,8 +8,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Input;
 using Windows.Foundation;
 using System.Text.Json;
-using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 using L = DMS.Services.Localization;
 
 namespace DMS.Views;
@@ -57,11 +55,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); ImagesHeading.Header = L.Get("TplBuilderImagesSection");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
-        ChooseImageButton.Content = L.Get("TplBuilderBackgroundImage"); ClearImageButton.Content = L.Get("TplBuilderClearBackground");
-        ImageOpacitySlider.Header = L.Get("TplBuilderImageOpacity");
-        AddDecorationButton.Content = L.Get("TplBuilderAddDecoration"); RemoveDecorationButton.Content = L.Get("TplBuilderRemoveDecoration");
-        DecorationSelector.Header = L.Get("TplBuilderDecorations"); DecorationX.Header = L.Get("TplBuilderImageX"); DecorationY.Header = L.Get("TplBuilderImageY");
-        DecorationWidth.Header = L.Get("TplBuilderImageWidth"); DecorationHeight.Header = L.Get("TplBuilderImageHeight"); DecorationReserve.Content = L.Get("TplBuilderReserveSpace");
+        AddImageMenuItem.Text = L.Get("TplAddImage");
+        DecorationSelector.Header = L.Get("TplImageBlock");
+        InitializeImageInteraction();
         WeekPicker.Date = DateTimeOffset.Now;
         foreach (var (control, label) in new (FrameworkElement, string)[] { (ZoomOutButton, "TplZoomOut"), (ZoomInButton, "TplZoomIn"), (ZoomResetButton, "TplZoomReset"), (CanvasZoomSlider, "TplZoom") })
         {
@@ -77,7 +73,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         InlineEditor.LostFocus += (_, _) => RefreshInlineText();
         Workspace.SizeChanged += (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
         AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
-        KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { DismissContextTools(); e.Handled = true; } };
+        KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(); e.Handled = true; } };
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
         for (var i = 0; i < 7; i++)
         {
@@ -164,9 +160,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
+        NormalizePageBackground();
         RefreshDecorationList();
         HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
-        ImageOpacitySlider.Value = Math.Clamp(_document.BackgroundImageOpacity * 100, 0, 100);
         for (var i = 0; i < 7; i++)
         {
             _fixedBoxes[i].IsChecked = heights[i].HasValue;
@@ -329,94 +325,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Render();
     }
 
-    private void ImageOpacity_Changed(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-    {
-        if (_binding) return;
-        _document.BackgroundImageOpacity = Math.Clamp(e.NewValue / 100, 0, 1); _dirty = true; Render();
-    }
-
-    private async void ChooseImage_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var picker = new FileOpenPicker();
-            picker.FileTypeFilter.Add(".png"); picker.FileTypeFilter.Add(".jpg"); picker.FileTypeFilter.Add(".jpeg");
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
-            var file = await picker.PickSingleFileAsync();
-            if (file == null) return;
-            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
-            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
-            var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
-            var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
-            _document.BackgroundImageDataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
-            _dirty = true; Render();
-        }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-    }
-
-    private void ClearImage_Click(object sender, RoutedEventArgs e)
-    {
-        _document.BackgroundImageDataUri = null; _dirty = true; Render();
-    }
-
-    private async void AddDecoration_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var picker = new FileOpenPicker();
-            picker.FileTypeFilter.Add(".png"); picker.FileTypeFilter.Add(".jpg"); picker.FileTypeFilter.Add(".jpeg");
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
-            var file = await picker.PickSingleFileAsync();
-            if (file == null) return;
-            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
-            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
-            var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
-            var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
-            var image = new TemplateImage { DataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", AltText = file.DisplayName };
-            _document.DecorativeImages.Add(image);
-            _dirty = true; RefreshDecorationList(image.Id); Render();
-        }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-    }
-
-    private void RefreshDecorationList(string? selectedId = null)
-    {
-        var wasBinding = _binding; _binding = true;
-        DecorationSelector.Items.Clear();
-        foreach (var item in _document.DecorativeImages)
-            DecorationSelector.Items.Add(new ComboBoxItem { Tag = item.Id, Content = string.IsNullOrWhiteSpace(item.AltText) ? L.Get("TplBuilderDecorations") : item.AltText });
-        DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId));
-        _binding = wasBinding;
-        ShowSelectedDecoration();
-    }
-
-    private TemplateImage? SelectedDecoration() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
-        ? _document.DecorativeImages.FirstOrDefault(item => item.Id == id) : null;
-
-    private void DecorationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!_binding) ShowSelectedDecoration(); }
-    private void ShowSelectedDecoration()
-    {
-        var image = SelectedDecoration(); var wasBinding = _binding; _binding = true;
-        foreach (var control in new Control[] { DecorationX, DecorationY, DecorationWidth, DecorationHeight, DecorationReserve, RemoveDecorationButton }) control.IsEnabled = image != null;
-        if (image != null) { DecorationX.Value = image.X; DecorationY.Value = image.Y; DecorationWidth.Value = image.Width; DecorationHeight.Value = image.Height; DecorationReserve.IsChecked = image.ReserveTextSpace; }
-        _binding = wasBinding;
-    }
-    private void Decoration_Changed(NumberBox sender, NumberBoxValueChangedEventArgs e)
-    {
-        if (_binding || SelectedDecoration() is not { } image || !double.IsFinite(e.NewValue)) return;
-        image.X = DecorationX.Value; image.Y = DecorationY.Value; image.Width = DecorationWidth.Value; image.Height = DecorationHeight.Value;
-        _dirty = true; Render();
-    }
-    private void DecorationReserve_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_binding || SelectedDecoration() is not { } image) return;
-        image.ReserveTextSpace = DecorationReserve.IsChecked == true; _dirty = true; Render();
-    }
-    private void RemoveDecoration_Click(object sender, RoutedEventArgs e)
-    {
-        if (SelectedDecoration() is not { } image) return;
-        _document.DecorativeImages.Remove(image); _dirty = true; RefreshDecorationList(); Render();
-    }
     private static Windows.UI.Color ParseColor(string? value)
     {
         if (value is { Length: 7 } && value[0] == '#' && uint.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
@@ -445,7 +353,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var overSelectableBlock = false;
         for (var current = e.OriginalSource as DependencyObject; current != null; current = VisualTreeHelper.GetParent(current))
         {
-            if (current == SelectionToolbar || current == InlineEditor) return;
+            if (current == SelectionToolbar || current == InlineEditor || current == SelectionOutline || current == DecorationSelector
+                || current == ZoomOutButton || current == ZoomInButton || current == ZoomResetButton || current == CanvasZoomSlider) return;
+            if (current is FrameworkElement { Tag: string imageKey } && imageKey == _selectedBlock && SelectedCanvasImage() != null)
+            {
+                BeginImageDrag(e);
+                return;
+            }
             if (current is FrameworkElement { Tag: string }) overSelectableBlock = true;
             if (current == PageHost)
             {
@@ -458,8 +372,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void DismissContextTools()
     {
+        EndImageDrag();
         StopInlineEditing();
         _selectedBlock = null;
+        _imageToReveal = null;
+        SelectionOutline.IsHitTestVisible = false;
+        SelectionOutline.Background = null;
         _selectionAnchor = null;
         SelectionToolbar.Visibility = Visibility.Collapsed;
         SelectionOutline.Visibility = Visibility.Collapsed;
@@ -471,6 +389,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         StopInlineEditing();
         _selectedBlock = key;
         _selectionAnchor = anchor;
+        if (key.StartsWith("image:", StringComparison.Ordinal)) SelectImageInList(key[6..]);
         BuildContextTools();
         PositionContextTools();
         if (key is "header" or "footer")
@@ -528,6 +447,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             SelectionOutline.Height = Math.Max(0, _selectionAnchor.ActualHeight * zoom);
             Canvas.SetLeft(SelectionOutline, origin.X); Canvas.SetTop(SelectionOutline, origin.Y);
             SelectionOutline.Visibility = Visibility.Visible;
+            SelectionOutline.IsHitTestVisible = SelectedCanvasImage() != null;
+            SelectionOutline.Background = SelectionOutline.IsHitTestVisible ? new SolidColorBrush(Microsoft.UI.Colors.Transparent) : null;
             if (_editingBlock == _selectedBlock)
             {
                 _selectionAnchor.Opacity = 0;
@@ -570,7 +491,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var parts = key.Split(':');
         var sectionName = parts[0] switch
         {
-            "page" => L.Get("TplBuilderPageSection"),
+            "page" => L.Get("TplBuilderPageSection"), "image" => L.Get("TplImageBlock"),
             "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplBuilderNotice"),
             "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
             "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
@@ -593,7 +514,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             ContextTools.Children.Add(section);
         }
 
-        if (key == "page")
+        if (key.StartsWith("image:", StringComparison.Ordinal))
+        {
+            BuildImageTools();
+        }
+        else if (key == "page")
         {
             AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, value =>
             {
@@ -768,6 +693,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
                 _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock));
+                RevealNewImage();
                 PositionContextTools();
             };
             PageHost.Content = result.Page;

@@ -312,6 +312,24 @@
   <data name="TplNew" xml:space="preserve"><value>New</value></data>
   <data name="TplFileMenu" xml:space="preserve"><value>File</value></data>
   <data name="TplSavedTemplates" xml:space="preserve"><value>Saved templates</value></data>
+  <data name="TplAddImage" xml:space="preserve"><value>Add image…</value></data>
+  <data name="TplImageBlock" xml:space="preserve"><value>Image</value></data>
+  <data name="TplImageBackground" xml:space="preserve"><value>Background image</value></data>
+  <data name="TplImageInvalid" xml:space="preserve"><value>The selected image cannot be read.</value></data>
+  <data name="TplImageAlignHorizontal" xml:space="preserve"><value>Align to page horizontally</value></data>
+  <data name="TplImageAlignVertical" xml:space="preserve"><value>Align to page vertically</value></data>
+  <data name="TplImageTop" xml:space="preserve"><value>Top</value></data>
+  <data name="TplImageMiddle" xml:space="preserve"><value>Middle</value></data>
+  <data name="TplImageBottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="TplImageLockAspect" xml:space="preserve"><value>Keep image proportions</value></data>
+  <data name="TplImageTransparency" xml:space="preserve"><value>Transparency (%)</value></data>
+  <data name="TplImageBehindText" xml:space="preserve"><value>Behind text</value></data>
+  <data name="TplImageInFront" xml:space="preserve"><value>In front of text</value></data>
+  <data name="TplImageKeepClear" xml:space="preserve"><value>Keep text clear</value></data>
+  <data name="TplImageTextPlacement" xml:space="preserve"><value>Image position relative to text</value></data>
+  <data name="TplImageMoveBackward" xml:space="preserve"><value>Send behind other images in this layer</value></data>
+  <data name="TplImageMoveForward" xml:space="preserve"><value>Bring above other images in this layer</value></data>
+  <data name="TplImageDelete" xml:space="preserve"><value>Delete image</value></data>
   <data name="TplSave" xml:space="preserve"><value>Save template</value></data>
   <data name="TplDelete" xml:space="preserve"><value>Delete</value></data>
   <data name="TplSelect" xml:space="preserve"><value>Select template</value></data>
