@@ -171,8 +171,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 PrimaryButtonText = L.Get("TplOpenTemplate"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 IsPrimaryButtonEnabled = grid.SelectedItem != null };
             grid.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = grid.SelectedItem != null;
-            if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate template })
-                selected = template;
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate chosenTemplate })
+                selected = chosenTemplate;
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
         finally { _switching = false; }
