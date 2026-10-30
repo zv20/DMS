@@ -18,8 +18,8 @@ Pages with unsaved edits participate in navigation confirmation.
 database at `%APPDATA%\DMS\dms.db`. It stores recipes, ingredients, allergens,
 menu entries and categories, settings and serialized templates. It enables WAL
 and foreign keys and tracks schema information. The Settings page displays the
-active path and exposes SQLite backup/restore, ZIP data export/import and older
-JSON import. SQLite backup uses the database backup API; imports create a pre-import backup.
+active path and exposes a single full SQLite backup and restore workflow.
+SQLite backup uses the database backup API and includes all saved image bytes.
 
 The shared image library stores PNG/JPEG bytes once in SQLite. Saved templates
 reference image IDs; the editor hydrates them for preview and output. ZIP data

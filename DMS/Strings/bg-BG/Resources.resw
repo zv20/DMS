@@ -510,4 +510,5 @@
   <data name="ImportImageCount" xml:space="preserve"><value>Възстановени споделени изображения: {0}.</value></data>
   <data name="TplPageImages" xml:space="preserve"><value>Изображения на страницата</value></data>
   <data name="TplOpenTemplate" xml:space="preserve"><value>Отвори шаблон</value></data>
+  <data name="FullBackupHint.Text" xml:space="preserve"><value>Запазете всички данни, включително шаблоните и оригиналните изображения, в един файл. Възстановяването заменя текущите данни.</value></data>
 </root>
