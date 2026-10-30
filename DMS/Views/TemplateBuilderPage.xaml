@@ -4,7 +4,7 @@
    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
   </DataTemplate>
  </Page.Resources>
- <Grid RowDefinitions="Auto,*,Auto" Background="Transparent">
+ <Grid RowDefinitions="Auto,*" Background="Transparent">
   <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
     <DropDownButton x:Name="FileMenuButton" VerticalAlignment="Bottom">
@@ -20,9 +20,9 @@
     <CalendarDatePicker x:Name="WeekPicker" VerticalAlignment="Bottom" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>
-  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto,Auto">
+  <Grid x:Name="Workspace" Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="PageScroll" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
-   <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid><Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">
+   <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="2" Width="270" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid RowDefinitions="*,Auto,Auto"><Border Grid.RowSpan="3" Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">
     <Expander x:Name="LayoutHeading" IsExpanded="True" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
      <StackPanel Spacing="10">
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Numbers_Changed" />
@@ -47,7 +47,17 @@
     <CheckBox x:Name="DecorationReserve" MinWidth="0" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Checked="DecorationReserve_Changed" Unchecked="DecorationReserve_Changed" />
      </StackPanel>
     </Expander>
-   </StackPanel></ScrollViewer></Grid></Border>
+   </StackPanel></ScrollViewer>
+    <ScrollViewer x:Name="StatusPanel" Grid.Row="1" Margin="12,0,12,8" MaxHeight="144" Visibility="Collapsed" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
+     <TextBlock x:Name="StatusText" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+    </ScrollViewer>
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="4" Padding="8,4">
+     <Button x:Name="ZoomOutButton" Content="−" MinWidth="32" />
+     <Slider x:Name="CanvasZoomSlider" Grid.Column="1" MinWidth="0" Minimum="50" Maximum="200" StepFrequency="10" Value="100" />
+     <Button x:Name="ZoomResetButton" Grid.Column="2" Content="100%" MinWidth="48" />
+     <Button x:Name="ZoomInButton" Grid.Column="3" Content="+" MinWidth="32" />
+    </Grid>
+   </Grid></Border>
    <Canvas x:Name="SelectionOverlay" Grid.Column="0" Canvas.ZIndex="10">
     <Border x:Name="SelectionOutline" IsHitTestVisible="False" BorderBrush="DodgerBlue" BorderThickness="2" Visibility="Collapsed" />
     <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Padding="0" Visibility="Collapsed" />
@@ -55,18 +65,6 @@
      <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled"><StackPanel x:Name="ContextTools" Orientation="Horizontal" Spacing="4" /></ScrollViewer>
     </Border>
    </Canvas>
-   <ScrollViewer Grid.Row="1" HorizontalContentAlignment="Stretch" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
-    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="6" Padding="8,4">
-     <Button x:Name="ZoomOutButton" Content="−" />
-     <Slider x:Name="CanvasZoomSlider" Width="120" Minimum="50" Maximum="200" StepFrequency="10" Value="100" />
-     <Button x:Name="ZoomResetButton" Content="100%" />
-     <Button x:Name="ZoomInButton" Content="+" />
-    </StackPanel>
-   </ScrollViewer>
   </Grid>
-  <StackPanel Grid.Row="2" Margin="12,6" Spacing="2">
-   <TextBlock x:Name="InlineEditHint" TextWrapping="Wrap" />
-   <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
-  </StackPanel>
  </Grid>
 </Page>

@@ -27,7 +27,6 @@
   <data name="TplLegacyConvertMessage" xml:space="preserve"><value>Ще се създаде приблизително копие за редактиране. Разположението, форматирането, изображенията и някои настройки може да се различават. Оригиналният шаблон остава непроменен; запазете копието с ново име и проверете прегледа преди печат.</value></data>
   <data name="TplLegacyConvertButton" xml:space="preserve"><value>Отваряне на копие</value></data>
   <data name="TplLegacyCopySuffix" xml:space="preserve"><value>копие</value></data>
-  <data name="TplBuilderInlineEditHint" xml:space="preserve"><value>Щракнете върху блок, за да го форматирате, или върху заглавието или текста в края, за да ги редактирате. Щракнете върху полето на страницата за цвят на фона и побиране на текста.</value></data>
   <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Настройки на страницата</value></data>
   <data name="TplBuilderImagesSection" xml:space="preserve"><value>Настройки на изображенията</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Височина на дните</value></data>
@@ -53,7 +52,6 @@
   <data name="TplBuilderFooterLimit" xml:space="preserve"><value>Долният колонтитул може да съдържа най-много три реда.</value></data>
   <data name="TplBuilderFontInvalid" xml:space="preserve"><value>Минималният размер на шрифта не може да надвишава предпочитания.</value></data>
   <data name="TplBuilderNameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
-  <data name="TplBuilderBuilderHint" xml:space="preserve"><value>Изберете седмица за преглед на шаблона.</value></data>
   <data name="TplBuilderAllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
   <data name="TplBuilderHideEmptyDays" xml:space="preserve"><value>Скрий дните без ястия</value></data>
   <data name="TplBuilderNoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица. Добавете ястия преди печат или експорт.</value></data>

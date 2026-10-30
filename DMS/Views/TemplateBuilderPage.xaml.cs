@@ -51,7 +51,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         DeleteButton.Text = L.Get("String_Text_Delete_f6fdbe");
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
-        InlineEditHint.Text = L.Get("TplBuilderInlineEditHint"); DayHint.Text = L.Get("TplBuilderDayHint");
+        DayHint.Text = L.Get("TplBuilderDayHint");
+        StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
+            StatusPanel.Visibility = string.IsNullOrWhiteSpace(StatusText.Text) ? Visibility.Collapsed : Visibility.Visible);
         LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); ImagesHeading.Header = L.Get("TplBuilderImagesSection");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
@@ -100,8 +102,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var compact = width < 700;
         Grid.SetColumn(SettingsPanel, compact ? 0 : 1);
         Grid.SetColumnSpan(SettingsPanel, compact ? 2 : 1);
-        Grid.SetRow(SettingsPanel, compact ? 2 : 0);
-        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 3);
+        Grid.SetRow(SettingsPanel, compact ? 1 : 0);
+        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 2);
         SettingsPanel.Width = compact ? double.NaN : 270;
         SettingsPanel.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
         SettingsPanel.MaxHeight = compact ? Math.Clamp(height * 0.35, 72, 240) : double.PositiveInfinity;
@@ -771,9 +773,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             PageHost.Content = result.Page;
             if (_selectedBlock != null)
                 DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
-            StatusText.Text = L.Get("OutputPreparing");
+            StatusText.Text = "";
             await result.ImagesReady;
-            if (generation == _renderGeneration) StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TplBuilderOverflow" : "TplBuilderBuilderHint");
+            if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
         }
         catch (Exception ex) { if (generation == _renderGeneration) StatusText.Text = L.Format("TplError", ex.Message); }
     }
