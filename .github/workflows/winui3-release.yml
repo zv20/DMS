@@ -31,14 +31,18 @@ jobs:
       - name: Restore, build, and test
         run: |
           dotnet restore DMS.sln -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/check-localization.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish self-contained x64 app
         run: >-
           dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64
-          --self-contained true --no-restore -p:Platform=x64
+          --self-contained true -p:Platform=x64
           --output artifacts/DMS-win-x64
 
       - name: Build portable ZIP
