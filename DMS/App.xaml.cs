@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Services;
+using System.IO;
 
 
 namespace DMS;
@@ -41,12 +42,36 @@ public partial class App : Application
         startup.ShowLoading("Preparing your kitchen... / Подготвяме приложението...");
         try
         {
+            var database = Services.GetRequiredService<IDatabaseService>();
+            var requestPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DMS", "installer-request.ini");
+            if (File.Exists(requestPath))
+            {
+                var request = InstallerRequest.Read(requestPath);
+                language = request.Language ?? language;
+                if (!string.IsNullOrWhiteSpace(request.Backup) && await startup.ConfirmInstallerRestoreAsync(request.Backup, language))
+                {
+                    while (true)
+                    {
+                        try { await database.RestoreFromAsync(request.Backup); break; }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, "Installer backup restore failed");
+                            // If automatic recovery failed, do not reopen or initialize
+                            // the database until the recovery backup is handled.
+                            if (ex.InnerException is AggregateException) throw;
+                            if (!await startup.RetryInstallerRestoreAsync(ex.Message, language)) break;
+                        }
+                    }
+                }
+                if (startup.IsClosed) return;
+                if (request.Language != null) await Services.GetRequiredService<ISettingsService>().SetLanguageAsync(request.Language);
+                File.Delete(requestPath);
+            }
             var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
             if (startup.IsClosed) return;
             language = settings.Language;
             Localization.Apply(language);
             AppearanceService.ApplyAccent(settings.AccentColor);
-            var database = Services.GetRequiredService<IDatabaseService>();
             startup.ShowLoading(Localization.Get("StartupRecipes"));
             await database.GetAllRecipesAsync();
             if (startup.IsClosed) return;

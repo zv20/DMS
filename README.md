@@ -13,7 +13,12 @@ From a Windows terminal:
 dotnet restore DMS.sln -p:Platform=x64
 dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
+dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 --output artifacts/DMS-win-x64
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/DMS.iss
 ```
+
+Install Inno Setup 6.5.2 or later before the last command. The installer EXE is written to
+`artifacts/installer/`.
 
 App data is stored in `%APPDATA%\DMS`. Use Settings to create and restore a
 full database backup. The release workflow in `.github/workflows/` builds the

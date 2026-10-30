@@ -756,24 +756,58 @@ public partial class DatabaseService : IDatabaseService, IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         if (!File.Exists(sourcePath)) throw new FileNotFoundException("The selected backup file no longer exists.", sourcePath);
+        var source = Path.GetFullPath(sourcePath);
+        var current = Path.GetFullPath(_dbPath);
+        if (string.Equals(source, current, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+            throw new InvalidOperationException("The selected backup is the current database.");
+
+        // Validate the selected file before opening or changing the live database.
+        // Read-only mode avoids accidentally creating a database for a bad path.
+        var sourceOptions = new SqliteConnectionStringBuilder { DataSource = source, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
+        await using var backup = new SqliteConnection(sourceOptions.ToString());
+        await backup.OpenAsync();
+        ValidateRestoreSource(backup);
+        await InitializeAsync();
 
         await _initLock.WaitAsync();
         try
         {
-            _connection?.Dispose();
-            _connection = null;
-            _initialized = false;
+            var recoveryFolder = Path.Combine(Path.GetDirectoryName(current)!, "RestoreBackups");
+            Directory.CreateDirectory(recoveryFolder);
+            var recoveryPath = Path.Combine(recoveryFolder, $"before-restore-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db");
+            var recoveryOptions = new SqliteConnectionStringBuilder { DataSource = recoveryPath, Pooling = false };
+            await using var recovery = new SqliteConnection(recoveryOptions.ToString());
+            await recovery.OpenAsync();
+            _connection!.BackupDatabase(recovery);
 
-            File.Copy(sourcePath, _dbPath, overwrite: true);
-            DeleteIfPresent($"{_dbPath}-wal");
-            DeleteIfPresent($"{_dbPath}-shm");
-
-            _connection = new SqliteConnection($"Data Source={_dbPath};Pooling=False");
-            await _connection.OpenAsync();
-            await ConfigureConnectionAsync();
-            await CreateSchemaAsync();
-            _initialized = true;
-            _logger.LogInformation("Restored database from {Path}", sourcePath);
+            try
+            {
+                // SQLite's backup API handles the active WAL and atomically replaces
+                // the destination database without deleting live WAL sidecars.
+                backup.BackupDatabase(_connection);
+                await ConfigureConnectionAsync();
+                await CreateSchemaAsync();
+                _initialized = true;
+                _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);
+            }
+            catch (Exception restoreError)
+            {
+                try
+                {
+                    recovery.BackupDatabase(_connection);
+                    await ConfigureConnectionAsync();
+                    await CreateSchemaAsync();
+                    _initialized = true;
+                }
+                catch (Exception recoveryError)
+                {
+                    _initialized = false;
+                    _connection?.Dispose();
+                    _connection = null;
+                    throw new InvalidOperationException($"Restore failed and automatic recovery failed. The previous database backup is at: {recoveryPath}", new AggregateException(restoreError, recoveryError));
+                }
+                throw new InvalidOperationException($"Restore failed; the previous database was recovered. A recovery backup is at: {recoveryPath}", restoreError);
+            }
         }
         finally
         {
@@ -781,9 +815,43 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         }
     }
 
-    private static void DeleteIfPresent(string path)
+    private static void ValidateRestoreSource(SqliteConnection source)
     {
-        if (File.Exists(path)) File.Delete(path);
+        using (var check = source.CreateCommand())
+        {
+            check.CommandText = "PRAGMA integrity_check";
+            using var result = check.ExecuteReader();
+            if (!result.Read() || !string.Equals(result.GetString(0), "ok", StringComparison.OrdinalIgnoreCase) || result.Read())
+                throw new InvalidDataException("The selected database failed its integrity check.");
+        }
+        using (var version = source.CreateCommand())
+        {
+            version.CommandText = "PRAGMA user_version";
+            if (Convert.ToInt64(version.ExecuteScalar()) > 2)
+                throw new InvalidDataException("This backup was created by a newer DMS database version.");
+        }
+
+        // Older DMS databases may lack later optional tables or columns; schema
+        // initialization can add those after the restore succeeds.
+        var required = new Dictionary<string, string[]>
+        {
+            ["recipes"] = ["id", "name", "category", "portion_size", "calories", "instructions", "ingredients_json", "allergens_json", "created_at", "updated_at"],
+            ["ingredients"] = ["id", "name", "allergens_json", "created_at"],
+            ["allergens"] = ["id", "name", "color", "created_at"],
+            ["menu"] = ["id", "date", "slot", "recipe_id", "created_at"],
+            ["templates"] = ["name", "data_json", "is_preset", "created_at", "updated_at"],
+            ["settings"] = ["key", "value"]
+        };
+        foreach (var (table, columns) in required)
+        {
+            using var command = source.CreateCommand();
+            command.CommandText = $"PRAGMA table_info(\"{table}\")";
+            using var reader = command.ExecuteReader();
+            var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            while (reader.Read()) found.Add(reader.GetString(1));
+            if (columns.Any(column => !found.Contains(column)))
+                throw new InvalidDataException("The selected file is not a supported DMS database backup.");
+        }
     }
 
     public async Task VacuumAsync()
