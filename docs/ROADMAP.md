@@ -5,13 +5,13 @@ record of completed testing. The earlier migration plans are retained under
 [`archive/`](archive/). Record dated results separately from instructions.
 
 1. **Establish Windows build evidence.** Restore, build, test and publish the
-   current revision on Windows using [Windows development](../WINDOWS_DEVELOPMENT.md).
+   current revision on Windows using [Windows development](WINDOWS_DEVELOPMENT.md).
    Record configuration, revision, results and any failures.
 2. **Exercise core data workflows.** Use disposable data for recipe,
    ingredient and allergen changes, menu assignment, restart persistence,
    backup/restore and JSON import/export. Check invalid input and recovery.
 3. **Validate planner, template and output.** Run the
-   [Windows debug checklist](../WINDOWS_DEBUG_CHECKLIST.md), including long
+   [Windows debug checklist](WINDOWS_DEBUG_CHECKLIST.md), including long
    menus, weekend days, conversion, page overflow, saved templates, PNG, PDF
    and a physical A4 printer. Repair and retest issues found.
 4. **Review browser-to-native parity.** Compare real workflows against the

@@ -59,5 +59,5 @@ Theme and accent selection are managed by `AppearanceService`.
 The release workflow restores, builds and tests on Windows, then creates a
 self-contained portable ZIP and Inno Setup installer for a tag or manual run.
 Its existence does not imply a particular run succeeded. See
-[Windows development](../WINDOWS_DEVELOPMENT.md), [debug checklist](../WINDOWS_DEBUG_CHECKLIST.md),
-and [installer guide](../INSTALLER.md) for current commands and checks.
+[Windows development](WINDOWS_DEVELOPMENT.md), [debug checklist](WINDOWS_DEBUG_CHECKLIST.md),
+and [installer guide](INSTALLER.md) for current commands and checks.

@@ -1,10 +1,10 @@
 # DMS Windows UI3 Migration – Finished Notes
 
-> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../../WINDOWS_DEVELOPMENT.md).
+> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../WINDOWS_DEVELOPMENT.md).
 
 
 > Historical migration notes: version numbers, build conclusions, and next steps below
-> describe an earlier state. See [WINDOWS_DEVELOPMENT.md](../../WINDOWS_DEVELOPMENT.md)
+> describe an earlier state. See [WINDOWS_DEVELOPMENT.md](../WINDOWS_DEVELOPMENT.md)
 > and the project files for current targets and pending Windows verification.
 
 ## Project Overview

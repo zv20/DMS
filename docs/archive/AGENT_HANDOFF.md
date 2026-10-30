@@ -1,6 +1,6 @@
 # 🤝 DMS — Agent Handoff Document
 
-> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../../WINDOWS_DEVELOPMENT.md).
+> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../WINDOWS_DEVELOPMENT.md).
 
 
 > **Last Updated:** February 22, 2026  

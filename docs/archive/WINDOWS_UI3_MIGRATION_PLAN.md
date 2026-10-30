@@ -1,6 +1,6 @@
 # DMS → Native Windows (WinUI 3) Migration Plan
 
-> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../../WINDOWS_DEVELOPMENT.md).
+> **Historical reference:** This document describes an earlier project state. For current guidance, see [native architecture](../ARCHITECTURE.md), [roadmap](../ROADMAP.md), and [Windows development](../WINDOWS_DEVELOPMENT.md).
 
 
 **App:** DMS — kitchen/restaurant menu planner  
