@@ -1,7 +1,3 @@
-# Data directories
-/data/pictures
-/data/archive
-
 # Mac system files
 .DS_Store
 **/.DS_Store
@@ -21,7 +17,6 @@ dist/
 build/
 /release/
 /artifacts/
-/data/images
 
 # .NET Build outputs
 bin/
