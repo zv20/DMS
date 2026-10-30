@@ -511,4 +511,5 @@
   <data name="TplPageImages" xml:space="preserve"><value>Images on page</value></data>
   <data name="TplOpenTemplate" xml:space="preserve"><value>Open template</value></data>
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Back up all saved data, including templates and original images, in one file. Restoring replaces current data.</value></data>
+  <data name="MenuViewSelected" xml:space="preserve"><value>Selected view</value></data>
 </root>

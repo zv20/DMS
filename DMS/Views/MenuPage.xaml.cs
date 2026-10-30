@@ -24,11 +24,20 @@ public sealed partial class MenuPage : Page
     {
         InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
+        UpdateViewButtons();
         Loaded += async (_, _) => await RefreshAsync();
     }
     private static DateTime WeekStart(DateTime day) => day.Date.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
-    private async void Monthly_Click(object sender, RoutedEventArgs e) { _monthly = true; await RefreshAsync(); }
-    private async void Weekly_Click(object sender, RoutedEventArgs e) { _monthly = false; await RefreshAsync(); }
+    private void UpdateViewButtons()
+    {
+        var accent = (Style)Application.Current.Resources["AccentButtonStyle"];
+        MonthlyButton.Style = _monthly ? accent : null;
+        WeeklyButton.Style = _monthly ? null : accent;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(MonthlyButton, _monthly ? L.Get("MenuViewSelected") : "");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(WeeklyButton, _monthly ? "" : L.Get("MenuViewSelected"));
+    }
+    private async void Monthly_Click(object sender, RoutedEventArgs e) { _monthly = true; UpdateViewButtons(); await RefreshAsync(); }
+    private async void Weekly_Click(object sender, RoutedEventArgs e) { _monthly = false; UpdateViewButtons(); await RefreshAsync(); }
     private async void Previous_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(-1) : _date.AddDays(-7); await RefreshAsync(); }
     private async void Next_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(1) : _date.AddDays(7); await RefreshAsync(); }
     private async void Today_Click(object sender, RoutedEventArgs e) { _date = DateTime.Today; await RefreshAsync(); }
