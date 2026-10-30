@@ -37,8 +37,9 @@ jobs:
         run: |
           $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
           $setup = (Resolve-Path 'artifacts/installer/DMS-Setup-0.0.1.exe').Path
-          $result = Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir") -Wait -PassThru
-          if ($result.ExitCode -ne 0) { throw "Installer exited with $($result.ExitCode)" }
+          $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
+          $result = Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir", "/LOG=$setupLog") -Wait -PassThru
+          if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
             if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
           }
