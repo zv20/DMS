@@ -102,8 +102,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var compact = width < 700;
         Grid.SetColumn(SettingsPanel, compact ? 0 : 1);
         Grid.SetColumnSpan(SettingsPanel, compact ? 2 : 1);
-        Grid.SetRow(SettingsPanel, compact ? 1 : 0);
-        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 2);
+        Grid.SetRow(SettingsPanel, compact ? 2 : 0);
+        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 3);
         SettingsPanel.Width = compact ? double.NaN : 270;
         SettingsPanel.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
         SettingsPanel.MaxHeight = compact ? Math.Clamp(height * 0.35, 72, 240) : double.PositiveInfinity;
