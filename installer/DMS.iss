@@ -1,6 +1,6 @@
 ; Per-user DMS setup. Publish the app to artifacts\DMS-win-x64 before compiling.
 #ifndef MyAppVersion
-  #define MyAppVersion "2.0.0-beta.3"
+  #define MyAppVersion "0.0.1"
 #endif
 
 [Setup]
