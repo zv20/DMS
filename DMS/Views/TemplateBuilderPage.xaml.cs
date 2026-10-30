@@ -134,14 +134,55 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void RefreshSavedTemplatesMenu()
     {
-        SavedTemplatesMenu.Items.Clear();
         SavedTemplatesMenu.IsEnabled = _templates.Count > 0;
-        foreach (var template in _templates)
+    }
+
+    private async void BrowseTemplates_Click(object sender, RoutedEventArgs e)
+    {
+        if (_saving || _switching || _binding || _templates.Count == 0) return;
+        _switching = true;
+        MenuTemplate? selected = null;
+        try
         {
-            var item = new ToggleMenuFlyoutItem { Text = template.Name, IsChecked = string.Equals(template.Name, _loadedName, StringComparison.Ordinal) };
-            item.Click += async (_, _) => await SelectTemplateAsync(template);
-            SavedTemplatesMenu.Items.Add(item);
+            var grid = new GridView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 440, MinWidth = 320,
+                HorizontalAlignment = HorizontalAlignment.Stretch };
+            foreach (var template in _templates)
+            {
+                var tile = new StackPanel { Width = 125, Spacing = 6 };
+                try
+                {
+                    var document = TemplateConversion.ToEditableCopy(template).Document ?? new TemplateDocument();
+                    document.MergeLegacyFooterNotice();
+                    var page = TemplateRenderer.Create(document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+                    var thumbnail = new Viewbox { Width = 120, Height = 170, Stretch = Stretch.Uniform, Child = page.Page, IsHitTestVisible = false };
+                    tile.Children.Add(thumbnail);
+                    _ = ObserveTemplateThumbnailAsync(page.ImagesReady);
+                }
+                catch
+                {
+                    tile.Children.Add(new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 });
+                }
+                tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+                var item = new GridViewItem { Tag = template, Content = tile };
+                grid.Items.Add(item);
+                if (string.Equals(template.Name, _loadedName, StringComparison.Ordinal)) grid.SelectedItem = item;
+            }
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplSavedTemplates"), Content = grid,
+                PrimaryButtonText = L.Get("TplOpenTemplate"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                IsPrimaryButtonEnabled = grid.SelectedItem != null };
+            grid.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = grid.SelectedItem != null;
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate template })
+                selected = template;
         }
+        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        finally { _switching = false; }
+        if (selected != null) await SelectTemplateAsync(selected);
+    }
+
+    private static async Task ObserveTemplateThumbnailAsync(Task imagesReady)
+    {
+        try { await imagesReady; }
+        catch { /* An unreadable image should not prevent choosing a template. */ }
     }
 
     private void SetDocument(MenuTemplate template, string? name)

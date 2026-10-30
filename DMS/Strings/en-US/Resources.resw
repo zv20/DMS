@@ -509,4 +509,5 @@
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Use a name with 255 characters or fewer.</value></data>
   <data name="ImportImageCount" xml:space="preserve"><value>{0} shared images restored.</value></data>
   <data name="TplPageImages" xml:space="preserve"><value>Images on page</value></data>
+  <data name="TplOpenTemplate" xml:space="preserve"><value>Open template</value></data>
 </root>

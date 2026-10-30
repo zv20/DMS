@@ -509,4 +509,5 @@
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Използвайте име до 255 знака.</value></data>
   <data name="ImportImageCount" xml:space="preserve"><value>Възстановени споделени изображения: {0}.</value></data>
   <data name="TplPageImages" xml:space="preserve"><value>Изображения на страницата</value></data>
+  <data name="TplOpenTemplate" xml:space="preserve"><value>Отвори шаблон</value></data>
 </root>
