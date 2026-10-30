@@ -49,6 +49,8 @@ var
   LanguagePage: TInputOptionWizardPage;
   BackupPage: TInputFileWizardPage;
   BrandLabel, TaglineLabel, HeadingLabel, DescriptionLabel: TNewStaticText;
+  NextParent: TWinControl;
+  NextLeft, NextTop, NextWidth, NextHeight: Integer;
 
 procedure AdvancedChanged(Sender: TObject);
 begin
@@ -62,6 +64,11 @@ procedure InitializeWizard();
 begin
   { Keep the built-in wizard controls and accessibility, but make the first
     page a simple branded install screen. The app icon remains in the title bar. }
+  NextParent := WizardForm.NextButton.Parent;
+  NextLeft := WizardForm.NextButton.Left;
+  NextTop := WizardForm.NextButton.Top;
+  NextWidth := WizardForm.NextButton.Width;
+  NextHeight := WizardForm.NextButton.Height;
   WizardForm.WizardBitmapImage.Parent := WizardForm.WelcomePage;
   WizardForm.WizardBitmapImage.Width := ScaleX(86);
   WizardForm.WizardBitmapImage.Height := ScaleY(86);
@@ -153,7 +160,20 @@ end;
 
 procedure CurPageChanged(CurPageID: Integer);
 begin
-  if CurPageID = wpWelcome then AdvancedChanged(nil);
+  if CurPageID = wpWelcome then begin
+    WizardForm.NextButton.Parent := WizardForm.WelcomePage;
+    WizardForm.NextButton.Width := ScaleX(180);
+    WizardForm.NextButton.Height := ScaleY(34);
+    WizardForm.NextButton.Left := (WizardForm.WelcomePage.ClientWidth - WizardForm.NextButton.Width) div 2;
+    WizardForm.NextButton.Top := WizardForm.WelcomePage.ClientHeight - ScaleY(100);
+    AdvancedChanged(nil);
+  end else begin
+    WizardForm.NextButton.Parent := NextParent;
+    WizardForm.NextButton.Left := NextLeft;
+    WizardForm.NextButton.Top := NextTop;
+    WizardForm.NextButton.Width := NextWidth;
+    WizardForm.NextButton.Height := NextHeight;
+  end;
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;

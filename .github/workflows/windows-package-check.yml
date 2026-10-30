@@ -68,3 +68,35 @@ jobs:
           name: DMS-installer-test
           path: artifacts/installer/DMS-Setup-0.0.1.exe
           if-no-files-found: error
+      - name: Capture setup welcome screen when desktop is available
+        shell: pwsh
+        run: |
+          $setup = (Resolve-Path 'artifacts/installer/DMS-Setup-0.0.1.exe').Path
+          $process = Start-Process -FilePath $setup -PassThru
+          try {
+            Start-Sleep -Seconds 5
+            $process.Refresh()
+            if ($process.HasExited -or $process.MainWindowHandle -eq 0) {
+              Write-Host 'No interactive setup window was available for screenshot capture.'
+            } else {
+              Add-Type -AssemblyName System.Windows.Forms
+              Add-Type -AssemblyName System.Drawing
+              $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+              $bitmap = [System.Drawing.Bitmap]::new($bounds.Width, $bounds.Height)
+              $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+              try {
+                $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+                $bitmap.Save((Join-Path $env:GITHUB_WORKSPACE 'artifacts/setup-welcome.png'))
+              } finally { $graphics.Dispose(); $bitmap.Dispose() }
+            }
+          } catch { Write-Host "Screenshot unavailable: $_" }
+          finally {
+            $process.Refresh()
+            if (!$process.HasExited) { Stop-Process -Id $process.Id -Force }
+          }
+      - name: Upload setup screenshot if captured
+        uses: actions/upload-artifact@v4
+        with:
+          name: DMS-setup-preview
+          path: artifacts/setup-welcome.png
+          if-no-files-found: ignore
