@@ -342,6 +342,52 @@ public sealed class DatabaseServiceTests : IDisposable
         Assert.Equal(System.Text.Json.JsonSerializer.Serialize(template.Document), System.Text.Json.JsonSerializer.Serialize(final.Document));
     }
 
+    [Fact]
+    public async Task RenamingTemplatePreservesImagesAndChangesTheExistingEntry()
+    {
+        using (var database = CreateDatabase())
+        {
+            var source = new MenuTemplate { Name = "Original", Document = new TemplateDocument
+                { DecorativeImages = [new TemplateImage { AltText = "Logo", DataUri = "data:image/png;base64,YWJj", X = 40, Y = 60 }] } };
+            await database.SaveTemplateAsync(source);
+            await database.RenameTemplateAsync("Original", " Ново меню ");
+            Assert.DoesNotContain(await database.GetAllTemplatesAsync(), item => item.Name == "Original");
+        }
+        using var reopened = CreateDatabase();
+        var renamed = (await reopened.GetAllTemplatesAsync()).Single(item => item.Name == "Ново меню");
+        Assert.Equal("Logo", renamed.Document!.DecorativeImages.Single().AltText);
+        Assert.Equal("data:image/png;base64,YWJj", renamed.Document.DecorativeImages.Single().DataUri);
+        renamed.Document.DecorativeImages[0].AltText = "Kitchen logo";
+        await reopened.SaveTemplateAsync(renamed);
+        Assert.Equal("Kitchen logo", (await reopened.GetAllTemplatesAsync()).Single(item => item.Name == "Ново меню").Document!.DecorativeImages[0].AltText);
+        await reopened.DeleteTemplateAsync("Ново меню");
+        Assert.DoesNotContain(await reopened.GetAllTemplatesAsync(), item => item.Name == "Ново меню");
+    }
+
+    [Fact]
+    public async Task DuplicateTemplateRenameLeavesBothSavedTemplatesIntact()
+    {
+        using var database = CreateDatabase();
+        await database.SaveTemplateAsync(new MenuTemplate { Name = "Source" });
+        await database.SaveTemplateAsync(new MenuTemplate { Name = "Меню" });
+        await Assert.ThrowsAsync<InvalidOperationException>(() => database.RenameTemplateAsync("Source", "меню"));
+        var templates = await database.GetAllTemplatesAsync();
+        Assert.Contains(templates, item => item.Name == "Source");
+        Assert.Contains(templates, item => item.Name == "Меню");
+        await database.RenameTemplateAsync("Source", "source");
+        Assert.Contains(await database.GetAllTemplatesAsync(), item => item.Name == "source");
+    }
+
+    [Fact]
+    public async Task BuiltInTemplateCannotBeRenamedOrDeleted()
+    {
+        using var database = CreateDatabase();
+        await database.SaveTemplateAsync(new MenuTemplate { Name = "Built-in", IsPreset = true });
+        await Assert.ThrowsAsync<InvalidOperationException>(() => database.RenameTemplateAsync("Built-in", "Changed"));
+        await database.DeleteTemplateAsync("Built-in");
+        Assert.Contains(await database.GetAllTemplatesAsync(), item => item.Name == "Built-in" && item.IsPreset);
+    }
+
     private DatabaseService CreateDatabase()
     {
         Directory.CreateDirectory(_testDirectory);

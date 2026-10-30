@@ -46,7 +46,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         SavedTemplatesMenu.Text = L.Get("TplSavedTemplates");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));
         NewButton.Text = L.Get("TplNew"); SaveButton.Text = L.Get("TplSave");
-        DeleteButton.Text = L.Get("String_Text_Delete_f6fdbe");
+        DeleteButton.Text = L.Get("TplDeleteTemplate");
+        RenameTemplateMenuItem.Text = L.Get("TplRenameTemplate");
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
         DayHint.Text = L.Get("TplBuilderDayHint");
@@ -157,7 +158,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name;
-        DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
+        RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         NormalizePageBackground();
@@ -239,7 +240,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved; _legacySource = false;
             _loadedName = name; _dirty = false;
-            DeleteButton.IsEnabled = !saved.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;
             await ReloadTemplatesAsync();
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
@@ -247,11 +248,56 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         finally { _saving = false; SaveButton.IsEnabled = true; }
     }
 
+    private async void RenameTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        _saving = true;
+        RenameTemplateMenuItem.IsEnabled = SaveButton.IsEnabled = DeleteButton.IsEnabled = false;
+        try
+        {
+            var currentName = _loadedName;
+            var all = await _database.GetAllTemplatesAsync();
+            var name = await PromptNameAsync("TplRenameTemplate", "TplName", currentName,
+                value => all.Any(template => template.Name != currentName && string.Equals(template.Name, value, StringComparison.OrdinalIgnoreCase)));
+            if (name == null) return;
+            await _database.RenameTemplateAsync(currentName, name);
+            _loadedName = name;
+            _loadedTemplate.Name = name;
+            // Keep unsaved canvas edits and their dirty flag; rename changes only
+            // the saved entry's name, rather than implicitly saving those edits.
+            await ReloadTemplatesAsync();
+            StatusText.Text = L.Get("Text_Saved_499dc6");
+        }
+        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        finally
+        {
+            _saving = false; SaveButton.IsEnabled = true;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+        }
+    }
+
+    private async Task<string?> PromptNameAsync(string titleKey, string labelKey, string currentName, Func<string, bool> nameExists)
+    {
+        var input = new TextBox { Header = L.Get(labelKey), Text = currentName };
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        var content = new StackPanel { Spacing = 8 };
+        content.Children.Add(input); content.Children.Add(error);
+        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get(titleKey), Content = content,
+            PrimaryButtonText = L.Get("TplRenameAction"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Primary };
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            var value = input.Text.Trim();
+            if (value.Length > 0 && !nameExists(value)) return;
+            args.Cancel = true; error.Text = L.Get(value.Length == 0 ? "TplAssetNameRequired" : "TplAssetNameExists"); error.Visibility = Visibility.Visible;
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary ? input.Text.Trim() : null;
+    }
+
     private async void Delete_Click(object sender, RoutedEventArgs e)
     {
         if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
         var name = _loadedName;
-        _saving = true; DeleteButton.IsEnabled = false; SaveButton.IsEnabled = false;
+        _saving = true; RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = SaveButton.IsEnabled = false;
         try
         {
             var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
@@ -266,7 +312,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
-            DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
         }
     }
 

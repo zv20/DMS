@@ -312,6 +312,15 @@
   <data name="TplNew" xml:space="preserve"><value>Нов</value></data>
   <data name="TplFileMenu" xml:space="preserve"><value>Файл</value></data>
   <data name="TplSavedTemplates" xml:space="preserve"><value>Запазени шаблони</value></data>
+  <data name="TplRenameTemplate" xml:space="preserve"><value>Преименувай шаблона…</value></data>
+  <data name="TplDeleteTemplate" xml:space="preserve"><value>Изтрий шаблона…</value></data>
+  <data name="TplRenameAction" xml:space="preserve"><value>Преименувай</value></data>
+  <data name="TplAssetNameRequired" xml:space="preserve"><value>Въведете име.</value></data>
+  <data name="TplAssetNameExists" xml:space="preserve"><value>Това име вече се използва.</value></data>
+  <data name="TplImageRename" xml:space="preserve"><value>Преименувай изображението…</value></data>
+  <data name="TplImageName" xml:space="preserve"><value>Име на изображението</value></data>
+  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Да се премахне ли изображението от текущия шаблон? Запазете шаблона, за да запазите промяната.</value></data>
+  <data name="TplImageChangesPending" xml:space="preserve"><value>Запазете шаблона, за да запазите промените по изображенията.</value></data>
   <data name="TplAddImage" xml:space="preserve"><value>Добави изображение…</value></data>
   <data name="TplImageBlock" xml:space="preserve"><value>Изображение</value></data>
   <data name="TplImageBackground" xml:space="preserve"><value>Фоново изображение</value></data>

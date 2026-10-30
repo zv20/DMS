@@ -30,6 +30,7 @@ public interface IDatabaseService
     Task SaveSettingsAsync(AppSettings settings);
     Task<List<MenuTemplate>> GetAllTemplatesAsync();
     Task SaveTemplateAsync(MenuTemplate template);
+    Task RenameTemplateAsync(string currentName, string newName);
     Task DeleteTemplateAsync(string name);
     Task CreateBackupAsync(string destinationPath);
     Task RestoreFromAsync(string sourcePath);
@@ -671,6 +672,48 @@ public class DatabaseService : IDatabaseService, IDisposable
         cmd.Parameters.AddWithValue("@preset", template.IsPreset ? 1 : 0);
         cmd.Parameters.AddWithValue("@now", now);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task RenameTemplateAsync(string currentName, string newName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        newName = newName.Trim();
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        string json;
+        using (var source = _connection.CreateCommand())
+        {
+            source.Transaction = transaction;
+            source.CommandText = "SELECT data_json, is_preset FROM templates WHERE name = @name";
+            source.Parameters.AddWithValue("@name", currentName);
+            using var reader = await source.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) throw new InvalidOperationException("The selected template no longer exists.");
+            if (reader.GetInt32(1) != 0) throw new InvalidOperationException("Built-in templates cannot be renamed.");
+            json = reader.GetString(0);
+        }
+        using (var names = _connection.CreateCommand())
+        {
+            names.Transaction = transaction;
+            names.CommandText = "SELECT name FROM templates WHERE name <> @name";
+            names.Parameters.AddWithValue("@name", currentName);
+            using var reader = await names.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                if (string.Equals(reader.GetString(0), newName, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("A template with this name already exists.");
+        }
+        var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(json)
+            ?? throw new InvalidOperationException("The selected template cannot be read.");
+        template.Name = newName;
+        using var update = _connection.CreateCommand();
+        update.Transaction = transaction;
+        update.CommandText = "UPDATE templates SET name = @new, data_json = @json, updated_at = @now WHERE name = @old";
+        update.Parameters.AddWithValue("@new", newName);
+        update.Parameters.AddWithValue("@json", System.Text.Json.JsonSerializer.Serialize(template));
+        update.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
+        update.Parameters.AddWithValue("@old", currentName);
+        await update.ExecuteNonQueryAsync();
+        transaction.Commit();
     }
 
     public async Task DeleteTemplateAsync(string name)

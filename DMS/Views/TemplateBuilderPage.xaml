@@ -13,6 +13,7 @@
       <MenuFlyoutItem x:Name="NewButton" Click="New_Click" />
       <MenuFlyoutSubItem x:Name="SavedTemplatesMenu" />
       <MenuFlyoutItem x:Name="SaveButton" Click="Save_Click" />
+      <MenuFlyoutItem x:Name="RenameTemplateMenuItem" Click="RenameTemplate_Click" IsEnabled="False" />
       <MenuFlyoutSeparator />
       <MenuFlyoutItem x:Name="AddImageMenuItem" Click="AddDecoration_Click" />
       <MenuFlyoutSeparator />
@@ -36,6 +37,8 @@
     <Expander x:Name="ImagesHeading" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
      <StackPanel Spacing="10">
     <ComboBox x:Name="DecorationSelector" HeaderTemplate="{StaticResource SettingsLabelTemplate}" SelectionChanged="DecorationSelector_SelectionChanged" HorizontalAlignment="Stretch" />
+    <Button x:Name="RenameImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="RenameImage_Click" IsEnabled="False" />
+    <Button x:Name="DeleteImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="DeleteImage_Click" IsEnabled="False" />
      </StackPanel>
     </Expander>
    </StackPanel></ScrollViewer>

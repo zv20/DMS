@@ -25,6 +25,8 @@ public sealed partial class TemplateBuilderPage
 
     private void InitializeImageInteraction()
     {
+        RenameImageButton.Content = L.Get("TplImageRename");
+        DeleteImageButton.Content = L.Get("TplImageDelete");
         SelectionOutline.PointerPressed += (_, e) => BeginImageDrag(e);
         SelectionOutline.PointerMoved += (_, e) =>
         {
@@ -136,6 +138,7 @@ public sealed partial class TemplateBuilderPage
         DecorationSelector.IsEnabled = DecorationSelector.Items.Count > 0;
         DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId));
         _binding = wasBinding;
+        UpdateImageActions();
     }
 
     private void SelectImageInList(string id)
@@ -143,11 +146,21 @@ public sealed partial class TemplateBuilderPage
         var wasBinding = _binding; _binding = true;
         DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, id));
         _binding = wasBinding;
+        UpdateImageActions();
+    }
+
+    private TemplateImage? ImageInList() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
+        ? _document.DecorativeImages.FirstOrDefault(image => image.Id == id) : null;
+
+    private void UpdateImageActions()
+    {
+        RenameImageButton.IsEnabled = DeleteImageButton.IsEnabled = ImageInList() != null && !_saving;
     }
 
     private void DecorationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_binding || DecorationSelector.SelectedItem is not ComboBoxItem { Tag: string id }) return;
+        UpdateImageActions();
         var key = $"image:{id}";
         if (FindAnchor(PageHost, key) is { } anchor)
         {
@@ -242,12 +255,53 @@ public sealed partial class TemplateBuilderPage
         ContextTools.Children.Add(mode);
         AddImageAction("TplImageMoveBackward", "↓", () => ReorderImage(image, false));
         AddImageAction("TplImageMoveForward", "↑", () => ReorderImage(image, true));
-        AddImageAction("TplImageDelete", "🗑", () =>
+        AddImageAction("TplImageRename", "✎", async () => await RenameImageAsync(image));
+        AddImageAction("TplImageDelete", "🗑", async () => await DeleteImageAsync(image));
+    }
+
+    private async void RenameImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ImageInList() is { } image) await RenameImageAsync(image);
+    }
+
+    private async void DeleteImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ImageInList() is { } image) await DeleteImageAsync(image);
+    }
+
+    private async Task RenameImageAsync(TemplateImage image)
+    {
+        if (_saving || _switching || !_document.DecorativeImages.Contains(image)) return;
+        _saving = true; UpdateImageActions();
+        try
         {
-            DismissContextTools();
+            var name = await PromptNameAsync("TplImageRename", "TplImageName", image.AltText,
+                value => _document.DecorativeImages.Any(other => other.Id != image.Id && string.Equals(other.AltText, value, StringComparison.OrdinalIgnoreCase)));
+            if (name == null) return;
+            image.AltText = name; _dirty = true;
+            RefreshDecorationList(image.Id); Render();
+            StatusText.Text = L.Get("TplImageChangesPending");
+        }
+        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        finally { _saving = false; UpdateImageActions(); }
+    }
+
+    private async Task DeleteImageAsync(TemplateImage image)
+    {
+        if (_saving || _switching || !_document.DecorativeImages.Contains(image)) return;
+        _saving = true; UpdateImageActions();
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplImageDelete"), Content = L.Get("TplImageDeletePrompt"),
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (_selectedBlock == $"image:{image.Id}") DismissContextTools();
             _document.DecorativeImages.Remove(image);
             _dirty = true; RefreshDecorationList(); Render();
-        });
+            StatusText.Text = L.Get("TplImageChangesPending");
+        }
+        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        finally { _saving = false; UpdateImageActions(); }
     }
 
     private void ReorderImage(TemplateImage image, bool forward)

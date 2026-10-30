@@ -29,6 +29,7 @@ data or make a backup before testing import, restore, conversion or deletion.
 - [ ] Test contextual fonts, colors, alignment, allergen emphasis, day spacing and title reflection. Add multiple images and test reserved text-safe columns.
 - [ ] Open an older template in the builder. Review the conversion warning, save a copy under a new name, and verify the original remains in the database and backup. Compare the copy carefully; unsupported legacy styling and layout may differ.
 - [ ] Check saving under an existing name, saving a separate copy, cancellation, unsaved-change protection, and deleting a disposable saved template.
+- [ ] Rename a saved custom template from File, cancel once, and try empty/duplicate names. Verify the existing entry is renamed without losing images or unsaved canvas edits. In Image settings and the image toolbar, rename/delete an image; cancel deletion once and save/reopen to confirm the final name or removal. Verify built-in templates remain protected and deleting an image from one template leaves other saved templates unchanged.
 ## Print and export
 
 - [ ] Compare the selected template and week in the builder, output preview, PNG, Microsoft Print to PDF and an A4 printer. Check overflow blocks output and files contain the date range.
