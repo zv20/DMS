@@ -26,6 +26,7 @@ WizardSizePercent=120
 WizardImageFile=..\DMS\Assets\logo.png
 WizardSmallImageFile=..\DMS\Assets\logo.png
 PrivilegesRequired=lowest
+UsePreviousTasks=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
@@ -44,7 +45,7 @@ Filename: "{app}\DMS.exe"; Description: "Launch DMS"; Flags: nowait postinstall 
 
 [Code]
 var
-  AdvancedOptions: TNewCheckBox;
+  AdvancedOptions, DesktopShortcut: TNewCheckBox;
   LanguagePage: TInputOptionWizardPage;
   BackupPage: TInputFileWizardPage;
   BrandLabel, TaglineLabel, HeadingLabel, DescriptionLabel: TNewStaticText;
@@ -62,9 +63,9 @@ begin
   { Keep the built-in wizard controls and accessibility, but make the first
     page a simple branded install screen. The app icon remains in the title bar. }
   WizardForm.WizardBitmapImage.Parent := WizardForm.WelcomePage;
-  WizardForm.WizardBitmapImage.Width := ScaleX(96);
-  WizardForm.WizardBitmapImage.Height := ScaleY(96);
-  WizardForm.WizardBitmapImage.Left := (WizardForm.WelcomePage.ClientWidth - ScaleX(96)) div 2;
+  WizardForm.WizardBitmapImage.Width := ScaleX(86);
+  WizardForm.WizardBitmapImage.Height := ScaleY(86);
+  WizardForm.WizardBitmapImage.Left := (WizardForm.WelcomePage.ClientWidth - ScaleX(86)) div 2;
   WizardForm.WizardBitmapImage.Top := ScaleY(3);
   WizardForm.WizardBitmapImage.Stretch := True;
   WizardForm.WelcomeLabel1.Visible := False;
@@ -78,7 +79,7 @@ begin
   BrandLabel.Width := WizardForm.WelcomePage.ClientWidth;
   BrandLabel.Height := ScaleY(24);
   BrandLabel.Left := 0;
-  BrandLabel.Top := ScaleY(97);
+  BrandLabel.Top := ScaleY(87);
   BrandLabel.Font.Size := 14;
   BrandLabel.Font.Style := [fsBold];
   BrandLabel.Font.Color := $0041250A;
@@ -91,7 +92,7 @@ begin
   TaglineLabel.Width := WizardForm.WelcomePage.ClientWidth;
   TaglineLabel.Height := ScaleY(18);
   TaglineLabel.Left := 0;
-  TaglineLabel.Top := ScaleY(119);
+  TaglineLabel.Top := ScaleY(109);
   TaglineLabel.Font.Size := 9;
   TaglineLabel.Font.Style := [fsBold];
   TaglineLabel.Font.Color := $00147EFD;
@@ -104,7 +105,7 @@ begin
   HeadingLabel.Width := WizardForm.WelcomePage.ClientWidth;
   HeadingLabel.Height := ScaleY(26);
   HeadingLabel.Left := 0;
-  HeadingLabel.Top := ScaleY(144);
+  HeadingLabel.Top := ScaleY(132);
   HeadingLabel.Font.Size := 16;
   HeadingLabel.Font.Style := [fsBold];
   HeadingLabel.Font.Color := $0041250A;
@@ -116,15 +117,23 @@ begin
   DescriptionLabel.Alignment := taCenter;
   DescriptionLabel.Caption := 'Install DMS in the default location, or choose advanced options below.';
   DescriptionLabel.Left := ScaleX(22);
-  DescriptionLabel.Top := ScaleY(177);
+  DescriptionLabel.Top := ScaleY(164);
   DescriptionLabel.Width := WizardForm.WelcomePage.ClientWidth - ScaleX(44);
-  DescriptionLabel.Height := ScaleY(40);
+  DescriptionLabel.Height := ScaleY(32);
+
+  DesktopShortcut := TNewCheckBox.Create(WizardForm.WelcomePage);
+  DesktopShortcut.Parent := WizardForm.WelcomePage;
+  DesktopShortcut.Caption := 'Create a desktop shortcut';
+  DesktopShortcut.Left := ScaleX(22);
+  DesktopShortcut.Top := WizardForm.WelcomePage.ClientHeight - ScaleY(54);
+  DesktopShortcut.Width := WizardForm.WelcomePage.ClientWidth - ScaleX(44);
+  DesktopShortcut.Checked := WizardIsTaskSelected('desktopicon');
 
   AdvancedOptions := TNewCheckBox.Create(WizardForm.WelcomePage);
   AdvancedOptions.Parent := WizardForm.WelcomePage;
   AdvancedOptions.Caption := 'Advanced options';
   AdvancedOptions.Left := ScaleX(22);
-  AdvancedOptions.Top := ScaleY(222);
+  AdvancedOptions.Top := WizardForm.WelcomePage.ClientHeight - ScaleY(28);
   AdvancedOptions.Width := WizardForm.WelcomePage.ClientWidth - ScaleX(44);
   AdvancedOptions.OnClick := @AdvancedChanged;
 
@@ -150,7 +159,11 @@ end;
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   Result := False;
-  if (PageID = wpSelectDir) or (PageID = wpSelectTasks) or
+  if PageID = wpSelectTasks then begin
+    Result := True;
+    exit;
+  end;
+  if (PageID = wpSelectDir) or
      (PageID = LanguagePage.ID) or (PageID = BackupPage.ID) then
     Result := not AdvancedOptions.Checked;
 end;
@@ -160,6 +173,11 @@ var
   BackupPath, RequestPath: String;
 begin
   Result := True;
+  if CurPageID = wpWelcome then begin
+    if DesktopShortcut.Checked then WizardSelectTasks('desktopicon')
+    else WizardSelectTasks('!desktopicon');
+    exit;
+  end;
   if CurPageID <> BackupPage.ID then exit;
   BackupPath := Trim(BackupPage.Values[0]);
   if (BackupPath <> '') and not FileExists(BackupPath) then begin

@@ -55,6 +55,11 @@ public sealed partial class MainWindow : Window
         {
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage));
+            // An opt-in signal lets the packaging check verify that the installed
+            // app reached its main window and loaded application resources.
+            var readyFile = Environment.GetEnvironmentVariable("DMS_QA_READY_FILE");
+            if (!string.IsNullOrWhiteSpace(readyFile))
+                System.IO.File.WriteAllText(readyFile, Localization.Get("MenuViewSelected"));
         }
     }
 
