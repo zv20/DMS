@@ -138,7 +138,7 @@ public sealed partial class MenuPage : Page
                 var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
                 var isDisabledWeekend = isWeekend && !_weekendPlanningEnabled;
                 var panel = new StackPanel { Spacing = 8 };
-                panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = 14, TextWrapping = TextWrapping.Wrap });
+                panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = _monthly ? 14 : 16, TextWrapping = TextWrapping.Wrap });
                 if (_monthly)
                 {
                     var names = isDisabledWeekend
@@ -146,7 +146,7 @@ public sealed partial class MenuPage : Page
                         : _entries.Where(e => e.Date.Date == day.Date).Select(e => _recipes.FirstOrDefault(r => r.Id == e.RecipeId)?.Name).Where(n => n != null);
                     var summary = string.Join("\n", names);
                     var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend };
-                    button.Click += async (_, _) => { _date = day; _monthly = false; await RefreshAsync(); };
+                    button.Click += async (_, _) => { _date = day; _monthly = false; UpdateViewButtons(); await RefreshAsync(); };
                     panel.Children.Add(button);
                 }
                 else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot));
@@ -170,10 +170,10 @@ public sealed partial class MenuPage : Page
         var current = _recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
         var category = await _database.GetMenuCategoryAsync(day, slot) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
-        panel.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 12 });
-        var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), HorizontalAlignment = HorizontalAlignment.Stretch };
-        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 13, DisplayMemberPath = "Name", TextMemberPath = "Name" };
-        var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap };
+        panel.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14 });
+        var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, DisplayMemberPath = "Name", TextMemberPath = "Name" };
+        var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
         bool saving = false;
         async Task SaveAsync(Recipe? recipe)
         {
