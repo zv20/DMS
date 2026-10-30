@@ -15,7 +15,7 @@ record of completed testing. The earlier migration plans are retained under
    menus, weekend days, conversion, page overflow, saved templates, PNG, PDF
    and a physical A4 printer. Repair and retest issues found.
 4. **Review browser-to-native parity.** Compare real workflows against the
-   retained browser app. Prioritize confirmed gaps and explicitly review
+   browser app on its separate branch. Prioritize confirmed gaps and explicitly review
    legacy template conversion and missing styling before claiming parity.
 5. **Harden delivery.** Verify the published app and installer on a clean
    Windows environment, confirm tag-specific CI and release assets, and

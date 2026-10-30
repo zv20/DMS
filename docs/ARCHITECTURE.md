@@ -1,7 +1,7 @@
 # DMS native architecture
 
-This guide describes the WinUI 3 source on `winUI3`. The browser app remains a
-behavioral reference; its historical architecture is in [the archive](archive/ARCHITECTURE.md).
+This guide describes the WinUI 3 source on `winUI3`. The earlier browser app
+is available on a separate branch; its historical architecture is in [the archive](archive/ARCHITECTURE.md).
 Source descriptions here do not establish Windows build or runtime results.
 
 ## Application and navigation
@@ -29,9 +29,7 @@ and requires confirmation before deleting those templates and the image together
 
 Browser JSON import handles legacy fields and maps recipe references. Imports
 and restores should be tested using disposable data and a separate backup;
-feature parity and failure recovery require Windows verification. Browser
-files under `index.html`, `js/`, `css/`, `img/` and `data/` remain useful as
-reference and may support the separate demo workflow.
+feature parity and failure recovery require Windows verification.
 
 ## Menu, templates and output
 

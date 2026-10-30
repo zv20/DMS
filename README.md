@@ -1,8 +1,7 @@
 # DMS
 
 DMS is a local-first menu planning application. The active native Windows app
-uses WinUI 3, C# and SQLite; the browser application remains in the repository as
-a behavioral and import reference.
+uses WinUI 3, C# and SQLite. The earlier browser application is available on its separate branch.
 
 - [Windows development and build](WINDOWS_DEVELOPMENT.md)
 - [Windows verification checklist](WINDOWS_DEBUG_CHECKLIST.md)
