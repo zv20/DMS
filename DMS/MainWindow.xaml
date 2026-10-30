@@ -45,6 +45,16 @@
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
 
+            <NavigationView.Resources>
+                <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
+                <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
+                <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
+                <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="White" />
+                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
+                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
+                <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
+            </NavigationView.Resources>
+
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="NavMenu" Tag="menu" Content="Menu Planner">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Calendar" /></NavigationViewItem.Icon>
