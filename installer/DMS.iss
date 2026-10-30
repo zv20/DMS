@@ -61,21 +61,21 @@ procedure InitializeWizard();
 begin
   { Keep the built-in wizard controls and accessibility, but make the first
     page a simple branded install screen. The app icon remains in the title bar. }
-  WizardForm.WizardBitmapImage.Parent := WizardForm.WelcomePage.Surface;
+  WizardForm.WizardBitmapImage.Parent := WizardForm.WelcomePage;
   WizardForm.WizardBitmapImage.Width := ScaleX(96);
   WizardForm.WizardBitmapImage.Height := ScaleY(96);
-  WizardForm.WizardBitmapImage.Left := (WizardForm.WelcomePage.SurfaceWidth - ScaleX(96)) div 2;
+  WizardForm.WizardBitmapImage.Left := (WizardForm.WelcomePage.ClientWidth - ScaleX(96)) div 2;
   WizardForm.WizardBitmapImage.Top := ScaleY(3);
   WizardForm.WizardBitmapImage.Stretch := True;
   WizardForm.WelcomeLabel1.Visible := False;
   WizardForm.WelcomeLabel2.Visible := False;
 
   BrandLabel := TNewStaticText.Create(WizardForm.WelcomePage);
-  BrandLabel.Parent := WizardForm.WelcomePage.Surface;
+  BrandLabel.Parent := WizardForm.WelcomePage;
   BrandLabel.Caption := 'DMS';
   BrandLabel.AutoSize := False;
   BrandLabel.Alignment := taCenter;
-  BrandLabel.Width := WizardForm.WelcomePage.SurfaceWidth;
+  BrandLabel.Width := WizardForm.WelcomePage.ClientWidth;
   BrandLabel.Height := ScaleY(24);
   BrandLabel.Left := 0;
   BrandLabel.Top := ScaleY(97);
@@ -84,11 +84,11 @@ begin
   BrandLabel.Font.Color := $0041250A;
 
   TaglineLabel := TNewStaticText.Create(WizardForm.WelcomePage);
-  TaglineLabel.Parent := WizardForm.WelcomePage.Surface;
+  TaglineLabel.Parent := WizardForm.WelcomePage;
   TaglineLabel.Caption := 'KITCHEN MENU PLANNING';
   TaglineLabel.AutoSize := False;
   TaglineLabel.Alignment := taCenter;
-  TaglineLabel.Width := WizardForm.WelcomePage.SurfaceWidth;
+  TaglineLabel.Width := WizardForm.WelcomePage.ClientWidth;
   TaglineLabel.Height := ScaleY(18);
   TaglineLabel.Left := 0;
   TaglineLabel.Top := ScaleY(119);
@@ -97,11 +97,11 @@ begin
   TaglineLabel.Font.Color := $00147EFD;
 
   HeadingLabel := TNewStaticText.Create(WizardForm.WelcomePage);
-  HeadingLabel.Parent := WizardForm.WelcomePage.Surface;
+  HeadingLabel.Parent := WizardForm.WelcomePage;
   HeadingLabel.Caption := 'DMS is ready to install';
   HeadingLabel.AutoSize := False;
   HeadingLabel.Alignment := taCenter;
-  HeadingLabel.Width := WizardForm.WelcomePage.SurfaceWidth;
+  HeadingLabel.Width := WizardForm.WelcomePage.ClientWidth;
   HeadingLabel.Height := ScaleY(26);
   HeadingLabel.Left := 0;
   HeadingLabel.Top := ScaleY(144);
@@ -110,22 +110,22 @@ begin
   HeadingLabel.Font.Color := $0041250A;
 
   DescriptionLabel := TNewStaticText.Create(WizardForm.WelcomePage);
-  DescriptionLabel.Parent := WizardForm.WelcomePage.Surface;
+  DescriptionLabel.Parent := WizardForm.WelcomePage;
   DescriptionLabel.AutoSize := False;
   DescriptionLabel.WordWrap := True;
   DescriptionLabel.Alignment := taCenter;
   DescriptionLabel.Caption := 'Install DMS in the default location, or choose advanced options below.';
   DescriptionLabel.Left := ScaleX(22);
   DescriptionLabel.Top := ScaleY(177);
-  DescriptionLabel.Width := WizardForm.WelcomePage.SurfaceWidth - ScaleX(44);
+  DescriptionLabel.Width := WizardForm.WelcomePage.ClientWidth - ScaleX(44);
   DescriptionLabel.Height := ScaleY(40);
 
   AdvancedOptions := TNewCheckBox.Create(WizardForm.WelcomePage);
-  AdvancedOptions.Parent := WizardForm.WelcomePage.Surface;
+  AdvancedOptions.Parent := WizardForm.WelcomePage;
   AdvancedOptions.Caption := 'Advanced options';
   AdvancedOptions.Left := ScaleX(22);
   AdvancedOptions.Top := ScaleY(222);
-  AdvancedOptions.Width := WizardForm.WelcomePage.SurfaceWidth - ScaleX(44);
+  AdvancedOptions.Width := WizardForm.WelcomePage.ClientWidth - ScaleX(44);
   AdvancedOptions.OnClick := @AdvancedChanged;
 
   LanguagePage := CreateInputOptionPage(wpSelectTasks, 'DMS language',
