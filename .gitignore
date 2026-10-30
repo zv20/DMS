@@ -1,12 +1,8 @@
-# Data directories
-/data/pictures
-/data/archive
-
 # Mac system files
 .DS_Store
 **/.DS_Store
 
-# Node modules (if added in future)
+# Local Node dependencies
 node_modules/
 
 # IDE files
@@ -18,10 +14,50 @@ node_modules/
 
 # Build files
 dist/
-/out/
+build/
 /release/
-KitchenPro-DMS-GitHub/
+/artifacts/
 
-# Electron runtime data (the production app uses the per-user application-data folder)
-.electron/
-/data/images
+# .NET Build outputs
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.msix
+*.appx
+*.appxbundle
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NuGet
+packages/
+*.nupkg
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+
+# MSIX
+AppPackages/
+PackageStore/
+
+# Local settings
+appsettings.Development.json
+*.local.json
+
+# Logs
+*.log

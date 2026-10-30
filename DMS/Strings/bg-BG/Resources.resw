@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="NavAllergens.Content" xml:space="preserve"><value>Алергени</value></data>
+  <data name="NavIngredients.Content" xml:space="preserve"><value>Съставки</value></data>
+  <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
+  <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
+  <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TemplateOutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
+  <data name="TemplateOutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="TemplateOutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
+  <data name="TemplateOutputPng" xml:space="preserve"><value>Запази като PNG</value></data>
+  <data name="TemplateOutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="TemplateOutputReady" xml:space="preserve"><value>Готово за печат или експорт.</value></data>
+  <data name="TemplateOutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
+  <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
+  <data name="TemplateOutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="TemplateOutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
+  <data name="TemplateOutputWeek" xml:space="preserve"><value>Седмица</value></data>
+  <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
+  <data name="TemplateOutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
+  <data name="TplBuilderTitle" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TplLegacyConvertTitle" xml:space="preserve"><value>Отваряне на стар шаблон</value></data>
+  <data name="TplLegacyConvertMessage" xml:space="preserve"><value>Ще се създаде приблизително копие за редактиране. Разположението, форматирането, изображенията и някои настройки може да се различават. Оригиналният шаблон остава непроменен; запазете копието с ново име и проверете прегледа преди печат.</value></data>
+  <data name="TplLegacyConvertButton" xml:space="preserve"><value>Отваряне на копие</value></data>
+  <data name="TplLegacyCopySuffix" xml:space="preserve"><value>копие</value></data>
+  <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Настройки на страницата</value></data>
+  <data name="TplBuilderImagesSection" xml:space="preserve"><value>Настройки на изображенията</value></data>
+  <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Височина на дните</value></data>
+  <data name="TplBuilderPageSection" xml:space="preserve"><value>Страница</value></data>
+  <data name="TplBuilderFooterHint" xml:space="preserve"><value>Бележките споделят страницата с менюто. При липса на място се показва предупреждение.</value></data>
+  <data name="TplBuilderNotice" xml:space="preserve"><value>Заключително съобщение</value></data>
+  <data name="TplBuilderAddDecoration" xml:space="preserve"><value>Добави декоративно изображение</value></data>
+  <data name="TplBuilderRemoveDecoration" xml:space="preserve"><value>Премахни избраното изображение</value></data>
+  <data name="TplBuilderDecorations" xml:space="preserve"><value>Декоративни изображения</value></data>
+  <data name="TplBuilderImageX" xml:space="preserve"><value>Разстояние на изображението отляво</value></data>
+  <data name="TplBuilderImageY" xml:space="preserve"><value>Разстояние на изображението отгоре</value></data>
+  <data name="TplBuilderImageWidth" xml:space="preserve"><value>Ширина на изображението</value></data>
+  <data name="TplBuilderImageHeight" xml:space="preserve"><value>Височина на изображението</value></data>
+  <data name="TplBuilderReserveSpace" xml:space="preserve"><value>Остави колона за изображението, без застъпване на текста</value></data>
+  <data name="TplBuilderHeaderReflection" xml:space="preserve"><value>Отражение на заглавието</value></data>
+  <data name="TplBuilderDaySpacing" xml:space="preserve"><value>Разстояние между дните</value></data>
+  <data name="TplBuilderMealSpacing" xml:space="preserve"><value>Разстояние между ястията</value></data>
+  <data name="TplBuilderAllergenAccent" xml:space="preserve"><value>Цвят на съставките с алергени (всички дни)</value></data>
+  <data name="TplBuilderDayHint" xml:space="preserve"><value>Изберете ден, за да фиксирате височината му; останалите се настройват автоматично.</value></data>
+  <data name="TplBuilderFontSize" xml:space="preserve"><value>Предпочитан размер на шрифта</value></data>
+  <data name="TplBuilderMinimumFont" xml:space="preserve"><value>Минимален размер на шрифта</value></data>
+  <data name="TplBuilderNameRequired" xml:space="preserve"><value>Въведете име на шаблона.</value></data>
+  <data name="TplBuilderFooterLimit" xml:space="preserve"><value>Долният колонтитул може да съдържа най-много три реда.</value></data>
+  <data name="TplBuilderFontInvalid" xml:space="preserve"><value>Минималният размер на шрифта не може да надвишава предпочитания.</value></data>
+  <data name="TplBuilderNameExists" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
+  <data name="TplBuilderAllowShrink" xml:space="preserve"><value>Позволи намаляване на текста до минималния размер</value></data>
+  <data name="TplBuilderHideEmptyDays" xml:space="preserve"><value>Скрий дните без ястия</value></data>
+  <data name="TplBuilderNoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица. Добавете ястия преди печат или експорт.</value></data>
+  <data name="TplBuilderHeaderColor" xml:space="preserve"><value>Цвят на заглавието</value></data>
+  <data name="TplBuilderBodyColor" xml:space="preserve"><value>Цвят на менюто</value></data>
+  <data name="TplBuilderFooterColor" xml:space="preserve"><value>Цвят на долния колонтитул</value></data>
+  <data name="TplBuilderBackgroundColor" xml:space="preserve"><value>Фон на страницата</value></data>
+  <data name="TplBuilderBackgroundImage" xml:space="preserve"><value>Изберете изображение за фон</value></data>
+  <data name="TplBuilderClearBackground" xml:space="preserve"><value>Премахни фоновото изображение</value></data>
+  <data name="TplBuilderImageOpacity" xml:space="preserve"><value>Непрозрачност на изображението</value></data>
+  <data name="TemplateOutputImageSizeError" xml:space="preserve"><value>Изображението не може да бъде създадено с необходимата разделителна способност.</value></data>
+  <data name="TplBuilderOverflow" xml:space="preserve"><value>Част от съдържанието не се побира. Превъртете в червения ден, за да видите всички ястия; променете шаблона или менюто преди печат или експорт.</value></data>
+  <data name="TplBuilderScaffoldNote" xml:space="preserve"><value>Експериментално седмично оформление за A4. Редактирането, запазването и печатът все още не са налични.</value></data>
+  <data name="Text_Planning_53aa11.Text" xml:space="preserve"><value>📅 Планиране</value></data>
+  <data name="Text_Weekend_Planning_53aa12.Header" xml:space="preserve"><value>Меню за уикенда</value></data>
+  <data name="Text_Weekend_Planning_53aa12.OffContent" xml:space="preserve"><value>Само делнични дни</value></data>
+  <data name="Text_Weekend_Planning_53aa12.OnContent" xml:space="preserve"><value>Включи събота и неделя</value></data>
+  <data name="Text_Weekend_Planning_Hint_53aa13.Text" xml:space="preserve"><value>Дните през уикенда са изключени по подразбиране.</value></data>
+  <data name="String_Text_About_3e3c26" xml:space="preserve"><value>ℹ️ За приложението</value></data>
+  <data name="Text_About_3e3c26.Text" xml:space="preserve"><value>ℹ️ За приложението</value></data>
+  <data name="String_Text_Accent_Color_2bef52" xml:space="preserve"><value>Акцентен цвят</value></data>
+  <data name="Text_Accent_Color_2bef52.Header" xml:space="preserve"><value>Акцентен цвят</value></data>
+  <data name="Text_Add_61cc55" xml:space="preserve"><value>Добави</value></data>
+  <data name="Text_Add_Allergen_3f78ad" xml:space="preserve"><value>Добавяне на алерген</value></data>
+  <data name="String_Text_Add_Allergen_a0c094" xml:space="preserve"><value>➕ Добавяне на алерген</value></data>
+  <data name="Text_Add_Allergen_a0c094.Content" xml:space="preserve"><value>➕ Добавяне на алерген</value></data>
+  <data name="Text_Add_Ingredient_73b214" xml:space="preserve"><value>Добавяне на съставка</value></data>
+  <data name="String_Text_Add_Ingredient_bc5b34" xml:space="preserve"><value>➕ Добавяне на съставка</value></data>
+  <data name="Text_Add_Ingredient_bc5b34.Content" xml:space="preserve"><value>➕ Добавяне на съставка</value></data>
+  <data name="String_Text_Add_Recipe_09855a" xml:space="preserve"><value>➕ Добавяне на рецепта</value></data>
+  <data name="Text_Add_Recipe_09855a.Content" xml:space="preserve"><value>➕ Добавяне на рецепта</value></data>
+  <data name="Text_Add_Recipe_aa1d63" xml:space="preserve"><value>Добавяне на рецепта</value></data>
+  <data name="Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715" xml:space="preserve"><value>Име на алергена (напр. глутен, мляко, ядки)</value></data>
+  <data name="Text_Allergen_name_is_required_94160b" xml:space="preserve"><value>Въведете име на алергена</value></data>
+  <data name="Text_Allergens_50e1ad" xml:space="preserve"><value>⚠️ Алергени</value></data>
+  <data name="Text_Allergens_537261" xml:space="preserve"><value>Алергени</value></data>
+  <data name="String_Text_Appearance_be0e75" xml:space="preserve"><value>🎨 Външен вид</value></data>
+  <data name="Text_Appearance_be0e75.Text" xml:space="preserve"><value>🎨 Външен вид</value></data>
+  <data name="Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете този алерген?</value></data>
+  <data name="Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази съставка?</value></data>
+  <data name="Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази рецепта?</value></data>
+  <data name="String_Text_Background_Color_874df4" xml:space="preserve"><value>Цвят на фона</value></data>
+  <data name="Text_Background_Color_874df4.Text" xml:space="preserve"><value>Цвят на фона</value></data>
+  <data name="Text_Backup_Complete_8b1525" xml:space="preserve"><value>Резервното копие е създадено</value></data>
+  <data name="Text_Backup_Failed_fcbe1a" xml:space="preserve"><value>Неуспешно създаване на резервно копие</value></data>
+  <data name="String_Text_Blue_b81516" xml:space="preserve"><value>🔵 Син</value></data>
+  <data name="Text_Blue_b81516.Content" xml:space="preserve"><value>🔵 Син</value></data>
+  <data name="String_Text_Built_for_meal_planning_and_recipe_management_49409f" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
+  <data name="Text_Built_for_meal_planning_and_recipe_management_49409f.Text" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
+  <data name="String_Text_Bulgarian_a7a43a" xml:space="preserve"><value>Български</value></data>
+  <data name="Text_Bulgarian_a7a43a.Content" xml:space="preserve"><value>Български</value></data>
+  <data name="Text_Calories_3e62ec" xml:space="preserve"><value>Калории</value></data>
+  <data name="Text_Cancel_77dfd2" xml:space="preserve"><value>Отказ</value></data>
+  <data name="Text_Cannot_Delete_9635fe" xml:space="preserve"><value>Изтриването е невъзможно</value></data>
+  <data name="Text_Category_a3c686" xml:space="preserve"><value>Категория</value></data>
+  <data name="Text_Choose_a_background_color_96d4ed" xml:space="preserve"><value>Изберете цвят на фона:</value></data>
+  <data name="Text_Clear_719ea3" xml:space="preserve"><value>Изчисти</value></data>
+  <data name="String_Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" xml:space="preserve"><value>Натиснете „Добавяне на алерген“, за да добавите първия алерген</value></data>
+  <data name="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d.Text" xml:space="preserve"><value>Натиснете „Добавяне на алерген“, за да добавите първия алерген</value></data>
+  <data name="String_Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" xml:space="preserve"><value>Натиснете „Добавяне на съставка“, за да добавите първата съставка</value></data>
+  <data name="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b.Text" xml:space="preserve"><value>Натиснете „Добавяне на съставка“, за да добавите първата съставка</value></data>
+  <data name="String_Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" xml:space="preserve"><value>Натиснете „Добавяне на рецепта“, за да добавите първата рецепта</value></data>
+  <data name="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d.Text" xml:space="preserve"><value>Натиснете „Добавяне на рецепта“, за да добавите първата рецепта</value></data>
+  <data name="Text_Color_1d0c83" xml:space="preserve"><value>Цвят</value></data>
+  <data name="Text_Cooking_steps_c3f1dd" xml:space="preserve"><value>Стъпки за приготвяне...</value></data>
+  <data name="String_Text_Create_Backup_67fc28" xml:space="preserve"><value>💾 Създаване на резервно копие</value></data>
+  <data name="Text_Create_Backup_67fc28.Content" xml:space="preserve"><value>💾 Създаване на резервно копие</value></data>
+  <data name="Text_Create_allergens_first_from_the_Allergens_page_e8f6ca" xml:space="preserve"><value>Първо добавете алергени от страницата „Алергени“.</value></data>
+  <data name="String_Text_Dark_9cc40d" xml:space="preserve"><value>🌙 Тъмна</value></data>
+  <data name="Text_Dark_9cc40d.Content" xml:space="preserve"><value>🌙 Тъмна</value></data>
+  <data name="String_Text_Data_Management_a0cf50" xml:space="preserve"><value>💾 Управление на данни</value></data>
+  <data name="Text_Data_Management_a0cf50.Text" xml:space="preserve"><value>💾 Управление на данни</value></data>
+  <data name="String_Text_Database_0038a1" xml:space="preserve"><value>🗄️ База данни</value></data>
+  <data name="Text_Database_0038a1.Text" xml:space="preserve"><value>🗄️ База данни</value></data>
+  <data name="Text_Database_backup_created_successfully_2b90d0" xml:space="preserve"><value>Резервното копие на базата данни е създадено успешно.</value></data>
+  <data name="Text_Database_indexes_rebuilt_1fdc67" xml:space="preserve"><value>Индексите на базата данни са преизградени.</value></data>
+  <data name="Text_Database_optimized_successfully_4e0a52" xml:space="preserve"><value>Базата данни е оптимизирана успешно.</value></data>
+  <data name="Text_Database_restored_successfully_Reopen_any_active_pages__48a860" xml:space="preserve"><value>Базата данни е възстановена успешно. Отворете отново страниците, за да обновите данните им.</value></data>
+  <data name="String_Text_Delete_8fb0a9" xml:space="preserve"><value>🗑️ Изтриване</value></data>
+  <data name="Text_Delete_8fb0a9.Content" xml:space="preserve"><value>🗑️ Изтриване</value></data>
+  <data name="Text_Delete_Allergen_7b0000" xml:space="preserve"><value>Изтриване на алерген</value></data>
+  <data name="Text_Delete_Ingredient_79a0ab" xml:space="preserve"><value>Изтриване на съставка</value></data>
+  <data name="Text_Delete_Recipe_f011c8" xml:space="preserve"><value>Изтриване на рецепта</value></data>
+  <data name="Text_Delete_Template_c07327" xml:space="preserve"><value>Изтриване на шаблон</value></data>
+  <data name="String_Text_Delete_f6fdbe" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="Text_Dessert_40f9c1" xml:space="preserve"><value>Десерт</value></data>
+  <data name="Text_Done_e9b450" xml:space="preserve"><value>Готово</value></data>
+  <data name="String_Text_Edit_530164" xml:space="preserve"><value>Редактирай</value></data>
+  <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Редактирай</value></data>
+  <data name="Text_Edit_Allergen_54f3c1" xml:space="preserve"><value>Редактиране на алерген</value></data>
+  <data name="Text_Edit_Ingredient_098e94" xml:space="preserve"><value>Редактиране на съставка</value></data>
+  <data name="Text_Edit_Recipe_838f93" xml:space="preserve"><value>Редактиране на рецепта</value></data>
+  <data name="String_Text_English_531f36" xml:space="preserve"><value>English</value></data>
+  <data name="Text_English_531f36.Content" xml:space="preserve"><value>English</value></data>
+  <data name="Text_Error_7f2f6a" xml:space="preserve"><value>Грешка</value></data>
+  <data name="Text_Export_Complete_7f2e84" xml:space="preserve"><value>Експортирането завърши</value></data>
+  <data name="String_Text_Export_Data_f821f4" xml:space="preserve"><value>📤 Експортиране на данни</value></data>
+  <data name="Text_Export_Data_f821f4.Content" xml:space="preserve"><value>📤 Експортиране на данни</value></data>
+  <data name="Text_Export_Failed_6aa6a7" xml:space="preserve"><value>Неуспешно експортиране</value></data>
+  <data name="String_Text_Footer_Text_9b1025" xml:space="preserve"><value>Текст в долния колонтитул</value></data>
+  <data name="Text_Footer_Text_9b1025.Text" xml:space="preserve"><value>Текст в долния колонтитул</value></data>
+  <data name="String_Text_Green_f66748" xml:space="preserve"><value>🟢 Зелен</value></data>
+  <data name="Text_Green_f66748.Content" xml:space="preserve"><value>🟢 Зелен</value></data>
+  <data name="String_Text_Header_Text_f7593e" xml:space="preserve"><value>Текст в горния колонтитул</value></data>
+  <data name="Text_Header_Text_f7593e.Text" xml:space="preserve"><value>Текст в горния колонтитул</value></data>
+  <data name="Text_Hex_Color_52aa66" xml:space="preserve"><value>Код на цвета</value></data>
+  <data name="Text_Import_Complete_a5cb9b" xml:space="preserve"><value>Импортирането завърши</value></data>
+  <data name="Text_Import_Data_0021d0" xml:space="preserve"><value>Импортиране на данни</value></data>
+  <data name="String_Text_Import_Data_a624f8" xml:space="preserve"><value>📥 Импортиране на данни</value></data>
+  <data name="Text_Import_Data_a624f8.Content" xml:space="preserve"><value>📥 Импортиране на данни</value></data>
+  <data name="Text_Import_Failed_4c1ed2" xml:space="preserve"><value>Неуспешно импортиране</value></data>
+  <data name="Text_Import_d6fbc9" xml:space="preserve"><value>Импортирай</value></data>
+  <data name="Text_Ingredient_name_6f2b4d" xml:space="preserve"><value>Име на съставката</value></data>
+  <data name="Text_Ingredient_name_is_required_468003" xml:space="preserve"><value>Въведете име на съставката</value></data>
+  <data name="Text_Ingredients_6db95c" xml:space="preserve"><value>🥕 Съставки</value></data>
+  <data name="Text_Ingredients_f9e84e" xml:space="preserve"><value>Съставки</value></data>
+  <data name="Text_Instructions_ed58f2" xml:space="preserve"><value>Начин на приготвяне</value></data>
+  <data name="String_Text_Language_89b86a" xml:space="preserve"><value>Език</value></data>
+  <data name="LanguageReloadTitle" xml:space="preserve"><value>Промяна на езика?</value></data>
+  <data name="LanguageReloadMessage" xml:space="preserve"><value>Прозорецът на приложението ще се презареди, за да се приложи избраният език. Желаете ли да продължите?</value></data>
+  <data name="LanguageReloadConfirm" xml:space="preserve"><value>Презареди</value></data>
+  <data name="Text_Language_89b86a.Header" xml:space="preserve"><value>Език</value></data>
+  <data name="String_Text_Language_Region_5d78df" xml:space="preserve"><value>🌐 Език и регион</value></data>
+  <data name="Text_Language_Region_5d78df.Text" xml:space="preserve"><value>🌐 Език и регион</value></data>
+  <data name="String_Text_Light_200060" xml:space="preserve"><value>☀️ Светла</value></data>
+  <data name="Text_Light_200060.Content" xml:space="preserve"><value>☀️ Светла</value></data>
+  <data name="String_Text_Live_Preview_a62da9" xml:space="preserve"><value>Предварителен преглед</value></data>
+  <data name="Text_Live_Preview_a62da9.Text" xml:space="preserve"><value>Предварителен преглед</value></data>
+  <data name="String_Text_Load_Template_19a6c5" xml:space="preserve"><value>📂 Зареждане на шаблон</value></data>
+  <data name="Text_Load_Template_19a6c5.Content" xml:space="preserve"><value>📂 Зареждане на шаблон</value></data>
+  <data name="Text_Main_62bce9" xml:space="preserve"><value>Основно</value></data>
+  <data name="Text_Menu_Planner_5afa46" xml:space="preserve"><value>📅 Планиране на меню</value></data>
+  <data name="String_Text_Monthly_d31edb" xml:space="preserve"><value>Месечно</value></data>
+  <data name="Text_Monthly_d31edb.Content" xml:space="preserve"><value>Месечно</value></data>
+  <data name="String_Text_My_Weekly_Menu_Template_b71513" xml:space="preserve"><value>Моят шаблон за седмично меню</value></data>
+  <data name="Text_My_Weekly_Menu_Template_b71513.PlaceholderText" xml:space="preserve"><value>Моят шаблон за седмично меню</value></data>
+  <data name="Text_Name_d145bb" xml:space="preserve"><value>Име *</value></data>
+  <data name="String_Text_New_Template_27a75c" xml:space="preserve"><value>➕ Нов шаблон</value></data>
+  <data name="Text_New_Template_27a75c.Content" xml:space="preserve"><value>➕ Нов шаблон</value></data>
+  <data name="Text_No_allergens_238938" xml:space="preserve"><value>Няма алергени</value></data>
+  <data name="String_Text_No_allergens_yet_6f883b" xml:space="preserve"><value>Все още няма алергени</value></data>
+  <data name="Text_No_allergens_yet_6f883b.Text" xml:space="preserve"><value>Все още няма алергени</value></data>
+  <data name="String_Text_No_ingredients_yet_affb49" xml:space="preserve"><value>Все още няма съставки</value></data>
+  <data name="Text_No_ingredients_yet_affb49.Text" xml:space="preserve"><value>Все още няма съставки</value></data>
+  <data name="String_Text_No_recipes_yet_0e52a2" xml:space="preserve"><value>Все още няма рецепти</value></data>
+  <data name="Text_No_recipes_yet_0e52a2.Text" xml:space="preserve"><value>Все още няма рецепти</value></data>
+  <data name="Text_OK_9ce3bd" xml:space="preserve"><value>Добре</value></data>
+  <data name="String_Text_Open_Data_Folder_7f4c75" xml:space="preserve"><value>📁 Отваряне на папката с данни</value></data>
+  <data name="Text_Open_Data_Folder_7f4c75.Content" xml:space="preserve"><value>📁 Отваряне на папката с данни</value></data>
+  <data name="String_Text_Orange_ed1c11" xml:space="preserve"><value>🟠 Оранжев</value></data>
+  <data name="Text_Orange_ed1c11.Content" xml:space="preserve"><value>🟠 Оранжев</value></data>
+  <data name="Text_Other_6e6a6f" xml:space="preserve"><value>Друго</value></data>
+  <data name="Text_Pick_Background_Color_cb6f4f" xml:space="preserve"><value>Избор на цвят на фона</value></data>
+  <data name="String_Text_Pick_Color_aa15a3" xml:space="preserve"><value>Избор на цвят</value></data>
+  <data name="Text_Pick_Color_aa15a3.Content" xml:space="preserve"><value>Избор на цвят</value></data>
+  <data name="Text_Plan_menu_0031d0" xml:space="preserve"><value>＋ Планиране на меню</value></data>
+  <data name="Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b" xml:space="preserve"><value>Въведете валиден код на цвят (напр. #3498db)</value></data>
+  <data name="Text_Portion_Size_4c79c6" xml:space="preserve"><value>Грамаж</value></data>
+  <data name="String_Text_Prepared_with_care_by_DMS_082a78" xml:space="preserve"><value>Изготвено с грижа от DMS</value></data>
+  <data name="Text_Prepared_with_care_by_DMS_082a78.PlaceholderText" xml:space="preserve"><value>Изготвено с грижа от DMS</value></data>
+  <data name="Text_Preset_templates_cannot_be_deleted_0a9c55" xml:space="preserve"><value>Вградените шаблони не могат да бъдат изтрити</value></data>
+  <data name="String_Text_Purple_a14112" xml:space="preserve"><value>🟣 Лилав</value></data>
+  <data name="Text_Purple_a14112.Content" xml:space="preserve"><value>🟣 Лилав</value></data>
+  <data name="Text_Recipe_is_in_use_d1249f" xml:space="preserve"><value>Рецептата се използва</value></data>
+  <data name="Text_Recipe_name_bcb84d" xml:space="preserve"><value>Име на рецептата</value></data>
+  <data name="Text_Recipe_name_is_required_75e015" xml:space="preserve"><value>Въведете име на рецептата</value></data>
+  <data name="Text_Recipes_b1513f" xml:space="preserve"><value>🍽️ Рецепти</value></data>
+  <data name="String_Text_Red_6f6efe" xml:space="preserve"><value>🔴 Червен</value></data>
+  <data name="Text_Red_6f6efe.Content" xml:space="preserve"><value>🔴 Червен</value></data>
+  <data name="String_Text_Reindex_70aa2b" xml:space="preserve"><value>📇 Преизграждане на индексите</value></data>
+  <data name="Text_Reindex_70aa2b.Content" xml:space="preserve"><value>📇 Преизграждане на индексите</value></data>
+  <data name="Text_Reindex_Complete_6eb4e1" xml:space="preserve"><value>Индексите са преизградени</value></data>
+  <data name="Text_Reindex_failed_f6512f" xml:space="preserve"><value>Неуспешно преизграждане на индексите</value></data>
+  <data name="Text_Restore_3cbe6d" xml:space="preserve"><value>Възстанови</value></data>
+  <data name="String_Text_Restore_Backup_0e7200" xml:space="preserve"><value>🔄 Възстановяване на резервно копие</value></data>
+  <data name="Text_Restore_Backup_0e7200.Content" xml:space="preserve"><value>🔄 Възстановяване на резервно копие</value></data>
+  <data name="Text_Restore_Complete_6ad3ae" xml:space="preserve"><value>Възстановяването завърши</value></data>
+  <data name="Text_Restore_Database_04f0a6" xml:space="preserve"><value>Възстановяване на базата данни</value></data>
+  <data name="Text_Restore_Failed_b6bce7" xml:space="preserve"><value>Неуспешно възстановяване</value></data>
+  <data name="String_Text_Save_Template_913ba6" xml:space="preserve"><value>💾 Запазване на шаблон</value></data>
+  <data name="Text_Save_Template_913ba6.Content" xml:space="preserve"><value>💾 Запазване на шаблон</value></data>
+  <data name="Text_Save_efc007" xml:space="preserve"><value>Запази</value></data>
+  <data name="Text_Saved_499dc6" xml:space="preserve"><value>✓ Запазено</value></data>
+  <data name="String_Text_Search_allergens_c1743a" xml:space="preserve"><value>Търсене на алергени...</value></data>
+  <data name="Text_Search_allergens_c1743a.PlaceholderText" xml:space="preserve"><value>Търсене на алергени...</value></data>
+  <data name="String_Text_Search_ingredients_540992" xml:space="preserve"><value>Търсене на съставки...</value></data>
+  <data name="Text_Search_ingredients_540992.PlaceholderText" xml:space="preserve"><value>Търсене на съставки...</value></data>
+  <data name="String_Text_Search_recipes_ba1ee4" xml:space="preserve"><value>Търсене на рецепти...</value></data>
+  <data name="Text_Search_recipes_ba1ee4.PlaceholderText" xml:space="preserve"><value>Търсене на рецепти...</value></data>
+  <data name="Text_Select_category_a2a5ca" xml:space="preserve"><value>Изберете категория</value></data>
+  <data name="Text_Select_recipe_c2831b" xml:space="preserve"><value>Изберете рецепта…</value></data>
+  <data name="String_Text_Select_template_3b4dfd" xml:space="preserve"><value>Изберете шаблон...</value></data>
+  <data name="Text_Select_template_3b4dfd.PlaceholderText" xml:space="preserve"><value>Изберете шаблон...</value></data>
+  <data name="Text_Settings_c7f73b" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Text_Soup_e373ab" xml:space="preserve"><value>Супа</value></data>
+  <data name="String_Text_System_Default_363703" xml:space="preserve"><value>💻 Системна настройка</value></data>
+  <data name="Text_System_Default_363703.Content" xml:space="preserve"><value>💻 Системна настройка</value></data>
+  <data name="String_Text_Teal_ee7cb9" xml:space="preserve"><value>🟢 Синьо-зелен</value></data>
+  <data name="Text_Teal_ee7cb9.Content" xml:space="preserve"><value>🟢 Синьо-зелен</value></data>
+  <data name="Text_Template_Builder_86b3c0" xml:space="preserve"><value>📝 Редактор на шаблони</value></data>
+  <data name="String_Text_Template_Name_48c554" xml:space="preserve"><value>Име на шаблона</value></data>
+  <data name="Text_Template_Name_48c554.Text" xml:space="preserve"><value>Име на шаблона</value></data>
+  <data name="Text_Template_name_is_required_0e3ca2" xml:space="preserve"><value>Въведете име на шаблона</value></data>
+  <data name="Text_The_selected_file_is_not_a_DMS_backup_df8918" xml:space="preserve"><value>Избраният файл не е резервно копие на DMS.</value></data>
+  <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Тема</value></data>
+  <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Тема</value></data>
+  <data name="ThemeClassicDefault.Content" xml:space="preserve"><value>По подразбиране</value></data>
+  <data name="ThemeClassicAccentHint" xml:space="preserve"><value>Темата по подразбиране използва оригиналния оранжев цвят на DMS. Изберете светла, тъмна или системна тема, за да използвате друг акцентен цвят.</value></data>
+  <data name="Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0" xml:space="preserve"><value>Импортираните данни ще бъдат добавени към съществуващите. Дублираните имена ще бъдат пропуснати. Продължаване?</value></data>
+  <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>Това ще оптимизира размера на базата данни. Продължаване?</value></data>
+  <data name="String_Text_Today_24345a" xml:space="preserve"><value>Днес</value></data>
+  <data name="Text_Today_24345a.Content" xml:space="preserve"><value>Днес</value></data>
+  <data name="Text_Vacuum_5fe15d" xml:space="preserve"><value>Оптимизирай</value></data>
+  <data name="Text_Vacuum_Complete_43b708" xml:space="preserve"><value>Оптимизирането завърши</value></data>
+  <data name="Text_Vacuum_Database_0a823e" xml:space="preserve"><value>Оптимизиране на базата данни</value></data>
+  <data name="String_Text_Vacuum_Database_c3255f" xml:space="preserve"><value>🧹 Оптимизиране на базата данни</value></data>
+  <data name="Text_Vacuum_Database_c3255f.Content" xml:space="preserve"><value>🧹 Оптимизиране на базата данни</value></data>
+  <data name="String_Text_Week_Structure_0043f9" xml:space="preserve"><value>Структура на седмицата</value></data>
+  <data name="Text_Week_Structure_0043f9.Text" xml:space="preserve"><value>Структура на седмицата</value></data>
+  <data name="String_Text_Weekly_158f3d" xml:space="preserve"><value>Седмично</value></data>
+  <data name="Text_Weekly_158f3d.Content" xml:space="preserve"><value>Седмично</value></data>
+  <data name="String_Text_Weekly_Menu_69fa95" xml:space="preserve"><value>Седмично меню</value></data>
+  <data name="Text_Weekly_Menu_69fa95.PlaceholderText" xml:space="preserve"><value>Седмично меню</value></data>
+  <data name="Text_e_g_2_servings_29af24" xml:space="preserve"><value>напр. 250 г</value></data>
+  <data name="DatabaseInfo" xml:space="preserve"><value>Местоположение: {0}&#10;Размер: {1}&#10;Последна промяна: {2:g}</value></data>
+  <data name="ExportSummary" xml:space="preserve"><value>Експортирани: {0} рецепти, {1} съставки, {2} алергени, {3} позиции в менюто, {4} шаблона.</value></data>
+  <data name="ImportSummary" xml:space="preserve"><value>Импортирани: {0} рецепти, {1} съставки, {2} алергени, {3} позиции в менюто, {4} шаблона.</value></data>
+  <data name="ErrorDetail" xml:space="preserve"><value>Грешка: {0}</value></data>
+  <data name="MenuLoadError" xml:space="preserve"><value>Менюто не може да бъде заредено: {0}</value></data>
+  <data name="SaveError" xml:space="preserve"><value>Неуспешно запазване: {0}</value></data>
+  <data name="RestoreWarning" xml:space="preserve"><value>⚠️ Това ще ЗАМЕНИ текущата база данни. Всички текущи данни ще бъдат загубени. Сигурни ли сте?</value></data>
+  <data name="DeleteTemplatePrompt" xml:space="preserve"><value>Изтриване на шаблона „{0}“?</value></data>
+  <data name="RecipeFor" xml:space="preserve"><value>Рецепта за {0}</value></data>
+  <data name="AllergenGluten" xml:space="preserve"><value>Зърнени култури, съдържащи глутен</value></data>
+  <data name="AllergenCrustaceans" xml:space="preserve"><value>Ракообразни</value></data>
+  <data name="AllergenEggs" xml:space="preserve"><value>Яйца</value></data>
+  <data name="AllergenFish" xml:space="preserve"><value>Риба</value></data>
+  <data name="AllergenPeanuts" xml:space="preserve"><value>Фъстъци</value></data>
+  <data name="AllergenSoy" xml:space="preserve"><value>Соя</value></data>
+  <data name="AllergenMilk" xml:space="preserve"><value>Мляко</value></data>
+  <data name="AllergenNuts" xml:space="preserve"><value>Ядки</value></data>
+  <data name="AllergenCelery" xml:space="preserve"><value>Целина</value></data>
+  <data name="AllergenMustard" xml:space="preserve"><value>Горчица</value></data>
+  <data name="AllergenSesame" xml:space="preserve"><value>Сусам</value></data>
+  <data name="AllergenSulphites" xml:space="preserve"><value>Серен диоксид и сулфити</value></data>
+  <data name="AllergenLupin" xml:space="preserve"><value>Лупина</value></data>
+  <data name="AllergenMolluscs" xml:space="preserve"><value>Мекотели</value></data>
+  <data name="StartupRecipes" xml:space="preserve"><value>Зареждане на рецепти...</value></data>
+  <data name="StartupIngredients" xml:space="preserve"><value>Подготвяне на съставки...</value></data>
+  <data name="MenuOutput.Content" xml:space="preserve"><value>Печат / Експорт</value></data>
+  <data name="RecipeAllCategories" xml:space="preserve"><value>Всички категории</value></data>
+  <data name="RecipeSortName" xml:space="preserve"><value>Име</value></data>
+  <data name="RecipeSortCategory" xml:space="preserve"><value>Категория</value></data>
+  <data name="RecipeSortPortion" xml:space="preserve"><value>Грамаж</value></data>
+  <data name="RecipeSortAllergens" xml:space="preserve"><value>Алергени</value></data>
+  <data name="RecipeNoMatches" xml:space="preserve"><value>Няма намерени рецепти</value></data>
+  <data name="TplNew" xml:space="preserve"><value>Нов</value></data>
+  <data name="TplFileMenu" xml:space="preserve"><value>Файл</value></data>
+  <data name="TplSavedTemplates" xml:space="preserve"><value>Запазени шаблони</value></data>
+  <data name="TplRenameTemplate" xml:space="preserve"><value>Преименувай шаблона…</value></data>
+  <data name="TplDeleteTemplate" xml:space="preserve"><value>Изтрий шаблона…</value></data>
+  <data name="TplRenameAction" xml:space="preserve"><value>Преименувай</value></data>
+  <data name="TplAssetNameRequired" xml:space="preserve"><value>Въведете име.</value></data>
+  <data name="TplAssetNameExists" xml:space="preserve"><value>Това име вече се използва.</value></data>
+  <data name="TplImageRename" xml:space="preserve"><value>Преименувай изображението на страницата…</value></data>
+  <data name="TplImageName" xml:space="preserve"><value>Име на изображението</value></data>
+  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Да се премахне ли този блок с изображение от текущата страница? Запазете шаблона, за да запазите промяната. Споделеното изображение остава в библиотеката с изображения.</value></data>
+  <data name="TplImageChangesPending" xml:space="preserve"><value>Запазете шаблона, за да запазите промените по изображенията.</value></data>
+  <data name="TplAddImage" xml:space="preserve"><value>Добави изображение…</value></data>
+  <data name="TplImageBlock" xml:space="preserve"><value>Изображение</value></data>
+  <data name="TplImageBackground" xml:space="preserve"><value>Фоново изображение</value></data>
+  <data name="TplImageInvalid" xml:space="preserve"><value>Избраното изображение не може да бъде прочетено.</value></data>
+  <data name="TplImageAlignHorizontal" xml:space="preserve"><value>Хоризонтално подравняване към страницата</value></data>
+  <data name="TplImageAlignVertical" xml:space="preserve"><value>Вертикално подравняване към страницата</value></data>
+  <data name="TplImageTop" xml:space="preserve"><value>Горе</value></data>
+  <data name="TplImageMiddle" xml:space="preserve"><value>В средата</value></data>
+  <data name="TplImageBottom" xml:space="preserve"><value>Долу</value></data>
+  <data name="TplImageLockAspect" xml:space="preserve"><value>Запази пропорциите на изображението</value></data>
+  <data name="TplImageTransparency" xml:space="preserve"><value>Прозрачност (%)</value></data>
+  <data name="TplImageBehindText" xml:space="preserve"><value>Зад текста</value></data>
+  <data name="TplImageInFront" xml:space="preserve"><value>Пред текста</value></data>
+  <data name="TplImageKeepClear" xml:space="preserve"><value>Остави място за текста</value></data>
+  <data name="TplImageTextPlacement" xml:space="preserve"><value>Разположение на изображението спрямо текста</value></data>
+  <data name="TplImageMoveBackward" xml:space="preserve"><value>Постави зад другите изображения в този слой</value></data>
+  <data name="TplImageMoveForward" xml:space="preserve"><value>Постави пред другите изображения в този слой</value></data>
+  <data name="TplImageDelete" xml:space="preserve"><value>Премахни от страницата</value></data>
+  <data name="TplSave" xml:space="preserve"><value>Запази шаблона</value></data>
+  <data name="TplDelete" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="TplSelect" xml:space="preserve"><value>Изберете шаблон</value></data>
+  <data name="TplName" xml:space="preserve"><value>Име на шаблона</value></data>
+  <data name="TplHeader" xml:space="preserve"><value>Текст на заглавието</value></data>
+  <data name="TplFooter" xml:space="preserve"><value>Текст в края</value></data>
+  <data name="TplFont" xml:space="preserve"><value>Шрифт</value></data>
+  <data name="TplLayout" xml:space="preserve"><value>Оформление</value></data>
+  <data name="TplHeaderSize" xml:space="preserve"><value>Размер на заглавието</value></data>
+  <data name="TplMealSize" xml:space="preserve"><value>Размер на ястията</value></data>
+  <data name="TplFooterSize" xml:space="preserve"><value>Размер на текста в края</value></data>
+  <data name="TplHeaderColor" xml:space="preserve"><value>Цвят на заглавието (hex)</value></data>
+  <data name="TplBackgroundColor" xml:space="preserve"><value>Цвят на фона (hex)</value></data>
+  <data name="TplImage" xml:space="preserve"><value>Изберете изображение</value></data>
+  <data name="TplImageClear" xml:space="preserve"><value>Премахване на изображението</value></data>
+  <data name="TplOpacity" xml:space="preserve"><value>Прозрачност на изображението</value></data>
+  <data name="TplShowHeader" xml:space="preserve"><value>Покажи заглавието</value></data>
+  <data name="TplShowDate" xml:space="preserve"><value>Покажи датите</value></data>
+  <data name="TplShowIngredients" xml:space="preserve"><value>Покажи съставките</value></data>
+  <data name="TplShowCalories" xml:space="preserve"><value>Покажи калориите</value></data>
+  <data name="TplShowPortions" xml:space="preserve"><value>Покажи грамажа</value></data>
+  <data name="TplShowFooter" xml:space="preserve"><value>Покажи текста в края</value></data>
+  <data name="TplPreview" xml:space="preserve"><value>Преглед на седмица</value></data>
+  <data name="TplLeft" xml:space="preserve"><value>Вляво</value></data>
+  <data name="TplCenter" xml:space="preserve"><value>По средата</value></data>
+  <data name="TplRight" xml:space="preserve"><value>Вдясно</value></data>
+  <data name="TplCompact" xml:space="preserve"><value>Компактно</value></data>
+  <data name="TplDetailed" xml:space="preserve"><value>Подробно</value></data>
+  <data name="TplTwoColumns" xml:space="preserve"><value>Подробно, две колони</value></data>
+  <data name="TplLegacy" xml:space="preserve"><value>Този импортиран шаблон запазва оригиналните настройки от браузъра. Форматираният текст и слоевете с изображения може да изискват настройка.</value></data>
+  <data name="TplInvalidColor" xml:space="preserve"><value>Въведете цветове във формат #RRGGBB.</value></data>
+  <data name="TplSaved" xml:space="preserve"><value>Шаблонът е запазен.</value></data>
+  <data name="TplNoMeals" xml:space="preserve"><value>Няма планирани ястия за тази седмица.</value></data>
+  <data name="TplDeletePrompt" xml:space="preserve"><value>Да се изтрие ли избраният шаблон?</value></data>
+  <data name="TplTooLarge" xml:space="preserve"><value>Изберете изображение, по-малко от 1 MB.</value></data>
+  <data name="TplDuplicate" xml:space="preserve"><value>Вече съществува шаблон с това име.</value></data>
+  <data name="TplPresetSave" xml:space="preserve"><value>Изберете ново име, за да запазите копие на вграден шаблон.</value></data>
+  <data name="TplError" xml:space="preserve"><value>Действието не може да бъде завършено: {0}</value></data>
+  <data name="OutputTitle" xml:space="preserve"><value>Извеждане на меню</value></data>
+  <data name="OutputNoRecipes" xml:space="preserve"><value>Добавете рецепти към менюто за делничен ден, преди да отпечатате.</value></data>
+  <data name="OutputClose" xml:space="preserve"><value>Затвори</value></data>
+  <data name="OutputDefaultTemplate" xml:space="preserve"><value>Стандартен шаблон</value></data>
+  <data name="OutputWeek" xml:space="preserve"><value>Седмица</value></data>
+  <data name="OutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
+  <data name="OutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="OutputSavePdf" xml:space="preserve"><value>Запази PDF</value></data>
+  <data name="OutputSaveImage" xml:space="preserve"><value>Запази изображение</value></data>
+  <data name="OutputPreviewExport" xml:space="preserve"><value>Преглед и извеждане на меню</value></data>
+  <data name="OutputPreparing" xml:space="preserve"><value>Подготвяне на прегледа...</value></data>
+  <data name="OutputImageTooLarge" xml:space="preserve"><value>Изображението в шаблона е твърде голямо. Изберете по-малко изображение в редактора.</value></data>
+  <data name="OutputPreviewFailed" xml:space="preserve"><value>Прегледът не може да бъде зареден.</value></data>
+  <data name="OutputWebViewRequired" xml:space="preserve"><value>Прегледът изисква WebView2: </value></data>
+  <data name="OutputPdfSaved" xml:space="preserve"><value>PDF е запазен.</value></data>
+  <data name="OutputPdfFailed" xml:space="preserve"><value>Неуспешно запазване на PDF.</value></data>
+  <data name="OutputImageOverflow" xml:space="preserve"><value>Менюто е по-дълго от едно изображение. Използвайте PDF или намалете размера на текста.</value></data>
+  <data name="OutputImageSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="OutputMargins" xml:space="preserve"><value>Полета</value></data>
+  <data name="ImportMissingIngredients" xml:space="preserve"><value>В резервното копие липсват {0} препратки към съставки. Проверете рецептите: {1}. Оригиналните препратки са запазени.</value></data>
+  <data name="ImportErrorRecovery" xml:space="preserve"><value>Импортирането е неуспешно: {0}&#10;Възможно е част от промените да са приложени. Резервното копие на базата данни преди импортирането е тук: {1}</value></data>
+  <data name="RecipeDiscardTitle" xml:space="preserve"><value>Да се отхвърлят ли промените?</value></data>
+  <data name="RecipeDiscardMessage" xml:space="preserve"><value>Имате незапазени промени по рецептата. Да бъдат ли отхвърлени?</value></data>
+  <data name="RecipeDiscardButton" xml:space="preserve"><value>Отхвърли</value></data>
+  <data name="RecipeCloseEditor" xml:space="preserve"><value>Затвори редактора на рецепта</value></data>
+  <data name="SideEditorClose" xml:space="preserve"><value>Затвори редактора</value></data>
+  <data name="SideEditorDiscardMessage" xml:space="preserve"><value>Имате незапазени промени. Да бъдат ли отхвърлени?</value></data>
+  <data name="RecipeRemoveIngredient" xml:space="preserve"><value>Премахни съставката: {0}</value></data>
+  <data name="TplHeaderAlignment" xml:space="preserve"><value>Подравняване на заглавието</value></data>
+  <data name="TplFooterAlignment" xml:space="preserve"><value>Подравняване на долния текст</value></data>
+  <data name="TplEditHeader" xml:space="preserve"><value>Натиснете, за да редактирате заглавието</value></data>
+  <data name="TplEditFooter" xml:space="preserve"><value>Натиснете, за да редактирате долния текст</value></data>
+  <data name="TplHeaderBold" xml:space="preserve"><value>Получерно заглавие</value></data>
+  <data name="TplHeaderItalic" xml:space="preserve"><value>Заглавие в курсив</value></data>
+  <data name="TplHeaderUnderline" xml:space="preserve"><value>Подчертано заглавие</value></data>
+  <data name="TplSelectElement" xml:space="preserve"><value>Изберете текст на страницата</value></data>
+  <data name="TplSelectedElement" xml:space="preserve"><value>Избран текст</value></data>
+  <data name="TplSelectedSize" xml:space="preserve"><value>Размер на текста</value></data>
+  <data name="TplSelectedColor" xml:space="preserve"><value>Цвят на текста</value></data>
+  <data name="TplSelectionDate" xml:space="preserve"><value>Период от дати</value></data>
+  <data name="TplSelectionEditableHint" xml:space="preserve"><value>Текст в шаблона: щракнете и пишете, за да го промените.</value></data>
+  <data name="TplSelectionLinkedHint" xml:space="preserve"><value>Генерирано от избраната седмица. Форматирайте тук; променяйте менюто в планирането.</value></data>
+  <data name="TplSelectionImageHint" xml:space="preserve"><value>Изображение в шаблона: преместете, преоразмерете или променете външния му вид.</value></data>
+  <data name="TplWeekendLayout" xml:space="preserve"><value>Промяна на уикенда</value></data>
+  <data name="TplWeekendEnableWarning" xml:space="preserve"><value>Включването на уикенда заменя позициите на всички дни със седемдневно оформление. Заглавието, долният колонтитул и изображенията остават на мястото си. Промяната може да се отмени.</value></data>
+  <data name="TplWeekendDisableWarning" xml:space="preserve"><value>Да се скрият ли дните през уикенда? Позициите на дните ще бъдат запазени.</value></data>
+  <data name="TplWeekendEnable" xml:space="preserve"><value>Седем дни</value></data>
+  <data name="TplWeekendDisable" xml:space="preserve"><value>Делнични дни</value></data>
+  <data name="TplSizingTitle" xml:space="preserve"><value>Размер на блока за меню</value></data>
+  <data name="TplSizingMode" xml:space="preserve"><value>Побиране на съдържанието</value></data>
+  <data name="TplSizingFixed" xml:space="preserve"><value>Фиксиран размер</value></data>
+  <data name="TplSizingFlexible" xml:space="preserve"><value>Гъвкава височина</value></data>
+  <data name="TplSizingShrink" xml:space="preserve"><value>Намаляване на текста</value></data>
+  <data name="TplSizingMinHeight" xml:space="preserve"><value>Минимална височина</value></data>
+  <data name="TplSizingMaxHeight" xml:space="preserve"><value>Максимална височина</value></data>
+  <data name="TplSizingMinScale" xml:space="preserve"><value>Минимален размер на текста (%)</value></data>
+  <data name="TplSizingAllDays" xml:space="preserve"><value>Тези настройки важат за блоковете на всички дни.</value></data>
+  <data name="TplSizingApply" xml:space="preserve"><value>Приложи</value></data>
+  <data name="TplApplyWeekdayStyle" xml:space="preserve"><value>Приложи този стил на текста за всички дни</value></data>
+  <data name="TplAddText" xml:space="preserve"><value>Добави текстово поле</value></data>
+  <data name="TplNewText" xml:space="preserve"><value>Нов текст</value></data>
+  <data name="TplRemoveText" xml:space="preserve"><value>Премахни текстовото поле</value></data>
+  <data name="TplLockPosition" xml:space="preserve"><value>Заключи позицията и размера</value></data>
+  <data name="TplUnlockPosition" xml:space="preserve"><value>Отключи позицията и размера</value></data>
+  <data name="TplZoom" xml:space="preserve"><value>Мащаб на страницата</value></data>
+  <data name="TplZoomIn" xml:space="preserve"><value>Увеличаване</value></data>
+  <data name="TplZoomOut" xml:space="preserve"><value>Намаляване</value></data>
+  <data name="TplZoomReset" xml:space="preserve"><value>Мащаб 100%</value></data>
+  <data name="TplDefaultColors" xml:space="preserve"><value>Основни цветове</value></data>
+  <data name="TplRecentColors" xml:space="preserve"><value>Последни цветове</value></data>
+  <data name="TplResetColor" xml:space="preserve"><value>Нулиране</value></data>
+  <data name="TplBold" xml:space="preserve"><value>Получер</value></data>
+  <data name="TplItalic" xml:space="preserve"><value>Курсив</value></data>
+  <data name="TplUnderline" xml:space="preserve"><value>Подчертаване</value></data>
+  <data name="TplPageOptions" xml:space="preserve"><value>Настройки на страницата и шаблона</value></data>
+  <data name="TplVisibilityOptions" xml:space="preserve"><value>Показване или скриване на подробности за менюто</value></data>
+  <data name="TplDayHeading" xml:space="preserve"><value>Заглавие на деня</value></data>
+  <data name="TplMenuNames" xml:space="preserve"><value>Имена на ястията</value></data>
+  <data name="TplIngredientText" xml:space="preserve"><value>Съставки</value></data>
+  <data name="TplAllergenText" xml:space="preserve"><value>Алергени</value></data>
+  <data name="TplEnableCanvas" xml:space="preserve"><value>Включване на подвижно оформление</value></data>
+  <data name="TplCanvasHint" xml:space="preserve"><value>Изберете обект и плъзнете дръжката му, за да го преместите или преоразмерите. Обектите се подравняват по водачи; използвайте стрелките за прецизно движение.</value></data>
+  <data name="TplMoveObject" xml:space="preserve"><value>Преместване на обект</value></data>
+  <data name="TplResizeObject" xml:space="preserve"><value>Промяна на размера</value></data>
+  <data name="TplBringForward" xml:space="preserve"><value>Преместване напред</value></data>
+  <data name="TplSendBackward" xml:space="preserve"><value>Преместване назад</value></data>
+  <data name="TplRemoveLayer" xml:space="preserve"><value>Премахване на избраното изображение</value></data>
+  <data name="TplEditText" xml:space="preserve"><value>Редактиране на текст</value></data>
+  <data name="TplLayoutImage" xml:space="preserve"><value>Изображение</value></data>
+  <data name="TplLayoutOverflow" xml:space="preserve"><value>Част от съдържанието излиза извън рамката или страницата. Коригирайте оформлението преди печат.</value></data>
+  <data name="OutputCanvasMargins" xml:space="preserve"><value>Шаблоните с подвижно оформление използват запазените позиции; полетата за печат не ги преместват.</value></data>
+  <data name="OutputLayoutWarning" xml:space="preserve"><value>Част от текста се застъпва или излиза извън рамката или страницата. Прегледайте шаблона преди печат.</value></data>
+  <data name="OutputLayoutCheckFailed" xml:space="preserve"><value>Оформлението не можа да бъде проверено. Прегледайте внимателно преди печат.</value></data>
+  <data name="TplImageLimit" xml:space="preserve"><value>Изберете изображение до 4 MB.</value></data>
+  <data name="TplImagesTotalLimit" xml:space="preserve"><value>Общият размер на данните за изображенията надвишава 16 MB. Премахнете изображения или изберете по-малки файлове.</value></data>
+  <data name="TplMenuAutoFit" xml:space="preserve"><value>Разрешаване на разширяване на блока с менюто</value></data>
+  <data name="TplMenuAutoFitHint" xml:space="preserve"><value>Позволява на блоковете с меню за деня да се разширяват в запазените си граници при по-дълги имена на рецепти. Другите блокове не се преместват автоматично.</value></data>
+  <data name="TplUndo" xml:space="preserve"><value>Отмяна на визуална промяна в шаблона</value></data>
+  <data name="TplRedo" xml:space="preserve"><value>Повторение на визуална промяна в шаблона</value></data>
+  <data name="TplRichEdit" xml:space="preserve"><value>Редактиране на форматиран текст в заглавие или долен колонтитул</value></data>
+  <data name="TplAppearance" xml:space="preserve"><value>Външен вид на блока</value></data>
+  <data name="TplAppearanceBackground" xml:space="preserve"><value>Цвят на фон (#RRGGBB, по избор)</value></data>
+  <data name="TplAppearanceBorder" xml:space="preserve"><value>Цвят на рамката (#RRGGBB, по избор)</value></data>
+  <data name="TplAppearanceThickness" xml:space="preserve"><value>Дебелина на рамката</value></data>
+  <data name="TplAppearanceRadius" xml:space="preserve"><value>Радиус на ъглите</value></data>
+  <data name="TplAppearancePadding" xml:space="preserve"><value>Вътрешно отстояние</value></data>
+  <data name="TplImageFit" xml:space="preserve"><value>Побиране на изображението</value></data>
+  <data name="TplFitFill" xml:space="preserve"><value>Запълване</value></data>
+  <data name="TplFitContain" xml:space="preserve"><value>Побиране</value></data>
+  <data name="TplFitCover" xml:space="preserve"><value>Покриване</value></data>
+  <data name="TplLockAspect" xml:space="preserve"><value>Заключване на пропорциите на изображението</value></data>
+  <data name="TplRotation" xml:space="preserve"><value>Завъртане на изображението</value></data>
+  <data name="TplImageAlt" xml:space="preserve"><value>Описание на изображението</value></data>
+  <data name="TplImageLibrary" xml:space="preserve"><value>Библиотека с изображения…</value></data>
+  <data name="TplImageLibraryEmpty" xml:space="preserve"><value>Библиотеката с изображения е празна. Използвайте Файл → Добави изображение, за да изберете изображение и да го запазите тук за повторна употреба.</value></data>
+  <data name="TplLibraryRename" xml:space="preserve"><value>Преименувай споделеното изображение…</value></data>
+  <data name="TplLibraryDelete" xml:space="preserve"><value>Изтрий от библиотеката…</value></data>
+  <data name="TplImageUsedBy" xml:space="preserve"><value>Запазени шаблони, използващи изображението</value></data>
+  <data name="TplImageUnused" xml:space="preserve"><value>Няма запазени шаблони, които използват това изображение.</value></data>
+  <data name="TplImageInsert" xml:space="preserve"><value>Добави към страницата</value></data>
+  <data name="TplLibraryDeletePrompt" xml:space="preserve"><value>Да се изтрие ли окончателно „{0}“ от библиотеката с изображения?</value></data>
+  <data name="TplLibraryDeleteTemplatesWarning" xml:space="preserve"><value>Изтриването на изображението ще наруши следните запазени шаблони. Ако продължите, тези шаблони също ще бъдат изтрити:</value></data>
+  <data name="TplLibraryOpenTemplateWarning" xml:space="preserve"><value>Отвореният шаблон е в този списък. Останалото съдържание на платното ще се запази като незаписан шаблон без това изображение.</value></data>
+  <data name="TplLibraryOpenCanvasWarning" xml:space="preserve"><value>Изображението ще бъде премахнато и от отвореното платно. Другите ви промени по платното ще се запазят.</value></data>
+  <data name="TplLibraryDeleteAll" xml:space="preserve"><value>Изтрий изображението и шаблоните</value></data>
+  <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Изображението и запазените шаблони са изтрити. Запазете останалото платно като нов шаблон, ако искате да го съхраните.</value></data>
+  <data name="TplLibraryDeleted" xml:space="preserve"><value>Изображението и посочените запазени шаблони са изтрити.</value></data>
+  <data name="DataArchiveFileType" xml:space="preserve"><value>Архив с данни на DMS</value></data>
+  <data name="ExportImageCount" xml:space="preserve"><value>Включени споделени изображения: {0}.</value></data>
+  <data name="TplAssetNameTooLong" xml:space="preserve"><value>Използвайте име до 255 знака.</value></data>
+  <data name="ImportImageCount" xml:space="preserve"><value>Възстановени споделени изображения: {0}.</value></data>
+  <data name="TplPageImages" xml:space="preserve"><value>Изображения на страницата</value></data>
+  <data name="TplOpenTemplate" xml:space="preserve"><value>Отвори шаблон</value></data>
+  <data name="FullBackupHint.Text" xml:space="preserve"><value>Запазете всички данни, включително шаблоните и оригиналните изображения, в един файл. Възстановяването заменя текущите данни.</value></data>
+  <data name="MenuViewSelected" xml:space="preserve"><value>Избран изглед</value></data>
+</root>

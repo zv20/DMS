@@ -1,0 +1,21 @@
+<Application
+    x:Class="DMS.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DMS">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- These are changed by Settings without recreating the application window. -->
+            <SolidColorBrush x:Key="DmsAccentBrush" Color="#FF0067C0" />
+            <SolidColorBrush x:Key="DmsAccentHoverBrush" Color="#FF1A78C8" />
+            <SolidColorBrush x:Key="DmsAccentPressedBrush" Color="#FF005AAB" />
+            <SolidColorBrush x:Key="DmsClassicPageOverlayBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DmsClassicSurfaceOverlayBrush" Color="Transparent" />
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

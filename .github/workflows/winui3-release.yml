@@ -1,0 +1,73 @@
+name: Release WinUI 3
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without the v prefix (for example 0.0.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, test, package, and release (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore, build, and test
+        run: |
+          dotnet restore DMS.sln -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/check-localization.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish self-contained x64 app
+        run: >-
+          dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64
+          --self-contained true -p:Platform=x64
+          --output artifacts/DMS-win-x64
+
+      - name: Build portable ZIP
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_VERSION.TrimStart('v')
+          Compress-Archive -Path artifacts/DMS-win-x64/* -DestinationPath "artifacts/DMS-$version-portable.zip"
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress --yes
+
+      - name: Build branded Setup EXE
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_VERSION.TrimStart('v')
+          & iscc installer/DMS.iss "/DMyAppVersion=$version"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DMS ${{ env.RELEASE_VERSION }}
+          prerelease: ${{ contains(env.RELEASE_VERSION, '-') }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/installer/*.exe
+            artifacts/*-portable.zip
