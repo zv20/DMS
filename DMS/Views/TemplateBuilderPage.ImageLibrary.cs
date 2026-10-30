@@ -17,8 +17,7 @@ public sealed partial class TemplateBuilderPage
         _saving = true;
         UpdateInlineText();
         EndImageDrag();
-        UpdateImageActions();
-        string? selectedId = ImageInList()?.AssetId;
+        string? selectedId = SelectedCanvasImage()?.AssetId;
         try
         {
             while (true)
@@ -31,9 +30,17 @@ public sealed partial class TemplateBuilderPage
                     return;
                 }
 
-                var selector = new ComboBox { Header = L.Get("TplImageName"), HorizontalAlignment = HorizontalAlignment.Stretch };
-                foreach (var asset in assets) selector.Items.Add(new ComboBoxItem { Tag = asset.Id, Content = asset.Name });
-                var preview = new Image { Height = 120, Stretch = Stretch.Uniform };
+                var selector = new GridView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 260, MinWidth = 320,
+                    HorizontalAlignment = HorizontalAlignment.Stretch, IsItemClickEnabled = false };
+                foreach (var asset in assets)
+                {
+                    var thumbnail = new Image { Width = 100, Height = 80, Stretch = Stretch.Uniform };
+                    var tile = new StackPanel { Width = 110, Spacing = 4 };
+                    tile.Children.Add(thumbnail);
+                    tile.Children.Add(new TextBlock { Text = asset.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+                    selector.Items.Add(new GridViewItem { Tag = asset.Id, Content = tile });
+                    _ = LoadThumbnailAsync(asset.Id, thumbnail);
+                }
                 var usage = new TextBlock { TextWrapping = TextWrapping.Wrap };
                 var rename = new Button { Content = L.Get("TplLibraryRename"), HorizontalAlignment = HorizontalAlignment.Stretch,
                     HorizontalContentAlignment = HorizontalAlignment.Stretch, ContentTemplate = (DataTemplate)Resources["SettingsLabelTemplate"] };
@@ -42,7 +49,7 @@ public sealed partial class TemplateBuilderPage
                 var actions = new StackPanel { Spacing = 8 };
                 actions.Children.Add(rename); actions.Children.Add(delete);
                 var content = new StackPanel { Spacing = 12, MinWidth = 260 };
-                content.Children.Add(selector); content.Children.Add(preview);
+                content.Children.Add(selector);
                 content.Children.Add(new TextBlock { Text = L.Get("TplImageUsedBy"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
                 content.Children.Add(new ScrollViewer { Content = usage, MaxHeight = 150, HorizontalScrollMode = ScrollMode.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
                 content.Children.Add(actions);
@@ -54,8 +61,8 @@ public sealed partial class TemplateBuilderPage
                 {
                     var currentGeneration = ++generation;
                     dialog.IsPrimaryButtonEnabled = rename.IsEnabled = delete.IsEnabled = false;
-                    preview.Source = null; usage.Text = "";
-                    if (selector.SelectedItem is not ComboBoxItem { Tag: string id }) return;
+                    usage.Text = "";
+                    if (selector.SelectedItem is not GridViewItem { Tag: string id }) return;
                     try
                     {
                         var image = await _database.GetTemplateImageAsync(id);
@@ -68,7 +75,6 @@ public sealed partial class TemplateBuilderPage
                         var bitmap = new BitmapImage { DecodePixelWidth = 256 };
                         await bitmap.SetSourceAsync(stream);
                         if (currentGeneration != generation) return;
-                        preview.Source = bitmap;
                         dialog.IsPrimaryButtonEnabled = true;
                     }
                     catch (Exception ex)
@@ -77,13 +83,13 @@ public sealed partial class TemplateBuilderPage
                     }
                 }
                 selector.SelectionChanged += async (_, _) => await LoadSelectionAsync();
-                selector.SelectedItem = selector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId)) ?? selector.Items[0];
+                selector.SelectedItem = selector.Items.OfType<GridViewItem>().FirstOrDefault(item => Equals(item.Tag, selectedId)) ?? selector.Items[0];
                 rename.Click += (_, _) => { action = "rename"; dialog.Hide(); };
                 delete.Click += (_, _) => { action = "delete"; dialog.Hide(); };
                 if (await dialog.ShowAsync() == ContentDialogResult.Primary) action = "insert";
                 // Ignore any preview read finishing after this dialog has closed.
                 ++generation;
-                if (selector.SelectedItem is not ComboBoxItem { Tag: string chosenId } || action.Length == 0) return;
+                if (selector.SelectedItem is not GridViewItem { Tag: string chosenId } || action.Length == 0) return;
                 selectedId = chosenId;
                 var selected = assets.First(asset => asset.Id == chosenId);
                 if (action == "rename")
@@ -108,7 +114,21 @@ public sealed partial class TemplateBuilderPage
             }
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-        finally { _saving = false; UpdateImageActions(); }
+        finally { _saving = false; }
+    }
+
+    private async Task LoadThumbnailAsync(string id, Image target)
+    {
+        try
+        {
+            var asset = await _database.GetTemplateImageAsync(id);
+            if (asset == null) return;
+            using var stream = await OpenLibraryImageAsync(asset.Data);
+            var bitmap = new BitmapImage { DecodePixelWidth = 120 };
+            await bitmap.SetSourceAsync(stream);
+            target.Source = bitmap;
+        }
+        catch { /* Keep the name visible if an image cannot be decoded. */ }
     }
 
     private static async Task<InMemoryRandomAccessStream> OpenLibraryImageAsync(byte[] bytes)

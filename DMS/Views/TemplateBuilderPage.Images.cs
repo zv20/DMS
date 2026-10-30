@@ -25,10 +25,7 @@ public sealed partial class TemplateBuilderPage
 
     private void InitializeImageInteraction()
     {
-        RenameImageButton.Content = L.Get("TplImageRename");
-        DeleteImageButton.Content = L.Get("TplImageDelete");
         ImageLibraryMenuItem.Text = L.Get("TplImageLibrary");
-        ImageLibraryButton.Content = L.Get("TplImageLibrary");
         SelectionOutline.PointerPressed += (_, e) => BeginImageDrag(e);
         SelectionOutline.PointerMoved += (_, e) =>
         {
@@ -116,7 +113,7 @@ public sealed partial class TemplateBuilderPage
             PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-        finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; UpdateImageActions(); }
+        finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; }
     }
 
     private void PlaceLibraryImage(TemplateImageAsset asset, double sourceWidth, double sourceHeight)
@@ -134,48 +131,24 @@ public sealed partial class TemplateBuilderPage
         _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
         _imageToReveal = image.Id;
         RefreshDecorationList(image.Id);
-        ImagesHeading.IsExpanded = true;
         BuildContextTools(); Render();
     }
 
     private void RefreshDecorationList(string? selectedId = null)
     {
-        var wasBinding = _binding; _binding = true;
-        DecorationSelector.Items.Clear();
+        PageImagesMenu.Items.Clear();
         foreach (var image in _document.DecorativeImages)
-            DecorationSelector.Items.Add(new ComboBoxItem { Tag = image.Id, Content = string.IsNullOrWhiteSpace(image.AltText) ? L.Get("TplImageBlock") : image.AltText });
-        DecorationSelector.IsEnabled = DecorationSelector.Items.Count > 0;
-        DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, selectedId));
-        _binding = wasBinding;
-        UpdateImageActions();
-    }
-
-    private void SelectImageInList(string id)
-    {
-        var wasBinding = _binding; _binding = true;
-        DecorationSelector.SelectedItem = DecorationSelector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, id));
-        _binding = wasBinding;
-        UpdateImageActions();
-    }
-
-    private TemplateImage? ImageInList() => DecorationSelector.SelectedItem is ComboBoxItem { Tag: string id }
-        ? _document.DecorativeImages.FirstOrDefault(image => image.Id == id) : null;
-
-    private void UpdateImageActions()
-    {
-        RenameImageButton.IsEnabled = DeleteImageButton.IsEnabled = ImageInList() != null && !_saving;
-    }
-
-    private void DecorationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_binding || DecorationSelector.SelectedItem is not ComboBoxItem { Tag: string id }) return;
-        UpdateImageActions();
-        var key = $"image:{id}";
-        if (FindAnchor(PageHost, key) is { } anchor)
         {
-            SelectCanvasBlock(key, anchor);
-            anchor.StartBringIntoView();
+            var item = new MenuFlyoutItem { Text = string.IsNullOrWhiteSpace(image.AltText) ? L.Get("TplImageBlock") : image.AltText };
+            var id = image.Id;
+            item.Click += (_, _) =>
+            {
+                var key = $"image:{id}";
+                if (FindAnchor(PageHost, key) is { } anchor) { SelectCanvasBlock(key, anchor); anchor.StartBringIntoView(); }
+            };
+            PageImagesMenu.Items.Add(item);
         }
+        PageImagesMenu.IsEnabled = PageImagesMenu.Items.Count > 0;
     }
 
     private void RevealNewImage()
@@ -268,20 +241,10 @@ public sealed partial class TemplateBuilderPage
         AddImageAction("TplImageDelete", "🗑", async () => await DeleteImageAsync(image));
     }
 
-    private async void RenameImage_Click(object sender, RoutedEventArgs e)
-    {
-        if (ImageInList() is { } image) await RenameImageAsync(image);
-    }
-
-    private async void DeleteImage_Click(object sender, RoutedEventArgs e)
-    {
-        if (ImageInList() is { } image) await DeleteImageAsync(image);
-    }
-
     private async Task RenameImageAsync(TemplateImage image)
     {
         if (_saving || _switching || !_document.DecorativeImages.Contains(image)) return;
-        _saving = true; UpdateImageActions();
+        _saving = true;
         try
         {
             var name = await PromptNameAsync("TplImageRename", "TplImageName", image.AltText,
@@ -292,13 +255,13 @@ public sealed partial class TemplateBuilderPage
             StatusText.Text = L.Get("TplImageChangesPending");
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-        finally { _saving = false; UpdateImageActions(); }
+        finally { _saving = false; }
     }
 
     private async Task DeleteImageAsync(TemplateImage image)
     {
         if (_saving || _switching || !_document.DecorativeImages.Contains(image)) return;
-        _saving = true; UpdateImageActions();
+        _saving = true;
         try
         {
             var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplImageDelete"), Content = L.Get("TplImageDeletePrompt"),
@@ -310,7 +273,7 @@ public sealed partial class TemplateBuilderPage
             StatusText.Text = L.Get("TplImageChangesPending");
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-        finally { _saving = false; UpdateImageActions(); }
+        finally { _saving = false; }
     }
 
     private void ReorderImage(TemplateImage image, bool forward)

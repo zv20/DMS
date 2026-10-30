@@ -53,11 +53,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         DayHint.Text = L.Get("TplBuilderDayHint");
         StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
             StatusPanel.Visibility = string.IsNullOrWhiteSpace(StatusText.Text) ? Visibility.Collapsed : Visibility.Visible);
-        LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); ImagesHeading.Header = L.Get("TplBuilderImagesSection");
+        LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); PageImagesMenu.Text = L.Get("TplPageImages");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
         AddImageMenuItem.Text = L.Get("TplAddImage");
-        DecorationSelector.Header = L.Get("TplImageBlock");
         InitializeImageInteraction();
         WeekPicker.Date = DateTimeOffset.Now;
         foreach (var (control, label) in new (FrameworkElement, string)[] { (ZoomOutButton, "TplZoomOut"), (ZoomInButton, "TplZoomIn"), (ZoomResetButton, "TplZoomReset"), (CanvasZoomSlider, "TplZoom") })
@@ -405,7 +404,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var overSelectableBlock = false;
         for (var current = e.OriginalSource as DependencyObject; current != null; current = VisualTreeHelper.GetParent(current))
         {
-            if (current == SelectionToolbar || current == InlineEditor || current == SelectionOutline || current == DecorationSelector
+            if (current == SelectionToolbar || current == InlineEditor || current == SelectionOutline
                 || current == ZoomOutButton || current == ZoomInButton || current == ZoomResetButton || current == CanvasZoomSlider) return;
             if (current is FrameworkElement { Tag: string imageKey } && imageKey == _selectedBlock && SelectedCanvasImage() != null)
             {
@@ -441,7 +440,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         StopInlineEditing();
         _selectedBlock = key;
         _selectionAnchor = anchor;
-        if (key.StartsWith("image:", StringComparison.Ordinal)) SelectImageInList(key[6..]);
         BuildContextTools();
         PositionContextTools();
         if (key is "header" or "footer")

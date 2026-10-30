@@ -17,6 +17,7 @@
       <MenuFlyoutSeparator />
       <MenuFlyoutItem x:Name="AddImageMenuItem" Click="AddDecoration_Click" />
       <MenuFlyoutItem x:Name="ImageLibraryMenuItem" Click="ImageLibrary_Click" />
+      <MenuFlyoutSubItem x:Name="PageImagesMenu" />
       <MenuFlyoutSeparator />
       <MenuFlyoutItem x:Name="DeleteButton" Click="Delete_Click" IsEnabled="False" />
      </MenuFlyout></DropDownButton.Flyout>
@@ -35,14 +36,7 @@
     <TextBlock x:Name="DayHint" TextWrapping="Wrap" /><StackPanel x:Name="DayControls" Spacing="6" />
      </StackPanel>
     </Expander>
-    <Expander x:Name="ImagesHeading" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
-     <StackPanel Spacing="10">
-    <Button x:Name="ImageLibraryButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="ImageLibrary_Click" />
-    <ComboBox x:Name="DecorationSelector" HeaderTemplate="{StaticResource SettingsLabelTemplate}" SelectionChanged="DecorationSelector_SelectionChanged" HorizontalAlignment="Stretch" />
-    <Button x:Name="RenameImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="RenameImage_Click" IsEnabled="False" />
-    <Button x:Name="DeleteImageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Click="DeleteImage_Click" IsEnabled="False" />
-     </StackPanel>
-    </Expander>
+
    </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="StatusPanel" Grid.Row="1" Margin="12,0,12,8" MaxHeight="144" Visibility="Collapsed" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
      <TextBlock x:Name="StatusText" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />

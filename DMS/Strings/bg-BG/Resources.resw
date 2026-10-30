@@ -508,4 +508,5 @@
   <data name="ExportImageCount" xml:space="preserve"><value>Включени споделени изображения: {0}.</value></data>
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Използвайте име до 255 знака.</value></data>
   <data name="ImportImageCount" xml:space="preserve"><value>Възстановени споделени изображения: {0}.</value></data>
+  <data name="TplPageImages" xml:space="preserve"><value>Изображения на страницата</value></data>
 </root>
