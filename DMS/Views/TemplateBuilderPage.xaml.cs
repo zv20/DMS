@@ -19,7 +19,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private readonly IDatabaseService _database;
     private readonly List<NumberBox> _dayBoxes = [];
     private readonly List<CheckBox> _fixedBoxes = [];
-    private readonly List<StackPanel> _dayRows = [];
+    private readonly List<Grid> _dayRows = [];
     private readonly List<MenuTemplate> _templates = [];
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
@@ -80,9 +80,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         for (var i = 0; i < 7; i++)
         {
             var day = i;
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            var fixedBox = new CheckBox { Content = monday.AddDays(i).ToString("dddd"), MinWidth = 110 };
-            var height = new NumberBox { Minimum = 40, Maximum = 500, Width = 105, Value = 160, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, IsEnabled = false };
+            var row = new Grid { ColumnSpacing = 6 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var fixedBox = new CheckBox { Content = monday.AddDays(i).ToString("dddd"), MinWidth = 0, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                ContentTemplate = (DataTemplate)Resources["SettingsLabelTemplate"] };
+            var height = new NumberBox { Minimum = 40, Maximum = 500, MinWidth = 0, Width = 88, Value = 160, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, IsEnabled = false };
+            Grid.SetColumn(height, 1);
             fixedBox.Checked += (_, _) => { height.IsEnabled = true; DayChanged(day); };
             fixedBox.Unchecked += (_, _) => { height.IsEnabled = false; DayChanged(day); };
             height.ValueChanged += (_, _) => DayChanged(day);
