@@ -12,6 +12,7 @@ public sealed partial class MainWindow : Window
     private readonly bool _openSettings;
     private bool _navigationPending;
     private bool _paneCollapsedForSize;
+    private readonly WindowSizeLimits _sizeLimits;
 
     public MainWindow(bool openSettings = false)
     {
@@ -25,6 +26,7 @@ public sealed partial class MainWindow : Window
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
         RootGrid.SizeChanged += RootGrid_SizeChanged;
+        _sizeLimits = new WindowSizeLimits(this, RootGrid);
     }
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)

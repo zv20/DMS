@@ -6,6 +6,7 @@ data or make a backup before testing import, restore, conversion or deletion.
 ## Startup and language
 
 - [ ] Check startup, taskbar icon, EN/BG switching and restart.
+- [ ] Try shrinking the main window below 960×640 logical client pixels: native resizing should stop at the scaled minimum (or the monitor work area if smaller). Check 100%, 125%, 150% and 200% scaling, moving between monitors, maximize/restore, minimize/restore, snapping and language reload. Confirm the startup window keeps its separate sizing and the app fits small displays.
 - [ ] In Appearance, check Default uses the original orange (#FD7E14), light gray (#F8F9FA) and white palette, and explains why the accent selector is unavailable. Change to Light, Dark and System and verify the saved custom accent is restored. Restart with each theme; check both languages and Windows high contrast.
 - [ ] Change the language in Settings and cancel the reload confirmation. Confirm the original language remains selected after reopening Settings and restarting. Confirm a language change, verify the window reloads in the selected language, and restart to verify it persists.
 ## Data and planner
