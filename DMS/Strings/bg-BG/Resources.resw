@@ -317,9 +317,9 @@
   <data name="TplRenameAction" xml:space="preserve"><value>Преименувай</value></data>
   <data name="TplAssetNameRequired" xml:space="preserve"><value>Въведете име.</value></data>
   <data name="TplAssetNameExists" xml:space="preserve"><value>Това име вече се използва.</value></data>
-  <data name="TplImageRename" xml:space="preserve"><value>Преименувай изображението…</value></data>
+  <data name="TplImageRename" xml:space="preserve"><value>Преименувай изображението на страницата…</value></data>
   <data name="TplImageName" xml:space="preserve"><value>Име на изображението</value></data>
-  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Да се премахне ли изображението от текущия шаблон? Запазете шаблона, за да запазите промяната.</value></data>
+  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Да се премахне ли този блок с изображение от текущата страница? Запазете шаблона, за да запазите промяната. Споделеното изображение остава в библиотеката с изображения.</value></data>
   <data name="TplImageChangesPending" xml:space="preserve"><value>Запазете шаблона, за да запазите промените по изображенията.</value></data>
   <data name="TplAddImage" xml:space="preserve"><value>Добави изображение…</value></data>
   <data name="TplImageBlock" xml:space="preserve"><value>Изображение</value></data>
@@ -338,7 +338,7 @@
   <data name="TplImageTextPlacement" xml:space="preserve"><value>Разположение на изображението спрямо текста</value></data>
   <data name="TplImageMoveBackward" xml:space="preserve"><value>Постави зад другите изображения в този слой</value></data>
   <data name="TplImageMoveForward" xml:space="preserve"><value>Постави пред другите изображения в този слой</value></data>
-  <data name="TplImageDelete" xml:space="preserve"><value>Изтрий изображението</value></data>
+  <data name="TplImageDelete" xml:space="preserve"><value>Премахни от страницата</value></data>
   <data name="TplSave" xml:space="preserve"><value>Запази шаблона</value></data>
   <data name="TplDelete" xml:space="preserve"><value>Изтрий</value></data>
   <data name="TplSelect" xml:space="preserve"><value>Изберете шаблон</value></data>
@@ -490,4 +490,22 @@
   <data name="TplLockAspect" xml:space="preserve"><value>Заключване на пропорциите на изображението</value></data>
   <data name="TplRotation" xml:space="preserve"><value>Завъртане на изображението</value></data>
   <data name="TplImageAlt" xml:space="preserve"><value>Описание на изображението</value></data>
+  <data name="TplImageLibrary" xml:space="preserve"><value>Библиотека с изображения…</value></data>
+  <data name="TplImageLibraryEmpty" xml:space="preserve"><value>Библиотеката с изображения е празна. Използвайте Файл → Добави изображение, за да изберете изображение и да го запазите тук за повторна употреба.</value></data>
+  <data name="TplLibraryRename" xml:space="preserve"><value>Преименувай споделеното изображение…</value></data>
+  <data name="TplLibraryDelete" xml:space="preserve"><value>Изтрий от библиотеката…</value></data>
+  <data name="TplImageUsedBy" xml:space="preserve"><value>Запазени шаблони, използващи изображението</value></data>
+  <data name="TplImageUnused" xml:space="preserve"><value>Няма запазени шаблони, които използват това изображение.</value></data>
+  <data name="TplImageInsert" xml:space="preserve"><value>Добави към страницата</value></data>
+  <data name="TplLibraryDeletePrompt" xml:space="preserve"><value>Да се изтрие ли окончателно „{0}“ от библиотеката с изображения?</value></data>
+  <data name="TplLibraryDeleteTemplatesWarning" xml:space="preserve"><value>Изтриването на изображението ще наруши следните запазени шаблони. Ако продължите, тези шаблони също ще бъдат изтрити:</value></data>
+  <data name="TplLibraryOpenTemplateWarning" xml:space="preserve"><value>Отвореният шаблон е в този списък. Останалото съдържание на платното ще се запази като незаписан шаблон без това изображение.</value></data>
+  <data name="TplLibraryOpenCanvasWarning" xml:space="preserve"><value>Изображението ще бъде премахнато и от отвореното платно. Другите ви промени по платното ще се запазят.</value></data>
+  <data name="TplLibraryDeleteAll" xml:space="preserve"><value>Изтрий изображението и шаблоните</value></data>
+  <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Изображението и запазените шаблони са изтрити. Запазете останалото платно като нов шаблон, ако искате да го съхраните.</value></data>
+  <data name="TplLibraryDeleted" xml:space="preserve"><value>Изображението и посочените запазени шаблони са изтрити.</value></data>
+  <data name="DataArchiveFileType" xml:space="preserve"><value>Архив с данни на DMS</value></data>
+  <data name="ExportImageCount" xml:space="preserve"><value>Включени споделени изображения: {0}.</value></data>
+  <data name="TplAssetNameTooLong" xml:space="preserve"><value>Използвайте име до 255 знака.</value></data>
+  <data name="ImportImageCount" xml:space="preserve"><value>Възстановени споделени изображения: {0}.</value></data>
 </root>

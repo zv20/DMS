@@ -26,6 +26,7 @@ public static class TemplateConversion
             HeaderColor = copy.HeaderColor,
             BackgroundColor = copy.BackgroundColor,
             BackgroundImageDataUri = copy.BackgroundImageDataUri,
+            BackgroundImageAssetId = copy.BackgroundImageAssetId,
             BackgroundImageOpacity = double.IsFinite(copy.BackgroundImageOpacity) ? Math.Clamp(copy.BackgroundImageOpacity, 0, 1) : 1
         };
         document.TextStyles["header"] = new TemplateTextStyle

@@ -14,7 +14,7 @@ public sealed class TemplateConversionTests
         {
             Name = "Old", HeaderText = "Our menu", FooterText = "Footer", FontFamily = "Georgia",
             MealFontSize = 12, HeaderFontSize = 30, HeaderColor = "#112233", HeaderItalic = true,
-            FooterAlignment = "left", BackgroundColor = "#EEEEEE", BackgroundImageDataUri = "data:image/png;base64,YQ==",
+            FooterAlignment = "left", BackgroundColor = "#EEEEEE", BackgroundImageDataUri = "data:image/png;base64,YQ==", BackgroundImageAssetId = "shared-background",
             LegacyDataJson = "{\"unsupported\":true}", NativeStyleInitialized = true,
             TextStyles = new() { ["heading:0"] = new TemplateTextStyle { Color = "#123456" } }
         };
@@ -31,6 +31,7 @@ public sealed class TemplateConversionTests
         Assert.Equal(12, converted.Document.FontSize);
         Assert.Equal("#EEEEEE", converted.Document.BackgroundColor);
         Assert.Equal(original.BackgroundImageDataUri, converted.Document.BackgroundImageDataUri);
+        Assert.Equal(original.BackgroundImageAssetId, converted.Document.BackgroundImageAssetId);
         Assert.True(converted.Document.TextStyles["header"].Italic);
         Assert.Equal("left", converted.Document.TextStyles["footer"].Alignment);
         Assert.Equal("#123456", converted.Document.TextStyles["heading:0"].Color);

@@ -19,6 +19,7 @@ public sealed class TemplateDocument
     public string FooterColor { get; set; } = "#000000";
     public string BackgroundColor { get; set; } = "#FFFFFF";
     public string? BackgroundImageDataUri { get; set; }
+    public string? BackgroundImageAssetId { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
     public double DaySpacing { get; set; } = 6;
     public double MealLineSpacing { get; set; } = 2;

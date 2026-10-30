@@ -18,8 +18,14 @@ Pages with unsaved edits participate in navigation confirmation.
 database at `%APPDATA%\DMS\dms.db`. It stores recipes, ingredients, allergens,
 menu entries and categories, settings and serialized templates. It enables WAL
 and foreign keys and tracks schema information. The Settings page displays the
-active path and exposes SQLite backup/restore and JSON import/export. SQLite
-backup uses the database backup API; imports create a pre-import backup.
+active path and exposes SQLite backup/restore, ZIP data export/import and older
+JSON import. SQLite backup uses the database backup API; imports create a pre-import backup.
+
+The shared image library stores PNG/JPEG bytes once in SQLite. Saved templates
+reference image IDs; the editor hydrates them for preview and output. ZIP data
+archives include reference-only template JSON and separate binary image files,
+including unused library images. Library deletion lists affected saved templates
+and requires confirmation before deleting those templates and the image together.
 
 Browser JSON import handles legacy fields and maps recipe references. Imports
 and restores should be tested using disposable data and a separate backup;
@@ -40,8 +46,7 @@ page can block a document that does not fit.
 
 Older template formats can be opened as approximate editable copies through
 `TemplateConversion`; conversion can lose unsupported formatting or geometry.
-The current `Document` serialization field does not provide compatibility
-with the previous `V2` field. Validate imported templates before use.
+Validate imported templates before use.
 
 ## Localization and appearance
 

@@ -32,6 +32,12 @@ public interface IDatabaseService
     Task SaveTemplateAsync(MenuTemplate template);
     Task RenameTemplateAsync(string currentName, string newName);
     Task DeleteTemplateAsync(string name);
+    Task<List<TemplateImageAsset>> GetTemplateImagesAsync();
+    Task<TemplateImageAsset?> GetTemplateImageAsync(string id);
+    Task<TemplateImageAsset> SaveTemplateImageAsync(string name, string contentType, byte[] data);
+    Task RenameTemplateImageAsync(string id, string name);
+    Task<List<string>> GetTemplateImageUsageAsync(string id);
+    Task<List<string>> DeleteTemplateImageAsync(string id, IReadOnlyCollection<string> expectedTemplateNames);
     Task CreateBackupAsync(string destinationPath);
     Task RestoreFromAsync(string sourcePath);
     Task VacuumAsync();
@@ -39,7 +45,7 @@ public interface IDatabaseService
     string GetDatabasePath();
 }
 
-public class DatabaseService : IDatabaseService, IDisposable
+public partial class DatabaseService : IDatabaseService, IDisposable
 {
     private readonly ILogger<DatabaseService> _logger;
     private readonly string _dbPath;
@@ -189,6 +195,7 @@ public class DatabaseService : IDatabaseService, IDisposable
         await SeedDefaultsAsync();
         await SeedDefaultAllergensAsync();
         await RecordSchemaVersionAsync();
+        InitializeTemplateImages();
     }
 
     private async Task EnsureAllergenIconColumnAsync()
@@ -231,8 +238,7 @@ public class DatabaseService : IDatabaseService, IDisposable
         if (_connection == null) return;
 
         using var command = _connection.CreateCommand();
-        command.CommandText = @"INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
-                                PRAGMA user_version = 1;";
+        command.CommandText = "INSERT OR IGNORE INTO schema_migrations(version) VALUES (1)";
         await command.ExecuteNonQueryAsync();
     }
 
@@ -642,27 +648,35 @@ public class DatabaseService : IDatabaseService, IDisposable
     {
         await InitializeAsync();
         var list = new List<MenuTemplate>();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT name, data_json, is_preset FROM templates ORDER BY is_preset DESC, name";
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        using (var cmd = _connection!.CreateCommand())
         {
-            var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1));
-            if (template != null)
+            cmd.CommandText = "SELECT name, data_json, is_preset FROM templates ORDER BY is_preset DESC, name";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                template.Name = reader.GetString(0);
-                template.IsPreset = reader.GetInt32(2) == 1;
-                list.Add(template);
+                var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1));
+                if (template != null)
+                {
+                    template.Name = reader.GetString(0);
+                    template.IsPreset = reader.GetInt32(2) == 1;
+                    list.Add(template);
+                }
             }
         }
+        var imageUris = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var template in list) HydrateTemplateImages(template, imageUris);
         return list;
     }
 
     public async Task SaveTemplateAsync(MenuTemplate template)
     {
         await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        var json = System.Text.Json.JsonSerializer.Serialize(template);
+        using var transaction = _connection!.BeginTransaction();
+        var stored = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(System.Text.Json.JsonSerializer.Serialize(template))!;
+        var references = ExtractTemplateImages(stored, transaction);
+        using var cmd = _connection.CreateCommand();
+        cmd.Transaction = transaction;
+        var json = System.Text.Json.JsonSerializer.Serialize(stored);
         var now = DateTime.UtcNow.ToString("O");
         cmd.CommandText = @"INSERT INTO templates (name, data_json, is_preset, created_at, updated_at)
                            VALUES (@name, @data, @preset, @now, @now)
@@ -671,7 +685,9 @@ public class DatabaseService : IDatabaseService, IDisposable
         cmd.Parameters.AddWithValue("@data", json);
         cmd.Parameters.AddWithValue("@preset", template.IsPreset ? 1 : 0);
         cmd.Parameters.AddWithValue("@now", now);
-        await cmd.ExecuteNonQueryAsync();
+        cmd.ExecuteNonQuery();
+        ReplaceTemplateImageReferences(template.Name, references, transaction);
+        transaction.Commit();
     }
 
     public async Task RenameTemplateAsync(string currentName, string newName)

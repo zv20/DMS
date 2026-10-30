@@ -218,7 +218,7 @@ public sealed partial class SettingsPage : Page
         var picker = new Windows.Storage.Pickers.FileSavePicker
         {
             SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-            FileTypeChoices = { { "JSON", new[] { ".json" } } },
+            FileTypeChoices = { { L.Get("DataArchiveFileType"), new[] { ".zip" } } },
             SuggestedFileName = $"DMS_Export_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
         
@@ -242,10 +242,17 @@ public sealed partial class SettingsPage : Page
             var templates = await _databaseService.GetAllTemplatesAsync();
             var menuEntries = await _databaseService.GetMenuAsync(DateTime.MinValue, DateTime.MaxValue);
             var settings = await _databaseService.GetSettingsAsync();
+            var images = new List<TemplateImageAsset>();
+            foreach (var metadata in await _databaseService.GetTemplateImagesAsync())
+            {
+                var image = await _databaseService.GetTemplateImageAsync(metadata.Id)
+                    ?? throw new InvalidDataException(L.Get("TplImageInvalid"));
+                images.Add(image);
+            }
 
             var exportData = new
             {
-                Version = "2.0",
+                Version = "3.0",
                 ExportedAt = DateTime.UtcNow,
                 Recipes = recipes,
                 Ingredients = ingredients,
@@ -256,13 +263,30 @@ public sealed partial class SettingsPage : Page
                 Settings = settings
             };
 
-            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions { WriteIndented = true });
-            await Windows.Storage.FileIO.WriteTextAsync(file, json);
+            var json = TemplateImageArchive.SerializeExportData(exportData);
+            var temporaryArchive = Path.Combine(Path.GetTempPath(), $"DMS-export-{Guid.NewGuid():N}.zip");
+            try
+            {
+                using (var stream = new FileStream(temporaryArchive, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    await TemplateImageArchive.WriteAsync(stream, json, images);
+                // Finish validation and archive generation before replacing an existing chosen file.
+                using var input = new FileStream(temporaryArchive, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var output = await file.OpenStreamForWriteAsync();
+                output.SetLength(0);
+                await input.CopyToAsync(output);
+            }
+            finally
+            {
+                try { File.Delete(temporaryArchive); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
 
             var exportSuccessDialog = new ContentDialog
             {
                 Title = L.Get("Text_Export_Complete_7f2e84"),
-                Content = L.Format("ExportSummary", recipes.Count, ingredients.Count, allergens.Count, menuEntries.Count, templates.Count),
+                Content = L.Format("ExportSummary", recipes.Count, ingredients.Count, allergens.Count, menuEntries.Count, templates.Count)
+                    + "\n" + L.Format("ExportImageCount", images.Count),
                 CloseButtonText = L.Get("Text_OK_9ce3bd"),
                 XamlRoot = this.XamlRoot
             };
@@ -286,7 +310,7 @@ public sealed partial class SettingsPage : Page
         var picker = new Windows.Storage.Pickers.FileOpenPicker
         {
             SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".json" }
+            FileTypeFilter = { ".zip", ".json" }
         };
 
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
@@ -317,7 +341,15 @@ public sealed partial class SettingsPage : Page
         string? preImportBackup = null;
         try
         {
-            var json = await Windows.Storage.FileIO.ReadTextAsync(file);
+            TemplateImageArchive.Contents? archive = null;
+            string json;
+            if (file.FileType.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                using var stream = await file.OpenStreamForReadAsync();
+                archive = await TemplateImageArchive.ReadAsync(stream);
+                json = archive.DataJson;
+            }
+            else json = await Windows.Storage.FileIO.ReadTextAsync(file);
             using var document = JsonDocument.Parse(json);
             var importData = document.RootElement;
             if (importData.ValueKind != JsonValueKind.Object)
@@ -347,6 +379,16 @@ public sealed partial class SettingsPage : Page
             }
             if (!recognized) throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
             preImportBackup = await CreatePreImportBackupAsync();
+
+            var imageIds = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (archive != null)
+            {
+                foreach (var image in archive.Images)
+                {
+                    var saved = await _databaseService.SaveTemplateImageAsync(image.Name, image.ContentType, image.Data);
+                    imageIds.Add(image.Id, saved.Id);
+                }
+            }
 
             int importedRecipes = 0, importedIngredients = 0, importedAllergens = 0, importedMenus = 0, importedTemplates = 0;
             var existingRecipes = (await _databaseService.GetAllRecipesAsync())
@@ -457,6 +499,7 @@ public sealed partial class SettingsPage : Page
                     var template = JsonSerializer.Deserialize<MenuTemplate>(templateJson.GetRawText(), ImportJsonOptions);
                     if (template != null && !string.IsNullOrWhiteSpace(template.Name))
                     {
+                        if (archive != null) TemplateImageArchive.RemapTemplateAssetIds(template, imageIds);
                         var baseName = $"{template.Name} (imported {DateTime.Now:yyyyMMdd})";
                         var candidate = baseName;
                         var suffix = 2;
@@ -476,7 +519,7 @@ public sealed partial class SettingsPage : Page
             }
 
             await ShowImportSuccessAsync(new ImportResult(
-                importedRecipes, importedIngredients, importedAllergens, importedMenus, importedTemplates));
+                importedRecipes, importedIngredients, importedAllergens, importedMenus, importedTemplates) { Images = archive?.Images.Count });
         }
         catch (Exception ex)
         {
@@ -709,6 +752,7 @@ public sealed partial class SettingsPage : Page
         {
             Title = L.Get("Text_Import_Complete_a5cb9b"),
             Content = L.Format("ImportSummary", result.Recipes, result.Ingredients, result.Allergens, result.MenuEntries, result.Templates)
+                + (result.Images.HasValue ? "\n" + L.Format("ImportImageCount", result.Images.Value) : "")
                 + (result.MissingIngredientReferences > 0 ? "\n\n" + L.Format("ImportMissingIngredients", result.MissingIngredientReferences, string.Join(", ", result.RecipesWithMissingIngredients)) : ""),
             CloseButtonText = L.Get("Text_OK_9ce3bd"),
             XamlRoot = this.XamlRoot
@@ -748,6 +792,7 @@ public sealed partial class SettingsPage : Page
         public int Allergens { get; set; }
         public int MenuEntries { get; set; }
         public int Templates { get; set; }
+        public int? Images { get; set; }
         public int MissingIngredientReferences { get; set; }
         public List<string> RecipesWithMissingIngredients { get; } = new();
     }

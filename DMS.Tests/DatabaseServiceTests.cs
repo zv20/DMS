@@ -35,7 +35,7 @@ public sealed class DatabaseServiceTests : IDisposable
         var entries = new List<MenuEntry> { new() { Date = monday, Slot = "slot2", RecipeId = 7 } };
         var html = MenuOutputService.BuildHtml(saved, monday, entries, recipes);
         Assert.Contains("data-element=\"header\" style=\"position:absolute;left:125px;top:55px;width:320px;min-height:45px;z-index:12", html);
-        Assert.Contains("data-element=\"menu:0\" style=\"position:absolute;left:80px;top:200px;width:500px;min-height:160px", html);
+        Assert.Matches("data-element=\"menu:0\"(?: data-layout-overflow=\"true\")? style=\"position:absolute;left:80px;top:200px;width:500px;min-height:160px", html);
         Assert.Contains("left:33px;top:44px;width:150px;height:80px;z-index:2;opacity:0.5", html);
         Assert.Contains("font-family:'Georgia';font-size:16px;color:#123456", html);
         Assert.Contains("&lt;Weekly&gt;", html);
@@ -320,7 +320,13 @@ public sealed class DatabaseServiceTests : IDisposable
         {
             var templates = await database.GetAllTemplatesAsync();
             var saved = templates.Single(item => item.Name == template.Name);
-            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(template.Document), System.Text.Json.JsonSerializer.Serialize(saved.Document));
+            var expectedBytes = Convert.FromBase64String(png[(png.IndexOf(',') + 1)..]);
+            var expectedAssetId = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(expectedBytes)).ToLowerInvariant();
+            Assert.Null(template.Document!.DecorativeImages[0].AssetId);
+            var expectedDocument = System.Text.Json.JsonSerializer.Deserialize<TemplateDocument>(System.Text.Json.JsonSerializer.Serialize(template.Document))!;
+            expectedDocument.DecorativeImages[0].AssetId = expectedAssetId;
+            Assert.Equal(expectedBytes, (await database.GetTemplateImageAsync(expectedAssetId))!.Data);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(expectedDocument), System.Text.Json.JsonSerializer.Serialize(saved.Document));
             var backupPath = Path.Combine(_testDirectory, "images-backup.db");
             await database.CreateBackupAsync(backupPath);
             await database.DeleteTemplateAsync(template.Name);
@@ -329,8 +335,7 @@ public sealed class DatabaseServiceTests : IDisposable
             Assert.Equal(png, restored.Document!.DecorativeImages.Single().DataUri);
             Assert.Equal(System.Text.Json.JsonSerializer.Serialize(saved.Document), System.Text.Json.JsonSerializer.Serialize(restored.Document));
 
-            // The Settings export includes complete Templates; import deserializes
-            // the same MenuTemplate payload before writing it back to SQLite.
+            // Older JSON imports can still carry embedded images alongside IDs.
             var exportJson = System.Text.Json.JsonSerializer.Serialize(new { Templates = new[] { restored } });
             using var export = System.Text.Json.JsonDocument.Parse(exportJson);
             var imported = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(export.RootElement.GetProperty("Templates")[0].GetRawText())!;
@@ -339,6 +344,10 @@ public sealed class DatabaseServiceTests : IDisposable
         }
         using var reopened = CreateDatabase();
         var final = (await reopened.GetAllTemplatesAsync()).Single(item => item.Name == template.Name);
+        var finalImage = final.Document!.DecorativeImages.Single();
+        Assert.Equal(png, finalImage.DataUri);
+        Assert.Equal(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Convert.FromBase64String(png[(png.IndexOf(',') + 1)..]))).ToLowerInvariant(), finalImage.AssetId);
+        finalImage.AssetId = null;
         Assert.Equal(System.Text.Json.JsonSerializer.Serialize(template.Document), System.Text.Json.JsonSerializer.Serialize(final.Document));
     }
 

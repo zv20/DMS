@@ -236,6 +236,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             var saved = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(_loadedTemplate)) ?? new MenuTemplate();
             saved.Name = name; saved.Document = _document;
+            // The editable document owns its images. Retaining inactive browser
+            // layers would incorrectly report usage after a block was removed.
+            saved.BackgroundImageAssetId = null; saved.BackgroundImageDataUri = null;
+            saved.ImageLayers = []; saved.LegacyDataJson = null;
             if (_legacySource || !string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved; _legacySource = false;
@@ -278,7 +282,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async Task<string?> PromptNameAsync(string titleKey, string labelKey, string currentName, Func<string, bool> nameExists)
     {
-        var input = new TextBox { Header = L.Get(labelKey), Text = currentName };
+        var input = new TextBox { Header = L.Get(labelKey), Text = currentName, MaxLength = 255 };
         var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         var content = new StackPanel { Spacing = 8 };
         content.Children.Add(input); content.Children.Add(error);
@@ -287,8 +291,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         dialog.PrimaryButtonClick += (_, args) =>
         {
             var value = input.Text.Trim();
-            if (value.Length > 0 && !nameExists(value)) return;
-            args.Cancel = true; error.Text = L.Get(value.Length == 0 ? "TplAssetNameRequired" : "TplAssetNameExists"); error.Visibility = Visibility.Visible;
+            if (value.Length is > 0 and <= 255 && !nameExists(value)) return;
+            args.Cancel = true;
+            error.Text = L.Get(value.Length == 0 ? "TplAssetNameRequired" : value.Length > 255 ? "TplAssetNameTooLong" : "TplAssetNameExists");
+            error.Visibility = Visibility.Visible;
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary ? input.Text.Trim() : null;
     }

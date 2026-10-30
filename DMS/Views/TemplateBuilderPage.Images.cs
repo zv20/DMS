@@ -27,6 +27,8 @@ public sealed partial class TemplateBuilderPage
     {
         RenameImageButton.Content = L.Get("TplImageRename");
         DeleteImageButton.Content = L.Get("TplImageDelete");
+        ImageLibraryMenuItem.Text = L.Get("TplImageLibrary");
+        ImageLibraryButton.Content = L.Get("TplImageLibrary");
         SelectionOutline.PointerPressed += (_, e) => BeginImageDrag(e);
         SelectionOutline.PointerMoved += (_, e) =>
         {
@@ -78,18 +80,19 @@ public sealed partial class TemplateBuilderPage
         if (string.IsNullOrEmpty(_document.BackgroundImageDataUri)) return;
         _document.DecorativeImages.Insert(0, new TemplateImage
         {
-            DataUri = _document.BackgroundImageDataUri, X = 0, Y = 0,
+            AssetId = _document.BackgroundImageAssetId, DataUri = _document.BackgroundImageDataUri, X = 0, Y = 0,
             Width = TemplatePageLayout.PageWidth, Height = TemplatePageLayout.PageHeight,
             Opacity = _document.BackgroundImageOpacity, ReserveTextSpace = false, FillFrame = true,
             AltText = L.Get("TplImageBackground")
         });
         _document.BackgroundImageDataUri = null;
+        _document.BackgroundImageAssetId = null;
     }
 
     private async void AddDecoration_Click(object sender, RoutedEventArgs e)
     {
         if (_addingImage || _saving || _switching) return;
-        _addingImage = true; AddImageMenuItem.IsEnabled = false;
+        _addingImage = _saving = true; AddImageMenuItem.IsEnabled = false;
         var document = _document;
         try
         {
@@ -108,25 +111,31 @@ public sealed partial class TemplateBuilderPage
             if (buffer.Length > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
             var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
             if (!ReferenceEquals(document, _document)) return;
-            var scale = Math.Min(1, 200 / Math.Max(sourceWidth, sourceHeight));
             var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
-            var image = new TemplateImage
-            {
-                DataUri = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", AltText = file.DisplayName,
-                Width = Math.Max(1, sourceWidth * scale), Height = Math.Max(1, sourceHeight * scale), ReserveTextSpace = false
-            };
-            TemplateImagePlacement.Move(image, (TemplatePageLayout.PageWidth - image.Width) / 2, (TemplatePageLayout.PageHeight - image.Height) / 2);
-            _document.DecorativeImages.Add(image);
-            _dirty = true;
-            StopInlineEditing();
-            _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
-            _imageToReveal = image.Id;
-            RefreshDecorationList(image.Id);
-            ImagesHeading.IsExpanded = true;
-            BuildContextTools(); Render();
+            var asset = await _database.SaveTemplateImageAsync(file.DisplayName, mime, bytes);
+            PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }
         catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
-        finally { _addingImage = false; AddImageMenuItem.IsEnabled = true; }
+        finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; UpdateImageActions(); }
+    }
+
+    private void PlaceLibraryImage(TemplateImageAsset asset, double sourceWidth, double sourceHeight)
+    {
+        var scale = Math.Min(1, 200 / Math.Max(sourceWidth, sourceHeight));
+        var image = new TemplateImage
+        {
+            AssetId = asset.Id, DataUri = $"data:{asset.ContentType};base64,{Convert.ToBase64String(asset.Data)}", AltText = asset.Name,
+            Width = Math.Max(1, sourceWidth * scale), Height = Math.Max(1, sourceHeight * scale), ReserveTextSpace = false
+        };
+        TemplateImagePlacement.Move(image, (TemplatePageLayout.PageWidth - image.Width) / 2, (TemplatePageLayout.PageHeight - image.Height) / 2);
+        _document.DecorativeImages.Add(image);
+        _dirty = true;
+        StopInlineEditing();
+        _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
+        _imageToReveal = image.Id;
+        RefreshDecorationList(image.Id);
+        ImagesHeading.IsExpanded = true;
+        BuildContextTools(); Render();
     }
 
     private void RefreshDecorationList(string? selectedId = null)

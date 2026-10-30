@@ -34,8 +34,10 @@ public sealed class MenuTemplate
     public bool ShowIngredients { get; set; } = true;
     public bool ShowCalories { get; set; } = true;
     public bool ShowPortions { get; set; } = true;
-    // Embedded bytes keep user-selected images portable in JSON exports and backups.
+    // Data URIs are hydrated for rendering and accepted from older imports;
+    // persisted images reference the shared binary library.
     public string? BackgroundImageDataUri { get; set; }
+    public string? BackgroundImageAssetId { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
     public bool NativeStyleInitialized { get; set; }
     // Keys identify a weekday and slot, so formatting follows the template across weeks.
@@ -84,6 +86,7 @@ public sealed class TemplateMenuBlockSizing
 public sealed class TemplateImageLayer
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string? AssetId { get; set; }
     public string DataUri { get; set; } = string.Empty;
     public double X { get; set; } = 250;
     public double Y { get; set; } = 100;

@@ -4,6 +4,7 @@ namespace DMS.Models;
 public sealed class TemplateImage
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string? AssetId { get; set; }
     public string DataUri { get; set; } = string.Empty;
     public double X { get; set; } = 594;
     public double Y { get; set; } = 20;

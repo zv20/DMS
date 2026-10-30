@@ -317,9 +317,9 @@
   <data name="TplRenameAction" xml:space="preserve"><value>Rename</value></data>
   <data name="TplAssetNameRequired" xml:space="preserve"><value>Enter a name.</value></data>
   <data name="TplAssetNameExists" xml:space="preserve"><value>That name is already in use.</value></data>
-  <data name="TplImageRename" xml:space="preserve"><value>Rename image…</value></data>
+  <data name="TplImageRename" xml:space="preserve"><value>Rename image on page…</value></data>
   <data name="TplImageName" xml:space="preserve"><value>Image name</value></data>
-  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Remove this image from the current template? Save the template to keep this change.</value></data>
+  <data name="TplImageDeletePrompt" xml:space="preserve"><value>Remove this image block from the current page? Save the template to keep this change. The shared image stays in the image library.</value></data>
   <data name="TplImageChangesPending" xml:space="preserve"><value>Save the template to keep your image changes.</value></data>
   <data name="TplAddImage" xml:space="preserve"><value>Add image…</value></data>
   <data name="TplImageBlock" xml:space="preserve"><value>Image</value></data>
@@ -338,7 +338,7 @@
   <data name="TplImageTextPlacement" xml:space="preserve"><value>Image position relative to text</value></data>
   <data name="TplImageMoveBackward" xml:space="preserve"><value>Send behind other images in this layer</value></data>
   <data name="TplImageMoveForward" xml:space="preserve"><value>Bring above other images in this layer</value></data>
-  <data name="TplImageDelete" xml:space="preserve"><value>Delete image</value></data>
+  <data name="TplImageDelete" xml:space="preserve"><value>Remove from page</value></data>
   <data name="TplSave" xml:space="preserve"><value>Save template</value></data>
   <data name="TplDelete" xml:space="preserve"><value>Delete</value></data>
   <data name="TplSelect" xml:space="preserve"><value>Select template</value></data>
@@ -490,4 +490,22 @@
   <data name="TplLockAspect" xml:space="preserve"><value>Lock image aspect ratio</value></data>
   <data name="TplRotation" xml:space="preserve"><value>Image rotation</value></data>
   <data name="TplImageAlt" xml:space="preserve"><value>Image description</value></data>
+  <data name="TplImageLibrary" xml:space="preserve"><value>Image library…</value></data>
+  <data name="TplImageLibraryEmpty" xml:space="preserve"><value>Your image library is empty. Use File → Add image to choose an image and keep it here for reuse.</value></data>
+  <data name="TplLibraryRename" xml:space="preserve"><value>Rename shared image…</value></data>
+  <data name="TplLibraryDelete" xml:space="preserve"><value>Delete from library…</value></data>
+  <data name="TplImageUsedBy" xml:space="preserve"><value>Saved templates using this image</value></data>
+  <data name="TplImageUnused" xml:space="preserve"><value>No saved templates use this image.</value></data>
+  <data name="TplImageInsert" xml:space="preserve"><value>Add to page</value></data>
+  <data name="TplLibraryDeletePrompt" xml:space="preserve"><value>Permanently delete “{0}” from the image library?</value></data>
+  <data name="TplLibraryDeleteTemplatesWarning" xml:space="preserve"><value>Deleting this image would break the following saved templates. Continuing will delete these templates too:</value></data>
+  <data name="TplLibraryOpenTemplateWarning" xml:space="preserve"><value>The open template is in this list. Its remaining canvas content will be kept as an unsaved template without this image.</value></data>
+  <data name="TplLibraryOpenCanvasWarning" xml:space="preserve"><value>This image will also be removed from the open canvas. Your other canvas edits will be kept.</value></data>
+  <data name="TplLibraryDeleteAll" xml:space="preserve"><value>Delete image and templates</value></data>
+  <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Image and saved templates deleted. Save the remaining canvas as a new template if you want to keep it.</value></data>
+  <data name="TplLibraryDeleted" xml:space="preserve"><value>Image and its listed saved templates deleted.</value></data>
+  <data name="DataArchiveFileType" xml:space="preserve"><value>DMS data archive</value></data>
+  <data name="ExportImageCount" xml:space="preserve"><value>{0} shared images included.</value></data>
+  <data name="TplAssetNameTooLong" xml:space="preserve"><value>Use a name with 255 characters or fewer.</value></data>
+  <data name="ImportImageCount" xml:space="preserve"><value>{0} shared images restored.</value></data>
 </root>
