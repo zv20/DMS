@@ -466,6 +466,7 @@ public class RecipeItemViewModel : INotifyPropertyChanged
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
+    public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
     public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {L.Allergen(allergen)}"));
 
     private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
