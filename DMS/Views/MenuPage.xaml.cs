@@ -78,8 +78,11 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     private void SetPlannerInteraction()
     {
         var enabled = !_busy && _activeSlotSaves == 0;
-        MenuHeader.IsEnabled = enabled;
-        CalendarGrid.IsEnabled = enabled;
+        // Grid is a UIElement, not a Control, so it has no IsEnabled property.
+        // Keep the planner stable while a slot is being saved by blocking input
+        // on its two layout regions instead.
+        MenuHeader.IsHitTestVisible = enabled;
+        CalendarGrid.IsHitTestVisible = enabled;
     }
 
     private void MenuHeader_SizeChanged(object sender, SizeChangedEventArgs e)
