@@ -521,6 +521,7 @@
   <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Refresh logs</value></data>
   <data name="LogViewerFolder.Content" xml:space="preserve"><value>Open log folder</value></data>
   <data name="LogViewerClear.Content" xml:space="preserve"><value>Clear logs</value></data>
+  <data name="LogViewerClearAction" xml:space="preserve"><value>Clear logs</value></data>
   <data name="LogViewerClearTitle" xml:space="preserve"><value>Clear diagnostic logs?</value></data>
   <data name="LogViewerClearConfirmation" xml:space="preserve"><value>This permanently removes the local diagnostic history. New logs will continue to be recorded.</value></data>
   <data name="LogViewerEmpty" xml:space="preserve"><value>No log entries yet.</value></data>

@@ -521,6 +521,7 @@
   <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Обнови дневниците</value></data>
   <data name="LogViewerFolder.Content" xml:space="preserve"><value>Отвори папката с дневници</value></data>
   <data name="LogViewerClear.Content" xml:space="preserve"><value>Изчисти дневниците</value></data>
+  <data name="LogViewerClearAction" xml:space="preserve"><value>Изчисти дневниците</value></data>
   <data name="LogViewerClearTitle" xml:space="preserve"><value>Да се изчистят ли диагностичните дневници?</value></data>
   <data name="LogViewerClearConfirmation" xml:space="preserve"><value>Това окончателно премахва локалната диагностична история. Новите записи ще продължат да се записват.</value></data>
   <data name="LogViewerEmpty" xml:space="preserve"><value>Все още няма записи в дневника.</value></data>

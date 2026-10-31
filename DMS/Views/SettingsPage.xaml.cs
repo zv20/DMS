@@ -104,7 +104,7 @@ public sealed partial class SettingsPage : Page
                 XamlRoot = XamlRoot,
                 Title = L.Get("LogViewerClearTitle"),
                 Content = L.Get("LogViewerClearConfirmation"),
-                PrimaryButtonText = L.Get("LogViewerClear.Content"),
+                PrimaryButtonText = L.Get("LogViewerClearAction"),
                 CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close
             }.ShowAsync();
