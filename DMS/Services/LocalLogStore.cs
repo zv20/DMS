@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace DMS.Services;
 
+public enum DiagnosticLogFilter { All, Information, Warning, Error }
+
 /// <summary>Bounded, local-only diagnostic log. Failure to log never breaks app work.</summary>
 public sealed class LocalLogStore
 {
@@ -57,7 +59,7 @@ public sealed class LocalLogStore
     }
 
     /// <summary>Reads the latest entries; older entries remain in the local files.</summary>
-    public string ReadRecent(int maxCharacters = 100_000)
+    public string ReadRecent(int maxCharacters = 100_000, DiagnosticLogFilter filter = DiagnosticLogFilter.All)
     {
         if (maxCharacters < 1) throw new ArgumentOutOfRangeException(nameof(maxCharacters));
         lock (_gate)
@@ -74,9 +76,27 @@ public sealed class LocalLogStore
                 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
                 text.Append(reader.ReadToEnd());
             }
-            var result = text.ToString();
+            var result = FilterEntries(text.ToString(), filter);
             return result.Length <= maxCharacters ? result : result[^maxCharacters..];
         }
+    }
+
+    private static string FilterEntries(string text, DiagnosticLogFilter filter)
+    {
+        if (filter == DiagnosticLogFilter.All || string.IsNullOrEmpty(text)) return text;
+        var wanted = filter == DiagnosticLogFilter.Error
+            ? new[] { "] Error ", "] Critical " }
+            : filter == DiagnosticLogFilter.Warning ? new[] { "] Warning " } : new[] { "] Information " };
+        var result = new StringBuilder();
+        var include = false;
+        foreach (var line in text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+        {
+            // Exception detail lines stay with the entry that introduced them.
+            if (line.StartsWith("[", StringComparison.Ordinal) && line.Contains("] ", StringComparison.Ordinal))
+                include = wanted.Any(level => line.Contains(level, StringComparison.Ordinal));
+            if (include) result.AppendLine(line);
+        }
+        return result.ToString();
     }
 }
 

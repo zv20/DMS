@@ -56,5 +56,24 @@ public sealed class LocalLogStoreTests : IDisposable
         for (var i = 0; i < 100; i++) Assert.Contains($"entry-{i:D3}", text);
     }
 
+    [Fact]
+    public void FiltersKeepTheRequestedSeverityAndAttachedExceptionDetails()
+    {
+        var store = new LocalLogStore(_folder);
+        store.Write(LogLevel.Information, "Test", "regular");
+        store.Write(LogLevel.Warning, "Test", "warning");
+        store.Write(LogLevel.Error, "Test", "error", new InvalidOperationException("details"));
+        store.Write(LogLevel.Critical, "Test", "critical");
+
+        var warnings = store.ReadRecent(filter: DiagnosticLogFilter.Warning);
+        var errors = store.ReadRecent(filter: DiagnosticLogFilter.Error);
+        Assert.Contains("warning", warnings);
+        Assert.DoesNotContain("regular", warnings);
+        Assert.Contains("error", errors);
+        Assert.Contains("critical", errors);
+        Assert.Contains("InvalidOperationException: details", errors);
+        Assert.DoesNotContain("warning", errors);
+    }
+
     public void Dispose() { if (Directory.Exists(_folder)) Directory.Delete(_folder, true); }
 }

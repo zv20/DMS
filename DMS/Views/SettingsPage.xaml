@@ -109,6 +109,12 @@
                     <StackPanel Margin="24" Spacing="10">
                         <TextBlock Style="{StaticResource PageTitleTextStyle}" x:Uid="LogViewerTitle" />
                         <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
+                        <ComboBox x:Name="LogViewerFilterComboBox" SelectionChanged="LogViewerFilter_SelectionChanged">
+                            <ComboBoxItem Tag="All" x:Uid="LogFilterAll" />
+                            <ComboBoxItem Tag="Information" x:Uid="LogFilterInformation" />
+                            <ComboBoxItem Tag="Warning" x:Uid="LogFilterWarning" />
+                            <ComboBoxItem Tag="Error" x:Uid="LogFilterError" />
+                        </ComboBox>
                         <TextBox x:Name="LogViewerText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" Height="200" />
                         <Button x:Name="LogViewerRefreshButton" HorizontalAlignment="Stretch" Click="LogViewerRefresh_Click" x:Uid="LogViewerRefresh" />
                         <Button x:Name="LogViewerFolderButton" HorizontalAlignment="Stretch" Click="LogViewerFolder_Click" x:Uid="LogViewerFolder" />

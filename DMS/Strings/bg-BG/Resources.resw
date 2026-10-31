@@ -514,6 +514,10 @@
   <data name="MenuViewSelected" xml:space="preserve"><value>Избран изглед</value></data>
   <data name="LogViewerTitle.Text" xml:space="preserve"><value>Диагностика и дневници</value></data>
   <data name="LogViewerHint.Text" xml:space="preserve"><value>Дневниците остават на това устройство и може да съдържат пътища до файлове или имена на рецепти. Последните записи и подробности за грешки са показани по-долу.</value></data>
+  <data name="LogFilterAll.Content" xml:space="preserve"><value>Всички записи</value></data>
+  <data name="LogFilterInformation.Content" xml:space="preserve"><value>Обичайна дейност</value></data>
+  <data name="LogFilterWarning.Content" xml:space="preserve"><value>Предупреждения</value></data>
+  <data name="LogFilterError.Content" xml:space="preserve"><value>Грешки</value></data>
   <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Обнови дневниците</value></data>
   <data name="LogViewerFolder.Content" xml:space="preserve"><value>Отвори папката с дневници</value></data>
   <data name="LogViewerEmpty" xml:space="preserve"><value>Все още няма записи в дневника.</value></data>

@@ -514,6 +514,10 @@
   <data name="MenuViewSelected" xml:space="preserve"><value>Selected view</value></data>
   <data name="LogViewerTitle.Text" xml:space="preserve"><value>Diagnostics and logs</value></data>
   <data name="LogViewerHint.Text" xml:space="preserve"><value>Logs stay on this device and may include file paths or recipe names. Recent entries and error details appear below.</value></data>
+  <data name="LogFilterAll.Content" xml:space="preserve"><value>All logs</value></data>
+  <data name="LogFilterInformation.Content" xml:space="preserve"><value>Regular activity</value></data>
+  <data name="LogFilterWarning.Content" xml:space="preserve"><value>Warnings</value></data>
+  <data name="LogFilterError.Content" xml:space="preserve"><value>Errors</value></data>
   <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Refresh logs</value></data>
   <data name="LogViewerFolder.Content" xml:space="preserve"><value>Open log folder</value></data>
   <data name="LogViewerEmpty" xml:space="preserve"><value>No log entries yet.</value></data>

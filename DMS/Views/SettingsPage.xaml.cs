@@ -24,6 +24,7 @@ public sealed partial class SettingsPage : Page
     private string _selectedTheme = "default";
     private string _selectedAccent = "blue";
     private bool _selectedWeekend;
+    private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
     private int _cardColumns;
 
     public SettingsPage()
@@ -74,7 +75,7 @@ public sealed partial class SettingsPage : Page
     {
         try
         {
-            var text = App.LogStore.ReadRecent();
+            var text = App.LogStore.ReadRecent(filter: _logFilter);
             LogViewerText.Text = string.IsNullOrWhiteSpace(text) ? L.Get("LogViewerEmpty") : text;
             LogViewerStatus.Text = App.LogStore.LastWriteFailure == null ? "" : L.Format("LogViewerUnavailable", App.LogStore.LastWriteFailure);
         }
@@ -86,6 +87,13 @@ public sealed partial class SettingsPage : Page
     }
 
     private void LogViewerRefresh_Click(object sender, RoutedEventArgs e) => RefreshLogViewer();
+
+    private void LogViewerFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var value = (LogViewerFilterComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        _logFilter = Enum.TryParse<DiagnosticLogFilter>(value, out var filter) ? filter : DiagnosticLogFilter.All;
+        RefreshLogViewer();
+    }
 
     private void LogViewerFolder_Click(object sender, RoutedEventArgs e)
     {
