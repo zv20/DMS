@@ -1,6 +1,7 @@
 using DMS.Models;
 using DMS.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -74,21 +75,28 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             // A machine with no printing support can still export a PNG.
-            try { RegisterPrinting(); } catch (Exception) { UnregisterPrinting(); }
+            try { RegisterPrinting(); }
+            catch (Exception ex) { App.Logger.LogWarning(ex, "Printing is unavailable"); UnregisterPrinting(); }
+            if (_printManager == null)
+            {
+                ToolTipService.SetToolTip(PrintButton, L.Get("TemplateOutputPrintUnsupported"));
+                ToolTipService.SetToolTip(PdfButton, L.Get("TemplateOutputPrintUnsupported"));
+            }
             var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.Document != null).ToList();
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;
             TemplateSelector.SelectedIndex = 0;
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to load print and export"); StatusText.Text = L.Get("ErrorOutput"); }
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
     {
         _loaded = false;
         _generation++;
-        UnregisterPrinting();
+        try { UnregisterPrinting(); }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to release print resources"); }
     }
 
     private async void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (_loaded) await RefreshAsync(); }
@@ -127,9 +135,10 @@ public sealed partial class TemplateOutputPage : Page
             await result.ImagesReady;
             if (!_loaded || generation != _generation) return;
             StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
+            if (_printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
             SetReady(result.HasMeals && !result.Overflowed);
         }
-        catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the output preview"); if (generation == _generation) StatusText.Text = L.Get("ErrorOutput"); }
         finally { _refreshGate.Release(); }
     }
 
@@ -161,26 +170,51 @@ public sealed partial class TemplateOutputPage : Page
 
     private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
     {
+        var taskCounted = false;
+        var completionAttached = false;
+        try
+        {
         var source = _printSource;
         if (source == null) return;
         var task = e.Request.CreatePrintTask(OutputDateName(), args => args.SetSource(source));
         System.Threading.Interlocked.Increment(ref _activePrintTasks);
+        taskCounted = true;
         task.Completed += (_, args) =>
         {
             System.Threading.Interlocked.Decrement(ref _activePrintTasks);
             _uiQueue.TryEnqueue(() =>
             {
-                if (args.Completion == PrintTaskCompletion.Failed) StatusText.Text = L.Get("TemplateOutputPrintFailed");
+                if (args.Completion == PrintTaskCompletion.Failed)
+                {
+                    App.Logger.LogWarning("The print task reported a failure");
+                    StatusText.Text = L.Get("TemplateOutputPrintFailed");
+                }
                 CloseAvailabilityChanged?.Invoke(CanClose);
             });
         };
+        completionAttached = true;
         _uiQueue.TryEnqueue(() => CloseAvailabilityChanged?.Invoke(CanClose));
         try { task.Options.MediaSize = PrintMediaSize.IsoA4; task.Options.Orientation = PrintOrientation.Portrait; }
-        catch (Exception) { /* The printer may not support these defaults. */ }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Printer did not accept the preferred page settings"); }
+        }
+        catch (Exception ex)
+        {
+            if (taskCounted && !completionAttached) System.Threading.Interlocked.Decrement(ref _activePrintTasks);
+            ReportPrintCallbackFailure(ex);
+            _uiQueue.TryEnqueue(() => CloseAvailabilityChanged?.Invoke(CanClose));
+        }
+    }
+
+    private void ReportPrintCallbackFailure(Exception ex)
+    {
+        App.Logger.LogError(ex, "The print system could not prepare the document");
+        _uiQueue.TryEnqueue(() => { if (_loaded) StatusText.Text = L.Get("ErrorOutput"); });
     }
 
     private void Paginate(object sender, PaginateEventArgs e)
     {
+        try
+        {
         if (_nativePage == null) return;
         if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
         var description = ((PrintTaskOptions)e.PrintTaskOptions).GetPageDescription(0);
@@ -194,18 +228,25 @@ public sealed partial class TemplateOutputPage : Page
         page.Children.Add(_printViewbox);
         _printPage = page;
         ((PrintDocument)sender).SetPreviewPageCount(1, PreviewPageCountType.Final);
+        }
+        catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
     private void GetPreviewPage(object sender, GetPreviewPageEventArgs e)
     {
-        if (_printPage != null && e.PageNumber == 1) ((PrintDocument)sender).SetPreviewPage(1, _printPage);
+        try { if (_printPage != null && e.PageNumber == 1) ((PrintDocument)sender).SetPreviewPage(1, _printPage); }
+        catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
     private void AddPages(object sender, AddPagesEventArgs e)
     {
-        var document = (PrintDocument)sender;
-        if (_printPage != null) document.AddPage(_printPage);
-        document.AddPagesComplete();
+        try
+        {
+            var document = (PrintDocument)sender;
+            if (_printPage != null) document.AddPage(_printPage);
+            document.AddPagesComplete();
+        }
+        catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
     private async void Print_Click(object sender, RoutedEventArgs e) => await ShowPrintAsync(false);
@@ -227,7 +268,7 @@ public sealed partial class TemplateOutputPage : Page
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to open the print dialog"); StatusText.Text = L.Get("ErrorOutput"); }
         finally { _busy = false; SetReady(_ready); }
     }
 
@@ -235,6 +276,7 @@ public sealed partial class TemplateOutputPage : Page
     {
         if (!_ready || _busy || _previewPage == null) return;
         _busy = true; SetReady(true);
+        var outputStarted = false;
         try
         {
             var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = OutputDateName() };
@@ -250,12 +292,13 @@ public sealed partial class TemplateOutputPage : Page
             using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
             using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
             stream.Size = 0;
+            outputStarted = true;
             var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
             encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
             await encoder.FlushAsync();
             StatusText.Text = L.Get("TemplateOutputSaved");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TemplateOutputFailure", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to export the menu as an image"); StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput"); }
         finally { _busy = false; SetReady(_ready); }
     }
 

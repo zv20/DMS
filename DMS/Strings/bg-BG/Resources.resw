@@ -283,7 +283,7 @@
   <data name="ErrorDetail" xml:space="preserve"><value>Грешка: {0}</value></data>
   <data name="MenuLoadError" xml:space="preserve"><value>Менюто не може да бъде заредено: {0}</value></data>
   <data name="SaveError" xml:space="preserve"><value>Неуспешно запазване: {0}</value></data>
-  <data name="RestoreWarning" xml:space="preserve"><value>⚠️ Това ще ЗАМЕНИ текущата база данни. Всички текущи данни ще бъдат загубени. Сигурни ли сте?</value></data>
+  <data name="RestoreWarning" xml:space="preserve"><value>Това ще замени текущите данни. DMS първо ще запази резервно копие за възстановяване. Затворете другите прозорци на DMS, преди да продължите.</value></data>
   <data name="DeleteTemplatePrompt" xml:space="preserve"><value>Изтриване на шаблона „{0}“?</value></data>
   <data name="RecipeFor" xml:space="preserve"><value>Рецепта за {0}</value></data>
   <data name="AllergenGluten" xml:space="preserve"><value>Зърнени култури, съдържащи глутен</value></data>
@@ -512,4 +512,35 @@
   <data name="TplOpenTemplate" xml:space="preserve"><value>Отвори шаблон</value></data>
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Запазете всички данни, включително шаблоните и оригиналните изображения, в един файл. Възстановяването заменя текущите данни.</value></data>
   <data name="MenuViewSelected" xml:space="preserve"><value>Избран изглед</value></data>
+  <data name="LogViewerTitle.Text" xml:space="preserve"><value>Диагностика и дневници</value></data>
+  <data name="LogViewerHint.Text" xml:space="preserve"><value>Дневниците остават на това устройство и може да съдържат пътища до файлове или имена на рецепти. Последните записи и подробности за грешки са показани по-долу.</value></data>
+  <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Обнови дневниците</value></data>
+  <data name="LogViewerFolder.Content" xml:space="preserve"><value>Отвори папката с дневници</value></data>
+  <data name="LogViewerEmpty" xml:space="preserve"><value>Все още няма записи в дневника.</value></data>
+  <data name="LogViewerUnavailable" xml:space="preserve"><value>Дневникът не е достъпен: {0}</value></data>
+  <data name="LogViewerSettingsLoadFailed" xml:space="preserve"><value>Настройките не могат да бъдат заредени. Проверете диагностичния дневник за подробности.</value></data>
+  <data name="LogViewerBackupFailed" xml:space="preserve"><value>Архивът не може да бъде създаден. Проверете диагностичния дневник за подробности.</value></data>
+  <data name="LogViewerRestoreFailed" xml:space="preserve"><value>Архивът не може да бъде възстановен. Проверете диагностичния дневник за подробности.</value></data>
+  <data name="LogViewerFolderFailed" xml:space="preserve"><value>Папката с данни не може да бъде отворена. Проверете диагностичния дневник за подробности.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Възникна проблем</value></data>
+  <data name="ErrorNavigation" xml:space="preserve"><value>Страницата не може да бъде отворена. Опитайте отново; подробности има в Настройки → Дневник.</value></data>
+  <data name="ErrorTemplate" xml:space="preserve"><value>Действието с шаблона не може да бъде изпълнено. Опитайте отново; подробности има в Настройки → Дневник.</value></data>
+  <data name="ErrorOutput" xml:space="preserve"><value>Отпечатването или експортирането не можа да се изпълни. Опитайте отново; подробности има в Настройки → Дневник.</value></data>
+  <data name="DataLoadFailed" xml:space="preserve"><value>Списъкът не може да бъде зареден. Опитайте отново.</value></data>
+  <data name="DataDeleteFailed" xml:space="preserve"><value>Елементът не може да бъде изтрит. Опитайте отново.</value></data>
+  <data name="DataSavedRefreshFailed" xml:space="preserve"><value>Запазено е, но списъкът не може да се обнови. Отворете страницата отново.</value></data>
+  <data name="DataDeletedRefreshFailed" xml:space="preserve"><value>Изтрито е, но списъкът не може да се обнови. Отворете страницата отново.</value></data>
+  <data name="DataDialogFailed" xml:space="preserve"><value>Прозорецът не може да бъде отворен. Опитайте отново.</value></data>
+  <data name="DataEditorOpenFailed" xml:space="preserve"><value>Редакторът не може да бъде отворен. Опитайте отново.</value></data>
+  <data name="DataSaveFailed" xml:space="preserve"><value>Промените не могат да бъдат запазени. Опитайте отново.</value></data>
+  <data name="DataFilterFailed" xml:space="preserve"><value>Списъкът не може да бъде филтриран. Опитайте отново.</value></data>
+  <data name="DataRecipeInUse" xml:space="preserve"><value>Рецептата се използва в менюта. Премахнете я от тях, преди да я изтриете.</value></data>
+  <data name="ActionFailed" xml:space="preserve"><value>Действието не може да бъде изпълнено. Опитайте отново.</value></data>
+  <data name="ErrorPngIncomplete" xml:space="preserve"><value>Изображението не можа да бъде експортирано докрай. Избраният файл може да е непълен.</value></data>
+  <data name="LogViewerSavedApplyFailed" xml:space="preserve"><value>Настройката е запазена, но не може да бъде приложена. Рестартирайте приложението и проверете дневника, ако проблемът продължи.</value></data>
+  <data name="LogViewerMaintenanceFailed" xml:space="preserve"><value>Поддръжката на базата данни е неуспешна. Проверете диагностичния дневник за подробности.</value></data>
+  <data name="LogViewerRecoveryFatalTitle" xml:space="preserve"><value>Възстановяването на базата данни изисква внимание</value></data>
+  <data name="LogViewerRecoveryFatalMessage" xml:space="preserve"><value>DMS не можа автоматично да възстанови предишната база данни. Затворете DMS и възстановете посочения по-долу резервен архив, преди да продължите. Пълната грешка е записана и в местния дневник.&#10;&#10;{0}</value></data>
+  <data name="LogViewerCloseApp" xml:space="preserve"><value>Затвори DMS</value></data>
+  <data name="RetryAction" xml:space="preserve"><value>Опитайте отново</value></data>
 </root>

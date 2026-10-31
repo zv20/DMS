@@ -1,4 +1,5 @@
 using DMS.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -79,7 +80,8 @@ public sealed partial class TemplateBuilderPage
                     }
                     catch (Exception ex)
                     {
-                        if (currentGeneration == generation) usage.Text = L.Format("TplError", ex.Message);
+                        App.Logger.LogError(ex, "Unable to load the selected library image");
+                        if (currentGeneration == generation) usage.Text = L.Get("ErrorTemplate");
                     }
                 }
                 selector.SelectionChanged += async (_, _) => await LoadSelectionAsync();
@@ -113,7 +115,7 @@ public sealed partial class TemplateBuilderPage
                 }
             }
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to use the image library"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _saving = false; }
     }
 
@@ -128,7 +130,7 @@ public sealed partial class TemplateBuilderPage
             await bitmap.SetSourceAsync(stream);
             target.Source = bitmap;
         }
-        catch { /* Keep the name visible if an image cannot be decoded. */ }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load an image library thumbnail"); }
     }
 
     private static async Task<InMemoryRandomAccessStream> OpenLibraryImageAsync(byte[] bytes)
@@ -186,7 +188,8 @@ public sealed partial class TemplateBuilderPage
             }
             _dirty = true; RefreshDecorationList(); Render();
         }
-        await ReloadTemplatesAsync();
+        try { await ReloadTemplatesAsync(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Image deleted but the template list could not be refreshed"); StatusText.Text = L.Get("DataDeletedRefreshFailed"); return true; }
         StatusText.Text = L.Get(currentSavedTemplateDeleted ? "TplLibraryDeletedOpenTemplate" : "TplLibraryDeleted");
         return true;
     }

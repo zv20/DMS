@@ -1,6 +1,7 @@
 using DMS.Models;
 using DMS.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -120,7 +121,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private async Task InitializeAsync()
     {
         try { await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync(); }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private static MenuTemplate NewTemplate() => new() { Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } };
@@ -158,8 +159,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     tile.Children.Add(thumbnail);
                     _ = ObserveTemplateThumbnailAsync(page.ImagesReady);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
                     tile.Children.Add(new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 });
                 }
                 tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
@@ -174,7 +176,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate chosenTemplate })
                 selected = chosenTemplate;
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to browse saved templates"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _switching = false; }
         if (selected != null) await SelectTemplateAsync(selected);
     }
@@ -182,7 +184,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private static async Task ObserveTemplateThumbnailAsync(Task imagesReady)
     {
         try { await imagesReady; }
-        catch { /* An unreadable image should not prevent choosing a template. */ }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load a template thumbnail image"); }
     }
 
     private void SetDocument(MenuTemplate template, string? name)
@@ -237,16 +239,21 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.Format("TplError", ex.Message);
+            App.Logger.LogError(ex, "Unable to open the selected template");
+            StatusText.Text = L.Get("ErrorTemplate");
         }
         finally { _switching = false; RefreshSavedTemplatesMenu(); }
     }
 
     private async void New_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || !await ConfirmDiscardAsync()) return;
-        SetDocument(NewTemplate(), null);
-        RefreshSavedTemplatesMenu();
+        try
+        {
+            if (_saving || _switching || !await ConfirmDiscardAsync()) return;
+            SetDocument(NewTemplate(), null);
+            RefreshSavedTemplatesMenu();
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to create a new template"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -285,10 +292,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _loadedTemplate = saved; _legacySource = false;
             _loadedName = name; _dirty = false;
             RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;
-            await ReloadTemplatesAsync();
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template saved but its list could not be refreshed"); StatusText.Text = L.Get("DataSavedRefreshFailed"); return; }
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to save the template"); StatusText.Text = L.Get("DataSaveFailed"); }
         finally { _saving = false; SaveButton.IsEnabled = true; }
     }
 
@@ -309,10 +317,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _loadedTemplate.Name = name;
             // Keep unsaved canvas edits and their dirty flag; rename changes only
             // the saved entry's name, rather than implicitly saving those edits.
-            await ReloadTemplatesAsync();
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template renamed but its list could not be refreshed"); StatusText.Text = L.Get("DataSavedRefreshFailed"); return; }
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to rename the template"); StatusText.Text = L.Get("DataSaveFailed"); }
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
@@ -351,10 +360,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             await _database.DeleteTemplateAsync(name);
-            await ReloadTemplatesAsync();
             SetDocument(NewTemplate(), null);
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template deleted but its list could not be refreshed"); StatusText.Text = L.Get("DataDeletedRefreshFailed"); }
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to delete the template"); StatusText.Text = L.Get("DataDeleteFailed"); }
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
@@ -391,7 +401,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
             Render();
         }
-        catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("MenuLoadError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to load template preview data"); if (generation == _generation) StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private void Numbers_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
@@ -794,6 +804,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await result.ImagesReady;
             if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
         }
-        catch (Exception ex) { if (generation == _renderGeneration) StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
     }
 }

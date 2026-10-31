@@ -8,6 +8,7 @@ public sealed partial class StartupWindow : Window
 {
     public event EventHandler? RetryRequested;
     public bool IsClosed { get; private set; }
+    private bool _fatalRecovery;
 
     public StartupWindow()
     {
@@ -28,6 +29,7 @@ public sealed partial class StartupWindow : Window
 
     public void ShowError(string message, string details, string retry)
     {
+        _fatalRecovery = false;
         Subtitle.Text = message;
         ErrorDetails.Text = details;
         ErrorDetails.Visibility = Visibility.Visible;
@@ -35,6 +37,12 @@ public sealed partial class StartupWindow : Window
         LoadingIndicator.Visibility = Visibility.Collapsed;
         RetryButton.Content = retry;
         RetryButton.Visibility = Visibility.Visible;
+    }
+
+    public void ShowFatalRecoveryError(string message, string details, string close)
+    {
+        ShowError(message, details, close);
+        _fatalRecovery = true;
     }
 
     public async Task<bool> ConfirmInstallerRestoreAsync(string path, string language)
@@ -69,5 +77,9 @@ public sealed partial class StartupWindow : Window
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
-    private void RetryButton_Click(object sender, RoutedEventArgs e) => RetryRequested?.Invoke(this, EventArgs.Empty);
+    private void RetryButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_fatalRecovery) Close();
+        else RetryRequested?.Invoke(this, EventArgs.Empty);
+    }
 }

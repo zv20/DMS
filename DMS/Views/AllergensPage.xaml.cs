@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
@@ -31,7 +32,14 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 
     private async void AllergensPage_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadAllergensAsync();
+        try { await LoadAllergensAsync(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to load allergens"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    private void SetPageStatus(string? key)
+    {
+        PageStatus.Text = key == null ? "" : L.Get(key);
+        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private async Task LoadAllergensAsync()
@@ -43,6 +51,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             _allergens.Add(new AllergenItemViewModel(allergen));
         }
         ApplyFilter();
+        SetPageStatus(null);
     }
 
     private void ApplyFilter()
@@ -61,9 +70,15 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         AllergensListView.Visibility = _filteredAllergens.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void TryApplyFilter()
+    {
+        try { ApplyFilter(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to filter list on {Page}", GetType().Name); SetPageStatus("DataFilterFailed"); }
+    }
+
     private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        ApplyFilter();
+        TryApplyFilter();
     }
 
     private async void AddAllergenButton_Click(object sender, RoutedEventArgs e)
@@ -90,26 +105,23 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 
     private async void DeleteAllergenButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is int id)
+        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
+        button.IsEnabled = false;
+        try
         {
-            var deleteDialog = new ContentDialog
-            {
-                Title = L.Get("Text_Delete_Allergen_7b0000"),
-                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await deleteDialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                await _database.DeleteAllergenAsync(id);
-                if (_editor.EditingId == id) _editor.Close();
-                await LoadAllergensAsync();
-            }
+            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Allergen_7b0000"), Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"),
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
+            try { await _database.DeleteAllergenAsync(id); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete allergen {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
+            if (_editor.EditingId == id) _editor.Close();
+            try { await LoadAllergensAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Deleted allergen {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
         }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm allergen deletion"); SetPageStatus("DataDialogFailed"); }
+        finally { button.IsEnabled = true; }
     }
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
@@ -155,14 +167,8 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         // Update preview when color changes
         colorBox.TextChanged += (s, e) =>
         {
-            if (colorBox.Text.StartsWith("#") && colorBox.Text.Length == 7)
-            {
-                try 
-                {
-                    colorPreview.Background = new SolidColorBrush(ParseColorHex(colorBox.Text));
-                }
-                catch { }
-            }
+            if (System.Text.RegularExpressions.Regex.IsMatch(colorBox.Text, "^#[0-9a-fA-F]{6}$"))
+                colorPreview.Background = new SolidColorBrush(ParseColorHex(colorBox.Text));
         };
 
         panel.Children.Add(colorPanel);
@@ -214,7 +220,8 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             allergen.Color = colorBox.Text.Trim();
 
             allergen.Id = await _database.SaveAllergenAsync(allergen);
-            await LoadAllergensAsync();
+            try { await LoadAllergensAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Saved allergen but refresh failed"); SetPageStatus("DataSavedRefreshFailed"); }
             return true;
         });
         nameBox.Focus(FocusState.Programmatic);

@@ -42,7 +42,11 @@ public partial class DatabaseService
             {
                 MenuTemplate? template;
                 try { template = JsonSerializer.Deserialize<MenuTemplate>(json); }
-                catch (JsonException) { continue; }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Image migration skipped an unreadable saved template {Template}", name);
+                    continue;
+                }
                 if (template == null) continue;
                 var refs = ExtractTemplateImages(template, transaction, preserveBrokenReferences: true);
                 using var update = _connection.CreateCommand();

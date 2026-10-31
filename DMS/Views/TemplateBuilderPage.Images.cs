@@ -1,6 +1,7 @@
 using DMS.Models;
 using DMS.Services;
 using Microsoft.UI.Xaml;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -112,7 +113,7 @@ public sealed partial class TemplateBuilderPage
             var asset = await _database.SaveTemplateImageAsync(file.DisplayName, mime, bytes);
             PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to add an image to the template"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; }
     }
 
@@ -254,7 +255,7 @@ public sealed partial class TemplateBuilderPage
             RefreshDecorationList(image.Id); Render();
             StatusText.Text = L.Get("TplImageChangesPending");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to rename the image block"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _saving = false; }
     }
 
@@ -272,7 +273,7 @@ public sealed partial class TemplateBuilderPage
             _dirty = true; RefreshDecorationList(); Render();
             StatusText.Text = L.Get("TplImageChangesPending");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to remove the image block"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _saving = false; }
     }
 

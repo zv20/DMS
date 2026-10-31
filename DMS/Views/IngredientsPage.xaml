@@ -11,6 +11,7 @@
         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition x:Name="EditorColumn" Width="0" /></Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -20,10 +21,12 @@
             <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Search ingredients..." QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_ingredients_540992" />
         </Grid>
 
+        <TextBlock x:Name="PageStatus" Grid.Row="1" Margin="16,0,16,8" TextWrapping="Wrap" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+
         <!-- Ingredient List -->
         <ListView
             x:Name="IngredientsListView"
-            Grid.Row="1"
+            Grid.Row="2"
             Padding="8"
             SelectionMode="None"
             IsItemClickEnabled="True"
@@ -49,7 +52,7 @@
         <!-- Empty State -->
         <StackPanel
             x:Name="EmptyStatePanel"
-            Grid.Row="1"
+            Grid.Row="2"
             VerticalAlignment="Center"
             HorizontalAlignment="Center"
             Spacing="16"
@@ -58,7 +61,7 @@
             <TextBlock Text="No ingredients yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_ingredients_yet_affb49" />
             <TextBlock Text="Click 'Add Ingredient' to create your first ingredient" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" />
         </StackPanel>
-        <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="2" Visibility="Collapsed"
+        <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"
                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="12">

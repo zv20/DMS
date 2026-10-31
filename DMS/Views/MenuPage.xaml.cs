@@ -2,23 +2,26 @@ using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 
 namespace DMS.Views;
 
-public sealed partial class MenuPage : Page
+public sealed partial class MenuPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
     private static readonly string[] Categories = ["soup", "main", "dessert", "other"];
     private static string[] Labels => ["🥣 " + L.Category("soup"), "🍽️ " + L.Category("main"), "🍰 " + L.Category("dessert"), "➕ " + L.Category("other")];
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
-    private bool _busy;
+    private bool _busy, _refreshPending;
+    private bool _hasRenderedView, _renderedMonthly;
+    private bool _confirmingDiscard;
+    private int _activeSlotSaves, _pendingSlotFailures;
+    private DateTime _renderedDate;
     private bool _weekendPlanningEnabled;
     private int _headerLayout = -1;
-    private List<Recipe> _recipes = [];
-    private List<MenuEntry> _entries = [];
 
     public MenuPage()
     {
@@ -36,11 +39,48 @@ public sealed partial class MenuPage : Page
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(MonthlyButton, _monthly ? L.Get("MenuViewSelected") : "");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(WeeklyButton, _monthly ? "" : L.Get("MenuViewSelected"));
     }
-    private async void Monthly_Click(object sender, RoutedEventArgs e) { _monthly = true; UpdateViewButtons(); await RefreshAsync(); }
-    private async void Weekly_Click(object sender, RoutedEventArgs e) { _monthly = false; UpdateViewButtons(); await RefreshAsync(); }
-    private async void Previous_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(-1) : _date.AddDays(-7); await RefreshAsync(); }
-    private async void Next_Click(object sender, RoutedEventArgs e) { _date = _monthly ? _date.AddMonths(1) : _date.AddDays(7); await RefreshAsync(); }
-    private async void Today_Click(object sender, RoutedEventArgs e) { _date = DateTime.Today; await RefreshAsync(); }
+    private async Task ChangeViewAsync(Action change)
+    {
+        try
+        {
+            if (_busy || _activeSlotSaves > 0 || !await ConfirmDiscardAsync()) return;
+            change(); UpdateViewButtons(); await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not change the planner view");
+            PeriodLabel.Text = L.Get("DataLoadFailed");
+        }
+    }
+    private async void Monthly_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _monthly = true);
+    private async void Weekly_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _monthly = false);
+    private async void Previous_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _date = _monthly ? _date.AddMonths(-1) : _date.AddDays(-7));
+    private async void Next_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _date = _monthly ? _date.AddMonths(1) : _date.AddDays(7));
+    private async void Today_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _date = DateTime.Today);
+
+    public async Task<bool> CanLeaveAsync() => !_busy && _activeSlotSaves == 0 && await ConfirmDiscardAsync();
+
+    private async Task<bool> ConfirmDiscardAsync()
+    {
+        if (_pendingSlotFailures == 0) return true;
+        if (_confirmingDiscard) return false;
+        _confirmingDiscard = true;
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"),
+                Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        finally { _confirmingDiscard = false; }
+    }
+
+    private void SetPlannerInteraction()
+    {
+        var enabled = !_busy && _activeSlotSaves == 0;
+        MenuHeader.IsEnabled = enabled;
+        CalendarGrid.IsEnabled = enabled;
+    }
 
     private void MenuHeader_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -102,127 +142,187 @@ public sealed partial class MenuPage : Page
     private void Output_Click(object sender, RoutedEventArgs e)
     {
         try { if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date); }
-        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Could not open menu output"); PeriodLabel.Text = L.Get("ActionFailed"); }
     }
 
     public void FocusOutputButton() => OutputButton.Focus(FocusState.Programmatic);
 
     private async Task RefreshAsync()
     {
-        if (_busy) return;
+        if (_busy || _activeSlotSaves > 0) { _refreshPending = true; return; }
         _busy = true;
+        SetPlannerInteraction();
         try
         {
-            _weekendPlanningEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
-            _recipes = await _database.GetAllRecipesAsync();
-            var first = _monthly ? new DateTime(_date.Year, _date.Month, 1) : WeekStart(_date);
-            var start = WeekStart(first);
-            var end = _monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(_weekendPlanningEnabled ? 6 : 4);
-            var calendarEnd = _monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
-            _entries = await _database.GetMenuAsync(start, calendarEnd);
-            PeriodLabel.Text = _monthly ? first.ToString("MMMM yyyy") : $"{start:dd MMM} – {end:dd MMM yyyy}";
-            CalendarGrid.Children.Clear();
-            CalendarGrid.RowDefinitions.Clear();
-            CalendarGrid.ColumnDefinitions.Clear();
-            var columns = _weekendPlanningEnabled ? 7 : 5;
-            for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
-            var days = _monthly ? ((end - start).Days / 7 + 1) * 7 : _weekendPlanningEnabled ? 7 : 5;
-            var displayedDays = Enumerable.Range(0, days)
-                .Select(offset => start.AddDays(offset))
-                .Where(day => _weekendPlanningEnabled || day.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
-                .ToList();
-            for (var row = 0; row < (displayedDays.Count + columns - 1) / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            for (var i = 0; i < displayedDays.Count; i++)
+            do
             {
-                var day = displayedDays[i];
-                var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-                var isDisabledWeekend = isWeekend && !_weekendPlanningEnabled;
-                var panel = new StackPanel { Spacing = 8 };
-                panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = _monthly ? 14 : 16, TextWrapping = TextWrapping.Wrap });
-                if (_monthly)
+                _refreshPending = false;
+                try { await RefreshCoreAsync(); }
+                catch (Exception ex)
                 {
-                    var names = isDisabledWeekend
-                        ? Enumerable.Empty<string?>()
-                        : _entries.Where(e => e.Date.Date == day.Date).Select(e => _recipes.FirstOrDefault(r => r.Id == e.RecipeId)?.Name).Where(n => n != null);
-                    var summary = string.Join("\n", names);
-                    var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend };
-                    button.Click += async (_, _) => { _date = day; _monthly = false; UpdateViewButtons(); await RefreshAsync(); };
-                    panel.Children.Add(button);
+                    App.Logger.LogError(ex, "Could not load the meal planner");
+                    if (!_refreshPending)
+                    {
+                        if (_hasRenderedView) { _date = _renderedDate; _monthly = _renderedMonthly; UpdateViewButtons(); }
+                        PeriodLabel.Text = L.Get("DataLoadFailed");
+                    }
                 }
-                else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot));
-                var border = new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (_monthly && day.Month != first.Month) ? 0.4 : 1 };
-                Grid.SetColumn(border, i % columns);
-                Grid.SetRow(border, i / columns);
-                CalendarGrid.Children.Add(border);
-            }
-            ResizeCalendarCards();
+            } while (_refreshPending);
         }
-        catch (Exception ex) { PeriodLabel.Text = L.Format("MenuLoadError", ex.Message); }
-        finally { _busy = false; }
+        finally { _busy = false; SetPlannerInteraction(); }
     }
 
-    private async Task<StackPanel> CreateSlotAsync(DateTime day, int index)
+    private async Task RefreshCoreAsync()
+    {
+        var monthly = _monthly;
+        var date = _date;
+        var weekend = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
+        var recipes = await _database.GetAllRecipesAsync();
+        var first = monthly ? new DateTime(date.Year, date.Month, 1) : WeekStart(date);
+        var start = WeekStart(first);
+        var end = monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(weekend ? 6 : 4);
+        var calendarEnd = monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
+        var entries = await _database.GetMenuAsync(start, calendarEnd);
+        var period = monthly ? first.ToString("MMMM yyyy") : $"{start:dd MMM} – {end:dd MMM yyyy}";
+        var columns = weekend ? 7 : 5;
+        var days = monthly ? ((end - start).Days / 7 + 1) * 7 : weekend ? 7 : 5;
+        var displayedDays = Enumerable.Range(0, days)
+            .Select(offset => start.AddDays(offset))
+            .Where(day => weekend || day.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
+            .ToList();
+        // Construct the new view before replacing the old one. A failed category
+        // read leaves the previous calendar visible instead of partially rendered.
+        var cards = new List<Border>();
+        foreach (var day in displayedDays)
+        {
+            var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+            var isDisabledWeekend = isWeekend && !weekend;
+            var panel = new StackPanel { Spacing = 8 };
+            panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = monthly ? 14 : 16, TextWrapping = TextWrapping.Wrap });
+            if (monthly)
+            {
+                var names = isDisabledWeekend
+                    ? Enumerable.Empty<string?>()
+                    : entries.Where(e => e.Date.Date == day.Date).Select(e => recipes.FirstOrDefault(r => r.Id == e.RecipeId)?.Name).Where(n => n != null);
+                var summary = string.Join("\n", names);
+                var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend };
+                button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
+                panel.Children.Add(button);
+            }
+            else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot, entries, recipes));
+            cards.Add(new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 });
+        }
+        // A newer request supersedes this snapshot, so the next iteration renders it.
+        if (_refreshPending) return;
+        _weekendPlanningEnabled = weekend;
+        PeriodLabel.Text = period;
+        CalendarGrid.Children.Clear();
+        CalendarGrid.RowDefinitions.Clear();
+        CalendarGrid.ColumnDefinitions.Clear();
+        for (var i = 0; i < columns; i++) CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+        for (var row = 0; row < (cards.Count + columns - 1) / columns; row++) CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < cards.Count; i++)
+        {
+            Grid.SetColumn(cards[i], i % columns);
+            Grid.SetRow(cards[i], i / columns);
+            CalendarGrid.Children.Add(cards[i]);
+        }
+        _renderedDate = date; _renderedMonthly = monthly; _hasRenderedView = true;
+        _pendingSlotFailures = 0;
+        ResizeCalendarCards();
+    }
+
+    private async Task<StackPanel> CreateSlotAsync(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes)
     {
         var slot = $"slot{index + 1}";
         string[] oldNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
-        var entry = _entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == slot)
-            ?? _entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
-        var current = _recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
+        var entry = entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == slot)
+            ?? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
+        var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
         var category = await _database.GetMenuCategoryAsync(day, slot) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         panel.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14 });
         var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, DisplayMemberPath = "Name", TextMemberPath = "Name" };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
-        bool saving = false;
-        async Task SaveAsync(Recipe? recipe)
+        var retry = new Button { Content = L.Get("RetryAction"), Visibility = Visibility.Collapsed };
+        bool saving = false, hasPending = false;
+        Recipe? pendingRecipe = null;
+        string pendingCategory = category;
+        string DisplayedCategory() => select.SelectedIndex >= 0 ? Categories[select.SelectedIndex] : category;
+        void ClearPending()
         {
-            if (saving) return;
+            if (hasPending) { hasPending = false; _pendingSlotFailures--; }
+            retry.Visibility = Visibility.Collapsed;
+        }
+        async Task SaveAsync(Recipe? recipe, string requestedCategory)
+        {
+            if (saving || _busy) return;
             saving = true;
-            select.IsEnabled = search.IsEnabled = false;
+            _activeSlotSaves++;
+            SetPlannerInteraction();
+            // Keep the user's attempted choice visible if the database rejects it.
+            search.Text = recipe?.Name ?? "";
             try
             {
-                await _database.SaveMenuCategoryAsync(day, slot, category);
-                if (recipe == null)
-                {
-                    if (entry != null) await _database.DeleteMenuEntryAsync(day, entry.Slot);
-                    entry = null;
-                }
-                else
-                {
-                    var replacement = new MenuEntry { Date = day, Slot = slot, RecipeId = recipe.Id };
-                    await _database.SaveMenuEntryAsync(replacement);
-                    if (entry != null && entry.Slot != slot) await _database.DeleteMenuEntryAsync(day, entry.Slot);
-                    entry = replacement;
-                }
+                await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id, entry?.Slot);
+                category = requestedCategory;
+                current = recipe;
+                entry = recipe == null ? null : new MenuEntry { Date = day, Slot = slot, RecipeId = recipe.Id };
+                ClearPending();
                 status.Text = L.Get("Text_Saved_499dc6");
             }
-            catch (Exception ex) { status.Text = L.Format("SaveError", ex.Message); }
-            finally { saving = false; select.IsEnabled = search.IsEnabled = true; }
+            catch (Exception ex)
+            {
+                App.Logger.LogError(ex, "Could not save meal planner slot {Date} {Slot}", day, slot);
+                if (!hasPending) { hasPending = true; _pendingSlotFailures++; }
+                pendingRecipe = recipe;
+                pendingCategory = requestedCategory;
+                retry.Visibility = Visibility.Visible;
+                status.Text = L.Get("DataSaveFailed");
+            }
+            finally
+            {
+                saving = false;
+                _activeSlotSaves--;
+                SetPlannerInteraction();
+                if (_activeSlotSaves == 0 && _refreshPending && _pendingSlotFailures == 0) await RefreshAsync();
+            }
         }
-        void Suggest() => search.ItemsSource = _recipes.Where(r => r.Category.Equals(category, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+        void Suggest()
+        {
+            try
+            {
+                var displayedCategory = DisplayedCategory();
+                search.ItemsSource = recipes.Where(r => r.Category.Equals(displayedCategory, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            }
+            catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); }
+        }
         search.GotFocus += (_, _) => Suggest();
         search.TextChanged += async (_, args) =>
         {
             if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
+            // A new search supersedes the failed choice; require a new selection
+            // before retrying so Retry cannot save an older, hidden choice.
+            if (hasPending) retry.Visibility = Visibility.Collapsed;
             Suggest();
-            if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null);
+            if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, DisplayedCategory());
         };
-        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe); };
+        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, DisplayedCategory()); };
         select.SelectionChanged += async (_, _) =>
         {
             if (select.SelectedIndex < 0) return;
-            category = Categories[select.SelectedIndex];
-            search.Text = "";
-            await SaveAsync(null);
+            await SaveAsync(null, DisplayedCategory());
             Suggest();
         };
+        retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         panel.Children.Add(select);
         panel.Children.Add(search);
         var clear = new Button { Content = L.Get("Text_Clear_719ea3"), FontSize = 11, Padding = new Thickness(6, 2, 6, 2) };
-        clear.Click += async (_, _) => { search.Text = ""; await SaveAsync(null); };
+        clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         panel.Children.Add(clear);
         panel.Children.Add(status);
+        panel.Children.Add(retry);
         return panel;
     }
 }

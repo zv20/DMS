@@ -220,7 +220,7 @@ public sealed class DatabaseServiceTests : IDisposable
             RecipeId = recipe.Id
         });
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => database.DeleteRecipeAsync(recipe.Id));
+        var exception = await Assert.ThrowsAsync<RecipeInUseException>(() => database.DeleteRecipeAsync(recipe.Id));
 
         Assert.Contains("menu entries", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Single(await database.GetMenuAsync(new DateTime(2026, 10, 26), new DateTime(2026, 10, 26)));

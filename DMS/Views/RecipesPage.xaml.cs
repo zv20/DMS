@@ -2,6 +2,7 @@ using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
@@ -43,7 +44,14 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
     private async void RecipesPage_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadRecipesAsync();
+        try { await LoadRecipesAsync(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to load recipes"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    private void SetPageStatus(string? key)
+    {
+        PageStatus.Text = key == null ? "" : L.Get(key);
+        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void RecipeToolbar_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -80,6 +88,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             _recipes.Add(new RecipeItemViewModel(recipe));
         }
         ApplyFilter();
+        SetPageStatus(null);
     }
 
     private void ApplyFilter()
@@ -110,17 +119,23 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         RecipesListView.Visibility = _filteredRecipes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private void TryApplyFilter()
     {
-        ApplyFilter();
+        try { ApplyFilter(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to filter list on {Page}", GetType().Name); SetPageStatus("DataFilterFailed"); }
     }
 
-    private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilter();
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        TryApplyFilter();
+    }
+
+    private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e) => TryApplyFilter();
     private void SortDirection_Click(object sender, RoutedEventArgs e)
     {
         _sortAscending = !_sortAscending;
         SortDirectionButton.Content = _sortAscending ? "↑" : "↓";
-        ApplyFilter();
+        TryApplyFilter();
     }
 
     private async void AddRecipeButton_Click(object sender, RoutedEventArgs e)
@@ -147,45 +162,38 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
     private async void DeleteRecipeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is int id)
+        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
+        button.IsEnabled = false;
+        try
         {
-            var dialog = new ContentDialog
-            {
-                Title = L.Get("Text_Delete_Recipe_f011c8"),
+            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Recipe_f011c8"),
                 Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (_editingRecipeId == id && (_savingEditor || _openingEditor || !await ConfirmDiscardAsync())) return;
+            try { await _database.DeleteRecipeAsync(id); }
+            catch (RecipeInUseException ex)
             {
-                try
-                {
-                    await _database.DeleteRecipeAsync(id);
-                    if (_editingRecipeId == id) HideRecipeEditor();
-                    await LoadRecipesAsync();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    var blockedDialog = new ContentDialog
-                    {
-                        Title = L.Get("Text_Recipe_is_in_use_d1249f"),
-                        Content = ex.Message,
-                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                        XamlRoot = this.XamlRoot
-                    };
-                    await blockedDialog.ShowAsync();
-                }
+                App.Logger.LogWarning(ex, "Recipe {Id} could not be deleted because it is in use", id);
+                var blocked = new ContentDialog { Title = L.Get("Text_Recipe_is_in_use_d1249f"), Content = L.Get("DataRecipeInUse"),
+                    CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot };
+                await blocked.ShowAsync();
+                return;
             }
+            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete recipe {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
+            if (_editingRecipeId == id) HideRecipeEditor();
+            try { await LoadRecipesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Deleted recipe {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
         }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm recipe deletion"); SetPageStatus("DataDialogFailed"); }
+        finally { button.IsEnabled = true; }
     }
 
     private async void EditorClose_Click(object sender, RoutedEventArgs e)
     {
-        if (!_savingEditor && !_openingEditor && await ConfirmDiscardAsync()) HideRecipeEditor();
+        try { if (!_savingEditor && !_openingEditor && await ConfirmDiscardAsync()) HideRecipeEditor(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to close recipe editor"); EditorStatus.Text = L.Get("DataDialogFailed"); }
     }
 
     private async Task<bool> ConfirmDiscardAsync()
@@ -418,7 +426,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
             recipe.Id = await _database.SaveRecipeAsync(recipe);
             _editorDirty = false;
-            await LoadRecipesAsync();
+            try { await LoadRecipesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Saved recipe but refresh failed"); SetPageStatus("DataSavedRefreshFailed"); }
             HideRecipeEditor();
         };
         EditorSaveButton.Click += EditorSave_Click;
@@ -428,7 +437,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         }
         catch (Exception ex)
         {
-            EditorStatus.Text = L.Format("ErrorDetail", ex.Message);
+            App.Logger.LogError(ex, "Failed to open recipe editor");
+            EditorStatus.Text = L.Get("DataEditorOpenFailed");
             ResizeEditor();
             RecipeEditor.Visibility = Visibility.Visible;
         }
@@ -443,7 +453,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         _savingEditor = true;
         EditorSaveButton.IsEnabled = EditorCancelButton.IsEnabled = EditorCloseButton.IsEnabled = false;
         try { await _saveRecipe(); }
-        catch (Exception ex) { EditorStatus.Text = L.Format("ErrorDetail", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to save recipe"); EditorStatus.Text = L.Get("DataSaveFailed"); }
         finally
         {
             EditorSaveButton.IsEnabled = EditorCancelButton.IsEnabled = EditorCloseButton.IsEnabled = true;

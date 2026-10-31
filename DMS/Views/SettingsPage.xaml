@@ -74,6 +74,7 @@
                         <TextBlock TextWrapping="Wrap" x:Uid="FullBackupHint" />
                         <Button x:Name="BackupButton" Content="💾 Create Backup" Click="BackupButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Create_Backup_67fc28" />
                         <Button x:Name="RestoreButton" Content="🔄 Restore Backup" Click="RestoreButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Restore_Backup_0e7200" />
+                        <TextBlock x:Name="DataStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
 
                     <StackPanel Spacing="8" Margin="0,8,0,0">
@@ -91,12 +92,28 @@
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Database_0038a1" />
                     <TextBlock x:Name="DatabaseInfoText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DatabaseStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
                     
                     <StackPanel Spacing="8" Margin="0,8,0,0">
                         <Button x:Name="VacuumButton" Content="🧹 Vacuum Database" Click="VacuumButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Vacuum_Database_c3255f" />
                         <Button x:Name="ReindexButton" Content="📇 Reindex" Click="ReindexButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Reindex_70aa2b" />
                     </StackPanel>
                 </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Local diagnostic log -->
+            <Border x:Name="LogsCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+                <Grid>
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <StackPanel Margin="24" Spacing="10">
+                        <TextBlock Style="{StaticResource PageTitleTextStyle}" x:Uid="LogViewerTitle" />
+                        <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
+                        <TextBox x:Name="LogViewerText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" Height="200" />
+                        <Button x:Name="LogViewerRefreshButton" HorizontalAlignment="Stretch" Click="LogViewerRefresh_Click" x:Uid="LogViewerRefresh" />
+                        <Button x:Name="LogViewerFolderButton" HorizontalAlignment="Stretch" Click="LogViewerFolder_Click" x:Uid="LogViewerFolder" />
+                        <TextBlock x:Name="LogViewerStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
                 </Grid>
             </Border>
 

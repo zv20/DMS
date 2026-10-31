@@ -1,6 +1,7 @@
 using DMS.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Extensions.Logging;
 
 namespace DMS.Views;
 
@@ -45,7 +46,8 @@ internal sealed class SideEditorController
         }
         catch (Exception ex)
         {
-            _status.Text = Localization.Format("ErrorDetail", ex.Message);
+            App.Logger.LogError(ex, "Failed to open side editor on {Page}", _page.GetType().Name);
+            _status.Text = Localization.Get("DataEditorOpenFailed");
             Resize();
             _panel.Visibility = Visibility.Visible;
         }
@@ -104,7 +106,12 @@ internal sealed class SideEditorController
 
     private async void Close_Click(object sender, RoutedEventArgs e)
     {
-        if (await CanLeaveAsync()) Close();
+        try { if (await CanLeaveAsync()) Close(); }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Failed to close side editor on {Page}", _page.GetType().Name);
+            _status.Text = Localization.Get("DataDialogFailed");
+        }
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -113,7 +120,11 @@ internal sealed class SideEditorController
         _saving = true;
         _save.IsEnabled = _cancel.IsEnabled = _close.IsEnabled = false;
         try { if (await _saveAction()) Close(); }
-        catch (Exception ex) { _status.Text = Localization.Format("ErrorDetail", ex.Message); }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Failed to save side editor on {Page}", _page.GetType().Name);
+            _status.Text = Localization.Get("DataSaveFailed");
+        }
         finally { _save.IsEnabled = _cancel.IsEnabled = _close.IsEnabled = true; _saving = false; }
     }
 }

@@ -283,7 +283,7 @@
   <data name="ErrorDetail" xml:space="preserve"><value>Error: {0}</value></data>
   <data name="MenuLoadError" xml:space="preserve"><value>Unable to load menu: {0}</value></data>
   <data name="SaveError" xml:space="preserve"><value>Save failed: {0}</value></data>
-  <data name="RestoreWarning" xml:space="preserve"><value>⚠️ This will REPLACE your current database. All current data will be lost. Are you sure?</value></data>
+  <data name="RestoreWarning" xml:space="preserve"><value>This replaces your current data. DMS will save a recovery copy first. Close any other DMS windows before continuing.</value></data>
   <data name="DeleteTemplatePrompt" xml:space="preserve"><value>Delete template ‘{0}’?</value></data>
   <data name="RecipeFor" xml:space="preserve"><value>Recipe for {0}</value></data>
   <data name="AllergenGluten" xml:space="preserve"><value>Cereals containing gluten</value></data>
@@ -512,4 +512,35 @@
   <data name="TplOpenTemplate" xml:space="preserve"><value>Open template</value></data>
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Back up all saved data, including templates and original images, in one file. Restoring replaces current data.</value></data>
   <data name="MenuViewSelected" xml:space="preserve"><value>Selected view</value></data>
+  <data name="LogViewerTitle.Text" xml:space="preserve"><value>Diagnostics and logs</value></data>
+  <data name="LogViewerHint.Text" xml:space="preserve"><value>Logs stay on this device and may include file paths or recipe names. Recent entries and error details appear below.</value></data>
+  <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Refresh logs</value></data>
+  <data name="LogViewerFolder.Content" xml:space="preserve"><value>Open log folder</value></data>
+  <data name="LogViewerEmpty" xml:space="preserve"><value>No log entries yet.</value></data>
+  <data name="LogViewerUnavailable" xml:space="preserve"><value>The log is unavailable: {0}</value></data>
+  <data name="LogViewerSettingsLoadFailed" xml:space="preserve"><value>Could not load settings. Check the diagnostic log for details.</value></data>
+  <data name="LogViewerBackupFailed" xml:space="preserve"><value>Could not create the backup. Check the diagnostic log for details.</value></data>
+  <data name="LogViewerRestoreFailed" xml:space="preserve"><value>Could not restore the backup. Check the diagnostic log for details.</value></data>
+  <data name="LogViewerFolderFailed" xml:space="preserve"><value>Could not open the data folder. Check the diagnostic log for details.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Something went wrong</value></data>
+  <data name="ErrorNavigation" xml:space="preserve"><value>Could not open the page. Try again; details are available in Settings → Logs.</value></data>
+  <data name="ErrorTemplate" xml:space="preserve"><value>Could not complete the template action. Try again; details are available in Settings → Logs.</value></data>
+  <data name="ErrorOutput" xml:space="preserve"><value>Could not complete the print or export action. Try again; details are available in Settings → Logs.</value></data>
+  <data name="DataLoadFailed" xml:space="preserve"><value>Could not load the list. Try again.</value></data>
+  <data name="DataDeleteFailed" xml:space="preserve"><value>Could not delete the item. Try again.</value></data>
+  <data name="DataSavedRefreshFailed" xml:space="preserve"><value>Saved, but the list could not refresh. Reopen this page.</value></data>
+  <data name="DataDeletedRefreshFailed" xml:space="preserve"><value>Deleted, but the list could not refresh. Reopen this page.</value></data>
+  <data name="DataDialogFailed" xml:space="preserve"><value>Could not open the dialog. Try again.</value></data>
+  <data name="DataEditorOpenFailed" xml:space="preserve"><value>Could not open the editor. Try again.</value></data>
+  <data name="DataSaveFailed" xml:space="preserve"><value>Could not save your changes. Try again.</value></data>
+  <data name="DataFilterFailed" xml:space="preserve"><value>Could not filter the list. Try again.</value></data>
+  <data name="DataRecipeInUse" xml:space="preserve"><value>This recipe is used in meal plans. Remove it from those plans before deleting it.</value></data>
+  <data name="ActionFailed" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
+  <data name="ErrorPngIncomplete" xml:space="preserve"><value>Could not finish exporting the image. The selected file may be incomplete.</value></data>
+  <data name="LogViewerSavedApplyFailed" xml:space="preserve"><value>The setting was saved, but could not be applied. Restart the app and check the log if the problem continues.</value></data>
+  <data name="LogViewerMaintenanceFailed" xml:space="preserve"><value>Database maintenance failed. Check the diagnostic log for details.</value></data>
+  <data name="LogViewerRecoveryFatalTitle" xml:space="preserve"><value>Database recovery needs attention</value></data>
+  <data name="LogViewerRecoveryFatalMessage" xml:space="preserve"><value>DMS could not automatically recover the previous database. Close DMS and restore the recovery backup shown below before continuing. The full error is also in the local log.&#10;&#10;{0}</value></data>
+  <data name="LogViewerCloseApp" xml:space="preserve"><value>Close DMS</value></data>
+  <data name="RetryAction" xml:space="preserve"><value>Try again</value></data>
 </root>
