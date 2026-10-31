@@ -118,6 +118,7 @@
                         <TextBox x:Name="LogViewerText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" Height="200" />
                         <Button x:Name="LogViewerRefreshButton" HorizontalAlignment="Stretch" Click="LogViewerRefresh_Click" x:Uid="LogViewerRefresh" />
                         <Button x:Name="LogViewerFolderButton" HorizontalAlignment="Stretch" Click="LogViewerFolder_Click" x:Uid="LogViewerFolder" />
+                        <Button x:Name="LogViewerClearButton" HorizontalAlignment="Stretch" Click="LogViewerClear_Click" x:Uid="LogViewerClear" />
                         <TextBlock x:Name="LogViewerStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </Grid>

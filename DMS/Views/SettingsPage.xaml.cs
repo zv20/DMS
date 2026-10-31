@@ -95,6 +95,30 @@ public sealed partial class SettingsPage : Page
         RefreshLogViewer();
     }
 
+    private async void LogViewerClear_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var result = await new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = L.Get("LogViewerClearTitle"),
+                Content = L.Get("LogViewerClearConfirmation"),
+                PrimaryButtonText = L.Get("LogViewerClear.Content"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close
+            }.ShowAsync();
+            if (result != ContentDialogResult.Primary) return;
+            App.LogStore.Clear();
+            RefreshLogViewer();
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not clear local diagnostic logs");
+            LogViewerStatus.Text = L.Format("LogViewerUnavailable", ex.Message);
+        }
+    }
+
     private void LogViewerFolder_Click(object sender, RoutedEventArgs e)
     {
         try

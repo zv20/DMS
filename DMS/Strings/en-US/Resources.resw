@@ -520,6 +520,9 @@
   <data name="LogFilterError.Content" xml:space="preserve"><value>Errors</value></data>
   <data name="LogViewerRefresh.Content" xml:space="preserve"><value>Refresh logs</value></data>
   <data name="LogViewerFolder.Content" xml:space="preserve"><value>Open log folder</value></data>
+  <data name="LogViewerClear.Content" xml:space="preserve"><value>Clear logs</value></data>
+  <data name="LogViewerClearTitle" xml:space="preserve"><value>Clear diagnostic logs?</value></data>
+  <data name="LogViewerClearConfirmation" xml:space="preserve"><value>This permanently removes the local diagnostic history. New logs will continue to be recorded.</value></data>
   <data name="LogViewerEmpty" xml:space="preserve"><value>No log entries yet.</value></data>
   <data name="LogViewerUnavailable" xml:space="preserve"><value>The log is unavailable: {0}</value></data>
   <data name="LogViewerSettingsLoadFailed" xml:space="preserve"><value>Could not load settings. Check the diagnostic log for details.</value></data>

@@ -81,6 +81,25 @@ public sealed class LocalLogStore
         }
     }
 
+    /// <summary>Deletes the local diagnostic history. New entries are written normally.</summary>
+    public void Clear()
+    {
+        lock (_gate)
+        {
+            try
+            {
+                foreach (var path in new[] { FilePath, FilePath + ".1" })
+                    if (File.Exists(path)) File.Delete(path);
+                LastWriteFailure = null;
+            }
+            catch (Exception ex)
+            {
+                LastWriteFailure = ex.Message;
+                throw;
+            }
+        }
+    }
+
     private static string FilterEntries(string text, DiagnosticLogFilter filter)
     {
         if (filter == DiagnosticLogFilter.All || string.IsNullOrEmpty(text)) return text;

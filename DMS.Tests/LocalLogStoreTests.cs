@@ -75,5 +75,17 @@ public sealed class LocalLogStoreTests : IDisposable
         Assert.DoesNotContain("warning", errors);
     }
 
+    [Fact]
+    public void ClearRemovesCurrentAndRotatedLogs()
+    {
+        var store = new LocalLogStore(_folder, 1024);
+        store.Write(LogLevel.Information, "Test", new string('x', 900));
+        store.Write(LogLevel.Information, "Test", new string('y', 900));
+        store.Clear();
+        Assert.False(File.Exists(store.FilePath));
+        Assert.False(File.Exists(store.FilePath + ".1"));
+        Assert.Empty(store.ReadRecent());
+    }
+
     public void Dispose() { if (Directory.Exists(_folder)) Directory.Delete(_folder, true); }
 }
