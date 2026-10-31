@@ -302,6 +302,9 @@
   <data name="AllergenMolluscs" xml:space="preserve"><value>Molluscs</value></data>
   <data name="StartupRecipes" xml:space="preserve"><value>Loading your recipes...</value></data>
   <data name="StartupIngredients" xml:space="preserve"><value>Preparing your ingredients...</value></data>
+  <data name="StartupRestoringBackup" xml:space="preserve"><value>Restoring your backup...</value></data>
+  <data name="StartupReloading" xml:space="preserve"><value>Reloading your kitchen...</value></data>
+  <data name="RestoreReloadFailed" xml:space="preserve"><value>Your backup was restored, but DMS could not finish reloading.</value></data>
   <data name="MenuOutput.Content" xml:space="preserve"><value>Print / Export</value></data>
   <data name="RecipeAllCategories" xml:space="preserve"><value>All categories</value></data>
   <data name="RecipeSortName" xml:space="preserve"><value>Name</value></data>

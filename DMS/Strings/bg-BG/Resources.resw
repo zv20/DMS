@@ -302,6 +302,9 @@
   <data name="AllergenMolluscs" xml:space="preserve"><value>Мекотели</value></data>
   <data name="StartupRecipes" xml:space="preserve"><value>Зареждане на рецепти...</value></data>
   <data name="StartupIngredients" xml:space="preserve"><value>Подготвяне на съставки...</value></data>
+  <data name="StartupRestoringBackup" xml:space="preserve"><value>Възстановяване на резервното копие...</value></data>
+  <data name="StartupReloading" xml:space="preserve"><value>Презареждане на кухнята...</value></data>
+  <data name="RestoreReloadFailed" xml:space="preserve"><value>Резервното копие е възстановено, но DMS не успя да завърши презареждането.</value></data>
   <data name="MenuOutput.Content" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="RecipeAllCategories" xml:space="preserve"><value>Всички категории</value></data>
   <data name="RecipeSortName" xml:space="preserve"><value>Име</value></data>

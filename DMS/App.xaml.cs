@@ -119,6 +119,62 @@ public partial class App : Application
         previous.Close();
     }
 
+    /// <summary>
+    /// Restores data behind the startup screen, then replaces every page with a
+    /// fresh main window so no old database-backed view remains in memory.
+    /// </summary>
+    public static async Task RestoreAndReloadAsync(string backupPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
+        var previous = CurrentWindow;
+        var startup = new StartupWindow();
+        var databaseRestored = false;
+        try
+        {
+            previous.AppWindow.Hide();
+            CurrentWindow = startup;
+            startup.ShowRestoreLoading(Localization.Get("StartupRestoringBackup"));
+            startup.Activate();
+            await Task.Delay(50); // Let the restore screen paint before database work starts.
+
+            await Services.GetRequiredService<IDatabaseService>().RestoreFromAsync(backupPath);
+            databaseRestored = true;
+            startup.ShowRestoreLoading(Localization.Get("StartupReloading"));
+
+            var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
+            Localization.Apply(settings.Language);
+            AppearanceService.ApplyAccent(settings.AccentColor);
+            await Services.GetRequiredService<IDatabaseService>().GetAllRecipesAsync();
+            await Services.GetRequiredService<IDatabaseService>().GetAllIngredientsAsync();
+
+            var window = new MainWindow();
+            CurrentWindow = window;
+            window.Activate();
+            previous.Close();
+            startup.AllowClose();
+            startup.Close();
+            Logger.LogInformation("Database restored and MainWindow reloaded");
+        }
+        catch (Exception ex) when (!databaseRestored)
+        {
+            Logger.LogError(ex, "Database restore failed before data replacement");
+            CurrentWindow = previous;
+            startup.AllowClose();
+            startup.Close();
+            previous.AppWindow.Show();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // The data is restored, so never return to the old, stale pages.
+            Logger.LogError(ex, "Database restored but the fresh application window could not be opened");
+            previous.Close();
+            CurrentWindow = startup;
+            startup.RetryRequested += async (_, _) => await InitializeAndOpenAsync(startup);
+            startup.ShowError(Localization.Get("RestoreReloadFailed"), ex.Message, Localization.Get("RetryAction"));
+        }
+    }
+
     private static IServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();

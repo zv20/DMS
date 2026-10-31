@@ -9,12 +9,14 @@ public sealed partial class StartupWindow : Window
     public event EventHandler? RetryRequested;
     public bool IsClosed { get; private set; }
     private bool _fatalRecovery;
+    private bool _closeAllowed = true;
 
     public StartupWindow()
     {
         InitializeComponent();
         WindowIcon.Apply(this);
         Closed += (_, _) => IsClosed = true;
+        AppWindow.Closing += (_, args) => args.Cancel = !_closeAllowed;
         AppWindow.Resize(new Windows.Graphics.SizeInt32 { Width = 620, Height = 560 });
     }
 
@@ -27,8 +29,18 @@ public sealed partial class StartupWindow : Window
         RetryButton.Visibility = Visibility.Collapsed;
     }
 
+    /// <summary>Shows an uninterruptible foreground operation such as database restore.</summary>
+    public void ShowRestoreLoading(string message)
+    {
+        _closeAllowed = false;
+        ShowLoading(message);
+    }
+
+    public void AllowClose() => _closeAllowed = true;
+
     public void ShowError(string message, string details, string retry)
     {
+        _closeAllowed = true;
         _fatalRecovery = false;
         Subtitle.Text = message;
         ErrorDetails.Text = details;

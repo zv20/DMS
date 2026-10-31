@@ -948,11 +948,9 @@ public sealed partial class SettingsPage : Page
                 PrimaryButtonText = L.Get("Text_Restore_3cbe6d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
             if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
-            await _databaseService.RestoreFromAsync(file.Path);
+            await App.RestoreAndReloadAsync(file.Path);
             restored = true;
-            DataStatus.Text = L.Get("Text_Database_restored_successfully_Reopen_any_active_pages__48a860");
-            await new ContentDialog { Title = L.Get("Text_Restore_Complete_6ad3ae"), Content = DataStatus.Text,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
+            return;
         }
         catch (Exception ex)
         {
