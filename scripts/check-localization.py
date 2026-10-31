@@ -35,12 +35,23 @@ for key in english:
     placeholders = lambda value: sorted(re.findall(r"\{\d+(?:[^{}]*)\}", value))
     assert placeholders(english[key]) == placeholders(bulgarian[key]), f"Placeholder mismatch: {key}"
 
-for path in (ROOT / "DMS").rglob("*.cs"):
+def source_files(extension):
+    """Only inspect project source, never generated/published output.
+
+    The WinUI build creates framework directories below bin that may include
+    protected files on Windows runners, so rglob cannot safely walk them.
+    """
+    ignored = {"bin", "obj"}
+    return (path for path in (ROOT / "DMS").rglob(f"*{extension}")
+            if not any(part.casefold() in ignored for part in path.parts))
+
+
+for path in source_files(".cs"):
     for key in re.findall(r'(?:L|Localization)\.(?:Get|Format)\("([^\"]+)"', path.read_text(encoding="utf-8")):
         assert key in english, f"Missing resource {key} in {path}"
 
 uid = "{http://schemas.microsoft.com/winfx/2006/xaml}Uid"
-for path in (ROOT / "DMS").rglob("*.xaml"):
+for path in source_files(".xaml"):
     for element in ET.parse(path).iter():
         if uid in element.attrib:
             prefix = element.attrib[uid] + "."
