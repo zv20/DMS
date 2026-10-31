@@ -262,6 +262,37 @@ public sealed class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task FullBackupAndRestorePreserveLanguageAndAppearanceSettings()
+    {
+        var backupPath = Path.Combine(_testDirectory, "settings-backup.db");
+        using var database = CreateDatabase();
+        await database.SaveSettingsAsync(new AppSettings
+        {
+            Language = "en",
+            Theme = "dark",
+            AccentColor = "teal",
+            WeekendPlanningEnabled = true
+        });
+        await database.CreateBackupAsync(backupPath);
+
+        await database.SaveSettingsAsync(new AppSettings
+        {
+            Language = "bg",
+            Theme = "light",
+            AccentColor = "red",
+            WeekendPlanningEnabled = false
+        });
+        await database.RestoreFromAsync(backupPath);
+
+        var restored = await database.GetSettingsAsync();
+        Assert.NotNull(restored);
+        Assert.Equal("en", restored!.Language);
+        Assert.Equal("dark", restored.Theme);
+        Assert.Equal("teal", restored.AccentColor);
+        Assert.True(restored.WeekendPlanningEnabled);
+    }
+
+    [Fact]
     public async Task EmptyMenuSlotCategorySurvivesReopenAndBackup()
     {
         var day = new DateTime(2026, 10, 26);
