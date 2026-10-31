@@ -2,7 +2,7 @@ name: Windows package check
 
 on:
   push:
-    branches: [winUI3]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
