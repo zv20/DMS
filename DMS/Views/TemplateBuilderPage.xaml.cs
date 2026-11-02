@@ -741,23 +741,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (render) Render();
     }
 
-    private void UpdateSelectedBlockBackground(string key, double opacity)
-    {
-        var anchor = _selectionAnchor;
-        if (anchor is not Border || anchor.Tag as string != _selectedBlock)
-        {
-            anchor = _selectedBlock == null ? null : FindAnchor(PageHost, _selectedBlock);
-            _selectionAnchor = anchor;
-        }
-        if (anchor is not Border border) return;
-        _document.BlockAppearances ??= new();
-        _document.BlockAppearances.TryGetValue(key, out var appearance);
-        if (appearance == null) _document.BlockAppearances.TryGetValue("day", out appearance);
-        var source = ParseColor(appearance?.BackgroundColor ?? "#FFFFFF");
-        var alpha = (byte)Math.Round(Math.Clamp(opacity, 0, 1) * byte.MaxValue);
-        border.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, source.R, source.G, source.B));
-    }
-
     private void AddStyleToggle(string text, string label, bool initial, Action<bool> change)
     {
         var button = new ToggleButton { Content = text, IsChecked = initial, MinWidth = 32, Padding = new Thickness(6, 4, 6, 4) };

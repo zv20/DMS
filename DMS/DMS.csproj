@@ -26,7 +26,6 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.14" />
   </ItemGroup>
@@ -35,9 +34,6 @@
     <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Assets\Templates\*.png" />
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

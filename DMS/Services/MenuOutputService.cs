@@ -180,12 +180,11 @@ public static class MenuOutputService
             return $";background-color:{background};border:{borderThickness}px solid {borderColor};border-radius:{radius}px;padding:{padding}px;opacity:{opacity}";
         }
         string Css(TemplateTextStyle style, double scale = 1) => $"font-family:'{H(Font(style.FontFamily))}';font-size:{Num(style.FontSize * scale, 11, 3, 72)}px;color:{Color(style.Color, "#000000")};font-weight:{(style.Bold ? "bold" : "normal")};font-style:{(style.Italic ? "italic" : "normal")};text-decoration:{(style.Underline ? "underline" : "none")}" + (style.Alignment is "left" or "center" or "right" ? $";text-align:{style.Alignment}" : "");
-        TemplateTextStyle Style(string key, double size, bool bold = false, string? legacy = null)
+        TemplateTextStyle Style(string key, double size, bool bold = false)
         {
             if (template.TextStyles != null && template.TextStyles.TryGetValue(key, out var found) && found != null) return found;
             var split = key.Split(':');
             if (split.Length == 2 && template.TextStyles != null && template.TextStyles.TryGetValue($"block:{split[1]}", out var block) && block != null) return block;
-            if (legacy != null && template.TextStyles != null && template.TextStyles.TryGetValue(legacy, out var old) && old != null) return old;
             return new TemplateTextStyle { FontFamily = template.FontFamily, FontSize = size, Bold = bold };
         }
         string Position(TemplateLayoutElement item, double? resolvedHeight = null) => $"position:absolute;left:{Num(item.X, 0, 0, 794)}px;top:{Num(item.Y, 0, 0, 1123)}px;width:{Num(item.Width, 100, 1, 794)}px;min-height:{Num(resolvedHeight ?? item.Height, 20, 1, 1123)}px;z-index:{Math.Clamp(item.ZIndex, 1, 1000)}";
@@ -229,11 +228,11 @@ public static class MenuOutputService
                 var name = $"{slot}. {recipe.Name}";
                 if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) name += $" ({recipe.PortionSize})";
                 if (template.ShowCalories && recipe.Calories > 0) name += $" · {recipe.Calories} kcal";
-                menuLines.Add((name, Style(key, template.MealFontSize, legacy: $"meal:{i}:{slot}").FontSize));
-                if (template.ShowIngredients && recipe.Ingredients.Count > 0) menuLines.Add((string.Join(", ", recipe.Ingredients), Style($"ingredient-group:{i}", template.MealFontSize, legacy: $"ingredients:{i}:{slot}").FontSize));
+                menuLines.Add((name, Style(key, template.MealFontSize).FontSize));
+                if (template.ShowIngredients && recipe.Ingredients.Count > 0) menuLines.Add((string.Join(", ", recipe.Ingredients), Style($"ingredient-group:{i}", template.MealFontSize).FontSize));
                 var estimatedAllergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(ingredientName => ingredientByName.TryGetValue(ingredientName, out var ingredient) ? ingredient.Allergens : []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToList();
-                if (estimatedAllergens.Count > 0) menuLines.Add(("⚠ " + string.Join(", ", estimatedAllergens), Style($"allergen-group:{i}", template.MealFontSize, legacy: $"allergens:{i}:{slot}").FontSize));
+                if (estimatedAllergens.Count > 0) menuLines.Add(("⚠ " + string.Join(", ", estimatedAllergens), Style($"allergen-group:{i}", template.MealFontSize).FontSize));
             }
             var menuElement = Element(key);
             var neighbors = new List<TemplateLayoutElement>();
@@ -257,11 +256,11 @@ public static class MenuOutputService
                 var name = $"{slot}. {recipe.Name}";
                 if (template.ShowPortions && !string.IsNullOrWhiteSpace(recipe.PortionSize)) name += $" ({recipe.PortionSize})";
                 if (template.ShowCalories && recipe.Calories > 0) name += $" · {recipe.Calories} kcal";
-                sb.Append("<div class='meal'><div class='line' style=\"").Append(Css(Style(key, template.MealFontSize, legacy: $"meal:{i}:{slot}"), resolution.FontScale)).Append("\">").Append(H(name)).Append("</div>");
-                if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"ingredient-group:{i}", template.MealFontSize, legacy: $"ingredients:{i}:{slot}"), resolution.FontScale)).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
+                sb.Append("<div class='meal'><div class='line' style=\"").Append(Css(Style(key, template.MealFontSize), resolution.FontScale)).Append("\">").Append(H(name)).Append("</div>");
+                if (template.ShowIngredients && recipe.Ingredients.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"ingredient-group:{i}", template.MealFontSize), resolution.FontScale)).Append("\">").Append(H(string.Join(", ", recipe.Ingredients))).Append("</div>");
                 var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredientByName.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToList();
-                if (allergens.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"allergen-group:{i}", template.MealFontSize, legacy: $"allergens:{i}:{slot}"), resolution.FontScale)).Append("\">⚠ ").Append(H(string.Join(", ", allergens))).Append("</div>");
+                if (allergens.Count > 0) sb.Append("<div class='line' style=\"").Append(Css(Style($"allergen-group:{i}", template.MealFontSize), resolution.FontScale)).Append("\">⚠ ").Append(H(string.Join(", ", allergens))).Append("</div>");
                 sb.Append("</div>");
             }
             sb.Append("</div>");
