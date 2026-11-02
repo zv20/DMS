@@ -241,6 +241,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         await SeedDefaultAllergensAsync();
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
+        SeedSeasonalTemplatePresets();
     }
 
     private async Task EnsureAllergenIconColumnAsync()

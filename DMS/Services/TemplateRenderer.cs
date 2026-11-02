@@ -1,4 +1,5 @@
 using DMS.Models;
+using DMS.Views;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -172,28 +173,43 @@ public static class TemplateRenderer
             var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
             var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
             var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
-            var meal = StyledText("", menuStyle, scale);
-            // Each inline owns its underline, including allergen-bearing ingredients.
-            meal.TextDecorations = Windows.UI.Text.TextDecorations.None;
-            Selectable(meal, $"menu:{dayIndex}", onSelected);
+            // Keep each editable part as its own element. Runs inside one TextBlock
+            // cannot receive pointer input, which made the builder's previous
+            // menu/ingredients/allergens selector ambiguous.
+            var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
             if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
-            AddRun(meal, title, menuStyle, scale, false);
-            if (recipe.Ingredients.Count > 0) AddRun(meal, " — ", ingredientStyle, scale, false);
-            for (var i = 0; i < recipe.Ingredients.Count; i++)
+            var titleBlock = StyledText(title, menuStyle, scale);
+            Selectable(titleBlock, $"menu:{dayIndex}", onSelected);
+            meal.Children.Add(titleBlock);
+
+            if (recipe.Ingredients.Count > 0)
             {
-                var name = recipe.Ingredients[i];
-                if (i > 0) AddRun(meal, ", ", ingredientStyle, scale, false);
-                var hasAllergen = ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0;
-                if (hasAllergen)
+                var ingredientBlock = StyledText("", ingredientStyle, scale);
+                ingredientBlock.TextDecorations = Windows.UI.Text.TextDecorations.None;
+                AddRun(ingredientBlock, " — ", ingredientStyle, scale, false);
+                for (var i = 0; i < recipe.Ingredients.Count; i++)
                 {
-                    var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
-                    AddRun(meal, name, emphasis, scale, true);
+                    var name = recipe.Ingredients[i];
+                    if (i > 0) AddRun(ingredientBlock, ", ", ingredientStyle, scale, false);
+                    var hasAllergen = ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0;
+                    if (hasAllergen)
+                    {
+                        var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
+                        AddRun(ingredientBlock, name, emphasis, scale, true);
+                    }
+                    else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
                 }
-                else AddRun(meal, name, ingredientStyle, scale, false);
+                Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected);
+                meal.Children.Add(ingredientBlock);
             }
-            if (allergens.Length > 0) AddRun(meal, " · " + string.Join(", ", allergens), allergenStyle, scale, false);
+            if (allergens.Length > 0)
+            {
+                var allergenBlock = StyledText(" · " + string.Join(", ", allergens), allergenStyle, scale);
+                Selectable(allergenBlock, $"allergens:{dayIndex}", onSelected);
+                meal.Children.Add(allergenBlock);
+            }
             panel.Children.Add(meal);
         }
         return panel;

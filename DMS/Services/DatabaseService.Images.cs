@@ -75,6 +75,46 @@ public partial class DatabaseService
         transaction.Commit();
     }
 
+    private void SeedSeasonalTemplatePresets()
+    {
+        var assembly = typeof(DatabaseService).Assembly;
+        var firstResource = $"{assembly.GetName().Name}.Assets.Templates.{SeasonalTemplateDefaults.All[0].AssetFile}";
+        if (assembly.GetManifestResourceStream(firstResource) == null)
+        {
+            // Unit-test hosts can link the service source without bundling the
+            // application assets. The published app always embeds these files.
+            _logger.LogWarning("Built-in seasonal template artwork is unavailable in this host");
+            return;
+        }
+        using var transaction = _connection!.BeginTransaction();
+        foreach (var definition in SeasonalTemplateDefaults.All)
+        {
+            using var exists = _connection.CreateCommand();
+            exists.Transaction = transaction;
+            exists.CommandText = "SELECT COUNT(*) FROM templates WHERE name=@name";
+            exists.Parameters.AddWithValue("@name", definition.Name);
+            if (Convert.ToInt32(exists.ExecuteScalar()) != 0) continue;
+
+            var resourceName = $"{assembly.GetName().Name}.Assets.Templates.{definition.AssetFile}";
+            using var stream = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Built-in seasonal template artwork is missing: {definition.AssetFile}");
+            using var bytes = new MemoryStream();
+            stream.CopyTo(bytes);
+            var image = StoreTemplateImage(definition.Name + " artwork", "image/png", bytes.ToArray(), transaction);
+            var template = SeasonalTemplateDefaults.Create(definition, image.Id);
+            using var insert = _connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = @"INSERT INTO templates (name, data_json, is_preset, created_at, updated_at)
+                VALUES (@name, @data, 1, @now, @now)";
+            insert.Parameters.AddWithValue("@name", template.Name);
+            insert.Parameters.AddWithValue("@data", JsonSerializer.Serialize(template));
+            insert.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
+            insert.ExecuteNonQuery();
+            ReplaceTemplateImageReferences(template.Name, [image.Id], transaction);
+        }
+        transaction.Commit();
+    }
+
     private TemplateImageAsset StoreTemplateImage(string name, string contentType, byte[] data, SqliteTransaction transaction)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -292,6 +332,15 @@ public partial class DatabaseService
             throw new InvalidOperationException("The templates using this image changed. Review the list and try again.");
         foreach (var name in actual)
         {
+            using var preset = _connection.CreateCommand();
+            preset.Transaction = transaction;
+            preset.CommandText = "SELECT is_preset FROM templates WHERE name=@name";
+            preset.Parameters.AddWithValue("@name", name);
+            if (Convert.ToInt32(preset.ExecuteScalar()) != 0)
+                throw new InvalidOperationException("Built-in template artwork cannot be deleted.");
+        }
+        foreach (var name in actual)
+        {
             using var deleteTemplate = _connection.CreateCommand();
             deleteTemplate.Transaction = transaction;
             deleteTemplate.CommandText = "DELETE FROM templates WHERE name=@name";
@@ -306,4 +355,53 @@ public partial class DatabaseService
         transaction.Commit();
         return actual;
     }
+}
+
+/// <summary>Built-in seasonal A4 menu presets using the original DMS artwork.</summary>
+internal static class SeasonalTemplateDefaults
+{
+    internal sealed record Definition(string Name, string AssetFile, string HeaderColor, string BodyColor);
+
+    internal static readonly Definition[] All =
+    [
+        new("Spring Garden", "season-spring.png", "#356B39", "#213A23"),
+        new("Summer Table", "season-summer.png", "#9A5B08", "#253F65"),
+        new("Autumn Harvest", "season-autumn.png", "#8C4818", "#563116"),
+        new("Winter Comfort", "season-winter.png", "#2D5D88", "#223C59")
+    ];
+
+    internal static MenuTemplate Create(Definition definition, string assetId) => new()
+    {
+        Name = definition.Name,
+        IsPreset = true,
+        Document = new TemplateDocument
+        {
+            HeaderText = "Weekly Menu",
+            FooterText = "Allergens are highlighted in red.",
+            FontFamily = "Arial",
+            HeaderColor = definition.HeaderColor,
+            BodyColor = definition.BodyColor,
+            AllergenAccentColor = "#C60000",
+            FooterColor = definition.BodyColor,
+            BackgroundColor = "#FFFFFF",
+            BackgroundImageAssetId = assetId,
+            BackgroundImageOpacity = 1,
+            DaySpacing = 6,
+            MealLineSpacing = 2,
+            BlockAppearances = new Dictionary<string, TemplateBlockAppearance>
+            {
+                ["day"] = new() { BackgroundColor = "#FFFFFF", Opacity = 0.88, Padding = 8, CornerRadius = 4 }
+            },
+            TextStyles = new Dictionary<string, TemplateTextStyle>
+            {
+                ["header"] = new() { FontFamily = "Arial", FontSize = 25, Color = definition.HeaderColor, Bold = true, Alignment = "center" },
+                ["date"] = new() { FontFamily = "Arial", FontSize = 14, Color = definition.BodyColor, Alignment = "center" },
+                ["heading"] = new() { FontFamily = "Arial", FontSize = 15, Color = definition.HeaderColor, Bold = true },
+                ["menu"] = new() { FontFamily = "Arial", FontSize = 11, Color = definition.BodyColor },
+                ["ingredients"] = new() { FontFamily = "Arial", FontSize = 10, Color = definition.BodyColor },
+                ["allergens"] = new() { FontFamily = "Arial", FontSize = 10, Color = "#C60000", Bold = true, Underline = true },
+                ["footer"] = new() { FontFamily = "Arial", FontSize = 9, Color = definition.BodyColor, Alignment = "center" }
+            }
+        }
+    };
 }

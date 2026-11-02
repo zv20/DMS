@@ -60,9 +60,9 @@ public sealed class TemplateImageAssetDatabaseTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() => database.DeleteTemplateImageAsync(image.Id, ["User"]));
         Assert.Equal(2, (await database.GetAllTemplatesAsync()).Count);
         Assert.NotNull(await database.GetTemplateImageAsync(image.Id));
-        Assert.Equal(new[] { "Preset", "User" }, await database.DeleteTemplateImageAsync(image.Id, ["User", "Preset"]));
-        Assert.Empty(await database.GetAllTemplatesAsync());
-        Assert.Null(await database.GetTemplateImageAsync(image.Id));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => database.DeleteTemplateImageAsync(image.Id, ["User", "Preset"]));
+        Assert.Equal(2, (await database.GetAllTemplatesAsync()).Count);
+        Assert.NotNull(await database.GetTemplateImageAsync(image.Id));
     }
 
     [Fact]

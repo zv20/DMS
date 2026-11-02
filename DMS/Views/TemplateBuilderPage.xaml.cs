@@ -433,7 +433,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
         return Microsoft.UI.Colors.Black;
     }
-    private static string AnchorKey(string key) => key.StartsWith("ingredients:") || key.StartsWith("allergens:") ? "menu:" + key.Split(':')[1] : key;
+    private static string AnchorKey(string key) => key;
 
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
     {
@@ -601,19 +601,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 7)
             sectionName = $"{_monday.AddDays(dayIndex):dddd} › {sectionName}";
         ContextTools.Children.Add(new TextBlock { Text = sectionName, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) });
-        if (parts.Length == 2 && parts[0] is "menu" or "ingredients" or "allergens")
-        {
-            var section = new ComboBox { Width = 120 };
-            section.Items.Add(L.Get("TplMenuNames")); section.Items.Add(L.Get("TplIngredientText")); section.Items.Add(L.Get("TplAllergenText"));
-            section.SelectedIndex = parts[0] == "menu" ? 0 : parts[0] == "ingredients" ? 1 : 2;
-            section.SelectionChanged += (_, _) =>
-            {
-                if (_contextBinding || section.SelectedIndex < 0 || _selectionAnchor == null) return;
-                _selectedBlock = new[] { "menu", "ingredients", "allergens" }[section.SelectedIndex] + ":" + parts[1];
-                BuildContextTools(); PositionContextTools();
-            };
-            ContextTools.Children.Add(section);
-        }
 
         if (key.StartsWith("image:", StringComparison.Ordinal))
         {
@@ -692,7 +679,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 {
                     _document.ShowHeaderReflection = value; _dirty = true; Render();
                 });
-            if (parts[0] is "ingredients" or "allergens")
+            if (parts[0] is "allergens")
                 AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, value =>
                 {
                     _document.AllergenAccentColor = value; _dirty = true; Render();

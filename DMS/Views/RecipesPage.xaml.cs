@@ -313,7 +313,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var ingredientsLabel = new TextBlock { Text = L.Get("Text_Ingredients_f9e84e"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
         var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
-        var ingredientChips = new IngredientWrapPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        var ingredientChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         void AddIngredientChip(string name)
         {
             var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 260 };
