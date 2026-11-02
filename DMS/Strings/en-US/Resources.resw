@@ -482,6 +482,7 @@
   <data name="TplRichEdit" xml:space="preserve"><value>Edit rich header or footer text</value></data>
   <data name="TplAppearance" xml:space="preserve"><value>Block appearance</value></data>
   <data name="TplAppearanceBackground" xml:space="preserve"><value>Background color (#RRGGBB, optional)</value></data>
+  <data name="TplBlockTransparency" xml:space="preserve"><value>Block transparency</value></data>
   <data name="TplAppearanceBorder" xml:space="preserve"><value>Border color (#RRGGBB, optional)</value></data>
   <data name="TplAppearanceThickness" xml:space="preserve"><value>Border thickness</value></data>
   <data name="TplAppearanceRadius" xml:space="preserve"><value>Corner radius</value></data>

@@ -33,6 +33,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _editingBlock;
     private bool _inlineTextChanged;
     private bool _weekendEnabled;
+    private List<string> _recentTemplateColors = [];
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -120,7 +121,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async Task InitializeAsync()
     {
-        try { await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync(); }
+        try
+        {
+            _recentTemplateColors = (await _database.GetSettingsAsync())?.RecentTemplateColors?
+                .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
+            await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync();
+        }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
@@ -630,6 +636,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             appearance ??= new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 };
             AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", value => EditAppearance(key, a => a.BackgroundColor = value));
             AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", value => EditAppearance(key, a => { a.BorderColor = value; if (a.BorderThickness <= 0) a.BorderThickness = 1; }));
+            var opacity = double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
+            var transparency = new NumberBox { Width = 80, Minimum = 0, Maximum = 100, Value = Math.Round((1 - opacity) * 100), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            ToolTipService.SetToolTip(transparency, L.Get("TplBlockTransparency"));
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(transparency, L.Get("TplBlockTransparency"));
+            transparency.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(transparency.Value)) EditAppearance(key, a => a.Opacity = 1 - transparency.Value / 100); };
+            ContextTools.Children.Add(transparency);
             var padding = new NumberBox { Width = 80, Minimum = 0, Maximum = 25, Value = appearance.Padding, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             ToolTipService.SetToolTip(padding, L.Get("TplAppearancePadding"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(padding, L.Get("TplAppearancePadding"));
@@ -748,15 +760,51 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
         ToolTipService.SetToolTip(button, L.Get(label));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
-        var picker = new ColorPicker { Color = ParseColor(initial), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
+        var picker = new ColorPicker { Color = ParseColor(initial), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 288 };
+        var content = new StackPanel { Width = 288, Spacing = 8 };
+        content.Children.Add(picker);
+        if (_recentTemplateColors.Count > 0)
+        {
+            var recent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            recent.Children.Add(new TextBlock { Text = L.Get("TplRecentColors"), VerticalAlignment = VerticalAlignment.Center });
+            foreach (var recentColor in _recentTemplateColors)
+            {
+                var color = recentColor;
+                var recentButton = new Button { Width = 28, Height = 28, Padding = new Thickness(3), Content = new Border { Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) } };
+                ToolTipService.SetToolTip(recentButton, color);
+                recentButton.Click += (_, _) => picker.Color = ParseColor(color);
+                recent.Children.Add(recentButton);
+            }
+            content.Children.Add(recent);
+        }
+        string? selectedColor = null;
         picker.ColorChanged += (_, args) =>
         {
             var color = args.NewColor;
             swatch.Background = new SolidColorBrush(color);
-            change($"#{color.R:X2}{color.G:X2}{color.B:X2}");
+            selectedColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            change(selectedColor);
         };
-        button.Flyout = new Flyout { Content = picker };
+        var flyout = new Flyout { Content = content, Placement = FlyoutPlacementMode.Top };
+        flyout.Closed += async (_, _) => { if (selectedColor != null) await RememberTemplateColorAsync(selectedColor); };
+        button.Flyout = flyout;
         ContextTools.Children.Add(button);
+    }
+
+    private static bool IsColorHex(string color) => color.Length == 7 && color[0] == '#' && uint.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out _);
+
+    private async Task RememberTemplateColorAsync(string color)
+    {
+        _recentTemplateColors.RemoveAll(existing => string.Equals(existing, color, StringComparison.OrdinalIgnoreCase));
+        _recentTemplateColors.Insert(0, color);
+        if (_recentTemplateColors.Count > 8) _recentTemplateColors.RemoveRange(8, _recentTemplateColors.Count - 8);
+        try
+        {
+            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            settings.RecentTemplateColors = [.. _recentTemplateColors];
+            await _database.SaveSettingsAsync(settings);
+        }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save recently used template colors"); }
     }
 
     private async void Render()

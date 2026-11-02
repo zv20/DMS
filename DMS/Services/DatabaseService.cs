@@ -712,6 +712,10 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                 case "accent_color": settings.AccentColor = value; break;
                 case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
                 case "data_folder": settings.DataFolder = value; break;
+                case "recent_template_colors":
+                    try { settings.RecentTemplateColors = System.Text.Json.JsonSerializer.Deserialize<List<string>>(value) ?? []; }
+                    catch (System.Text.Json.JsonException) { settings.RecentTemplateColors = []; }
+                    break;
             }
         }
         return settings;
@@ -729,7 +733,8 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             ("theme", settings.Theme),
             ("accent_color", settings.AccentColor),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
-            ("data_folder", settings.DataFolder ?? "")
+            ("data_folder", settings.DataFolder ?? ""),
+            ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
         };
 
         foreach (var (key, value) in pairs)

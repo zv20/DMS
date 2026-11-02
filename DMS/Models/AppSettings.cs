@@ -7,4 +7,5 @@ public sealed class AppSettings
     public string AccentColor { get; set; } = "blue";
     public bool WeekendPlanningEnabled { get; set; }
     public string? DataFolder { get; set; }
+    public List<string> RecentTemplateColors { get; set; } = [];
 }
