@@ -787,7 +787,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             foreach (var recentColor in _recentTemplateColors)
             {
                 var color = recentColor;
-                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
+                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
                 ToolTipService.SetToolTip(recentButton, color);
                 recentButton.Click += (_, _) => picker.Color = ParseColor(color);
                 recent.Children.Add(recentButton);
