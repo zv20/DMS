@@ -9,7 +9,8 @@ internal static class WindowPlacement
     {
         var area = DisplayArea.GetFromWindowId(window.Id, DisplayAreaFallback.Primary)?.WorkArea;
         if (area == null) return;
-        window.Move(new PointInt32(area.X + Math.Max(0, (area.Width - window.Size.Width) / 2), area.Y + Math.Max(0, (area.Height - window.Size.Height) / 2)));
+        var workArea = area.Value;
+        window.Move(new PointInt32(workArea.X + Math.Max(0, (workArea.Width - window.Size.Width) / 2), workArea.Y + Math.Max(0, (workArea.Height - window.Size.Height) / 2)));
     }
 
     internal static void RestoreOrCenter(AppWindow window, Models.AppSettings settings)
@@ -20,8 +21,9 @@ internal static class WindowPlacement
         }
         var area = DisplayArea.GetFromPoint(new PointInt32(x + width / 2, y + height / 2), DisplayAreaFallback.Primary)?.WorkArea;
         if (area == null || width < 400 || height < 300) { Center(window); return; }
-        var safeWidth = Math.Min(width, area.Width); var safeHeight = Math.Min(height, area.Height);
+        var workArea = area.Value;
+        var safeWidth = Math.Min(width, workArea.Width); var safeHeight = Math.Min(height, workArea.Height);
         window.Resize(new SizeInt32(safeWidth, safeHeight));
-        window.Move(new PointInt32(Math.Clamp(x, area.X, area.X + area.Width - safeWidth), Math.Clamp(y, area.Y, area.Y + area.Height - safeHeight)));
+        window.Move(new PointInt32(Math.Clamp(x, workArea.X, workArea.X + workArea.Width - safeWidth), Math.Clamp(y, workArea.Y, workArea.Y + workArea.Height - safeHeight)));
     }
 }
