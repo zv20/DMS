@@ -91,9 +91,22 @@ public partial class DatabaseService
         {
             using var exists = _connection.CreateCommand();
             exists.Transaction = transaction;
-            exists.CommandText = "SELECT COUNT(*) FROM templates WHERE name=@name";
+            exists.CommandText = "SELECT data_json FROM templates WHERE name=@name";
             exists.Parameters.AddWithValue("@name", definition.Name);
-            if (Convert.ToInt32(exists.ExecuteScalar()) != 0) continue;
+            if (exists.ExecuteScalar() is string existingJson)
+            {
+                if (SeasonalTemplateDefaults.TryApplyRoomierTypography(existingJson, out var refreshedJson))
+                {
+                    using var update = _connection.CreateCommand();
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE templates SET data_json=@data, updated_at=@now WHERE name=@name";
+                    update.Parameters.AddWithValue("@data", refreshedJson);
+                    update.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
+                    update.Parameters.AddWithValue("@name", definition.Name);
+                    update.ExecuteNonQuery();
+                }
+                continue;
+            }
 
             var resourceName = $"{assembly.GetName().Name}.Assets.Templates.{definition.AssetFile}";
             using var stream = assembly.GetManifestResourceStream(resourceName)
@@ -387,21 +400,56 @@ internal static class SeasonalTemplateDefaults
             BackgroundImageAssetId = assetId,
             BackgroundImageOpacity = 1,
             DaySpacing = 6,
-            MealLineSpacing = 2,
+            MealLineSpacing = 4,
             BlockAppearances = new Dictionary<string, TemplateBlockAppearance>
             {
                 ["day"] = new() { BackgroundColor = "#FFFFFF", Opacity = 0.88, Padding = 8, CornerRadius = 4 }
             },
             TextStyles = new Dictionary<string, TemplateTextStyle>
             {
-                ["header"] = new() { FontFamily = "Arial", FontSize = 25, Color = definition.HeaderColor, Bold = true, Alignment = "center" },
-                ["date"] = new() { FontFamily = "Arial", FontSize = 14, Color = definition.BodyColor, Alignment = "center" },
-                ["heading"] = new() { FontFamily = "Arial", FontSize = 15, Color = definition.HeaderColor, Bold = true },
-                ["menu"] = new() { FontFamily = "Arial", FontSize = 11, Color = definition.BodyColor },
-                ["ingredients"] = new() { FontFamily = "Arial", FontSize = 10, Color = definition.BodyColor },
-                ["allergens"] = new() { FontFamily = "Arial", FontSize = 10, Color = "#C60000", Bold = true, Underline = true },
-                ["footer"] = new() { FontFamily = "Arial", FontSize = 9, Color = definition.BodyColor, Alignment = "center" }
+                ["header"] = new() { FontFamily = "Arial", FontSize = 28, Color = definition.HeaderColor, Bold = true, Alignment = "center" },
+                ["date"] = new() { FontFamily = "Arial", FontSize = 15, Color = definition.BodyColor, Alignment = "center" },
+                ["heading"] = new() { FontFamily = "Arial", FontSize = 17, Color = definition.HeaderColor, Bold = true },
+                ["menu"] = new() { FontFamily = "Arial", FontSize = 14, Color = definition.BodyColor },
+                ["ingredients"] = new() { FontFamily = "Arial", FontSize = 12, Color = definition.BodyColor },
+                ["allergens"] = new() { FontFamily = "Arial", FontSize = 12, Color = "#C60000", Bold = true, Underline = true },
+                ["footer"] = new() { FontFamily = "Arial", FontSize = 10, Color = definition.BodyColor, Alignment = "center" }
             }
         }
     };
+
+    /// <summary>Updates only the untouched first draft of a preset, never a user's customisation.</summary>
+    internal static bool TryApplyRoomierTypography(string json, out string refreshedJson)
+    {
+        refreshedJson = json;
+        try
+        {
+            var template = JsonSerializer.Deserialize<MenuTemplate>(json);
+            var styles = template?.Document?.TextStyles;
+            if (template?.Document == null || styles == null
+                || !HasSize(styles, "header", 25) || !HasSize(styles, "date", 14)
+                || !HasSize(styles, "heading", 15) || !HasSize(styles, "menu", 11)
+                || !HasSize(styles, "ingredients", 10) || !HasSize(styles, "allergens", 10)
+                || !HasSize(styles, "footer", 9) || template.Document.MealLineSpacing != 2)
+                return false;
+
+            template.Document.MealLineSpacing = 4;
+            styles["header"].FontSize = 28;
+            styles["date"].FontSize = 15;
+            styles["heading"].FontSize = 17;
+            styles["menu"].FontSize = 14;
+            styles["ingredients"].FontSize = 12;
+            styles["allergens"].FontSize = 12;
+            styles["footer"].FontSize = 10;
+            refreshedJson = JsonSerializer.Serialize(template);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasSize(Dictionary<string, TemplateTextStyle> styles, string key, double size)
+        => styles.TryGetValue(key, out var style) && style != null && style.FontSize == size;
 }

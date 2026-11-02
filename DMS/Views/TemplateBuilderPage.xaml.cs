@@ -590,17 +590,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Add(close);
 
         var parts = key.Split(':');
-        var sectionName = parts[0] switch
-        {
-            "page" => L.Get("TplBuilderPageSection"), "image" => L.Get("TplImageBlock"),
-            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplBuilderNotice"),
-            "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
-            "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
-            "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")
-        };
-        if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 7)
-            sectionName = $"{_monday.AddDays(dayIndex):dddd} › {sectionName}";
-        ContextTools.Children.Add(new TextBlock { Text = sectionName, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) });
 
         if (key.StartsWith("image:", StringComparison.Ordinal))
         {
