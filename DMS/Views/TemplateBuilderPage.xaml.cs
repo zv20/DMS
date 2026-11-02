@@ -645,7 +645,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (_contextBinding || !double.IsFinite(transparency.Value)) return;
                 var selectedOpacity = 1 - transparency.Value / 100;
                 EditAppearance(key, a => a.Opacity = selectedOpacity, render: false);
-                UpdateSelectedBlockBackground(appearance.BackgroundColor, selectedOpacity);
+                UpdateSelectedBlockBackground(key, selectedOpacity);
             };
             transparency.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
             transparency.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
@@ -753,7 +753,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (render) Render();
     }
 
-    private void UpdateSelectedBlockBackground(string? color, double opacity)
+    private void UpdateSelectedBlockBackground(string key, double opacity)
     {
         var anchor = _selectionAnchor;
         if (anchor is not Border || anchor.Tag as string != _selectedBlock)
@@ -762,7 +762,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _selectionAnchor = anchor;
         }
         if (anchor is not Border border) return;
-        var source = ParseColor(color ?? "#FFFFFF");
+        _document.BlockAppearances ??= new();
+        _document.BlockAppearances.TryGetValue(key, out var appearance);
+        if (appearance == null) _document.BlockAppearances.TryGetValue("day", out appearance);
+        var source = ParseColor(appearance?.BackgroundColor ?? "#FFFFFF");
         var alpha = (byte)Math.Round(Math.Clamp(opacity, 0, 1) * byte.MaxValue);
         border.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, source.R, source.G, source.B));
     }
