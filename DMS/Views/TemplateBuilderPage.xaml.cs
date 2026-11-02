@@ -755,7 +755,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void UpdateSelectedBlockBackground(string? color, double opacity)
     {
-        if (_selectionAnchor is not Border border) return;
+        var anchor = _selectionAnchor;
+        if (anchor is not Border || anchor.Tag as string != _selectedBlock)
+        {
+            anchor = _selectedBlock == null ? null : FindAnchor(PageHost, _selectedBlock);
+            _selectionAnchor = anchor;
+        }
+        if (anchor is not Border border) return;
         var source = ParseColor(color ?? "#FFFFFF");
         var alpha = (byte)Math.Round(Math.Clamp(opacity, 0, 1) * byte.MaxValue);
         border.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, source.R, source.G, source.B));
