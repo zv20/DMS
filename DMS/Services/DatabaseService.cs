@@ -716,6 +716,10 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                     try { settings.RecentTemplateColors = System.Text.Json.JsonSerializer.Deserialize<List<string>>(value) ?? []; }
                     catch (System.Text.Json.JsonException) { settings.RecentTemplateColors = []; }
                     break;
+                case "window_x": settings.WindowX = int.TryParse(value, out var x) ? x : null; break;
+                case "window_y": settings.WindowY = int.TryParse(value, out var y) ? y : null; break;
+                case "window_width": settings.WindowWidth = int.TryParse(value, out var width) ? width : null; break;
+                case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
             }
         }
         return settings;
@@ -735,6 +739,10 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("data_folder", settings.DataFolder ?? ""),
             ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
+            ,("window_x", settings.WindowX?.ToString() ?? "")
+            ,("window_y", settings.WindowY?.ToString() ?? "")
+            ,("window_width", settings.WindowWidth?.ToString() ?? "")
+            ,("window_height", settings.WindowHeight?.ToString() ?? "")
         };
 
         foreach (var (key, value) in pairs)

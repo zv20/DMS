@@ -28,6 +28,8 @@ public sealed partial class MainWindow : Window
         this.SystemBackdrop = new MicaBackdrop();
         RootGrid.SizeChanged += RootGrid_SizeChanged;
         _sizeLimits = new WindowSizeLimits(this, RootGrid);
+        WindowPlacement.Center(AppWindow);
+        Closed += async (_, _) => await SaveWindowPlacementAsync();
     }
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -52,6 +54,7 @@ public sealed partial class MainWindow : Window
         try
         {
             var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
+            if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
@@ -67,6 +70,19 @@ public sealed partial class MainWindow : Window
             App.Logger.LogError(ex, "Unable to load the initial application page");
             await ShowNavigationErrorAsync();
         }
+    }
+
+    private async Task SaveWindowPlacementAsync()
+    {
+        try
+        {
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized }) return;
+            var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync() ?? new DMS.Models.AppSettings();
+            settings.WindowX = AppWindow.Position.X; settings.WindowY = AppWindow.Position.Y;
+            settings.WindowWidth = AppWindow.Size.Width; settings.WindowHeight = AppWindow.Size.Height;
+            await App.Services.GetRequiredService<IDatabaseService>().SaveSettingsAsync(settings);
+        }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save window placement"); }
     }
 
     private void RestoreNavigationSelection()

@@ -8,4 +8,8 @@ public sealed class AppSettings
     public bool WeekendPlanningEnabled { get; set; }
     public string? DataFolder { get; set; }
     public List<string> RecentTemplateColors { get; set; } = [];
+    public int? WindowX { get; set; }
+    public int? WindowY { get; set; }
+    public int? WindowWidth { get; set; }
+    public int? WindowHeight { get; set; }
 }

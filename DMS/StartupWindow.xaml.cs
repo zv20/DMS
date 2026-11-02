@@ -18,6 +18,7 @@ public sealed partial class StartupWindow : Window
         Closed += (_, _) => IsClosed = true;
         AppWindow.Closing += (_, args) => args.Cancel = !_closeAllowed;
         AppWindow.Resize(new Windows.Graphics.SizeInt32 { Width = 620, Height = 560 });
+        WindowPlacement.Center(AppWindow);
     }
 
     public void ShowLoading(string message)
