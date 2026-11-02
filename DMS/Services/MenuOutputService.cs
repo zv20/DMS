@@ -217,7 +217,7 @@ public static class MenuOutputService
         for (var i = 0; i < (template.IncludeWeekend ? 7 : 5); i++)
         {
             var day = week.Date.AddDays(i);
-            Box($"heading:{i}", day.ToString("dddd, d MMMM"), Style($"heading:{i}", 15, true, $"day:{i}"));
+            Box($"heading:{i}", day.ToString("dddd, d MMMM"), Style($"heading:{i}", 15, true));
             var key = $"menu:{i}";
             var menuLines = new List<(string Text, double FontSize)>();
             var menuEntries = entries.Where(e => e.Date.Date == day && byId.ContainsKey(e.RecipeId)).OrderBy(e => SlotOrder(e.Slot)).ToList();
