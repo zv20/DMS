@@ -53,7 +53,7 @@ public static class TemplateConversion
                     document.TextStyles[key] = new TemplateTextStyle
                     {
                         FontFamily = style.FontFamily, FontSize = SafeSize(style.FontSize, 11, 7, 48), Color = style.Color,
-                        Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment
+                        Opacity = style.Opacity, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment
                     };
             }
         }

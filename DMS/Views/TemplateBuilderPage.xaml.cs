@@ -603,10 +603,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         else if (key == "page")
         {
-            AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, value =>
+            AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, (value, opacity) =>
             {
-                _document.BackgroundColor = value; _dirty = true; Render();
-            });
+                _document.BackgroundColor = value; _document.BackgroundOpacity = opacity; _dirty = true; Render();
+            }, _document.BackgroundOpacity);
             var shrink = new CheckBox { Content = L.Get("TplBuilderAllowShrink"), IsChecked = _document.AllowFontShrink, VerticalAlignment = VerticalAlignment.Center };
             var minimumSize = new Slider { Width = 120, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
                 IsEnabled = _document.AllowFontShrink, StepFrequency = 1, SmallChange = 1, LargeChange = 2 };
@@ -637,23 +637,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _document.BlockAppearances.TryGetValue(key, out var appearance);
             if (appearance == null) _document.BlockAppearances.TryGetValue("day", out appearance);
             appearance ??= new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 };
-            AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", value => EditAppearance(key, a => a.BackgroundColor = value));
-            AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", value => EditAppearance(key, a => { a.BorderColor = value; if (a.BorderThickness <= 0) a.BorderThickness = 1; }));
-            var opacity = double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
-            var transparency = new Slider { Width = 120, Minimum = 0, Maximum = 100, StepFrequency = 1, SmallChange = 1, LargeChange = 10, Value = Math.Round((1 - opacity) * 100) };
-            ToolTipService.SetToolTip(transparency, L.Get("TplBlockTransparency"));
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(transparency, L.Get("TplBlockTransparency"));
-            transparency.ValueChanged += (_, _) =>
-            {
-                if (_contextBinding || !double.IsFinite(transparency.Value)) return;
-                var selectedOpacity = 1 - transparency.Value / 100;
-                EditAppearance(key, a => a.Opacity = selectedOpacity, render: false);
-                UpdateSelectedBlockBackground(key, selectedOpacity);
-            };
-            transparency.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
-            transparency.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
-            transparency.KeyUp += (_, _) => { if (!_contextBinding) Render(); };
-            ContextTools.Children.Add(transparency);
+            AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", (value, opacity) => EditAppearance(key, a => { a.BackgroundColor = value; a.Opacity = opacity; }), appearance.Opacity);
+            AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", (value, opacity) => EditAppearance(key, a => { a.BorderColor = value; a.BorderOpacity = opacity; if (a.BorderThickness <= 0) a.BorderThickness = 1; }), appearance.BorderOpacity);
             var padding = new NumberBox { Width = 80, Minimum = 0, Maximum = 25, Value = appearance.Padding, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             ToolTipService.SetToolTip(padding, L.Get("TplAppearancePadding"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(padding, L.Get("TplAppearancePadding"));
@@ -665,7 +650,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             allDays.Click += (_, _) =>
             {
                 var current = _document.BlockAppearances.TryGetValue(key, out var saved) && saved != null ? saved : appearance;
-                for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
+                for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderOpacity = current.BorderOpacity, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
                 _dirty = true; Render();
             };
             ContextTools.Children.Add(allDays);
@@ -683,7 +668,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(size, L.Get("TplSelectedSize"));
             size.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(size.Value)) EditTextStyle(key, s => s.FontSize = size.Value); };
             ContextTools.Children.Add(size);
-            AddContextColor("TplSelectedColor", style.Color, value => EditTextStyle(key, s => s.Color = value));
+            AddContextColor("TplSelectedColor", style.Color, (value, opacity) => EditTextStyle(key, s => { s.Color = value; s.Opacity = opacity; }), style.Opacity);
             AddStyleToggle("B", "TplBold", style.Bold, value => EditTextStyle(key, s => s.Bold = value));
             AddStyleToggle("I", "TplItalic", style.Italic, value => EditTextStyle(key, s => s.Italic = value));
             AddStyleToggle("U", "TplUnderline", style.Underline, value => EditTextStyle(key, s => s.Underline = value));
@@ -693,10 +678,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     _document.ShowHeaderReflection = value; _dirty = true; Render();
                 });
             if (parts[0] is "allergens")
-                AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, value =>
+                AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, (value, opacity) =>
                 {
-                    _document.AllergenAccentColor = value; _dirty = true; Render();
-                });
+                    _document.AllergenAccentColor = value; _document.AllergenAccentOpacity = opacity; _dirty = true; Render();
+                }, _document.AllergenAccentOpacity);
             if (parts[0] is not ("ingredients" or "allergens"))
             {
             var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
@@ -729,7 +714,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _contextBinding = false;
     }
 
-    private static TemplateTextStyle CopyStyle(TemplateTextStyle s) => new() { FontFamily = s.FontFamily, FontSize = s.FontSize, Color = s.Color, Bold = s.Bold, Italic = s.Italic, Underline = s.Underline, Alignment = s.Alignment };
+    private static TemplateTextStyle CopyStyle(TemplateTextStyle s) => new() { FontFamily = s.FontFamily, FontSize = s.FontSize, Color = s.Color, Opacity = s.Opacity, Bold = s.Bold, Italic = s.Italic, Underline = s.Underline, Alignment = s.Alignment };
 
     private void EditTextStyle(string key, Action<TemplateTextStyle> change)
     {
@@ -749,7 +734,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _document.BlockAppearances.TryGetValue("day", out var shared);
             _document.BlockAppearances[key] = appearance = shared == null
                 ? new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 }
-                : new TemplateBlockAppearance { BackgroundColor = shared.BackgroundColor, BorderColor = shared.BorderColor, BorderThickness = shared.BorderThickness, CornerRadius = shared.CornerRadius, Padding = shared.Padding, Opacity = shared.Opacity };
+                : new TemplateBlockAppearance { BackgroundColor = shared.BackgroundColor, BorderColor = shared.BorderColor, BorderOpacity = shared.BorderOpacity, BorderThickness = shared.BorderThickness, CornerRadius = shared.CornerRadius, Padding = shared.Padding, Opacity = shared.Opacity };
         }
         change(appearance);
         _dirty = true;
@@ -783,13 +768,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Add(button);
     }
 
-    private void AddContextColor(string label, string initial, Action<string> change)
+    private void AddContextColor(string label, string initial, Action<string, double> change, double initialOpacity = 1)
     {
         var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
         ToolTipService.SetToolTip(button, L.Get(label));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
-        var picker = new ColorPicker { Color = ParseColor(initial), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 288 };
+        var initialColor = ParseColor(initial);
+        var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
+        var picker = new ColorPicker { Color = Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = true, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 288 };
         var content = new StackPanel { Width = 288, Spacing = 8 };
         content.Children.Add(picker);
         if (_recentTemplateColors.Count > 0)
@@ -814,7 +801,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var color = args.NewColor;
             swatch.Background = new SolidColorBrush(color);
             selectedColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-            change(selectedColor);
+            change(selectedColor, color.A / (double)byte.MaxValue);
         };
         var flyout = new Flyout { Content = content, Placement = FlyoutPlacementMode.Top };
         flyout.Closed += async (_, _) => { if (selectedColor != null) await RememberTemplateColorAsync(selectedColor); };

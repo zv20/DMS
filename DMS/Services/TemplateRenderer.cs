@@ -69,7 +69,9 @@ public static class TemplateRenderer
             // opaque while making only the block fill transparent on every renderer.
             var background = new SolidColorBrush(Windows.UI.Color.FromArgb(
                 (byte)Math.Round(backgroundOpacity * byte.MaxValue), backgroundColor.R, backgroundColor.G, backgroundColor.B));
-            var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray)), Background = background, CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
+            var borderColor = dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray);
+            var borderOpacity = appearance != null && double.IsFinite(appearance.BorderOpacity) ? Math.Clamp(appearance.BorderOpacity, 0, 1) : 1;
+            var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(borderOpacity * byte.MaxValue), borderColor.R, borderColor.G, borderColor.B)), Background = background, CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
             Selectable(border, $"day:{visible[i]}", onSelected);
             Grid.SetRow(border, i); days.Children.Add(border);
         }
@@ -115,7 +117,9 @@ public static class TemplateRenderer
         content.Children.Add(inset);
         var foreground = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && image.InFrontOfText), onSelected);
         content.Children.Add(foreground.Layer);
-        var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(ParseColor(template.BackgroundColor, Colors.White)), Child = content };
+        var pageColor = ParseColor(template.BackgroundColor, Colors.White);
+        var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
+        var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected);
         return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
     }
@@ -132,11 +136,11 @@ public static class TemplateRenderer
             Color = group == "header" ? template.HeaderColor : group == "footer" ? template.FooterColor : group == "notice" ? template.AllergenAccentColor : template.BodyColor,
             Bold = group is "header" or "heading" or "notice", Underline = group == "notice", Alignment = group is "header" or "footer" or "date" ? "center" : "left"
         };
-        return new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize, Color = style.Color, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
+        return new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize, Color = style.Color, Opacity = style.Opacity, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
     }
 
     private static TextBlock StyledText(string text, TemplateTextStyle style, double scale = 1)
-        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
+        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = Brush(style.Color, style.Opacity), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
 
     private static void Selectable(FrameworkElement element, string key, Action<string, FrameworkElement>? onSelected)
     {
@@ -202,7 +206,7 @@ public static class TemplateRenderer
                     var hasAllergen = ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0;
                     if (hasAllergen)
                     {
-                        var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
+                        var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Opacity = template.AllergenAccentOpacity, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
                         AddRun(ingredientBlock, name, emphasis, scale, true);
                     }
                     else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
@@ -223,7 +227,7 @@ public static class TemplateRenderer
 
     private static void AddRun(TextBlock block, string text, TemplateTextStyle style, double scale, bool ingredientAllergen)
     {
-        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)) };
+        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = Brush(style.Color, style.Opacity) };
         if (ingredientAllergen || style.Underline) { var underline = new Underline(); underline.Inlines.Add(run); block.Inlines.Add(underline); }
         else block.Inlines.Add(run);
     }
@@ -232,6 +236,13 @@ public static class TemplateRenderer
     {
         if (value == null || !System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$")) return fallback;
         return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
+    }
+
+    private static SolidColorBrush Brush(string? value, double opacity)
+    {
+        var color = ParseColor(value, Colors.Black);
+        var alpha = (byte)Math.Round((double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1) * byte.MaxValue);
+        return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
     }
 
     private static async Task LoadImageAsync(Image target, string? dataUri)

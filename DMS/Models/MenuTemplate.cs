@@ -134,6 +134,7 @@ public sealed class TemplateTextStyle
     public string FontFamily { get; set; } = "Arial";
     public double FontSize { get; set; } = 11;
     public string Color { get; set; } = "#000000";
+    public double Opacity { get; set; } = 1;
     public bool Bold { get; set; }
     public bool Italic { get; set; }
     public bool Underline { get; set; }
@@ -145,6 +146,7 @@ public sealed class TemplateBlockAppearance
 {
     public string? BackgroundColor { get; set; }
     public string? BorderColor { get; set; }
+    public double BorderOpacity { get; set; } = 1;
     public double BorderThickness { get; set; }
     public double CornerRadius { get; set; }
     public double Padding { get; set; }
