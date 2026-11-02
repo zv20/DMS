@@ -14,7 +14,7 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
-    public async Task ReplacingLegacySlotSavesCategoryAndMealAcrossReopen()
+    public async Task ReplacingExistingSlotSavesCategoryAndMealAcrossReopen()
     {
         using (var database = Open())
         {
@@ -57,7 +57,7 @@ public sealed class PlannerMutationTests : IDisposable
     }
 
     [Fact]
-    public async Task LegacyRemovalFailureRollsBackNewAssignmentAndCategory()
+    public async Task ExistingSlotRemovalFailureRollsBackNewAssignmentAndCategory()
     {
         using var database = Open();
         var original = await database.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
@@ -67,7 +67,7 @@ public sealed class PlannerMutationTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TRIGGER reject_legacy_delete BEFORE DELETE ON menu WHEN OLD.slot='Breakfast' BEGIN SELECT RAISE(ABORT, 'simulated failure'); END";
+            command.CommandText = "CREATE TRIGGER reject_existing_delete BEFORE DELETE ON menu WHEN OLD.slot='Breakfast' BEGIN SELECT RAISE(ABORT, 'simulated failure'); END";
             command.ExecuteNonQuery();
         }
         await Assert.ThrowsAsync<SqliteException>(() => database.SaveMenuSlotAsync(_day, "slot1", "main", replacement, "Breakfast"));
@@ -78,7 +78,7 @@ public sealed class PlannerMutationTests : IDisposable
     }
 
     [Fact]
-    public async Task ClearingLegacySlotKeepsCategoryAndMissingRecipeDoesNotChangeData()
+    public async Task ClearingExistingSlotKeepsCategoryAndMissingRecipeDoesNotChangeData()
     {
         using var database = Open();
         var original = await database.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
