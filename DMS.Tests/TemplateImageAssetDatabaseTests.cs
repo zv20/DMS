@@ -13,7 +13,7 @@ public sealed class TemplateImageAssetDatabaseTests : IDisposable
     private static readonly byte[] TinyPng = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
     private static string TinyPngUri => "data:image/png;base64," + Convert.ToBase64String(TinyPng);
     private string DatabasePath => Path.Combine(_directory, "dms.db");
-    private DatabaseService Open() { Directory.CreateDirectory(_directory); return new(NullLogger<DatabaseService>.Instance, DatabasePath); }
+    private DatabaseService Open() { Directory.CreateDirectory(_directory); return new(NullLogger<DatabaseService>.Instance, DatabasePath, seedBuiltInTemplates: false); }
 
     [Fact]
     public async Task SharedImagesAreStoredOnceAndReferencesFollowSaveRenameAndDelete()

@@ -76,7 +76,7 @@ public sealed class TemplateImageArchiveTests
             await TemplateImageArchive.WriteAsync(stream, JsonSerializer.Serialize(new { Templates = new[] { template } }), new[] { shared, unused });
             stream.Position = 0;
             var contents = await TemplateImageArchive.ReadAsync(stream);
-            using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, Path.Combine(directory, "destination.db"));
+            using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, Path.Combine(directory, "destination.db"), seedBuiltInTemplates: false);
             var remap = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var image in contents.Images)
                 remap.Add(image.Id, (await database.SaveTemplateImageAsync(image.Name, image.ContentType, image.Data)).Id);

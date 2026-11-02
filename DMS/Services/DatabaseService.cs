@@ -54,14 +54,16 @@ public interface IDatabaseService
 public partial class DatabaseService : IDatabaseService, IDisposable
 {
     private readonly ILogger<DatabaseService> _logger;
+    private readonly bool _seedBuiltInTemplates;
     private readonly string _dbPath;
     private SqliteConnection? _connection;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized = false;
 
-    public DatabaseService(ILogger<DatabaseService> logger, string? databasePath = null)
+    public DatabaseService(ILogger<DatabaseService> logger, string? databasePath = null, bool seedBuiltInTemplates = true)
     {
         _logger = logger;
+        _seedBuiltInTemplates = seedBuiltInTemplates;
         if (string.IsNullOrWhiteSpace(databasePath))
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -241,7 +243,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         await SeedDefaultAllergensAsync();
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
-        SeedSeasonalTemplatePresets();
+        if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
     private async Task EnsureAllergenIconColumnAsync()
