@@ -8,13 +8,17 @@ public sealed partial class StartupWindow : Window
 {
     public event EventHandler? RetryRequested;
     public bool IsClosed { get; private set; }
+    private bool _fatalRecovery;
+    private bool _closeAllowed = true;
 
     public StartupWindow()
     {
         InitializeComponent();
         WindowIcon.Apply(this);
         Closed += (_, _) => IsClosed = true;
+        AppWindow.Closing += (_, args) => args.Cancel = !_closeAllowed;
         AppWindow.Resize(new Windows.Graphics.SizeInt32 { Width = 620, Height = 560 });
+        WindowPlacement.Center(AppWindow);
     }
 
     public void ShowLoading(string message)
@@ -26,8 +30,19 @@ public sealed partial class StartupWindow : Window
         RetryButton.Visibility = Visibility.Collapsed;
     }
 
+    /// <summary>Shows an uninterruptible foreground operation such as database restore.</summary>
+    public void ShowRestoreLoading(string message)
+    {
+        _closeAllowed = false;
+        ShowLoading(message);
+    }
+
+    public void AllowClose() => _closeAllowed = true;
+
     public void ShowError(string message, string details, string retry)
     {
+        _closeAllowed = true;
+        _fatalRecovery = false;
         Subtitle.Text = message;
         ErrorDetails.Text = details;
         ErrorDetails.Visibility = Visibility.Visible;
@@ -35,6 +50,12 @@ public sealed partial class StartupWindow : Window
         LoadingIndicator.Visibility = Visibility.Collapsed;
         RetryButton.Content = retry;
         RetryButton.Visibility = Visibility.Visible;
+    }
+
+    public void ShowFatalRecoveryError(string message, string details, string close)
+    {
+        ShowError(message, details, close);
+        _fatalRecovery = true;
     }
 
     public async Task<bool> ConfirmInstallerRestoreAsync(string path, string language)
@@ -69,5 +90,9 @@ public sealed partial class StartupWindow : Window
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
-    private void RetryButton_Click(object sender, RoutedEventArgs e) => RetryRequested?.Invoke(this, EventArgs.Empty);
+    private void RetryButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_fatalRecovery) Close();
+        else RetryRequested?.Invoke(this, EventArgs.Empty);
+    }
 }

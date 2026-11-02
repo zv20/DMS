@@ -2,6 +2,7 @@ using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
@@ -28,7 +29,14 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 
     private async void IngredientsPage_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadIngredientsAsync();
+        try { await LoadIngredientsAsync(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to load ingredients"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    private void SetPageStatus(string? key)
+    {
+        PageStatus.Text = key == null ? "" : L.Get(key);
+        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private async Task LoadIngredientsAsync()
@@ -40,6 +48,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
             _ingredients.Add(new IngredientItemViewModel(ingredient));
         }
         ApplyFilter();
+        SetPageStatus(null);
     }
 
     private void ApplyFilter()
@@ -58,9 +67,15 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         IngredientsListView.Visibility = _filteredIngredients.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void TryApplyFilter()
+    {
+        try { ApplyFilter(); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to filter list on {Page}", GetType().Name); SetPageStatus("DataFilterFailed"); }
+    }
+
     private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        ApplyFilter();
+        TryApplyFilter();
     }
 
     private async void AddIngredientButton_Click(object sender, RoutedEventArgs e)
@@ -87,26 +102,23 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 
     private async void DeleteIngredientButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is int id)
+        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
+        button.IsEnabled = false;
+        try
         {
-            var dialog = new ContentDialog
-            {
-                Title = L.Get("Text_Delete_Ingredient_79a0ab"),
-                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                await _database.DeleteIngredientAsync(id);
-                if (_editor.EditingId == id) _editor.Close();
-                await LoadIngredientsAsync();
-            }
+            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Ingredient_79a0ab"), Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"),
+                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
+            try { await _database.DeleteIngredientAsync(id); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete ingredient {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
+            if (_editor.EditingId == id) _editor.Close();
+            try { await LoadIngredientsAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Deleted ingredient {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
         }
+        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm ingredient deletion"); SetPageStatus("DataDialogFailed"); }
+        finally { button.IsEnabled = true; }
     }
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
@@ -172,7 +184,8 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
                 .ToList();
 
             ingredient.Id = await _database.SaveIngredientAsync(ingredient);
-            await LoadIngredientsAsync();
+            try { await LoadIngredientsAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Saved ingredient but refresh failed"); SetPageStatus("DataSavedRefreshFailed"); }
             return true;
         });
         nameBox.Focus(FocusState.Programmatic);

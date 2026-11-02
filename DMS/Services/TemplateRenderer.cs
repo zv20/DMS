@@ -1,4 +1,5 @@
 using DMS.Models;
+using DMS.Views;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -62,7 +63,15 @@ public static class TemplateRenderer
             var dayOverflow = required[i] > fit.DayHeights[i] + .5;
             var scroller = new ScrollViewer { Content = panels[i], VerticalScrollMode = dayOverflow ? ScrollMode.Auto : ScrollMode.Disabled, VerticalScrollBarVisibility = dayOverflow ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Disabled };
             var appearance = DayAppearance(template, visible[i]);
-            var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray)), Background = new SolidColorBrush(ParseColor(appearance?.BackgroundColor, Colors.Transparent)), CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
+            var backgroundColor = ParseColor(appearance?.BackgroundColor, Colors.Transparent);
+            var backgroundOpacity = appearance != null && double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
+            // Put the alpha in the color itself. This keeps the text and border fully
+            // opaque while making only the block fill transparent on every renderer.
+            var background = new SolidColorBrush(Windows.UI.Color.FromArgb(
+                (byte)Math.Round(backgroundOpacity * byte.MaxValue), backgroundColor.R, backgroundColor.G, backgroundColor.B));
+            var borderColor = dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray);
+            var borderOpacity = appearance != null && double.IsFinite(appearance.BorderOpacity) ? Math.Clamp(appearance.BorderOpacity, 0, 1) : 1;
+            var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(borderOpacity * byte.MaxValue), borderColor.R, borderColor.G, borderColor.B)), Background = background, CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
             Selectable(border, $"day:{visible[i]}", onSelected);
             Grid.SetRow(border, i); days.Children.Add(border);
         }
@@ -108,7 +117,9 @@ public static class TemplateRenderer
         content.Children.Add(inset);
         var foreground = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && image.InFrontOfText), onSelected);
         content.Children.Add(foreground.Layer);
-        var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(ParseColor(template.BackgroundColor, Colors.White)), Child = content };
+        var pageColor = ParseColor(template.BackgroundColor, Colors.White);
+        var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
+        var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected);
         return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
     }
@@ -125,11 +136,11 @@ public static class TemplateRenderer
             Color = group == "header" ? template.HeaderColor : group == "footer" ? template.FooterColor : group == "notice" ? template.AllergenAccentColor : template.BodyColor,
             Bold = group is "header" or "heading" or "notice", Underline = group == "notice", Alignment = group is "header" or "footer" or "date" ? "center" : "left"
         };
-        return new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize, Color = style.Color, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
+        return new TemplateTextStyle { FontFamily = style.FontFamily, FontSize = style.FontSize, Color = style.Color, Opacity = style.Opacity, Bold = style.Bold, Italic = style.Italic, Underline = style.Underline, Alignment = style.Alignment };
     }
 
     private static TextBlock StyledText(string text, TemplateTextStyle style, double scale = 1)
-        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
+        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = Brush(style.Color, style.Opacity), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
 
     private static void Selectable(FrameworkElement element, string key, Action<string, FrameworkElement>? onSelected)
     {
@@ -172,28 +183,43 @@ public static class TemplateRenderer
             var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
             var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
             var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
-            var meal = StyledText("", menuStyle, scale);
-            // Each inline owns its underline, including allergen-bearing ingredients.
-            meal.TextDecorations = Windows.UI.Text.TextDecorations.None;
-            Selectable(meal, $"menu:{dayIndex}", onSelected);
+            // Keep each editable part as its own element. Runs inside one TextBlock
+            // cannot receive pointer input, which made the builder's previous
+            // menu/ingredients/allergens selector ambiguous.
+            var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
             if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
-            AddRun(meal, title, menuStyle, scale, false);
-            if (recipe.Ingredients.Count > 0) AddRun(meal, " — ", ingredientStyle, scale, false);
-            for (var i = 0; i < recipe.Ingredients.Count; i++)
+            var titleBlock = StyledText(title, menuStyle, scale);
+            Selectable(titleBlock, $"menu:{dayIndex}", onSelected);
+            meal.Children.Add(titleBlock);
+
+            if (recipe.Ingredients.Count > 0)
             {
-                var name = recipe.Ingredients[i];
-                if (i > 0) AddRun(meal, ", ", ingredientStyle, scale, false);
-                var hasAllergen = ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0;
-                if (hasAllergen)
+                var ingredientBlock = StyledText("", ingredientStyle, scale);
+                ingredientBlock.TextDecorations = Windows.UI.Text.TextDecorations.None;
+                AddRun(ingredientBlock, " — ", ingredientStyle, scale, false);
+                for (var i = 0; i < recipe.Ingredients.Count; i++)
                 {
-                    var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
-                    AddRun(meal, name, emphasis, scale, true);
+                    var name = recipe.Ingredients[i];
+                    if (i > 0) AddRun(ingredientBlock, ", ", ingredientStyle, scale, false);
+                    var hasAllergen = ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0;
+                    if (hasAllergen)
+                    {
+                        var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Opacity = template.AllergenAccentOpacity, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
+                        AddRun(ingredientBlock, name, emphasis, scale, true);
+                    }
+                    else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
                 }
-                else AddRun(meal, name, ingredientStyle, scale, false);
+                Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected);
+                meal.Children.Add(ingredientBlock);
             }
-            if (allergens.Length > 0) AddRun(meal, " · " + string.Join(", ", allergens), allergenStyle, scale, false);
+            if (allergens.Length > 0)
+            {
+                var allergenBlock = StyledText(" · " + string.Join(", ", allergens), allergenStyle, scale);
+                Selectable(allergenBlock, $"allergens:{dayIndex}", onSelected);
+                meal.Children.Add(allergenBlock);
+            }
             panel.Children.Add(meal);
         }
         return panel;
@@ -201,7 +227,7 @@ public static class TemplateRenderer
 
     private static void AddRun(TextBlock block, string text, TemplateTextStyle style, double scale, bool ingredientAllergen)
     {
-        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = new SolidColorBrush(ParseColor(style.Color, Colors.Black)) };
+        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = Brush(style.Color, style.Opacity) };
         if (ingredientAllergen || style.Underline) { var underline = new Underline(); underline.Inlines.Add(run); block.Inlines.Add(underline); }
         else block.Inlines.Add(run);
     }
@@ -210,6 +236,13 @@ public static class TemplateRenderer
     {
         if (value == null || !System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$")) return fallback;
         return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
+    }
+
+    private static SolidColorBrush Brush(string? value, double opacity)
+    {
+        var color = ParseColor(value, Colors.Black);
+        var alpha = (byte)Math.Round((double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1) * byte.MaxValue);
+        return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
     }
 
     private static async Task LoadImageAsync(Image target, string? dataUri)

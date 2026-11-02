@@ -14,6 +14,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -26,10 +27,12 @@
             <Button x:Name="SortDirectionButton" Grid.Column="4" Content="↑" Click="SortDirection_Click" />
         </Grid>
 
+        <TextBlock x:Name="PageStatus" Grid.Row="1" Margin="16,0,16,8" TextWrapping="Wrap" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+
         <!-- Recipe List -->
         <ListView
             x:Name="RecipesListView"
-            Grid.Row="1"
+            Grid.Row="2"
             Padding="8"
             SelectionMode="None"
             IsItemClickEnabled="True"
@@ -61,7 +64,7 @@
         <!-- Empty State -->
         <StackPanel
             x:Name="EmptyStatePanel"
-            Grid.Row="1"
+            Grid.Row="2"
             VerticalAlignment="Center"
             HorizontalAlignment="Center"
             Spacing="16"
@@ -70,7 +73,7 @@
             <TextBlock x:Name="EmptyStateTitle" Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
             <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
         </StackPanel>
-        <Border x:Name="RecipeEditor" Grid.Column="1" Grid.RowSpan="2" Visibility="Collapsed"
+        <Border x:Name="RecipeEditor" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"
                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="12">

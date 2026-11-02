@@ -220,7 +220,7 @@ public sealed class DatabaseServiceTests : IDisposable
             RecipeId = recipe.Id
         });
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => database.DeleteRecipeAsync(recipe.Id));
+        var exception = await Assert.ThrowsAsync<RecipeInUseException>(() => database.DeleteRecipeAsync(recipe.Id));
 
         Assert.Contains("menu entries", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Single(await database.GetMenuAsync(new DateTime(2026, 10, 26), new DateTime(2026, 10, 26)));
@@ -259,6 +259,37 @@ public sealed class DatabaseServiceTests : IDisposable
         var settings = await reopened.GetSettingsAsync();
         Assert.Equal(theme, settings!.Theme);
         Assert.Equal("teal", settings.AccentColor);
+    }
+
+    [Fact]
+    public async Task FullBackupAndRestorePreserveLanguageAndAppearanceSettings()
+    {
+        var backupPath = Path.Combine(_testDirectory, "settings-backup.db");
+        using var database = CreateDatabase();
+        await database.SaveSettingsAsync(new AppSettings
+        {
+            Language = "en",
+            Theme = "dark",
+            AccentColor = "teal",
+            WeekendPlanningEnabled = true
+        });
+        await database.CreateBackupAsync(backupPath);
+
+        await database.SaveSettingsAsync(new AppSettings
+        {
+            Language = "bg",
+            Theme = "light",
+            AccentColor = "red",
+            WeekendPlanningEnabled = false
+        });
+        await database.RestoreFromAsync(backupPath);
+
+        var restored = await database.GetSettingsAsync();
+        Assert.NotNull(restored);
+        Assert.Equal("en", restored!.Language);
+        Assert.Equal("dark", restored.Theme);
+        Assert.Equal("teal", restored.AccentColor);
+        Assert.True(restored.WeekendPlanningEnabled);
     }
 
     [Fact]

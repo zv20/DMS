@@ -22,6 +22,9 @@ public sealed partial class SettingsPage : Page
     private readonly IDatabaseService _databaseService;
     private bool _suppressSettingChanges = true;
     private string _selectedTheme = "default";
+    private string _selectedAccent = "blue";
+    private bool _selectedWeekend;
+    private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
     private int _cardColumns;
 
     public SettingsPage()
@@ -29,6 +32,7 @@ public sealed partial class SettingsPage : Page
         this.InitializeComponent();
         _settingsService = App.Services.GetRequiredService<ISettingsService>();
         _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        AppVersionText.Text = $"v{AppVersion.Current}";
         ClassicAccentHint.Text = L.Get("ThemeClassicAccentHint");
         SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);
         Loaded += SettingsPage_Loaded;
@@ -41,7 +45,7 @@ public sealed partial class SettingsPage : Page
         var columns = available >= 1200 ? 3 : available >= 780 ? 2 : 1;
         if (_cardColumns == columns) return;
         _cardColumns = columns;
-        var cards = new[] { LanguageCard, AppearanceCard, PlanningCard, DataCard, DatabaseCard, AboutCard };
+        var cards = new[] { LanguageCard, AppearanceCard, PlanningCard, DataCard, DatabaseCard, LogsCard, AboutCard };
         SettingsCards.ColumnDefinitions.Clear();
         SettingsCards.RowDefinitions.Clear();
         for (var i = 0; i < columns; i++)
@@ -58,7 +62,76 @@ public sealed partial class SettingsPage : Page
     private async void SettingsPage_Loaded(object sender, RoutedEventArgs e)
     {
         ArrangeCards(SettingsScrollViewer.ActualWidth);
-        await LoadSettingsAsync();
+        try { await LoadSettingsAsync(); }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not load settings");
+            DatabaseInfoText.Text = L.Get("LogViewerSettingsLoadFailed");
+            LanguageComboBox.IsEnabled = ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = WeekendPlanningToggle.IsEnabled = false;
+        }
+        RefreshLogViewer();
+    }
+
+    private void RefreshLogViewer()
+    {
+        try
+        {
+            var text = App.LogStore.ReadRecent(filter: _logFilter);
+            LogViewerText.Text = string.IsNullOrWhiteSpace(text) ? L.Get("LogViewerEmpty") : text;
+            LogViewerStatus.Text = App.LogStore.LastWriteFailure == null ? "" : L.Format("LogViewerUnavailable", App.LogStore.LastWriteFailure);
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not read local diagnostic log");
+            LogViewerStatus.Text = L.Format("LogViewerUnavailable", ex.Message);
+        }
+    }
+
+    private void LogViewerRefresh_Click(object sender, RoutedEventArgs e) => RefreshLogViewer();
+
+    private void LogViewerFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var value = (LogViewerFilterComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        _logFilter = Enum.TryParse<DiagnosticLogFilter>(value, out var filter) ? filter : DiagnosticLogFilter.All;
+        RefreshLogViewer();
+    }
+
+    private async void LogViewerClear_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var result = await new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = L.Get("LogViewerClearTitle"),
+                Content = L.Get("LogViewerClearConfirmation"),
+                PrimaryButtonText = L.Get("LogViewerClearAction"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close
+            }.ShowAsync();
+            if (result != ContentDialogResult.Primary) return;
+            App.LogStore.Clear();
+            RefreshLogViewer();
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not clear local diagnostic logs");
+            LogViewerStatus.Text = L.Format("LogViewerUnavailable", ex.Message);
+        }
+    }
+
+    private void LogViewerFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Directory.CreateDirectory(App.LogStore.DirectoryPath);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{App.LogStore.DirectoryPath}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not open local diagnostic log folder");
+            LogViewerStatus.Text = L.Format("LogViewerUnavailable", ex.Message);
+        }
     }
 
     private async Task LoadSettingsAsync()
@@ -73,6 +146,8 @@ public sealed partial class SettingsPage : Page
             // Theme (stored in settings)
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
             _selectedTheme = settings.Theme;
+            _selectedAccent = settings.AccentColor;
+            _selectedWeekend = settings.WeekendPlanningEnabled;
             ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[0];
             AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
             UpdateAccentAvailability(settings.Theme);
@@ -124,13 +199,15 @@ public sealed partial class SettingsPage : Page
             }
             catch (Exception ex)
             {
+                App.Logger.LogError(ex, "Could not change the application language");
+                var rollbackFailed = false;
                 if (saved)
                 {
                     try { await _settingsService.SetLanguageAsync(previousLanguage); Localization.Apply(previousLanguage); }
-                    catch (Exception rollbackError) { App.Logger.LogError(rollbackError, "Unable to restore the previous language"); }
+                    catch (Exception rollbackError) { rollbackFailed = true; App.Logger.LogError(rollbackError, "Unable to restore the previous language"); }
                 }
                 RestoreLanguageSelection(_settingsService.GetLanguage());
-                LanguageStatus.Text = L.Format("SaveError", ex.Message);
+                LanguageStatus.Text = L.Get(rollbackFailed ? "LogViewerSavedApplyFailed" : "DataSaveFailed");
             }
             finally { LanguageComboBox.IsEnabled = true; }
         }
@@ -149,21 +226,27 @@ public sealed partial class SettingsPage : Page
         if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string theme)
         {
             ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+            var saved = false;
             try
             {
                 var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
                 settings.Theme = theme;
                 await _databaseService.SaveSettingsAsync(settings);
-                AppearanceService.ApplyTheme(App.CurrentWindow, theme, settings.AccentColor);
+                saved = true;
                 _selectedTheme = theme;
+                AppearanceService.ApplyTheme(App.CurrentWindow, theme, settings.AccentColor);
                 AppearanceStatus.Text = "";
             }
             catch (Exception ex)
             {
-                _suppressSettingChanges = true;
-                try { ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedTheme) ?? ThemeComboBox.Items[0]; }
-                finally { _suppressSettingChanges = false; }
-                AppearanceStatus.Text = L.Format("SaveError", ex.Message);
+                App.Logger.LogError(ex, saved ? "Theme was saved but could not be applied" : "Could not save theme");
+                if (!saved)
+                {
+                    _suppressSettingChanges = true;
+                    try { ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedTheme) ?? ThemeComboBox.Items[0]; }
+                    finally { _suppressSettingChanges = false; }
+                }
+                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
             }
             finally { ThemeComboBox.IsEnabled = true; UpdateAccentAvailability((ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()); }
         }
@@ -182,19 +265,29 @@ public sealed partial class SettingsPage : Page
         if (AccentColorComboBox.SelectedItem is ComboBoxItem item && item.Tag is string accent)
         {
             ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+            var saved = false;
             try
             {
                 var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
                 settings.AccentColor = accent;
                 await _databaseService.SaveSettingsAsync(settings);
+                saved = true;
+                _selectedAccent = accent;
                 AppearanceService.ApplyAccent(accent);
                 AppearanceStatus.Text = "";
             }
             catch (Exception ex)
             {
-                AppearanceStatus.Text = L.Format("SaveError", ex.Message);
+                App.Logger.LogError(ex, saved ? "Accent was saved but could not be applied" : "Could not save accent color");
+                if (!saved)
+                {
+                    _suppressSettingChanges = true;
+                    try { AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedAccent) ?? AccentColorComboBox.Items[0]; }
+                    finally { _suppressSettingChanges = false; }
+                }
+                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
             }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
+            finally { ThemeComboBox.IsEnabled = true; UpdateAccentAvailability((ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()); }
         }
     }
 
@@ -207,9 +300,17 @@ public sealed partial class SettingsPage : Page
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
             settings.WeekendPlanningEnabled = WeekendPlanningToggle.IsOn;
             await _databaseService.SaveSettingsAsync(settings);
+            _selectedWeekend = settings.WeekendPlanningEnabled;
             PlanningStatus.Text = "";
         }
-        catch (Exception ex) { PlanningStatus.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not save weekend planning setting");
+            _suppressSettingChanges = true;
+            try { WeekendPlanningToggle.IsOn = _selectedWeekend; }
+            finally { _suppressSettingChanges = false; }
+            PlanningStatus.Text = L.Get("DataSaveFailed");
+        }
         finally { WeekendPlanningToggle.IsEnabled = true; }
     }
 
@@ -354,14 +455,6 @@ public sealed partial class SettingsPage : Page
             var importData = document.RootElement;
             if (importData.ValueKind != JsonValueKind.Object)
                 throw new InvalidDataException(L.Get("Text_The_selected_file_is_not_a_DMS_backup_df8918"));
-
-            if (LooksLikeLegacyBrowserBackup(importData))
-            {
-                preImportBackup = await CreatePreImportBackupAsync();
-                var legacyResult = await ImportLegacyBrowserBackupAsync(importData);
-                await ShowImportSuccessAsync(legacyResult);
-                return;
-            }
 
             var recognized = false;
             foreach (var field in new[] { "Recipes", "Ingredients", "Allergens", "MenuEntries", "MenuCategories", "Templates" })
@@ -565,187 +658,6 @@ public sealed partial class SettingsPage : Page
         return false;
     }
 
-    private static bool LooksLikeLegacyBrowserBackup(JsonElement backup)
-    {
-        if (TryGetPropertyIgnoreCase(backup, "currentMenu", out var menu) && menu.ValueKind == JsonValueKind.Object) return true;
-        if (TryGetPropertyIgnoreCase(backup, "appSettings", out var settings) && settings.ValueKind == JsonValueKind.Object) return true;
-        if (TryGetPropertyIgnoreCase(backup, "templates", out var templates) && templates.ValueKind == JsonValueKind.Object) return true;
-        foreach (var collection in new[] { "recipes", "ingredients", "allergens" })
-        {
-            if (!TryGetPropertyIgnoreCase(backup, collection, out var items) || items.ValueKind != JsonValueKind.Array) continue;
-            foreach (var item in items.EnumerateArray())
-                if (item.ValueKind == JsonValueKind.Object && TryGetPropertyIgnoreCase(item, "id", out var id) && id.ValueKind == JsonValueKind.String) return true;
-        }
-        return false;
-    }
-
-    private async Task<ImportResult> ImportLegacyBrowserBackupAsync(JsonElement backup)
-    {
-        var allergenNames = new Dictionary<string, string>(StringComparer.Ordinal);
-        var ingredientNames = new Dictionary<string, string>(StringComparer.Ordinal);
-        var ingredientAllergens = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        var recipeIds = new Dictionary<string, int>(StringComparer.Ordinal);
-        var result = new ImportResult();
-        var existingMenuKeys = (await _databaseService.GetMenuAsync(DateTime.MinValue, DateTime.MaxValue))
-            .Select(entry => (entry.Date.Date, entry.Slot.ToLowerInvariant())).ToHashSet();
-        var existingCategoryKeys = (await _databaseService.GetMenuCategoriesAsync())
-            .Select(category => (category.Date.Date, category.Slot.ToLowerInvariant())).ToHashSet();
-        var existingTemplateNames = (await _databaseService.GetAllTemplatesAsync())
-            .Select(template => template.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var existingAllergens = (await _databaseService.GetAllAllergensAsync())
-            .Select(allergen => allergen.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (TryGetPropertyIgnoreCase(backup, "allergens", out var allergens) && allergens.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var rawAllergen in allergens.EnumerateArray())
-            {
-                var id = GetString(rawAllergen, "id");
-                var name = GetString(rawAllergen, "name");
-                if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name)) continue;
-                allergenNames[id] = name;
-                if (existingAllergens.Add(name))
-                {
-                    await _databaseService.SaveAllergenAsync(new Allergen
-                    {
-                        Name = name,
-                        Color = GetString(rawAllergen, "color") ?? "#3498db"
-                    });
-                    result.Allergens++;
-                }
-            }
-        }
-
-        var existingIngredients = (await _databaseService.GetAllIngredientsAsync())
-            .Select(ingredient => ingredient.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (TryGetPropertyIgnoreCase(backup, "ingredients", out var ingredients) && ingredients.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var rawIngredient in ingredients.EnumerateArray())
-            {
-                var id = GetString(rawIngredient, "id");
-                var name = GetString(rawIngredient, "name");
-                if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name)) continue;
-
-                var linkedAllergens = GetStringArray(rawIngredient, "allergens")
-                    .Select(allergenId => allergenNames.GetValueOrDefault(allergenId, allergenId))
-                    .Where(allergenName => !string.IsNullOrWhiteSpace(allergenName))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-                ingredientNames[id] = name;
-                ingredientAllergens[id] = linkedAllergens;
-                if (existingIngredients.Add(name))
-                {
-                    await _databaseService.SaveIngredientAsync(new Ingredient { Name = name, Allergens = linkedAllergens });
-                    result.Ingredients++;
-                }
-            }
-        }
-
-        var existingRecipes = (await _databaseService.GetAllRecipesAsync())
-            .GroupBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-        if (TryGetPropertyIgnoreCase(backup, "recipes", out var recipes) && recipes.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var rawRecipe in recipes.EnumerateArray())
-            {
-                var sourceId = GetString(rawRecipe, "id");
-                var name = GetString(rawRecipe, "name");
-                if (string.IsNullOrWhiteSpace(sourceId) || string.IsNullOrWhiteSpace(name)) continue;
-
-                var sourceIngredients = GetObjectIdArray(rawRecipe, "ingredients");
-                var allergensForRecipe = GetObjectIdArray(rawRecipe, "manualAllergens")
-                    .Select(allergenId => allergenNames.GetValueOrDefault(allergenId, allergenId))
-                    .Concat(sourceIngredients.SelectMany(ingredientId => ingredientAllergens.GetValueOrDefault(ingredientId) ?? []))
-                    .Where(allergenName => !string.IsNullOrWhiteSpace(allergenName))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-                if (!existingRecipes.TryGetValue(name, out var recipe))
-                {
-                    var missing = sourceIngredients.Where(id => !ingredientNames.ContainsKey(id)).ToArray();
-                    if (missing.Length > 0)
-                    {
-                        result.MissingIngredientReferences += missing.Length;
-                        result.RecipesWithMissingIngredients.Add(name);
-                    }
-                    recipe = new Recipe
-                    {
-                        Name = name,
-                        Category = GetString(rawRecipe, "category") ?? "other",
-                        PortionSize = GetString(rawRecipe, "portionSize") ?? string.Empty,
-                        Calories = GetInt(rawRecipe, "calories"),
-                        Instructions = GetString(rawRecipe, "instructions") ?? string.Empty,
-                        Ingredients = sourceIngredients
-                            .Select(ingredientId => ingredientNames.GetValueOrDefault(ingredientId, ingredientId))
-                            .Where(ingredientName => !string.IsNullOrWhiteSpace(ingredientName))
-                            .ToList(),
-                        Allergens = allergensForRecipe
-                    };
-                    recipe.Id = await _databaseService.SaveRecipeAsync(recipe);
-                    existingRecipes.Add(name, recipe);
-                    result.Recipes++;
-                }
-                recipeIds[sourceId] = recipe.Id;
-            }
-        }
-
-        if (TryGetPropertyIgnoreCase(backup, "currentMenu", out var currentMenu) && currentMenu.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var day in currentMenu.EnumerateObject())
-            {
-                if (!DateTime.TryParse(day.Name, out var date) || day.Value.ValueKind != JsonValueKind.Object) continue;
-                foreach (var slot in day.Value.EnumerateObject())
-                {
-                    if (slot.Value.ValueKind != JsonValueKind.Object || string.IsNullOrWhiteSpace(slot.Name)) continue;
-                    var key = (date.Date, slot.Name.ToLowerInvariant());
-                    if (existingMenuKeys.Contains(key) || existingCategoryKeys.Contains(key)) continue;
-                    var category = GetString(slot.Value, "category") ?? GetString(slot.Value, "type");
-                    if (category != null)
-                    {
-                        await _databaseService.SaveMenuCategoryAsync(date, slot.Name, category);
-                        existingCategoryKeys.Add(key);
-                    }
-                    var sourceRecipeId = GetString(slot.Value, "recipe");
-                    if (sourceRecipeId == null || !recipeIds.TryGetValue(sourceRecipeId, out var recipeId)) continue;
-                    await _databaseService.SaveMenuEntryAsync(new MenuEntry { Date = date, Slot = slot.Name, RecipeId = recipeId });
-                    existingMenuKeys.Add(key);
-                    result.MenuEntries++;
-                }
-            }
-        }
-
-        if (TryGetPropertyIgnoreCase(backup, "templates", out var templates) && templates.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var templateProperty in templates.EnumerateObject())
-            {
-                var sourceTemplate = templateProperty.Value;
-                if (sourceTemplate.ValueKind != JsonValueKind.Object || !existingTemplateNames.Add(templateProperty.Name)) continue;
-                var template = new MenuTemplate
-                {
-                    Name = templateProperty.Name,
-                    HeaderText = GetString(sourceTemplate, "headerText") ?? "Weekly Menu",
-                    FooterText = GetString(sourceTemplate, "footerText") ?? "Prepared with care by DMS",
-                    BackgroundColor = GetString(sourceTemplate, "backgroundColor") ?? "#FFFFFF",
-                    LegacyDataJson = sourceTemplate.GetRawText()
-                };
-                await _databaseService.SaveTemplateAsync(template);
-                result.Templates++;
-            }
-        }
-
-        if (TryGetPropertyIgnoreCase(backup, "appSettings", out var appSettings) && appSettings.ValueKind == JsonValueKind.Object)
-        {
-            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-            if (GetString(appSettings, "language") is string language && language is "bg" or "en")
-            {
-                settings.Language = language;
-            }
-            await _databaseService.SaveSettingsAsync(settings);
-        }
-
-        return result;
-    }
-
     private async Task ShowImportSuccessAsync(ImportResult result)
     {
         var importSuccessDialog = new ContentDialog
@@ -799,176 +711,144 @@ public sealed partial class SettingsPage : Page
 
     private async void BackupButton_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new Windows.Storage.Pickers.FileSavePicker
+        if (!BackupButton.IsEnabled) return;
+        BackupButton.IsEnabled = RestoreButton.IsEnabled = false;
+        DataStatus.Text = "";
+        var saved = false;
+        try
         {
-            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-            FileTypeChoices = { { "SQLite Database", new[] { ".db" } } },
-            SuggestedFileName = $"DMS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}"
-        };
-
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-        var file = await picker.PickSaveFileAsync();
-        if (file != null)
-        {
-            try
+            var picker = new Windows.Storage.Pickers.FileSavePicker
             {
-                await _databaseService.CreateBackupAsync(file.Path);
-
-                var backupDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Backup_Complete_8b1525"),
-                    Content = L.Get("Text_Database_backup_created_successfully_2b90d0"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await backupDialog.ShowAsync();
-            }
-            catch (Exception ex)
-            {
-                var backupErrorDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Backup_Failed_fcbe1a"),
-                    Content = L.Format("ErrorDetail", ex.Message),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await backupErrorDialog.ShowAsync();
-            }
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                FileTypeChoices = { { "SQLite Database", new[] { ".db" } } },
+                SuggestedFileName = $"DMS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}"
+            };
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
+            var file = await picker.PickSaveFileAsync();
+            if (file == null) return;
+            await _databaseService.CreateBackupAsync(file.Path);
+            saved = true;
+            DataStatus.Text = L.Get("Text_Database_backup_created_successfully_2b90d0");
+            await new ContentDialog { Title = L.Get("Text_Backup_Complete_8b1525"), Content = DataStatus.Text,
+                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
         }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, saved ? "Backup was created, but its confirmation could not be displayed" : "Could not create database backup");
+            DataStatus.Text = L.Get(saved ? "Text_Database_backup_created_successfully_2b90d0" : "LogViewerBackupFailed");
+        }
+        finally { BackupButton.IsEnabled = RestoreButton.IsEnabled = true; }
     }
 
     private async void RestoreButton_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new Windows.Storage.Pickers.FileOpenPicker
+        if (!RestoreButton.IsEnabled) return;
+        BackupButton.IsEnabled = RestoreButton.IsEnabled = false;
+        DataStatus.Text = "";
+        var restored = false;
+        try
         {
-            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".db" }
-        };
-
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-        var file = await picker.PickSingleFileAsync();
-        if (file != null)
-        {
-            var restoreConfirmDialog = new ContentDialog
+            var picker = new Windows.Storage.Pickers.FileOpenPicker
             {
-                Title = L.Get("Text_Restore_Database_04f0a6"),
-                Content = L.Get("RestoreWarning"),
-                PrimaryButtonText = L.Get("Text_Restore_3cbe6d"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                FileTypeFilter = { ".db" }
             };
-
-            var result = await restoreConfirmDialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+            var confirm = new ContentDialog { Title = L.Get("Text_Restore_Database_04f0a6"), Content = L.Get("RestoreWarning"),
+                PrimaryButtonText = L.Get("Text_Restore_3cbe6d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
+            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+            await App.RestoreAndReloadAsync(file.Path);
+            restored = true;
+            return;
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, restored ? "Database was restored, but its confirmation could not be displayed" : "Could not restore database backup");
+            if (!restored && (ex is DatabaseRecoveryRequiredException || ex.InnerException is AggregateException))
             {
+                // The service could not recover automatically. Do not let the
+                // user continue writing to an uncertain database in this process.
                 try
                 {
-                    await _databaseService.RestoreFromAsync(file.Path);
-                    
-                    var restoreSuccessDialog = new ContentDialog
-                    {
-                        Title = L.Get("Text_Restore_Complete_6ad3ae"),
-                        Content = L.Get("Text_Database_restored_successfully_Reopen_any_active_pages__48a860"),
-                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                        XamlRoot = this.XamlRoot
-                    };
-                    await restoreSuccessDialog.ShowAsync();
+                    var instructions = ex is DatabaseRecoveryRequiredException recovery ? RecoveryGuidance.Format(recovery, L.Language) : ex.Message;
+                    var details = new TextBox { Text = L.Format("LogViewerRecoveryFatalMessage", instructions), IsReadOnly = true,
+                        AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MaxHeight = 300 };
+                    await new ContentDialog { Title = L.Get("LogViewerRecoveryFatalTitle"), Content = details,
+                        PrimaryButtonText = L.Get("LogViewerCloseApp"), DefaultButton = ContentDialogButton.Primary, XamlRoot = XamlRoot }.ShowAsync();
                 }
-                catch (Exception ex)
-                {
-                    var restoreErrorDialog = new ContentDialog
-                    {
-                        Title = L.Get("Text_Restore_Failed_b6bce7"),
-                        Content = L.Format("ErrorDetail", ex.Message),
-                        CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                        XamlRoot = this.XamlRoot
-                    };
-                    await restoreErrorDialog.ShowAsync();
-                }
+                finally { App.CurrentWindow.Close(); }
+                return;
             }
+            DataStatus.Text = L.Get(restored ? "Text_Database_restored_successfully_Reopen_any_active_pages__48a860" : "LogViewerRestoreFailed");
         }
+        finally { BackupButton.IsEnabled = RestoreButton.IsEnabled = true; }
     }
 
     private void OpenDataFolderButton_Click(object sender, RoutedEventArgs e)
     {
-        var dbPath = _databaseService.GetDatabasePath();
-        var folder = Path.GetDirectoryName(dbPath);
-        if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+        try
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", folder) { UseShellExecute = true });
+            var folder = Path.GetDirectoryName(_databaseService.GetDatabasePath());
+            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) throw new DirectoryNotFoundException("The data folder does not exist.");
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{folder}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not open the data folder");
+            DataStatus.Text = L.Get("LogViewerFolderFailed");
         }
     }
 
     private async void VacuumButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!VacuumButton.IsEnabled) return;
+        VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
+        DatabaseStatus.Text = "";
+        var completed = false;
         try
         {
-            var vacDialog = new ContentDialog
-            {
-                Title = L.Get("Text_Vacuum_Database_0a823e"),
+            var confirmation = new ContentDialog { Title = L.Get("Text_Vacuum_Database_0a823e"),
                 Content = L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"),
-                PrimaryButtonText = L.Get("Text_Vacuum_5fe15d"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await vacDialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                await _databaseService.VacuumAsync();
-                var doneDialog = new ContentDialog
-                {
-                    Title = L.Get("Text_Vacuum_Complete_43b708"),
-                    Content = L.Get("Text_Database_optimized_successfully_4e0a52"),
-                    CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                    XamlRoot = this.XamlRoot
-                };
-                await doneDialog.ShowAsync();
-            }
+                PrimaryButtonText = L.Get("Text_Vacuum_5fe15d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
+            if (await confirmation.ShowAsync() != ContentDialogResult.Primary) return;
+            await _databaseService.VacuumAsync();
+            completed = true;
+            DatabaseStatus.Text = L.Get("Text_Database_optimized_successfully_4e0a52");
+            await new ContentDialog { Title = L.Get("Text_Vacuum_Complete_43b708"), Content = DatabaseStatus.Text,
+                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
         }
         catch (Exception ex)
         {
-            var errorDialog = new ContentDialog
-            {
-                Title = L.Get("Text_Error_7f2f6a"),
-                Content = ex.Message,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                XamlRoot = this.XamlRoot
-            };
-            await errorDialog.ShowAsync();
+            App.Logger.LogError(ex, completed ? "Database vacuum completed, but its confirmation failed" : "Database vacuum failed");
+            DatabaseStatus.Text = L.Get(completed ? "Text_Database_optimized_successfully_4e0a52" : "LogViewerMaintenanceFailed");
         }
+        finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
     }
 
     private async void ReindexButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!ReindexButton.IsEnabled) return;
+        VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
+        DatabaseStatus.Text = "";
+        var completed = false;
         try
         {
             await _databaseService.ReindexAsync();
-        var reindexDialog = new ContentDialog
-        {
-            Title = L.Get("Text_Reindex_Complete_6eb4e1"),
-            Content = L.Get("Text_Database_indexes_rebuilt_1fdc67"),
-            CloseButtonText = L.Get("Text_OK_9ce3bd"),
-            XamlRoot = this.XamlRoot
-        };
-        await reindexDialog.ShowAsync();
+            completed = true;
+            DatabaseStatus.Text = L.Get("Text_Database_indexes_rebuilt_1fdc67");
+            await new ContentDialog { Title = L.Get("Text_Reindex_Complete_6eb4e1"), Content = DatabaseStatus.Text,
+                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
         }
         catch (Exception ex)
         {
-            var errorDialog = new ContentDialog
-            {
-                Title = L.Get("Text_Reindex_failed_f6512f"),
-                Content = ex.Message,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"),
-                XamlRoot = this.XamlRoot
-            };
-            await errorDialog.ShowAsync();
+            App.Logger.LogError(ex, completed ? "Database reindex completed, but its confirmation failed" : "Database reindex failed");
+            DatabaseStatus.Text = L.Get(completed ? "Text_Database_indexes_rebuilt_1fdc67" : "LogViewerMaintenanceFailed");
         }
+        finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
     }
 
     private static string FormatFileSize(long bytes)

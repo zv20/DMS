@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DMS.Services;
 using DMS.Views;
 
@@ -27,6 +28,8 @@ public sealed partial class MainWindow : Window
         this.SystemBackdrop = new MicaBackdrop();
         RootGrid.SizeChanged += RootGrid_SizeChanged;
         _sizeLimits = new WindowSizeLimits(this, RootGrid);
+        WindowPlacement.Center(AppWindow);
+        Closed += async (_, _) => await SaveWindowPlacementAsync();
     }
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -48,14 +51,60 @@ public sealed partial class MainWindow : Window
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
-        AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
-        // Navigate to Menu by default - ensure ContentFrame is ready
-        if (ContentFrame != null)
+        try
         {
+            var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
+            if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
+            AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
-            ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage));
+            if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
+                throw new InvalidOperationException("The initial page could not be opened.");
+            // An opt-in signal lets the packaging check verify that the installed
+            // app reached its main window and loaded application resources.
+            var readyFile = Environment.GetEnvironmentVariable("DMS_QA_READY_FILE");
+            if (!string.IsNullOrWhiteSpace(readyFile))
+                System.IO.File.WriteAllText(readyFile, Localization.Get("MenuViewSelected"));
         }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Unable to load the initial application page");
+            await ShowNavigationErrorAsync();
+        }
+    }
+
+    private async Task SaveWindowPlacementAsync()
+    {
+        try
+        {
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized }) return;
+            var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync() ?? new DMS.Models.AppSettings();
+            settings.WindowX = AppWindow.Position.X; settings.WindowY = AppWindow.Position.Y;
+            settings.WindowWidth = AppWindow.Size.Width; settings.WindowHeight = AppWindow.Size.Height;
+            await App.Services.GetRequiredService<IDatabaseService>().SaveSettingsAsync(settings);
+        }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save window placement"); }
+    }
+
+    private void RestoreNavigationSelection()
+    {
+        if (ContentFrame.CurrentSourcePageType == typeof(SettingsPage)) { NavView.SelectedItem = NavView.SettingsItem; return; }
+        var tag = ContentFrame.CurrentSourcePageType == typeof(MenuPage) ? "menu" :
+            ContentFrame.CurrentSourcePageType == typeof(RecipesPage) ? "recipes" :
+            ContentFrame.CurrentSourcePageType == typeof(IngredientsPage) ? "ingredients" :
+            ContentFrame.CurrentSourcePageType == typeof(AllergensPage) ? "allergens" :
+            ContentFrame.CurrentSourcePageType == typeof(TemplateBuilderPage) ? "templateBuilder" : null;
+        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, tag));
+    }
+
+    private async Task ShowNavigationErrorAsync()
+    {
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = RootGrid.XamlRoot, Title = Localization.Get("ErrorTitle"),
+                Content = Localization.Get("ErrorNavigation"), CloseButtonText = Localization.Get("Text_OK_9ce3bd") };
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to show the navigation error"); }
     }
 
     private async void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
@@ -74,11 +123,14 @@ public sealed partial class MainWindow : Window
 
         if (pageType != null && ContentFrame != null)
         {
+            try
+            {
             if (ContentFrame.CurrentSourcePageType == pageType) return;
             if (ContentFrame.Content is IUnsavedEditor editor)
             {
                 var currentTag = ContentFrame.Content switch
                 {
+                    MenuPage => "menu",
                     RecipesPage => "recipes",
                     IngredientsPage => "ingredients",
                     AllergensPage => "allergens",
@@ -102,7 +154,14 @@ public sealed partial class MainWindow : Window
                 finally { _navigationPending = false; }
             }
             NavView.SelectedItem = args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer;
-            ContentFrame.Navigate(pageType);
+            if (!ContentFrame.Navigate(pageType)) throw new InvalidOperationException("The selected page could not be opened.");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.LogError(ex, "Unable to navigate to {Page}", pageType.Name);
+                RestoreNavigationSelection();
+                await ShowNavigationErrorAsync();
+            }
         }
     }
 

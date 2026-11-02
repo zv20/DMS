@@ -4,8 +4,8 @@ using Windows.Foundation;
 
 namespace DMS.Views;
 
-/// <summary>A small wrap panel for the recipe editor's ingredient chips.</summary>
-public sealed class IngredientWrapPanel : Panel
+/// <summary>A lightweight panel that flows children inline and wraps them to a new line.</summary>
+public sealed class WrappingPanel : Panel
 {
     protected override Size MeasureOverride(Size availableSize)
     {

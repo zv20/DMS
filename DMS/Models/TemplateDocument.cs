@@ -16,8 +16,10 @@ public sealed class TemplateDocument
     public string HeaderColor { get; set; } = "#000000";
     public string BodyColor { get; set; } = "#000000";
     public string AllergenAccentColor { get; set; } = "#C60000";
+    public double AllergenAccentOpacity { get; set; } = 1;
     public string FooterColor { get; set; } = "#000000";
     public string BackgroundColor { get; set; } = "#FFFFFF";
+    public double BackgroundOpacity { get; set; } = 1;
     public string? BackgroundImageDataUri { get; set; }
     public string? BackgroundImageAssetId { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;

@@ -1,6 +1,7 @@
 using DMS.Models;
 using DMS.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -22,7 +23,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
-    private bool _legacySource;
     private bool _binding = true, _dirty, _saving, _switching;
     private int _generation;
     private int _renderGeneration;
@@ -32,6 +32,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _editingBlock;
     private bool _inlineTextChanged;
     private bool _weekendEnabled;
+    private List<string> _recentTemplateColors = [];
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
@@ -119,8 +120,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async Task InitializeAsync()
     {
-        try { await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync(); }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        try
+        {
+            _recentTemplateColors = (await _database.GetSettingsAsync())?.RecentTemplateColors?
+                .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
+            await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync();
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private static MenuTemplate NewTemplate() => new() { Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } };
@@ -158,8 +164,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     tile.Children.Add(thumbnail);
                     _ = ObserveTemplateThumbnailAsync(page.ImagesReady);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
                     tile.Children.Add(new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 });
                 }
                 tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
@@ -174,7 +181,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate chosenTemplate })
                 selected = chosenTemplate;
         }
-        catch (Exception ex) { StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to browse saved templates"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _switching = false; }
         if (selected != null) await SelectTemplateAsync(selected);
     }
@@ -182,7 +189,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private static async Task ObserveTemplateThumbnailAsync(Task imagesReady)
     {
         try { await imagesReady; }
-        catch { /* An unreadable image should not prevent choosing a template. */ }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load a template thumbnail image"); }
     }
 
     private void SetDocument(MenuTemplate template, string? name)
@@ -190,7 +197,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var loadedTemplate = TemplateConversion.ToEditableCopy(template);
         _binding = true;
         DismissContextTools();
-        _legacySource = template.Document == null && name != null;
         _loadedTemplate = loadedTemplate;
         _document = _loadedTemplate.Document ?? new();
         _document.MergeLegacyFooterNotice();
@@ -198,7 +204,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name;
-        RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
+        RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = name != null && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         NormalizePageBackground();
@@ -224,29 +230,25 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 return;
             }
-            if (chosen.Document == null)
-            {
-                var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLegacyConvertTitle"), Content = L.Get("TplLegacyConvertMessage"),
-                    PrimaryButtonText = L.Get("TplLegacyConvertButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
-                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
-                {
-                    return;
-                }
-            }
             SetDocument(chosen, chosen.Name);
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.Format("TplError", ex.Message);
+            App.Logger.LogError(ex, "Unable to open the selected template");
+            StatusText.Text = L.Get("ErrorTemplate");
         }
         finally { _switching = false; RefreshSavedTemplatesMenu(); }
     }
 
     private async void New_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || !await ConfirmDiscardAsync()) return;
-        SetDocument(NewTemplate(), null);
-        RefreshSavedTemplatesMenu();
+        try
+        {
+            if (_saving || _switching || !await ConfirmDiscardAsync()) return;
+            SetDocument(NewTemplate(), null);
+            RefreshSavedTemplatesMenu();
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to create a new template"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -259,7 +261,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         try
         {
             var all = await _database.GetAllTemplatesAsync();
-            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _legacySource ? $"{_loadedName} - {L.Get("TplLegacyCopySuffix")}" : _loadedName ?? "" };
+            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _loadedName ?? "" };
             var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
             var content = new StackPanel { Spacing = 8 };
             content.Children.Add(nameBox); content.Children.Add(error);
@@ -269,7 +271,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             dialog.PrimaryButtonClick += (_, args) =>
             {
                 name = nameBox.Text.Trim();
-                var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && (_legacySource || !string.Equals(t.Name, _loadedName, StringComparison.Ordinal))) ? "TplBuilderNameExists" : null;
+                var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)) ? "TplBuilderNameExists" : null;
                 if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
@@ -279,22 +281,23 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             // The editable document owns its images. Retaining inactive browser
             // layers would incorrectly report usage after a block was removed.
             saved.BackgroundImageAssetId = null; saved.BackgroundImageDataUri = null;
-            saved.ImageLayers = []; saved.LegacyDataJson = null;
-            if (_legacySource || !string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
+            saved.ImageLayers = [];
+            if (!string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
             await _database.SaveTemplateAsync(saved);
-            _loadedTemplate = saved; _legacySource = false;
+            _loadedTemplate = saved;
             _loadedName = name; _dirty = false;
             RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;
-            await ReloadTemplatesAsync();
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template saved but its list could not be refreshed"); StatusText.Text = L.Get("DataSavedRefreshFailed"); return; }
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to save the template"); StatusText.Text = L.Get("DataSaveFailed"); }
         finally { _saving = false; SaveButton.IsEnabled = true; }
     }
 
     private async void RenameTemplate_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        if (_saving || _switching || _loadedName == null || _loadedTemplate.IsPreset) return;
         _saving = true;
         RenameTemplateMenuItem.IsEnabled = SaveButton.IsEnabled = DeleteButton.IsEnabled = false;
         try
@@ -309,14 +312,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _loadedTemplate.Name = name;
             // Keep unsaved canvas edits and their dirty flag; rename changes only
             // the saved entry's name, rather than implicitly saving those edits.
-            await ReloadTemplatesAsync();
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template renamed but its list could not be refreshed"); StatusText.Text = L.Get("DataSavedRefreshFailed"); return; }
             StatusText.Text = L.Get("Text_Saved_499dc6");
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to rename the template"); StatusText.Text = L.Get("DataSaveFailed"); }
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
-            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_loadedTemplate.IsPreset;
         }
     }
 
@@ -341,7 +345,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        if (_saving || _switching || _loadedName == null || _loadedTemplate.IsPreset) return;
         var name = _loadedName;
         _saving = true; RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = SaveButton.IsEnabled = false;
         try
@@ -351,14 +355,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             await _database.DeleteTemplateAsync(name);
-            await ReloadTemplatesAsync();
             SetDocument(NewTemplate(), null);
+            try { await ReloadTemplatesAsync(); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Template deleted but its list could not be refreshed"); StatusText.Text = L.Get("DataDeletedRefreshFailed"); }
         }
-        catch (Exception ex) { StatusText.Text = L.Format("SaveError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to delete the template"); StatusText.Text = L.Get("DataDeleteFailed"); }
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
-            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_loadedTemplate.IsPreset;
         }
     }
 
@@ -391,7 +396,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
             Render();
         }
-        catch (Exception ex) { if (generation == _generation) StatusText.Text = L.Format("MenuLoadError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to load template preview data"); if (generation == _generation) StatusText.Text = L.Get("ErrorTemplate"); }
     }
 
     private void Numbers_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
@@ -423,7 +428,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
         return Microsoft.UI.Colors.Black;
     }
-    private static string AnchorKey(string key) => key.StartsWith("ingredients:") || key.StartsWith("allergens:") ? "menu:" + key.Split(':')[1] : key;
+    private static string AnchorKey(string key) => key;
 
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
     {
@@ -580,30 +585,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Add(close);
 
         var parts = key.Split(':');
-        var sectionName = parts[0] switch
-        {
-            "page" => L.Get("TplBuilderPageSection"), "image" => L.Get("TplImageBlock"),
-            "header" => L.Get("TplHeader"), "date" => L.Get("TplSelectionDate"), "footer" => L.Get("TplFooter"), "notice" => L.Get("TplBuilderNotice"),
-            "heading" => L.Get("TplDayHeading"), "menu" => L.Get("TplMenuNames"),
-            "ingredients" => L.Get("TplIngredientText"), "allergens" => L.Get("TplAllergenText"),
-            "day" => L.Get("TplDayHeading"), _ => L.Get("TplSelectedElement")
-        };
-        if (parts.Length == 2 && int.TryParse(parts[1], out var dayIndex) && dayIndex is >= 0 and < 7)
-            sectionName = $"{_monday.AddDays(dayIndex):dddd} › {sectionName}";
-        ContextTools.Children.Add(new TextBlock { Text = sectionName, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) });
-        if (parts.Length == 2 && parts[0] is "menu" or "ingredients" or "allergens")
-        {
-            var section = new ComboBox { Width = 120 };
-            section.Items.Add(L.Get("TplMenuNames")); section.Items.Add(L.Get("TplIngredientText")); section.Items.Add(L.Get("TplAllergenText"));
-            section.SelectedIndex = parts[0] == "menu" ? 0 : parts[0] == "ingredients" ? 1 : 2;
-            section.SelectionChanged += (_, _) =>
-            {
-                if (_contextBinding || section.SelectedIndex < 0 || _selectionAnchor == null) return;
-                _selectedBlock = new[] { "menu", "ingredients", "allergens" }[section.SelectedIndex] + ":" + parts[1];
-                BuildContextTools(); PositionContextTools();
-            };
-            ContextTools.Children.Add(section);
-        }
 
         if (key.StartsWith("image:", StringComparison.Ordinal))
         {
@@ -611,13 +592,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         else if (key == "page")
         {
-            AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, value =>
+            AddContextColor("TplBuilderBackgroundColor", _document.BackgroundColor, (value, opacity) =>
             {
-                _document.BackgroundColor = value; _dirty = true; Render();
-            });
+                _document.BackgroundColor = value; _document.BackgroundOpacity = opacity; _dirty = true; Render();
+            }, _document.BackgroundOpacity);
             var shrink = new CheckBox { Content = L.Get("TplBuilderAllowShrink"), IsChecked = _document.AllowFontShrink, VerticalAlignment = VerticalAlignment.Center };
-            var minimumSize = new NumberBox { Width = 80, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
-                IsEnabled = _document.AllowFontShrink, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var minimumSize = new Slider { Width = 120, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
+                IsEnabled = _document.AllowFontShrink, StepFrequency = 1, SmallChange = 1, LargeChange = 2 };
             ToolTipService.SetToolTip(minimumSize, L.Get("TplBuilderMinimumFont"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(minimumSize, L.Get("TplBuilderMinimumFont"));
             void ChangeShrink(bool enabled)
@@ -631,8 +612,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             minimumSize.ValueChanged += (_, _) =>
             {
                 if (_contextBinding || !double.IsFinite(minimumSize.Value)) return;
-                _document.MinimumFontSize = minimumSize.Value; _dirty = true; Render();
+                _document.MinimumFontSize = minimumSize.Value; _dirty = true;
             };
+            minimumSize.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
+            minimumSize.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
+            minimumSize.KeyUp += (_, _) => { if (!_contextBinding) Render(); };
             ContextTools.Children.Add(shrink);
             ContextTools.Children.Add(minimumSize);
         }
@@ -642,8 +626,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _document.BlockAppearances.TryGetValue(key, out var appearance);
             if (appearance == null) _document.BlockAppearances.TryGetValue("day", out appearance);
             appearance ??= new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 };
-            AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", value => EditAppearance(key, a => a.BackgroundColor = value));
-            AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", value => EditAppearance(key, a => { a.BorderColor = value; if (a.BorderThickness <= 0) a.BorderThickness = 1; }));
+            AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", (value, opacity) => EditAppearance(key, a => { a.BackgroundColor = value; a.Opacity = opacity; }), appearance.Opacity);
+            AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", (value, opacity) => EditAppearance(key, a => { a.BorderColor = value; a.BorderOpacity = opacity; if (a.BorderThickness <= 0) a.BorderThickness = 1; }), appearance.BorderOpacity);
             var padding = new NumberBox { Width = 80, Minimum = 0, Maximum = 25, Value = appearance.Padding, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             ToolTipService.SetToolTip(padding, L.Get("TplAppearancePadding"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(padding, L.Get("TplAppearancePadding"));
@@ -655,7 +639,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             allDays.Click += (_, _) =>
             {
                 var current = _document.BlockAppearances.TryGetValue(key, out var saved) && saved != null ? saved : appearance;
-                for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
+                for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderOpacity = current.BorderOpacity, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
                 _dirty = true; Render();
             };
             ContextTools.Children.Add(allDays);
@@ -673,7 +657,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(size, L.Get("TplSelectedSize"));
             size.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(size.Value)) EditTextStyle(key, s => s.FontSize = size.Value); };
             ContextTools.Children.Add(size);
-            AddContextColor("TplSelectedColor", style.Color, value => EditTextStyle(key, s => s.Color = value));
+            AddContextColor("TplSelectedColor", style.Color, (value, opacity) => EditTextStyle(key, s => { s.Color = value; s.Opacity = opacity; }), style.Opacity);
             AddStyleToggle("B", "TplBold", style.Bold, value => EditTextStyle(key, s => s.Bold = value));
             AddStyleToggle("I", "TplItalic", style.Italic, value => EditTextStyle(key, s => s.Italic = value));
             AddStyleToggle("U", "TplUnderline", style.Underline, value => EditTextStyle(key, s => s.Underline = value));
@@ -682,11 +666,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 {
                     _document.ShowHeaderReflection = value; _dirty = true; Render();
                 });
-            if (parts[0] is "ingredients" or "allergens")
-                AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, value =>
+            if (parts[0] is "allergens")
+                AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, (value, opacity) =>
                 {
-                    _document.AllergenAccentColor = value; _dirty = true; Render();
-                });
+                    _document.AllergenAccentColor = value; _document.AllergenAccentOpacity = opacity; _dirty = true; Render();
+                }, _document.AllergenAccentOpacity);
             if (parts[0] is not ("ingredients" or "allergens"))
             {
             var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
@@ -719,7 +703,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _contextBinding = false;
     }
 
-    private static TemplateTextStyle CopyStyle(TemplateTextStyle s) => new() { FontFamily = s.FontFamily, FontSize = s.FontSize, Color = s.Color, Bold = s.Bold, Italic = s.Italic, Underline = s.Underline, Alignment = s.Alignment };
+    private static TemplateTextStyle CopyStyle(TemplateTextStyle s) => new() { FontFamily = s.FontFamily, FontSize = s.FontSize, Color = s.Color, Opacity = s.Opacity, Bold = s.Bold, Italic = s.Italic, Underline = s.Underline, Alignment = s.Alignment };
 
     private void EditTextStyle(string key, Action<TemplateTextStyle> change)
     {
@@ -731,7 +715,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Render();
     }
 
-    private void EditAppearance(string key, Action<TemplateBlockAppearance> change)
+    private void EditAppearance(string key, Action<TemplateBlockAppearance> change, bool render = true)
     {
         _document.BlockAppearances ??= new();
         if (!_document.BlockAppearances.TryGetValue(key, out var appearance) || appearance == null)
@@ -739,11 +723,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _document.BlockAppearances.TryGetValue("day", out var shared);
             _document.BlockAppearances[key] = appearance = shared == null
                 ? new TemplateBlockAppearance { BorderThickness = 1, Padding = 8 }
-                : new TemplateBlockAppearance { BackgroundColor = shared.BackgroundColor, BorderColor = shared.BorderColor, BorderThickness = shared.BorderThickness, CornerRadius = shared.CornerRadius, Padding = shared.Padding, Opacity = shared.Opacity };
+                : new TemplateBlockAppearance { BackgroundColor = shared.BackgroundColor, BorderColor = shared.BorderColor, BorderOpacity = shared.BorderOpacity, BorderThickness = shared.BorderThickness, CornerRadius = shared.CornerRadius, Padding = shared.Padding, Opacity = shared.Opacity };
         }
         change(appearance);
         _dirty = true;
-        Render();
+        if (render) Render();
     }
 
     private void AddStyleToggle(string text, string label, bool initial, Action<bool> change)
@@ -756,21 +740,61 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Add(button);
     }
 
-    private void AddContextColor(string label, string initial, Action<string> change)
+    private void AddContextColor(string label, string initial, Action<string, double> change, double initialOpacity = 1)
     {
         var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
         ToolTipService.SetToolTip(button, L.Get(label));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
-        var picker = new ColorPicker { Color = ParseColor(initial), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = false, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 230 };
+        var initialColor = ParseColor(initial);
+        var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
+        var picker = new ColorPicker { Color = Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = true, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 288 };
+        var content = new StackPanel { Width = 288, Spacing = 8 };
+        content.Children.Add(picker);
+        if (_recentTemplateColors.Count > 0)
+        {
+            var recentSection = new StackPanel { Spacing = 4 };
+            recentSection.Children.Add(new TextBlock { Text = L.Get("TplRecentColors") });
+            var recent = new WrappingPanel();
+            foreach (var recentColor in _recentTemplateColors)
+            {
+                var color = recentColor;
+                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
+                ToolTipService.SetToolTip(recentButton, color);
+                recentButton.Click += (_, _) => picker.Color = ParseColor(color);
+                recent.Children.Add(recentButton);
+            }
+            recentSection.Children.Add(recent);
+            content.Children.Add(recentSection);
+        }
+        string? selectedColor = null;
         picker.ColorChanged += (_, args) =>
         {
             var color = args.NewColor;
             swatch.Background = new SolidColorBrush(color);
-            change($"#{color.R:X2}{color.G:X2}{color.B:X2}");
+            selectedColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            change(selectedColor, color.A / (double)byte.MaxValue);
         };
-        button.Flyout = new Flyout { Content = picker };
+        var flyout = new Flyout { Content = content, Placement = FlyoutPlacementMode.Top };
+        flyout.Closed += async (_, _) => { if (selectedColor != null) await RememberTemplateColorAsync(selectedColor); };
+        button.Flyout = flyout;
         ContextTools.Children.Add(button);
+    }
+
+    private static bool IsColorHex(string color) => color.Length == 7 && color[0] == '#' && uint.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out _);
+
+    private async Task RememberTemplateColorAsync(string color)
+    {
+        _recentTemplateColors.RemoveAll(existing => string.Equals(existing, color, StringComparison.OrdinalIgnoreCase));
+        _recentTemplateColors.Insert(0, color);
+        if (_recentTemplateColors.Count > 8) _recentTemplateColors.RemoveRange(8, _recentTemplateColors.Count - 8);
+        try
+        {
+            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            settings.RecentTemplateColors = [.. _recentTemplateColors];
+            await _database.SaveSettingsAsync(settings);
+        }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save recently used template colors"); }
     }
 
     private async void Render()
@@ -794,6 +818,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await result.ImagesReady;
             if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
         }
-        catch (Exception ex) { if (generation == _renderGeneration) StatusText.Text = L.Format("TplError", ex.Message); }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
     }
 }

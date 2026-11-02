@@ -11,6 +11,7 @@
         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition x:Name="EditorColumn" Width="0" /></Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -20,10 +21,12 @@
             <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Search allergens..." QueryIcon="Find" TextChanged="SearchBox_TextChanged"  x:Uid="Text_Search_allergens_c1743a" />
         </Grid>
 
+        <TextBlock x:Name="PageStatus" Grid.Row="1" Margin="16,0,16,8" TextWrapping="Wrap" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+
         <!-- Allergen List -->
         <ListView
             x:Name="AllergensListView"
-            Grid.Row="1"
+            Grid.Row="2"
             Padding="8"
             SelectionMode="None"
             IsItemClickEnabled="True"
@@ -53,7 +56,7 @@
         <!-- Empty State -->
         <StackPanel
             x:Name="EmptyStatePanel"
-            Grid.Row="1"
+            Grid.Row="2"
             VerticalAlignment="Center"
             HorizontalAlignment="Center"
             Spacing="16"
@@ -62,7 +65,7 @@
             <TextBlock Text="No allergens yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_allergens_yet_6f883b" />
             <TextBlock Text="Click 'Add Allergen' to create your first allergen" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" />
         </StackPanel>
-        <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="2" Visibility="Collapsed"
+        <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"
                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="12">

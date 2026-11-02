@@ -5,6 +5,11 @@ using DMS.Models;
 
 namespace DMS.Services;
 
+public sealed class RecipeInUseException : InvalidOperationException
+{
+    public RecipeInUseException() : base("This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.") { }
+}
+
 public interface IDatabaseService
 {
     Task InitializeAsync();
@@ -26,6 +31,7 @@ public interface IDatabaseService
     Task<string?> GetMenuCategoryAsync(DateTime date, string slot);
     Task<List<MenuSlotCategory>> GetMenuCategoriesAsync();
     Task SaveMenuCategoryAsync(DateTime date, string slot, string category);
+    Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId, string? previousSlot = null);
     Task<AppSettings?> GetSettingsAsync();
     Task SaveSettingsAsync(AppSettings settings);
     Task<List<MenuTemplate>> GetAllTemplatesAsync();
@@ -75,11 +81,13 @@ public partial class DatabaseService : IDatabaseService, IDisposable
 
     public async Task InitializeAsync()
     {
+        ThrowIfRecoveryRequired();
         if (_initialized) return;
 
         await _initLock.WaitAsync();
         try
         {
+            ThrowIfRecoveryRequired();
             if (_initialized) return;
 
             // The app owns one long-lived connection. Disabling ADO.NET pooling
@@ -105,6 +113,43 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    private string RecoveryMarkerPath => _dbPath + ".recovery-required";
+
+    private void ThrowIfRecoveryRequired()
+    {
+        var markerPath = RecoveryMarkerPath;
+        if (!File.Exists(markerPath)) return;
+        string recoveryPath;
+        try { recoveryPath = File.ReadAllText(markerPath).Trim(); }
+        catch (IOException) { recoveryPath = ""; }
+        catch (UnauthorizedAccessException) { recoveryPath = ""; }
+        throw new DatabaseRecoveryRequiredException(_dbPath, recoveryPath, markerPath);
+    }
+
+    private void WriteRecoveryMarker(string recoveryPath)
+    {
+        var created = false;
+        try
+        {
+            using var stream = new FileStream(RecoveryMarkerPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+            created = true;
+            using (var writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024, leaveOpen: true))
+            {
+                writer.Write(recoveryPath);
+                writer.Flush();
+            }
+            // Make the recovery location durable before touching the live database.
+            stream.Flush(flushToDisk: true);
+        }
+        catch
+        {
+            // A failed marker write occurs before replacement; remove only the
+            // incomplete marker we created, never one owned by another restore.
+            if (created) { try { File.Delete(RecoveryMarkerPath); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+            throw;
         }
     }
 
@@ -196,6 +241,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         await SeedDefaultAllergensAsync();
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
+        SeedSeasonalTemplatePresets();
     }
 
     private async Task EnsureAllergenIconColumnAsync()
@@ -249,8 +295,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         var defaults = new Dictionary<string, string>
         {
             ["language"] = "bg",
-            ["theme"] = "default",
-            ["version"] = "1.0.0"
+            ["theme"] = "default"
         };
 
         foreach (var (key, value) in defaults)
@@ -335,8 +380,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             var assignmentCount = Convert.ToInt32(await usageCommand.ExecuteScalarAsync());
             if (assignmentCount > 0)
             {
-                throw new InvalidOperationException(
-                    "This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.");
+                throw new RecipeInUseException();
             }
         }
 
@@ -595,6 +639,60 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         await cmd.ExecuteNonQueryAsync();
     }
 
+    /// <summary>Save a slot's category and assignment as one indivisible change.</summary>
+    public async Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId, string? previousSlot = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(category);
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        if (recipeId.HasValue)
+        {
+            using var recipe = _connection.CreateCommand();
+            recipe.Transaction = transaction;
+            recipe.CommandText = "SELECT COUNT(*) FROM recipes WHERE id=@id";
+            recipe.Parameters.AddWithValue("@id", recipeId.Value);
+            if (Convert.ToInt32(recipe.ExecuteScalar()) == 0)
+                throw new InvalidOperationException("The selected recipe no longer exists.");
+        }
+
+        var dateValue = date.ToString("yyyy-MM-dd");
+        using (var updateCategory = _connection.CreateCommand())
+        {
+            updateCategory.Transaction = transaction;
+            updateCategory.CommandText = @"INSERT INTO menu_slot_categories(date, slot, category) VALUES(@date, @slot, @category)
+                ON CONFLICT(date, slot) DO UPDATE SET category=@category";
+            updateCategory.Parameters.AddWithValue("@date", dateValue);
+            updateCategory.Parameters.AddWithValue("@slot", slot);
+            updateCategory.Parameters.AddWithValue("@category", category);
+            updateCategory.ExecuteNonQuery();
+        }
+
+        using (var updateMenu = _connection.CreateCommand())
+        {
+            updateMenu.Transaction = transaction;
+            updateMenu.CommandText = recipeId.HasValue
+                ? @"INSERT INTO menu(date, slot, recipe_id) VALUES(@date, @slot, @recipe)
+                    ON CONFLICT(date, slot) DO UPDATE SET recipe_id=@recipe"
+                : "DELETE FROM menu WHERE date=@date AND slot=@slot";
+            updateMenu.Parameters.AddWithValue("@date", dateValue);
+            updateMenu.Parameters.AddWithValue("@slot", slot);
+            if (recipeId.HasValue) updateMenu.Parameters.AddWithValue("@recipe", recipeId.Value);
+            updateMenu.ExecuteNonQuery();
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousSlot) && !string.Equals(previousSlot, slot, StringComparison.Ordinal))
+        {
+            using var removePrevious = _connection.CreateCommand();
+            removePrevious.Transaction = transaction;
+            removePrevious.CommandText = "DELETE FROM menu WHERE date=@date AND slot=@slot";
+            removePrevious.Parameters.AddWithValue("@date", dateValue);
+            removePrevious.Parameters.AddWithValue("@slot", previousSlot);
+            removePrevious.ExecuteNonQuery();
+        }
+        transaction.Commit();
+    }
+
     // Settings
     public async Task<AppSettings?> GetSettingsAsync()
     {
@@ -614,6 +712,14 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                 case "accent_color": settings.AccentColor = value; break;
                 case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
                 case "data_folder": settings.DataFolder = value; break;
+                case "recent_template_colors":
+                    try { settings.RecentTemplateColors = System.Text.Json.JsonSerializer.Deserialize<List<string>>(value) ?? []; }
+                    catch (System.Text.Json.JsonException) { settings.RecentTemplateColors = []; }
+                    break;
+                case "window_x": settings.WindowX = int.TryParse(value, out var x) ? x : null; break;
+                case "window_y": settings.WindowY = int.TryParse(value, out var y) ? y : null; break;
+                case "window_width": settings.WindowWidth = int.TryParse(value, out var width) ? width : null; break;
+                case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
             }
         }
         return settings;
@@ -631,7 +737,12 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             ("theme", settings.Theme),
             ("accent_color", settings.AccentColor),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
-            ("data_folder", settings.DataFolder ?? "")
+            ("data_folder", settings.DataFolder ?? ""),
+            ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
+            ,("window_x", settings.WindowX?.ToString() ?? "")
+            ,("window_y", settings.WindowY?.ToString() ?? "")
+            ,("window_width", settings.WindowWidth?.ToString() ?? "")
+            ,("window_height", settings.WindowHeight?.ToString() ?? "")
         };
 
         foreach (var (key, value) in pairs)
@@ -779,6 +890,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             await using var recovery = new SqliteConnection(recoveryOptions.ToString());
             await recovery.OpenAsync();
             _connection!.BackupDatabase(recovery);
+            WriteRecoveryMarker(recoveryPath);
 
             try
             {
@@ -788,6 +900,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                 await ConfigureConnectionAsync();
                 await CreateSchemaAsync();
                 _initialized = true;
+                File.Delete(RecoveryMarkerPath);
                 _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);
             }
             catch (Exception restoreError)
@@ -798,13 +911,14 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                     await ConfigureConnectionAsync();
                     await CreateSchemaAsync();
                     _initialized = true;
+                    File.Delete(RecoveryMarkerPath);
                 }
                 catch (Exception recoveryError)
                 {
                     _initialized = false;
                     _connection?.Dispose();
                     _connection = null;
-                    throw new InvalidOperationException($"Restore failed and automatic recovery failed. The previous database backup is at: {recoveryPath}", new AggregateException(restoreError, recoveryError));
+                    throw new DatabaseRecoveryRequiredException(_dbPath, recoveryPath, RecoveryMarkerPath, new AggregateException(restoreError, recoveryError));
                 }
                 throw new InvalidOperationException($"Restore failed; the previous database was recovered. A recovery backup is at: {recoveryPath}", restoreError);
             }

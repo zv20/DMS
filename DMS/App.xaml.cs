@@ -12,9 +12,15 @@ public partial class App : Application
     public static IServiceProvider Services { get; private set; } = null!;
     public static ILogger<App> Logger { get; private set; } = null!;
     public static Window CurrentWindow { get; private set; } = null!;
+    public static LocalLogStore LogStore { get; } = LocalLogStore.CreateDefault();
 
     public App()
     {
+        // Record unexpected failures without marking them handled: continuing
+        // after an unknown UI or process error could leave data inconsistent.
+        UnhandledException += (_, e) => LogStore.Write(LogLevel.Critical, "UI", "Unhandled UI exception", e.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => LogStore.Write(LogLevel.Critical, "Process", "Unhandled process exception", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) => LogStore.Write(LogLevel.Error, "Task", "Unobserved background task exception", e.Exception);
         this.InitializeComponent();
     }
 
@@ -39,6 +45,7 @@ public partial class App : Application
     {
         var began = System.Diagnostics.Stopwatch.StartNew();
         var language = "bg";
+        var fatalRecovery = false;
         startup.ShowLoading("Preparing your kitchen... / Подготвяме приложението...");
         try
         {
@@ -58,7 +65,7 @@ public partial class App : Application
                             Logger.LogError(ex, "Installer backup restore failed");
                             // If automatic recovery failed, do not reopen or initialize
                             // the database until the recovery backup is handled.
-                            if (ex.InnerException is AggregateException) throw;
+                            if (ex is DatabaseRecoveryRequiredException || ex.InnerException is AggregateException) { fatalRecovery = true; throw; }
                             if (!await startup.RetryInstallerRestoreAsync(ex.Message, language)) break;
                         }
                     }
@@ -92,8 +99,15 @@ public partial class App : Application
         {
             Logger.LogError(ex, "Unable to start DMS");
             if (!startup.IsClosed)
-                startup.ShowError(language == "en" ? "DMS could not start." : "DMS не успя да се стартира.", ex.Message,
-                    language == "en" ? "Try again" : "Опитайте отново");
+            {
+                if (fatalRecovery || ex is DatabaseRecoveryRequiredException)
+                    startup.ShowFatalRecoveryError(language == "en" ? "Database recovery needs attention. Close DMS and restore the recovery backup shown below." : "Възстановяването на базата данни изисква внимание. Затворете DMS и възстановете посочения по-долу резервен архив.",
+                        ex is DatabaseRecoveryRequiredException recovery ? RecoveryGuidance.Format(recovery, language) : ex.Message,
+                        language == "en" ? "Close DMS" : "Затвори DMS");
+                else
+                    startup.ShowError(language == "en" ? "DMS could not start." : "DMS не успя да се стартира.", ex.Message,
+                        language == "en" ? "Try again" : "Опитайте отново");
+            }
         }
     }
 
@@ -105,6 +119,62 @@ public partial class App : Application
         previous.Close();
     }
 
+    /// <summary>
+    /// Restores data behind the startup screen, then replaces every page with a
+    /// fresh main window so no old database-backed view remains in memory.
+    /// </summary>
+    public static async Task RestoreAndReloadAsync(string backupPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
+        var previous = CurrentWindow;
+        var startup = new StartupWindow();
+        var databaseRestored = false;
+        try
+        {
+            previous.AppWindow.Hide();
+            CurrentWindow = startup;
+            startup.ShowRestoreLoading(Localization.Get("StartupRestoringBackup"));
+            startup.Activate();
+            await Task.Delay(50); // Let the restore screen paint before database work starts.
+
+            await Services.GetRequiredService<IDatabaseService>().RestoreFromAsync(backupPath);
+            databaseRestored = true;
+            startup.ShowRestoreLoading(Localization.Get("StartupReloading"));
+
+            var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
+            Localization.Apply(settings.Language);
+            AppearanceService.ApplyAccent(settings.AccentColor);
+            await Services.GetRequiredService<IDatabaseService>().GetAllRecipesAsync();
+            await Services.GetRequiredService<IDatabaseService>().GetAllIngredientsAsync();
+
+            var window = new MainWindow();
+            CurrentWindow = window;
+            window.Activate();
+            previous.Close();
+            startup.AllowClose();
+            startup.Close();
+            Logger.LogInformation("Database restored and MainWindow reloaded");
+        }
+        catch (Exception ex) when (!databaseRestored)
+        {
+            Logger.LogError(ex, "Database restore failed before data replacement");
+            CurrentWindow = previous;
+            startup.AllowClose();
+            startup.Close();
+            previous.AppWindow.Show();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // The data is restored, so never return to the old, stale pages.
+            Logger.LogError(ex, "Database restored but the fresh application window could not be opened");
+            previous.Close();
+            CurrentWindow = startup;
+            startup.RetryRequested += async (_, _) => await InitializeAndOpenAsync(startup);
+            startup.ShowError(Localization.Get("RestoreReloadFailed"), ex.Message, Localization.Get("RetryAction"));
+        }
+    }
+
     private static IServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
@@ -113,6 +183,7 @@ public partial class App : Application
         services.AddLogging(builder =>
         {
             builder.AddDebug();
+            builder.AddProvider(new LocalLogProvider(LogStore));
             builder.SetMinimumLevel(LogLevel.Information);
         });
 
