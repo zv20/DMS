@@ -637,10 +637,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             AddContextColor("TplAppearanceBackground", appearance.BackgroundColor ?? "#FFFFFF", value => EditAppearance(key, a => a.BackgroundColor = value));
             AddContextColor("TplAppearanceBorder", appearance.BorderColor ?? "#000000", value => EditAppearance(key, a => { a.BorderColor = value; if (a.BorderThickness <= 0) a.BorderThickness = 1; }));
             var opacity = double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
-            var transparency = new NumberBox { Width = 80, Minimum = 0, Maximum = 100, Value = Math.Round((1 - opacity) * 100), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var transparency = new Slider { Width = 120, Minimum = 0, Maximum = 100, StepFrequency = 1, SmallChange = 1, LargeChange = 10, Value = Math.Round((1 - opacity) * 100) };
             ToolTipService.SetToolTip(transparency, L.Get("TplBlockTransparency"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(transparency, L.Get("TplBlockTransparency"));
-            transparency.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(transparency.Value)) EditAppearance(key, a => a.Opacity = 1 - transparency.Value / 100); };
+            transparency.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(transparency.Value)) EditAppearance(key, a => a.Opacity = 1 - transparency.Value / 100, render: false); };
+            transparency.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
+            transparency.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
+            transparency.KeyUp += (_, _) => { if (!_contextBinding) Render(); };
             ContextTools.Children.Add(transparency);
             var padding = new NumberBox { Width = 80, Minimum = 0, Maximum = 25, Value = appearance.Padding, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             ToolTipService.SetToolTip(padding, L.Get("TplAppearancePadding"));
@@ -729,7 +732,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Render();
     }
 
-    private void EditAppearance(string key, Action<TemplateBlockAppearance> change)
+    private void EditAppearance(string key, Action<TemplateBlockAppearance> change, bool render = true)
     {
         _document.BlockAppearances ??= new();
         if (!_document.BlockAppearances.TryGetValue(key, out var appearance) || appearance == null)
@@ -741,7 +744,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         }
         change(appearance);
         _dirty = true;
-        Render();
+        if (render) Render();
     }
 
     private void AddStyleToggle(string text, string label, bool initial, Action<bool> change)
