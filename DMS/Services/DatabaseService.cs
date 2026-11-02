@@ -294,8 +294,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         var defaults = new Dictionary<string, string>
         {
             ["language"] = "bg",
-            ["theme"] = "default",
-            ["version"] = "1.0.0"
+            ["theme"] = "default"
         };
 
         foreach (var (key, value) in defaults)

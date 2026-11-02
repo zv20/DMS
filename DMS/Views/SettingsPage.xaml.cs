@@ -32,6 +32,7 @@ public sealed partial class SettingsPage : Page
         this.InitializeComponent();
         _settingsService = App.Services.GetRequiredService<ISettingsService>();
         _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        AppVersionText.Text = $"v{AppVersion.Current}";
         ClassicAccentHint.Text = L.Get("ThemeClassicAccentHint");
         SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);
         Loaded += SettingsPage_Loaded;
