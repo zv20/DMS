@@ -20,7 +20,7 @@ public static class TemplateImageArchive
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
 
     // Filter runtime-only hydrated image bytes before creating the export JSON string.
-    // Imported opaque legacy data remains untouched until it has an explicit asset reference.
+    // Opaque image data remains untouched until it has an explicit asset reference.
     public static string SerializeExportData<T>(T data)
     {
         var resolver = new DefaultJsonTypeInfoResolver();

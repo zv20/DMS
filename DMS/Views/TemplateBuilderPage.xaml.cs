@@ -158,7 +158,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 try
                 {
                     var document = TemplateConversion.ToEditableCopy(template).Document ?? new TemplateDocument();
-                    document.MergeLegacyFooterNotice();
                     var page = TemplateRenderer.Create(document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
                     var thumbnail = new Viewbox { Width = 120, Height = 170, Stretch = Stretch.Uniform, Child = page.Page, IsHitTestVisible = false };
                     tile.Children.Add(thumbnail);
@@ -199,7 +198,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         DismissContextTools();
         _loadedTemplate = loadedTemplate;
         _document = _loadedTemplate.Document ?? new();
-        _document.MergeLegacyFooterNotice();
         var heights = new double?[7];
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
         _document.DayHeights = heights;

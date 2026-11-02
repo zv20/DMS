@@ -15,7 +15,6 @@ public sealed class MenuTemplate
     // Null keeps the established A4 portrait document unchanged. The native editor
     // can opt in to these settings as its page-setup controls are introduced.
     public TemplatePageSettings? PageSettings { get; set; }
-    public string TemplateStyle { get; set; } = "compact";
     public string FontFamily { get; set; } = "Arial";
     public double HeaderFontSize { get; set; } = 24;
     public double MealFontSize { get; set; } = 11;
@@ -39,7 +38,6 @@ public sealed class MenuTemplate
     public string? BackgroundImageDataUri { get; set; }
     public string? BackgroundImageAssetId { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
-    public bool NativeStyleInitialized { get; set; }
     // Keys identify a weekday and slot, so formatting follows the template across weeks.
     public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
     // Optional visual chrome for individual canvas objects. An absent key means
@@ -53,9 +51,6 @@ public sealed class MenuTemplate
     public List<TemplateImageLayer> ImageLayers { get; set; } = new();
     // Additional template-owned text, independent of weekly menu data.
     public List<TemplateTextLayer> TextLayers { get; set; } = new();
-    // Retains an imported browser template intact while its richer layer model
-    // is being ported to native WinUI controls.
-    public string? LegacyDataJson { get; set; }
 }
 
 // Page-relative coordinates in CSS pixels on an A4 page (794 x 1123).
@@ -138,7 +133,6 @@ public sealed class TemplateTextStyle
     public bool Bold { get; set; }
     public bool Italic { get; set; }
     public bool Underline { get; set; }
-    // Null keeps the legacy alignment rules for existing saved templates.
     public string? Alignment { get; set; }
 }
 

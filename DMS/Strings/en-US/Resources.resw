@@ -23,10 +23,6 @@
   <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>
   <data name="TemplateOutputPrintUnsupported" xml:space="preserve"><value>Printing is not available on this system.</value></data>
   <data name="TplBuilderTitle" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="TplLegacyConvertTitle" xml:space="preserve"><value>Open older template</value></data>
-  <data name="TplLegacyConvertMessage" xml:space="preserve"><value>This creates an approximate editable copy. Some layout, formatting, images and display options may differ. Your original template stays unchanged; save the copy under a new name and review the preview before printing.</value></data>
-  <data name="TplLegacyConvertButton" xml:space="preserve"><value>Open copy</value></data>
-  <data name="TplLegacyCopySuffix" xml:space="preserve"><value>copy</value></data>
   <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Canvas settings</value></data>
   <data name="TplBuilderImagesSection" xml:space="preserve"><value>Image settings</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Day heights</value></data>
@@ -371,7 +367,6 @@
   <data name="TplCompact" xml:space="preserve"><value>Compact</value></data>
   <data name="TplDetailed" xml:space="preserve"><value>Detailed</value></data>
   <data name="TplTwoColumns" xml:space="preserve"><value>Detailed, two columns</value></data>
-  <data name="TplLegacy" xml:space="preserve"><value>This imported template retains its original browser settings. Rich text and image layers may need adjustment in the native editor.</value></data>
   <data name="TplInvalidColor" xml:space="preserve"><value>Enter colors as #RRGGBB.</value></data>
   <data name="TplSaved" xml:space="preserve"><value>Template saved.</value></data>
   <data name="TplNoMeals" xml:space="preserve"><value>No planned meals in this week.</value></data>

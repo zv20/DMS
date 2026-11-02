@@ -33,17 +33,4 @@ public sealed class TemplateDocument
     public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
     public Dictionary<string, TemplateBlockAppearance> BlockAppearances { get; set; } = new();
 
-    /// <summary>Moves the legacy separate notice into the editable footer without losing text.</summary>
-    public void MergeLegacyFooterNotice()
-    {
-        var footer = FooterText ?? "";
-        var notice = FooterNoticeText ?? "";
-        if (notice.Length > 0)
-        {
-            var hasLineBreak = footer.EndsWith('\n') || footer.EndsWith('\r') || notice.StartsWith('\n') || notice.StartsWith('\r');
-            FooterText = footer + (footer.Length > 0 && !hasLineBreak ? "\n" : "") + notice;
-        }
-        else FooterText = footer;
-        FooterNoticeText = "";
-    }
 }

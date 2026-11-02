@@ -266,7 +266,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             string.Equals((string)item.Tag, recipe.Category, StringComparison.OrdinalIgnoreCase));
         if (currentCategory == null && !string.IsNullOrWhiteSpace(recipe.Category))
         {
-            // Keep legacy/custom categories until the user explicitly changes them.
+            // Keep custom categories until the user explicitly changes them.
             currentCategory = new ComboBoxItem { Tag = recipe.Category, Content = recipe.Category };
             categoryBox.Items.Add(currentCategory);
         }
