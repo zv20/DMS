@@ -61,6 +61,39 @@ jobs:
           & iscc installer/DMS.iss "/DMyAppVersion=$version"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Install and start packaged DMS with disposable data
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_VERSION.TrimStart('v')
+          $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
+          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.exe").Path
+          $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
+          $result = Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir", "/LOG=$setupLog") -Wait -PassThru
+          if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
+          foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
+            if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
+          }
+          $env:APPDATA = Join-Path $env:RUNNER_TEMP 'DMS-test-appdata'
+          New-Item -ItemType Directory -Force $env:APPDATA | Out-Null
+          $env:DMS_QA_READY_FILE = Join-Path $env:RUNNER_TEMP 'dms-ready.txt'
+          Remove-Item $env:DMS_QA_READY_FILE -Force -ErrorAction SilentlyContinue
+          $app = Start-Process -FilePath (Join-Path $installDir 'DMS.exe') -WorkingDirectory $installDir -PassThru
+          try {
+            $deadline = (Get-Date).AddSeconds(45)
+            while ((Get-Date) -lt $deadline -and !(Test-Path $env:DMS_QA_READY_FILE)) {
+              $app.Refresh()
+              if ($app.HasExited) { throw "Installed DMS exited before its main window was ready. Exit code: $($app.ExitCode)" }
+              Start-Sleep -Seconds 1
+            }
+            if (!(Test-Path $env:DMS_QA_READY_FILE)) { throw 'Installed DMS did not reach its main window within 45 seconds.' }
+            $localized = Get-Content $env:DMS_QA_READY_FILE -Raw
+            if (!$localized -or $localized.Trim() -eq 'MenuViewSelected') { throw 'Installed DMS did not load its localized resources.' }
+            Write-Host 'Installed DMS reached its main window and loaded localized resources.'
+          } finally {
+            $app.Refresh()
+            if (!$app.HasExited) { Stop-Process -Id $app.Id -Force }
+          }
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
