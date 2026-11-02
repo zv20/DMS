@@ -608,8 +608,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 _document.BackgroundColor = value; _dirty = true; Render();
             });
             var shrink = new CheckBox { Content = L.Get("TplBuilderAllowShrink"), IsChecked = _document.AllowFontShrink, VerticalAlignment = VerticalAlignment.Center };
-            var minimumSize = new NumberBox { Width = 80, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
-                IsEnabled = _document.AllowFontShrink, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var minimumSize = new Slider { Width = 120, Minimum = 10, Maximum = double.IsFinite(_document.FontSize) ? Math.Clamp(_document.FontSize, 10, 36) : 18, Value = _document.MinimumFontSize,
+                IsEnabled = _document.AllowFontShrink, StepFrequency = 1, SmallChange = 1, LargeChange = 2 };
             ToolTipService.SetToolTip(minimumSize, L.Get("TplBuilderMinimumFont"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(minimumSize, L.Get("TplBuilderMinimumFont"));
             void ChangeShrink(bool enabled)
@@ -623,8 +623,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             minimumSize.ValueChanged += (_, _) =>
             {
                 if (_contextBinding || !double.IsFinite(minimumSize.Value)) return;
-                _document.MinimumFontSize = minimumSize.Value; _dirty = true; Render();
+                _document.MinimumFontSize = minimumSize.Value; _dirty = true;
             };
+            minimumSize.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
+            minimumSize.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
+            minimumSize.KeyUp += (_, _) => { if (!_contextBinding) Render(); };
             ContextTools.Children.Add(shrink);
             ContextTools.Children.Add(minimumSize);
         }
@@ -791,17 +794,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         content.Children.Add(picker);
         if (_recentTemplateColors.Count > 0)
         {
-            var recent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            recent.Children.Add(new TextBlock { Text = L.Get("TplRecentColors"), VerticalAlignment = VerticalAlignment.Center });
+            var recentSection = new StackPanel { Spacing = 4 };
+            recentSection.Children.Add(new TextBlock { Text = L.Get("TplRecentColors") });
+            var recent = new WrappingPanel();
             foreach (var recentColor in _recentTemplateColors)
             {
                 var color = recentColor;
-                var recentButton = new Button { Width = 28, Height = 28, Padding = new Thickness(3), Content = new Border { Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) } };
+                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
                 ToolTipService.SetToolTip(recentButton, color);
                 recentButton.Click += (_, _) => picker.Color = ParseColor(color);
                 recent.Children.Add(recentButton);
             }
-            content.Children.Add(recent);
+            recentSection.Children.Add(recent);
+            content.Children.Add(recentSection);
         }
         string? selectedColor = null;
         picker.ColorChanged += (_, args) =>
