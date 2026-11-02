@@ -23,7 +23,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
-    private bool _legacySource;
     private bool _binding = true, _dirty, _saving, _switching;
     private int _generation;
     private int _renderGeneration;
@@ -198,7 +197,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var loadedTemplate = TemplateConversion.ToEditableCopy(template);
         _binding = true;
         DismissContextTools();
-        _legacySource = template.Document == null && name != null;
         _loadedTemplate = loadedTemplate;
         _document = _loadedTemplate.Document ?? new();
         _document.MergeLegacyFooterNotice();
@@ -206,7 +204,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_document.DayHeights != null) Array.Copy(_document.DayHeights, heights, Math.Min(7, _document.DayHeights.Length));
         _document.DayHeights = heights;
         _loadedName = name;
-        RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = name != null && !_legacySource && !_loadedTemplate.IsPreset;
+        RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = name != null && !_loadedTemplate.IsPreset;
         DaySpacingBox.Value = _document.DaySpacing; MealSpacingBox.Value = _document.MealLineSpacing;
         _document.DecorativeImages ??= new();
         NormalizePageBackground();
@@ -231,15 +229,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (!await ConfirmDiscardAsync())
             {
                 return;
-            }
-            if (chosen.Document == null)
-            {
-                var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLegacyConvertTitle"), Content = L.Get("TplLegacyConvertMessage"),
-                    PrimaryButtonText = L.Get("TplLegacyConvertButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2") };
-                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
-                {
-                    return;
-                }
             }
             SetDocument(chosen, chosen.Name);
         }
@@ -272,7 +261,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         try
         {
             var all = await _database.GetAllTemplatesAsync();
-            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _legacySource ? $"{_loadedName} - {L.Get("TplLegacyCopySuffix")}" : _loadedName ?? "" };
+            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _loadedName ?? "" };
             var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
             var content = new StackPanel { Spacing = 8 };
             content.Children.Add(nameBox); content.Children.Add(error);
@@ -282,7 +271,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             dialog.PrimaryButtonClick += (_, args) =>
             {
                 name = nameBox.Text.Trim();
-                var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && (_legacySource || !string.Equals(t.Name, _loadedName, StringComparison.Ordinal))) ? "TplBuilderNameExists" : null;
+                var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)) ? "TplBuilderNameExists" : null;
                 if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
@@ -292,10 +281,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             // The editable document owns its images. Retaining inactive browser
             // layers would incorrectly report usage after a block was removed.
             saved.BackgroundImageAssetId = null; saved.BackgroundImageDataUri = null;
-            saved.ImageLayers = []; saved.LegacyDataJson = null;
-            if (_legacySource || !string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
+            saved.ImageLayers = [];
+            if (!string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
             await _database.SaveTemplateAsync(saved);
-            _loadedTemplate = saved; _legacySource = false;
+            _loadedTemplate = saved;
             _loadedName = name; _dirty = false;
             RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;
             try { await ReloadTemplatesAsync(); }
@@ -308,7 +297,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async void RenameTemplate_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        if (_saving || _switching || _loadedName == null || _loadedTemplate.IsPreset) return;
         _saving = true;
         RenameTemplateMenuItem.IsEnabled = SaveButton.IsEnabled = DeleteButton.IsEnabled = false;
         try
@@ -331,7 +320,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
-            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_loadedTemplate.IsPreset;
         }
     }
 
@@ -356,7 +345,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || _loadedName == null || _legacySource || _loadedTemplate.IsPreset) return;
+        if (_saving || _switching || _loadedName == null || _loadedTemplate.IsPreset) return;
         var name = _loadedName;
         _saving = true; RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = SaveButton.IsEnabled = false;
         try
@@ -374,7 +363,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         finally
         {
             _saving = false; SaveButton.IsEnabled = true;
-            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_legacySource && !_loadedTemplate.IsPreset;
+            RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = _loadedName != null && !_loadedTemplate.IsPreset;
         }
     }
 
