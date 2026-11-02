@@ -178,7 +178,7 @@ public sealed partial class TemplateBuilderPage
             {
                 // Preserve remaining canvas edits as an unsaved document.
                 _loadedTemplate = new MenuTemplate { Document = _document };
-                _loadedName = null; _legacySource = false;
+                _loadedName = null;
                 RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = false;
             }
             else
