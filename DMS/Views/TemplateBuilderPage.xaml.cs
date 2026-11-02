@@ -640,7 +640,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var transparency = new Slider { Width = 120, Minimum = 0, Maximum = 100, StepFrequency = 1, SmallChange = 1, LargeChange = 10, Value = Math.Round((1 - opacity) * 100) };
             ToolTipService.SetToolTip(transparency, L.Get("TplBlockTransparency"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(transparency, L.Get("TplBlockTransparency"));
-            transparency.ValueChanged += (_, _) => { if (!_contextBinding && double.IsFinite(transparency.Value)) EditAppearance(key, a => a.Opacity = 1 - transparency.Value / 100, render: false); };
+            transparency.ValueChanged += (_, _) =>
+            {
+                if (_contextBinding || !double.IsFinite(transparency.Value)) return;
+                var selectedOpacity = 1 - transparency.Value / 100;
+                EditAppearance(key, a => a.Opacity = selectedOpacity, render: false);
+                UpdateSelectedBlockBackground(appearance.BackgroundColor, selectedOpacity);
+            };
             transparency.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
             transparency.LostFocus += (_, _) => { if (!_contextBinding) Render(); };
             transparency.KeyUp += (_, _) => { if (!_contextBinding) Render(); };
@@ -745,6 +751,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         change(appearance);
         _dirty = true;
         if (render) Render();
+    }
+
+    private void UpdateSelectedBlockBackground(string? color, double opacity)
+    {
+        if (_selectionAnchor is not Border border) return;
+        var source = ParseColor(color ?? "#FFFFFF");
+        var alpha = (byte)Math.Round(Math.Clamp(opacity, 0, 1) * byte.MaxValue);
+        border.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, source.R, source.G, source.B));
     }
 
     private void AddStyleToggle(string text, string label, bool initial, Action<bool> change)
