@@ -100,6 +100,7 @@ jobs:
           name: DMS ${{ env.RELEASE_VERSION }}
           prerelease: ${{ contains(env.RELEASE_VERSION, '-') }}
           generate_release_notes: true
+          body_path: CHANGELOG.md
           fail_on_unmatched_files: true
           files: |
             artifacts/installer/*.exe
