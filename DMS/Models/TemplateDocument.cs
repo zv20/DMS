@@ -23,8 +23,8 @@ public sealed class TemplateDocument
     public string? BackgroundImageDataUri { get; set; }
     public string? BackgroundImageAssetId { get; set; }
     public double BackgroundImageOpacity { get; set; } = 1;
-    public double DaySpacing { get; set; } = 6;
-    public double MealLineSpacing { get; set; } = 2;
+    public double DaySpacing { get; set; } = 1;
+    public double MealLineSpacing { get; set; } = 1;
     public List<TemplateImage> DecorativeImages { get; set; } = new();
     // Null means automatic; an explicit value is retained rather than silently resized.
     public double?[] DayHeights { get; set; } = new double?[7];
