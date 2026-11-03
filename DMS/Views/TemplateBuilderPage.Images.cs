@@ -193,28 +193,12 @@ public sealed partial class TemplateBuilderPage
         ContextTools.Children.Add(background);
         if (!image.IsCanvasBackground)
         {
-        var horizontal = new ComboBox { Width = 130, PlaceholderText = L.Get("TplImageAlignHorizontal") };
-        foreach (var key in new[] { "TplLeft", "TplCenter", "TplRight" }) horizontal.Items.Add(L.Get(key));
-        horizontal.SelectionChanged += (_, _) =>
-        {
-            if (horizontal.SelectedIndex < 0) return;
-            var position = horizontal.SelectedIndex;
-            EditImage(item => TemplateImagePlacement.Move(item, position == 0 ? 0 : position == 1 ? (TemplatePageLayout.PageWidth - item.Width) / 2 : TemplatePageLayout.PageWidth - item.Width, item.Y));
-            horizontal.SelectedIndex = -1;
-        };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(horizontal, L.Get("TplImageAlignHorizontal"));
-        ContextTools.Children.Add(horizontal);
-        var vertical = new ComboBox { Width = 130, PlaceholderText = L.Get("TplImageAlignVertical") };
-        foreach (var key in new[] { "TplImageTop", "TplImageMiddle", "TplImageBottom" }) vertical.Items.Add(L.Get(key));
-        vertical.SelectionChanged += (_, _) =>
-        {
-            if (vertical.SelectedIndex < 0) return;
-            var position = vertical.SelectedIndex;
-            EditImage(item => TemplateImagePlacement.Move(item, item.X, position == 0 ? 0 : position == 1 ? (TemplatePageLayout.PageHeight - item.Height) / 2 : TemplatePageLayout.PageHeight - item.Height));
-            vertical.SelectedIndex = -1;
-        };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(vertical, L.Get("TplImageAlignVertical"));
-        ContextTools.Children.Add(vertical);
+        AddImageAction("TplLeft", "↤", () => EditImage(item => TemplateImagePlacement.Move(item, 0, item.Y)));
+        AddImageAction("TplCenter", "↔", () => EditImage(item => TemplateImagePlacement.Move(item, (TemplatePageLayout.PageWidth - item.Width) / 2, item.Y)));
+        AddImageAction("TplRight", "↦", () => EditImage(item => TemplateImagePlacement.Move(item, TemplatePageLayout.PageWidth - item.Width, item.Y)));
+        AddImageAction("TplImageTop", "↥", () => EditImage(item => TemplateImagePlacement.Move(item, item.X, 0)));
+        AddImageAction("TplImageMiddle", "↕", () => EditImage(item => TemplateImagePlacement.Move(item, item.X, (TemplatePageLayout.PageHeight - item.Height) / 2)));
+        AddImageAction("TplImageBottom", "↧", () => EditImage(item => TemplateImagePlacement.Move(item, item.X, TemplatePageLayout.PageHeight - item.Height)));
         var width = ImageNumber("TplBuilderImageWidth", image.Width, TemplatePageLayout.PageWidth);
         var height = ImageNumber("TplBuilderImageHeight", image.Height, TemplatePageLayout.PageHeight);
         void Resize(double value, bool isWidth)
