@@ -400,7 +400,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         _editorDirty = false;
         nameBox.TextChanged += (_, _) => _editorDirty = true;
         categoryBox.SelectionChanged += (_, _) => _editorDirty = true;
-        portionBox.TextChanged += (_, _) => _editorDirty = true;
+        portionBox.ValueChanged += (_, _) => _editorDirty = true;
         caloriesBox.ValueChanged += (_, _) => _editorDirty = true;
         instructionsBox.TextChanged += (_, _) => _editorDirty = true;
         selectedIngredients.CollectionChanged += (_, _) => _editorDirty = true;

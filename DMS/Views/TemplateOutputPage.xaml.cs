@@ -8,8 +8,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Printing;
-using PdfSharpCore.Drawing;
-using PdfSharpCore.Pdf;
+using System.Text;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Printing;
 using Windows.Storage;
@@ -321,24 +320,10 @@ public sealed partial class TemplateOutputPage : Page
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
-            var png = await RenderPreviewAsPngAsync();
-            using var pdf = new PdfDocument();
-            pdf.Info.Title = $"Weekly menu {OutputDateName()}";
-            var page = pdf.AddPage();
-            page.Width = 595.28;
-            page.Height = 841.89;
-            using (var image = XImage.FromStream(() => new MemoryStream(png)))
-            using (var graphics = XGraphics.FromPdfPage(page))
-            {
-                var scale = Math.Min(page.Width / image.PointWidth, page.Height / image.PointHeight);
-                var width = image.PointWidth * scale;
-                var height = image.PointHeight * scale;
-                graphics.DrawImage(image, (page.Width - width) / 2, (page.Height - height) / 2, width, height);
-            }
-            using var output = new MemoryStream();
-            pdf.Save(output, false);
+            var jpeg = await RenderPreviewAsJpegAsync();
+            var pdf = CreateImagePdf(jpeg, 1588, 2246);
             outputStarted = true;
-            await FileIO.WriteBytesAsync(file, output.ToArray());
+            await FileIO.WriteBytesAsync(file, pdf);
             StatusText.Text = L.Get("TemplateOutputPdfSaved");
         }
         catch (Exception ex)
@@ -349,7 +334,7 @@ public sealed partial class TemplateOutputPage : Page
         finally { _busy = false; SetReady(_ready); }
     }
 
-    private async Task<byte[]> RenderPreviewAsPngAsync()
+    private async Task<byte[]> RenderPreviewAsJpegAsync()
     {
         if (_previewPage == null) throw new InvalidOperationException(L.Get("ErrorOutput"));
         var bitmap = new RenderTargetBitmap();
@@ -359,7 +344,7 @@ public sealed partial class TemplateOutputPage : Page
         var bytes = new byte[pixels.Length];
         using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
         using var stream = new InMemoryRandomAccessStream();
-        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream);
         encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
         await encoder.FlushAsync();
         stream.Seek(0);
@@ -368,6 +353,48 @@ public sealed partial class TemplateOutputPage : Page
         var encoded = new byte[(int)stream.Size];
         encodedReader.ReadBytes(encoded);
         return encoded;
+    }
+
+    // A single rendered JPEG in a standards-compliant PDF keeps direct export dependency-free.
+    private static byte[] CreateImagePdf(byte[] jpeg, int pixelWidth, int pixelHeight)
+    {
+        const double pageWidth = 595.28;
+        const double pageHeight = 841.89;
+        var scale = Math.Min(pageWidth / pixelWidth, pageHeight / pixelHeight);
+        var width = pixelWidth * scale;
+        var height = pixelHeight * scale;
+        var x = (pageWidth - width) / 2;
+        var y = (pageHeight - height) / 2;
+        var content = FormattableString.Invariant($"q\n{width:0.###} 0 0 {height:0.###} {x:0.###} {y:0.###} cm\n/Im0 Do\nQ\n");
+
+        using var stream = new MemoryStream();
+        WritePdfText(stream, "%PDF-1.4\n%âãÏÓ\n");
+        var offsets = new List<long>();
+        WritePdfObject(stream, offsets, 1, "<< /Type /Catalog /Pages 2 0 R >>");
+        WritePdfObject(stream, offsets, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+        WritePdfObject(stream, offsets, 3, $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {pageWidth.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} {pageHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>");
+        WritePdfObject(stream, offsets, 4, $"<< /Length {Encoding.ASCII.GetByteCount(content)} >>\nstream\n{content}endstream");
+        offsets.Add(stream.Position);
+        WritePdfText(stream, $"5 0 obj\n<< /Type /XObject /Subtype /Image /Width {pixelWidth} /Height {pixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {jpeg.Length} >>\nstream\n");
+        stream.Write(jpeg, 0, jpeg.Length);
+        WritePdfText(stream, "\nendstream\nendobj\n");
+        var xrefOffset = stream.Position;
+        WritePdfText(stream, "xref\n0 6\n0000000000 65535 f \n");
+        foreach (var offset in offsets) WritePdfText(stream, $"{offset.ToString("D10", System.Globalization.CultureInfo.InvariantCulture)} 00000 n \n");
+        WritePdfText(stream, $"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xrefOffset}\n%%EOF\n");
+        return stream.ToArray();
+    }
+
+    private static void WritePdfObject(Stream stream, List<long> offsets, int number, string body)
+    {
+        offsets.Add(stream.Position);
+        WritePdfText(stream, $"{number} 0 obj\n{body}\nendobj\n");
+    }
+
+    private static void WritePdfText(Stream stream, string value)
+    {
+        var bytes = Encoding.ASCII.GetBytes(value);
+        stream.Write(bytes, 0, bytes.Length);
     }
 
     private string OutputDateName() => _firstDay is DateTime first && _lastDay is DateTime last
