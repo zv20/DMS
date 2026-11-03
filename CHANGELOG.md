@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.4
+
+- Added direct PDF saving from Menu Planner, so exporting no longer requires selecting Microsoft Print to PDF.
+- Renamed image export to **Save image** and added a PNG/JPEG format picker.
+- Standardized image and PDF suggestions to the selected date range, for example `03-11-2026-05-11-2026`.
+- Made recipe portion size a numeric grams field.
+- Added an obvious Delete action with confirmation to Saved Templates; built-in templates remain protected.
+- Removed the PDF export dependency after review, avoiding vulnerable transitive image packages.
+
 ## 0.0.3-a
 
 - Completed the native WinUI 3 cleanup: removed browser/Electron compatibility paths and unused legacy template output code.
