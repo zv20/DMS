@@ -48,6 +48,7 @@ public sealed partial class TemplateBuilderPage
         if (_draggingImage || SelectedCanvasImage() is not { IsCanvasBackground: false } image || !e.GetCurrentPoint(PageHost).Properties.IsLeftButtonPressed) return;
         if (!SelectionOutline.CapturePointer(e.Pointer)) return;
         _imagePointerId = e.Pointer.PointerId;
+        SnapshotBeforeEdit();
         _imagePointerStart = e.GetCurrentPoint(PageHost).Position;
         _imagePositionStart = new Point(image.X, image.Y);
         _dirtyBeforeImageDrag = _dirty;
@@ -119,6 +120,7 @@ public sealed partial class TemplateBuilderPage
 
     private void PlaceLibraryImage(TemplateImageAsset asset, double sourceWidth, double sourceHeight)
     {
+        SnapshotBeforeEdit();
         var scale = Math.Min(1, 200 / Math.Max(sourceWidth, sourceHeight));
         var image = new TemplateImage
         {
@@ -162,6 +164,7 @@ public sealed partial class TemplateBuilderPage
     private void EditImage(Action<TemplateImage> change)
     {
         if (_contextBinding || SelectedCanvasImage() is not { } image) return;
+        SnapshotBeforeEdit();
         change(image); _dirty = true; Render();
     }
 
@@ -267,6 +270,7 @@ public sealed partial class TemplateBuilderPage
             var name = await PromptNameAsync("TplImageRename", "TplImageName", image.AltText,
                 value => _document.DecorativeImages.Any(other => other.Id != image.Id && string.Equals(other.AltText, value, StringComparison.OrdinalIgnoreCase)));
             if (name == null) return;
+            SnapshotBeforeEdit();
             image.AltText = name; _dirty = true;
             RefreshDecorationList(image.Id); Render();
             StatusText.Text = L.Get("TplImageChangesPending");
@@ -284,6 +288,7 @@ public sealed partial class TemplateBuilderPage
             var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplImageDelete"), Content = L.Get("TplImageDeletePrompt"),
                 PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            SnapshotBeforeEdit();
             if (_selectedBlock == $"image:{image.Id}") DismissContextTools();
             _document.DecorativeImages.Remove(image);
             _dirty = true; RefreshDecorationList(); Render();
@@ -295,6 +300,7 @@ public sealed partial class TemplateBuilderPage
 
     private void ReorderImage(TemplateImage image, bool forward)
     {
+        SnapshotBeforeEdit();
         _document.DecorativeImages.Remove(image);
         if (forward) _document.DecorativeImages.Add(image);
         else _document.DecorativeImages.Insert(0, image);

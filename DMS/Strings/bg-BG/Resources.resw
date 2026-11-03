@@ -25,6 +25,8 @@
   <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
   <data name="TemplateOutputPrintUnsupported" xml:space="preserve"><value>Печатът не е наличен на тази система.</value></data>
   <data name="TplBuilderTitle" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TplUndo" xml:space="preserve"><value>Отмени</value></data>
+  <data name="TplRedo" xml:space="preserve"><value>Повтори</value></data>
   <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Настройки на страницата</value></data>
   <data name="TplBuilderImagesSection" xml:space="preserve"><value>Настройки на изображенията</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Височина на дните</value></data>

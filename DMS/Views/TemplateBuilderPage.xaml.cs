@@ -20,10 +20,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private readonly List<CheckBox> _fixedBoxes = [];
     private readonly List<Grid> _dayRows = [];
     private readonly List<MenuTemplate> _templates = [];
+    private readonly Stack<string> _undoHistory = new();
+    private readonly Stack<string> _redoHistory = new();
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
     private bool _binding = true, _dirty, _saving, _switching;
+    private bool _restoringHistory;
+    private string _savedDocumentJson = "";
     private int _generation;
     private int _renderGeneration;
     private string? _selectedBlock;
@@ -47,6 +51,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         SavedTemplatesMenu.Text = L.Get("TplSavedTemplates");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));
         NewButton.Text = L.Get("TplNew"); SaveButton.Text = L.Get("TplSave");
+        ToolTipService.SetToolTip(UndoButton, L.Get("TplUndo")); ToolTipService.SetToolTip(RedoButton, L.Get("TplRedo"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(UndoButton, L.Get("TplUndo"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RedoButton, L.Get("TplRedo"));
+        UndoButton.Click += (_, _) => Undo(); RedoButton.Click += (_, _) => Redo();
+        UndoButton.KeyboardAccelerators.Add(new KeyboardAccelerator { Key = Windows.System.VirtualKey.Z, Modifiers = Windows.System.VirtualKeyModifiers.Control });
+        RedoButton.KeyboardAccelerators.Add(new KeyboardAccelerator { Key = Windows.System.VirtualKey.Y, Modifiers = Windows.System.VirtualKeyModifiers.Control });
+        UpdateHistoryControls();
         DeleteButton.Text = L.Get("TplDeleteTemplate");
         RenameTemplateMenuItem.Text = L.Get("TplRenameTemplate");
         WeekPicker.Header = L.Get("TplPreview");
@@ -116,6 +127,59 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         CanvasZoomSlider.Value = percent;
         _updatingZoom = false;
         ZoomResetButton.Content = $"{percent:0}%";
+    }
+
+    private string SerializeDocument() => JsonSerializer.Serialize(_document);
+
+    private void SnapshotBeforeEdit()
+    {
+        if (_binding || _restoringHistory) return;
+        var snapshot = SerializeDocument();
+        if (_undoHistory.TryPeek(out var previous) && previous == snapshot) return;
+        _undoHistory.Push(snapshot);
+        _redoHistory.Clear();
+        UpdateHistoryControls();
+    }
+
+    private void ResetHistory()
+    {
+        _undoHistory.Clear(); _redoHistory.Clear();
+        _savedDocumentJson = SerializeDocument();
+        UpdateHistoryControls();
+    }
+
+    private void Undo()
+    {
+        if (_undoHistory.Count == 0 || _saving || _switching) return;
+        _redoHistory.Push(SerializeDocument());
+        RestoreHistory(_undoHistory.Pop());
+    }
+
+    private void Redo()
+    {
+        if (_redoHistory.Count == 0 || _saving || _switching) return;
+        _undoHistory.Push(SerializeDocument());
+        RestoreHistory(_redoHistory.Pop());
+    }
+
+    private void RestoreHistory(string snapshot)
+    {
+        try
+        {
+            var document = JsonSerializer.Deserialize<TemplateDocument>(snapshot) ?? throw new InvalidOperationException("Invalid template history snapshot.");
+            _restoringHistory = true;
+            var template = new MenuTemplate { Name = _loadedTemplate.Name, IsPreset = _loadedTemplate.IsPreset, Document = document };
+            SetDocument(template, _loadedName, resetHistory: false);
+            _dirty = SerializeDocument() != _savedDocumentJson;
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Unable to restore template history"); StatusText.Text = L.Get("ErrorTemplate"); }
+        finally { _restoringHistory = false; UpdateHistoryControls(); }
+    }
+
+    private void UpdateHistoryControls()
+    {
+        UndoButton.IsEnabled = _undoHistory.Count > 0 && !_saving && !_switching;
+        RedoButton.IsEnabled = _redoHistory.Count > 0 && !_saving && !_switching;
     }
 
     private async Task InitializeAsync()
@@ -210,7 +274,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load a template thumbnail image"); }
     }
 
-    private void SetDocument(MenuTemplate template, string? name)
+    private void SetDocument(MenuTemplate template, string? name, bool resetHistory = true)
     {
         var loadedTemplate = TemplateConversion.ToEditableCopy(template);
         _binding = true;
@@ -233,7 +297,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _dayBoxes[i].Value = heights[i] ?? 160;
             _dayBoxes[i].IsEnabled = heights[i].HasValue;
         }
-        _dirty = false; _binding = false; Render();
+        _dirty = false; _binding = false;
+        if (resetHistory) ResetHistory();
+        Render();
     }
 
     private async Task SelectTemplateAsync(MenuTemplate chosen)
@@ -302,7 +368,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (!string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved;
-            _loadedName = name; _dirty = false;
+            _loadedName = name; _dirty = false; _savedDocumentJson = SerializeDocument();
             RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;
             try { await ReloadTemplatesAsync(); }
             catch (Exception ex) { App.Logger.LogError(ex, "Template saved but its list could not be refreshed"); StatusText.Text = L.Get("DataSavedRefreshFailed"); return; }
@@ -419,6 +485,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void Numbers_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (_binding) return;
+        SnapshotBeforeEdit();
         if (double.IsFinite(DaySpacingBox.Value)) _document.DaySpacing = DaySpacingBox.Value;
         if (double.IsFinite(MealSpacingBox.Value)) _document.MealLineSpacing = MealSpacingBox.Value;
         _dirty = true; Render();
@@ -427,6 +494,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void DayChanged(int index)
     {
         if (_binding) return;
+        SnapshotBeforeEdit();
         _document.DayHeights[index] = _fixedBoxes[index].IsChecked == true && double.IsFinite(_dayBoxes[index].Value) ? _dayBoxes[index].Value : null;
         _dirty = true; Render();
     }
@@ -434,6 +502,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void HideEmptyDays_Changed(object sender, RoutedEventArgs e)
     {
         if (_binding) return;
+        SnapshotBeforeEdit();
         _document.HideEmptyDays = HideEmptyDaysBox.IsChecked == true;
         _dirty = true;
         Render();
@@ -523,6 +592,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void UpdateInlineText()
     {
+        if (!_inlineTextChanged && ((_editingBlock == "header" && _document.HeaderText != InlineEditor.Text) || (_editingBlock == "footer" && _document.FooterText != InlineEditor.Text))) SnapshotBeforeEdit();
         if (_editingBlock == "header" && _document.HeaderText != InlineEditor.Text) _document.HeaderText = InlineEditor.Text;
         else if (_editingBlock == "footer" && _document.FooterText != InlineEditor.Text) _document.FooterText = InlineEditor.Text;
         else return;
@@ -621,6 +691,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             void ChangeShrink(bool enabled)
             {
                 if (_contextBinding) return;
+                SnapshotBeforeEdit();
                 minimumSize.IsEnabled = enabled;
                 _document.AllowFontShrink = enabled; _dirty = true; Render();
             }
@@ -629,6 +700,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             minimumSize.ValueChanged += (_, _) =>
             {
                 if (_contextBinding || !double.IsFinite(minimumSize.Value)) return;
+                SnapshotBeforeEdit();
                 _document.MinimumFontSize = minimumSize.Value; _dirty = true;
             };
             minimumSize.PointerReleased += (_, _) => { if (!_contextBinding) Render(); };
@@ -655,6 +727,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(allDays, L.Get("TplApplyWeekdayStyle"));
             allDays.Click += (_, _) =>
             {
+                SnapshotBeforeEdit();
                 var current = _document.BlockAppearances.TryGetValue(key, out var saved) && saved != null ? saved : appearance;
                 for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.BlockAppearances[$"day:{day}"] = new TemplateBlockAppearance { BackgroundColor = current.BackgroundColor, BorderColor = current.BorderColor, BorderOpacity = current.BorderOpacity, BorderThickness = current.BorderThickness, CornerRadius = current.CornerRadius, Padding = current.Padding, Opacity = current.Opacity };
                 _dirty = true; Render();
@@ -709,6 +782,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(all, L.Get("TplApplyWeekdayStyle"));
                 all.Click += (_, _) =>
                 {
+                    SnapshotBeforeEdit();
                     var current = TemplateRenderer.GetTextStyle(_document, key);
                     _document.TextStyles ??= new();
                     for (var day = 0; day < (_weekendEnabled ? 7 : 5); day++) _document.TextStyles[$"{parts[0]}:{day}"] = CopyStyle(current);
@@ -724,6 +798,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void EditTextStyle(string key, Action<TemplateTextStyle> change)
     {
+        SnapshotBeforeEdit();
         var style = TemplateRenderer.GetTextStyle(_document, key);
         change(style);
         _document.TextStyles ??= new();
@@ -734,6 +809,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void EditAppearance(string key, Action<TemplateBlockAppearance> change, bool render = true)
     {
+        SnapshotBeforeEdit();
         _document.BlockAppearances ??= new();
         if (!_document.BlockAppearances.TryGetValue(key, out var appearance) || appearance == null)
         {
@@ -752,8 +828,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var button = new ToggleButton { Content = text, IsChecked = initial, MinWidth = 32, Padding = new Thickness(6, 4, 6, 4) };
         ToolTipService.SetToolTip(button, L.Get(label));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
-        button.Checked += (_, _) => { if (!_contextBinding) change(true); };
-        button.Unchecked += (_, _) => { if (!_contextBinding) change(false); };
+        button.Checked += (_, _) => { if (!_contextBinding) { SnapshotBeforeEdit(); change(true); } };
+        button.Unchecked += (_, _) => { if (!_contextBinding) { SnapshotBeforeEdit(); change(false); } };
         ContextTools.Children.Add(button);
     }
 
@@ -790,6 +866,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var color = args.NewColor;
             swatch.Background = new SolidColorBrush(color);
             selectedColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            SnapshotBeforeEdit();
             change(selectedColor, color.A / (double)byte.MaxValue);
         };
         var flyout = new Flyout { Content = content, Placement = FlyoutPlacementMode.Top };

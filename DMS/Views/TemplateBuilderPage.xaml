@@ -7,6 +7,8 @@
  <Grid x:Name="Workspace" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*,Auto" Background="Transparent">
   <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
+    <Button x:Name="UndoButton" Content="↶" MinWidth="32" />
+    <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
     <DropDownButton x:Name="FileMenuButton" VerticalAlignment="Bottom">
      <DropDownButton.Content><StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE700;" FontSize="14" /><TextBlock x:Name="FileMenuLabel" /></StackPanel></DropDownButton.Content>
      <DropDownButton.Flyout><MenuFlyout Placement="BottomEdgeAlignedLeft">
