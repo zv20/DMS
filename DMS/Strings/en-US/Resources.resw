@@ -505,6 +505,7 @@
   <data name="TplLibraryDeleteAll" xml:space="preserve"><value>Delete image and templates</value></data>
   <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Image and saved templates deleted. Save the remaining canvas as a new template if you want to keep it.</value></data>
   <data name="TplLibraryDeleted" xml:space="preserve"><value>Image and its listed saved templates deleted.</value></data>
+  <data name="TplLibraryBuiltInProtected" xml:space="preserve"><value>Built-in template artwork cannot be deleted.</value></data>
   <data name="DataArchiveFileType" xml:space="preserve"><value>DMS data archive</value></data>
   <data name="ExportImageCount" xml:space="preserve"><value>{0} shared images included.</value></data>
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Use a name with 255 characters or fewer.</value></data>

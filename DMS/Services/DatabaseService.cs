@@ -768,7 +768,7 @@ public partial class DatabaseService : IDatabaseService, IDisposable
             while (reader.Read())
             {
                 var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1));
-                if (template != null)
+                if (template?.Document != null)
                 {
                     template.Name = reader.GetString(0);
                     template.IsPreset = reader.GetInt32(2) == 1;

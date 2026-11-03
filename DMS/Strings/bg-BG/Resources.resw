@@ -505,6 +505,7 @@
   <data name="TplLibraryDeleteAll" xml:space="preserve"><value>Изтрий изображението и шаблоните</value></data>
   <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Изображението и запазените шаблони са изтрити. Запазете останалото платно като нов шаблон, ако искате да го съхраните.</value></data>
   <data name="TplLibraryDeleted" xml:space="preserve"><value>Изображението и посочените запазени шаблони са изтрити.</value></data>
+  <data name="TplLibraryBuiltInProtected" xml:space="preserve"><value>Вграденото изображение на шаблон не може да бъде изтрито.</value></data>
   <data name="DataArchiveFileType" xml:space="preserve"><value>Архив с данни на DMS</value></data>
   <data name="ExportImageCount" xml:space="preserve"><value>Включени споделени изображения: {0}.</value></data>
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Използвайте име до 255 знака.</value></data>

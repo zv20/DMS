@@ -168,7 +168,12 @@ public sealed partial class TemplateBuilderPage
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
         // The database checks that this exact usage list is still current, then
         // removes the saved templates and image in one transaction.
-        await _database.DeleteTemplateImageAsync(asset.Id, names);
+        try { await _database.DeleteTemplateImageAsync(asset.Id, names); }
+        catch (InvalidOperationException ex) when (ex.Message == "Built-in template artwork cannot be deleted.")
+        {
+            StatusText.Text = L.Get("TplLibraryBuiltInProtected");
+            return false;
+        }
         if (usesOnCanvas || currentSavedTemplateDeleted)
         {
             DismissContextTools();

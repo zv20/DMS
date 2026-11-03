@@ -262,6 +262,9 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
+            if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
+            _printViewbox = null;
+            _printPage = null;
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
             await result.ImagesReady;
             if (!_loaded) return;

@@ -72,6 +72,47 @@ public partial class DatabaseService
                 userVersion.ExecuteNonQuery();
             }
         }
+        using (var legacyCheck = _connection.CreateCommand())
+        {
+            legacyCheck.Transaction = transaction;
+            legacyCheck.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version = 3";
+            if (Convert.ToInt64(legacyCheck.ExecuteScalar()) == 0)
+            {
+                var obsolete = new List<string>();
+                using (var select = _connection.CreateCommand())
+                {
+                    select.Transaction = transaction;
+                    select.CommandText = "SELECT name, data_json FROM templates";
+                    using var reader = select.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        try
+                        {
+                            if (JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1))?.Document == null) obsolete.Add(reader.GetString(0));
+                        }
+                        catch (JsonException) { obsolete.Add(reader.GetString(0)); }
+                    }
+                }
+                foreach (var name in obsolete)
+                {
+                    using var deleteReferences = _connection.CreateCommand();
+                    deleteReferences.Transaction = transaction;
+                    deleteReferences.CommandText = "DELETE FROM template_image_references WHERE template_name=@name";
+                    deleteReferences.Parameters.AddWithValue("@name", name);
+                    deleteReferences.ExecuteNonQuery();
+                    using var deleteTemplate = _connection.CreateCommand();
+                    deleteTemplate.Transaction = transaction;
+                    deleteTemplate.CommandText = "DELETE FROM templates WHERE name=@name";
+                    deleteTemplate.Parameters.AddWithValue("@name", name);
+                    deleteTemplate.ExecuteNonQuery();
+                }
+                if (obsolete.Count > 0) _logger.LogInformation("Removed {Count} obsolete non-native templates", obsolete.Count);
+                using var version = _connection.CreateCommand();
+                version.Transaction = transaction;
+                version.CommandText = "INSERT INTO schema_migrations(version) VALUES (3)";
+                version.ExecuteNonQuery();
+            }
+        }
         transaction.Commit();
     }
 
