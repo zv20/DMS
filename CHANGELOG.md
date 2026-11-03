@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.5
+
+- Added Template Builder undo and redo controls with Ctrl+Z and Ctrl+Y shortcuts.
+- Added a canvas-background option for template images, plus compact icon controls for image alignment.
+- Set new template canvas zoom to 70% and default day/meal spacing to 1.
+- Removed obsolete pre-native template records automatically and prevented them from appearing in Saved Templates.
+- Improved print-preview state handling and made protected built-in artwork display a friendly message instead of an error.
+
 ## 0.0.4
 
 - Added direct PDF saving from Menu Planner, so exporting no longer requires selecting Microsoft Print to PDF.
