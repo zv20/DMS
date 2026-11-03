@@ -12,12 +12,14 @@
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Print / Export</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Print</value></data>
   <data name="TemplateOutputPdf" xml:space="preserve"><value>Save as PDF</value></data>
-  <data name="TemplateOutputPng" xml:space="preserve"><value>Save as PNG</value></data>
+  <data name="TemplateOutputPng" xml:space="preserve"><value>Save image</value></data>
   <data name="TemplateOutputOverflow" xml:space="preserve"><value>The content does not fit on the page. Adjust the template or menu before printing or exporting.</value></data>
   <data name="TemplateOutputReady" xml:space="preserve"><value>Ready to print or export.</value></data>
   <data name="TemplateOutputFailure" xml:space="preserve"><value>Could not complete the operation: {0}</value></data>
   <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Choose Microsoft Print to PDF in the print dialog.</value></data>
   <data name="TemplateOutputSaved" xml:space="preserve"><value>Image saved.</value></data>
+  <data name="TemplateOutputPdfSaved" xml:space="preserve"><value>PDF saved.</value></data>
+  <data name="TplTemplateDeleted" xml:space="preserve"><value>Template deleted.</value></data>
   <data name="TemplateOutputTemplate" xml:space="preserve"><value>Template</value></data>
   <data name="TemplateOutputWeek" xml:space="preserve"><value>Week</value></data>
   <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>

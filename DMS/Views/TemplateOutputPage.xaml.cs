@@ -8,6 +8,8 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Printing;
+using PdfSharpCore.Drawing;
+using PdfSharpCore.Pdf;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Printing;
 using Windows.Storage;
@@ -22,6 +24,8 @@ public sealed partial class TemplateOutputPage : Page
 {
     private readonly IDatabaseService _database;
     private static readonly string[] PngExtensions = [".png"];
+    private static readonly string[] JpegExtensions = [".jpg", ".jpeg"];
+    private static readonly string[] PdfExtensions = [".pdf"];
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _uiQueue;
     private PrintManager? _printManager;
@@ -74,13 +78,12 @@ public sealed partial class TemplateOutputPage : Page
         _loaded = true;
         try
         {
-            // A machine with no printing support can still export a PNG.
+            // A machine with no printing support can still save an image or PDF.
             try { RegisterPrinting(); }
             catch (Exception ex) { App.Logger.LogWarning(ex, "Printing is unavailable"); UnregisterPrinting(); }
             if (_printManager == null)
             {
                 ToolTipService.SetToolTip(PrintButton, L.Get("TemplateOutputPrintUnsupported"));
-                ToolTipService.SetToolTip(PdfButton, L.Get("TemplateOutputPrintUnsupported"));
             }
             var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.Document != null).ToList();
             if (!_loaded) return;
@@ -105,7 +108,8 @@ public sealed partial class TemplateOutputPage : Page
     private void SetReady(bool ready)
     {
         _ready = ready;
-        PrintButton.IsEnabled = PdfButton.IsEnabled = ready && !_busy && _printManager != null;
+        PrintButton.IsEnabled = ready && !_busy && _printManager != null;
+        PdfButton.IsEnabled = ready && !_busy;
         PngButton.IsEnabled = ready && !_busy;
         TemplateSelector.IsEnabled = WeekPicker.IsEnabled = !_busy;
         CloseAvailabilityChanged?.Invoke(CanClose);
@@ -249,10 +253,10 @@ public sealed partial class TemplateOutputPage : Page
         catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
-    private async void Print_Click(object sender, RoutedEventArgs e) => await ShowPrintAsync(false);
-    private async void Pdf_Click(object sender, RoutedEventArgs e) => await ShowPrintAsync(true);
+    private async void Print_Click(object sender, RoutedEventArgs e) => await ShowPrintAsync();
+    private async void Pdf_Click(object sender, RoutedEventArgs e) => await SavePdfAsync();
 
-    private async Task ShowPrintAsync(bool pdf)
+    private async Task ShowPrintAsync()
     {
         if (!_ready || _busy || _document == null) return;
         _busy = true; SetReady(true);
@@ -264,7 +268,6 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded) return;
             if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
             _nativePage = result.Page;
-            if (pdf) StatusText.Text = L.Get("TemplateOutputPrintPdfHint");
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
@@ -281,6 +284,7 @@ public sealed partial class TemplateOutputPage : Page
         {
             var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = OutputDateName() };
             picker.FileTypeChoices.Add("PNG", PngExtensions);
+            picker.FileTypeChoices.Add("JPEG", JpegExtensions);
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
@@ -293,7 +297,8 @@ public sealed partial class TemplateOutputPage : Page
             using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
             stream.Size = 0;
             outputStarted = true;
-            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+            var encoderId = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? BitmapEncoder.PngEncoderId : BitmapEncoder.JpegEncoderId;
+            var encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
             encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
             await encoder.FlushAsync();
             StatusText.Text = L.Get("TemplateOutputSaved");
@@ -302,7 +307,70 @@ public sealed partial class TemplateOutputPage : Page
         finally { _busy = false; SetReady(_ready); }
     }
 
+    private async Task SavePdfAsync()
+    {
+        if (!_ready || _busy || _previewPage == null) return;
+        _busy = true;
+        SetReady(true);
+        var outputStarted = false;
+        try
+        {
+            var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = OutputDateName() };
+            picker.FileTypeChoices.Add("PDF", PdfExtensions);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
+            var file = await picker.PickSaveFileAsync();
+            if (file == null) return;
+
+            var png = await RenderPreviewAsPngAsync();
+            using var pdf = new PdfDocument();
+            pdf.Info.Title = $"Weekly menu {OutputDateName()}";
+            var page = pdf.AddPage();
+            page.Width = 595.28;
+            page.Height = 841.89;
+            using (var image = XImage.FromStream(() => new MemoryStream(png)))
+            using (var graphics = XGraphics.FromPdfPage(page))
+            {
+                var scale = Math.Min(page.Width / image.PointWidth, page.Height / image.PointHeight);
+                var width = image.PointWidth * scale;
+                var height = image.PointHeight * scale;
+                graphics.DrawImage(image, (page.Width - width) / 2, (page.Height - height) / 2, width, height);
+            }
+            using var output = new MemoryStream();
+            pdf.Save(output, false);
+            outputStarted = true;
+            await FileIO.WriteBytesAsync(file, output.ToArray());
+            StatusText.Text = L.Get("TemplateOutputPdfSaved");
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Unable to save the menu as a PDF");
+            StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput");
+        }
+        finally { _busy = false; SetReady(_ready); }
+    }
+
+    private async Task<byte[]> RenderPreviewAsPngAsync()
+    {
+        if (_previewPage == null) throw new InvalidOperationException(L.Get("ErrorOutput"));
+        var bitmap = new RenderTargetBitmap();
+        await bitmap.RenderAsync(_previewPage, 1588, 2246);
+        if (bitmap.PixelWidth != 1588 || bitmap.PixelHeight != 2246) throw new InvalidOperationException(L.Get("TemplateOutputImageSizeError"));
+        var pixels = await bitmap.GetPixelsAsync();
+        var bytes = new byte[pixels.Length];
+        using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
+        using var stream = new InMemoryRandomAccessStream();
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+        encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
+        await encoder.FlushAsync();
+        stream.Seek(0);
+        using var encodedReader = new DataReader(stream.GetInputStreamAt(0));
+        await encodedReader.LoadAsync((uint)stream.Size);
+        var encoded = new byte[(int)stream.Size];
+        encodedReader.ReadBytes(encoded);
+        return encoded;
+    }
+
     private string OutputDateName() => _firstDay is DateTime first && _lastDay is DateTime last
-        ? first == last ? $"{first:dd-MM-yyyy}" : $"{first:dd-MM-yyyy} - {last:dd-MM-yyyy}"
+        ? first == last ? $"{first:dd-MM-yyyy}" : $"{first:dd-MM-yyyy}-{last:dd-MM-yyyy}"
         : $"{_monday:dd-MM-yyyy}";
 }

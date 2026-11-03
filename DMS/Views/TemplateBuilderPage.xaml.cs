@@ -174,11 +174,30 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (string.Equals(template.Name, _loadedName, StringComparison.Ordinal)) grid.SelectedItem = item;
             }
             var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplSavedTemplates"), Content = grid,
-                PrimaryButtonText = L.Get("TplOpenTemplate"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                PrimaryButtonText = L.Get("TplOpenTemplate"), SecondaryButtonText = L.Get("TplDelete"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 IsPrimaryButtonEnabled = grid.SelectedItem != null };
-            grid.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = grid.SelectedItem != null;
-            if (await dialog.ShowAsync() == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate chosenTemplate })
+            void UpdateActions()
+            {
+                dialog.IsPrimaryButtonEnabled = grid.SelectedItem != null;
+                dialog.IsSecondaryButtonEnabled = grid.SelectedItem is GridViewItem { Tag: MenuTemplate template } && !template.IsPreset;
+            }
+            grid.SelectionChanged += (_, _) => UpdateActions();
+            UpdateActions();
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate chosenTemplate })
                 selected = chosenTemplate;
+            else if (result == ContentDialogResult.Secondary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate templateToDelete } && !templateToDelete.IsPreset)
+            {
+                var confirmation = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
+                    Content = string.Format(L.Get("DeleteTemplatePrompt"), templateToDelete.Name), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
+                    CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
+                if (await confirmation.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    await _database.DeleteTemplateAsync(templateToDelete.Name);
+                    await ReloadTemplatesAsync();
+                    StatusText.Text = L.Get("TplTemplateDeleted");
+                }
+            }
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to browse saved templates"); StatusText.Text = L.Get("ErrorTemplate"); }
         finally { _switching = false; }

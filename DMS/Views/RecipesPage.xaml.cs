@@ -274,7 +274,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(categoryBox);
 
         // Portion Size
-        var portionBox = new TextBox { Header = L.Get("Text_Portion_Size_4c79c6"), Text = recipe.PortionSize, PlaceholderText = L.Get("Text_e_g_2_servings_29af24") };
+        var portionValue = double.TryParse(System.Text.RegularExpressions.Regex.Match(recipe.PortionSize ?? "", @"\d+(?:[\.,]\d+)?").Value.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsedPortion) ? parsedPortion : 0;
+        var portionBox = new NumberBox { Header = L.Get("Text_Portion_Size_4c79c6"), Value = portionValue, Minimum = 0, Maximum = 10000, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
         panel.Children.Add(portionBox);
 
         // Calories
@@ -418,7 +419,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
             recipe.Name = nameBox.Text.Trim();
             recipe.Category = (categoryBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "other";
-            recipe.PortionSize = portionBox.Text?.Trim() ?? "";
+            recipe.PortionSize = double.IsFinite(portionBox.Value) && portionBox.Value > 0 ? $"{portionBox.Value:0.##}g" : "";
             recipe.Calories = double.IsFinite(caloriesBox.Value) ? (int)caloriesBox.Value : 0;
             recipe.Instructions = instructionsBox.Text?.Trim() ?? "";
             recipe.Ingredients = selectedIngredients.ToList();

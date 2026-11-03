@@ -12,12 +12,14 @@
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Печат</value></data>
   <data name="TemplateOutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
-  <data name="TemplateOutputPng" xml:space="preserve"><value>Запази като PNG</value></data>
+  <data name="TemplateOutputPng" xml:space="preserve"><value>Запази изображение</value></data>
   <data name="TemplateOutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>
   <data name="TemplateOutputReady" xml:space="preserve"><value>Готово за печат или експорт.</value></data>
   <data name="TemplateOutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
   <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
   <data name="TemplateOutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="TemplateOutputPdfSaved" xml:space="preserve"><value>PDF файлът е запазен.</value></data>
+  <data name="TplTemplateDeleted" xml:space="preserve"><value>Шаблонът е изтрит.</value></data>
   <data name="TemplateOutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
   <data name="TemplateOutputWeek" xml:space="preserve"><value>Седмица</value></data>
   <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Печатът не успя.</value></data>
