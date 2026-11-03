@@ -7,8 +7,6 @@
  <Grid x:Name="Workspace" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*,Auto" Background="Transparent">
   <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel Orientation="Horizontal" Padding="12,8" Spacing="8">
-    <Button x:Name="UndoButton" Content="↶" MinWidth="32" />
-    <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
     <DropDownButton x:Name="FileMenuButton" VerticalAlignment="Bottom">
      <DropDownButton.Content><StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE700;" FontSize="14" /><TextBlock x:Name="FileMenuLabel" /></StackPanel></DropDownButton.Content>
      <DropDownButton.Flyout><MenuFlyout Placement="BottomEdgeAlignedLeft">
@@ -27,6 +25,10 @@
     <CalendarDatePicker x:Name="WeekPicker" VerticalAlignment="Bottom" DateChanged="WeekPicker_DateChanged" />
    </StackPanel>
   </ScrollViewer>
+  <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" Padding="8">
+   <Button x:Name="UndoButton" Content="↶" MinWidth="32" />
+   <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
+  </StackPanel>
    <ScrollViewer x:Name="PageScroll" Grid.Row="1" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" VerticalAlignment="Stretch" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid RowDefinitions="*,Auto,Auto"><Border Grid.RowSpan="3" Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">
     <Expander x:Name="LayoutHeading" IsExpanded="True" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
