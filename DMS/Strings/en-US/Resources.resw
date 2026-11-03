@@ -25,8 +25,6 @@
   <data name="TemplateOutputPrintFailed" xml:space="preserve"><value>Printing failed.</value></data>
   <data name="TemplateOutputPrintUnsupported" xml:space="preserve"><value>Printing is not available on this system.</value></data>
   <data name="TplBuilderTitle" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="TplUndo" xml:space="preserve"><value>Undo</value></data>
-  <data name="TplRedo" xml:space="preserve"><value>Redo</value></data>
   <data name="TplBuilderLayoutSection" xml:space="preserve"><value>Canvas settings</value></data>
   <data name="TplBuilderImagesSection" xml:space="preserve"><value>Image settings</value></data>
   <data name="TplBuilderDayHeightsSection" xml:space="preserve"><value>Day heights</value></data>
