@@ -45,7 +45,7 @@ public sealed partial class TemplateBuilderPage
 
     private void BeginImageDrag(PointerRoutedEventArgs e)
     {
-        if (_draggingImage || SelectedCanvasImage() is not { } image || !e.GetCurrentPoint(PageHost).Properties.IsLeftButtonPressed) return;
+        if (_draggingImage || SelectedCanvasImage() is not { IsCanvasBackground: false } image || !e.GetCurrentPoint(PageHost).Properties.IsLeftButtonPressed) return;
         if (!SelectionOutline.CapturePointer(e.Pointer)) return;
         _imagePointerId = e.Pointer.PointerId;
         _imagePointerStart = e.GetCurrentPoint(PageHost).Position;
@@ -186,6 +186,13 @@ public sealed partial class TemplateBuilderPage
     private void BuildImageTools()
     {
         if (SelectedCanvasImage() is not { } image) return;
+        var background = new CheckBox { Content = L.Get("TplImageBackground"), IsChecked = image.IsCanvasBackground };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(background, L.Get("TplImageBackground"));
+        background.Checked += (_, _) => SetCanvasBackground(image, true);
+        background.Unchecked += (_, _) => SetCanvasBackground(image, false);
+        ContextTools.Children.Add(background);
+        if (!image.IsCanvasBackground)
+        {
         var horizontal = new ComboBox { Width = 130, PlaceholderText = L.Get("TplImageAlignHorizontal") };
         foreach (var key in new[] { "TplLeft", "TplCenter", "TplRight" }) horizontal.Items.Add(L.Get(key));
         horizontal.SelectionChanged += (_, _) =>
@@ -221,11 +228,14 @@ public sealed partial class TemplateBuilderPage
         width.ValueChanged += (_, _) => Resize(width.Value, true);
         height.ValueChanged += (_, _) => Resize(height.Value, false);
         AddStyleToggle("↔", "TplImageLockAspect", image.LockAspectRatio, value => EditImage(item => item.LockAspectRatio = value));
+        }
         var transparency = ImageNumber("TplImageTransparency", Math.Round((1 - image.Opacity) * 100), 100, minimum: 0);
         transparency.ValueChanged += (_, _) =>
         {
             if (double.IsFinite(transparency.Value)) EditImage(item => item.Opacity = 1 - transparency.Value / 100);
         };
+        if (!image.IsCanvasBackground)
+        {
         var mode = new ComboBox { Width = 170 };
         foreach (var key in new[] { "TplImageBehindText", "TplImageInFront", "TplImageKeepClear" }) mode.Items.Add(L.Get(key));
         mode.SelectedIndex = image.ReserveTextSpace ? 2 : image.InFrontOfText ? 1 : 0;
@@ -238,8 +248,30 @@ public sealed partial class TemplateBuilderPage
         ContextTools.Children.Add(mode);
         AddImageAction("TplImageMoveBackward", "↓", () => ReorderImage(image, false));
         AddImageAction("TplImageMoveForward", "↑", () => ReorderImage(image, true));
+        }
         AddImageAction("TplImageRename", "✎", async () => await RenameImageAsync(image));
         AddImageAction("TplImageDelete", "🗑", async () => await DeleteImageAsync(image));
+    }
+
+    private void SetCanvasBackground(TemplateImage image, bool enabled)
+    {
+        if (_contextBinding || image.IsCanvasBackground == enabled) return;
+        EditImage(item =>
+        {
+            if (enabled)
+            {
+                foreach (var other in _document.DecorativeImages.Where(other => other != item && other.IsCanvasBackground))
+                {
+                    other.IsCanvasBackground = false;
+                    other.FillFrame = false;
+                }
+                item.X = 0; item.Y = 0;
+                item.Width = TemplatePageLayout.PageWidth; item.Height = TemplatePageLayout.PageHeight;
+                item.FillFrame = true; item.InFrontOfText = false; item.ReserveTextSpace = false;
+            }
+            else item.FillFrame = false;
+            item.IsCanvasBackground = enabled;
+        });
     }
 
     private async Task RenameImageAsync(TemplateImage image)

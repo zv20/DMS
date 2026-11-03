@@ -19,7 +19,8 @@ public static class TemplateRenderer
 {
     public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false)
     {
-        var insets = TemplatePageImages.GetInsets(template.DecorativeImages);
+        var canvasImages = template.DecorativeImages ?? [];
+        var insets = TemplatePageImages.GetInsets(canvasImages.Where(image => image is { IsCanvasBackground: false }));
         var width = Math.Max(1, 714 - insets.Left - insets.Right);
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
@@ -111,17 +112,19 @@ public static class TemplateRenderer
         var backgroundImage = new Image { Stretch = Stretch.UniformToFill, Opacity = double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1, IsHitTestVisible = false };
         var content = new Grid();
         content.Children.Add(backgroundImage);
-        var decorations = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && !image.InFrontOfText), onSelected);
+        var canvasBackground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: true }), onSelected);
+        content.Children.Add(canvasBackground.Layer);
+        var decorations = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: false }), onSelected);
         content.Children.Add(decorations.Layer);
         var inset = new Border { Padding = new Thickness(40 + insets.Left, 40, 40 + insets.Right, 40), Child = grid };
         content.Children.Add(inset);
-        var foreground = TemplatePageImages.CreateLayer((template.DecorativeImages ?? []).Where(image => image != null && image.InFrontOfText), onSelected);
+        var foreground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: true }), onSelected);
         content.Children.Add(foreground.Layer);
         var pageColor = ParseColor(template.BackgroundColor, Colors.White);
         var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected);
-        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
+        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
     }
 
     public static TemplateTextStyle GetTextStyle(TemplateDocument template, string key)

@@ -14,6 +14,8 @@ public sealed class TemplateImage
     public bool InFrontOfText { get; set; }
     public bool LockAspectRatio { get; set; } = true;
     public bool FillFrame { get; set; }
+    // A canvas background fills the complete page behind every other template element.
+    public bool IsCanvasBackground { get; set; }
     // Reserve a conservative full-height gutter so text cannot be hidden by art.
     public bool ReserveTextSpace { get; set; } = true;
     public string AltText { get; set; } = string.Empty;
