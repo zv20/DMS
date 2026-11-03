@@ -43,7 +43,7 @@
     </ScrollViewer>
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="4" Padding="8,4">
      <Button x:Name="ZoomOutButton" Content="−" MinWidth="32" />
-     <Slider x:Name="CanvasZoomSlider" Grid.Column="1" MinWidth="0" Minimum="50" Maximum="200" StepFrequency="10" Value="100" />
+     <Slider x:Name="CanvasZoomSlider" Grid.Column="1" MinWidth="0" Minimum="50" Maximum="200" StepFrequency="10" Value="70" />
      <Button x:Name="ZoomResetButton" Grid.Column="2" Content="100%" MinWidth="48" />
      <Button x:Name="ZoomInButton" Grid.Column="3" Content="+" MinWidth="32" />
     </Grid>

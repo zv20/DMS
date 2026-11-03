@@ -124,7 +124,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         {
             _recentTemplateColors = (await _database.GetSettingsAsync())?.RecentTemplateColors?
                 .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
-            await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync();
+            await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync(); SetCanvasZoom(70);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }
     }
