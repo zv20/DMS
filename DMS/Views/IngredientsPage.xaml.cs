@@ -135,6 +135,11 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = ingredient.Name, PlaceholderText = L.Get("Text_Ingredient_name_6f2b4d") };
         panel.Children.Add(nameBox);
+        var duplicateWarning = new TextBlock { Text = L.Get("DuplicateIngredientWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        panel.Children.Add(duplicateWarning);
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _ingredients.Any(item => item.Id != ingredient.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
+        UpdateDuplicateWarning();
 
         // Allergens
         var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
@@ -175,6 +180,12 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
                 return false;
             }
 
+            if (_ingredients.Any(item => item.Id != ingredient.Id && string.Equals(item.Name, nameBox.Text.Trim(), StringComparison.Ordinal)))
+            {
+                _editor.SetError(L.Get("DuplicateIngredientError"));
+                nameBox.Focus(FocusState.Programmatic);
+                return false;
+            }
             ingredient.Name = nameBox.Text.Trim();
             ingredient.Allergens = allergenList.SelectedItems
                 .OfType<Allergen>()

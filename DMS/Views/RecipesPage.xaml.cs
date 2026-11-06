@@ -255,6 +255,11 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = recipe.Name, PlaceholderText = L.Get("Text_Recipe_name_bcb84d") };
         panel.Children.Add(nameBox);
+        var duplicateWarning = new TextBlock { Text = L.Get("DuplicateRecipeWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        panel.Children.Add(duplicateWarning);
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _recipes.Any(item => item.Id != recipe.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
+        UpdateDuplicateWarning();
 
         // Category
         var categoryBox = new ComboBox { Header = L.Get("Text_Category_a3c686"), PlaceholderText = L.Get("Text_Select_category_a2a5ca") };

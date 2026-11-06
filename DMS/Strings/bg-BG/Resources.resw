@@ -534,4 +534,9 @@
   <data name="LogViewerRecoveryFatalMessage" xml:space="preserve"><value>DMS не можа автоматично да възстанови предишната база данни. Затворете DMS и възстановете посочения по-долу резервен архив, преди да продължите. Пълната грешка е записана и в местния дневник.&#10;&#10;{0}</value></data>
   <data name="LogViewerCloseApp" xml:space="preserve"><value>Затвори DMS</value></data>
   <data name="RetryAction" xml:space="preserve"><value>Опитайте отново</value></data>
+  <data name="DuplicateIngredientWarning" xml:space="preserve"><value>Вече съществува съставка с това име. Напълно еднакви имена не могат да бъдат запазени.</value></data>
+  <data name="DuplicateAllergenWarning" xml:space="preserve"><value>Вече съществува алерген с това име. Напълно еднакви имена не могат да бъдат запазени.</value></data>
+  <data name="DuplicateRecipeWarning" xml:space="preserve"><value>Вече съществува рецепта с това име. Все пак можете да запазите рецептата.</value></data>
+  <data name="DuplicateIngredientError" xml:space="preserve"><value>Вече съществува съставка с точно това име.</value></data>
+  <data name="DuplicateAllergenError" xml:space="preserve"><value>Вече съществува алерген с точно това име.</value></data>
 </root>

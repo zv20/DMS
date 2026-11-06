@@ -137,6 +137,11 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         // Name
         var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), Text = allergen.Name, PlaceholderText = L.Get("Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715") };
         panel.Children.Add(nameBox);
+        var duplicateWarning = new TextBlock { Text = L.Get("DuplicateAllergenWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        panel.Children.Add(duplicateWarning);
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _allergens.Any(item => item.Id != allergen.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
+        UpdateDuplicateWarning();
 
         // Color Picker
         var colorLabel = new TextBlock { Text = L.Get("Text_Color_1d0c83"), FontSize = 14, FontWeight = FontWeights.SemiBold };
@@ -216,6 +221,12 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
                 return false;
             }
 
+            if (_allergens.Any(item => item.Id != allergen.Id && string.Equals(item.Name, nameBox.Text.Trim(), StringComparison.Ordinal)))
+            {
+                _editor.SetError(L.Get("DuplicateAllergenError"));
+                nameBox.Focus(FocusState.Programmatic);
+                return false;
+            }
             allergen.Name = nameBox.Text.Trim();
             allergen.Color = colorBox.Text.Trim();
 
