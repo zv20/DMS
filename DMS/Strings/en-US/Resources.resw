@@ -146,10 +146,6 @@
   <data name="String_Text_English_531f36" xml:space="preserve"><value>🇺🇸 English</value></data>
   <data name="Text_English_531f36.Content" xml:space="preserve"><value>🇺🇸 English</value></data>
   <data name="Text_Error_7f2f6a" xml:space="preserve"><value>Error</value></data>
-  <data name="Text_Export_Complete_7f2e84" xml:space="preserve"><value>Export Complete</value></data>
-  <data name="String_Text_Export_Data_f821f4" xml:space="preserve"><value>📤 Export Data</value></data>
-  <data name="Text_Export_Data_f821f4.Content" xml:space="preserve"><value>📤 Export Data</value></data>
-  <data name="Text_Export_Failed_6aa6a7" xml:space="preserve"><value>Export Failed</value></data>
   <data name="String_Text_Footer_Text_9b1025" xml:space="preserve"><value>Footer Text</value></data>
   <data name="Text_Footer_Text_9b1025.Text" xml:space="preserve"><value>Footer Text</value></data>
   <data name="String_Text_Green_f66748" xml:space="preserve"><value>🟢 Green</value></data>
@@ -157,12 +153,6 @@
   <data name="String_Text_Header_Text_f7593e" xml:space="preserve"><value>Header Text</value></data>
   <data name="Text_Header_Text_f7593e.Text" xml:space="preserve"><value>Header Text</value></data>
   <data name="Text_Hex_Color_52aa66" xml:space="preserve"><value>Hex Color</value></data>
-  <data name="Text_Import_Complete_a5cb9b" xml:space="preserve"><value>Import Complete</value></data>
-  <data name="Text_Import_Data_0021d0" xml:space="preserve"><value>Import Data</value></data>
-  <data name="String_Text_Import_Data_a624f8" xml:space="preserve"><value>📥 Import Data</value></data>
-  <data name="Text_Import_Data_a624f8.Content" xml:space="preserve"><value>📥 Import Data</value></data>
-  <data name="Text_Import_Failed_4c1ed2" xml:space="preserve"><value>Import Failed</value></data>
-  <data name="Text_Import_d6fbc9" xml:space="preserve"><value>Import</value></data>
   <data name="Text_Ingredient_name_6f2b4d" xml:space="preserve"><value>Ingredient name</value></data>
   <data name="Text_Ingredient_name_is_required_468003" xml:space="preserve"><value>Ingredient name is required</value></data>
   <data name="Text_Ingredients_6db95c" xml:space="preserve"><value>🥕 Ingredients</value></data>
@@ -254,12 +244,10 @@
   <data name="String_Text_Template_Name_48c554" xml:space="preserve"><value>Template Name</value></data>
   <data name="Text_Template_Name_48c554.Text" xml:space="preserve"><value>Template Name</value></data>
   <data name="Text_Template_name_is_required_0e3ca2" xml:space="preserve"><value>Template name is required</value></data>
-  <data name="Text_The_selected_file_is_not_a_DMS_backup_df8918" xml:space="preserve"><value>The selected file is not a DMS backup.</value></data>
   <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Theme</value></data>
   <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Theme</value></data>
   <data name="ThemeClassicDefault.Content" xml:space="preserve"><value>Default</value></data>
   <data name="ThemeClassicAccentHint" xml:space="preserve"><value>Default uses the original DMS orange. Choose Light, Dark, or System to use a custom accent.</value></data>
-  <data name="Text_This_will_add_imported_data_to_your_existing_data_Dupli_095ae0" xml:space="preserve"><value>This will add imported data to your existing data. Duplicate names will be skipped. Continue?</value></data>
   <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>This will optimize the database file size. Continue?</value></data>
   <data name="String_Text_Today_24345a" xml:space="preserve"><value>Today</value></data>
   <data name="Text_Today_24345a.Content" xml:space="preserve"><value>Today</value></data>
@@ -276,8 +264,6 @@
   <data name="Text_Weekly_Menu_69fa95.PlaceholderText" xml:space="preserve"><value>Weekly Menu</value></data>
   <data name="Text_e_g_2_servings_29af24" xml:space="preserve"><value>e.g., 2 servings</value></data>
   <data name="DatabaseInfo" xml:space="preserve"><value>Location: {0}&#10;Size: {1}&#10;Last modified: {2:g}</value></data>
-  <data name="ExportSummary" xml:space="preserve"><value>Exported: {0} recipes, {1} ingredients, {2} allergens, {3} menu entries, {4} templates.</value></data>
-  <data name="ImportSummary" xml:space="preserve"><value>Imported: {0} recipes, {1} ingredients, {2} allergens, {3} menu entries, {4} templates.</value></data>
   <data name="ErrorDetail" xml:space="preserve"><value>Error: {0}</value></data>
   <data name="MenuLoadError" xml:space="preserve"><value>Unable to load menu: {0}</value></data>
   <data name="SaveError" xml:space="preserve"><value>Save failed: {0}</value></data>
@@ -396,8 +382,6 @@
   <data name="OutputImageOverflow" xml:space="preserve"><value>The menu is longer than one image. Use PDF or reduce the template text size.</value></data>
   <data name="OutputImageSaved" xml:space="preserve"><value>Image saved.</value></data>
   <data name="OutputMargins" xml:space="preserve"><value>Margins</value></data>
-  <data name="ImportMissingIngredients" xml:space="preserve"><value>{0} ingredient references were not present in the backup. Review these recipes: {1}. The original references were preserved.</value></data>
-  <data name="ImportErrorRecovery" xml:space="preserve"><value>Import failed: {0}&#10;Some changes may have been applied. A database backup from before the import is available at: {1}</value></data>
   <data name="RecipeDiscardTitle" xml:space="preserve"><value>Discard changes?</value></data>
   <data name="RecipeDiscardMessage" xml:space="preserve"><value>You have unsaved recipe changes. Discard them?</value></data>
   <data name="RecipeDiscardButton" xml:space="preserve"><value>Discard</value></data>
@@ -506,10 +490,7 @@
   <data name="TplLibraryDeletedOpenTemplate" xml:space="preserve"><value>Image and saved templates deleted. Save the remaining canvas as a new template if you want to keep it.</value></data>
   <data name="TplLibraryDeleted" xml:space="preserve"><value>Image and its listed saved templates deleted.</value></data>
   <data name="TplLibraryBuiltInProtected" xml:space="preserve"><value>Built-in template artwork cannot be deleted.</value></data>
-  <data name="DataArchiveFileType" xml:space="preserve"><value>DMS data archive</value></data>
-  <data name="ExportImageCount" xml:space="preserve"><value>{0} shared images included.</value></data>
   <data name="TplAssetNameTooLong" xml:space="preserve"><value>Use a name with 255 characters or fewer.</value></data>
-  <data name="ImportImageCount" xml:space="preserve"><value>{0} shared images restored.</value></data>
   <data name="TplPageImages" xml:space="preserve"><value>Images on page</value></data>
   <data name="TplOpenTemplate" xml:space="preserve"><value>Open template</value></data>
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Back up all saved data, including templates and original images, in one file. Restoring replaces current data.</value></data>

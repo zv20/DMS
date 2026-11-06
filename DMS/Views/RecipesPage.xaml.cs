@@ -6,8 +6,6 @@ using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Microsoft.UI.Text;
 
 namespace DMS.Views;
@@ -463,7 +461,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     }
 }
 
-public class RecipeItemViewModel : INotifyPropertyChanged
+public class RecipeItemViewModel
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
@@ -517,6 +515,4 @@ public class RecipeItemViewModel : INotifyPropertyChanged
         };
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
