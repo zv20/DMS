@@ -69,6 +69,29 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     }
 
     [Fact]
+    public async Task RestoreRejectsTriggersAndViewsWithoutChangingCurrentData()
+    {
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        foreach (var (name, sql) in new[]
+        {
+            ("trigger.db", "CREATE TRIGGER corrupt AFTER INSERT ON recipes BEGIN DELETE FROM recipes; END"),
+            ("view.db", "CREATE VIEW unexpected AS SELECT * FROM recipes"),
+            ("foreign-key.db", "ALTER TABLE settings ADD COLUMN recipe_ref INTEGER REFERENCES recipes(id) ON DELETE CASCADE")
+        })
+        {
+            using (var source = Open(name)) await source.InitializeAsync();
+            using (var connection = new SqliteConnection($"Data Source={PathFor(name)};Pooling=False"))
+            {
+                connection.Open(); using var command = connection.CreateCommand(); command.CommandText = sql; command.ExecuteNonQuery();
+            }
+            await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor(name)));
+            Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+        }
+        Assert.False(Directory.Exists(PathFor("RestoreBackups")));
+    }
+
+    [Fact]
     public async Task FailureAfterReplacementRestoresPreviousDatabase()
     {
         using (var source = Open("source.db"))
@@ -78,7 +101,7 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathFor("source.db")};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TRIGGER fail_settings BEFORE INSERT ON settings BEGIN SELECT RAISE(ABORT, 'simulated migration failure'); END";
+            command.CommandText = "DROP TABLE allergens; CREATE TABLE allergens (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, color TEXT NOT NULL CHECK (color != '#D97706'), icon TEXT, created_at TEXT NOT NULL DEFAULT ''); INSERT INTO allergens(name, color, icon) VALUES ('глутен', '#3498db', '⚠️')";
             command.ExecuteNonQuery();
         }
         using (var current = Open("current.db"))

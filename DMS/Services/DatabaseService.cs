@@ -877,62 +877,112 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         // Validate the selected file before opening or changing the live database.
         // Read-only mode avoids accidentally creating a database for a bad path.
         var sourceOptions = new SqliteConnectionStringBuilder { DataSource = source, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
-        await using var backup = new SqliteConnection(sourceOptions.ToString());
-        await backup.OpenAsync();
-        ValidateRestoreSource(backup);
-        await InitializeAsync();
-
-        await _initLock.WaitAsync();
+        var snapshotDirectory = Path.Combine(Path.GetTempPath(), "DMS-restore-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(snapshotDirectory);
         try
         {
-            var recoveryFolder = Path.Combine(Path.GetDirectoryName(current)!, "RestoreBackups");
-            Directory.CreateDirectory(recoveryFolder);
-            var recoveryPath = Path.Combine(recoveryFolder, $"before-restore-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db");
-            var recoveryOptions = new SqliteConnectionStringBuilder { DataSource = recoveryPath, Pooling = false };
-            await using var recovery = new SqliteConnection(recoveryOptions.ToString());
-            await recovery.OpenAsync();
-            _connection!.BackupDatabase(recovery);
-            WriteRecoveryMarker(recoveryPath);
+            await using var sourceConnection = new SqliteConnection(sourceOptions.ToString());
+            await sourceConnection.OpenAsync();
+            // Validate and restore the same private disk snapshot, even if the
+            // selected file changes, without loading the whole database into RAM.
+            var snapshotOptions = new SqliteConnectionStringBuilder { DataSource = Path.Combine(snapshotDirectory, "snapshot.db"), Pooling = false };
+            await using var backup = new SqliteConnection(snapshotOptions.ToString());
+            await backup.OpenAsync();
+            sourceConnection.BackupDatabase(backup);
+            ValidateRestoreSource(backup);
+            await InitializeAsync();
 
+            await _initLock.WaitAsync();
             try
             {
-                // SQLite's backup API handles the active WAL and atomically replaces
-                // the destination database without deleting live WAL sidecars.
-                backup.BackupDatabase(_connection);
-                await ConfigureConnectionAsync();
-                await CreateSchemaAsync();
-                _initialized = true;
-                File.Delete(RecoveryMarkerPath);
-                _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);
-            }
-            catch (Exception restoreError)
-            {
+                var recoveryFolder = Path.Combine(Path.GetDirectoryName(current)!, "RestoreBackups");
+                Directory.CreateDirectory(recoveryFolder);
+                var recoveryPath = Path.Combine(recoveryFolder, $"before-restore-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db");
+                var recoveryOptions = new SqliteConnectionStringBuilder { DataSource = recoveryPath, Pooling = false };
+                await using var recovery = new SqliteConnection(recoveryOptions.ToString());
+                await recovery.OpenAsync();
+                _connection!.BackupDatabase(recovery);
+                WriteRecoveryMarker(recoveryPath);
+
                 try
                 {
-                    recovery.BackupDatabase(_connection);
+                    // SQLite's backup API handles the active WAL and atomically replaces
+                    // the destination database without deleting live WAL sidecars.
+                    backup.BackupDatabase(_connection);
                     await ConfigureConnectionAsync();
                     await CreateSchemaAsync();
                     _initialized = true;
                     File.Delete(RecoveryMarkerPath);
+                    _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);
                 }
-                catch (Exception recoveryError)
+                catch (Exception restoreError)
                 {
-                    _initialized = false;
-                    _connection?.Dispose();
-                    _connection = null;
-                    throw new DatabaseRecoveryRequiredException(_dbPath, recoveryPath, RecoveryMarkerPath, new AggregateException(restoreError, recoveryError));
+                    try
+                    {
+                        recovery.BackupDatabase(_connection);
+                        await ConfigureConnectionAsync();
+                        await CreateSchemaAsync();
+                        _initialized = true;
+                        File.Delete(RecoveryMarkerPath);
+                    }
+                    catch (Exception recoveryError)
+                    {
+                        _initialized = false;
+                        _connection?.Dispose();
+                        _connection = null;
+                        throw new DatabaseRecoveryRequiredException(_dbPath, recoveryPath, RecoveryMarkerPath, new AggregateException(restoreError, recoveryError));
+                    }
+                    throw new InvalidOperationException($"Restore failed; the previous database was recovered. A recovery backup is at: {recoveryPath}", restoreError);
                 }
-                throw new InvalidOperationException($"Restore failed; the previous database was recovered. A recovery backup is at: {recoveryPath}", restoreError);
+            }
+            finally
+            {
+                _initLock.Release();
             }
         }
         finally
         {
-            _initLock.Release();
+            try { Directory.Delete(snapshotDirectory, recursive: true); }
+            catch (IOException ex) { _logger.LogWarning(ex, "Could not remove restore snapshot directory {Path}", snapshotDirectory); }
+            catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Could not remove restore snapshot directory {Path}", snapshotDirectory); }
         }
     }
 
     private static void ValidateRestoreSource(SqliteConnection source)
     {
+        // DMS does not create triggers, views, or virtual tables. They can carry
+        // behavior supplied by a backup author into later application operations.
+        using (var objects = source.CreateCommand())
+        {
+            objects.CommandText = "SELECT 1 FROM sqlite_schema WHERE type IN ('trigger', 'view') LIMIT 1";
+            if (objects.ExecuteScalar() != null)
+                throw new InvalidDataException("The selected backup contains unsupported database objects.");
+        }
+        using (var tables = source.CreateCommand())
+        {
+            tables.CommandText = "PRAGMA table_list";
+            using var reader = tables.ExecuteReader();
+            while (reader.Read())
+                if (!string.Equals(reader.GetString(2), "table", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("The selected backup contains unsupported database objects.");
+        }
+        // Foreign key actions also execute on later writes. Allow only the
+        // relationships owned by DMS, including their update/delete actions.
+        using (var keys = source.CreateCommand())
+        {
+            keys.CommandText = @"SELECT t.name, f.[table], f.[from], f.[to], f.on_update, f.on_delete
+                FROM pragma_table_list AS t, pragma_foreign_key_list(t.name) AS f
+                WHERE t.schema = 'main' AND t.type = 'table'";
+            using var reader = keys.ExecuteReader();
+            while (reader.Read())
+            {
+                var relationship = string.Join("|", Enumerable.Range(0, 6).Select(reader.GetString)).ToLowerInvariant();
+                if (relationship is not ("menu|recipes|recipe_id|id|no action|restrict"
+                    or "template_image_references|templates|template_name|name|cascade|cascade"
+                    or "template_image_references|template_image_assets|asset_id|id|no action|restrict"))
+                    throw new InvalidDataException("The selected backup contains unsupported database relationships.");
+            }
+        }
         using (var check = source.CreateCommand())
         {
             check.CommandText = "PRAGMA integrity_check";

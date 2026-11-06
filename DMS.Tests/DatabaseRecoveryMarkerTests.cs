@@ -72,21 +72,15 @@ public sealed class DatabaseRecoveryMarkerTests : IDisposable
             await database.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
         using (var source = Open("source.db"))
             await source.SaveRecipeAsync(new Recipe { Name = "Other", Category = "soup" });
-        foreach (var file in new[] { "current.db", "source.db" })
+        using (var connection = new SqliteConnection($"Data Source={PathFor("source.db")};Pooling=False"))
         {
-            using var connection = new SqliteConnection($"Data Source={PathFor(file)};Pooling=False");
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TRIGGER fail_settings BEFORE INSERT ON settings BEGIN SELECT RAISE(ABORT, 'simulated migration failure'); END";
+            command.CommandText = "DROP TABLE allergens; CREATE TABLE allergens (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, color TEXT NOT NULL CHECK (color != '#D97706'), icon TEXT, created_at TEXT NOT NULL DEFAULT ''); INSERT INTO allergens(name, color, icon) VALUES ('глутен', '#3498db', '⚠️')";
             command.ExecuteNonQuery();
         }
-        // Open an already initialized service, then add a trigger to the live
-        // database so the recovery copy deliberately cannot initialize either.
+        // Add a trigger only to the live database, so the recovery copy cannot
+        // initialize after the accepted source fails during schema seeding.
         using var current = Open("current.db");
-        // Existing triggers would prevent initialization; open and remove it first.
-        using (var connection = new SqliteConnection($"Data Source={PathFor("current.db")};Pooling=False"))
-        {
-            connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "DROP TRIGGER fail_settings"; command.ExecuteNonQuery();
-        }
         await current.InitializeAsync();
         using (var connection = new SqliteConnection($"Data Source={PathFor("current.db")};Pooling=False"))
         {
