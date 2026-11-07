@@ -1,6 +1,7 @@
 using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Models;
@@ -13,6 +14,7 @@ namespace DMS.Views;
 public sealed partial class IngredientsPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
+    private int _pageGeneration;
     private ObservableCollection<IngredientItemViewModel> _ingredients = new();
     private ObservableCollection<IngredientItemViewModel> _filteredIngredients = new();
     private readonly SideEditorController _editor;
@@ -23,14 +25,24 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<IDatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
-        IngredientsListView.ItemsSource = _filteredIngredients;
         Loaded += IngredientsPage_Loaded;
     }
 
     private async void IngredientsPage_Loaded(object sender, RoutedEventArgs e)
     {
+        IngredientsListView.ItemsSource = _filteredIngredients;
         try { await LoadIngredientsAsync(); }
         catch (Exception ex) { App.Logger.LogError(ex, "Failed to load ingredients"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        // Detach realized rows and their event handlers before leaving the page.
+        _pageGeneration++;
+        IngredientsListView.ItemsSource = null;
+        _filteredIngredients.Clear();
+        _ingredients.Clear();
+        base.OnNavigatedFrom(e);
     }
 
     private void SetPageStatus(string? key)
@@ -41,7 +53,9 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 
     private async Task LoadIngredientsAsync()
     {
+        var generation = _pageGeneration;
         var ingredients = await _database.GetAllIngredientsAsync();
+        if (generation != _pageGeneration) return;
         _ingredients.Clear();
         foreach (var ingredient in ingredients)
         {

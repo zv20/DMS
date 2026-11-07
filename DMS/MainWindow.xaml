@@ -75,14 +75,14 @@
             </NavigationView.MenuItems>
 
             <!-- Frame for page navigation -->
-            <Frame x:Name="ContentFrame" Margin="0" />
+            <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
         </NavigationView>
         </Grid>
         <Grid x:Name="OutputOverlay" Grid.Row="1" Background="#99000000" Visibility="Collapsed" KeyDown="OutputOverlay_KeyDown">
             <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8" Margin="16" MaxWidth="1150" MaxHeight="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid RowDefinitions="Auto,*">
                     <Button x:Name="CloseOutputButton" HorizontalAlignment="Right" Margin="12,8,12,0" Click="CloseOutput_Click" />
-                    <Frame x:Name="OutputFrame" Grid.Row="1" />
+                    <Frame x:Name="OutputFrame" Grid.Row="1" IsNavigationStackEnabled="False" />
                 </Grid>
             </Border>
         </Grid>

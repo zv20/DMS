@@ -1,6 +1,7 @@
 using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Models;
@@ -13,6 +14,7 @@ namespace DMS.Views;
 public sealed partial class RecipesPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
+    private int _pageGeneration;
     private ObservableCollection<RecipeItemViewModel> _recipes = new();
     private ObservableCollection<RecipeItemViewModel> _filteredRecipes = new();
     private bool _filtersReady;
@@ -28,7 +30,6 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     {
         this.InitializeComponent();
         _database = App.Services.GetRequiredService<IDatabaseService>();
-        RecipesListView.ItemsSource = _filteredRecipes;
         CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
         foreach (var category in new[] { "soup", "main", "dessert", "other" })
             CategoryFilter.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
@@ -42,8 +43,19 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
     private async void RecipesPage_Loaded(object sender, RoutedEventArgs e)
     {
+        RecipesListView.ItemsSource = _filteredRecipes;
         try { await LoadRecipesAsync(); }
         catch (Exception ex) { App.Logger.LogError(ex, "Failed to load recipes"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        // Detach realized rows and their event handlers before leaving the page.
+        _pageGeneration++;
+        RecipesListView.ItemsSource = null;
+        _filteredRecipes.Clear();
+        _recipes.Clear();
+        base.OnNavigatedFrom(e);
     }
 
     private void SetPageStatus(string? key)
@@ -79,7 +91,9 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
     private async Task LoadRecipesAsync()
     {
+        var generation = _pageGeneration;
         var recipes = await _database.GetAllRecipesAsync();
+        if (generation != _pageGeneration) return;
         _recipes.Clear();
         foreach (var recipe in recipes)
         {

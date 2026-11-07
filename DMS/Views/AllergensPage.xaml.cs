@@ -2,6 +2,7 @@ using L = DMS.Services.Localization;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ namespace DMS.Views;
 public sealed partial class AllergensPage : Page, IUnsavedEditor
 {
     private readonly IDatabaseService _database;
+    private int _pageGeneration;
     private ObservableCollection<AllergenItemViewModel> _allergens = new();
     private ObservableCollection<AllergenItemViewModel> _filteredAllergens = new();
     private readonly SideEditorController _editor;
@@ -26,14 +28,24 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<IDatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
-        AllergensListView.ItemsSource = _filteredAllergens;
         Loaded += AllergensPage_Loaded;
     }
 
     private async void AllergensPage_Loaded(object sender, RoutedEventArgs e)
     {
+        AllergensListView.ItemsSource = _filteredAllergens;
         try { await LoadAllergensAsync(); }
         catch (Exception ex) { App.Logger.LogError(ex, "Failed to load allergens"); SetPageStatus("DataLoadFailed"); }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        // Detach realized rows and their event handlers before leaving the page.
+        _pageGeneration++;
+        AllergensListView.ItemsSource = null;
+        _filteredAllergens.Clear();
+        _allergens.Clear();
+        base.OnNavigatedFrom(e);
     }
 
     private void SetPageStatus(string? key)
@@ -44,7 +56,9 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 
     private async Task LoadAllergensAsync()
     {
+        var generation = _pageGeneration;
         var allergens = await _database.GetAllAllergensAsync();
+        if (generation != _pageGeneration) return;
         _allergens.Clear();
         foreach (var allergen in allergens)
         {
