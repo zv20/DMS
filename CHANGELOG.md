@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.6
+
+- Refreshed the recipe, ingredient, and allergen lists with a more compact look and clearer actions.
+- Show meal numbers beside the selected recipes in the weekly and monthly planner.
+- Save the main window's last normal size and position before closing.
+- Show a helpful message when a recipe, ingredient, or allergen name already exists.
+- Improved database backup restore validation.
+
 ## 0.0.5
 
 - Added Template Builder undo and redo controls with Ctrl+Z and Ctrl+Y shortcuts.
