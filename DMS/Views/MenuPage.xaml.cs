@@ -205,8 +205,13 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             if (monthly)
             {
                 var names = isDisabledWeekend
-                    ? Enumerable.Empty<string?>()
-                    : entries.Where(e => e.Date.Date == day.Date).Select(e => recipes.FirstOrDefault(r => r.Id == e.RecipeId)?.Name).Where(n => n != null);
+                    ? Enumerable.Empty<string>()
+                    : Enumerable.Range(0, 4).Select(index =>
+                    {
+                        var entry = FindSlotEntry(day, index, entries);
+                        var name = recipes.FirstOrDefault(recipe => recipe.Id == entry?.RecipeId)?.Name;
+                        return name == null ? null : $"{index + 1}. {name}";
+                    }).OfType<string>();
                 var summary = string.Join("\n", names);
                 var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend };
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
@@ -235,16 +240,20 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         ResizeCalendarCards();
     }
 
+    private static MenuEntry? FindSlotEntry(DateTime day, int index, IReadOnlyList<MenuEntry> entries)
+    {
+        string[] oldNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
+        return entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == $"slot{index + 1}")
+            ?? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
+    }
+
     private async Task<StackPanel> CreateSlotAsync(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes)
     {
         var slot = $"slot{index + 1}";
-        string[] oldNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
-        var entry = entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == slot)
-            ?? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
+        var entry = FindSlotEntry(day, index, entries);
         var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
         var category = await _database.GetMenuCategoryAsync(day, slot) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
-        panel.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14 });
         var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, DisplayMemberPath = "Name", TextMemberPath = "Name" };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
@@ -320,7 +329,13 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         };
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         panel.Children.Add(select);
-        panel.Children.Add(search);
+        var mealRow = new Grid { ColumnSpacing = 6 };
+        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        mealRow.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(search, 1);
+        mealRow.Children.Add(search);
+        panel.Children.Add(mealRow);
         var clear = new Button { Content = L.Get("Text_Clear_719ea3"), FontSize = 11, Padding = new Thickness(6, 2, 6, 2) };
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         panel.Children.Add(clear);
