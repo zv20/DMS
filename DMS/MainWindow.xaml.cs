@@ -113,6 +113,21 @@ public sealed partial class MainWindow : Window
             }
         }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save window placement"); }
+        try
+        {
+            if (App.CurrentWindow == this && _placementLoaded)
+                await AutomaticBackup.CreateAsync(App.Services.GetRequiredService<IDatabaseService>());
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Unable to create automatic backup");
+            try
+            {
+                await new ContentDialog { XamlRoot = RootGrid.XamlRoot, Title = Localization.Get("AutomaticBackupFailedTitle"),
+                    Content = Localization.Get("AutomaticBackupFailedMessage"), CloseButtonText = Localization.Get("Text_OK_9ce3bd") }.ShowAsync();
+            }
+            catch (Exception dialogError) { App.Logger.LogWarning(dialogError, "Unable to show automatic backup warning"); }
+        }
         finally
         {
             _allowClose = true;

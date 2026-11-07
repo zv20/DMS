@@ -541,4 +541,11 @@
   <data name="DuplicateRecipeWarning" xml:space="preserve"><value>A recipe with this name already exists. You can still save this recipe.</value></data>
   <data name="DuplicateIngredientError" xml:space="preserve"><value>An ingredient with this exact name already exists.</value></data>
   <data name="DuplicateAllergenError" xml:space="preserve"><value>An allergen with this exact name already exists.</value></data>
+  <data name="AutomaticBackupHint.Text" xml:space="preserve"><value>DMS automatically saves a backup when you close it and keeps the latest three in AutomaticBackups inside the data folder. Use Restore Backup to open one.</value></data>
+  <data name="AutomaticBackupFailedTitle" xml:space="preserve"><value>Automatic backup failed</value></data>
+  <data name="AutomaticBackupFailedMessage" xml:space="preserve"><value>DMS could not create an automatic backup. Check your existing backups. Create a backup from Settings and check the data folder.</value></data>
+  <data name="IngredientNoMatches" xml:space="preserve"><value>No matching ingredients</value></data>
+  <data name="AllergenNoMatches" xml:space="preserve"><value>No matching allergens</value></data>
+  <data name="ClearSearch.Content" xml:space="preserve"><value>Clear search</value></data>
+  <data name="ClearFilters.Content" xml:space="preserve"><value>Clear search and filters</value></data>
 </root>

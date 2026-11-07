@@ -541,4 +541,11 @@
   <data name="DuplicateRecipeWarning" xml:space="preserve"><value>Вече съществува рецепта с това име. Все пак можете да запазите рецептата.</value></data>
   <data name="DuplicateIngredientError" xml:space="preserve"><value>Вече съществува съставка с точно това име.</value></data>
   <data name="DuplicateAllergenError" xml:space="preserve"><value>Вече съществува алерген с точно това име.</value></data>
+  <data name="AutomaticBackupHint.Text" xml:space="preserve"><value>DMS автоматично създава резервно копие при затваряне и пази последните три в папка AutomaticBackups в папката с данни. Използвайте „Възстановяване на резервно копие“, за да отворите копие.</value></data>
+  <data name="AutomaticBackupFailedTitle" xml:space="preserve"><value>Неуспешно автоматично архивиране</value></data>
+  <data name="AutomaticBackupFailedMessage" xml:space="preserve"><value>DMS не успя да създаде автоматично резервно копие. Проверете съществуващите копия. Създайте резервно копие от Настройки и проверете папката с данни.</value></data>
+  <data name="IngredientNoMatches" xml:space="preserve"><value>Няма намерени съставки</value></data>
+  <data name="AllergenNoMatches" xml:space="preserve"><value>Няма намерени алергени</value></data>
+  <data name="ClearSearch.Content" xml:space="preserve"><value>Изчисти търсенето</value></data>
+  <data name="ClearFilters.Content" xml:space="preserve"><value>Изчисти търсенето и филтрите</value></data>
 </root>

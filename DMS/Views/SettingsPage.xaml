@@ -72,6 +72,7 @@
                     
                     <StackPanel Spacing="8">
                         <TextBlock TextWrapping="Wrap" x:Uid="FullBackupHint" />
+                        <TextBlock TextWrapping="Wrap" x:Uid="AutomaticBackupHint" />
                         <Button x:Name="BackupButton" Content="💾 Create Backup" Click="BackupButton_Click" Style="{StaticResource AccentButtonStyle}"  x:Uid="Text_Create_Backup_67fc28" />
                         <Button x:Name="RestoreButton" Content="🔄 Restore Backup" Click="RestoreButton_Click" Style="{StaticResource ButtonRevealStyle}"  x:Uid="Text_Restore_Backup_0e7200" />
                         <TextBlock x:Name="DataStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />

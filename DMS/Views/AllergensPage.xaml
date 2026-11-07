@@ -62,8 +62,9 @@
             Spacing="16"
             Visibility="Collapsed">
             <TextBlock Text="⚠️" FontSize="64" />
-            <TextBlock Text="No allergens yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_allergens_yet_6f883b" />
-            <TextBlock Text="Click 'Add Allergen' to create your first allergen" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" />
+            <TextBlock x:Name="EmptyStateTitle" Text="No allergens yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_allergens_yet_6f883b" />
+            <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Allergen' to create your first allergen" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Allergen_to_create_your_first_allergen_4c030d" />
+            <Button x:Name="ClearSearchButton" HorizontalAlignment="Center" Click="ClearSearch_Click" Visibility="Collapsed" x:Uid="ClearSearch" />
         </StackPanel>
         <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"

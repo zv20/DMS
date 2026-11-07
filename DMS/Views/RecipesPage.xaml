@@ -73,6 +73,7 @@
             <TextBlock Text="🍽️" FontSize="64" />
             <TextBlock x:Name="EmptyStateTitle" Text="No recipes yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_recipes_yet_0e52a2" />
             <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Recipe' to create your first recipe" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Recipe_to_create_your_first_recipe_056e9d" />
+            <Button x:Name="ClearSearchButton" HorizontalAlignment="Center" Click="ClearSearch_Click" Visibility="Collapsed" x:Uid="ClearFilters" />
         </StackPanel>
         <Border x:Name="RecipeEditor" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"

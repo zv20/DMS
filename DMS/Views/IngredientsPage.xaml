@@ -59,8 +59,9 @@
             Spacing="16"
             Visibility="Collapsed">
             <TextBlock Text="🥕" FontSize="64" />
-            <TextBlock Text="No ingredients yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_ingredients_yet_affb49" />
-            <TextBlock Text="Click 'Add Ingredient' to create your first ingredient" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" />
+            <TextBlock x:Name="EmptyStateTitle" Text="No ingredients yet" Style="{StaticResource PageTitleTextStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"  x:Uid="Text_No_ingredients_yet_affb49" />
+            <TextBlock x:Name="EmptyStateHint" Text="Click 'Add Ingredient' to create your first ingredient" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" TextAlignment="Center"  x:Uid="Text_Click_Add_Ingredient_to_create_your_first_ingredient_49aa0b" />
+            <Button x:Name="ClearSearchButton" HorizontalAlignment="Center" Click="ClearSearch_Click" Visibility="Collapsed" x:Uid="ClearSearch" />
         </StackPanel>
         <Border x:Name="EditorPanel" Grid.Column="1" Grid.RowSpan="3" Visibility="Collapsed"
                 BorderThickness="1,0,0,0" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}"

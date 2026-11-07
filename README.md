@@ -36,7 +36,10 @@ archive and run `DMS.exe` from the extracted folder.
 Start by adding ingredients and recipes, assign recipes in **Menu Planner**,
 then use **Print / Export** to create your menu. In **Settings**, use **Create
 Backup** to save all your data, including template images. **Restore Backup**
-replaces current data with a saved backup.
+replaces current data with a saved backup. DMS also creates a backup when you
+close the app and keeps the latest three in the `AutomaticBackups` folder inside
+the data folder. Use **Open Data Folder** in Settings to find them. These copies
+are on the same computer, so keep a separate manual backup elsewhere as well.
 
 ## Change the code
 

@@ -66,9 +66,15 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
                 _filteredAllergens.Add(allergen);
             }
         }
+        var hasItems = _allergens.Count > 0;
+        EmptyStateTitle.Text = L.Get(hasItems ? "AllergenNoMatches" : "String_Text_No_allergens_yet_6f883b");
+        EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
+        ClearSearchButton.Visibility = hasItems && _filteredAllergens.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyStatePanel.Visibility = _filteredAllergens.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         AllergensListView.Visibility = _filteredAllergens.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
+
+    private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
     private void TryApplyFilter()
     {

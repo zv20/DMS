@@ -113,8 +113,15 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         }
         EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("String_Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
         EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ClearSearchButton.Visibility = _recipes.Count > 0 && _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyStatePanel.Visibility = _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         RecipesListView.Visibility = _filteredRecipes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void ClearSearch_Click(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = "";
+        CategoryFilter.SelectedIndex = 0;
     }
 
     private void TryApplyFilter()
