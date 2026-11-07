@@ -135,10 +135,12 @@
   <data name="Text_Delete_Recipe_f011c8" xml:space="preserve"><value>Изтриване на рецепта</value></data>
   <data name="Text_Delete_Template_c07327" xml:space="preserve"><value>Изтриване на шаблон</value></data>
   <data name="String_Text_Delete_f6fdbe" xml:space="preserve"><value>Изтрий</value></data>
+  <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Изтрий</value></data>
   <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Изтрий</value></data>
   <data name="Text_Dessert_40f9c1" xml:space="preserve"><value>Десерт</value></data>
   <data name="Text_Done_e9b450" xml:space="preserve"><value>Готово</value></data>
   <data name="String_Text_Edit_530164" xml:space="preserve"><value>Редактирай</value></data>
+  <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Редактирай</value></data>
   <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Редактирай</value></data>
   <data name="Text_Edit_Allergen_54f3c1" xml:space="preserve"><value>Редактиране на алерген</value></data>
   <data name="Text_Edit_Ingredient_098e94" xml:space="preserve"><value>Редактиране на съставка</value></data>

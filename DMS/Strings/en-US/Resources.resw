@@ -135,10 +135,12 @@
   <data name="Text_Delete_Recipe_f011c8" xml:space="preserve"><value>Delete Recipe</value></data>
   <data name="Text_Delete_Template_c07327" xml:space="preserve"><value>Delete Template</value></data>
   <data name="String_Text_Delete_f6fdbe" xml:space="preserve"><value>Delete</value></data>
+  <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Delete</value></data>
   <data name="Text_Delete_f6fdbe.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Delete</value></data>
   <data name="Text_Dessert_40f9c1" xml:space="preserve"><value>Dessert</value></data>
   <data name="Text_Done_e9b450" xml:space="preserve"><value>Done</value></data>
   <data name="String_Text_Edit_530164" xml:space="preserve"><value>Edit</value></data>
+  <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Edit</value></data>
   <data name="Text_Edit_530164.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Edit</value></data>
   <data name="Text_Edit_Allergen_54f3c1" xml:space="preserve"><value>Edit Allergen</value></data>
   <data name="Text_Edit_Ingredient_098e94" xml:space="preserve"><value>Edit Ingredient</value></data>
