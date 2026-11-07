@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Windowing;
+using Windows.Graphics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Services;
@@ -14,6 +16,8 @@ public sealed partial class MainWindow : Window
     private bool _navigationPending;
     private bool _paneCollapsedForSize;
     private readonly WindowSizeLimits _sizeLimits;
+    private RectInt32? _normalPlacement;
+    private bool _placementLoaded, _closing, _allowClose;
 
     public MainWindow(bool openSettings = false)
     {
@@ -29,7 +33,8 @@ public sealed partial class MainWindow : Window
         RootGrid.SizeChanged += RootGrid_SizeChanged;
         _sizeLimits = new WindowSizeLimits(this, RootGrid);
         WindowPlacement.Center(AppWindow);
-        Closed += async (_, _) => await SaveWindowPlacementAsync();
+        AppWindow.Changed += WindowPlacementChanged;
+        AppWindow.Closing += MainWindow_Closing;
     }
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -55,6 +60,8 @@ public sealed partial class MainWindow : Window
         {
             var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
+            _placementLoaded = true;
+            CaptureNormalPlacement();
             AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
@@ -72,17 +79,45 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async Task SaveWindowPlacementAsync()
+    private void WindowPlacementChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        if (_placementLoaded && (args.DidSizeChange || args.DidPositionChange || args.DidPresenterChange))
+            CaptureNormalPlacement();
+    }
+
+    private void CaptureNormalPlacement()
+    {
+        if (AppWindow.Presenter is not OverlappedPresenter { State: OverlappedPresenterState.Restored }) return;
+        var position = AppWindow.Position;
+        var size = AppWindow.Size;
+        if (size.Width > 0 && size.Height > 0)
+            _normalPlacement = new RectInt32(position.X, position.Y, size.Width, size.Height);
+    }
+
+    private async void MainWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_allowClose) return;
+        args.Cancel = true;
+        if (_closing) return;
+        _closing = true;
         try
         {
-            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized }) return;
-            var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync() ?? new DMS.Models.AppSettings();
-            settings.WindowX = AppWindow.Position.X; settings.WindowY = AppWindow.Position.Y;
-            settings.WindowWidth = AppWindow.Size.Width; settings.WindowHeight = AppWindow.Size.Height;
-            await App.Services.GetRequiredService<IDatabaseService>().SaveSettingsAsync(settings);
+            // A replaced window must not overwrite settings loaded from a restored backup.
+            if (App.CurrentWindow == this && _normalPlacement is RectInt32 placement)
+            {
+                var database = App.Services.GetRequiredService<IDatabaseService>();
+                var settings = await database.GetSettingsAsync() ?? new DMS.Models.AppSettings();
+                settings.WindowX = placement.X; settings.WindowY = placement.Y;
+                settings.WindowWidth = placement.Width; settings.WindowHeight = placement.Height;
+                await database.SaveSettingsAsync(settings);
+            }
         }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save window placement"); }
+        finally
+        {
+            _allowClose = true;
+            Close();
+        }
     }
 
     private void RestoreNavigationSelection()
