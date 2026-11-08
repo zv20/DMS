@@ -71,6 +71,10 @@ jobs:
           $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
           $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
           $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
+          # A leftover Inno uninstall entry must not block MSI installation.
+          $legacyKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{62CF39B5-8F17-4242-9DE5-99B3A75219ED}_is1'
+          New-Item -Path $legacyKey -Force | Out-Null
+          New-ItemProperty -Path $legacyKey -Name UninstallString -Value 'legacy-uninstaller.exe' -Force | Out-Null
           $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$setup`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$setupLog`"") -Wait -PassThru
           if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {

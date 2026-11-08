@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.8
+
+- Fixed MSI installation being blocked by a leftover entry from the previous EXE installer.
+
 ## 0.0.7
 
 - Replaced the EXE installer with a per-user Windows MSI installer. Uninstall the previous EXE installation before installing the MSI; DMS data is stored separately.
