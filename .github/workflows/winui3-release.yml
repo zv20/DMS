@@ -93,7 +93,10 @@ jobs:
             Write-Host 'Installed DMS reached its main window and loaded localized resources.'
           } finally {
             $app.Refresh()
-            if (!$app.HasExited) { Stop-Process -Id $app.Id -Force }
+            if (!$app.HasExited) {
+              Stop-Process -Id $app.Id -Force
+              $app.WaitForExit()
+            }
           }
           $database = Join-Path $dataDir 'dms.db'
           if (!(Test-Path $database)) { throw 'DMS did not create its database.' }
