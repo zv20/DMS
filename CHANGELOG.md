@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.10
+
+- Added an option to launch DMS when the installer finishes.
+
 ## 0.0.9
 
 - Added a visible MSI setup wizard with installation progress and a completion screen.
