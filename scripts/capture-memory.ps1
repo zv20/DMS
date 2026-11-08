@@ -73,6 +73,13 @@ $steps = @(
 )
 
 try {
+    $startupDeadline = [DateTime]::UtcNow.AddSeconds(10)
+    while (-not (Test-Path -LiteralPath $csvPath)) {
+        if ($job.State -in @('Failed', 'Stopped', 'Completed') -or [DateTime]::UtcNow -ge $startupDeadline) {
+            throw 'The memory sampler could not start. Check process permissions and try again.'
+        }
+        Start-Sleep -Milliseconds 200
+    }
     Write-Host "Recording PID $ProcessId every second. Output: $runPath"
     Write-Host 'Keep DMS running. For Visual Studio heap snapshots, take a snapshot at each checkpoint before pressing Enter.'
     if ($CaptureDumps) { Write-Host 'Full dumps may pause DMS, take disk space, and contain private data.' }
