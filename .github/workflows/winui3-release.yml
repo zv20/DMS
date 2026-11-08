@@ -52,7 +52,11 @@ jobs:
           Compress-Archive -Path artifacts/DMS-win-x64/* -DestinationPath "artifacts/DMS-$version-portable.zip"
 
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix --version 5.0.2
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build MSI installer
         shell: pwsh
@@ -61,8 +65,16 @@ jobs:
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'MSI releases require a three-part numeric version.' }
           New-Item -ItemType Directory -Force artifacts/installer | Out-Null
           $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
-          wix build installer/DMS.wxs -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
+          wix build installer/DMS.wxs -ext WixToolset.UI.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installer = New-Object -ComObject WindowsInstaller.Installer
+          $database = $installer.OpenDatabase((Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path, 0)
+          foreach ($dialog in @('WelcomeDlg', 'VerifyReadyDlg', 'ExitDialog')) {
+            $view = $database.OpenView("SELECT ``Dialog`` FROM ``Dialog`` WHERE ``Dialog`` = '$dialog'")
+            $view.Execute()
+            if (!$view.Fetch()) { throw "Missing installer dialog: $dialog" }
+            $view.Close()
+          }
 
       - name: Install and start packaged DMS with disposable data
         shell: pwsh

@@ -71,9 +71,10 @@ Run the app from Visual Studio. To create an MSI installer, run:
 dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 --output artifacts/DMS-win-x64
 $version = ([xml](Get-Content DMS/DMS.csproj -Raw)).Project.PropertyGroup[0].Version
 dotnet tool install --global wix --version 5.0.2
+wix extension add --global WixToolset.UI.wixext/5.0.2
 New-Item -ItemType Directory -Force artifacts/installer
 $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
-wix build installer/DMS.wxs -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
+wix build installer/DMS.wxs -ext WixToolset.UI.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
 ```
 
 The installer is written to `artifacts/installer/`. For releases, update

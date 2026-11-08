@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.9
+
+- Added a visible MSI setup wizard with installation progress and a completion screen.
+
 ## 0.0.8
 
 - Fixed MSI installation being blocked by a leftover entry from the previous EXE installer.
