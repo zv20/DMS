@@ -2,7 +2,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Services;
-using System.IO;
 
 
 namespace DMS;
@@ -45,35 +44,10 @@ public partial class App : Application
     {
         var began = System.Diagnostics.Stopwatch.StartNew();
         var language = "bg";
-        var fatalRecovery = false;
         startup.ShowLoading("Preparing your kitchen... / Подготвяме приложението...");
         try
         {
             var database = Services.GetRequiredService<IDatabaseService>();
-            var requestPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DMS", "installer-request.ini");
-            if (File.Exists(requestPath))
-            {
-                var request = InstallerRequest.Read(requestPath);
-                language = request.Language ?? language;
-                if (!string.IsNullOrWhiteSpace(request.Backup) && await startup.ConfirmInstallerRestoreAsync(request.Backup, language))
-                {
-                    while (true)
-                    {
-                        try { await database.RestoreFromAsync(request.Backup); break; }
-                        catch (Exception ex)
-                        {
-                            Logger.LogError(ex, "Installer backup restore failed");
-                            // If automatic recovery failed, do not reopen or initialize
-                            // the database until the recovery backup is handled.
-                            if (ex is DatabaseRecoveryRequiredException || ex.InnerException is AggregateException) { fatalRecovery = true; throw; }
-                            if (!await startup.RetryInstallerRestoreAsync(ex.Message, language)) break;
-                        }
-                    }
-                }
-                if (startup.IsClosed) return;
-                if (request.Language != null) await Services.GetRequiredService<ISettingsService>().SetLanguageAsync(request.Language);
-                File.Delete(requestPath);
-            }
             var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
             if (startup.IsClosed) return;
             language = settings.Language;
@@ -100,7 +74,7 @@ public partial class App : Application
             Logger.LogError(ex, "Unable to start DMS");
             if (!startup.IsClosed)
             {
-                if (fatalRecovery || ex is DatabaseRecoveryRequiredException)
+                if (ex is DatabaseRecoveryRequiredException)
                     startup.ShowFatalRecoveryError(language == "en" ? "Database recovery needs attention. Close DMS and restore the recovery backup shown below." : "Възстановяването на базата данни изисква внимание. Затворете DMS и възстановете посочения по-долу резервен архив.",
                         ex is DatabaseRecoveryRequiredException recovery ? RecoveryGuidance.Format(recovery, language) : ex.Message,
                         language == "en" ? "Close DMS" : "Затвори DMS");

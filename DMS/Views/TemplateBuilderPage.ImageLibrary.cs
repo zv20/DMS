@@ -40,7 +40,14 @@ public sealed partial class TemplateBuilderPage
                     tile.Children.Add(thumbnail);
                     tile.Children.Add(new TextBlock { Text = asset.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
                     selector.Items.Add(new GridViewItem { Tag = asset.Id, Content = tile });
-                    _ = LoadThumbnailAsync(asset.Id, thumbnail);
+                    // Keep image bytes and decoding off the initial library load.
+                    void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
+                    {
+                        if (args.EffectiveViewport.IsEmpty || args.EffectiveViewport.Width <= 0 || args.EffectiveViewport.Height <= 0) return;
+                        sender.EffectiveViewportChanged -= LoadVisibleThumbnail;
+                        _ = LoadThumbnailAsync(asset.Id, thumbnail);
+                    }
+                    thumbnail.EffectiveViewportChanged += LoadVisibleThumbnail;
                 }
                 var usage = new TextBlock { TextWrapping = TextWrapping.Wrap };
                 var rename = new Button { Content = L.Get("TplLibraryRename"), HorizontalAlignment = HorizontalAlignment.Stretch,

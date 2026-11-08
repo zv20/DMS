@@ -129,6 +129,7 @@ public sealed partial class TemplateOutputPage : Page
             var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
+            await _database.HydrateTemplateImagesAsync(template);
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);

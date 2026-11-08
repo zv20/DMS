@@ -19,7 +19,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
     private readonly IDatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<AllergenItemViewModel> _allergens = new();
-    private ObservableCollection<AllergenItemViewModel> _filteredAllergens = new();
+    private List<AllergenItemViewModel> _filteredAllergens = new();
     private readonly SideEditorController _editor;
 
     public AllergensPage()
@@ -70,16 +70,11 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 
     private void ApplyFilter()
     {
-        var query = SearchBox.Text?.ToLowerInvariant() ?? "";
-        _filteredAllergens.Clear();
-        foreach (var allergen in _allergens)
-        {
-            if (string.IsNullOrEmpty(query) ||
-                allergen.Name.ToLowerInvariant().Contains(query) || allergen.DisplayName.ToLowerInvariant().Contains(query))
-            {
-                _filteredAllergens.Add(allergen);
-            }
-        }
+        var query = SearchBox.Text ?? "";
+        _filteredAllergens = _allergens.Where(allergen => query.Length == 0 ||
+            allergen.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+            allergen.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        AllergensListView.ItemsSource = _filteredAllergens;
         var hasItems = _allergens.Count > 0;
         EmptyStateTitle.Text = L.Get(hasItems ? "AllergenNoMatches" : "String_Text_No_allergens_yet_6f883b");
         EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;

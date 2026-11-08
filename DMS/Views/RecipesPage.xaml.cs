@@ -16,7 +16,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private readonly IDatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<RecipeItemViewModel> _recipes = new();
-    private ObservableCollection<RecipeItemViewModel> _filteredRecipes = new();
+    private List<RecipeItemViewModel> _filteredRecipes = new();
     private bool _filtersReady;
     private bool _sortAscending = true;
     private bool _editorDirty;
@@ -120,11 +120,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             (category.Length == 0 || recipe.Category.Equals(category, StringComparison.OrdinalIgnoreCase)) &&
             (query.Length == 0 || recipe.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) || recipe.CategoryDisplay.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
         items = _sortAscending ? items.OrderBy(SortKey, StringComparer.CurrentCultureIgnoreCase) : items.OrderByDescending(SortKey, StringComparer.CurrentCultureIgnoreCase);
-        _filteredRecipes.Clear();
-        foreach (var recipe in items)
-        {
-            _filteredRecipes.Add(recipe);
-        }
+        _filteredRecipes = items.ToList();
+        RecipesListView.ItemsSource = _filteredRecipes;
         EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("String_Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
         EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ClearSearchButton.Visibility = _recipes.Count > 0 && _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -502,15 +499,7 @@ public class RecipeItemViewModel
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
     public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
-    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {L.Allergen(allergen)}"));
-
-    private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
-    {
-        "глутен" => "🌾", "ракообразни" => "🦐", "яйца" => "🥚", "риба" => "🐟",
-        "фъстъци" => "🥜", "соя" => "🫛", "мляко" => "🥛", "ядки" => "🌰",
-        "целина" => "🥬", "горчица" => "🟡", "сусам" => "🌾",
-        "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
-    };
+    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenDisplay.Icon(allergen)} {L.Allergen(allergen)}"));
 
     public RecipeItemViewModel() { }
 

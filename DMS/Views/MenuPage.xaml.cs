@@ -186,6 +186,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var end = monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(weekend ? 6 : 4);
         var calendarEnd = monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
         var entries = await _database.GetMenuAsync(start, calendarEnd);
+        var categories = monthly
+            ? new Dictionary<(DateTime Date, string Slot), string>()
+            : (await _database.GetMenuCategoriesAsync(start, calendarEnd))
+                .ToDictionary(item => (item.Date.Date, item.Slot), item => item.Category);
         var period = monthly ? first.ToString("MMMM yyyy") : $"{start:dd MMM} – {end:dd MMM yyyy}";
         var columns = weekend ? 7 : 5;
         var days = monthly ? ((end - start).Days / 7 + 1) * 7 : weekend ? 7 : 5;
@@ -217,7 +221,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
                 panel.Children.Add(button);
             }
-            else for (var slot = 0; slot < 4; slot++) panel.Children.Add(await CreateSlotAsync(day, slot, entries, recipes));
+            else for (var slot = 0; slot < 4; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories));
             cards.Add(new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 });
         }
         // A newer request supersedes this snapshot, so the next iteration renders it.
@@ -247,12 +251,12 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             ?? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
     }
 
-    private async Task<StackPanel> CreateSlotAsync(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes)
+    private StackPanel CreateSlot(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories)
     {
         var slot = $"slot{index + 1}";
         var entry = FindSlotEntry(day, index, entries);
         var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
-        var category = await _database.GetMenuCategoryAsync(day, slot) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
+        var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, DisplayMemberPath = "Name", TextMemberPath = "Name" };

@@ -29,6 +29,15 @@ public static class TemplateRenderer
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 1;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        // These values do not depend on the font size. Compute them once even
+        // when fitting the page requires several measurement passes.
+        var dayEntries = visible.Select(day => entries
+            .Where(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeMap.ContainsKey(entry.RecipeId))
+            .OrderBy(entry => MenuOutputService.SlotOrder(entry.Slot)).ToArray()).ToArray();
+        var recipeAllergens = dayEntries.SelectMany(day => day).Select(entry => entry.RecipeId).Distinct()
+            .ToDictionary(id => id, id => recipeMap[id].Allergens
+                .Concat(recipeMap[id].Ingredients.SelectMany(name => ingredientMap.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
+                .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray());
         var floor = double.IsFinite(template.MinimumFontSize) ? Math.Clamp(template.MinimumFontSize, 10, 36) : 14;
         var ceiling = double.IsFinite(template.MaximumFontSize) ? Math.Clamp(template.MaximumFontSize, floor, 48) : Math.Max(18, floor);
         var start = double.IsFinite(template.FontSize) ? Math.Clamp(template.FontSize, floor, ceiling) : floor;
@@ -50,7 +59,7 @@ public static class TemplateRenderer
         TemplatePageLayout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
-            panels = visible.Select(day => BuildDay(monday.AddDays(day), day, entries, recipeMap, ingredientMap, font, template, onSelected)).ToArray();
+            panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, recipeAllergens, font, template, onSelected)).ToArray();
             required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
             fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink) break;
@@ -171,18 +180,17 @@ public static class TemplateRenderer
         return double.IsFinite(thickness) ? Math.Clamp(thickness, 0, 20) : 1;
     }
 
-    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected)
+    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, Dictionary<int, string[]> recipeAllergens, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected)
     {
         var panel = new StackPanel { Spacing = double.IsFinite(template.MealLineSpacing) ? Math.Clamp(template.MealLineSpacing, 0, 20) : 1 };
         var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;
         var heading = StyledText(day.ToString("dddd, d MMMM"), GetTextStyle(template, $"heading:{dayIndex}"), scale);
         Selectable(heading, $"heading:{dayIndex}", onSelected);
         panel.Children.Add(heading);
-        foreach (var entry in entries.Where(e => e.Date.Date == day.Date && recipes.ContainsKey(e.RecipeId)).OrderBy(e => MenuOutputService.SlotOrder(e.Slot)))
+        foreach (var entry in entries)
         {
             var recipe = recipes[entry.RecipeId];
-            var allergens = recipe.Allergens.Concat(recipe.Ingredients.SelectMany(name => ingredients.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
-                .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray();
+            var allergens = recipeAllergens[entry.RecipeId];
             var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
             var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
             var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");

@@ -14,6 +14,25 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task CategoryRangeIncludesBothBoundariesAndKeepsSlotsDistinct()
+    {
+        using var database = Open();
+        await database.SaveMenuSlotAsync(_day.AddDays(-1), "slot1", "other", null);
+        await database.SaveMenuSlotAsync(_day, "slot1", "soup", null);
+        await database.SaveMenuSlotAsync(_day, "slot2", "main", null);
+        await database.SaveMenuSlotAsync(_day.AddDays(6), "slot1", "dessert", null);
+        await database.SaveMenuSlotAsync(_day.AddDays(7), "slot1", "other", null);
+
+        var categories = await database.GetMenuCategoriesAsync(_day.AddHours(12), _day.AddDays(6).AddHours(23));
+
+        Assert.Collection(categories,
+            item => { Assert.Equal(_day, item.Date); Assert.Equal("slot1", item.Slot); Assert.Equal("soup", item.Category); },
+            item => { Assert.Equal(_day, item.Date); Assert.Equal("slot2", item.Slot); Assert.Equal("main", item.Category); },
+            item => { Assert.Equal(_day.AddDays(6), item.Date); Assert.Equal("slot1", item.Slot); Assert.Equal("dessert", item.Category); });
+        Assert.Empty(await database.GetMenuCategoriesAsync(_day.AddDays(1), _day.AddDays(5)));
+    }
+
+    [Fact]
     public async Task ReplacingExistingSlotSavesCategoryAndMealAcrossReopen()
     {
         using (var database = Open())

@@ -13,28 +13,25 @@ public sealed class RecipeInUseException : InvalidOperationException
 public interface IDatabaseService
 {
     Task InitializeAsync();
-    Task<Recipe?> GetRecipeAsync(int id);
     Task<List<Recipe>> GetAllRecipesAsync();
     Task<int> SaveRecipeAsync(Recipe recipe);
     Task DeleteRecipeAsync(int id);
-    Task<Ingredient?> GetIngredientAsync(int id);
     Task<List<Ingredient>> GetAllIngredientsAsync();
     Task<int> SaveIngredientAsync(Ingredient ingredient);
     Task DeleteIngredientAsync(int id);
-    Task<Allergen?> GetAllergenAsync(int id);
     Task<List<Allergen>> GetAllAllergensAsync();
     Task<int> SaveAllergenAsync(Allergen allergen);
     Task DeleteAllergenAsync(int id);
     Task<List<MenuEntry>> GetMenuAsync(DateTime start, DateTime end);
     Task SaveMenuEntryAsync(MenuEntry entry);
-    Task DeleteMenuEntryAsync(DateTime date, string slot);
     Task<string?> GetMenuCategoryAsync(DateTime date, string slot);
-    Task<List<MenuSlotCategory>> GetMenuCategoriesAsync();
+    Task<List<MenuSlotCategory>> GetMenuCategoriesAsync(DateTime start, DateTime end);
     Task SaveMenuCategoryAsync(DateTime date, string slot, string category);
     Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId, string? previousSlot = null);
     Task<AppSettings?> GetSettingsAsync();
     Task SaveSettingsAsync(AppSettings settings);
     Task<List<MenuTemplate>> GetAllTemplatesAsync();
+    Task HydrateTemplateImagesAsync(MenuTemplate template);
     Task SaveTemplateAsync(MenuTemplate template);
     Task RenameTemplateAsync(string currentName, string newName);
     Task DeleteTemplateAsync(string name);
@@ -313,17 +310,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
     public string GetDatabasePath() => _dbPath;
 
     // Recipe operations
-    public async Task<Recipe?> GetRecipeAsync(int id)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM recipes WHERE id = @id";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = await cmd.ExecuteReaderAsync();
-        if (await reader.ReadAsync()) return ReadRecipe(reader);
-        return null;
-    }
-
     public async Task<List<Recipe>> GetAllRecipesAsync()
     {
         await InitializeAsync();
@@ -409,17 +395,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
     }
 
     // Ingredient operations
-    public async Task<Ingredient?> GetIngredientAsync(int id)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM ingredients WHERE id = @id";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = await cmd.ExecuteReaderAsync();
-        if (await reader.ReadAsync()) return ReadIngredient(reader);
-        return null;
-    }
-
     public async Task<List<Ingredient>> GetAllIngredientsAsync()
     {
         await InitializeAsync();
@@ -481,17 +456,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
     }
 
     // Allergen operations
-    public async Task<Allergen?> GetAllergenAsync(int id)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT id, name, color, icon FROM allergens WHERE id = @id";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = await cmd.ExecuteReaderAsync();
-        if (await reader.ReadAsync()) return ReadAllergen(reader);
-        return null;
-    }
-
     public async Task<List<Allergen>> GetAllAllergensAsync()
     {
         await InitializeAsync();
@@ -598,16 +562,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task DeleteMenuEntryAsync(DateTime date, string slot)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "DELETE FROM menu WHERE date = @date AND slot = @slot";
-        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@slot", slot);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
     public async Task<string?> GetMenuCategoryAsync(DateTime date, string slot)
     {
         await InitializeAsync();
@@ -618,11 +572,13 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         return await cmd.ExecuteScalarAsync() as string;
     }
 
-    public async Task<List<MenuSlotCategory>> GetMenuCategoriesAsync()
+    public async Task<List<MenuSlotCategory>> GetMenuCategoriesAsync(DateTime start, DateTime end)
     {
         await InitializeAsync();
         using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT date, slot, category FROM menu_slot_categories ORDER BY date, slot";
+        cmd.CommandText = "SELECT date, slot, category FROM menu_slot_categories WHERE date >= @start AND date <= @end ORDER BY date, slot";
+        cmd.Parameters.AddWithValue("@start", start.ToString("yyyy-MM-dd"));
+        cmd.Parameters.AddWithValue("@end", end.ToString("yyyy-MM-dd"));
         using var reader = await cmd.ExecuteReaderAsync();
         var result = new List<MenuSlotCategory>();
         while (await reader.ReadAsync()) result.Add(new MenuSlotCategory { Date = DateTime.Parse(reader.GetString(0)), Slot = reader.GetString(1), Category = reader.GetString(2) });
@@ -776,9 +732,14 @@ public partial class DatabaseService : IDatabaseService, IDisposable
                 }
             }
         }
-        var imageUris = new Dictionary<string, string?>(StringComparer.Ordinal);
-        foreach (var template in list) HydrateTemplateImages(template, imageUris);
         return list;
+    }
+
+    public async Task HydrateTemplateImagesAsync(MenuTemplate template)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        await InitializeAsync();
+        HydrateTemplateImages(template, new Dictionary<string, string?>(StringComparer.Ordinal));
     }
 
     public async Task SaveTemplateAsync(MenuTemplate template)

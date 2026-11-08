@@ -16,7 +16,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     private readonly IDatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<IngredientItemViewModel> _ingredients = new();
-    private ObservableCollection<IngredientItemViewModel> _filteredIngredients = new();
+    private List<IngredientItemViewModel> _filteredIngredients = new();
     private readonly SideEditorController _editor;
 
     public IngredientsPage()
@@ -67,16 +67,10 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 
     private void ApplyFilter()
     {
-        var query = SearchBox.Text?.ToLowerInvariant() ?? "";
-        _filteredIngredients.Clear();
-        foreach (var ingredient in _ingredients)
-        {
-            if (string.IsNullOrEmpty(query) ||
-                ingredient.Name.ToLowerInvariant().Contains(query))
-            {
-                _filteredIngredients.Add(ingredient);
-            }
-        }
+        var query = SearchBox.Text ?? "";
+        _filteredIngredients = _ingredients.Where(ingredient =>
+            query.Length == 0 || ingredient.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        IngredientsListView.ItemsSource = _filteredIngredients;
         var hasItems = _ingredients.Count > 0;
         EmptyStateTitle.Text = L.Get(hasItems ? "IngredientNoMatches" : "String_Text_No_ingredients_yet_affb49");
         EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
@@ -230,16 +224,8 @@ public class IngredientItemViewModel
     public List<string> Allergens { get; set; } = new();
 
     public string AllergensDisplay => Allergens.Count > 0
-        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenIcon(allergen)} {L.Allergen(allergen)}"))
+        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenDisplay.Icon(allergen)} {L.Allergen(allergen)}"))
         : L.Get("Text_No_allergens_238938");
-
-    private static string AllergenIcon(string name) => name.Trim().ToLowerInvariant() switch
-    {
-        "глутен" => "🌾", "ракообразни" => "🦐", "яйца" => "🥚", "риба" => "🐟",
-        "фъстъци" => "🥜", "соя" => "🫛", "мляко" => "🥛", "ядки" => "🌰",
-        "целина" => "🥬", "горчица" => "🟡", "сусам" => "🌾",
-        "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
-    };
 
     public IngredientItemViewModel() { }
 

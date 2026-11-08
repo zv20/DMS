@@ -219,19 +219,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             foreach (var template in _templates)
             {
                 var tile = new StackPanel { Width = 125, Spacing = 6 };
-                try
+                var thumbnail = new Viewbox { Width = 120, Height = 170, Stretch = Stretch.Uniform, IsHitTestVisible = false };
+                tile.Children.Add(thumbnail);
+                // Load artwork and build a preview only when its tile enters the viewport.
+                void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
                 {
-                    var document = TemplateConversion.ToEditableCopy(template).Document ?? new TemplateDocument();
-                    var page = TemplateRenderer.Create(document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
-                    var thumbnail = new Viewbox { Width = 120, Height = 170, Stretch = Stretch.Uniform, Child = page.Page, IsHitTestVisible = false };
-                    tile.Children.Add(thumbnail);
-                    _ = ObserveTemplateThumbnailAsync(page.ImagesReady);
+                    if (args.EffectiveViewport.IsEmpty || args.EffectiveViewport.Width <= 0 || args.EffectiveViewport.Height <= 0) return;
+                    sender.EffectiveViewportChanged -= LoadVisibleThumbnail;
+                    _ = LoadTemplateThumbnailAsync(template, thumbnail);
                 }
-                catch (Exception ex)
-                {
-                    App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
-                    tile.Children.Add(new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 });
-                }
+                thumbnail.EffectiveViewportChanged += LoadVisibleThumbnail;
                 tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
                 var item = new GridViewItem { Tag = template, Content = tile };
                 grid.Items.Add(item);
@@ -268,10 +265,21 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (selected != null) await SelectTemplateAsync(selected);
     }
 
-    private static async Task ObserveTemplateThumbnailAsync(Task imagesReady)
+    private async Task LoadTemplateThumbnailAsync(MenuTemplate template, Viewbox thumbnail)
     {
-        try { await imagesReady; }
-        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load a template thumbnail image"); }
+        try
+        {
+            var copy = TemplateConversion.ToEditableCopy(template);
+            await _database.HydrateTemplateImagesAsync(copy);
+            var page = TemplateRenderer.Create(copy.Document ?? new TemplateDocument(), _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            thumbnail.Child = page.Page;
+            await page.ImagesReady;
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
+            thumbnail.Child = new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 };
+        }
     }
 
     private void SetDocument(MenuTemplate template, string? name, bool resetHistory = true)
@@ -313,7 +321,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 return;
             }
-            SetDocument(chosen, chosen.Name);
+            var loaded = TemplateConversion.ToEditableCopy(chosen);
+            await _database.HydrateTemplateImagesAsync(loaded);
+            SetDocument(loaded, chosen.Name);
         }
         catch (Exception ex)
         {
