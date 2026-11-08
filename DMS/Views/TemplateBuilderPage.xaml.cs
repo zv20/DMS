@@ -20,8 +20,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private readonly List<CheckBox> _fixedBoxes = [];
     private readonly List<Grid> _dayRows = [];
     private readonly List<MenuTemplate> _templates = [];
-    private readonly Stack<string> _undoHistory = new();
-    private readonly Stack<string> _redoHistory = new();
+    private readonly TemplateHistoryStack _undoHistory = new();
+    private readonly TemplateHistoryStack _redoHistory = new();
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
