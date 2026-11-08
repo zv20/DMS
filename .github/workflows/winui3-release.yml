@@ -76,8 +76,7 @@ jobs:
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
             if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
           }
-          $env:APPDATA = Join-Path $env:RUNNER_TEMP 'DMS-test-appdata'
-          New-Item -ItemType Directory -Force $env:APPDATA | Out-Null
+          $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
           $env:DMS_QA_READY_FILE = Join-Path $env:RUNNER_TEMP 'dms-ready.txt'
           Remove-Item $env:DMS_QA_READY_FILE -Force -ErrorAction SilentlyContinue
           $app = Start-Process -FilePath (Join-Path $installDir 'DMS.exe') -WorkingDirectory $installDir -PassThru
@@ -96,10 +95,13 @@ jobs:
             $app.Refresh()
             if (!$app.HasExited) { Stop-Process -Id $app.Id -Force }
           }
+          $database = Join-Path $dataDir 'dms.db'
+          if (!(Test-Path $database)) { throw 'DMS did not create its database.' }
+          $databaseHash = (Get-FileHash $database).Hash
           $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$setup`"", '/qn', '/norestart') -Wait -PassThru
           if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
           if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
-          if (!(Test-Path (Join-Path $env:APPDATA 'DMS/dms.db'))) { throw 'Uninstall removed the application database.' }
+          if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
