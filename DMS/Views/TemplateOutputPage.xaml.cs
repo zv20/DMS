@@ -141,7 +141,8 @@ public sealed partial class TemplateOutputPage : Page
             template = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(template);
             if (!_loaded || generation != _generation) return;
-            _monday = monday; _document = template.Document; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
+            _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token);
             _firstDay = result.FirstDay; _lastDay = result.LastDay;
             _previewPage = result.Page;
