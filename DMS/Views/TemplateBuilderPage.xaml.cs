@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 using Windows.Foundation;
 using System.Text.Json;
 using L = DMS.Services.Localization;
@@ -22,6 +23,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private readonly List<MenuTemplate> _templates = [];
     private readonly TemplateHistoryStack _undoHistory = new();
     private readonly TemplateHistoryStack _redoHistory = new();
+    private readonly TemplateHistoryImages _historyImages = new();
+    private readonly TemplateBitmapCache _bitmapCache = new();
+    private readonly CancellationTokenSource _pageLifetime = new();
+    private bool _leaving, _renderRunning, _renderPending;
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
     private string? _loadedName;
@@ -129,7 +134,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ZoomResetButton.Content = $"{percent:0}%";
     }
 
-    private string SerializeDocument() => JsonSerializer.Serialize(_document);
+    private string SerializeDocument() => _historyImages.Serialize(_document);
 
     private void SnapshotBeforeEdit()
     {
@@ -144,6 +149,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void ResetHistory()
     {
         _undoHistory.Clear(); _redoHistory.Clear();
+        _historyImages.Clear();
         _savedDocumentJson = SerializeDocument();
         UpdateHistoryControls();
     }
@@ -167,6 +173,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         try
         {
             var document = JsonSerializer.Deserialize<TemplateDocument>(snapshot) ?? throw new InvalidOperationException("Invalid template history snapshot.");
+            _historyImages.Restore(document);
             _restoringHistory = true;
             var template = new MenuTemplate { Name = _loadedTemplate.Name, IsPreset = _loadedTemplate.IsPreset, Document = document };
             SetDocument(template, _loadedName, resetHistory: false);
@@ -186,11 +193,33 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         try
         {
-            _recentTemplateColors = (await _database.GetSettingsAsync())?.RecentTemplateColors?
+            var settings = await _database.GetSettingsAsync();
+            if (_leaving) return;
+            _recentTemplateColors = settings?.RecentTemplateColors?
                 .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
-            await ReloadTemplatesAsync(); SetDocument(NewTemplate(), null); await LoadWeekAsync(); SetCanvasZoom(70);
+            await ReloadTemplatesAsync();
+            if (_leaving) return;
+            SetDocument(NewTemplate(), null); await LoadWeekAsync();
+            if (!_leaving) SetCanvasZoom(70);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        _leaving = true;
+        _generation++; _renderGeneration++;
+        _pageLifetime.Cancel();
+        _renderPending = false;
+        DismissContextTools();
+        PageHost.Content = null;
+        _selectionAnchor = null;
+        _bitmapCache.Clear();
+        _undoHistory.Clear(); _redoHistory.Clear(); _historyImages.Clear();
+        _savedDocumentJson = "";
+        _templates.Clear(); _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
+        _document = new TemplateDocument(); _loadedTemplate = new MenuTemplate();
+        base.OnNavigatedFrom(e);
     }
 
     private static MenuTemplate NewTemplate() => new() { Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } };
@@ -198,6 +227,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private async Task ReloadTemplatesAsync()
     {
         var all = await _database.GetAllTemplatesAsync();
+        if (_leaving) return;
         _templates.Clear(); _templates.AddRange(all);
         RefreshSavedTemplatesMenu();
     }
@@ -212,6 +242,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         if (_saving || _switching || _binding || _templates.Count == 0) return;
         _switching = true;
         MenuTemplate? selected = null;
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(_pageLifetime.Token);
+        var thumbnails = new List<Viewbox>();
+        var viewportHandlers = new List<(Viewbox Thumbnail, TypedEventHandler<FrameworkElement, EffectiveViewportChangedEventArgs> Handler)>();
+        var thumbnailCache = new TemplateBitmapCache();
+        var thumbnailGate = new SemaphoreSlim(1, 1);
         try
         {
             var grid = new GridView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 440, MinWidth = 320,
@@ -220,15 +255,22 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             {
                 var tile = new StackPanel { Width = 125, Spacing = 6 };
                 var thumbnail = new Viewbox { Width = 120, Height = 170, Stretch = Stretch.Uniform, IsHitTestVisible = false };
+                thumbnails.Add(thumbnail);
                 tile.Children.Add(thumbnail);
                 // Load artwork and build a preview only when its tile enters the viewport.
-                void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
+                var visible = false;
+                var loading = false;
+                async void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
                 {
-                    if (args.EffectiveViewport.IsEmpty || args.EffectiveViewport.Width <= 0 || args.EffectiveViewport.Height <= 0) return;
-                    sender.EffectiveViewportChanged -= LoadVisibleThumbnail;
-                    _ = LoadTemplateThumbnailAsync(template, thumbnail);
+                    visible = !args.EffectiveViewport.IsEmpty && args.EffectiveViewport.Width > 0 && args.EffectiveViewport.Height > 0;
+                    if (!visible) { thumbnail.Child = null; return; }
+                    if (loading || thumbnail.Child != null || lifetime.IsCancellationRequested) return;
+                    loading = true;
+                    try { await LoadTemplateThumbnailAsync(template, thumbnail, thumbnailCache, thumbnailGate, lifetime.Token); }
+                    finally { loading = false; if (!visible) thumbnail.Child = null; }
                 }
                 thumbnail.EffectiveViewportChanged += LoadVisibleThumbnail;
+                viewportHandlers.Add((thumbnail, LoadVisibleThumbnail));
                 tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
                 var item = new GridViewItem { Tag = template, Content = tile };
                 grid.Items.Add(item);
@@ -261,25 +303,40 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             }
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to browse saved templates"); StatusText.Text = L.Get("ErrorTemplate"); }
-        finally { _switching = false; }
+        finally
+        {
+            lifetime.Cancel();
+            foreach (var (thumbnail, handler) in viewportHandlers) thumbnail.EffectiveViewportChanged -= handler;
+            foreach (var thumbnail in thumbnails) thumbnail.Child = null;
+            thumbnailCache.Clear();
+            _switching = false;
+        }
         if (selected != null) await SelectTemplateAsync(selected);
     }
 
-    private async Task LoadTemplateThumbnailAsync(MenuTemplate template, Viewbox thumbnail)
+    private async Task LoadTemplateThumbnailAsync(MenuTemplate template, Viewbox thumbnail, TemplateBitmapCache cache, SemaphoreSlim gate, CancellationToken cancellationToken)
     {
+        var entered = false;
         try
         {
+            await gate.WaitAsync(cancellationToken);
+            entered = true;
+            cancellationToken.ThrowIfCancellationRequested();
             var copy = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(copy);
-            var page = TemplateRenderer.Create(copy.Document ?? new TemplateDocument(), _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            cancellationToken.ThrowIfCancellationRequested();
+            var page = TemplateRenderer.Create(copy.Document ?? new TemplateDocument(), _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: cache, decodeWidth: 256, cancellationToken: cancellationToken);
             thumbnail.Child = page.Page;
             await page.ImagesReady;
+            if (cancellationToken.IsCancellationRequested) thumbnail.Child = null;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception ex)
         {
             App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
-            thumbnail.Child = new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 };
+            if (!cancellationToken.IsCancellationRequested) thumbnail.Child = new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 };
         }
+        finally { if (entered) gate.Release(); }
     }
 
     private void SetDocument(MenuTemplate template, string? name, bool resetHistory = true)
@@ -903,11 +960,20 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private async void Render()
     {
-        if (_binding || _monday == default) return;
-        var generation = ++_renderGeneration;
+        if (_binding || _monday == default || _leaving) return;
+        _renderPending = true;
+        ++_renderGeneration;
+        if (_renderRunning) return;
+        _renderRunning = true;
         try
         {
-            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled);
+          while (_renderPending && !_leaving)
+          {
+            _renderPending = false;
+            var generation = _renderGeneration;
+            try
+            {
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token);
             result.Page.Loaded += (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
@@ -921,7 +987,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             StatusText.Text = "";
             await result.ImagesReady;
             if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
+            }
+            catch (OperationCanceledException) when (_leaving) { }
+            catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (!_leaving && generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
+          }
         }
-        catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
+        finally { _renderRunning = false; }
     }
 }

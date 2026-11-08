@@ -17,7 +17,7 @@ public sealed record TemplatePageResult(FrameworkElement Page, bool Overflowed, 
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateRenderer
 {
-    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false)
+    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default)
     {
         var canvasImages = template.DecorativeImages ?? [];
         var insets = TemplatePageImages.GetInsets(canvasImages.Where(image => image is { IsCanvasBackground: false }));
@@ -121,19 +121,19 @@ public static class TemplateRenderer
         var backgroundImage = new Image { Stretch = Stretch.UniformToFill, Opacity = double.IsFinite(template.BackgroundImageOpacity) ? Math.Clamp(template.BackgroundImageOpacity, 0, 1) : 1, IsHitTestVisible = false };
         var content = new Grid();
         content.Children.Add(backgroundImage);
-        var canvasBackground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: true }), onSelected);
+        var canvasBackground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: true }), onSelected, bitmapCache, decodeWidth, cancellationToken);
         content.Children.Add(canvasBackground.Layer);
-        var decorations = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: false }), onSelected);
+        var decorations = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: false }), onSelected, bitmapCache, decodeWidth, cancellationToken);
         content.Children.Add(decorations.Layer);
         var inset = new Border { Padding = new Thickness(40 + insets.Left, 40, 40 + insets.Right, 40), Child = grid };
         content.Children.Add(inset);
-        var foreground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: true }), onSelected);
+        var foreground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: true }), onSelected, bitmapCache, decodeWidth, cancellationToken);
         content.Children.Add(foreground.Layer);
         var pageColor = ParseColor(template.BackgroundColor, Colors.White);
         var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected);
-        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri), canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
+        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri, bitmapCache, decodeWidth, cancellationToken), canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last);
     }
 
     public static TemplateTextStyle GetTextStyle(TemplateDocument template, string key)
@@ -256,7 +256,7 @@ public static class TemplateRenderer
         return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
     }
 
-    private static async Task LoadImageAsync(Image target, string? dataUri)
+    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(dataUri)) return;
         if (!dataUri.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase) && !dataUri.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase))
@@ -264,12 +264,19 @@ public static class TemplateRenderer
         if (dataUri.Length > 14_000_000) throw new InvalidOperationException("Template image is too large.");
         try
         {
+            if (bitmapCache != null)
+            {
+                var cached = await bitmapCache.GetAsync(dataUri, decodeWidth, 10 * 1024 * 1024);
+                if (!cancellationToken.IsCancellationRequested) target.Source = cached;
+                return;
+            }
             var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
             if (bytes.Length > 10 * 1024 * 1024) throw new InvalidOperationException("Template image is too large.");
             using var stream = new InMemoryRandomAccessStream();
             using var writer = new DataWriter(stream.GetOutputStreamAt(0));
             writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
-            var bitmap = new BitmapImage(); await bitmap.SetSourceAsync(stream); target.Source = bitmap;
+            var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
+            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested) target.Source = bitmap;
         }
         catch (FormatException ex) { throw new InvalidOperationException("Invalid template image.", ex); }
     }

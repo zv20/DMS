@@ -26,6 +26,8 @@ public sealed partial class TemplateOutputPage : Page
     private static readonly string[] JpegExtensions = [".jpg", ".jpeg"];
     private static readonly string[] PdfExtensions = [".pdf"];
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private readonly CancellationTokenSource _pageLifetime = new();
+    private readonly TemplateBitmapCache _previewBitmaps = new();
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _uiQueue;
     private PrintManager? _printManager;
     private PrintDocument? _printDocument;
@@ -97,6 +99,12 @@ public sealed partial class TemplateOutputPage : Page
     {
         _loaded = false;
         _generation++;
+        _pageLifetime.Cancel();
+        PreviewHost.Content = null;
+        TemplateSelector.ItemsSource = null;
+        _previewPage = null; _document = null;
+        _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
+        _previewBitmaps.Clear();
         try { UnregisterPrinting(); }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to release print resources"); }
     }
@@ -125,14 +133,16 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             if (!_loaded || generation != _generation) return;
+            _previewBitmaps.Clear();
             var weekendEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
             var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
+            template = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(template);
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
-            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token);
             _firstDay = result.FirstDay; _lastDay = result.LastDay;
             _previewPage = result.Page;
             PreviewHost.Content = _previewPage;
@@ -142,6 +152,7 @@ public sealed partial class TemplateOutputPage : Page
             if (_printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
             SetReady(result.HasMeals && !result.Overflowed);
         }
+        catch (OperationCanceledException) when (!_loaded || generation != _generation) { }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the output preview"); if (generation == _generation) StatusText.Text = L.Get("ErrorOutput"); }
         finally { _refreshGate.Release(); }
     }
