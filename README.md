@@ -65,6 +65,8 @@ dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
 ```
 
+For a repeatable memory investigation, see [memory diagnostics](scripts/MEMORY-DIAGNOSTICS.md).
+
 Run the app from Visual Studio. To create an MSI installer, run:
 
 ```powershell
