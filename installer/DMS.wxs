@@ -1,0 +1,31 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="DMS" Manufacturer="DMS" Version="$(var.Version)"
+           UpgradeCode="8739DAA3-B371-4A7C-8D98-19D6F030D77D" Scope="perUser">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DMS is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Do not let two installer technologies own the same app or shortcuts. -->
+    <Property Id="INNOINSTALLED">
+      <RegistrySearch Id="InnoSearch" Root="HKCU"
+        Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\{62CF39B5-8F17-4242-9DE5-99B3A75219ED}_is1"
+        Name="UninstallString" Type="raw" />
+    </Property>
+    <Launch Condition="Installed OR NOT INNOINSTALLED"
+      Message="Please uninstall the previous DMS installation before installing this version. Your DMS data is kept separately." />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="DMS" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="DMS">
+      <Files Include="$(var.PublishDir)\**" Directory="INSTALLFOLDER" />
+      <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder" Guid="*">
+        <Shortcut Id="DmsShortcut" Name="DMS" Target="[INSTALLFOLDER]DMS.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\DMS\Installer" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </Feature>
+  </Package>
+</Wix>

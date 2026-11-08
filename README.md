@@ -24,11 +24,16 @@ your computer.
 Requires **Windows 11 x64, build 22621 or newer**.
 
 1. Open the [latest release](https://github.com/zv20/DMS/releases/latest).
-2. Under **Assets**, download `DMS-Setup-<version>.exe` and run it.
+2. Under **Assets**, download `DMS-Setup-<version>.msi` and run it.
 3. Follow the installer, then open **DMS** from the Start menu.
 
 The installer includes the app's runtimes. You can install and use DMS without
 Visual Studio, developer tools or build commands.
+
+If you previously installed DMS using the EXE installer, uninstall that version
+before installing the MSI. Your database and backups are stored separately in
+`%APPDATA%\DMS`; keep a backup before changing installations. Choose the
+language and restore a backup in DMS Settings after installation.
 
 For a portable copy, download `DMS-<version>-portable.zip`, extract the whole
 archive and run `DMS.exe` from the extracted folder.
@@ -60,13 +65,15 @@ dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
 ```
 
-Run the app from Visual Studio. To create an EXE installer, install Inno Setup
-6.5.2 or later, then run:
+Run the app from Visual Studio. To create an MSI installer, run:
 
 ```powershell
 dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 --output artifacts/DMS-win-x64
 $version = ([xml](Get-Content DMS/DMS.csproj -Raw)).Project.PropertyGroup[0].Version
-& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/DMS.iss "/DMyAppVersion=$version"
+dotnet tool install --global wix --version 5.0.2
+New-Item -ItemType Directory -Force artifacts/installer
+$publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
+wix build installer/DMS.wxs -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
 ```
 
 The installer is written to `artifacts/installer/`. For releases, update

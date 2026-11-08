@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.7
+
+- Replaced the EXE installer with a per-user Windows MSI installer. Uninstall the previous EXE installation before installing the MSI; DMS data is stored separately.
+- Added automatic backups and improved empty search states.
+- Released list data when leaving pages to reduce memory use.
+
 ## 0.0.6
 
 - Refreshed the recipe, ingredient, and allergen lists with a more compact look and clearer actions.

@@ -51,14 +51,17 @@ jobs:
           $version = $env:RELEASE_VERSION.TrimStart('v')
           Compress-Archive -Path artifacts/DMS-win-x64/* -DestinationPath "artifacts/DMS-$version-portable.zip"
 
-      - name: Install Inno Setup
-        run: choco install innosetup --no-progress --yes
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix --version 5.0.2
 
-      - name: Build branded Setup EXE
+      - name: Build MSI installer
         shell: pwsh
         run: |
           $version = $env:RELEASE_VERSION.TrimStart('v')
-          & iscc installer/DMS.iss "/DMyAppVersion=$version"
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'MSI releases require a three-part numeric version.' }
+          New-Item -ItemType Directory -Force artifacts/installer | Out-Null
+          $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
+          wix build installer/DMS.wxs -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install and start packaged DMS with disposable data
@@ -66,9 +69,9 @@ jobs:
         run: |
           $version = $env:RELEASE_VERSION.TrimStart('v')
           $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
-          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.exe").Path
+          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
           $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
-          $result = Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir", "/LOG=$setupLog") -Wait -PassThru
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$setup`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$setupLog`"") -Wait -PassThru
           if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
             if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
@@ -93,6 +96,10 @@ jobs:
             $app.Refresh()
             if (!$app.HasExited) { Stop-Process -Id $app.Id -Force }
           }
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$setup`"", '/qn', '/norestart') -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
+          if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
+          if (!(Test-Path (Join-Path $env:APPDATA 'DMS/dms.db'))) { throw 'Uninstall removed the application database.' }
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
@@ -103,5 +110,5 @@ jobs:
           body_path: CHANGELOG.md
           fail_on_unmatched_files: true
           files: |
-            artifacts/installer/*.exe
+            artifacts/installer/*.msi
             artifacts/*-portable.zip
