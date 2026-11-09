@@ -17,10 +17,13 @@ Directory for a new run folder. Defaults to the ignored artifacts folder.
 param(
     [int]$ProcessId = 0,
     [switch]$CaptureDumps,
-    [string]$OutputRoot = (Join-Path $PSScriptRoot '..\artifacts\memory-captures')
+    [string]$OutputRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
+    $OutputRoot = Join-Path $PSScriptRoot '..\artifacts\memory-captures'
+}
 if ($CaptureDumps -and -not (Get-Command dotnet-dump -ErrorAction SilentlyContinue)) {
     throw 'dotnet-dump is not available. Install it first or run without -CaptureDumps.'
 }
