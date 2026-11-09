@@ -64,7 +64,8 @@ public static class TemplatePageImages
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picture, item.AltText ?? "");
             Canvas.SetLeft(picture, item.X); Canvas.SetTop(picture, item.Y);
             canvas.Children.Add(picture);
-            loads.Add(LoadImageAsync(picture, item.DataUri, bitmapCache, decodeWidth, cancellationToken, lifetime));
+            var imageDecodeSize = TemplatePreviewSizing.ForImage(item.Width, item.Height, decodeWidth);
+            loads.Add(LoadImageAsync(picture, item.DataUri, bitmapCache, imageDecodeSize, cancellationToken, lifetime));
         }
         return new ImageLayer(canvas, Task.WhenAll(loads));
     }

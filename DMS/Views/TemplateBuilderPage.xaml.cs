@@ -191,7 +191,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _historyImages.Restore(document);
             _restoringHistory = true;
             var template = new MenuTemplate { Name = _loadedTemplate.Name, IsPreset = _loadedTemplate.IsPreset, Document = document };
-            SetDocument(template, _loadedName, resetHistory: false);
+            SetDocument(template, _loadedName, resetHistory: false, takeOwnership: true);
             _dirty = SerializeDocument() != _savedDocumentJson;
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to restore template history"); StatusText.Text = L.Get("ErrorTemplate"); }
@@ -363,9 +363,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         finally { if (entered) gate.Release(); }
     }
 
-    private void SetDocument(MenuTemplate template, string? name, bool resetHistory = true)
+    private void SetDocument(MenuTemplate template, string? name, bool resetHistory = true, bool takeOwnership = false)
     {
-        var loadedTemplate = TemplateConversion.ToEditableCopy(template);
+        var loadedTemplate = takeOwnership ? template : TemplateConversion.ToEditableCopy(template);
         _binding = true;
         DismissContextTools();
         _loadedTemplate = loadedTemplate;
@@ -387,7 +387,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             _dayBoxes[i].IsEnabled = heights[i].HasValue;
         }
         _dirty = false; _binding = false;
-        if (resetHistory) ResetHistory();
+        if (resetHistory) { _bitmapCache.Clear(); ResetHistory(); }
         Render();
     }
 
@@ -404,7 +404,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             }
             var loaded = TemplateConversion.ToEditableCopy(chosen);
             await _database.HydrateTemplateImagesAsync(loaded);
-            SetDocument(loaded, chosen.Name);
+            SetDocument(loaded, chosen.Name, takeOwnership: true);
         }
         catch (Exception ex)
         {
@@ -1015,7 +1015,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await result.ImagesReady;
             if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
             }
-            catch (OperationCanceledException) when (_leaving) { }
+            catch (OperationCanceledException) when (_leaving || _switching || _renderPending) { }
             catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (!_leaving && generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
           }
         }
