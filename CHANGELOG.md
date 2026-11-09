@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.11
+
+- Reduced memory use when browsing and editing templates with images.
+- Released page previews, image resources, and event handlers when they are no longer needed.
+- Improved Template Builder undo history and added a guided memory diagnostic capture for developers.
+- Improved template and menu planner performance.
+
 ## 0.0.10
 
 - Added an option to launch DMS when the installer finishes.
