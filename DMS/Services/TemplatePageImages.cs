@@ -43,7 +43,7 @@ public static class TemplatePageImages
         image.X >= 0 && image.Y >= 0 && image.Width > 0 && image.Height > 0 &&
         image.X + image.Width <= TemplatePageLayout.PageWidth && image.Y + image.Height <= TemplatePageLayout.PageHeight;
 
-    public static ImageLayer CreateLayer(IEnumerable<TemplateImage>? images, Action<string, FrameworkElement>? onSelected = null, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default)
+    public static ImageLayer CreateLayer(IEnumerable<TemplateImage>? images, Action<string, FrameworkElement>? onSelected = null, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default, TemplateVisualLifetime? lifetime = null)
     {
         var canvas = new Canvas { Width = TemplatePageLayout.PageWidth, Height = TemplatePageLayout.PageHeight, IsHitTestVisible = onSelected != null };
         var loads = new List<Task>();
@@ -55,16 +55,21 @@ public static class TemplatePageImages
             var key = $"image:{item.Id}";
             picture.Tag = key;
             if (onSelected != null)
-                picture.PointerPressed += (_, e) => { onSelected(key, picture); e.Handled = true; };
+            {
+                Microsoft.UI.Xaml.Input.PointerEventHandler handler = (_, e) => { onSelected(key, picture); e.Handled = true; };
+                if (lifetime != null) lifetime.AddSelection(picture, handler);
+                else picture.PointerPressed += handler;
+            }
+            lifetime?.AddImage(picture);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picture, item.AltText ?? "");
             Canvas.SetLeft(picture, item.X); Canvas.SetTop(picture, item.Y);
             canvas.Children.Add(picture);
-            loads.Add(LoadImageAsync(picture, item.DataUri, bitmapCache, decodeWidth, cancellationToken));
+            loads.Add(LoadImageAsync(picture, item.DataUri, bitmapCache, decodeWidth, cancellationToken, lifetime));
         }
         return new ImageLayer(canvas, Task.WhenAll(loads));
     }
 
-    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken)
+    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken, TemplateVisualLifetime? lifetime)
     {
         if (string.IsNullOrEmpty(dataUri) ||
             (!dataUri.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase) &&
@@ -76,7 +81,7 @@ public static class TemplatePageImages
             if (bitmapCache != null)
             {
                 var cached = await bitmapCache.GetAsync(dataUri, decodeWidth, 4 * 1024 * 1024);
-                if (!cancellationToken.IsCancellationRequested) target.Source = cached;
+                if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = cached;
                 return;
             }
             var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
@@ -85,7 +90,7 @@ public static class TemplatePageImages
             using var writer = new DataWriter(stream.GetOutputStreamAt(0));
             writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
             var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
-            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested) target.Source = bitmap;
+            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = bitmap;
         }
         catch (FormatException ex) { throw new InvalidOperationException("Invalid decorative image.", ex); }
     }

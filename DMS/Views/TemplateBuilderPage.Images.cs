@@ -27,8 +27,8 @@ public sealed partial class TemplateBuilderPage
     private void InitializeImageInteraction()
     {
         ImageLibraryMenuItem.Text = L.Get("TplImageLibrary");
-        SelectionOutline.PointerPressed += (_, e) => BeginImageDrag(e);
-        SelectionOutline.PointerMoved += (_, e) =>
+        PointerEventHandler pressed = (_, e) => BeginImageDrag(e);
+        PointerEventHandler moved = (_, e) =>
         {
             if (!_draggingImage || e.Pointer.PointerId != _imagePointerId || SelectedCanvasImage() is not { } image) return;
             var point = e.GetCurrentPoint(PageHost).Position;
@@ -38,9 +38,12 @@ public sealed partial class TemplateBuilderPage
             PositionContextTools();
             e.Handled = true;
         };
-        SelectionOutline.PointerReleased += (_, e) => { if (e.Pointer.PointerId == _imagePointerId) EndImageDrag(); };
-        SelectionOutline.PointerCanceled += (_, _) => EndImageDrag(cancel: true);
-        SelectionOutline.PointerCaptureLost += (_, _) => EndImageDrag();
+        PointerEventHandler released = (_, e) => { if (e.Pointer.PointerId == _imagePointerId) EndImageDrag(); };
+        PointerEventHandler canceled = (_, _) => EndImageDrag(cancel: true);
+        PointerEventHandler lost = (_, _) => EndImageDrag();
+        SelectionOutline.PointerPressed += pressed; SelectionOutline.PointerMoved += moved;
+        SelectionOutline.PointerReleased += released; SelectionOutline.PointerCanceled += canceled; SelectionOutline.PointerCaptureLost += lost;
+        _pageCleanup.Add(() => { SelectionOutline.PointerPressed -= pressed; SelectionOutline.PointerMoved -= moved; SelectionOutline.PointerReleased -= released; SelectionOutline.PointerCanceled -= canceled; SelectionOutline.PointerCaptureLost -= lost; });
     }
 
     private void BeginImageDrag(PointerRoutedEventArgs e)

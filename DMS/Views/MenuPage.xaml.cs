@@ -1,6 +1,7 @@
 using L = DMS.Services.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Models;
@@ -29,6 +30,14 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         _database = App.Services.GetRequiredService<IDatabaseService>();
         UpdateViewButtons();
         Loaded += async (_, _) => await RefreshAsync();
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        CalendarGrid.Children.Clear();
+        CalendarGrid.RowDefinitions.Clear();
+        CalendarGrid.ColumnDefinitions.Clear();
+        base.OnNavigatedFrom(e);
     }
     private static DateTime WeekStart(DateTime day) => day.Date.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
     private void UpdateViewButtons()

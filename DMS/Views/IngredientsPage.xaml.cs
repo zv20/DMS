@@ -39,6 +39,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     {
         // Detach realized rows and their event handlers before leaving the page.
         _pageGeneration++;
+        _editor.Close();
         IngredientsListView.ItemsSource = null;
         _filteredIngredients.Clear();
         _ingredients.Clear();

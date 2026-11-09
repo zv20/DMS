@@ -36,6 +36,7 @@ public sealed partial class TemplateOutputPage : Page
     private FrameworkElement? _nativePage;
     private Viewbox? _printViewbox;
     private FrameworkElement? _previewPage;
+    private TemplateVisualLifetime? _previewLifetime, _printLifetime;
     private bool _ready;
     private bool _busy;
     private int _activePrintTasks;
@@ -101,6 +102,7 @@ public sealed partial class TemplateOutputPage : Page
         _generation++;
         _pageLifetime.Cancel();
         PreviewHost.Content = null;
+        _previewLifetime?.Dispose(); _previewLifetime = null;
         TemplateSelector.ItemsSource = null;
         _previewPage = null; _document = null;
         _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
@@ -145,8 +147,11 @@ public sealed partial class TemplateOutputPage : Page
             _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token);
             _firstDay = result.FirstDay; _lastDay = result.LastDay;
+            var previous = _previewLifetime;
+            _previewLifetime = result.Lifetime;
             _previewPage = result.Page;
             PreviewHost.Content = _previewPage;
+            previous?.Dispose();
             await result.ImagesReady;
             if (!_loaded || generation != _generation) return;
             StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
@@ -181,6 +186,8 @@ public sealed partial class TemplateOutputPage : Page
             _printDocument.GetPreviewPage -= GetPreviewPage;
             _printDocument.AddPages -= AddPages;
         }
+        if (_printViewbox != null) _printViewbox.Child = null;
+        _printLifetime?.Dispose(); _printLifetime = null;
         _printManager = null; _printDocument = null; _printSource = null; _printPage = null; _nativePage = null; _printViewbox = null;
     }
 
@@ -278,7 +285,10 @@ public sealed partial class TemplateOutputPage : Page
             if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
             _printViewbox = null;
             _printPage = null;
+            _nativePage = null;
+            _printLifetime?.Dispose(); _printLifetime = null;
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
+            _printLifetime = result.Lifetime;
             await result.ImagesReady;
             if (!_loaded) return;
             if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }

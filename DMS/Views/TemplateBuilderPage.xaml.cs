@@ -26,6 +26,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private readonly TemplateHistoryImages _historyImages = new();
     private readonly TemplateBitmapCache _bitmapCache = new();
     private readonly CancellationTokenSource _pageLifetime = new();
+    private TemplateVisualLifetime? _previewLifetime;
+    private readonly List<Action> _pageCleanup = [];
     private bool _leaving, _renderRunning, _renderPending;
     private TemplateDocument _document = new();
     private MenuTemplate _loadedTemplate = new();
@@ -59,7 +61,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ToolTipService.SetToolTip(UndoButton, L.Get("TplUndo")); ToolTipService.SetToolTip(RedoButton, L.Get("TplRedo"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(UndoButton, L.Get("TplUndo"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RedoButton, L.Get("TplRedo"));
-        UndoButton.Click += (_, _) => Undo(); RedoButton.Click += (_, _) => Redo();
+        RoutedEventHandler undo = (_, _) => Undo(), redo = (_, _) => Redo();
+        UndoButton.Click += undo; RedoButton.Click += redo;
+        _pageCleanup.Add(() => { UndoButton.Click -= undo; RedoButton.Click -= redo; });
         UndoButton.KeyboardAccelerators.Add(new KeyboardAccelerator { Key = Windows.System.VirtualKey.Z, Modifiers = Windows.System.VirtualKeyModifiers.Control });
         RedoButton.KeyboardAccelerators.Add(new KeyboardAccelerator { Key = Windows.System.VirtualKey.Y, Modifiers = Windows.System.VirtualKeyModifiers.Control });
         UpdateHistoryControls();
@@ -68,8 +72,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         WeekPicker.Header = L.Get("TplPreview");
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
         DayHint.Text = L.Get("TplBuilderDayHint");
-        StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
+        var statusCallback = StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
             StatusPanel.Visibility = string.IsNullOrWhiteSpace(StatusText.Text) ? Visibility.Collapsed : Visibility.Visible);
+        _pageCleanup.Add(() => StatusText.UnregisterPropertyChangedCallback(TextBlock.TextProperty, statusCallback));
         LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); PageImagesMenu.Text = L.Get("TplPageImages");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
@@ -81,16 +86,22 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             ToolTipService.SetToolTip(control, L.Get(label));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(control, L.Get(label));
         }
-        ZoomOutButton.Click += (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 - 10);
-        ZoomInButton.Click += (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 + 10);
-        ZoomResetButton.Click += (_, _) => SetCanvasZoom(100);
-        CanvasZoomSlider.ValueChanged += (_, e) => { if (!_updatingZoom) SetCanvasZoom(e.NewValue); };
-        PageScroll.ViewChanged += (_, _) => { UpdateCanvasZoom(); PositionContextTools(); };
+        RoutedEventHandler zoomOut = (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 - 10);
+        RoutedEventHandler zoomIn = (_, _) => SetCanvasZoom(PageScroll.ZoomFactor * 100 + 10);
+        RoutedEventHandler zoomReset = (_, _) => SetCanvasZoom(100);
+        RangeBaseValueChangedEventHandler zoomChanged = (_, e) => { if (!_updatingZoom) SetCanvasZoom(e.NewValue); };
+        EventHandler<ScrollViewerViewChangedEventArgs> viewChanged = (_, _) => { UpdateCanvasZoom(); PositionContextTools(); };
+        ZoomOutButton.Click += zoomOut; ZoomInButton.Click += zoomIn; ZoomResetButton.Click += zoomReset;
+        CanvasZoomSlider.ValueChanged += zoomChanged; PageScroll.ViewChanged += viewChanged;
+        _pageCleanup.Add(() => { ZoomOutButton.Click -= zoomOut; ZoomInButton.Click -= zoomIn; ZoomResetButton.Click -= zoomReset; CanvasZoomSlider.ValueChanged -= zoomChanged; PageScroll.ViewChanged -= viewChanged; });
         InlineEditor.TextChanged += InlineEditor_TextChanged;
-        InlineEditor.LostFocus += (_, _) => RefreshInlineText();
-        Workspace.SizeChanged += (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
-        AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Page_PointerPressed), true);
-        KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(); e.Handled = true; } };
+        RoutedEventHandler editorLostFocus = (_, _) => RefreshInlineText();
+        SizeChangedEventHandler workspaceSizeChanged = (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
+        PointerEventHandler pagePointerPressed = Page_PointerPressed;
+        KeyEventHandler pageKeyDown = (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(); e.Handled = true; } };
+        InlineEditor.LostFocus += editorLostFocus; Workspace.SizeChanged += workspaceSizeChanged;
+        AddHandler(UIElement.PointerPressedEvent, pagePointerPressed, true); KeyDown += pageKeyDown;
+        _pageCleanup.Add(() => { InlineEditor.TextChanged -= InlineEditor_TextChanged; InlineEditor.LostFocus -= editorLostFocus; Workspace.SizeChanged -= workspaceSizeChanged; RemoveHandler(UIElement.PointerPressedEvent, pagePointerPressed); KeyDown -= pageKeyDown; });
         var monday = DateTime.Today.AddDays(-((7 + (int)DateTime.Today.DayOfWeek - 1) % 7));
         for (var i = 0; i < 7; i++)
         {
@@ -102,12 +113,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 ContentTemplate = (DataTemplate)Resources["SettingsLabelTemplate"] };
             var height = new NumberBox { Minimum = 40, Maximum = 500, MinWidth = 0, Width = 88, Value = 160, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, IsEnabled = false };
             Grid.SetColumn(height, 1);
-            fixedBox.Checked += (_, _) => { height.IsEnabled = true; DayChanged(day); };
-            fixedBox.Unchecked += (_, _) => { height.IsEnabled = false; DayChanged(day); };
-            height.ValueChanged += (_, _) => DayChanged(day);
+            RoutedEventHandler checkedHandler = (_, _) => { height.IsEnabled = true; DayChanged(day); };
+            RoutedEventHandler uncheckedHandler = (_, _) => { height.IsEnabled = false; DayChanged(day); };
+            TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs> valueChanged = (_, _) => DayChanged(day);
+            fixedBox.Checked += checkedHandler; fixedBox.Unchecked += uncheckedHandler; height.ValueChanged += valueChanged;
+            _pageCleanup.Add(() => { fixedBox.Checked -= checkedHandler; fixedBox.Unchecked -= uncheckedHandler; height.ValueChanged -= valueChanged; });
             _fixedBoxes.Add(fixedBox); _dayBoxes.Add(height); _dayRows.Add(row); row.Children.Add(fixedBox); row.Children.Add(height); DayControls.Children.Add(row);
         }
-        Loaded += async (_, _) => await InitializeAsync();
+        RoutedEventHandler pageLoaded = async (_, _) => await InitializeAsync();
+        Loaded += pageLoaded;
+        _pageCleanup.Add(() => Loaded -= pageLoaded);
     }
 
     private void ResizeWorkspace(double width, double height)
@@ -213,8 +228,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _renderPending = false;
         DismissContextTools();
         PageHost.Content = null;
+        _previewLifetime?.Dispose(); _previewLifetime = null;
         _selectionAnchor = null;
         _bitmapCache.Clear();
+        foreach (var cleanup in _pageCleanup) cleanup();
+        _pageCleanup.Clear();
+        DayControls.Children.Clear(); _dayRows.Clear(); _dayBoxes.Clear(); _fixedBoxes.Clear();
         _undoHistory.Clear(); _redoHistory.Clear(); _historyImages.Clear();
         _savedDocumentJson = "";
         _templates.Clear(); _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
@@ -244,6 +263,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         MenuTemplate? selected = null;
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(_pageLifetime.Token);
         var thumbnails = new List<Viewbox>();
+        var thumbnailLifetimes = new Dictionary<Viewbox, TemplateVisualLifetime>();
         var viewportHandlers = new List<(Viewbox Thumbnail, TypedEventHandler<FrameworkElement, EffectiveViewportChangedEventArgs> Handler)>();
         var thumbnailCache = new TemplateBitmapCache();
         var thumbnailGate = new SemaphoreSlim(1, 1);
@@ -263,11 +283,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 async void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
                 {
                     visible = !args.EffectiveViewport.IsEmpty && args.EffectiveViewport.Width > 0 && args.EffectiveViewport.Height > 0;
-                    if (!visible) { thumbnail.Child = null; return; }
+                    if (!visible) { thumbnail.Child = null; if (thumbnailLifetimes.Remove(thumbnail, out var old)) old.Dispose(); return; }
                     if (loading || thumbnail.Child != null || lifetime.IsCancellationRequested) return;
                     loading = true;
-                    try { await LoadTemplateThumbnailAsync(template, thumbnail, thumbnailCache, thumbnailGate, lifetime.Token); }
-                    finally { loading = false; if (!visible) thumbnail.Child = null; }
+                    try { await LoadTemplateThumbnailAsync(template, thumbnail, thumbnailCache, thumbnailGate, thumbnailLifetimes, lifetime.Token); }
+                    finally { loading = false; if (!visible) { thumbnail.Child = null; if (thumbnailLifetimes.Remove(thumbnail, out var old)) old.Dispose(); } }
                 }
                 thumbnail.EffectiveViewportChanged += LoadVisibleThumbnail;
                 viewportHandlers.Add((thumbnail, LoadVisibleThumbnail));
@@ -308,13 +328,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             lifetime.Cancel();
             foreach (var (thumbnail, handler) in viewportHandlers) thumbnail.EffectiveViewportChanged -= handler;
             foreach (var thumbnail in thumbnails) thumbnail.Child = null;
+            foreach (var preview in thumbnailLifetimes.Values) preview.Dispose();
+            thumbnailLifetimes.Clear();
             thumbnailCache.Clear();
             _switching = false;
         }
         if (selected != null) await SelectTemplateAsync(selected);
     }
 
-    private async Task LoadTemplateThumbnailAsync(MenuTemplate template, Viewbox thumbnail, TemplateBitmapCache cache, SemaphoreSlim gate, CancellationToken cancellationToken)
+    private async Task LoadTemplateThumbnailAsync(MenuTemplate template, Viewbox thumbnail, TemplateBitmapCache cache, SemaphoreSlim gate, Dictionary<Viewbox, TemplateVisualLifetime> lifetimes, CancellationToken cancellationToken)
     {
         var entered = false;
         try
@@ -326,6 +348,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await _database.HydrateTemplateImagesAsync(copy);
             cancellationToken.ThrowIfCancellationRequested();
             var page = TemplateRenderer.Create(copy.Document ?? new TemplateDocument(), _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: cache, decodeWidth: 256, cancellationToken: cancellationToken);
+            lifetimes[thumbnail] = page.Lifetime;
             thumbnail.Child = page.Page;
             await page.ImagesReady;
             if (cancellationToken.IsCancellationRequested) thumbnail.Child = null;
@@ -333,6 +356,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception ex)
         {
+            if (lifetimes.Remove(thumbnail, out var failed)) failed.Dispose();
             App.Logger.LogWarning(ex, "Unable to render a saved template thumbnail");
             if (!cancellationToken.IsCancellationRequested) thumbnail.Child = new FontIcon { Glyph = "\uE8A5", FontSize = 48, Height = 170 };
         }
@@ -974,14 +998,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             try
             {
             var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token);
-            result.Page.Loaded += (_, _) =>
+            result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
                 _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock));
                 RevealNewImage();
                 PositionContextTools();
-            };
+            });
+            var previous = _previewLifetime;
+            _previewLifetime = result.Lifetime;
             PageHost.Content = result.Page;
+            previous?.Dispose();
             if (_selectedBlock != null)
                 DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
             StatusText.Text = "";

@@ -42,6 +42,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
     {
         // Detach realized rows and their event handlers before leaving the page.
         _pageGeneration++;
+        _editor.Close();
         AllergensListView.ItemsSource = null;
         _filteredAllergens.Clear();
         _allergens.Clear();
