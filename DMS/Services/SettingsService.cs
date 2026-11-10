@@ -2,21 +2,13 @@ using DMS.Models;
 
 namespace DMS.Services;
 
-public interface ISettingsService
-{
-    string GetLanguage();
-    Task SetLanguageAsync(string language);
-    Task<AppSettings> LoadAsync();
-    Task SaveAsync(AppSettings settings);
-}
-
-public sealed class SettingsService : ISettingsService
+public sealed class SettingsService
 {
     private const string DefaultLanguage = "bg";
     private string _language = DefaultLanguage;
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
 
-    public SettingsService(IDatabaseService database)
+    public SettingsService(DatabaseService database)
     {
         _database = database;
     }

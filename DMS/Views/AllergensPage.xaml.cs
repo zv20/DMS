@@ -16,7 +16,7 @@ namespace DMS.Views;
 
 public sealed partial class AllergensPage : Page, IUnsavedEditor
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<AllergenItemViewModel> _allergens = new();
     private List<AllergenItemViewModel> _filteredAllergens = new();
@@ -26,7 +26,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
     {
         this.InitializeComponent();
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         Loaded += AllergensPage_Loaded;
     }

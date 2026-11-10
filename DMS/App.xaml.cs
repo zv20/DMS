@@ -47,8 +47,8 @@ public partial class App : Application
         startup.ShowLoading("Preparing your kitchen... / Подготвяме приложението...");
         try
         {
-            var database = Services.GetRequiredService<IDatabaseService>();
-            var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
+            var database = Services.GetRequiredService<DatabaseService>();
+            var settings = await Services.GetRequiredService<SettingsService>().LoadAsync();
             if (startup.IsClosed) return;
             language = settings.Language;
             Localization.Apply(language);
@@ -111,15 +111,15 @@ public partial class App : Application
             startup.Activate();
             await Task.Delay(50); // Let the restore screen paint before database work starts.
 
-            await Services.GetRequiredService<IDatabaseService>().RestoreFromAsync(backupPath);
+            await Services.GetRequiredService<DatabaseService>().RestoreFromAsync(backupPath);
             databaseRestored = true;
             startup.ShowRestoreLoading(Localization.Get("StartupReloading"));
 
-            var settings = await Services.GetRequiredService<ISettingsService>().LoadAsync();
+            var settings = await Services.GetRequiredService<SettingsService>().LoadAsync();
             Localization.Apply(settings.Language);
             AppearanceService.ApplyAccent(settings.AccentColor);
-            await Services.GetRequiredService<IDatabaseService>().GetAllRecipesAsync();
-            await Services.GetRequiredService<IDatabaseService>().GetAllIngredientsAsync();
+            await Services.GetRequiredService<DatabaseService>().GetAllRecipesAsync();
+            await Services.GetRequiredService<DatabaseService>().GetAllIngredientsAsync();
 
             var window = new MainWindow();
             CurrentWindow = window;
@@ -162,9 +162,8 @@ public partial class App : Application
         });
 
         // Core services
-        services.AddSingleton<IDatabaseService, DatabaseService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<DatabaseService>();
+        services.AddSingleton<SettingsService>();
 
         return services.BuildServiceProvider();
     }

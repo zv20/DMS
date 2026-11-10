@@ -11,7 +11,7 @@ namespace DMS.Views;
 
 public sealed partial class MenuPage : Page, IUnsavedEditor
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private static readonly string[] Categories = ["soup", "main", "dessert", "other"];
     private static string[] Labels => ["🥣 " + L.Category("soup"), "🍽️ " + L.Category("main"), "🍰 " + L.Category("dessert"), "➕ " + L.Category("other")];
     private DateTime _date = DateTime.Today;
@@ -27,7 +27,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     public MenuPage()
     {
         InitializeComponent();
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         UpdateViewButtons();
         Loaded += async (_, _) => await RefreshAsync();
     }

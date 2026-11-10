@@ -13,7 +13,7 @@ namespace DMS.Views;
 
 public sealed partial class IngredientsPage : Page, IUnsavedEditor
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<IngredientItemViewModel> _ingredients = new();
     private List<IngredientItemViewModel> _filteredIngredients = new();
@@ -23,7 +23,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     {
         this.InitializeComponent();
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
         Loaded += IngredientsPage_Loaded;
     }

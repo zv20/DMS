@@ -16,7 +16,7 @@ namespace DMS.Views;
 
 public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private readonly List<NumberBox> _dayBoxes = [];
     private readonly List<CheckBox> _fixedBoxes = [];
     private readonly List<Grid> _dayRows = [];
@@ -53,7 +53,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     public TemplateBuilderPage()
     {
         InitializeComponent();
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         FileMenuLabel.Text = L.Get("TplFileMenu");
         SavedTemplatesMenu.Text = L.Get("TplSavedTemplates");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));

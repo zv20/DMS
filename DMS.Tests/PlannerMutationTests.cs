@@ -39,16 +39,16 @@ public sealed class PlannerMutationTests : IDisposable
         {
             var original = await database.SaveRecipeAsync(new Recipe { Name = "Before", Category = "soup" });
             var replacement = await database.SaveRecipeAsync(new Recipe { Name = "After", Category = "main" });
-            await database.SaveMenuEntryAsync(new MenuEntry { Date = _day, Slot = "Breakfast", RecipeId = original });
+            await database.SaveMenuSlotAsync(_day, "Breakfast", "soup", original);
             await database.SaveMenuSlotAsync(_day, "slot1", "main", replacement, "Breakfast");
             var entry = Assert.Single(await database.GetMenuAsync(_day, _day));
             Assert.Equal("slot1", entry.Slot);
             Assert.Equal(replacement, entry.RecipeId);
-            Assert.Equal("main", await database.GetMenuCategoryAsync(_day, "slot1"));
+            Assert.Equal("main", (await database.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
         }
         using var reopened = Open();
         Assert.Equal("slot1", Assert.Single(await reopened.GetMenuAsync(_day, _day)).Slot);
-        Assert.Equal("main", await reopened.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("main", (await reopened.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
     }
 
     [Fact]
@@ -57,8 +57,8 @@ public sealed class PlannerMutationTests : IDisposable
         using var database = Open();
         var original = await database.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
         var replacement = await database.SaveRecipeAsync(new Recipe { Name = "Replacement", Category = "main" });
-        await database.SaveMenuEntryAsync(new MenuEntry { Date = _day, Slot = "Breakfast", RecipeId = original });
-        await database.SaveMenuCategoryAsync(_day, "slot1", "soup");
+        await database.SaveMenuSlotAsync(_day, "Breakfast", "soup", original);
+        await database.SaveMenuSlotAsync(_day, "slot1", "soup", null);
         using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
@@ -69,10 +69,10 @@ public sealed class PlannerMutationTests : IDisposable
         var entry = Assert.Single(await database.GetMenuAsync(_day, _day));
         Assert.Equal("Breakfast", entry.Slot);
         Assert.Equal(original, entry.RecipeId);
-        Assert.Equal("soup", await database.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("soup", (await database.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
         using var reopened = Open();
         Assert.Equal(original, Assert.Single(await reopened.GetMenuAsync(_day, _day)).RecipeId);
-        Assert.Equal("soup", await reopened.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("soup", (await reopened.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public sealed class PlannerMutationTests : IDisposable
         using var database = Open();
         var original = await database.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
         var replacement = await database.SaveRecipeAsync(new Recipe { Name = "Replacement", Category = "main" });
-        await database.SaveMenuEntryAsync(new MenuEntry { Date = _day, Slot = "Breakfast", RecipeId = original });
-        await database.SaveMenuCategoryAsync(_day, "slot1", "soup");
+        await database.SaveMenuSlotAsync(_day, "Breakfast", "soup", original);
+        await database.SaveMenuSlotAsync(_day, "slot1", "soup", null);
         using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
@@ -93,7 +93,7 @@ public sealed class PlannerMutationTests : IDisposable
         var entry = Assert.Single(await database.GetMenuAsync(_day, _day));
         Assert.Equal("Breakfast", entry.Slot);
         Assert.Equal(original, entry.RecipeId);
-        Assert.Equal("soup", await database.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("soup", (await database.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
     }
 
     [Fact]
@@ -101,14 +101,14 @@ public sealed class PlannerMutationTests : IDisposable
     {
         using var database = Open();
         var original = await database.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
-        await database.SaveMenuEntryAsync(new MenuEntry { Date = _day, Slot = "Breakfast", RecipeId = original });
-        await database.SaveMenuCategoryAsync(_day, "slot1", "soup");
+        await database.SaveMenuSlotAsync(_day, "Breakfast", "soup", original);
+        await database.SaveMenuSlotAsync(_day, "slot1", "soup", null);
         await Assert.ThrowsAsync<InvalidOperationException>(() => database.SaveMenuSlotAsync(_day, "slot1", "dessert", int.MaxValue, "Breakfast"));
-        Assert.Equal("soup", await database.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("soup", (await database.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
         Assert.Single(await database.GetMenuAsync(_day, _day));
         await database.SaveMenuSlotAsync(_day, "slot1", "dessert", null, "Breakfast");
         Assert.Empty(await database.GetMenuAsync(_day, _day));
-        Assert.Equal("dessert", await database.GetMenuCategoryAsync(_day, "slot1"));
+        Assert.Equal("dessert", (await database.GetMenuCategoriesAsync(_day, _day)).Single(item => item.Slot == "slot1").Category);
     }
 
     public void Dispose() { if (Directory.Exists(_folder)) Directory.Delete(_folder, true); }

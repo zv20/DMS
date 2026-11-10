@@ -12,8 +12,8 @@ namespace DMS.Views;
 
 public sealed partial class SettingsPage : Page
 {
-    private readonly ISettingsService _settingsService;
-    private readonly IDatabaseService _databaseService;
+    private readonly SettingsService _settingsService;
+    private readonly DatabaseService _databaseService;
     private bool _suppressSettingChanges = true;
     private string _selectedTheme = "default";
     private string _selectedAccent = "blue";
@@ -24,8 +24,8 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         this.InitializeComponent();
-        _settingsService = App.Services.GetRequiredService<ISettingsService>();
-        _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        _settingsService = App.Services.GetRequiredService<SettingsService>();
+        _databaseService = App.Services.GetRequiredService<DatabaseService>();
         AppVersionText.Text = $"v{AppVersion.Current}";
         ClassicAccentHint.Text = L.Get("ThemeClassicAccentHint");
         SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);

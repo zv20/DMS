@@ -21,7 +21,7 @@ namespace DMS.Views;
 /// <summary>Prints the same native page renderer used in the template editor.</summary>
 public sealed partial class TemplateOutputPage : Page
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private static readonly string[] PngExtensions = [".png"];
     private static readonly string[] JpegExtensions = [".jpg", ".jpeg"];
     private static readonly string[] PdfExtensions = [".pdf"];
@@ -57,7 +57,7 @@ public sealed partial class TemplateOutputPage : Page
     {
         InitializeComponent();
         _uiQueue = DispatcherQueue;
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         TitleText.Text = L.Get("TemplateOutputTitle");
         TemplateSelector.Header = L.Get("TemplateOutputTemplate");
         WeekPicker.Header = L.Get("TemplateOutputWeek");

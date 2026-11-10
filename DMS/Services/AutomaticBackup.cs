@@ -8,7 +8,7 @@ internal static class AutomaticBackup
     private const string Prefix = "DMS-auto-";
     private const int RetainedCount = 3;
 
-    internal static async Task CreateAsync(IDatabaseService database)
+    internal static async Task CreateAsync(DatabaseService database)
     {
         var folder = Path.Combine(Path.GetDirectoryName(database.GetDatabasePath())!, "AutomaticBackups");
         Directory.CreateDirectory(folder);

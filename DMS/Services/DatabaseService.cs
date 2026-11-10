@@ -10,45 +10,7 @@ public sealed class RecipeInUseException : InvalidOperationException
     public RecipeInUseException() : base("This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.") { }
 }
 
-public interface IDatabaseService
-{
-    Task InitializeAsync();
-    Task<List<Recipe>> GetAllRecipesAsync();
-    Task<int> SaveRecipeAsync(Recipe recipe);
-    Task DeleteRecipeAsync(int id);
-    Task<List<Ingredient>> GetAllIngredientsAsync();
-    Task<int> SaveIngredientAsync(Ingredient ingredient);
-    Task DeleteIngredientAsync(int id);
-    Task<List<Allergen>> GetAllAllergensAsync();
-    Task<int> SaveAllergenAsync(Allergen allergen);
-    Task DeleteAllergenAsync(int id);
-    Task<List<MenuEntry>> GetMenuAsync(DateTime start, DateTime end);
-    Task SaveMenuEntryAsync(MenuEntry entry);
-    Task<string?> GetMenuCategoryAsync(DateTime date, string slot);
-    Task<List<MenuSlotCategory>> GetMenuCategoriesAsync(DateTime start, DateTime end);
-    Task SaveMenuCategoryAsync(DateTime date, string slot, string category);
-    Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId, string? previousSlot = null);
-    Task<AppSettings?> GetSettingsAsync();
-    Task SaveSettingsAsync(AppSettings settings);
-    Task<List<MenuTemplate>> GetAllTemplatesAsync();
-    Task HydrateTemplateImagesAsync(MenuTemplate template);
-    Task SaveTemplateAsync(MenuTemplate template);
-    Task RenameTemplateAsync(string currentName, string newName);
-    Task DeleteTemplateAsync(string name);
-    Task<List<TemplateImageAsset>> GetTemplateImagesAsync();
-    Task<TemplateImageAsset?> GetTemplateImageAsync(string id);
-    Task<TemplateImageAsset> SaveTemplateImageAsync(string name, string contentType, byte[] data);
-    Task RenameTemplateImageAsync(string id, string name);
-    Task<List<string>> GetTemplateImageUsageAsync(string id);
-    Task<List<string>> DeleteTemplateImageAsync(string id, IReadOnlyCollection<string> expectedTemplateNames);
-    Task CreateBackupAsync(string destinationPath);
-    Task RestoreFromAsync(string sourcePath);
-    Task VacuumAsync();
-    Task ReindexAsync();
-    string GetDatabasePath();
-}
-
-public partial class DatabaseService : IDatabaseService, IDisposable
+public partial class DatabaseService : IDisposable
 {
     private readonly ILogger<DatabaseService> _logger;
     private readonly bool _seedBuiltInTemplates;
@@ -540,38 +502,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         return list;
     }
 
-    public async Task SaveMenuEntryAsync(MenuEntry entry)
-    {
-        await InitializeAsync();
-        using (var recipeCommand = _connection!.CreateCommand())
-        {
-            recipeCommand.CommandText = "SELECT COUNT(*) FROM recipes WHERE id = @recipeId";
-            recipeCommand.Parameters.AddWithValue("@recipeId", entry.RecipeId);
-            if (Convert.ToInt32(await recipeCommand.ExecuteScalarAsync()) == 0)
-            {
-                throw new InvalidOperationException("The selected recipe no longer exists.");
-            }
-        }
-
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = @"INSERT INTO menu (date, slot, recipe_id) VALUES (@date, @slot, @recipeId)
-                           ON CONFLICT(date, slot) DO UPDATE SET recipe_id=@recipeId";
-        cmd.Parameters.AddWithValue("@date", entry.Date.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@slot", entry.Slot);
-        cmd.Parameters.AddWithValue("@recipeId", entry.RecipeId);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task<string?> GetMenuCategoryAsync(DateTime date, string slot)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT category FROM menu_slot_categories WHERE date=@date AND slot=@slot";
-        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@slot", slot);
-        return await cmd.ExecuteScalarAsync() as string;
-    }
-
     public async Task<List<MenuSlotCategory>> GetMenuCategoriesAsync(DateTime start, DateTime end)
     {
         await InitializeAsync();
@@ -583,18 +513,6 @@ public partial class DatabaseService : IDatabaseService, IDisposable
         var result = new List<MenuSlotCategory>();
         while (await reader.ReadAsync()) result.Add(new MenuSlotCategory { Date = DateTime.Parse(reader.GetString(0)), Slot = reader.GetString(1), Category = reader.GetString(2) });
         return result;
-    }
-
-    public async Task SaveMenuCategoryAsync(DateTime date, string slot, string category)
-    {
-        await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = @"INSERT INTO menu_slot_categories(date, slot, category) VALUES(@date, @slot, @category)
-                            ON CONFLICT(date, slot) DO UPDATE SET category=@category";
-        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@slot", slot);
-        cmd.Parameters.AddWithValue("@category", category);
-        await cmd.ExecuteNonQueryAsync();
     }
 
     /// <summary>Save a slot's category and assignment as one indivisible change.</summary>

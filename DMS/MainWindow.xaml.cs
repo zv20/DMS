@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var settings = await App.Services.GetRequiredService<IDatabaseService>().GetSettingsAsync();
+            var settings = await App.Services.GetRequiredService<DatabaseService>().GetSettingsAsync();
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             _placementLoaded = true;
             CaptureNormalPlacement();
@@ -105,7 +105,7 @@ public sealed partial class MainWindow : Window
             // A replaced window must not overwrite settings loaded from a restored backup.
             if (App.CurrentWindow == this && _normalPlacement is RectInt32 placement)
             {
-                var database = App.Services.GetRequiredService<IDatabaseService>();
+                var database = App.Services.GetRequiredService<DatabaseService>();
                 var settings = await database.GetSettingsAsync() ?? new DMS.Models.AppSettings();
                 settings.WindowX = placement.X; settings.WindowY = placement.Y;
                 settings.WindowWidth = placement.Width; settings.WindowHeight = placement.Height;
@@ -116,7 +116,7 @@ public sealed partial class MainWindow : Window
         try
         {
             if (App.CurrentWindow == this && _placementLoaded)
-                await AutomaticBackup.CreateAsync(App.Services.GetRequiredService<IDatabaseService>());
+                await AutomaticBackup.CreateAsync(App.Services.GetRequiredService<DatabaseService>());
         }
         catch (Exception ex)
         {

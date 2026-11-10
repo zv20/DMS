@@ -13,7 +13,7 @@ namespace DMS.Views;
 
 public sealed partial class RecipesPage : Page, IUnsavedEditor
 {
-    private readonly IDatabaseService _database;
+    private readonly DatabaseService _database;
     private int _pageGeneration;
     private ObservableCollection<RecipeItemViewModel> _recipes = new();
     private List<RecipeItemViewModel> _filteredRecipes = new();
@@ -29,7 +29,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     public RecipesPage()
     {
         this.InitializeComponent();
-        _database = App.Services.GetRequiredService<IDatabaseService>();
+        _database = App.Services.GetRequiredService<DatabaseService>();
         CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
         foreach (var category in new[] { "soup", "main", "dessert", "other" })
             CategoryFilter.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
