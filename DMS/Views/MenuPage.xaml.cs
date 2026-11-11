@@ -231,7 +231,18 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 panel.Children.Add(button);
             }
             else for (var slot = 0; slot < 4; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories));
-            cards.Add(new Border { Child = panel, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 });
+            var card = new Border { Child = panel, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 };
+            card.PointerEntered += (_, _) =>
+            {
+                card.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentSubtleBrush"];
+                card.BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
+            };
+            card.PointerExited += (_, _) =>
+            {
+                card.ClearValue(Border.BackgroundProperty);
+                card.ClearValue(Border.BorderBrushProperty);
+            };
+            cards.Add(card);
         }
         // A newer request supersedes this snapshot, so the next iteration renders it.
         if (_refreshPending) return;
