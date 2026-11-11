@@ -285,6 +285,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, MinWidth = 0, HorizontalAlignment = HorizontalAlignment.Stretch };
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, DisplayMemberPath = "Name", TextMemberPath = "Name" };
+        var recipeName = new TextBlock { Text = search.Text, FontSize = 13, TextWrapping = TextWrapping.Wrap, Visibility = string.IsNullOrWhiteSpace(search.Text) ? Visibility.Collapsed : Visibility.Visible };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
         var retry = new Button { Content = L.Get("RetryAction"), MinWidth = 0, Visibility = Visibility.Collapsed };
         bool saving = false, hasPending = false;
@@ -342,6 +343,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         search.GotFocus += (_, _) => Suggest();
         search.TextChanged += async (_, args) =>
         {
+            recipeName.Text = search.Text;
+            recipeName.Visibility = string.IsNullOrWhiteSpace(search.Text) ? Visibility.Collapsed : Visibility.Visible;
             if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
             // A new search supersedes the failed choice; require a new selection
             // before retrying so Retry cannot save an older, hidden choice.
@@ -365,6 +368,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         Grid.SetColumn(search, 1);
         mealRow.Children.Add(search);
         panel.Children.Add(mealRow);
+        panel.Children.Add(recipeName);
         var clear = new Button { Content = L.Get("Text_Clear_719ea3"), FontSize = 11, MinWidth = 0, Padding = new Thickness(6, 2, 6, 2) };
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         panel.Children.Add(clear);
