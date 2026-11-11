@@ -13,7 +13,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
 {
     private readonly DatabaseService _database;
     private static readonly string[] Categories = ["soup", "main", "dessert", "other"];
-    private static string[] Labels => ["🥣 " + L.Category("soup"), "🍽️ " + L.Category("main"), "🍰 " + L.Category("dessert"), "➕ " + L.Category("other")];
+    private static readonly string[] CategoryIcons = ["🥣", "🍽️", "🍰", "➕"];
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
     private bool _busy, _refreshPending;
@@ -283,14 +283,24 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
         var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
-        var select = new ComboBox { ItemsSource = Labels, SelectedIndex = Array.IndexOf(Categories, category), FontSize = 15, MinWidth = 0, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var selectedCategory = category;
+        var select = new DropDownButton { MinWidth = 0, HorizontalAlignment = HorizontalAlignment.Left };
+        var categoryMenu = new MenuFlyout();
+        select.Flyout = categoryMenu;
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, DisplayMemberPath = "Name", TextMemberPath = "Name", TextBoxStyle = (Style)Application.Current.Resources["PlannerRecipeTextBoxStyle"] };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
         var retry = new Button { Content = L.Get("RetryAction"), MinWidth = 0, Visibility = Visibility.Collapsed };
         bool saving = false, hasPending = false;
         Recipe? pendingRecipe = null;
         string pendingCategory = category;
-        string DisplayedCategory() => select.SelectedIndex >= 0 ? Categories[select.SelectedIndex] : category;
+        string DisplayedCategory() => selectedCategory;
+        void UpdateCategoryButton(int categoryIndex)
+        {
+            select.Content = CategoryIcons[categoryIndex];
+            var label = L.Category(Categories[categoryIndex]);
+            ToolTipService.SetToolTip(select, label);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(select, label);
+        }
         void ClearPending()
         {
             if (hasPending) { hasPending = false; _pendingSlotFailures--; }
@@ -350,24 +360,37 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, DisplayedCategory());
         };
         search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, DisplayedCategory()); };
-        select.SelectionChanged += async (_, _) =>
+        for (var categoryIndex = 0; categoryIndex < Categories.Length; categoryIndex++)
         {
-            if (select.SelectedIndex < 0) return;
-            await SaveAsync(null, DisplayedCategory());
-            Suggest();
-        };
+            var optionIndex = categoryIndex;
+            var item = new MenuFlyoutItem { Text = $"{CategoryIcons[optionIndex]} {L.Category(Categories[optionIndex])}" };
+            item.Click += async (_, _) =>
+            {
+                if (selectedCategory == Categories[optionIndex]) return;
+                selectedCategory = Categories[optionIndex];
+                UpdateCategoryButton(optionIndex);
+                await SaveAsync(null, DisplayedCategory());
+                Suggest();
+            };
+            categoryMenu.Items.Add(item);
+        }
+        UpdateCategoryButton(Math.Max(0, Array.IndexOf(Categories, selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         panel.Children.Add(select);
         var mealRow = new Grid { ColumnSpacing = 6 };
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         mealRow.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(search, 1);
         mealRow.Children.Add(search);
-        panel.Children.Add(mealRow);
-        var clear = new Button { Content = L.Get("Text_Clear_719ea3"), FontSize = 11, MinWidth = 0, Padding = new Thickness(6, 2, 6, 2) };
+        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
+        ToolTipService.SetToolTip(clear, L.Get("Text_Clear_719ea3"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{L.Get("Text_Clear_719ea3")} {index + 1}");
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
-        panel.Children.Add(clear);
+        Grid.SetColumn(clear, 2);
+        mealRow.Children.Add(clear);
+        panel.Children.Add(mealRow);
         panel.Children.Add(status);
         panel.Children.Add(retry);
         return panel;
