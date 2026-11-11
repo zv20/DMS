@@ -67,7 +67,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
     private void RecipeToolbar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var layout = e.NewSize.Width < 500 ? 2 : e.NewSize.Width < 760 ? 1 : 0;
+        var layout = e.NewSize.Width < 500 ? 2 : e.NewSize.Width < 800 ? 1 : 0;
         if (_toolbarLayout == layout) return;
         _toolbarLayout = layout;
         RecipeToolbar.RowDefinitions.Clear();
@@ -77,7 +77,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         Grid.SetRow(SearchBox, 0); Grid.SetColumn(SearchBox, 1); Grid.SetColumnSpan(SearchBox, layout == 0 ? 1 : 4);
         if (layout == 0)
         {
-            CategoryFilter.Width = SortField.Width = 160;
+            CategoryFilter.Width = 200;
+            SortField.Width = 160;
             Grid.SetRow(CategoryFilter, 0); Grid.SetColumn(CategoryFilter, 2); Grid.SetColumnSpan(CategoryFilter, 1);
             Grid.SetRow(SortField, 0); Grid.SetColumn(SortField, 3); Grid.SetColumnSpan(SortField, 1);
             Grid.SetRow(SortDirectionButton, 0); Grid.SetColumn(SortDirectionButton, 4); Grid.SetColumnSpan(SortDirectionButton, 1);
