@@ -215,14 +215,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    public void OpenMenuOutput(DateTime date)
+    public void OpenMenuOutput(DateTime date, bool print)
     {
         if (OutputOverlay.Visibility == Visibility.Visible) return;
         NavView.IsEnabled = false;
         OutputOverlay.Visibility = Visibility.Visible;
         try
         {
-            if (!OutputFrame.Navigate(typeof(TemplateOutputPage), date)) throw new InvalidOperationException("Unable to open the print preview.");
+            if (!OutputFrame.Navigate(typeof(TemplateOutputPage), Tuple.Create(date, print))) throw new InvalidOperationException("Unable to open the output preview.");
             if (OutputFrame.Content is TemplateOutputPage page)
             {
                 page.CloseAvailabilityChanged += OutputCloseAvailabilityChanged;

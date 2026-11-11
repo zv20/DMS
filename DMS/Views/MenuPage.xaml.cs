@@ -23,6 +23,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     private DateTime _renderedDate;
     private bool _weekendPlanningEnabled;
     private int _headerLayout = -1;
+    private Button? _lastOutputButton;
 
     public MenuPage()
     {
@@ -106,10 +107,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             if (layout == 2) MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             Grid.SetColumnSpan(HeaderScroll, layout == 2 ? 3 : 1);
-            Grid.SetRow(OutputButton, layout == 2 ? 2 : 0); Grid.SetColumn(OutputButton, layout == 2 ? 0 : 2);
-            Grid.SetColumnSpan(OutputButton, layout == 2 ? 3 : 1);
-            OutputButton.HorizontalAlignment = layout == 2 ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
-            OutputButton.Margin = layout == 2 ? new Thickness(0, 8, 0, 0) : new Thickness();
+            Grid.SetRow(OutputActions, layout == 2 ? 2 : 0); Grid.SetColumn(OutputActions, layout == 2 ? 0 : 2);
+            Grid.SetColumnSpan(OutputActions, layout == 2 ? 3 : 1);
+            OutputActions.HorizontalAlignment = layout == 2 ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+            OutputActions.Margin = layout == 2 ? new Thickness(0, 8, 0, 0) : new Thickness();
             Grid.SetRow(PeriodLabel, 1); Grid.SetColumn(PeriodLabel, 0); Grid.SetColumnSpan(PeriodLabel, 3);
             PeriodLabel.HorizontalAlignment = HorizontalAlignment.Left;
             PeriodLabel.Margin = new Thickness(0, 8, 0, 0);
@@ -118,8 +119,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             MenuHeader.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             Grid.SetColumnSpan(HeaderScroll, 1);
-            Grid.SetRow(OutputButton, 0); Grid.SetColumn(OutputButton, 2); Grid.SetColumnSpan(OutputButton, 1);
-            OutputButton.HorizontalAlignment = HorizontalAlignment.Stretch; OutputButton.Margin = new Thickness();
+            Grid.SetRow(OutputActions, 0); Grid.SetColumn(OutputActions, 2); Grid.SetColumnSpan(OutputActions, 1);
+            OutputActions.HorizontalAlignment = HorizontalAlignment.Stretch; OutputActions.Margin = new Thickness();
             Grid.SetRow(PeriodLabel, 0); Grid.SetColumn(PeriodLabel, 1); Grid.SetColumnSpan(PeriodLabel, 1);
             PeriodLabel.HorizontalAlignment = HorizontalAlignment.Center;
             PeriodLabel.Margin = new Thickness();
@@ -151,13 +152,17 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         foreach (var card in CalendarGrid.Children.OfType<Border>())
             card.MinHeight = _monthly ? Math.Min(155, width) : 0;
     }
-    private void Output_Click(object sender, RoutedEventArgs e)
+    private void PrintOutput_Click(object sender, RoutedEventArgs e) => OpenOutput(PrintOutputButton, true);
+    private void ExportOutput_Click(object sender, RoutedEventArgs e) => OpenOutput(ExportOutputButton, false);
+
+    private void OpenOutput(Button button, bool print)
     {
-        try { if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date); }
+        _lastOutputButton = button;
+        try { if (App.CurrentWindow is MainWindow window) window.OpenMenuOutput(_date, print); }
         catch (Exception ex) { App.Logger.LogError(ex, "Could not open menu output"); PeriodLabel.Text = L.Get("ActionFailed"); }
     }
 
-    public void FocusOutputButton() => OutputButton.Focus(FocusState.Programmatic);
+    public void FocusOutputButton() => (_lastOutputButton ?? PrintOutputButton).Focus(FocusState.Programmatic);
 
     private async Task RefreshAsync()
     {

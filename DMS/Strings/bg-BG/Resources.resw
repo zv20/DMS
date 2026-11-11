@@ -11,6 +11,9 @@
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Печат</value></data>
+  <data name="TemplateOutputExport" xml:space="preserve"><value>Експорт</value></data>
+  <data name="MenuPrint.Text" xml:space="preserve"><value>Печат</value></data>
+  <data name="MenuExport.Text" xml:space="preserve"><value>Експорт</value></data>
   <data name="TemplateOutputPdf" xml:space="preserve"><value>Запази като PDF</value></data>
   <data name="TemplateOutputPng" xml:space="preserve"><value>Запази изображение</value></data>
   <data name="TemplateOutputOverflow" xml:space="preserve"><value>Съдържанието не се побира на страницата. Променете шаблона или менюто преди печат или експорт.</value></data>

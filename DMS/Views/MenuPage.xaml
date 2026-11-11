@@ -7,7 +7,10 @@
     <Button Content="←" Click="Previous_Click"/><Button Content="Today" Click="Today_Click" x:Uid="Text_Today_24345a" /><Button Content="→" Click="Next_Click"/>
    </StackPanel></ScrollViewer>
    <TextBlock x:Name="PeriodLabel" Grid.Column="1" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Center" TextWrapping="Wrap"/>
-   <Button x:Name="OutputButton" Grid.Column="2" Content="Print / Export" Click="Output_Click" Style="{StaticResource AccentButtonStyle}" x:Uid="MenuOutput" />
+   <StackPanel x:Name="OutputActions" Grid.Column="2" Orientation="Horizontal" Spacing="8">
+    <Button x:Name="PrintOutputButton" Click="PrintOutput_Click" Style="{StaticResource AccentButtonStyle}"><StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Print" /><TextBlock x:Uid="MenuPrint" /></StackPanel></Button>
+    <Button x:Name="ExportOutputButton" Click="ExportOutput_Click"><StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xEDE1;" FontSize="16" /><TextBlock x:Uid="MenuExport" /></StackPanel></Button>
+   </StackPanel>
   </Grid>
   <ScrollViewer x:Name="CalendarScrollViewer" Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" SizeChanged="CalendarScrollViewer_SizeChanged">
    <Grid x:Name="CalendarGrid" Padding="16" ColumnSpacing="8" RowSpacing="8" HorizontalAlignment="Stretch"/>

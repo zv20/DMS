@@ -11,6 +11,9 @@
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Print / Export</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Print</value></data>
+  <data name="TemplateOutputExport" xml:space="preserve"><value>Export</value></data>
+  <data name="MenuPrint.Text" xml:space="preserve"><value>Print</value></data>
+  <data name="MenuExport.Text" xml:space="preserve"><value>Export</value></data>
   <data name="TemplateOutputPdf" xml:space="preserve"><value>Save as PDF</value></data>
   <data name="TemplateOutputPng" xml:space="preserve"><value>Save image</value></data>
   <data name="TemplateOutputOverflow" xml:space="preserve"><value>The content does not fit on the page. Adjust the template or menu before printing or exporting.</value></data>

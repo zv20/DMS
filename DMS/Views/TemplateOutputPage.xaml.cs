@@ -41,6 +41,7 @@ public sealed partial class TemplateOutputPage : Page
     private bool _busy;
     private int _activePrintTasks;
     private bool _loaded;
+    private bool _printMode;
     private bool _weekendEnabled;
     private int _generation;
     private DateTime _monday;
@@ -58,7 +59,6 @@ public sealed partial class TemplateOutputPage : Page
         InitializeComponent();
         _uiQueue = DispatcherQueue;
         _database = App.Services.GetRequiredService<DatabaseService>();
-        TitleText.Text = L.Get("TemplateOutputTitle");
         TemplateSelector.Header = L.Get("TemplateOutputTemplate");
         WeekPicker.Header = L.Get("TemplateOutputWeek");
         PrintButton.Content = L.Get("TemplateOutputPrint");
@@ -72,7 +72,14 @@ public sealed partial class TemplateOutputPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        if (e.Parameter is DateTime date) WeekPicker.Date = new DateTimeOffset(date.Date);
+        if (e.Parameter is Tuple<DateTime, bool> output)
+        {
+            WeekPicker.Date = new DateTimeOffset(output.Item1.Date);
+            _printMode = output.Item2;
+        }
+        TitleText.Text = L.Get(_printMode ? "TemplateOutputPrint" : "TemplateOutputExport");
+        PrintButton.Visibility = _printMode ? Visibility.Visible : Visibility.Collapsed;
+        PdfButton.Visibility = PngButton.Visibility = _printMode ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -81,9 +88,9 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             // A machine with no printing support can still save an image or PDF.
-            try { RegisterPrinting(); }
+            try { if (_printMode) RegisterPrinting(); }
             catch (Exception ex) { App.Logger.LogWarning(ex, "Printing is unavailable"); UnregisterPrinting(); }
-            if (_printManager == null)
+            if (_printMode && _printManager == null)
             {
                 ToolTipService.SetToolTip(PrintButton, L.Get("TemplateOutputPrintUnsupported"));
             }
@@ -155,7 +162,7 @@ public sealed partial class TemplateOutputPage : Page
             await result.ImagesReady;
             if (!_loaded || generation != _generation) return;
             StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
-            if (_printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
+            if (_printMode && _printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
             SetReady(result.HasMeals && !result.Overflowed);
         }
         catch (OperationCanceledException) when (!_loaded || generation != _generation) { }
