@@ -30,7 +30,7 @@
    <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
   </StackPanel>
    <ScrollViewer x:Name="PageScroll" Grid.Row="1" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
-   <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" VerticalAlignment="Stretch" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid RowDefinitions="*,Auto,Auto"><Border Grid.RowSpan="3" Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" /><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">
+   <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" VerticalAlignment="Stretch" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid RowDefinitions="*,Auto,Auto"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">
     <Expander x:Name="LayoutHeading" IsExpanded="True" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" HeaderTemplate="{StaticResource SettingsLabelTemplate}">
      <StackPanel Spacing="10">
     <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Numbers_Changed" />
@@ -55,7 +55,7 @@
    <Canvas x:Name="SelectionOverlay" Grid.Row="1" Grid.Column="0" Canvas.ZIndex="10">
     <Border x:Name="SelectionOutline" IsHitTestVisible="False" BorderBrush="DodgerBlue" BorderThickness="2" Visibility="Collapsed" />
     <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Padding="0" Visibility="Collapsed" />
-    <Border x:Name="SelectionToolbar" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1" CornerRadius="6" Padding="5" Visibility="Collapsed">
+    <Border x:Name="SelectionToolbar" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" BorderBrush="{ThemeResource SystemControlForegroundListLowBrush}" BorderThickness="1" CornerRadius="10" Padding="5" Visibility="Collapsed">
      <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled"><StackPanel x:Name="ContextTools" Orientation="Horizontal" Spacing="4" /></ScrollViewer>
     </Border>
    </Canvas>

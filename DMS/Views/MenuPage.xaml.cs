@@ -214,7 +214,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
             var isDisabledWeekend = isWeekend && !weekend;
             var panel = new StackPanel { Spacing = 8 };
-            panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = monthly ? 14 : 16, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = monthly ? 14 : 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             if (monthly)
             {
                 var names = isDisabledWeekend
@@ -226,12 +226,12 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                         return name == null ? null : $"{index + 1}. {name}";
                     }).OfType<string>();
                 var summary = string.Join("\n", names);
-                var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend };
+                var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend, Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8) };
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
                 panel.Children.Add(button);
             }
             else for (var slot = 0; slot < 4; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories));
-            cards.Add(new Border { Child = panel, Padding = new Thickness(8), BorderThickness = new Thickness(1), BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundListLowBrush"], CornerRadius = new CornerRadius(4), Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 });
+            cards.Add(new Border { Child = panel, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 });
         }
         // A newer request supersedes this snapshot, so the next iteration renders it.
         if (_refreshPending) return;

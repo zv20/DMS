@@ -15,7 +15,7 @@ public sealed partial class SettingsPage : Page
     private readonly SettingsService _settingsService;
     private readonly DatabaseService _databaseService;
     private bool _suppressSettingChanges = true;
-    private string _selectedTheme = "default";
+    private string _selectedTheme = "light";
     private string _selectedAccent = "blue";
     private bool _selectedWeekend;
     private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
@@ -27,7 +27,6 @@ public sealed partial class SettingsPage : Page
         _settingsService = App.Services.GetRequiredService<SettingsService>();
         _databaseService = App.Services.GetRequiredService<DatabaseService>();
         AppVersionText.Text = $"v{AppVersion.Current}";
-        ClassicAccentHint.Text = L.Get("ThemeClassicAccentHint");
         SettingsScrollViewer.SizeChanged += (_, args) => ArrangeCards(args.NewSize.Width);
         Loaded += SettingsPage_Loaded;
     }
@@ -144,7 +143,6 @@ public sealed partial class SettingsPage : Page
             _selectedWeekend = settings.WeekendPlanningEnabled;
             ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[0];
             AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
-            UpdateAccentAvailability(settings.Theme);
             WeekendPlanningToggle.IsOn = settings.WeekendPlanningEnabled;
 
             // Data folder
@@ -242,15 +240,8 @@ public sealed partial class SettingsPage : Page
                 }
                 AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
             }
-            finally { ThemeComboBox.IsEnabled = true; UpdateAccentAvailability((ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()); }
+            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
-    }
-
-    private void UpdateAccentAvailability(string? theme)
-    {
-        var classic = theme == "default";
-        AccentColorComboBox.IsEnabled = !classic;
-        ClassicAccentHint.Visibility = classic ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -281,7 +272,7 @@ public sealed partial class SettingsPage : Page
                 }
                 AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
             }
-            finally { ThemeComboBox.IsEnabled = true; UpdateAccentAvailability((ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()); }
+            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
     }
 

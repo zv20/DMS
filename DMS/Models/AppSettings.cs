@@ -3,7 +3,7 @@ namespace DMS.Models;
 public sealed class AppSettings
 {
     public string Language { get; set; } = "bg";
-    public string Theme { get; set; } = "default";
+    public string Theme { get; set; } = "light";
     public string AccentColor { get; set; } = "blue";
     public bool WeekendPlanningEnabled { get; set; }
     public string? DataFolder { get; set; }

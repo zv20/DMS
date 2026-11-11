@@ -248,8 +248,6 @@
   <data name="Text_Template_name_is_required_0e3ca2" xml:space="preserve"><value>Template name is required</value></data>
   <data name="String_Text_Theme_a797e3" xml:space="preserve"><value>Theme</value></data>
   <data name="Text_Theme_a797e3.Header" xml:space="preserve"><value>Theme</value></data>
-  <data name="ThemeClassicDefault.Content" xml:space="preserve"><value>Default</value></data>
-  <data name="ThemeClassicAccentHint" xml:space="preserve"><value>Default uses the original DMS orange. Choose Light, Dark, or System to use a custom accent.</value></data>
   <data name="Text_This_will_optimize_the_database_file_size_Continue_db86eb" xml:space="preserve"><value>This will optimize the database file size. Continue?</value></data>
   <data name="String_Text_Today_24345a" xml:space="preserve"><value>Today</value></data>
   <data name="Text_Today_24345a.Content" xml:space="preserve"><value>Today</value></data>

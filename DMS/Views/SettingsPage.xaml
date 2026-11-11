@@ -12,7 +12,6 @@
             <!-- Language Section -->
             <Border x:Name="LanguageCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Language_Region_5d78df" />
                     <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
@@ -27,16 +26,13 @@
             <!-- Theme Section -->
             <Border x:Name="AppearanceCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🎨 Appearance" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Appearance_be0e75" />
                     <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
-                        <ComboBoxItem Tag="default" Content="Default" x:Uid="ThemeClassicDefault" />
                         <ComboBoxItem Tag="light" Content="☀️ Light"  x:Uid="Text_Light_200060" />
                         <ComboBoxItem Tag="dark" Content="🌙 Dark"  x:Uid="Text_Dark_9cc40d" />
                         <ComboBoxItem Tag="system" Content="💻 System Default"  x:Uid="Text_System_Default_363703" />
                     </ComboBox>
-                    <TextBlock x:Name="ClassicAccentHint" TextWrapping="Wrap" Visibility="Collapsed" />
                     <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AccentColorComboBox_SelectionChanged" Margin="0,8,0,0" x:Uid="Text_Accent_Color_2bef52">
                         <ComboBoxItem Tag="blue" Content="🔵 Blue"  x:Uid="Text_Blue_b81516" />
                         <ComboBoxItem Tag="green" Content="🟢 Green"  x:Uid="Text_Green_f66748" />
@@ -53,7 +49,6 @@
             <!-- Planning Section -->
             <Border x:Name="PlanningCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="📅 Planning" Style="{StaticResource PageTitleTextStyle}" x:Uid="Text_Planning_53aa11" />
                     <ToggleSwitch x:Name="WeekendPlanningToggle" Header="Weekend menus" OffContent="Weekdays only" OnContent="Include Saturday and Sunday" Toggled="WeekendPlanningToggle_Toggled" x:Uid="Text_Weekend_Planning_53aa12" />
@@ -66,7 +61,6 @@
             <!-- Data Management Section -->
             <Border x:Name="DataCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="💾 Data Management" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Data_Management_a0cf50" />
                     
@@ -89,7 +83,6 @@
             <!-- Database Section -->
             <Border x:Name="DatabaseCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Database_0038a1" />
                     <TextBlock x:Name="DatabaseInfoText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
@@ -106,7 +99,6 @@
             <!-- Local diagnostic log -->
             <Border x:Name="LogsCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                     <StackPanel Margin="24" Spacing="10">
                         <TextBlock Style="{StaticResource PageTitleTextStyle}" x:Uid="LogViewerTitle" />
                         <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
@@ -128,7 +120,6 @@
             <!-- About Section -->
             <Border x:Name="AboutCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="8">
                     <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_About_3e3c26" />
                     <StackPanel Orientation="Horizontal" Spacing="16">

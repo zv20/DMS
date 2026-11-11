@@ -7,9 +7,9 @@ namespace DMS.Services;
 
 public static class AppearanceService
 {
-    public static void ApplyAccent(string accent, bool classic = false)
+    public static void ApplyAccent(string accent)
     {
-        var color = classic ? Color.FromArgb(255, 253, 126, 20) : accent switch
+        var color = accent switch
         {
             "green" => Color.FromArgb(255, 16, 124, 16),
             "purple" => Color.FromArgb(255, 117, 49, 166),
@@ -21,7 +21,9 @@ public static class AppearanceService
         var resources = Application.Current.Resources;
         SetBrush(resources, "DmsAccentBrush", color);
         SetBrush(resources, "DmsAccentHoverBrush", Lighten(color, 0.12));
-        SetBrush(resources, "DmsAccentPressedBrush", classic ? Color.FromArgb(255, 217, 72, 15) : Darken(color, 0.12));
+        SetBrush(resources, "DmsAccentPressedBrush", Darken(color, 0.12));
+        SetBrush(resources, "DmsAccentSubtleBrush", color);
+        SetBrush(resources, "DmsAccentSubtlePressedBrush", color);
 
         // Keep WinUI controls that use the system accent in sync as well.
         resources["SystemAccentColor"] = color;
@@ -45,11 +47,7 @@ public static class AppearanceService
 
     public static void ApplyTheme(Window window, string theme, string accent)
     {
-        var classic = theme == "default";
-        var resources = Application.Current.Resources;
-        SetBrush(resources, "DmsClassicPageOverlayBrush", classic ? Color.FromArgb(255, 248, 249, 250) : Color.FromArgb(0, 0, 0, 0));
-        SetBrush(resources, "DmsClassicSurfaceOverlayBrush", classic ? Color.FromArgb(255, 255, 255, 255) : Color.FromArgb(0, 0, 0, 0));
-        ApplyAccent(accent, classic);
+        ApplyAccent(accent);
         if (window.Content is FrameworkElement root)
             root.RequestedTheme = theme switch { "default" or "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
     }

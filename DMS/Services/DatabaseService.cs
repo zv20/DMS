@@ -256,7 +256,7 @@ public partial class DatabaseService : IDisposable
         var defaults = new Dictionary<string, string>
         {
             ["language"] = "bg",
-            ["theme"] = "default"
+            ["theme"] = "light"
         };
 
         foreach (var (key, value) in defaults)
@@ -584,7 +584,7 @@ public partial class DatabaseService : IDisposable
             switch (key)
             {
                 case "language": settings.Language = value; break;
-                case "theme": settings.Theme = value; break;
+                case "theme": settings.Theme = value == "default" ? "light" : value; break;
                 case "accent_color": settings.AccentColor = value; break;
                 case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
                 case "data_folder": settings.DataFolder = value; break;

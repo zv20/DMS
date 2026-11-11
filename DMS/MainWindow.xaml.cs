@@ -62,7 +62,7 @@ public sealed partial class MainWindow : Window
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             _placementLoaded = true;
             CaptureNormalPlacement();
-            AppearanceService.ApplyTheme(this, settings?.Theme ?? "default", settings?.AccentColor ?? "blue");
+            AppearanceService.ApplyTheme(this, settings?.Theme ?? "light", settings?.AccentColor ?? "blue");
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
                 throw new InvalidOperationException("The initial page could not be opened.");
