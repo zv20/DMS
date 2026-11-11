@@ -341,7 +341,7 @@ public partial class DatabaseService : IDisposable
         _logger.LogInformation("Deleted recipe {Id}", id);
     }
 
-    private Recipe ReadRecipe(SqliteDataReader reader)
+    private static Recipe ReadRecipe(SqliteDataReader reader)
     {
         return new Recipe
         {
@@ -407,7 +407,7 @@ public partial class DatabaseService : IDisposable
         _logger.LogInformation("Deleted ingredient {Id}", id);
     }
 
-    private Ingredient ReadIngredient(SqliteDataReader reader)
+    private static Ingredient ReadIngredient(SqliteDataReader reader)
     {
         return new Ingredient
         {
@@ -896,6 +896,51 @@ public partial class DatabaseService : IDisposable
             while (reader.Read()) found.Add(reader.GetString(1));
             if (columns.Any(column => !found.Contains(column)))
                 throw new InvalidDataException("The selected file is not a supported DMS database backup.");
+        }
+
+        // Startup reads these rows immediately after restore. Use the same
+        // readers against the snapshot before replacing the live database.
+        try
+        {
+            using (var settings = source.CreateCommand())
+            {
+                settings.CommandText = "SELECT key, value FROM settings";
+                using var reader = settings.ExecuteReader();
+                while (reader.Read()) { reader.GetString(0); reader.GetString(1); }
+            }
+            using (var recipes = source.CreateCommand())
+            {
+                recipes.CommandText = "SELECT * FROM recipes ORDER BY name";
+                using var reader = recipes.ExecuteReader();
+                for (var i = 0; i < 8; i++)
+                    if (!string.Equals(reader.GetName(i), required["recipes"][i], StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("The selected backup has an unsupported recipe column order.");
+                while (reader.Read())
+                {
+                    var recipe = ReadRecipe(reader);
+                    if (recipe.Ingredients.Any(value => value is null) || recipe.Allergens.Any(value => value is null))
+                        throw new InvalidDataException("The selected backup contains an invalid recipe list.");
+                }
+            }
+            using (var ingredients = source.CreateCommand())
+            {
+                ingredients.CommandText = "SELECT * FROM ingredients ORDER BY name";
+                using var reader = ingredients.ExecuteReader();
+                for (var i = 0; i < 3; i++)
+                    if (!string.Equals(reader.GetName(i), required["ingredients"][i], StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("The selected backup has an unsupported ingredient column order.");
+                while (reader.Read())
+                {
+                    var ingredient = ReadIngredient(reader);
+                    if (ingredient.Allergens.Any(value => value is null))
+                        throw new InvalidDataException("The selected backup contains an invalid ingredient list.");
+                }
+            }
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException
+            or InvalidCastException or FormatException or OverflowException)
+        {
+            throw new InvalidDataException("The selected backup contains unreadable startup data.", ex);
         }
     }
 

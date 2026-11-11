@@ -43,6 +43,62 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
     }
 
+    [Theory]
+    [InlineData("UPDATE recipes SET ingredients_json='not-json'")]
+    [InlineData("UPDATE recipes SET allergens_json='{}'")]
+    [InlineData("UPDATE ingredients SET allergens_json='[42]'")]
+    [InlineData("UPDATE recipes SET ingredients_json='[null]'")]
+    [InlineData("UPDATE recipes SET allergens_json='[null]'")]
+    [InlineData("UPDATE ingredients SET allergens_json='[null]'")]
+    [InlineData("DROP TABLE ingredients; CREATE TABLE ingredients (name TEXT NOT NULL UNIQUE, id INTEGER PRIMARY KEY, allergens_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT '')")]
+    [InlineData("ALTER TABLE settings RENAME TO old_settings; CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT); INSERT INTO settings SELECT * FROM old_settings; DROP TABLE old_settings; UPDATE settings SET value=NULL WHERE key='language'")]
+    public async Task UnreadableStartupDataIsRejectedBeforeReplacingDatabase(string corrupt)
+    {
+        using (var source = Open("source.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Source", Category = "soup" });
+            await source.SaveIngredientAsync(new Ingredient { Name = "Source ingredient" });
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("source.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = corrupt; command.ExecuteNonQuery();
+        }
+        using (var current = Open("current.db"))
+        {
+            await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+            await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("source.db")));
+            Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+            Assert.False(File.Exists(PathFor("current.db.recovery-required")));
+            Assert.False(Directory.Exists(PathFor("RestoreBackups")));
+        }
+        using var reopened = Open("current.db");
+        Assert.Equal("Original", Assert.Single(await reopened.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreAcceptsLegacyMissingOptionalSchemaAndJsonNull()
+    {
+        using (var source = Open("legacy.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Legacy", Category = "soup", Ingredients = ["Flour"] });
+            await source.SaveIngredientAsync(new Ingredient { Name = "Flour", Allergens = ["Gluten"] });
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("legacy.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE recipes SET allergens_json='null'; DROP TABLE menu_slot_categories; ALTER TABLE allergens DROP COLUMN icon";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.RestoreFromAsync(PathFor("legacy.db"));
+        var recipe = Assert.Single(await current.GetAllRecipesAsync());
+        Assert.Equal(new[] { "Flour" }, recipe.Ingredients);
+        Assert.Empty(recipe.Allergens);
+        Assert.Equal("Flour", Assert.Single(await current.GetAllIngredientsAsync()).Name);
+        Assert.NotEmpty(await current.GetAllAllergensAsync());
+    }
+
     [Fact]
     public async Task RestoreCreatesUsableRecoveryBackupAndCopiesSavedImages()
     {
