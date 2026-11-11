@@ -7,8 +7,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <ScrollViewer x:Name="SettingsScrollViewer" Padding="24" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="8" MaxWidth="960" HorizontalAlignment="Stretch">
+    <ScrollViewer x:Name="SettingsScrollViewer" Padding="24" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="960" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+        <StackPanel Spacing="8" HorizontalAlignment="Stretch">
             <!-- Language Section -->
             <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="🌐 Language &amp; Region" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Language_Region_5d78df" /></Expander.Header>
@@ -117,5 +122,6 @@
                 </StackPanel>
             </Expander>
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>
