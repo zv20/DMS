@@ -284,10 +284,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         var selectedCategory = category;
-        var select = new DropDownButton { MinWidth = 0, HorizontalAlignment = HorizontalAlignment.Left };
+        var select = new Button { Width = 36, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
         var categoryMenu = new MenuFlyout();
         select.Flyout = categoryMenu;
-        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, DisplayMemberPath = "Name", TextMemberPath = "Name", TextBoxStyle = (Style)Application.Current.Resources["PlannerRecipeTextBoxStyle"] };
+        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, TextMemberPath = "Name", Style = (Style)Application.Current.Resources["PlannerRecipeSuggestStyle"] };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         var retry = new Button { Content = L.Get("RetryAction"), MinWidth = 0, Visibility = Visibility.Collapsed };
         bool saving = false, hasPending = false;
@@ -299,7 +299,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             select.Content = CategoryIcons[categoryIndex];
             var label = L.Category(Categories[categoryIndex]);
             ToolTipService.SetToolTip(select, label);
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(select, label);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(select, $"{index + 1}. {label}");
         }
         void ClearPending()
         {
@@ -379,20 +379,18 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         UpdateCategoryButton(Math.Max(0, Array.IndexOf(Categories, selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         var mealRow = new Grid { ColumnSpacing = 6 };
-        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var categoryRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        categoryRow.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
-        categoryRow.Children.Add(select);
-        mealRow.Children.Add(categoryRow);
-        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
+        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+        mealRow.Children.Add(select);
+        Grid.SetColumn(search, 1);
+        mealRow.Children.Add(search);
+        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), Style = (Style)Application.Current.Resources["PlannerClearButtonStyle"], HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
         ToolTipService.SetToolTip(clear, L.Get("Text_Clear_719ea3"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{L.Get("Text_Clear_719ea3")} {index + 1}");
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         Grid.SetColumn(clear, 1);
         mealRow.Children.Add(clear);
         panel.Children.Add(mealRow);
-        panel.Children.Add(search);
         panel.Children.Add(status);
         panel.Children.Add(retry);
         return panel;

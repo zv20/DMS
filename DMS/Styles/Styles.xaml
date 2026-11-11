@@ -20,6 +20,42 @@
     </Style>
     <Style x:Key="PlannerRecipeTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
         <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Padding" Value="10,5,34,5" />
+    </Style>
+    <Style x:Key="PlannerClearButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="Background" Value="{ThemeResource TextControlBackground}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style x:Key="PlannerRecipeSuggestStyle" TargetType="AutoSuggestBox" BasedOn="{StaticResource DefaultAutoSuggestBoxStyle}">
+        <Setter Property="TextBoxStyle" Value="{StaticResource PlannerRecipeTextBoxStyle}" />
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate><TextBlock Text="{Binding Name}" TextWrapping="Wrap" /></DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="AutoSuggestBox">
+                    <Grid x:Name="LayoutRoot">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="Orientation">
+                                <VisualState x:Name="Landscape" />
+                                <VisualState x:Name="Portrait" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <TextBox x:Name="TextBox" Style="{TemplateBinding TextBoxStyle}" PlaceholderText="{TemplateBinding PlaceholderText}" Header="{TemplateBinding Header}" Width="{TemplateBinding Width}" Description="{TemplateBinding Description}" Foreground="{TemplateBinding Foreground}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" FontSize="{TemplateBinding FontSize}" FontFamily="{TemplateBinding FontFamily}" FontWeight="{TemplateBinding FontWeight}" FontStretch="{TemplateBinding FontStretch}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" ScrollViewer.BringIntoViewOnFocusChange="False" UseSystemFocusVisuals="{TemplateBinding UseSystemFocusVisuals}" CornerRadius="{TemplateBinding CornerRadius}" />
+                        <Popup x:Name="SuggestionsPopup" ShouldConstrainToRootBounds="True">
+                            <Border x:Name="SuggestionsContainer" MinWidth="300" Padding="{ThemeResource AutoSuggestListMargin}" BorderThickness="{ThemeResource AutoSuggestListBorderThemeThickness}" BorderBrush="{ThemeResource AutoSuggestBoxSuggestionsListBorderBrush}" Background="{ThemeResource AutoSuggestBoxSuggestionsListBackground}" CornerRadius="{ThemeResource OverlayCornerRadius}">
+                                <Border.RenderTransform />
+                                <ListView x:Name="SuggestionsList" IsItemClickEnabled="True" ItemTemplate="{TemplateBinding ItemTemplate}" ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" ItemContainerStyle="{TemplateBinding ItemContainerStyle}" MaxHeight="{ThemeResource AutoSuggestListMaxHeight}" Margin="{ThemeResource AutoSuggestListPadding}">
+                                    <ListView.ItemContainerTransitions />
+                                </ListView>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <Style x:Key="PlannerDayCardStyle" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
