@@ -253,6 +253,9 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         if (_refreshPending) return;
         _weekendPlanningEnabled = weekend;
         PeriodLabel.Text = period;
+        CalendarScrollViewer.HorizontalScrollMode = monthly ? ScrollMode.Disabled : ScrollMode.Auto;
+        CalendarScrollViewer.HorizontalScrollBarVisibility = monthly ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+        CalendarGrid.MinWidth = monthly ? 0 : columns * 160 + (columns - 1) * 8 + 32;
         CalendarGrid.Children.Clear();
         CalendarGrid.RowDefinitions.Clear();
         CalendarGrid.ColumnDefinitions.Clear();

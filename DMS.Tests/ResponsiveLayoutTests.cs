@@ -6,9 +6,10 @@ namespace DMS.Tests;
 public sealed class ResponsiveLayoutTests
 {
     [Theory]
-    [InlineData(390, 5, false, 1)]
-    [InlineData(800, 5, false, 3)]
+    [InlineData(390, 5, false, 5)]
+    [InlineData(800, 5, false, 5)]
     [InlineData(1300, 5, false, 5)]
+    [InlineData(390, 7, false, 7)]
     [InlineData(800, 7, true, 4)]
     [InlineData(1600, 7, true, 7)]
     [InlineData(10, 7, true, 1)]
