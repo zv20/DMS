@@ -10,9 +10,9 @@
     <ScrollViewer x:Name="SettingsScrollViewer" Padding="24" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
         <Grid x:Name="SettingsCards" ColumnSpacing="16" RowSpacing="16" HorizontalAlignment="Stretch">
             <!-- Language Section -->
-            <Border x:Name="LanguageCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="LanguageCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🌐 Language &amp; Region" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Language_Region_5d78df" />
                     <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
@@ -25,9 +25,9 @@
             </Border>
 
             <!-- Theme Section -->
-            <Border x:Name="AppearanceCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="AppearanceCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🎨 Appearance" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Appearance_be0e75" />
                     <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
@@ -51,9 +51,9 @@
             </Border>
 
             <!-- Planning Section -->
-            <Border x:Name="PlanningCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="PlanningCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="📅 Planning" Style="{StaticResource PageTitleTextStyle}" x:Uid="Text_Planning_53aa11" />
                     <ToggleSwitch x:Name="WeekendPlanningToggle" Header="Weekend menus" OffContent="Weekdays only" OnContent="Include Saturday and Sunday" Toggled="WeekendPlanningToggle_Toggled" x:Uid="Text_Weekend_Planning_53aa12" />
@@ -64,9 +64,9 @@
             </Border>
 
             <!-- Data Management Section -->
-            <Border x:Name="DataCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="DataCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="💾 Data Management" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Data_Management_a0cf50" />
                     
@@ -87,9 +87,9 @@
             </Border>
 
             <!-- Database Section -->
-            <Border x:Name="DatabaseCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="DatabaseCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="12">
                     <TextBlock Text="🗄️ Database" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_Database_0038a1" />
                     <TextBlock x:Name="DatabaseInfoText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
@@ -104,9 +104,9 @@
             </Border>
 
             <!-- Local diagnostic log -->
-            <Border x:Name="LogsCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="LogsCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                     <StackPanel Margin="24" Spacing="10">
                         <TextBlock Style="{StaticResource PageTitleTextStyle}" x:Uid="LogViewerTitle" />
                         <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
@@ -126,9 +126,9 @@
             </Border>
 
             <!-- About Section -->
-            <Border x:Name="AboutCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="8" VerticalAlignment="Stretch">
+            <Border x:Name="AboutCard" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="12" VerticalAlignment="Stretch">
                 <Grid>
-                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="8" />
+                    <Border Background="{ThemeResource DmsClassicSurfaceOverlayBrush}" CornerRadius="12" />
                 <StackPanel Margin="24" Spacing="8">
                     <TextBlock Text="ℹ️ About" Style="{StaticResource PageTitleTextStyle}"  x:Uid="Text_About_3e3c26" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
