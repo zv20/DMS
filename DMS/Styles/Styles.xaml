@@ -18,6 +18,9 @@
         <Setter Property="Margin" Value="0,2" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
+    <Style x:Key="PlannerRecipeTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
     <Style x:Key="PlannerDayCardStyle" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
