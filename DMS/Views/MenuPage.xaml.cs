@@ -288,7 +288,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var categoryMenu = new MenuFlyout();
         select.Flyout = categoryMenu;
         var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, DisplayMemberPath = "Name", TextMemberPath = "Name", TextBoxStyle = (Style)Application.Current.Resources["PlannerRecipeTextBoxStyle"] };
-        var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         var retry = new Button { Content = L.Get("RetryAction"), MinWidth = 0, Visibility = Visibility.Collapsed };
         bool saving = false, hasPending = false;
         Recipe? pendingRecipe = null;
@@ -322,6 +322,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 entry = recipe == null ? null : new MenuEntry { Date = day, Slot = slot, RecipeId = recipe.Id };
                 ClearPending();
                 status.Text = L.Get("Text_Saved_499dc6");
+                status.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
@@ -331,6 +332,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 pendingCategory = requestedCategory;
                 retry.Visibility = Visibility.Visible;
                 status.Text = L.Get("DataSaveFailed");
+                status.Visibility = Visibility.Visible;
             }
             finally
             {
@@ -347,7 +349,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 var displayedCategory = DisplayedCategory();
                 search.ItemsSource = recipes.Where(r => r.Category.Equals(displayedCategory, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
             }
-            catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); }
+            catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }
         search.GotFocus += (_, _) => Suggest();
         search.TextChanged += async (_, args) =>
@@ -376,21 +378,21 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         }
         UpdateCategoryButton(Math.Max(0, Array.IndexOf(Categories, selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
-        panel.Children.Add(select);
         var mealRow = new Grid { ColumnSpacing = 6 };
-        mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        mealRow.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
-        Grid.SetColumn(search, 1);
-        mealRow.Children.Add(search);
-        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
+        var categoryRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        categoryRow.Children.Add(new TextBlock { Text = $"{index + 1}.", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+        categoryRow.Children.Add(select);
+        mealRow.Children.Add(categoryRow);
+        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
         ToolTipService.SetToolTip(clear, L.Get("Text_Clear_719ea3"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{L.Get("Text_Clear_719ea3")} {index + 1}");
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
-        Grid.SetColumn(clear, 2);
+        Grid.SetColumn(clear, 1);
         mealRow.Children.Add(clear);
         panel.Children.Add(mealRow);
+        panel.Children.Add(search);
         panel.Children.Add(status);
         panel.Children.Add(retry);
         return panel;
