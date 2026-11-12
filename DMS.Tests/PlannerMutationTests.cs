@@ -14,6 +14,31 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task DeletedDefaultAllergensStayDeletedAcrossRestarts()
+    {
+        using (var database = Open())
+        {
+            var defaults = await database.GetAllAllergensAsync();
+            Assert.Equal(14, defaults.Count);
+            await database.DeleteAllergenAsync(defaults[0].Id);
+        }
+        using (var reopened = Open())
+        {
+            var remaining = await reopened.GetAllAllergensAsync();
+            Assert.Equal(13, remaining.Count);
+            foreach (var allergen in remaining) await reopened.DeleteAllergenAsync(allergen.Id);
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE schema_migrations";
+            command.ExecuteNonQuery();
+        }
+        using var empty = Open();
+        Assert.Empty(await empty.GetAllAllergensAsync());
+    }
+
+    [Fact]
     public async Task CustomizedDefaultAllergenAppearanceSurvivesRestart()
     {
         using (var database = Open())
@@ -36,13 +61,14 @@ public sealed class PlannerMutationTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE allergens SET color='#123456' WHERE name='глутен'; ALTER TABLE allergens DROP COLUMN icon";
+            command.CommandText = "DELETE FROM allergens WHERE name='яйца'; UPDATE allergens SET color='#123456' WHERE name='глутен'; ALTER TABLE allergens DROP COLUMN icon";
             command.ExecuteNonQuery();
         }
         using var reopened = Open();
         var allergen = (await reopened.GetAllAllergensAsync()).Single(item => item.Name == "глутен");
         Assert.Equal("🌾", allergen.Icon);
         Assert.Equal("#123456", allergen.Color);
+        Assert.DoesNotContain(await reopened.GetAllAllergensAsync(), item => item.Name == "яйца");
     }
 
     [Fact]

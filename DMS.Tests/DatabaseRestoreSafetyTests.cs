@@ -13,6 +13,24 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     private DatabaseService Open(string name) { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathFor(name)); }
 
     [Fact]
+    public async Task RestorePreservesDeletedDefaultAllergens()
+    {
+        using (var source = Open("source.db"))
+        {
+            var allergen = (await source.GetAllAllergensAsync()).Single(item => item.Name == "глутен");
+            await source.DeleteAllergenAsync(allergen.Id);
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        }
+        using (var current = Open("current.db"))
+        {
+            await current.RestoreFromAsync(PathFor("backup.db"));
+            Assert.DoesNotContain(await current.GetAllAllergensAsync(), item => item.Name == "глутен");
+        }
+        using var reopened = Open("current.db");
+        Assert.DoesNotContain(await reopened.GetAllAllergensAsync(), item => item.Name == "глутен");
+    }
+
+    [Fact]
     public async Task InvalidBackupsLeaveCurrentDataIntact()
     {
         using var current = Open("current.db");

@@ -149,13 +149,6 @@ public partial class DatabaseService : IDisposable
                 allergens_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
-            @"CREATE TABLE IF NOT EXISTS allergens (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                color TEXT NOT NULL DEFAULT '#3498db',
-                icon TEXT NOT NULL DEFAULT '⚠️',
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            )",
             @"CREATE TABLE IF NOT EXISTS menu (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
@@ -196,25 +189,60 @@ public partial class DatabaseService : IDisposable
             await cmd.ExecuteNonQueryAsync();
         }
 
-        var addedAllergenIcons = await EnsureAllergenIconColumnAsync();
+        await InitializeAllergensAsync();
         // Seed default settings
         await SeedDefaultsAsync();
-        await SeedDefaultAllergensAsync(addedAllergenIcons);
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
         if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
-    private async Task<bool> EnsureAllergenIconColumnAsync()
+    private async Task InitializeAllergensAsync()
     {
-        if (_connection == null) return false;
-        using var command = _connection.CreateCommand();
-        command.CommandText = "ALTER TABLE allergens ADD COLUMN icon TEXT NOT NULL DEFAULT '⚠️'";
-        try { await command.ExecuteNonQueryAsync(); return true; }
-        catch (SqliteException ex) when (ex.Message.Contains("duplicate column", StringComparison.OrdinalIgnoreCase)) { return false; }
+        if (_connection == null) return;
+        using var transaction = _connection.BeginTransaction();
+        bool exists;
+        using (var check = _connection.CreateCommand())
+        {
+            check.Transaction = transaction;
+            check.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='allergens' COLLATE NOCASE";
+            exists = Convert.ToInt32(await check.ExecuteScalarAsync()) > 0;
+        }
+        var addedIcons = false;
+        if (!exists)
+        {
+            using var create = _connection.CreateCommand();
+            create.Transaction = transaction;
+            create.CommandText = @"CREATE TABLE allergens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                color TEXT NOT NULL DEFAULT '#3498db',
+                icon TEXT NOT NULL DEFAULT '⚠️',
+                created_at TEXT NOT NULL DEFAULT (datetime('now')))";
+            await create.ExecuteNonQueryAsync();
+        }
+        else
+        {
+            using var check = _connection.CreateCommand();
+            check.Transaction = transaction;
+            check.CommandText = "PRAGMA table_info(allergens)";
+            var hasIcon = false;
+            using (var reader = await check.ExecuteReaderAsync())
+                while (await reader.ReadAsync()) hasIcon |= string.Equals(reader.GetString(1), "icon", StringComparison.OrdinalIgnoreCase);
+            if (!hasIcon)
+            {
+                using var alter = _connection.CreateCommand();
+                alter.Transaction = transaction;
+                alter.CommandText = "ALTER TABLE allergens ADD COLUMN icon TEXT NOT NULL DEFAULT '⚠️'";
+                await alter.ExecuteNonQueryAsync();
+                addedIcons = true;
+            }
+        }
+        if (!exists || addedIcons) await SeedDefaultAllergensAsync(transaction, seedDefaults: !exists);
+        transaction.Commit();
     }
 
-    private async Task SeedDefaultAllergensAsync(bool addedIcons)
+    private async Task SeedDefaultAllergensAsync(SqliteTransaction transaction, bool seedDefaults)
     {
         if (_connection == null) return;
         var defaults = new (string Name, string Icon, string Color)[]
@@ -230,11 +258,13 @@ public partial class DatabaseService : IDisposable
         foreach (var allergen in defaults)
         {
             using var command = _connection.CreateCommand();
-            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, color, icon) VALUES (@name, @color, @icon);" +
-                (addedIcons ? " UPDATE allergens SET icon=@icon WHERE name=@name AND icon='⚠️';" : "");
+            command.Transaction = transaction;
+            command.CommandText = seedDefaults
+                ? "INSERT INTO allergens (name, color, icon) VALUES (@name, @color, @icon)"
+                : "UPDATE allergens SET icon=@icon WHERE name=@name AND icon='⚠️'";
             command.Parameters.AddWithValue("@name", allergen.Name);
             command.Parameters.AddWithValue("@icon", allergen.Icon);
-            command.Parameters.AddWithValue("@color", allergen.Color);
+            if (seedDefaults) command.Parameters.AddWithValue("@color", allergen.Color);
             await command.ExecuteNonQueryAsync();
         }
     }

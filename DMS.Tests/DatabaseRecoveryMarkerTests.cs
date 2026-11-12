@@ -75,7 +75,7 @@ public sealed class DatabaseRecoveryMarkerTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathFor("source.db")};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "DROP TABLE allergens; CREATE TABLE allergens (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, color TEXT NOT NULL CHECK (color != '#D97706'), icon TEXT, created_at TEXT NOT NULL DEFAULT ''); INSERT INTO allergens(name, color, icon) VALUES ('глутен', '#3498db', '⚠️')";
+            command.CommandText = "DROP TABLE schema_migrations; CREATE TABLE schema_migrations (unexpected INTEGER)";
             command.ExecuteNonQuery();
         }
         // Add a trigger only to the live database, so the recovery copy cannot
