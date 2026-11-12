@@ -14,8 +14,15 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    name: Windows tests
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-checks.yml
+
   release:
-    name: Build, test, package, and release (Windows)
+    name: Build, package, and release (Windows)
+    needs: tests
     runs-on: windows-latest
     timeout-minutes: 45
     env:
@@ -27,17 +34,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-
-      - name: Restore, build, and test
-        run: |
-          dotnet restore DMS.sln -p:Platform=x64
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python scripts/check-localization.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish self-contained x64 app
         run: >-

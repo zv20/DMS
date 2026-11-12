@@ -1,0 +1,44 @@
+name: Windows tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Test and measure
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check localization
+        run: python scripts/check-localization.py
+
+      - name: Run tests
+        run: dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category!=PerformanceBaseline"
+
+      - name: Measure generated database reads
+        shell: pwsh
+        run: |
+          $env:DMS_PERF_RESULTS_PATH = Join-Path $env:RUNNER_TEMP 'dms-performance/database.json'
+          dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category=PerformanceBaseline"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (!(Test-Path -LiteralPath $env:DMS_PERF_RESULTS_PATH)) { throw 'Performance results were not created.' }
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-performance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/dms-performance/database.json
+          if-no-files-found: error

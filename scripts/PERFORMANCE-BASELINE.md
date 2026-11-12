@@ -5,6 +5,20 @@ grade. It has two independent parts: automated tests with generated data, and
 a guided capture of the real app. Run both on the same Windows machine again
 after changes, using the same dataset, build configuration and actions.
 
+## Automatic Windows checks on GitHub
+
+The **Windows tests** workflow runs on branch pushes, pull requests, and manual
+dispatch. It compiles the test project and its app dependency in Release x64,
+runs the regular tests, and runs the generated database benchmark. The release
+workflow also calls these checks and packages a release only after they pass.
+Open the workflow run in GitHub Actions and download its
+`database-performance-*` artifact to see `database.json`. The workflow must be
+present in the pushed branch (and Actions enabled for the repository) to run.
+
+Hosted runner hardware and load can vary; use these numbers to identify changes
+worth investigating, not as precise comparisons with your own PC. The workflow
+does not run the interactive UI capture or measure perceived responsiveness.
+
 ## Prepare
 
 1. Open `DMS.sln` from the performance checkout in Visual Studio. Select
