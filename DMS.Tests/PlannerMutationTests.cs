@@ -63,6 +63,19 @@ public sealed class PlannerMutationTests : IDisposable
     }
 
     [Fact]
+    public async Task SavingEmptyCategoriesIsRejectedWithoutChangingSettings()
+    {
+        using var database = Open();
+        var settings = (await database.GetSettingsAsync())!;
+        settings.MealsPerDay = 7;
+        settings.MealCategories.Clear();
+        await Assert.ThrowsAsync<InvalidDataException>(() => database.SaveSettingsAsync(settings));
+        var restored = (await database.GetSettingsAsync())!;
+        Assert.Equal(4, restored.MealsPerDay);
+        Assert.Equal(4, restored.MealCategories.Count);
+    }
+
+    [Fact]
     public async Task MealSettingsSaveRollsBackWhenCategoryWriteFails()
     {
         using var database = Open();

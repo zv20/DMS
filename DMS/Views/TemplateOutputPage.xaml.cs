@@ -27,6 +27,7 @@ public sealed partial class TemplateOutputPage : Page
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly CancellationTokenSource _pageLifetime = new();
     private readonly TemplateBitmapCache _previewBitmaps = new();
+    private readonly TemplateBitmapCache _printBitmaps = new(retainForJob: true);
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _uiQueue;
     private PrintManager? _printManager;
     private PrintDocument? _printDocument;
@@ -128,7 +129,7 @@ public sealed partial class TemplateOutputPage : Page
     private void SetReady(bool ready)
     {
         _ready = ready;
-        PrintButton.IsEnabled = ready && !_busy && _printManager != null;
+        PrintButton.IsEnabled = ready && !_busy && _printManager != null && System.Threading.Volatile.Read(ref _activePrintTasks) == 0;
         PdfButton.IsEnabled = ready && !_busy;
         PngButton.IsEnabled = ready && !_busy;
         TemplateSelector.IsEnabled = WeekPicker.IsEnabled = !_busy;
@@ -240,6 +241,7 @@ public sealed partial class TemplateOutputPage : Page
         foreach (var box in _printViewboxes) box.Child = null;
         _printViewboxes.Clear(); _printSurfaces.Clear();
         DisposePages(_printPages); _printPages = [];
+        _printBitmaps.Clear();
         _printManager = null; _printDocument = null; _printSource = null;
     }
 
@@ -264,11 +266,11 @@ public sealed partial class TemplateOutputPage : Page
                     App.Logger.LogWarning("The print task reported a failure");
                     StatusText.Text = L.Get("TemplateOutputPrintFailed");
                 }
-                CloseAvailabilityChanged?.Invoke(CanClose);
+                SetReady(_ready);
             });
         };
         completionAttached = true;
-        _uiQueue.TryEnqueue(() => CloseAvailabilityChanged?.Invoke(CanClose));
+        _uiQueue.TryEnqueue(() => SetReady(_ready));
         try { task.Options.MediaSize = PrintMediaSize.IsoA4; task.Options.Orientation = PrintOrientation.Portrait; }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Printer did not accept the preferred page settings"); }
         }
@@ -276,7 +278,7 @@ public sealed partial class TemplateOutputPage : Page
         {
             if (taskCounted && !completionAttached) System.Threading.Interlocked.Decrement(ref _activePrintTasks);
             ReportPrintCallbackFailure(ex);
-            _uiQueue.TryEnqueue(() => CloseAvailabilityChanged?.Invoke(CanClose));
+            _uiQueue.TryEnqueue(() => SetReady(_ready));
         }
     }
 
@@ -341,8 +343,9 @@ public sealed partial class TemplateOutputPage : Page
             foreach (var old in _printViewboxes) old.Child = null;
             _printViewboxes.Clear(); _printSurfaces.Clear();
             DisposePages(_printPages); _printPages = [];
+            _printBitmaps.Clear();
             foreach (var pageEntries in _pageEntries)
-                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled));
+                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps));
             await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
             if (!_loaded) return;
             if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }

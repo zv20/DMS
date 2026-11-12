@@ -622,6 +622,8 @@ public partial class DatabaseService : IDisposable
 
     public async Task SaveSettingsAsync(AppSettings settings)
     {
+        var mealCategories = System.Text.Json.JsonSerializer.Serialize(settings.MealCategories);
+        ParseMealCategories(mealCategories);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
         using var cmd = _connection.CreateCommand();
@@ -635,7 +637,7 @@ public partial class DatabaseService : IDisposable
             ("accent_color", settings.AccentColor),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("meals_per_day", Math.Clamp(settings.MealsPerDay, 1, 100).ToString()),
-            ("meal_categories", System.Text.Json.JsonSerializer.Serialize(settings.MealCategories)),
+            ("meal_categories", mealCategories),
             ("data_folder", settings.DataFolder ?? ""),
             ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
             ,("window_x", settings.WindowX?.ToString() ?? "")

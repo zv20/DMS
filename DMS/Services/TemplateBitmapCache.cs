@@ -11,14 +11,19 @@ public sealed class TemplateBitmapCache
     private const long MaxBytes = 32L * 1024 * 1024;
     private const int MaxEntries = 6;
     private readonly MemoryBudgetCache<(string Uri, int Width, int Limit), BitmapImage> _images = new(MaxBytes, MaxEntries);
+    private readonly Dictionary<(string Uri, int Width, int Limit), BitmapImage> _jobImages = new();
     private readonly Dictionary<(string Uri, int Width, int Limit), Task<(BitmapImage Bitmap, long Bytes)>> _pending = new();
     private readonly SemaphoreSlim _decodeGate = new(2, 2);
+    private readonly bool _retainForJob;
     private CancellationTokenSource _lifetime = new();
     private int _generation;
+
+    public TemplateBitmapCache(bool retainForJob = false) => _retainForJob = retainForJob;
 
     public async Task<BitmapImage> GetAsync(string uri, int width, int maxBytes)
     {
         var key = (uri, width, maxBytes);
+        if (_jobImages.TryGetValue(key, out var retained)) return retained;
         if (_images.TryGet(key, out var cached)) return cached;
         var generation = _generation;
         if (!_pending.TryGetValue(key, out var task))
@@ -29,7 +34,11 @@ public sealed class TemplateBitmapCache
         try
         {
             var decoded = await task;
-            if (generation == _generation) _images.Put(key, decoded.Bitmap, decoded.Bytes);
+            if (generation == _generation)
+            {
+                if (_retainForJob) _jobImages[key] = decoded.Bitmap;
+                else _images.Put(key, decoded.Bitmap, decoded.Bytes);
+            }
             return decoded.Bitmap;
         }
         finally
@@ -42,7 +51,7 @@ public sealed class TemplateBitmapCache
     {
         _generation++;
         _lifetime.Cancel(); _lifetime.Dispose(); _lifetime = new CancellationTokenSource();
-        _images.Clear(); _pending.Clear();
+        _images.Clear(); _jobImages.Clear(); _pending.Clear();
     }
 
     private async Task<(BitmapImage Bitmap, long Bytes)> DecodeAsync(string uri, int width, int maxBytes, CancellationToken cancellationToken)

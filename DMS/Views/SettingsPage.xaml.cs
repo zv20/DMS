@@ -38,6 +38,7 @@ public sealed partial class SettingsPage : Page
             App.Logger.LogError(ex, "Could not load settings");
             DatabaseInfoText.Text = L.Get("LogViewerSettingsLoadFailed");
             LanguageComboBox.IsEnabled = ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = WeekendPlanningToggle.IsEnabled = false;
+            MealsPerDayBox.IsEnabled = SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = false;
         }
         RefreshLogViewer();
     }
@@ -277,7 +278,7 @@ public sealed partial class SettingsPage : Page
     private async void SavePlanning_Click(object sender, RoutedEventArgs e)
     {
         var names = _categoryEditors.Select(item => item.Name.Text.Trim()).ToArray();
-        if (!double.IsFinite(MealsPerDayBox.Value) || MealsPerDayBox.Value < 1 || MealsPerDayBox.Value > 100 || MealsPerDayBox.Value != Math.Floor(MealsPerDayBox.Value) || names.Any(string.IsNullOrWhiteSpace) || names.Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != names.Length)
+        if (!double.IsFinite(MealsPerDayBox.Value) || MealsPerDayBox.Value < 1 || MealsPerDayBox.Value > 100 || MealsPerDayBox.Value != Math.Floor(MealsPerDayBox.Value) || names.Length == 0 || names.Any(string.IsNullOrWhiteSpace) || names.Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != names.Length)
         {
             PlanningStatus.Text = L.Get("MealSettingsInvalid");
             return;

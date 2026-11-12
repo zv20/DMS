@@ -97,11 +97,12 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var recipes = await _database.GetAllRecipesAsync();
         if (generation != _pageGeneration) return;
         _mealCategories = categories;
+        var selectedCategory = (CategoryFilter.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
         _filtersReady = false;
         CategoryFilter.Items.Clear();
         CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
         foreach (var category in categories) CategoryFilter.Items.Add(new ComboBoxItem { Tag = category.Id, Content = L.Category(category) });
-        CategoryFilter.SelectedIndex = 0;
+        CategoryFilter.SelectedItem = CategoryFilter.Items.Cast<ComboBoxItem>().FirstOrDefault(item => string.Equals(item.Tag as string, selectedCategory, StringComparison.OrdinalIgnoreCase)) ?? CategoryFilter.Items[0];
         _filtersReady = true;
         _recipes.Clear();
         foreach (var recipe in recipes)

@@ -376,22 +376,26 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, DisplayedCategory());
         };
         search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, DisplayedCategory()); };
-        for (var categoryIndex = 0; categoryIndex < mealCategories.Count; categoryIndex++)
+        categoryMenu.Opening += (_, _) =>
         {
-            var optionIndex = categoryIndex;
-            var option = mealCategories[optionIndex];
-            var builtInIndex = string.IsNullOrWhiteSpace(option.Name) ? Array.FindIndex(Categories, key => key.Equals(option.Id, StringComparison.OrdinalIgnoreCase)) : -1;
-            var item = new MenuFlyoutItem { Text = $"{(builtInIndex >= 0 ? CategoryIcons[builtInIndex] : "🍴")} {L.Category(option)}" };
-            item.Click += async (_, _) =>
+            if (categoryMenu.Items.Count != 0) return;
+            for (var categoryIndex = 0; categoryIndex < mealCategories.Count; categoryIndex++)
             {
-                if (selectedCategory == option.Id) return;
-                selectedCategory = option.Id;
-                UpdateCategoryButton(optionIndex);
-                await SaveAsync(null, DisplayedCategory());
-                Suggest();
-            };
-            categoryMenu.Items.Add(item);
-        }
+                var optionIndex = categoryIndex;
+                var option = mealCategories[optionIndex];
+                var builtInIndex = string.IsNullOrWhiteSpace(option.Name) ? Array.FindIndex(Categories, key => key.Equals(option.Id, StringComparison.OrdinalIgnoreCase)) : -1;
+                var item = new MenuFlyoutItem { Text = $"{(builtInIndex >= 0 ? CategoryIcons[builtInIndex] : "🍴")} {L.Category(option)}" };
+                item.Click += async (_, _) =>
+                {
+                    if (selectedCategory == option.Id) return;
+                    selectedCategory = option.Id;
+                    UpdateCategoryButton(optionIndex);
+                    await SaveAsync(null, DisplayedCategory());
+                    Suggest();
+                };
+                categoryMenu.Items.Add(item);
+            }
+        };
         UpdateCategoryButton(Math.Max(0, mealCategories.ToList().FindIndex(c => c.Id == selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         var mealRow = new Grid { ColumnSpacing = 6, RowSpacing = 4 };
