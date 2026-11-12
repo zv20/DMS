@@ -17,7 +17,7 @@ public sealed record TemplatePageResult(FrameworkElement Page, bool Overflowed, 
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateRenderer
 {
-    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default)
+    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default, bool measureOnly = false)
     {
         var lifetime = new TemplateVisualLifetime();
         try
@@ -74,6 +74,8 @@ public static class TemplateRenderer
         }
         // Long footers consume available day space but are never silently clipped.
         var overflow = fit.Overflowed || insets.Overflowed || header.DesiredSize.Height + reflectionHeight > headerHeight || footerNeeded > footerHeight + .5;
+        if (measureOnly)
+            return new TemplatePageResult(new Grid(), overflow, Task.CompletedTask, populated.Length > 0, null, null, lifetime);
         var days = new Grid { RowSpacing = dayGap };
         for (var i = 0; i < visible.Length; i++)
         {

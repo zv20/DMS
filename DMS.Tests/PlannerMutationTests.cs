@@ -14,6 +14,71 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task MealConfigurationPersistsWithoutChangingSavedCategoryIds()
+    {
+        using (var database = Open())
+        {
+            var settings = (await database.GetSettingsAsync())!;
+            Assert.Equal(4, settings.MealsPerDay);
+            Assert.Equal(new[] { "soup", "main", "dessert", "other" }, settings.MealCategories.Select(c => c.Id));
+            var recipeId = await database.SaveRecipeAsync(new Recipe { Name = "Soup", Category = "soup" });
+            await database.SaveMenuSlotAsync(_day, "slot6", "soup", recipeId);
+            settings.MealsPerDay = 6;
+            settings.MealCategories[0].Name = "Breakfast";
+            settings.MealCategories.Add(new MealCategory { Id = "custom-snack", Name = "Snack" });
+            await database.SaveSettingsAsync(settings);
+        }
+        using var reopened = Open();
+        var restored = (await reopened.GetSettingsAsync())!;
+        Assert.Equal(6, restored.MealsPerDay);
+        Assert.Equal("Breakfast", restored.MealCategories.Single(c => c.Id == "soup").Name);
+        Assert.Equal("Snack", restored.MealCategories.Single(c => c.Id == "custom-snack").Name);
+        Assert.Equal("soup", (await reopened.GetAllRecipesAsync()).Single().Category);
+        Assert.Equal("soup", (await reopened.GetMenuCategoriesAsync(_day, _day)).Single().Category);
+        Assert.Equal("slot6", (await reopened.GetMenuAsync(_day, _day)).Single().Slot);
+    }
+
+    [Fact]
+    public void NumberedSlotsSortNumerically()
+    {
+        Assert.Equal(new[] { "slot1", "slot2", "slot10" }, new[] { "slot10", "slot2", "slot1" }.OrderBy(MenuOutputService.SlotOrder));
+        Assert.True(MenuOutputService.IsVisibleSlot("slot4", 4));
+        Assert.False(MenuOutputService.IsVisibleSlot("slot5", 4));
+        Assert.True(MenuOutputService.IsVisibleSlot("Breakfast", 4));
+    }
+
+    [Fact]
+    public async Task InvalidCategorySettingsAreNotSilentlyReplaced()
+    {
+        using var database = Open();
+        await database.InitializeAsync();
+        using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES ('meal_categories', 'invalid json')";
+            command.ExecuteNonQuery();
+        }
+        await Assert.ThrowsAsync<InvalidDataException>(() => database.GetSettingsAsync());
+    }
+
+    [Fact]
+    public async Task MealSettingsSaveRollsBackWhenCategoryWriteFails()
+    {
+        using var database = Open();
+        var settings = (await database.GetSettingsAsync())!;
+        settings.MealsPerDay = 7;
+        using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TRIGGER reject_categories BEFORE INSERT ON settings WHEN NEW.key='meal_categories' BEGIN SELECT RAISE(ABORT, 'simulated failure'); END";
+            command.ExecuteNonQuery();
+        }
+        await Assert.ThrowsAsync<SqliteException>(() => database.SaveSettingsAsync(settings));
+        Assert.Equal(4, (await database.GetSettingsAsync())!.MealsPerDay);
+    }
+
+    [Fact]
     public async Task CategoryRangeIncludesBothBoundariesAndKeepsSlotsDistinct()
     {
         using var database = Open();

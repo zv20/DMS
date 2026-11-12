@@ -28,6 +28,11 @@
   <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" Padding="8">
    <Button x:Name="UndoButton" Content="↶" MinWidth="32" />
    <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
+   <StackPanel x:Name="PreviewPageNavigation" Orientation="Horizontal" Spacing="4" Visibility="Collapsed">
+    <Button x:Name="PreviousPreviewPageButton" Content="‹" Click="PreviousPreviewPage_Click" />
+    <TextBlock x:Name="PreviewPageNumber" VerticalAlignment="Center" />
+    <Button x:Name="NextPreviewPageButton" Content="›" Click="NextPreviewPage_Click" />
+   </StackPanel>
   </StackPanel>
    <ScrollViewer x:Name="PageScroll" Grid.Row="1" Background="Transparent" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Enabled" MinZoomFactor="0.5" MaxZoomFactor="2" Padding="24"><ContentControl x:Name="PageHost" HorizontalAlignment="Center" /></ScrollViewer>
    <Border x:Name="SettingsPanel" Grid.Column="1" Grid.RowSpan="3" Width="270" VerticalAlignment="Stretch" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"><Grid RowDefinitions="*,Auto,Auto"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Padding="12"><StackPanel Spacing="10">

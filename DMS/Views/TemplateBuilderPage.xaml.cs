@@ -43,6 +43,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _editingBlock;
     private bool _inlineTextChanged;
     private bool _weekendEnabled;
+    private int _mealsPerDay = 4, _previewPageIndex;
     private List<string> _recentTemplateColors = [];
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
@@ -59,6 +60,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FileMenuButton, L.Get("TplFileMenu"));
         NewButton.Text = L.Get("TplNew"); SaveButton.Text = L.Get("TplSave");
         ToolTipService.SetToolTip(UndoButton, L.Get("TplUndo")); ToolTipService.SetToolTip(RedoButton, L.Get("TplRedo"));
+        ToolTipService.SetToolTip(PreviousPreviewPageButton, L.Get("PreviousPreviewPage")); ToolTipService.SetToolTip(NextPreviewPageButton, L.Get("NextPreviewPage"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(PreviousPreviewPageButton, L.Get("PreviousPreviewPage"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(NextPreviewPageButton, L.Get("NextPreviewPage"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(UndoButton, L.Get("TplUndo"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RedoButton, L.Get("TplRedo"));
         RoutedEventHandler undo = (_, _) => Undo(), redo = (_, _) => Redo();
@@ -561,12 +565,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var monday = day.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
         try
         {
-            var weekendEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
-            var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
+            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            var weekendEnabled = settings.WeekendPlanningEnabled;
+            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
+                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
             if (generation != _generation) return;
-            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled; _mealsPerDay = settings.MealsPerDay; _previewPageIndex = 0;
             for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
             Render();
         }
@@ -982,6 +988,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to save recently used template colors"); }
     }
 
+    private void PreviousPreviewPage_Click(object sender, RoutedEventArgs e) { if (_previewPageIndex > 0) { _previewPageIndex--; Render(); } }
+    private void NextPreviewPage_Click(object sender, RoutedEventArgs e) { _previewPageIndex++; Render(); }
+
     private async void Render()
     {
         if (_binding || _monday == default || _leaving) return;
@@ -997,7 +1006,25 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var generation = _renderGeneration;
             try
             {
-            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token);
+            List<List<MenuEntry>> pages = [_entries];
+            bool Fits(IReadOnlyList<MenuEntry> entries)
+            {
+                var measured = TemplateRenderer.Create(_document, _monday, entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
+                try { return !measured.Overflowed; }
+                finally { measured.Lifetime.Dispose(); }
+            }
+            if (_mealsPerDay > 4 && !Fits(_entries))
+            {
+                var ids = _recipes.Select(recipe => recipe.Id).ToHashSet();
+                var printable = _entries.Where(entry => ids.Contains(entry.RecipeId)).ToList();
+                if (printable.Count > 0 && TemplatePagination.Split(printable, Fits) is { Count: > 0 } split) pages = split;
+            }
+            _previewPageIndex = Math.Clamp(_previewPageIndex, 0, pages.Count - 1);
+            PreviewPageNavigation.Visibility = pages.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            PreviewPageNumber.Text = $"{_previewPageIndex + 1} / {pages.Count}";
+            PreviousPreviewPageButton.IsEnabled = _previewPageIndex > 0;
+            NextPreviewPageButton.IsEnabled = _previewPageIndex + 1 < pages.Count;
+            var result = TemplateRenderer.Create(_document, _monday, pages[_previewPageIndex], _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token);
             result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;

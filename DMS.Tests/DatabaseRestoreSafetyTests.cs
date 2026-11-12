@@ -52,6 +52,8 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     [InlineData("UPDATE ingredients SET allergens_json='[null]'")]
     [InlineData("DROP TABLE ingredients; CREATE TABLE ingredients (name TEXT NOT NULL UNIQUE, id INTEGER PRIMARY KEY, allergens_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT '')")]
     [InlineData("ALTER TABLE settings RENAME TO old_settings; CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT); INSERT INTO settings SELECT * FROM old_settings; DROP TABLE old_settings; UPDATE settings SET value=NULL WHERE key='language'")]
+    [InlineData("INSERT OR REPLACE INTO settings (key, value) VALUES ('meal_categories', 'not-json')")]
+    [InlineData("INSERT OR REPLACE INTO settings (key, value) VALUES ('meals_per_day', 'invalid')")]
     public async Task UnreadableStartupDataIsRejectedBeforeReplacingDatabase(string corrupt)
     {
         using (var source = Open("source.db"))

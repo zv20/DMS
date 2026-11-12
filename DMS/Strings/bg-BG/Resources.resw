@@ -21,6 +21,11 @@
   <data name="TemplateOutputFailure" xml:space="preserve"><value>Операцията не успя: {0}</value></data>
   <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Изберете Microsoft Print to PDF в прозореца за печат.</value></data>
   <data name="TemplateOutputSaved" xml:space="preserve"><value>Изображението е запазено.</value></data>
+  <data name="TemplateOutputImagesSaved" xml:space="preserve"><value>Всички страници са запазени като PNG изображения в избраната папка.</value></data>
+  <data name="TemplateOutputPageCount" xml:space="preserve"><value>{0} страници</value></data>
+  <data name="TemplateOutputImagesHint" xml:space="preserve"><value>При експорт на изображения всяка страница се запазва като PNG в избрана от вас папка.</value></data>
+  <data name="PreviousPreviewPage" xml:space="preserve"><value>Предишна страница</value></data>
+  <data name="NextPreviewPage" xml:space="preserve"><value>Следваща страница</value></data>
   <data name="TemplateOutputPdfSaved" xml:space="preserve"><value>PDF файлът е запазен.</value></data>
   <data name="TplTemplateDeleted" xml:space="preserve"><value>Шаблонът е изтрит.</value></data>
   <data name="TemplateOutputTemplate" xml:space="preserve"><value>Шаблон</value></data>
@@ -549,4 +554,12 @@
   <data name="AllergenNoMatches" xml:space="preserve"><value>Няма намерени алергени</value></data>
   <data name="ClearSearch.Content" xml:space="preserve"><value>Изчисти търсенето</value></data>
   <data name="ClearFilters.Content" xml:space="preserve"><value>Изчисти търсенето и филтрите</value></data>
+  <data name="MealsPerDay.Header" xml:space="preserve"><value>Хранения на ден</value></data>
+  <data name="MealsPerDayHint.Text" xml:space="preserve"><value>Намаляването скрива допълнителните позиции; запазените ястия остават достъпни, ако увеличите броя отново.</value></data>
+  <data name="MealCategoriesHeading.Text" xml:space="preserve"><value>Категории ястия</value></data>
+  <data name="AddMealCategory.Content" xml:space="preserve"><value>Добави категория</value></data>
+  <data name="SavePlanning.Content" xml:space="preserve"><value>Запази настройките</value></data>
+  <data name="MealCategoryName" xml:space="preserve"><value>Име на категория</value></data>
+  <data name="RemoveNewCategory" xml:space="preserve"><value>Премахни новата категория</value></data>
+  <data name="MealSettingsInvalid" xml:space="preserve"><value>Въведете цяло число и уникално, непразно име за всяка категория.</value></data>
 </root>

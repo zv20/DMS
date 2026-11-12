@@ -587,6 +587,10 @@ public partial class DatabaseService : IDisposable
                 case "theme": settings.Theme = value == "default" ? "light" : value; break;
                 case "accent_color": settings.AccentColor = value; break;
                 case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
+                case "meals_per_day": settings.MealsPerDay = ParseMealsPerDay(value); break;
+                case "meal_categories":
+                    settings.MealCategories = ParseMealCategories(value);
+                    break;
                 case "data_folder": settings.DataFolder = value; break;
                 case "recent_template_colors":
                     try { settings.RecentTemplateColors = System.Text.Json.JsonSerializer.Deserialize<List<string>>(value) ?? []; }
@@ -601,10 +605,27 @@ public partial class DatabaseService : IDisposable
         return settings;
     }
 
+    private static List<MealCategory> ParseMealCategories(string value)
+    {
+        try
+        {
+            var categories = System.Text.Json.JsonSerializer.Deserialize<List<MealCategory>>(value);
+            if (categories is not { Count: > 0 } || categories.Any(c => c == null || string.IsNullOrWhiteSpace(c.Id)) || categories.Select(c => c.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != categories.Count)
+                throw new InvalidDataException("The saved meal categories are invalid.");
+            return categories;
+        }
+        catch (System.Text.Json.JsonException ex) { throw new InvalidDataException("The saved meal categories are invalid.", ex); }
+    }
+
+    private static int ParseMealsPerDay(string value) => int.TryParse(value, out var count) && count is >= 1 and <= 100
+        ? count : throw new InvalidDataException("The saved meals per day setting is invalid.");
+
     public async Task SaveSettingsAsync(AppSettings settings)
     {
         await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
+        using var transaction = _connection!.BeginTransaction();
+        using var cmd = _connection.CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES (@key, @value)";
 
         var pairs = new[]
@@ -613,6 +634,8 @@ public partial class DatabaseService : IDisposable
             ("theme", settings.Theme),
             ("accent_color", settings.AccentColor),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
+            ("meals_per_day", Math.Clamp(settings.MealsPerDay, 1, 100).ToString()),
+            ("meal_categories", System.Text.Json.JsonSerializer.Serialize(settings.MealCategories)),
             ("data_folder", settings.DataFolder ?? ""),
             ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
             ,("window_x", settings.WindowX?.ToString() ?? "")
@@ -628,6 +651,7 @@ public partial class DatabaseService : IDisposable
             cmd.Parameters.AddWithValue("@value", value);
             await cmd.ExecuteNonQueryAsync();
         }
+        transaction.Commit();
     }
 
     // Templates
@@ -906,7 +930,13 @@ public partial class DatabaseService : IDisposable
             {
                 settings.CommandText = "SELECT key, value FROM settings";
                 using var reader = settings.ExecuteReader();
-                while (reader.Read()) { reader.GetString(0); reader.GetString(1); }
+                while (reader.Read())
+                {
+                    var key = reader.GetString(0);
+                    var value = reader.GetString(1);
+                    if (key == "meal_categories") ParseMealCategories(value);
+                    if (key == "meals_per_day") ParseMealsPerDay(value);
+                }
             }
             using (var recipes = source.CreateCommand())
             {

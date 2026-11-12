@@ -56,6 +56,12 @@
 
                     <ToggleSwitch x:Name="WeekendPlanningToggle" Header="Weekend menus" OffContent="Weekdays only" OnContent="Include Saturday and Sunday" Toggled="WeekendPlanningToggle_Toggled" x:Uid="Text_Weekend_Planning_53aa12" />
                     <TextBlock Text="Weekend days are disabled by default." Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" x:Uid="Text_Weekend_Planning_Hint_53aa13" />
+                    <NumberBox x:Name="MealsPerDayBox" Minimum="1" Maximum="100" SpinButtonPlacementMode="Compact" x:Uid="MealsPerDay" />
+                    <TextBlock TextWrapping="Wrap" x:Uid="MealsPerDayHint" />
+                    <TextBlock FontWeight="SemiBold" x:Uid="MealCategoriesHeading" />
+                    <StackPanel x:Name="MealCategoryRows" Spacing="8" />
+                    <Button x:Name="AddMealCategoryButton" Click="AddMealCategory_Click" x:Uid="AddMealCategory" />
+                    <Button x:Name="SavePlanningButton" Click="SavePlanning_Click" Style="{StaticResource AccentButtonStyle}" x:Uid="SavePlanning" />
                     <TextBlock x:Name="PlanningStatus" TextWrapping="Wrap" />
                 </StackPanel>
             </Expander>

@@ -203,7 +203,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     {
         var monthly = _monthly;
         var date = _date;
-        var weekend = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
+        var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+        var weekend = settings.WeekendPlanningEnabled;
         var recipes = await _database.GetAllRecipesAsync();
         var first = monthly ? new DateTime(date.Year, date.Month, 1) : WeekStart(date);
         var start = WeekStart(first);
@@ -234,7 +235,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             {
                 var names = isDisabledWeekend
                     ? Enumerable.Empty<string>()
-                    : Enumerable.Range(0, 4).Select(index =>
+                    : Enumerable.Range(0, settings.MealsPerDay).Select(index =>
                     {
                         var entry = FindSlotEntry(day, index, entries);
                         var name = recipes.FirstOrDefault(recipe => recipe.Id == entry?.RecipeId)?.Name;
@@ -245,7 +246,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
                 panel.Children.Add(button);
             }
-            else for (var slot = 0; slot < 4; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories));
+            else for (var slot = 0; slot < settings.MealsPerDay; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories, settings.MealCategories));
             var card = new Border { Child = panel, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 };
             card.PointerEntered += (_, _) =>
             {
@@ -284,15 +285,15 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     {
         string[] oldNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
         return entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == $"slot{index + 1}")
-            ?? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index]));
+            ?? (index < Categories.Length ? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index])) : null);
     }
 
-    private StackPanel CreateSlot(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories)
+    private StackPanel CreateSlot(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
     {
         var slot = $"slot{index + 1}";
         var entry = FindSlotEntry(day, index, entries);
         var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
-        var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && Categories.Contains(current.Category) ? current.Category : Categories[index]);
+        var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
         var panel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 4, 0, 8) };
         var selectedCategory = category;
         var select = new Button { Width = 36, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
@@ -307,8 +308,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         string DisplayedCategory() => selectedCategory;
         void UpdateCategoryButton(int categoryIndex)
         {
-            select.Content = CategoryIcons[categoryIndex];
-            var label = L.Category(Categories[categoryIndex]);
+            var selected = mealCategories[categoryIndex];
+            var builtInIndex = string.IsNullOrWhiteSpace(selected.Name) ? Array.FindIndex(Categories, key => key.Equals(selected.Id, StringComparison.OrdinalIgnoreCase)) : -1;
+            select.Content = builtInIndex >= 0 ? CategoryIcons[builtInIndex] : "🍴";
+            var label = L.Category(selected);
             ToolTipService.SetToolTip(select, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(select, $"{index + 1}. {label}");
         }
@@ -373,21 +376,23 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, DisplayedCategory());
         };
         search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, DisplayedCategory()); };
-        for (var categoryIndex = 0; categoryIndex < Categories.Length; categoryIndex++)
+        for (var categoryIndex = 0; categoryIndex < mealCategories.Count; categoryIndex++)
         {
             var optionIndex = categoryIndex;
-            var item = new MenuFlyoutItem { Text = $"{CategoryIcons[optionIndex]} {L.Category(Categories[optionIndex])}" };
+            var option = mealCategories[optionIndex];
+            var builtInIndex = string.IsNullOrWhiteSpace(option.Name) ? Array.FindIndex(Categories, key => key.Equals(option.Id, StringComparison.OrdinalIgnoreCase)) : -1;
+            var item = new MenuFlyoutItem { Text = $"{(builtInIndex >= 0 ? CategoryIcons[builtInIndex] : "🍴")} {L.Category(option)}" };
             item.Click += async (_, _) =>
             {
-                if (selectedCategory == Categories[optionIndex]) return;
-                selectedCategory = Categories[optionIndex];
+                if (selectedCategory == option.Id) return;
+                selectedCategory = option.Id;
                 UpdateCategoryButton(optionIndex);
                 await SaveAsync(null, DisplayedCategory());
                 Suggest();
             };
             categoryMenu.Items.Add(item);
         }
-        UpdateCategoryButton(Math.Max(0, Array.IndexOf(Categories, selectedCategory)));
+        UpdateCategoryButton(Math.Max(0, mealCategories.ToList().FindIndex(c => c.Id == selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
         var mealRow = new Grid { ColumnSpacing = 6, RowSpacing = 4 };
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });

@@ -25,14 +25,13 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private bool _confirmingDiscard;
     private int _toolbarLayout = -1;
     private int? _editingRecipeId;
+    private List<MealCategory> _mealCategories = MealCategory.Defaults();
 
     public RecipesPage()
     {
         this.InitializeComponent();
         _database = App.Services.GetRequiredService<DatabaseService>();
         CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
-        foreach (var category in new[] { "soup", "main", "dessert", "other" })
-            CategoryFilter.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
         foreach (var sort in new[] { ("name", "RecipeSortName"), ("category", "RecipeSortCategory"), ("portion", "RecipeSortPortion"), ("allergens", "RecipeSortAllergens") })
             SortField.Items.Add(new ComboBoxItem { Tag = sort.Item1, Content = L.Get(sort.Item2) });
         CategoryFilter.SelectedIndex = SortField.SelectedIndex = 0;
@@ -94,12 +93,20 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private async Task LoadRecipesAsync()
     {
         var generation = _pageGeneration;
+        var categories = (await _database.GetSettingsAsync())?.MealCategories ?? MealCategory.Defaults();
         var recipes = await _database.GetAllRecipesAsync();
         if (generation != _pageGeneration) return;
+        _mealCategories = categories;
+        _filtersReady = false;
+        CategoryFilter.Items.Clear();
+        CategoryFilter.Items.Add(new ComboBoxItem { Tag = "", Content = L.Get("RecipeAllCategories") });
+        foreach (var category in categories) CategoryFilter.Items.Add(new ComboBoxItem { Tag = category.Id, Content = L.Category(category) });
+        CategoryFilter.SelectedIndex = 0;
+        _filtersReady = true;
         _recipes.Clear();
         foreach (var recipe in recipes)
         {
-            _recipes.Add(new RecipeItemViewModel(recipe));
+            _recipes.Add(new RecipeItemViewModel(recipe) { CategoryDisplay = categories.FirstOrDefault(category => string.Equals(category.Id, recipe.Category, StringComparison.OrdinalIgnoreCase)) is { } found ? L.Category(found) : L.Category(recipe.Category) });
         }
         ApplyFilter();
         SetPageStatus(null);
@@ -283,8 +290,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
         // Category
         var categoryBox = new ComboBox { Header = L.Get("Text_Category_a3c686"), PlaceholderText = L.Get("Text_Select_category_a2a5ca") };
-        foreach (var category in new[] { "soup", "main", "dessert", "other" })
-            categoryBox.Items.Add(new ComboBoxItem { Tag = category, Content = L.Category(category) });
+        foreach (var category in _mealCategories)
+            categoryBox.Items.Add(new ComboBoxItem { Tag = category.Id, Content = L.Category(category) });
         var currentCategory = categoryBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item =>
             string.Equals((string)item.Tag, recipe.Category, StringComparison.OrdinalIgnoreCase));
         if (currentCategory == null && !string.IsNullOrWhiteSpace(recipe.Category))
@@ -293,7 +300,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             currentCategory = new ComboBoxItem { Tag = recipe.Category, Content = recipe.Category };
             categoryBox.Items.Add(currentCategory);
         }
-        categoryBox.SelectedItem = currentCategory ?? categoryBox.Items[3];
+        categoryBox.SelectedItem = currentCategory ?? categoryBox.Items[0];
         panel.Children.Add(categoryBox);
 
         // Portion Size
@@ -491,7 +498,7 @@ public class RecipeItemViewModel
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Category { get; set; } = "other";
-    public string CategoryDisplay => L.Category(Category);
+    public string CategoryDisplay { get; set; } = "";
     public string PortionSize { get; set; } = "";
     public int Calories { get; set; }
     public string Instructions { get; set; } = "";
@@ -510,6 +517,7 @@ public class RecipeItemViewModel
         Id = recipe.Id;
         Name = recipe.Name;
         Category = recipe.Category;
+        CategoryDisplay = L.Category(recipe.Category);
         PortionSize = recipe.PortionSize;
         Calories = recipe.Calories;
         Instructions = recipe.Instructions;

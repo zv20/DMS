@@ -18,6 +18,7 @@ public sealed partial class SettingsPage : Page
     private string _selectedTheme = "light";
     private string _selectedAccent = "blue";
     private bool _selectedWeekend;
+    private readonly List<(string Id, TextBox Name)> _categoryEditors = [];
     private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
 
     public SettingsPage()
@@ -120,6 +121,10 @@ public sealed partial class SettingsPage : Page
             ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.Theme) ?? ThemeComboBox.Items[0];
             AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.AccentColor) ?? AccentColorComboBox.Items[0];
             WeekendPlanningToggle.IsOn = settings.WeekendPlanningEnabled;
+            MealsPerDayBox.Value = settings.MealsPerDay;
+            MealCategoryRows.Children.Clear();
+            _categoryEditors.Clear();
+            foreach (var category in settings.MealCategories) AddCategoryEditor(category.Id, L.Category(category));
 
             var dbPath = _databaseService.GetDatabasePath();
             var dbInfo = new FileInfo(dbPath);
@@ -246,6 +251,55 @@ public sealed partial class SettingsPage : Page
             }
             finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
         }
+    }
+
+    private void AddCategoryEditor(string id, string name, bool canRemove = false)
+    {
+        var box = new TextBox { Text = name, PlaceholderText = L.Get("MealCategoryName"), MaxLength = 120 };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, L.Get("MealCategoryName"));
+        _categoryEditors.Add((id, box));
+        if (!canRemove) { MealCategoryRows.Children.Add(box); return; }
+        var row = new Grid { ColumnSpacing = 8 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(box);
+        var remove = new Button { Content = "×" };
+        ToolTipService.SetToolTip(remove, L.Get("RemoveNewCategory"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(remove, L.Get("RemoveNewCategory"));
+        remove.Click += (_, _) => { _categoryEditors.RemoveAll(item => item.Name == box); MealCategoryRows.Children.Remove(row); };
+        Grid.SetColumn(remove, 1);
+        row.Children.Add(remove);
+        MealCategoryRows.Children.Add(row);
+    }
+
+    private void AddMealCategory_Click(object sender, RoutedEventArgs e) => AddCategoryEditor(Guid.NewGuid().ToString("N"), "", true);
+
+    private async void SavePlanning_Click(object sender, RoutedEventArgs e)
+    {
+        var names = _categoryEditors.Select(item => item.Name.Text.Trim()).ToArray();
+        if (!double.IsFinite(MealsPerDayBox.Value) || MealsPerDayBox.Value < 1 || MealsPerDayBox.Value > 100 || MealsPerDayBox.Value != Math.Floor(MealsPerDayBox.Value) || names.Any(string.IsNullOrWhiteSpace) || names.Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != names.Length)
+        {
+            PlanningStatus.Text = L.Get("MealSettingsInvalid");
+            return;
+        }
+        SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = WeekendPlanningToggle.IsEnabled = false;
+        try
+        {
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            settings.MealsPerDay = (int)MealsPerDayBox.Value;
+            settings.MealCategories = _categoryEditors.Select((item, i) => new MealCategory
+            {
+                Id = item.Id,
+                Name = names[i] == L.Category(item.Id) && item.Id is "soup" or "main" or "dessert" or "other" ? "" : names[i]
+            }).ToList();
+            await _databaseService.SaveSettingsAsync(settings);
+            MealCategoryRows.Children.Clear();
+            _categoryEditors.Clear();
+            foreach (var category in settings.MealCategories) AddCategoryEditor(category.Id, L.Category(category));
+            PlanningStatus.Text = L.Get("Text_Saved_499dc6");
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Could not save meal planning settings"); PlanningStatus.Text = L.Get("DataSaveFailed"); }
+        finally { SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = WeekendPlanningToggle.IsEnabled = true; }
     }
 
     private async void WeekendPlanningToggle_Toggled(object sender, RoutedEventArgs e)

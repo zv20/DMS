@@ -21,6 +21,11 @@
   <data name="TemplateOutputFailure" xml:space="preserve"><value>Could not complete the operation: {0}</value></data>
   <data name="TemplateOutputPrintPdfHint" xml:space="preserve"><value>Choose Microsoft Print to PDF in the print dialog.</value></data>
   <data name="TemplateOutputSaved" xml:space="preserve"><value>Image saved.</value></data>
+  <data name="TemplateOutputImagesSaved" xml:space="preserve"><value>All pages were saved as PNG images in the selected folder.</value></data>
+  <data name="TemplateOutputPageCount" xml:space="preserve"><value>{0} pages</value></data>
+  <data name="TemplateOutputImagesHint" xml:space="preserve"><value>Image export saves each page as a PNG in a folder you choose.</value></data>
+  <data name="PreviousPreviewPage" xml:space="preserve"><value>Previous page</value></data>
+  <data name="NextPreviewPage" xml:space="preserve"><value>Next page</value></data>
   <data name="TemplateOutputPdfSaved" xml:space="preserve"><value>PDF saved.</value></data>
   <data name="TplTemplateDeleted" xml:space="preserve"><value>Template deleted.</value></data>
   <data name="TemplateOutputTemplate" xml:space="preserve"><value>Template</value></data>
@@ -549,4 +554,12 @@
   <data name="AllergenNoMatches" xml:space="preserve"><value>No matching allergens</value></data>
   <data name="ClearSearch.Content" xml:space="preserve"><value>Clear search</value></data>
   <data name="ClearFilters.Content" xml:space="preserve"><value>Clear search and filters</value></data>
+  <data name="MealsPerDay.Header" xml:space="preserve"><value>Meals per day</value></data>
+  <data name="MealsPerDayHint.Text" xml:space="preserve"><value>Reducing this number hides extra slots; their saved meals remain available if you increase it again.</value></data>
+  <data name="MealCategoriesHeading.Text" xml:space="preserve"><value>Meal categories</value></data>
+  <data name="AddMealCategory.Content" xml:space="preserve"><value>Add category</value></data>
+  <data name="SavePlanning.Content" xml:space="preserve"><value>Save meal settings</value></data>
+  <data name="MealCategoryName" xml:space="preserve"><value>Category name</value></data>
+  <data name="RemoveNewCategory" xml:space="preserve"><value>Remove new category</value></data>
+  <data name="MealSettingsInvalid" xml:space="preserve"><value>Enter a whole number and a unique, non-empty name for each category.</value></data>
 </root>

@@ -40,6 +40,9 @@ public static class Localization
         _ => category
     };
 
+    public static string Category(DMS.Models.MealCategory category) =>
+        string.IsNullOrWhiteSpace(category.Name) ? Category(category.Id) : category.Name;
+
     public static string Allergen(string name)
     {
         var key = name.Trim().ToLowerInvariant() switch

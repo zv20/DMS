@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Printing;
-using System.Text;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Printing;
 using Windows.Storage;
@@ -32,11 +31,10 @@ public sealed partial class TemplateOutputPage : Page
     private PrintManager? _printManager;
     private PrintDocument? _printDocument;
     private IPrintDocumentSource? _printSource;
-    private FrameworkElement? _printPage;
-    private FrameworkElement? _nativePage;
-    private Viewbox? _printViewbox;
-    private FrameworkElement? _previewPage;
-    private TemplateVisualLifetime? _previewLifetime, _printLifetime;
+    private List<TemplatePageResult> _previewPages = [], _printPages = [];
+    private readonly List<FrameworkElement> _printSurfaces = [];
+    private readonly List<Viewbox> _printViewboxes = [];
+    private List<List<MenuEntry>> _pageEntries = [];
     private bool _ready;
     private bool _busy;
     private int _activePrintTasks;
@@ -109,9 +107,10 @@ public sealed partial class TemplateOutputPage : Page
         _generation++;
         _pageLifetime.Cancel();
         PreviewHost.Content = null;
-        _previewLifetime?.Dispose(); _previewLifetime = null;
+        MultiPreviewHost.Content = null;
+        DisposePages(_previewPages); _previewPages = [];
         TemplateSelector.ItemsSource = null;
-        _previewPage = null; _document = null;
+        _document = null; _pageEntries.Clear();
         _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
         _previewBitmaps.Clear();
         try { UnregisterPrinting(); }
@@ -120,6 +119,11 @@ public sealed partial class TemplateOutputPage : Page
 
     private async void TemplateSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (_loaded) await RefreshAsync(); }
     private async void WeekPicker_DateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args) { if (_loaded) await RefreshAsync(); }
+
+    private static void DisposePages(IEnumerable<TemplatePageResult> pages)
+    {
+        foreach (var page in pages) page.Lifetime.Dispose();
+    }
 
     private void SetReady(bool ready)
     {
@@ -143,8 +147,10 @@ public sealed partial class TemplateOutputPage : Page
         {
             if (!_loaded || generation != _generation) return;
             _previewBitmaps.Clear();
-            var weekendEnabled = (await _database.GetSettingsAsync())?.WeekendPlanningEnabled ?? false;
-            var entries = await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4));
+            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            var weekendEnabled = settings.WeekendPlanningEnabled;
+            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
+                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
             var recipes = await _database.GetAllRecipesAsync();
             var ingredients = await _database.GetAllIngredientsAsync();
             template = TemplateConversion.ToEditableCopy(template);
@@ -152,18 +158,56 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
             _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
-            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token);
-            _firstDay = result.FirstDay; _lastDay = result.LastDay;
-            var previous = _previewLifetime;
-            _previewLifetime = result.Lifetime;
-            _previewPage = result.Page;
-            PreviewHost.Content = _previewPage;
-            previous?.Dispose();
-            await result.ImagesReady;
+            _pageEntries = [_entries];
+            bool Fits(IReadOnlyList<MenuEntry> pageEntries)
+            {
+                var measured = TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
+                try { return !measured.Overflowed; }
+                finally { measured.Lifetime.Dispose(); }
+            }
+            if (settings.MealsPerDay > 4 && !Fits(_entries))
+            {
+                var recipeIds = _recipes.Select(recipe => recipe.Id).ToHashSet();
+                var printable = _entries.Where(entry => recipeIds.Contains(entry.RecipeId)).ToList();
+                if (printable.Count > 0 && TemplatePagination.Split(printable, Fits) is { Count: > 0 } pages)
+                    _pageEntries = pages;
+            }
+            var results = new List<TemplatePageResult>();
+            try
+            {
+                foreach (var pageEntries in _pageEntries)
+                    results.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token));
+            }
+            catch { DisposePages(results); throw; }
+            var previous = _previewPages;
+            _previewPages = results;
+            _firstDay = results.Where(result => result.FirstDay.HasValue).Select(result => result.FirstDay).Min();
+            _lastDay = results.Where(result => result.LastDay.HasValue).Select(result => result.LastDay).Max();
+            PreviewHost.Content = null;
+            MultiPreviewHost.Content = null;
+            SinglePagePreview.Visibility = results.Count == 1 ? Visibility.Visible : Visibility.Collapsed;
+            MultiPagePreview.Visibility = results.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            if (results.Count == 1) PreviewHost.Content = results[0].Page;
+            else
+            {
+                var preview = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
+                foreach (var result in results)
+                    preview.Children.Add(new Viewbox { MaxWidth = 794, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, Child = result.Page });
+                MultiPreviewHost.Content = preview;
+            }
+            DisposePages(previous);
+            await Task.WhenAll(results.Select(result => result.ImagesReady));
             if (!_loaded || generation != _generation) return;
-            StatusText.Text = L.Get(!result.HasMeals ? "TplBuilderNoMeals" : result.Overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
+            var hasMeals = results.Any(result => result.HasMeals);
+            var overflowed = results.Any(result => result.Overflowed);
+            StatusText.Text = L.Get(!hasMeals ? "TplBuilderNoMeals" : overflowed ? "TemplateOutputOverflow" : "TemplateOutputReady");
+            if (results.Count > 1)
+            {
+                StatusText.Text += "\n" + L.Format("TemplateOutputPageCount", results.Count);
+                if (!_printMode) StatusText.Text += "\n" + L.Get("TemplateOutputImagesHint");
+            }
             if (_printMode && _printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
-            SetReady(result.HasMeals && !result.Overflowed);
+            SetReady(hasMeals && !overflowed);
         }
         catch (OperationCanceledException) when (!_loaded || generation != _generation) { }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the output preview"); if (generation == _generation) StatusText.Text = L.Get("ErrorOutput"); }
@@ -193,9 +237,10 @@ public sealed partial class TemplateOutputPage : Page
             _printDocument.GetPreviewPage -= GetPreviewPage;
             _printDocument.AddPages -= AddPages;
         }
-        if (_printViewbox != null) _printViewbox.Child = null;
-        _printLifetime?.Dispose(); _printLifetime = null;
-        _printManager = null; _printDocument = null; _printSource = null; _printPage = null; _nativePage = null; _printViewbox = null;
+        foreach (var box in _printViewboxes) box.Child = null;
+        _printViewboxes.Clear(); _printSurfaces.Clear();
+        DisposePages(_printPages); _printPages = [];
+        _printManager = null; _printDocument = null; _printSource = null;
     }
 
     private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
@@ -245,26 +290,30 @@ public sealed partial class TemplateOutputPage : Page
     {
         try
         {
-        if (_nativePage == null) return;
-        if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
+        if (_printPages.Count == 0) return;
+        foreach (var old in _printViewboxes) old.Child = null;
+        _printViewboxes.Clear(); _printSurfaces.Clear();
         var description = ((PrintTaskOptions)e.PrintTaskOptions).GetPageDescription(0);
         var area = description.ImageableRect;
         var width = area.Width > 0 ? area.Width : description.PageSize.Width;
         var height = area.Height > 0 ? area.Height : description.PageSize.Height;
-        _printViewbox = new Viewbox { Width = width, Height = height, Stretch = Stretch.Uniform, Child = _nativePage };
-        var page = new Canvas { Width = description.PageSize.Width, Height = description.PageSize.Height };
-        Canvas.SetLeft(_printViewbox, area.Width > 0 ? area.X : 0);
-        Canvas.SetTop(_printViewbox, area.Height > 0 ? area.Y : 0);
-        page.Children.Add(_printViewbox);
-        _printPage = page;
-        ((PrintDocument)sender).SetPreviewPageCount(1, PreviewPageCountType.Final);
+        foreach (var result in _printPages)
+        {
+            var viewbox = new Viewbox { Width = width, Height = height, Stretch = Stretch.Uniform, Child = result.Page };
+            var page = new Canvas { Width = description.PageSize.Width, Height = description.PageSize.Height };
+            Canvas.SetLeft(viewbox, area.Width > 0 ? area.X : 0);
+            Canvas.SetTop(viewbox, area.Height > 0 ? area.Y : 0);
+            page.Children.Add(viewbox);
+            _printViewboxes.Add(viewbox); _printSurfaces.Add(page);
+        }
+        ((PrintDocument)sender).SetPreviewPageCount(_printSurfaces.Count, PreviewPageCountType.Final);
         }
         catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
     private void GetPreviewPage(object sender, GetPreviewPageEventArgs e)
     {
-        try { if (_printPage != null && e.PageNumber == 1) ((PrintDocument)sender).SetPreviewPage(1, _printPage); }
+        try { if (e.PageNumber > 0 && e.PageNumber <= _printSurfaces.Count) ((PrintDocument)sender).SetPreviewPage(e.PageNumber, _printSurfaces[e.PageNumber - 1]); }
         catch (Exception ex) { ReportPrintCallbackFailure(ex); }
     }
 
@@ -273,7 +322,7 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             var document = (PrintDocument)sender;
-            if (_printPage != null) document.AddPage(_printPage);
+            foreach (var page in _printSurfaces) document.AddPage(page);
             document.AddPagesComplete();
         }
         catch (Exception ex) { ReportPrintCallbackFailure(ex); }
@@ -289,17 +338,14 @@ public sealed partial class TemplateOutputPage : Page
         try
         {
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
-            if (_printViewbox is { } previousViewbox) previousViewbox.Child = null;
-            _printViewbox = null;
-            _printPage = null;
-            _nativePage = null;
-            _printLifetime?.Dispose(); _printLifetime = null;
-            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled);
-            _printLifetime = result.Lifetime;
-            await result.ImagesReady;
+            foreach (var old in _printViewboxes) old.Child = null;
+            _printViewboxes.Clear(); _printSurfaces.Clear();
+            DisposePages(_printPages); _printPages = [];
+            foreach (var pageEntries in _pageEntries)
+                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled));
+            await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
             if (!_loaded) return;
-            if (result.Overflowed) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
-            _nativePage = result.Page;
+            if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
@@ -309,30 +355,38 @@ public sealed partial class TemplateOutputPage : Page
 
     private async void Png_Click(object sender, RoutedEventArgs e)
     {
-        if (!_ready || _busy || _previewPage == null) return;
+        if (!_ready || _busy || _previewPages.Count == 0) return;
         _busy = true; SetReady(true);
         var outputStarted = false;
         try
         {
+            if (_previewPages.Count > 1)
+            {
+                var folderPicker = new FolderPicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary };
+                folderPicker.FileTypeFilter.Add("*");
+                WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
+                var folder = await folderPicker.PickSingleFolderAsync();
+                if (folder == null) return;
+                for (var i = 0; i < _previewPages.Count; i++)
+                {
+                    var encoded = await RenderPageAsync(_previewPages[i].Page, BitmapEncoder.PngEncoderId);
+                    var pageFile = await folder.CreateFileAsync($"{OutputDateName()}-{i + 1}.png", CreationCollisionOption.GenerateUniqueName);
+                    outputStarted = true;
+                    await FileIO.WriteBytesAsync(pageFile, encoded);
+                }
+                StatusText.Text = L.Get("TemplateOutputImagesSaved");
+                return;
+            }
             var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, SuggestedFileName = OutputDateName() };
             picker.FileTypeChoices.Add("PNG", PngExtensions);
             picker.FileTypeChoices.Add("JPEG", JpegExtensions);
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
-            var bitmap = new RenderTargetBitmap();
-            await bitmap.RenderAsync(_previewPage, 1588, 2246);
-            if (bitmap.PixelWidth != 1588 || bitmap.PixelHeight != 2246) throw new InvalidOperationException(L.Get("TemplateOutputImageSizeError"));
-            var pixels = await bitmap.GetPixelsAsync();
-            var bytes = new byte[pixels.Length];
-            using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
-            using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
-            stream.Size = 0;
-            outputStarted = true;
             var encoderId = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? BitmapEncoder.PngEncoderId : BitmapEncoder.JpegEncoderId;
-            var encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
-            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
-            await encoder.FlushAsync();
+            var image = await RenderPageAsync(_previewPages[0].Page, encoderId);
+            outputStarted = true;
+            await FileIO.WriteBytesAsync(file, image);
             StatusText.Text = L.Get("TemplateOutputSaved");
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to export the menu as an image"); StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput"); }
@@ -341,7 +395,7 @@ public sealed partial class TemplateOutputPage : Page
 
     private async Task SavePdfAsync()
     {
-        if (!_ready || _busy || _previewPage == null) return;
+        if (!_ready || _busy || _previewPages.Count == 0) return;
         _busy = true;
         SetReady(true);
         var outputStarted = false;
@@ -353,8 +407,9 @@ public sealed partial class TemplateOutputPage : Page
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
-            var jpeg = await RenderPreviewAsJpegAsync();
-            var pdf = CreateImagePdf(jpeg, 1588, 2246);
+            var images = new List<byte[]>();
+            foreach (var page in _previewPages) images.Add(await RenderPageAsync(page.Page, BitmapEncoder.JpegEncoderId));
+            var pdf = ImagePdf.Create(images, 1588, 2246);
             outputStarted = true;
             await FileIO.WriteBytesAsync(file, pdf);
             StatusText.Text = L.Get("TemplateOutputPdfSaved");
@@ -367,17 +422,16 @@ public sealed partial class TemplateOutputPage : Page
         finally { _busy = false; SetReady(_ready); }
     }
 
-    private async Task<byte[]> RenderPreviewAsJpegAsync()
+    private async Task<byte[]> RenderPageAsync(FrameworkElement page, Guid encoderId)
     {
-        if (_previewPage == null) throw new InvalidOperationException(L.Get("ErrorOutput"));
         var bitmap = new RenderTargetBitmap();
-        await bitmap.RenderAsync(_previewPage, 1588, 2246);
+        await bitmap.RenderAsync(page, 1588, 2246);
         if (bitmap.PixelWidth != 1588 || bitmap.PixelHeight != 2246) throw new InvalidOperationException(L.Get("TemplateOutputImageSizeError"));
         var pixels = await bitmap.GetPixelsAsync();
         var bytes = new byte[pixels.Length];
         using (var reader = DataReader.FromBuffer(pixels)) reader.ReadBytes(bytes);
         using var stream = new InMemoryRandomAccessStream();
-        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream);
+        var encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
         encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 192, 192, bytes);
         await encoder.FlushAsync();
         stream.Seek(0);
@@ -386,48 +440,6 @@ public sealed partial class TemplateOutputPage : Page
         var encoded = new byte[(int)stream.Size];
         encodedReader.ReadBytes(encoded);
         return encoded;
-    }
-
-    // A single rendered JPEG in a standards-compliant PDF keeps direct export dependency-free.
-    private static byte[] CreateImagePdf(byte[] jpeg, int pixelWidth, int pixelHeight)
-    {
-        const double pageWidth = 595.28;
-        const double pageHeight = 841.89;
-        var scale = Math.Min(pageWidth / pixelWidth, pageHeight / pixelHeight);
-        var width = pixelWidth * scale;
-        var height = pixelHeight * scale;
-        var x = (pageWidth - width) / 2;
-        var y = (pageHeight - height) / 2;
-        var content = FormattableString.Invariant($"q\n{width:0.###} 0 0 {height:0.###} {x:0.###} {y:0.###} cm\n/Im0 Do\nQ\n");
-
-        using var stream = new MemoryStream();
-        WritePdfText(stream, "%PDF-1.4\n%âãÏÓ\n");
-        var offsets = new List<long>();
-        WritePdfObject(stream, offsets, 1, "<< /Type /Catalog /Pages 2 0 R >>");
-        WritePdfObject(stream, offsets, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-        WritePdfObject(stream, offsets, 3, $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {pageWidth.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} {pageHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>");
-        WritePdfObject(stream, offsets, 4, $"<< /Length {Encoding.ASCII.GetByteCount(content)} >>\nstream\n{content}endstream");
-        offsets.Add(stream.Position);
-        WritePdfText(stream, $"5 0 obj\n<< /Type /XObject /Subtype /Image /Width {pixelWidth} /Height {pixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {jpeg.Length} >>\nstream\n");
-        stream.Write(jpeg, 0, jpeg.Length);
-        WritePdfText(stream, "\nendstream\nendobj\n");
-        var xrefOffset = stream.Position;
-        WritePdfText(stream, "xref\n0 6\n0000000000 65535 f \n");
-        foreach (var offset in offsets) WritePdfText(stream, $"{offset.ToString("D10", System.Globalization.CultureInfo.InvariantCulture)} 00000 n \n");
-        WritePdfText(stream, $"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xrefOffset}\n%%EOF\n");
-        return stream.ToArray();
-    }
-
-    private static void WritePdfObject(Stream stream, List<long> offsets, int number, string body)
-    {
-        offsets.Add(stream.Position);
-        WritePdfText(stream, $"{number} 0 obj\n{body}\nendobj\n");
-    }
-
-    private static void WritePdfText(Stream stream, string value)
-    {
-        var bytes = Encoding.ASCII.GetBytes(value);
-        stream.Write(bytes, 0, bytes.Length);
     }
 
     private string OutputDateName() => _firstDay is DateTime first && _lastDay is DateTime last

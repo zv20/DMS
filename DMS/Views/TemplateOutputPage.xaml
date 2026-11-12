@@ -13,8 +13,11 @@
             </StackPanel>
         </ScrollViewer>
         <TextBlock x:Name="StatusText" Grid.Row="1" Margin="16,0,16,8" TextWrapping="Wrap" />
-        <Viewbox Grid.Row="2" Margin="16" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Viewbox x:Name="SinglePagePreview" Grid.Row="2" Margin="16" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center">
             <ContentControl x:Name="PreviewHost" />
         </Viewbox>
+        <ScrollViewer x:Name="MultiPagePreview" Grid.Row="2" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <ContentControl x:Name="MultiPreviewHost" HorizontalContentAlignment="Center" Margin="16" />
+        </ScrollViewer>
     </Grid>
 </Page>
