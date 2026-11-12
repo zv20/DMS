@@ -18,6 +18,42 @@
         <Setter Property="Margin" Value="0,2" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
+    <Style x:Key="AllergenIconChoiceStyle" TargetType="RadioButton" BasedOn="{StaticResource DefaultRadioButtonStyle}">
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="FocusVisualMargin" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Hover.Background" Value="{ThemeResource DmsAccentSubtleBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Hover.Background" Value="{ThemeResource DmsAccentSubtlePressedBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="IconRoot.Opacity" Value="0.4" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Checked"><VisualState.Setters>
+                                    <Setter Target="IconRoot.Background" Value="{ThemeResource DmsAccentSubtleBrush}" />
+                                    <Setter Target="IconRoot.BorderBrush" Value="{ThemeResource DmsAccentBrush}" />
+                                    <Setter Target="IconRoot.BorderThickness" Value="2" />
+                                </VisualState.Setters></VisualState>
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="IconRoot" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                            <Grid>
+                                <Border x:Name="Hover" Background="Transparent" CornerRadius="6" />
+                                <ContentPresenter Content="{TemplateBinding Content}" FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="PlannerRecipeTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>

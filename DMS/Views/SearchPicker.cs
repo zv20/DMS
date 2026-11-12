@@ -13,6 +13,7 @@ internal static class SearchPicker
         box.TextChanged += (_, _) => Update();
         box.GotFocus += (_, _) => { Update(); box.IsSuggestionListOpen = true; };
         box.QuerySubmitted += (_, args) => { if (args.ChosenSuggestion == null) { Update(); box.IsSuggestionListOpen = true; } };
+        ReopenOnClick(box, Update);
         UIElement? root = null;
         PointerEventHandler dismiss = (_, args) =>
         {
@@ -32,6 +33,12 @@ internal static class SearchPicker
             root = null;
         };
     }
+
+    public static void ReopenOnClick(AutoSuggestBox box, Action update)
+        => box.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) =>
+        {
+            if (!box.IsSuggestionListOpen) { update(); box.IsSuggestionListOpen = true; }
+        }), true);
 
     public static void ClearAfterSelection(AutoSuggestBox box)
         => box.DispatcherQueue.TryEnqueue(() => { box.Text = ""; box.IsSuggestionListOpen = false; });

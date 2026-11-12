@@ -166,7 +166,8 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         var iconGroup = Guid.NewGuid().ToString("N");
         foreach (var icon in icons)
         {
-            var choice = new RadioButton { Content = icon, GroupName = iconGroup, IsChecked = icon == selectedIcon, Margin = new Thickness(0, 0, 8, 4) };
+            var choice = new RadioButton { Content = icon, GroupName = iconGroup, IsChecked = icon == selectedIcon,
+                Width = 44, Height = 44, FontSize = 20, Margin = new Thickness(0, 0, 6, 6), Style = (Style)Application.Current.Resources["AllergenIconChoiceStyle"] };
             choice.Checked += (_, _) => { selectedIcon = icon; _editor.MarkDirty(); };
             iconPanel.Children.Add(choice);
         }

@@ -366,6 +366,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }
         search.GotFocus += (_, _) => { _activeRecipeSearch = search; Suggest(); };
+        SearchPicker.ReopenOnClick(search, Suggest);
         search.TextChanged += async (_, args) =>
         {
             if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
