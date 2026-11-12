@@ -1,5 +1,4 @@
 using L = DMS.Services.Localization;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -159,81 +158,40 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
         UpdateDuplicateWarning();
 
-        // Color Picker
+        var iconBox = new ComboBox { Header = L.Get("AllergenIcon"), MinWidth = 120 };
+        string[] iconOptions = ["⚠️", "🌾", "🦐", "🥚", "🐟", "🥜", "🫛", "🥛", "🌰", "🥬", "🟡", "⚗️", "🌸", "🐚", "🍞", "🧀", "🍎", "🍄", "🌱", "❗"];
+        if (!string.IsNullOrWhiteSpace(allergen.Icon) && !iconOptions.Contains(allergen.Icon))
+            iconBox.Items.Add(new ComboBoxItem { Content = allergen.Icon, Tag = allergen.Icon });
+        foreach (var icon in iconOptions) iconBox.Items.Add(new ComboBoxItem { Content = icon, Tag = icon });
+        iconBox.SelectedItem = iconBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == allergen.Icon) ?? iconBox.Items[0];
+        panel.Children.Add(iconBox);
+
         var colorLabel = new TextBlock { Text = L.Get("Text_Color_1d0c83"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(colorLabel);
-        
-        var colorPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
-        var colorBox = new TextBox 
-        { 
-            Header = L.Get("Text_Hex_Color_52aa66"),
-            Text = allergen.Color, 
-            PlaceholderText = "#3498db",
-            Width = 150
-        };
-        colorPanel.Children.Add(colorBox);
-
-        var colorPreview = new Border 
-        { 
-            Width = 40, 
-            Height = 40, 
-            Background = new SolidColorBrush(ParseColorHex(allergen.Color)), 
-            CornerRadius = new CornerRadius(4),
-            BorderBrush = new SolidColorBrush(Colors.Gray),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        colorPanel.Children.Add(colorPreview);
-
-        // Update preview when color changes
-        colorBox.TextChanged += (s, e) =>
+        var picker = new ColorPicker { Color = ParseColorHex(allergen.Color), ColorSpectrumShape = ColorSpectrumShape.Ring,
+            IsAlphaEnabled = false, IsHexInputVisible = true, Width = 288 };
+        var swatch = new Border { Width = 24, Height = 24, CornerRadius = new CornerRadius(5), Background = new SolidColorBrush(picker.Color) };
+        var colorText = new TextBlock { Text = allergen.Color, VerticalAlignment = VerticalAlignment.Center };
+        var buttonContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        buttonContent.Children.Add(swatch); buttonContent.Children.Add(colorText);
+        var colorButton = new Button { Content = buttonContent, Flyout = new Flyout { Content = picker } };
+        ToolTipService.SetToolTip(colorButton, L.Get("AllergenChooseColor"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(colorButton, L.Get("AllergenChooseColor"));
+        panel.Children.Add(colorButton);
+        picker.ColorChanged += (_, args) =>
         {
-            if (System.Text.RegularExpressions.Regex.IsMatch(colorBox.Text, "^#[0-9a-fA-F]{6}$"))
-                colorPreview.Background = new SolidColorBrush(ParseColorHex(colorBox.Text));
+            swatch.Background = new SolidColorBrush(args.NewColor);
+            colorText.Text = $"#{args.NewColor.R:X2}{args.NewColor.G:X2}{args.NewColor.B:X2}";
+            _editor.MarkDirty();
         };
-
-        panel.Children.Add(colorPanel);
-
-        // Quick color buttons - use StackPanel with horizontal orientation instead of WrapPanel
-        var quickColors = new[] { "#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#34495e" };
-        var quickColorsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        foreach (var color in quickColors)
-        {
-            var btn = new Button
-            {
-                Width = 32,
-                Height = 32,
-                Background = new SolidColorBrush(ParseColorHex(color)),
-                CornerRadius = new CornerRadius(4),
-                Tag = color,
-                Style = (Style)Application.Current.Resources["ButtonRevealStyle"]
-            };
-            btn.Click += (s, e) =>
-            {
-                if (s is Button b && b.Tag is string c)
-                {
-                    colorBox.Text = c;
-                    colorPreview.Background = new SolidColorBrush(ParseColorHex(c));
-                }
-            };
-            quickColorsPanel.Children.Add(btn);
-        }
-        panel.Children.Add(new ScrollViewer { Content = quickColorsPanel, HorizontalScrollMode = ScrollMode.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollMode = ScrollMode.Disabled });
         nameBox.TextChanged += (_, _) => _editor.MarkDirty();
-        colorBox.TextChanged += (_, _) => _editor.MarkDirty();
+        iconBox.SelectionChanged += (_, _) => _editor.MarkDirty();
         _editor.Present(isEditing ? L.Get("Text_Edit_Allergen_54f3c1") : L.Get("Text_Add_Allergen_3f78ad"), isEditing ? allergen.Id : null, async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
             {
                 _editor.SetError(L.Get("Text_Allergen_name_is_required_94160b"));
                 nameBox.Focus(FocusState.Programmatic);
-                return false;
-            }
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(colorBox.Text.Trim(), "^#[0-9a-fA-F]{6}$"))
-            {
-                _editor.SetError(L.Get("Text_Please_enter_a_valid_hex_color_e_g_3498db_d8bf3b"));
-                colorBox.Focus(FocusState.Programmatic);
                 return false;
             }
 
@@ -244,7 +202,8 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
                 return false;
             }
             allergen.Name = nameBox.Text.Trim();
-            allergen.Color = colorBox.Text.Trim();
+            allergen.Color = $"#{picker.Color.R:X2}{picker.Color.G:X2}{picker.Color.B:X2}";
+            allergen.Icon = (iconBox.SelectedItem as ComboBoxItem)?.Tag as string ?? allergen.Icon;
 
             allergen.Id = await _database.SaveAllergenAsync(allergen);
             try { await LoadAllergensAsync(); }

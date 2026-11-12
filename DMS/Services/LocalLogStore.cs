@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace DMS.Services;
 
-public enum DiagnosticLogFilter { All, Information, Warning, Error }
+[Flags]
+public enum DiagnosticLogFilter { None = 0, Information = 1, Warning = 2, Error = 4, All = Information | Warning | Error }
 
 /// <summary>Bounded, local-only diagnostic log. Failure to log never breaks app work.</summary>
 public sealed class LocalLogStore
@@ -103,9 +104,10 @@ public sealed class LocalLogStore
     private static string FilterEntries(string text, DiagnosticLogFilter filter)
     {
         if (filter == DiagnosticLogFilter.All || string.IsNullOrEmpty(text)) return text;
-        var wanted = filter == DiagnosticLogFilter.Error
-            ? new[] { "] Error ", "] Critical " }
-            : filter == DiagnosticLogFilter.Warning ? new[] { "] Warning " } : new[] { "] Information " };
+        var wanted = new List<string>();
+        if (filter.HasFlag(DiagnosticLogFilter.Information)) wanted.Add("] Information ");
+        if (filter.HasFlag(DiagnosticLogFilter.Warning)) wanted.Add("] Warning ");
+        if (filter.HasFlag(DiagnosticLogFilter.Error)) { wanted.Add("] Error "); wanted.Add("] Critical "); }
         var result = new StringBuilder();
         var include = false;
         foreach (var line in text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))

@@ -562,4 +562,8 @@
   <data name="MealCategoryName" xml:space="preserve"><value>Име на категория</value></data>
   <data name="RemoveNewCategory" xml:space="preserve"><value>Премахни новата категория</value></data>
   <data name="MealSettingsInvalid" xml:space="preserve"><value>Въведете цяло число и уникално, непразно име за всяка категория.</value></data>
+  <data name="AllergenIcon" xml:space="preserve"><value>Икона</value></data>
+  <data name="AllergenChooseColor" xml:space="preserve"><value>Изберете цвят</value></data>
+  <data name="RemoveAllergen" xml:space="preserve"><value>Премахни алергена {0}</value></data>
+  <data name="AllergenFromIngredient" xml:space="preserve"><value>Добавен от избрана съставка</value></data>
 </root>

@@ -23,10 +23,12 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
     private double _savedMealsPerDay;
     private bool _planningLoaded, _savingPlanning, _confirmingPlanning;
     private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
+    private bool _logFiltersReady;
 
     public SettingsPage()
     {
         this.InitializeComponent();
+        _logFiltersReady = true;
         _settingsService = App.Services.GetRequiredService<SettingsService>();
         _databaseService = App.Services.GetRequiredService<DatabaseService>();
         AppVersionText.Text = $"v{AppVersion.Current}";
@@ -63,10 +65,12 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
 
     private void LogViewerRefresh_Click(object sender, RoutedEventArgs e) => RefreshLogViewer();
 
-    private void LogViewerFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void LogViewerFilter_Changed(object sender, RoutedEventArgs e)
     {
-        var value = (LogViewerFilterComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-        _logFilter = Enum.TryParse<DiagnosticLogFilter>(value, out var filter) ? filter : DiagnosticLogFilter.All;
+        if (!_logFiltersReady) return;
+        _logFilter = (LogInformationCheckBox.IsChecked == true ? DiagnosticLogFilter.Information : DiagnosticLogFilter.None)
+            | (LogWarningCheckBox.IsChecked == true ? DiagnosticLogFilter.Warning : DiagnosticLogFilter.None)
+            | (LogErrorCheckBox.IsChecked == true ? DiagnosticLogFilter.Error : DiagnosticLogFilter.None);
         RefreshLogViewer();
     }
 

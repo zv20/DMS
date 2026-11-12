@@ -196,25 +196,25 @@ public partial class DatabaseService : IDisposable
             await cmd.ExecuteNonQueryAsync();
         }
 
-        await EnsureAllergenIconColumnAsync();
+        var addedAllergenIcons = await EnsureAllergenIconColumnAsync();
         // Seed default settings
         await SeedDefaultsAsync();
-        await SeedDefaultAllergensAsync();
+        await SeedDefaultAllergensAsync(addedAllergenIcons);
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
         if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
-    private async Task EnsureAllergenIconColumnAsync()
+    private async Task<bool> EnsureAllergenIconColumnAsync()
     {
-        if (_connection == null) return;
+        if (_connection == null) return false;
         using var command = _connection.CreateCommand();
         command.CommandText = "ALTER TABLE allergens ADD COLUMN icon TEXT NOT NULL DEFAULT '⚠️'";
-        try { await command.ExecuteNonQueryAsync(); }
-        catch (SqliteException ex) when (ex.Message.Contains("duplicate column", StringComparison.OrdinalIgnoreCase)) { }
+        try { await command.ExecuteNonQueryAsync(); return true; }
+        catch (SqliteException ex) when (ex.Message.Contains("duplicate column", StringComparison.OrdinalIgnoreCase)) { return false; }
     }
 
-    private async Task SeedDefaultAllergensAsync()
+    private async Task SeedDefaultAllergensAsync(bool addedIcons)
     {
         if (_connection == null) return;
         var defaults = new (string Name, string Icon, string Color)[]
@@ -230,9 +230,8 @@ public partial class DatabaseService : IDisposable
         foreach (var allergen in defaults)
         {
             using var command = _connection.CreateCommand();
-            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, color, icon) VALUES (@name, @color, @icon);
-                                    UPDATE allergens SET color=@color, icon=@icon WHERE name=@name
-                                      AND (color='#3498db' OR color IS NULL OR icon IS NULL OR icon='⚠️');";
+            command.CommandText = @"INSERT OR IGNORE INTO allergens (name, color, icon) VALUES (@name, @color, @icon);" +
+                (addedIcons ? " UPDATE allergens SET icon=@icon WHERE name=@name AND icon='⚠️';" : "");
             command.Parameters.AddWithValue("@name", allergen.Name);
             command.Parameters.AddWithValue("@icon", allergen.Icon);
             command.Parameters.AddWithValue("@color", allergen.Color);

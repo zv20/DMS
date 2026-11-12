@@ -73,6 +73,11 @@ public sealed class LocalLogStoreTests : IDisposable
         Assert.Contains("critical", errors);
         Assert.Contains("InvalidOperationException: details", errors);
         Assert.DoesNotContain("warning", errors);
+        var selected = store.ReadRecent(filter: DiagnosticLogFilter.Warning | DiagnosticLogFilter.Error);
+        Assert.Contains("warning", selected);
+        Assert.Contains("critical", selected);
+        Assert.DoesNotContain("regular", selected);
+        Assert.Empty(store.ReadRecent(filter: DiagnosticLogFilter.None));
     }
 
     [Fact]

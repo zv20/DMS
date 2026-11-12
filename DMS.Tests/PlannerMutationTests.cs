@@ -14,6 +14,38 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task CustomizedDefaultAllergenAppearanceSurvivesRestart()
+    {
+        using (var database = Open())
+        {
+            var allergen = (await database.GetAllAllergensAsync()).Single(item => item.Name == "глутен");
+            allergen.Icon = "⚠️";
+            allergen.Color = "#3498db";
+            await database.SaveAllergenAsync(allergen);
+        }
+        using var reopened = Open();
+        var saved = (await reopened.GetAllAllergensAsync()).Single(item => item.Name == "глутен");
+        Assert.Equal("⚠️", saved.Icon);
+        Assert.Equal("#3498db", saved.Color);
+    }
+
+    [Fact]
+    public async Task LegacyAllergenIconMigrationKeepsExistingColor()
+    {
+        using (var database = Open()) await database.InitializeAsync();
+        using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE allergens SET color='#123456' WHERE name='глутен'; ALTER TABLE allergens DROP COLUMN icon";
+            command.ExecuteNonQuery();
+        }
+        using var reopened = Open();
+        var allergen = (await reopened.GetAllAllergensAsync()).Single(item => item.Name == "глутен");
+        Assert.Equal("🌾", allergen.Icon);
+        Assert.Equal("#123456", allergen.Color);
+    }
+
+    [Fact]
     public async Task MealConfigurationPersistsWithoutChangingSavedCategoryIds()
     {
         using (var database = Open())

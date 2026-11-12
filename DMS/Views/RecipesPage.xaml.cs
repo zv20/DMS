@@ -95,6 +95,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var generation = _pageGeneration;
         var categories = (await _database.GetSettingsAsync())?.MealCategories ?? MealCategory.Defaults();
         var recipes = await _database.GetAllRecipesAsync();
+        var allergens = await _database.GetAllAllergensAsync();
         if (generation != _pageGeneration) return;
         _mealCategories = categories;
         var selectedCategory = (CategoryFilter.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
@@ -104,10 +105,11 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         foreach (var category in categories) CategoryFilter.Items.Add(new ComboBoxItem { Tag = category.Id, Content = L.Category(category) });
         CategoryFilter.SelectedItem = CategoryFilter.Items.Cast<ComboBoxItem>().FirstOrDefault(item => string.Equals(item.Tag as string, selectedCategory, StringComparison.OrdinalIgnoreCase)) ?? CategoryFilter.Items[0];
         _filtersReady = true;
+        var allergenIcons = allergens.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
         _recipes.Clear();
         foreach (var recipe in recipes)
         {
-            _recipes.Add(new RecipeItemViewModel(recipe) { CategoryDisplay = categories.FirstOrDefault(category => string.Equals(category.Id, recipe.Category, StringComparison.OrdinalIgnoreCase)) is { } found ? L.Category(found) : L.Category(recipe.Category) });
+            _recipes.Add(new RecipeItemViewModel(recipe) { CategoryDisplay = categories.FirstOrDefault(category => string.Equals(category.Id, recipe.Category, StringComparison.OrdinalIgnoreCase)) is { } found ? L.Category(found) : L.Category(recipe.Category), AllergenIcons = allergenIcons });
         }
         ApplyFilter();
         SetPageStatus(null);
@@ -319,7 +321,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 
         // Ingredients: searchable dropdown plus removable wrapping chips.
         var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
-        var ingredientByName = availableIngredients.ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
+        var ingredientByName = availableIngredients.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         var inheritedAllergens = selectedIngredients
             .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -327,18 +329,32 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             .Where(name => !inheritedAllergens.Contains(name))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var selectedAllergens = new ObservableCollection<string>();
-        var selectedAllergenItems = new ObservableCollection<Allergen>();
+        var allergenChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         void RebuildAllergensFromIngredients()
         {
             selectedAllergens.Clear();
-            selectedAllergenItems.Clear();
-            foreach (var allergen in selectedIngredients
+            allergenChips.Children.Clear();
+            var inherited = selectedIngredients
                 .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
-                .Concat(manualAllergens)
-                .Distinct(StringComparer.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var allergen in inherited.Concat(manualAllergens).Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 selectedAllergens.Add(allergen);
-                selectedAllergenItems.Add(availableAllergens.FirstOrDefault(item => item.Name == allergen) ?? new Allergen { Name = allergen });
+                if (inherited.Contains(allergen))
+                {
+                    var inheritedChip = new Border { CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6), Child = new TextBlock { Text = L.Allergen(allergen) } };
+                    ToolTipService.SetToolTip(inheritedChip, L.Get("AllergenFromIngredient"));
+                    allergenChips.Children.Add(inheritedChip);
+                }
+                else
+                {
+                    var chip = new Button { Content = $"{L.Allergen(allergen)}  ✕", CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
+                    var label = L.Format("RemoveAllergen", L.Allergen(allergen));
+                    ToolTipService.SetToolTip(chip, label);
+                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, label);
+                    chip.Click += (_, _) => { manualAllergens.Remove(allergen); RebuildAllergensFromIngredients(); };
+                    allergenChips.Children.Add(chip);
+                }
             }
         }
         RebuildAllergensFromIngredients();
@@ -372,23 +388,19 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             ingredientChips.Children.Add(chip);
         }
         foreach (var ingredientName in selectedIngredients) AddIngredientChip(ingredientName);
-        ingredientSearch.TextChanged += (sender, args) =>
-        {
-            var query = ingredientSearch.Text.Trim();
-            ingredientSearch.ItemsSource = availableIngredients
-                .Where(item => !selectedIngredients.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+        SearchPicker.Attach(ingredientSearch, query => availableIngredients
+                .Where(item => !selectedIngredients.Contains(item.Name, StringComparer.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
                 .Select(item => item.Name)
-                .ToList();
-        };
+                .ToList());
         ingredientSearch.SuggestionChosen += (sender, args) =>
         {
-            if (args.SelectedItem is string name && !selectedIngredients.Contains(name))
+            if (args.SelectedItem is string name && !selectedIngredients.Contains(name, StringComparer.OrdinalIgnoreCase))
             {
                 selectedIngredients.Add(name);
                 AddIngredientChip(name);
                 RebuildAllergensFromIngredients();
             }
-            ingredientSearch.Text = string.Empty;
+            SearchPicker.ClearAfterSelection(ingredientSearch);
         };
         panel.Children.Add(ingredientSearch);
         panel.Children.Add(ingredientChips);
@@ -397,16 +409,11 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
         var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find) };
-        var allergenList = new ListView { ItemsSource = selectedAllergenItems, DisplayMemberPath = "DisplayName", IsItemClickEnabled = true, MaxHeight = 90 };
         allergenSearch.DisplayMemberPath = "DisplayName";
         allergenSearch.TextMemberPath = "DisplayName";
-        allergenSearch.TextChanged += (sender, args) =>
-        {
-            var query = allergenSearch.Text.Trim();
-            allergenSearch.ItemsSource = availableAllergens
-                .Where(item => !selectedAllergens.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
-        };
+        SearchPicker.Attach(allergenSearch, query => availableAllergens
+            .Where(item => !selectedAllergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .ToList());
         allergenSearch.SuggestionChosen += (sender, args) =>
         {
             if (args.SelectedItem is Allergen allergen)
@@ -414,18 +421,10 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
                 manualAllergens.Add(allergen.Name);
                 RebuildAllergensFromIngredients();
             }
-            allergenSearch.Text = string.Empty;
-        };
-        allergenList.ItemClick += (sender, args) =>
-        {
-            if (args.ClickedItem is Allergen allergen)
-            {
-                manualAllergens.Remove(allergen.Name);
-                RebuildAllergensFromIngredients();
-            }
+            SearchPicker.ClearAfterSelection(allergenSearch);
         };
         panel.Children.Add(allergenSearch);
-        panel.Children.Add(allergenList);
+        panel.Children.Add(allergenChips);
 
         _editingRecipeId = isEditing ? recipe.Id : null;
         _editorDirty = false;
@@ -505,11 +504,12 @@ public class RecipeItemViewModel
     public string Instructions { get; set; } = "";
     public List<string> Ingredients { get; set; } = new();
     public List<string> Allergens { get; set; } = new();
+    public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
     public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
-    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{AllergenDisplay.Icon(allergen)} {L.Allergen(allergen)}"));
+    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{(AllergenIcons.TryGetValue(allergen, out var icon) ? icon : AllergenDisplay.Icon(allergen))} {L.Allergen(allergen)}"));
 
     public RecipeItemViewModel() { }
 

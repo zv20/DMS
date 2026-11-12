@@ -562,4 +562,8 @@
   <data name="MealCategoryName" xml:space="preserve"><value>Category name</value></data>
   <data name="RemoveNewCategory" xml:space="preserve"><value>Remove new category</value></data>
   <data name="MealSettingsInvalid" xml:space="preserve"><value>Enter a whole number and a unique, non-empty name for each category.</value></data>
+  <data name="AllergenIcon" xml:space="preserve"><value>Icon</value></data>
+  <data name="AllergenChooseColor" xml:space="preserve"><value>Choose color</value></data>
+  <data name="RemoveAllergen" xml:space="preserve"><value>Remove allergen {0}</value></data>
+  <data name="AllergenFromIngredient" xml:space="preserve"><value>Included by a selected ingredient</value></data>
 </root>

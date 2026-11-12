@@ -56,11 +56,13 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     {
         var generation = _pageGeneration;
         var ingredients = await _database.GetAllIngredientsAsync();
+        var allergens = await _database.GetAllAllergensAsync();
         if (generation != _pageGeneration) return;
+        var allergenIcons = allergens.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
         _ingredients.Clear();
         foreach (var ingredient in ingredients)
         {
-            _ingredients.Add(new IngredientItemViewModel(ingredient));
+            _ingredients.Add(new IngredientItemViewModel(ingredient) { AllergenIcons = allergenIcons });
         }
         ApplyFilter();
         SetPageStatus(null);
@@ -159,20 +161,34 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         // Allergens
         var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(allergensLabel);
-        var allergenList = new ListView
+        var selectedAllergens = new ObservableCollection<string>(ingredient.Allergens.Distinct(StringComparer.OrdinalIgnoreCase));
+        var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find), DisplayMemberPath = "DisplayName", TextMemberPath = "DisplayName" };
+        var chips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        void RebuildChips()
         {
-            ItemsSource = allergens,
-            DisplayMemberPath = "DisplayName",
-            SelectionMode = ListViewSelectionMode.Multiple,
-            MaxHeight = 180,
-            BorderThickness = new Thickness(1),
-            BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
-        };
-        foreach (var allergen in allergens.Where(item => ingredient.Allergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase)))
-        {
-            allergenList.SelectedItems.Add(allergen);
+            chips.Children.Clear();
+            foreach (var name in selectedAllergens)
+            {
+                var chip = new Button { Content = $"{L.Allergen(name)}  ✕", CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
+                var label = L.Format("RemoveAllergen", L.Allergen(name));
+                ToolTipService.SetToolTip(chip, label);
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, label);
+                chip.Click += (_, _) => selectedAllergens.Remove(name);
+                chips.Children.Add(chip);
+            }
         }
-        panel.Children.Add(allergenList);
+        RebuildChips();
+        SearchPicker.Attach(allergenSearch, query => allergens
+            .Where(item => !selectedAllergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase) &&
+                (query.Length == 0 || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .ToList());
+        allergenSearch.SuggestionChosen += (_, args) =>
+        {
+            if (args.SelectedItem is Allergen allergen && !selectedAllergens.Contains(allergen.Name, StringComparer.OrdinalIgnoreCase)) selectedAllergens.Add(allergen.Name);
+            SearchPicker.ClearAfterSelection(allergenSearch);
+        };
+        panel.Children.Add(allergenSearch);
+        panel.Children.Add(chips);
         if (allergens.Count == 0)
         {
             panel.Children.Add(new TextBlock
@@ -182,10 +198,8 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
             });
         }
 
-        // Keep unknown saved allergens instead of dropping them during an unrelated edit.
-        var unmatchedAllergens = ingredient.Allergens.Where(name => !allergens.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))).ToList();
         nameBox.TextChanged += (_, _) => _editor.MarkDirty();
-        allergenList.SelectionChanged += (_, _) => _editor.MarkDirty();
+        selectedAllergens.CollectionChanged += (_, _) => { RebuildChips(); _editor.MarkDirty(); };
         _editor.Present(isEditing ? L.Get("Text_Edit_Ingredient_098e94") : L.Get("Text_Add_Ingredient_73b214"), isEditing ? ingredient.Id : null, async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
@@ -202,12 +216,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
                 return false;
             }
             ingredient.Name = nameBox.Text.Trim();
-            ingredient.Allergens = allergenList.SelectedItems
-                .OfType<Allergen>()
-                .Select(selected => selected.Name)
-                .Concat(unmatchedAllergens)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            ingredient.Allergens = selectedAllergens.ToList();
 
             ingredient.Id = await _database.SaveIngredientAsync(ingredient);
             try { await LoadIngredientsAsync(); }
@@ -223,9 +232,10 @@ public class IngredientItemViewModel
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public List<string> Allergens { get; set; } = new();
+    public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string AllergensDisplay => Allergens.Count > 0
-        ? string.Join("  ", Allergens.Select(allergen => $"{AllergenDisplay.Icon(allergen)} {L.Allergen(allergen)}"))
+        ? string.Join("  ", Allergens.Select(allergen => $"{(AllergenIcons.TryGetValue(allergen, out var icon) ? icon : AllergenDisplay.Icon(allergen))} {L.Allergen(allergen)}"))
         : L.Get("Text_No_allergens_238938");
 
     public IngredientItemViewModel() { }
