@@ -389,31 +389,21 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         }
         UpdateCategoryButton(Math.Max(0, Array.IndexOf(Categories, selectedCategory)));
         retry.Click += async (_, _) => { if (hasPending) await SaveAsync(pendingRecipe, pendingCategory); };
-        var mealRow = new Grid { ColumnSpacing = 6 };
+        var mealRow = new Grid { ColumnSpacing = 6, RowSpacing = 4 };
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         mealRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
+        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         mealRow.Children.Add(select);
-        Grid.SetColumn(search, 1);
+        Grid.SetRow(search, 1);
+        Grid.SetColumnSpan(search, 2);
         mealRow.Children.Add(search);
-        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), Style = (Style)Application.Current.Resources["PlannerClearButtonStyle"], HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
+        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
         ToolTipService.SetToolTip(clear, L.Get("Text_Clear_719ea3"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{L.Get("Text_Clear_719ea3")} {index + 1}");
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         Grid.SetColumn(clear, 1);
         mealRow.Children.Add(clear);
-        mealRow.SizeChanged += (_, args) =>
-        {
-            var compact = args.NewSize.Width < 180;
-            Grid.SetRow(search, compact ? 1 : 0);
-            Grid.SetColumn(search, compact ? 0 : 1);
-            Grid.SetColumnSpan(search, compact ? 2 : 1);
-            Grid.SetRow(clear, compact ? 1 : 0);
-            Grid.SetColumn(clear, compact ? 0 : 1);
-            Grid.SetColumnSpan(clear, compact ? 2 : 1);
-        };
-        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        mealRow.RowSpacing = 4;
         panel.Children.Add(mealRow);
         panel.Children.Add(status);
         panel.Children.Add(retry);
