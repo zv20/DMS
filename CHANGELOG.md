@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.12
+
+- Made meal categories and the number of meals per day configurable, with additional pages for larger menus when needed.
+- Refreshed the planner, settings, and lists, including clearer day borders, theme-colored hover states, and separate print and export actions.
+- Improved the weekly planner layout and recipe selection at narrow window sizes.
+- Added searchable ingredient and allergen pickers and improved dropdown dismissal.
+- Added selectable allergen icons and a color picker, and improved the Template Builder color picker with transparency and recent colors.
+- Simplified diagnostic log filters and settings navigation.
+- Preserved deleted default allergens across app restarts and updates.
+- Strengthened backup restore validation and improved planning and print resource handling.
+
 ## 0.0.11
 
 - Reduced memory use when browsing and editing templates with images.
