@@ -932,13 +932,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void AddContextColor(string label, string initial, Action<string, double> change, double initialOpacity = 1)
     {
-        var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(ParseColor(initial)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
+        var initialColor = ParseColor(initial);
+        var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
+        var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
         ToolTipService.SetToolTip(button, L.Get(label));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, L.Get(label));
-        var initialColor = ParseColor(initial);
-        var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
-        var picker = new ColorPicker { Color = Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = true, IsHexInputVisible = false, IsColorChannelTextInputVisible = false, Width = 288 };
+        var picker = new ColorPicker { Color = Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B), ColorSpectrumShape = ColorSpectrumShape.Ring, IsAlphaEnabled = true, IsHexInputVisible = true, Width = 288 };
         var content = new StackPanel { Width = 288, Spacing = 8 };
         content.Children.Add(picker);
         if (_recentTemplateColors.Count > 0)
@@ -951,7 +951,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 var color = recentColor;
                 var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
                 ToolTipService.SetToolTip(recentButton, color);
-                recentButton.Click += (_, _) => picker.Color = ParseColor(color);
+                recentButton.Click += (_, _) =>
+                {
+                    var recentRgb = ParseColor(color);
+                    picker.Color = Windows.UI.Color.FromArgb(picker.Color.A, recentRgb.R, recentRgb.G, recentRgb.B);
+                };
                 recent.Children.Add(recentButton);
             }
             recentSection.Children.Add(recent);
