@@ -1,5 +1,5 @@
 <Page x:Class="DMS.Views.MenuPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
- <Grid RowDefinitions="Auto,*">
+ <Grid x:Name="PlannerRoot" RowDefinitions="Auto,*" Background="Transparent">
   <Grid x:Name="MenuHeader" Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" SizeChanged="MenuHeader_SizeChanged">
    <ScrollViewer x:Name="HeaderScroll" Grid.Column="0" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled">
    <StackPanel x:Name="HeaderActions" Orientation="Horizontal" Spacing="8">

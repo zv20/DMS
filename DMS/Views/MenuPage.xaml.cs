@@ -24,10 +24,12 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     private bool _weekendPlanningEnabled;
     private int _headerLayout = -1;
     private Button? _lastOutputButton;
+    private AutoSuggestBox? _activeRecipeSearch;
 
     public MenuPage()
     {
         InitializeComponent();
+        PlannerRoot.AddHandler(UIElement.PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(PlannerRoot_PointerPressed), true);
         _database = App.Services.GetRequiredService<DatabaseService>();
         UpdateViewButtons();
         Loaded += async (_, _) => await RefreshAsync();
@@ -35,10 +37,18 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
+        _activeRecipeSearch = null;
         CalendarGrid.Children.Clear();
         CalendarGrid.RowDefinitions.Clear();
         CalendarGrid.ColumnDefinitions.Clear();
         base.OnNavigatedFrom(e);
+    }
+    private void PlannerRoot_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_activeRecipeSearch is not { IsSuggestionListOpen: true } search) return;
+        for (var element = e.OriginalSource as DependencyObject; element != null; element = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(element))
+            if (element == search) return;
+        search.IsSuggestionListOpen = false;
     }
     private static DateTime WeekStart(DateTime day) => day.Date.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
     private void UpdateViewButtons()
@@ -253,6 +263,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         if (_refreshPending) return;
         _weekendPlanningEnabled = weekend;
         PeriodLabel.Text = period;
+        _activeRecipeSearch = null;
         CalendarGrid.Children.Clear();
         CalendarGrid.RowDefinitions.Clear();
         CalendarGrid.ColumnDefinitions.Clear();
@@ -351,7 +362,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             }
             catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }
-        search.GotFocus += (_, _) => Suggest();
+        search.GotFocus += (_, _) => { _activeRecipeSearch = search; Suggest(); };
         search.TextChanged += async (_, args) =>
         {
             if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
@@ -390,6 +401,19 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
         Grid.SetColumn(clear, 1);
         mealRow.Children.Add(clear);
+        mealRow.SizeChanged += (_, args) =>
+        {
+            var compact = args.NewSize.Width < 180;
+            Grid.SetRow(search, compact ? 1 : 0);
+            Grid.SetColumn(search, compact ? 0 : 1);
+            Grid.SetColumnSpan(search, compact ? 2 : 1);
+            Grid.SetRow(clear, compact ? 1 : 0);
+            Grid.SetColumn(clear, compact ? 0 : 1);
+            Grid.SetColumnSpan(clear, compact ? 2 : 1);
+        };
+        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        mealRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        mealRow.RowSpacing = 4;
         panel.Children.Add(mealRow);
         panel.Children.Add(status);
         panel.Children.Add(retry);
