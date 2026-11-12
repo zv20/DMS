@@ -158,13 +158,19 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
         UpdateDuplicateWarning();
 
-        var iconBox = new ComboBox { Header = L.Get("AllergenIcon"), MinWidth = 120 };
+        panel.Children.Add(new TextBlock { Text = L.Get("AllergenIcon"), FontSize = 14, FontWeight = FontWeights.SemiBold });
+        var iconPanel = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         string[] iconOptions = ["⚠️", "🌾", "🦐", "🥚", "🐟", "🥜", "🫛", "🥛", "🌰", "🥬", "🟡", "⚗️", "🌸", "🐚", "🍞", "🧀", "🍎", "🍄", "🌱", "❗"];
-        if (!string.IsNullOrWhiteSpace(allergen.Icon) && !iconOptions.Contains(allergen.Icon))
-            iconBox.Items.Add(new ComboBoxItem { Content = allergen.Icon, Tag = allergen.Icon });
-        foreach (var icon in iconOptions) iconBox.Items.Add(new ComboBoxItem { Content = icon, Tag = icon });
-        iconBox.SelectedItem = iconBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == allergen.Icon) ?? iconBox.Items[0];
-        panel.Children.Add(iconBox);
+        var selectedIcon = string.IsNullOrWhiteSpace(allergen.Icon) ? "⚠️" : allergen.Icon;
+        var icons = iconOptions.Contains(selectedIcon) ? iconOptions : [selectedIcon, .. iconOptions];
+        var iconGroup = Guid.NewGuid().ToString("N");
+        foreach (var icon in icons)
+        {
+            var choice = new RadioButton { Content = icon, GroupName = iconGroup, IsChecked = icon == selectedIcon, Margin = new Thickness(0, 0, 8, 4) };
+            choice.Checked += (_, _) => { selectedIcon = icon; _editor.MarkDirty(); };
+            iconPanel.Children.Add(choice);
+        }
+        panel.Children.Add(iconPanel);
 
         var colorLabel = new TextBlock { Text = L.Get("Text_Color_1d0c83"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(colorLabel);
@@ -185,7 +191,6 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             _editor.MarkDirty();
         };
         nameBox.TextChanged += (_, _) => _editor.MarkDirty();
-        iconBox.SelectionChanged += (_, _) => _editor.MarkDirty();
         _editor.Present(isEditing ? L.Get("Text_Edit_Allergen_54f3c1") : L.Get("Text_Add_Allergen_3f78ad"), isEditing ? allergen.Id : null, async () =>
         {
             if (string.IsNullOrWhiteSpace(nameBox.Text))
@@ -203,7 +208,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             }
             allergen.Name = nameBox.Text.Trim();
             allergen.Color = $"#{picker.Color.R:X2}{picker.Color.G:X2}{picker.Color.B:X2}";
-            allergen.Icon = (iconBox.SelectedItem as ComboBoxItem)?.Tag as string ?? allergen.Icon;
+            allergen.Icon = selectedIcon;
 
             allergen.Id = await _database.SaveAllergenAsync(allergen);
             try { await LoadAllergensAsync(); }

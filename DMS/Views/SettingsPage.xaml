@@ -100,11 +100,11 @@
                     <StackPanel Margin="16,8,16,16" Spacing="10">
 
                         <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
-                        <StackPanel Spacing="4">
-                            <CheckBox x:Name="LogInformationCheckBox" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterInformation" />
-                            <CheckBox x:Name="LogWarningCheckBox" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterWarning" />
+                        <local:WrappingPanel HorizontalAlignment="Stretch">
+                            <CheckBox x:Name="LogInformationCheckBox" Margin="0,0,16,0" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterInformation" />
+                            <CheckBox x:Name="LogWarningCheckBox" Margin="0,0,16,0" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterWarning" />
                             <CheckBox x:Name="LogErrorCheckBox" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterError" />
-                        </StackPanel>
+                        </local:WrappingPanel>
                         <TextBox x:Name="LogViewerText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" Height="200" />
                         <Button x:Name="LogViewerRefreshButton" HorizontalAlignment="Stretch" Click="LogViewerRefresh_Click" x:Uid="LogViewerRefresh" />
                         <Button x:Name="LogViewerFolderButton" HorizontalAlignment="Stretch" Click="LogViewerFolder_Click" x:Uid="LogViewerFolder" />
