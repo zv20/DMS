@@ -4,8 +4,8 @@ using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
-// Session-owned cache. The budget covers estimated decoded pixels plus the
-// encoded key; active Image controls can independently retain their bitmaps.
+// Preview entries are budgeted; a print job retains its shared originals until
+// the job releases its pages. Active Image controls also retain their bitmaps.
 public sealed class TemplateBitmapCache
 {
     private const long MaxBytes = 32L * 1024 * 1024;

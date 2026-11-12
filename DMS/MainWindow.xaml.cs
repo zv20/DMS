@@ -100,6 +100,11 @@ public sealed partial class MainWindow : Window
         args.Cancel = true;
         if (_closing) return;
         _closing = true;
+        if (App.CurrentWindow == this && ContentFrame.Content is SettingsPage settingsPage)
+        {
+            try { if (!await settingsPage.CanLeaveAsync()) { _closing = false; return; } }
+            catch (Exception ex) { _closing = false; App.Logger.LogError(ex, "Unable to confirm unsaved settings"); return; }
+        }
         try
         {
             // A replaced window must not overwrite settings loaded from a restored backup.
@@ -178,18 +183,9 @@ public sealed partial class MainWindow : Window
             if (ContentFrame.CurrentSourcePageType == pageType) return;
             if (ContentFrame.Content is IUnsavedEditor editor)
             {
-                var currentTag = ContentFrame.Content switch
-                {
-                    MenuPage => "menu",
-                    RecipesPage => "recipes",
-                    IngredientsPage => "ingredients",
-                    AllergensPage => "allergens",
-                    TemplateBuilderPage => "templateBuilder",
-                    _ => ""
-                };
                 if (_navigationPending)
                 {
-                    NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, currentTag));
+                    RestoreNavigationSelection();
                     return;
                 }
                 _navigationPending = true;
@@ -197,7 +193,7 @@ public sealed partial class MainWindow : Window
                 {
                     if (!await editor.CanLeaveAsync())
                     {
-                        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, currentTag));
+                        RestoreNavigationSelection();
                         return;
                     }
                 }

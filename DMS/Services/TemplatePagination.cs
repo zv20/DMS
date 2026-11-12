@@ -4,6 +4,14 @@ namespace DMS.Services;
 
 public static class TemplatePagination
 {
+    public static List<List<MenuEntry>> Plan(int mealsPerDay, List<MenuEntry> entries, IReadOnlyList<Recipe> recipes, Func<IReadOnlyList<MenuEntry>, bool> fits)
+    {
+        if (mealsPerDay <= 4 || fits(entries)) return [entries];
+        var recipeIds = recipes.Select(recipe => recipe.Id).ToHashSet();
+        var printable = entries.Where(entry => recipeIds.Contains(entry.RecipeId)).ToList();
+        return printable.Count > 0 && Split(printable, fits) is { Count: > 0 } pages ? pages : [entries];
+    }
+
     /// <summary>Pack slot groups in order, splitting a group only when it cannot fit on an empty page.</summary>
     public static List<List<MenuEntry>>? Split(IReadOnlyList<MenuEntry> entries, Func<IReadOnlyList<MenuEntry>, bool> fits)
     {

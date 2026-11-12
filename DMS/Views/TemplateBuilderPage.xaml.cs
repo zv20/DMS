@@ -1006,19 +1006,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var generation = _renderGeneration;
             try
             {
-            List<List<MenuEntry>> pages = [_entries];
             bool Fits(IReadOnlyList<MenuEntry> entries)
             {
                 var measured = TemplateRenderer.Create(_document, _monday, entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            if (_mealsPerDay > 4 && !Fits(_entries))
-            {
-                var ids = _recipes.Select(recipe => recipe.Id).ToHashSet();
-                var printable = _entries.Where(entry => ids.Contains(entry.RecipeId)).ToList();
-                if (printable.Count > 0 && TemplatePagination.Split(printable, Fits) is { Count: > 0 } split) pages = split;
-            }
+            var pages = TemplatePagination.Plan(_mealsPerDay, _entries, _recipes, Fits);
             _previewPageIndex = Math.Clamp(_previewPageIndex, 0, pages.Count - 1);
             PreviewPageNavigation.Visibility = pages.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
             PreviewPageNumber.Text = $"{_previewPageIndex + 1} / {pages.Count}";

@@ -159,20 +159,13 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
             _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
-            _pageEntries = [_entries];
             bool Fits(IReadOnlyList<MenuEntry> pageEntries)
             {
                 var measured = TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            if (settings.MealsPerDay > 4 && !Fits(_entries))
-            {
-                var recipeIds = _recipes.Select(recipe => recipe.Id).ToHashSet();
-                var printable = _entries.Where(entry => recipeIds.Contains(entry.RecipeId)).ToList();
-                if (printable.Count > 0 && TemplatePagination.Split(printable, Fits) is { Count: > 0 } pages)
-                    _pageEntries = pages;
-            }
+            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, _entries, _recipes, Fits);
             var results = new List<TemplatePageResult>();
             try
             {
@@ -238,11 +231,21 @@ public sealed partial class TemplateOutputPage : Page
             _printDocument.GetPreviewPage -= GetPreviewPage;
             _printDocument.AddPages -= AddPages;
         }
+        ReleasePrintResources();
+        _printManager = null; _printDocument = null; _printSource = null;
+    }
+
+    private void ReleasePrintResources()
+    {
         foreach (var box in _printViewboxes) box.Child = null;
         _printViewboxes.Clear(); _printSurfaces.Clear();
         DisposePages(_printPages); _printPages = [];
         _printBitmaps.Clear();
-        _printManager = null; _printDocument = null; _printSource = null;
+    }
+
+    private void ReleasePrintResourcesIfIdle()
+    {
+        if (!_busy && System.Threading.Volatile.Read(ref _activePrintTasks) == 0) ReleasePrintResources();
     }
 
     private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
@@ -266,6 +269,7 @@ public sealed partial class TemplateOutputPage : Page
                     App.Logger.LogWarning("The print task reported a failure");
                     StatusText.Text = L.Get("TemplateOutputPrintFailed");
                 }
+                ReleasePrintResourcesIfIdle();
                 SetReady(_ready);
             });
         };
@@ -278,7 +282,7 @@ public sealed partial class TemplateOutputPage : Page
         {
             if (taskCounted && !completionAttached) System.Threading.Interlocked.Decrement(ref _activePrintTasks);
             ReportPrintCallbackFailure(ex);
-            _uiQueue.TryEnqueue(() => SetReady(_ready));
+            _uiQueue.TryEnqueue(() => { ReleasePrintResourcesIfIdle(); SetReady(_ready); });
         }
     }
 
@@ -335,15 +339,12 @@ public sealed partial class TemplateOutputPage : Page
 
     private async Task ShowPrintAsync()
     {
-        if (!_ready || _busy || _document == null) return;
+        if (!_ready || _busy || _document == null || System.Threading.Volatile.Read(ref _activePrintTasks) != 0) return;
         _busy = true; SetReady(true);
         try
         {
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
-            foreach (var old in _printViewboxes) old.Child = null;
-            _printViewboxes.Clear(); _printSurfaces.Clear();
-            DisposePages(_printPages); _printPages = [];
-            _printBitmaps.Clear();
+            ReleasePrintResources();
             foreach (var pageEntries in _pageEntries)
                 _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps));
             await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
@@ -353,7 +354,7 @@ public sealed partial class TemplateOutputPage : Page
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to open the print dialog"); StatusText.Text = L.Get("ErrorOutput"); }
-        finally { _busy = false; SetReady(_ready); }
+        finally { _busy = false; ReleasePrintResourcesIfIdle(); SetReady(_ready); }
     }
 
     private async void Png_Click(object sender, RoutedEventArgs e)

@@ -25,6 +25,19 @@ public sealed class TemplatePaginationTests
     }
 
     [Fact]
+    public void PlanPreservesDefaultAndFallsBackWhenEntriesCannotFit()
+    {
+        var entries = new List<MenuEntry> { new() { Slot = "slot1", RecipeId = 1 } };
+        var recipes = new List<Recipe> { new() { Id = 1 } };
+        var calls = 0;
+        bool NeverFits(IReadOnlyList<MenuEntry> _) { calls++; return false; }
+        Assert.Same(entries, Assert.Single(TemplatePagination.Plan(4, entries, recipes, NeverFits)));
+        Assert.Equal(0, calls);
+        Assert.Same(entries, Assert.Single(TemplatePagination.Plan(6, entries, recipes, NeverFits)));
+        Assert.True(calls > 0);
+    }
+
+    [Fact]
     public void ImagePdfContainsEachPageAndValidCrossReferenceOffsets()
     {
         var bytes = ImagePdf.Create([new byte[] { 1, 2 }, new byte[] { 3, 4 }], 1588, 2246);

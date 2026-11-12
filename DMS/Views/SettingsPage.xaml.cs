@@ -10,7 +10,7 @@ using System.IO;
 
 namespace DMS.Views;
 
-public sealed partial class SettingsPage : Page
+public sealed partial class SettingsPage : Page, IUnsavedEditor
 {
     private readonly SettingsService _settingsService;
     private readonly DatabaseService _databaseService;
@@ -19,6 +19,9 @@ public sealed partial class SettingsPage : Page
     private string _selectedAccent = "blue";
     private bool _selectedWeekend;
     private readonly List<(string Id, TextBox Name)> _categoryEditors = [];
+    private List<(string Id, string Name)> _savedCategories = [];
+    private double _savedMealsPerDay;
+    private bool _planningLoaded, _savingPlanning, _confirmingPlanning;
     private DiagnosticLogFilter _logFilter = DiagnosticLogFilter.All;
 
     public SettingsPage()
@@ -126,6 +129,7 @@ public sealed partial class SettingsPage : Page
             MealCategoryRows.Children.Clear();
             _categoryEditors.Clear();
             foreach (var category in settings.MealCategories) AddCategoryEditor(category.Id, L.Category(category));
+            CapturePlanningSnapshot();
 
             var dbPath = _databaseService.GetDatabasePath();
             var dbInfo = new FileInfo(dbPath);
@@ -148,6 +152,7 @@ public sealed partial class SettingsPage : Page
             var saved = false;
             try
             {
+                if (!await CanLeaveAsync()) { RestoreLanguageSelection(previousLanguage); return; }
                 var dialog = new ContentDialog
                 {
                     XamlRoot = XamlRoot,
@@ -275,6 +280,37 @@ public sealed partial class SettingsPage : Page
 
     private void AddMealCategory_Click(object sender, RoutedEventArgs e) => AddCategoryEditor(Guid.NewGuid().ToString("N"), "", true);
 
+    private void CapturePlanningSnapshot()
+    {
+        _savedMealsPerDay = MealsPerDayBox.Value;
+        _savedCategories = _categoryEditors.Select(item => (item.Id, item.Name.Text)).ToList();
+        _planningLoaded = true;
+    }
+
+    public async Task<bool> CanLeaveAsync()
+    {
+        if (_savingPlanning || _confirmingPlanning) return false;
+        if (!_planningLoaded || (MealsPerDayBox.Value.Equals(_savedMealsPerDay) &&
+            _categoryEditors.Select(item => (item.Id, item.Name.Text)).SequenceEqual(_savedCategories))) return true;
+        _confirmingPlanning = true;
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"),
+                Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        finally { _confirmingPlanning = false; }
+    }
+
+    private void SetPlanningEditorsEnabled(bool enabled)
+    {
+        MealsPerDayBox.IsEnabled = enabled;
+        foreach (var (_, box) in _categoryEditors) box.IsEnabled = enabled;
+        foreach (var row in MealCategoryRows.Children.OfType<Grid>())
+            foreach (var button in row.Children.OfType<Button>()) button.IsEnabled = enabled;
+    }
+
     private async void SavePlanning_Click(object sender, RoutedEventArgs e)
     {
         var names = _categoryEditors.Select(item => item.Name.Text.Trim()).ToArray();
@@ -283,7 +319,9 @@ public sealed partial class SettingsPage : Page
             PlanningStatus.Text = L.Get("MealSettingsInvalid");
             return;
         }
+        _savingPlanning = true;
         SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = WeekendPlanningToggle.IsEnabled = false;
+        SetPlanningEditorsEnabled(false);
         try
         {
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
@@ -297,10 +335,11 @@ public sealed partial class SettingsPage : Page
             MealCategoryRows.Children.Clear();
             _categoryEditors.Clear();
             foreach (var category in settings.MealCategories) AddCategoryEditor(category.Id, L.Category(category));
+            CapturePlanningSnapshot();
             PlanningStatus.Text = L.Get("Text_Saved_499dc6");
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Could not save meal planning settings"); PlanningStatus.Text = L.Get("DataSaveFailed"); }
-        finally { SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = WeekendPlanningToggle.IsEnabled = true; }
+        finally { _savingPlanning = false; SetPlanningEditorsEnabled(true); SavePlanningButton.IsEnabled = AddMealCategoryButton.IsEnabled = WeekendPlanningToggle.IsEnabled = true; }
     }
 
     private async void WeekendPlanningToggle_Toggled(object sender, RoutedEventArgs e)
@@ -373,6 +412,7 @@ public sealed partial class SettingsPage : Page
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSingleFileAsync();
             if (file == null) return;
+            if (!await CanLeaveAsync()) return;
             var confirm = new ContentDialog { Title = L.Get("Text_Restore_Database_04f0a6"), Content = L.Get("RestoreWarning"),
                 PrimaryButtonText = L.Get("Text_Restore_3cbe6d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
                 DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
