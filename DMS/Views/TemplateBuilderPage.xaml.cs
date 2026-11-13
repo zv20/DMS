@@ -227,7 +227,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (qaTemplate != null)
             {
                 await SelectTemplateAsync(qaTemplate);
-                if (_loadedName != qaName || string.IsNullOrEmpty(_document.BackgroundImageDataUri) || _document.DecorativeImages.Count(image => !string.IsNullOrEmpty(image.DataUri)) != 3)
+                if (_loadedName != qaName || _document.DecorativeImages.Count(image => !string.IsNullOrEmpty(image.DataUri)) != 4)
                     throw new InvalidOperationException("Performance template images were not loaded.");
             }
             else SetDocument(NewTemplate(), null);
