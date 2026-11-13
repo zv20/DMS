@@ -11,6 +11,15 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
 }
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
+Add-Type @'
+using System.Runtime.InteropServices;
+public static class DmsNavigationInput
+{
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr handle);
+    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, System.UIntPtr extraInfo);
+}
+'@
 $exe = (Resolve-Path -LiteralPath $Executable).Path
 $databasePath = (Resolve-Path -LiteralPath $Database).Path
 $folder = Join-Path $env:RUNNER_TEMP ('dms-navigation-' + [guid]::NewGuid().ToString('N'))
@@ -43,8 +52,11 @@ try {
             if ($null -eq $item) { throw "UI Automation could not find $id." }
             Remove-Item -LiteralPath $env:DMS_QA_PAGE_READY_FILE -Force -ErrorAction SilentlyContinue
             $watch = [System.Diagnostics.Stopwatch]::StartNew()
-            $invoke = $item.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-            $invoke.Invoke()
+            $point = $item.GetClickablePoint()
+            [void][DmsNavigationInput]::SetForegroundWindow($app.MainWindowHandle)
+            if (-not [DmsNavigationInput]::SetCursorPos([int]$point.X, [int]$point.Y)) { throw "Unable to position pointer for $page." }
+            [DmsNavigationInput]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
+            [DmsNavigationInput]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
             $deadline = [DateTime]::UtcNow.AddSeconds(45)
             do {
                 $app.Refresh()
@@ -64,7 +76,7 @@ try {
     New-Item -ItemType Directory -Path (Split-Path $output) -Force | Out-Null
     [pscustomobject]@{
         schemaVersion = 1
-        scope = 'UI Automation invocation to first rendering callback after database load and list binding; not a guarantee of displayed pixels or complete user interactivity.'
+        scope = 'UI Automation target and click to first rendering callback after database load and list binding; not a guarantee of displayed pixels or complete user interactivity.'
         notes = 'Generated database, 1,000 recipes and 1,000 ingredients; memory sampled after each navigation. Includes up to 50 ms polling overhead.'
         samples = $samples
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $output -Encoding UTF8
