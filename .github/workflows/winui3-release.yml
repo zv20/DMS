@@ -19,6 +19,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/windows-checks.yml
+    with:
+      skip_startup: true
 
   release:
     name: Build, package, and release (Windows)

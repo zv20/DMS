@@ -9,10 +9,14 @@ after changes, using the same dataset, build configuration and actions.
 
 The **Windows tests** workflow runs on branch pushes, pull requests, and manual
 dispatch. It compiles the test project and its app dependency in Release x64,
-runs the regular tests, and runs the generated database benchmark. The release
-workflow also calls these checks and packages a release only after they pass.
+runs the regular tests, runs the generated database benchmark, and measures
+process launch to the app's initial navigation signal three times. This signal
+is emitted before the initial page finishes loading; it is not a measurement of
+fully interactive startup. The first run may create the runner's database, and
+later runs reuse it. The release workflow calls the functional and database
+checks before packaging; it skips the experimental startup measurement.
 Open the workflow run in GitHub Actions and download its
-`database-performance-*` artifact to see `database.json`. The workflow must be
+`performance-*` artifact to see `database.json` and `startup.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
 
 Hosted runner hardware and load can vary; use these numbers to identify changes
