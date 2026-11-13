@@ -277,6 +277,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             CalendarGrid.Children.Add(cards[i]);
         }
         _renderedDate = date; _renderedMonthly = monthly; _hasRenderedView = true;
+        PerformancePageSignal.AfterRender(this, "menu", recipes.Count);
         _pendingSlotFailures = 0;
         ResizeCalendarCards();
     }

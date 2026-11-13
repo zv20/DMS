@@ -232,7 +232,15 @@ public sealed partial class MainWindow : Window
             {
                 var tag = System.IO.File.ReadAllText(path).Trim();
                 System.IO.File.Delete(path);
-                var pageType = tag switch { "recipes" => typeof(RecipesPage), "ingredients" => typeof(IngredientsPage), _ => null };
+                if (tag == "output") { OpenMenuOutput(new DateTime(2026, 1, 5), false); return; }
+                if (tag == "pdf")
+                {
+                    var output = Environment.GetEnvironmentVariable("DMS_QA_PDF_PATH");
+                    if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
+                        await preview.ExportPerformancePdfAsync(output);
+                    return;
+                }
+                var pageType = tag switch { "recipes" => typeof(RecipesPage), "ingredients" => typeof(IngredientsPage), "templateBuilder" => typeof(TemplateBuilderPage), _ => null };
                 if (pageType == null) return;
                 var item = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
                 await NavigateToAsync(pageType, item);

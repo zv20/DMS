@@ -10,13 +10,17 @@ after changes, using the same dataset, build configuration and actions.
 The **Windows tests** workflow runs on branch pushes, pull requests, and manual
 dispatch. It compiles the test project and its app dependency in Release x64,
 runs the regular tests, runs the generated database benchmark, and measures
-process launch to the app's initial navigation signal three times. This signal
-is emitted before the initial page finishes loading; it is not a measurement of
-fully interactive startup. The first run may create the runner's database, and
+process launch to both the initial navigation signal and a later rendering
+callback after the planner's data has loaded, three times. Neither signal proves
+that all pixels are visible or that startup is fully interactive. The first run may create the runner's database, and
 later runs reuse it. An experimental navigation scenario then loads a
-generated database and alternates between Recipes and Ingredients three times.
-It checks each page's item count and records time to the first rendering callback
-after data loading and list binding, plus process memory at each checkpoint.
+generated database and alternates between Recipes, Ingredients and Template
+Builder for 20 cycles, with pauses. It checks the catalog item counts and waits
+for a populated template preview, recording the first rendering callback after
+data loading and list binding, plus memory at each checkpoint and after settling.
+It opens a populated output preview and measures PDF generation using the same
+rendering and PDF creation code as the app. It validates the PDF header and
+length, but bypasses the file picker and does not test printing or a printer.
 It uses an opt-in test command to trigger the normal navigation code, not a
 physical mouse click; command and response polling add overhead.
 The callback does not guarantee that all pixels have appeared or that the page

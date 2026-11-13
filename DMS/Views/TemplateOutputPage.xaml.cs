@@ -202,6 +202,7 @@ public sealed partial class TemplateOutputPage : Page
             }
             if (_printMode && _printManager == null) StatusText.Text += "\n" + L.Get("TemplateOutputPrintUnsupported");
             SetReady(hasMeals && !overflowed);
+            if (_ready) PerformancePageSignal.AfterRender(this, "output", results.Count);
         }
         catch (OperationCanceledException) when (!_loaded || generation != _generation) { }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the output preview"); if (generation == _generation) StatusText.Text = L.Get("ErrorOutput"); }
@@ -411,9 +412,7 @@ public sealed partial class TemplateOutputPage : Page
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
-            var images = new List<byte[]>();
-            foreach (var page in _previewPages) images.Add(await RenderPageAsync(page.Page, BitmapEncoder.JpegEncoderId));
-            var pdf = ImagePdf.Create(images, 1588, 2246);
+            var pdf = await CreatePdfBytesAsync();
             outputStarted = true;
             await FileIO.WriteBytesAsync(file, pdf);
             StatusText.Text = L.Get("TemplateOutputPdfSaved");
@@ -422,6 +421,27 @@ public sealed partial class TemplateOutputPage : Page
         {
             App.Logger.LogError(ex, "Unable to save the menu as a PDF");
             StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput");
+        }
+        finally { _busy = false; SetReady(_ready); }
+    }
+
+    private async Task<byte[]> CreatePdfBytesAsync()
+    {
+        var images = new List<byte[]>();
+        foreach (var page in _previewPages) images.Add(await RenderPageAsync(page.Page, BitmapEncoder.JpegEncoderId));
+        return ImagePdf.Create(images, 1588, 2246);
+    }
+
+    internal async Task ExportPerformancePdfAsync(string path)
+    {
+        if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
+        _busy = true;
+        SetReady(true);
+        try
+        {
+            var pdf = await CreatePdfBytesAsync();
+            await System.IO.File.WriteAllBytesAsync(path, pdf);
+            PerformancePageSignal.Write("pdf", pdf.Length);
         }
         finally { _busy = false; SetReady(_ready); }
     }

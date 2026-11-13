@@ -24,11 +24,18 @@ internal static class PerformancePageSignal
         rendered = (_, _) =>
         {
             Detach();
-            try { System.IO.File.WriteAllText(path, $"{name}:{count}"); }
-            catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to write performance page signal"); }
+            Write(name, count);
         };
         unloaded = (_, _) => Detach();
         page.Unloaded += unloaded;
         CompositionTarget.Rendering += rendered;
+    }
+
+    internal static void Write(string name, int count)
+    {
+        var path = Environment.GetEnvironmentVariable("DMS_QA_PAGE_READY_FILE");
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try { System.IO.File.WriteAllText(path, $"{name}:{count}"); }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to write performance page signal"); }
     }
 }

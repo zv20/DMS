@@ -85,6 +85,9 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         AddImageMenuItem.Text = L.Get("TplAddImage");
         InitializeImageInteraction();
         WeekPicker.Date = DateTimeOffset.Now;
+        var performanceWeek = Environment.GetEnvironmentVariable("DMS_QA_WEEK_DATE");
+        if (DateTime.TryParseExact(performanceWeek, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var week))
+            WeekPicker.Date = new DateTimeOffset(week);
         foreach (var (control, label) in new (FrameworkElement, string)[] { (ZoomOutButton, "TplZoomOut"), (ZoomInButton, "TplZoomIn"), (ZoomResetButton, "TplZoomReset"), (CanvasZoomSlider, "TplZoom") })
         {
             ToolTipService.SetToolTip(control, L.Get(label));
@@ -1038,7 +1041,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
             StatusText.Text = "";
             await result.ImagesReady;
-            if (generation == _renderGeneration) StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
+            if (generation == _renderGeneration)
+            {
+                StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
+                if (!_renderPending && result.HasMeals && !result.Overflowed)
+                    PerformancePageSignal.AfterRender(this, "templateBuilder", 1);
+            }
             }
             catch (OperationCanceledException) when (_leaving || _switching || _renderPending) { }
             catch (Exception ex) { App.Logger.LogError(ex, "Unable to render the template"); if (!_leaving && generation == _renderGeneration) StatusText.Text = L.Get("ErrorTemplate"); }
