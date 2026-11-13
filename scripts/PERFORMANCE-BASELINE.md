@@ -16,7 +16,7 @@ fully interactive startup. The first run may create the runner's database, and
 later runs reuse it. The release workflow calls the functional and database
 checks before packaging; it skips the experimental startup measurement.
 Open the workflow run in GitHub Actions and download its
-`performance-*` artifact to see `database.json` and `startup.json`. The workflow must be
+`performance-*` artifact to see `database.json`, `catalog.json` and `startup.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
 
 Hosted runner hardware and load can vary; use these numbers to identify changes
@@ -46,11 +46,12 @@ Remove-Item Env:DMS_PERF_RESULTS_PATH
 
 The test creates a temporary synthetic database, measures repeated service
 reads, verifies the results and removes the database. It does not use the
-application's own database. Check that the test passed and that
-`artifacts/performance-baselines/database.json` exists. This file is overwritten
-on another run, so save a copy first if you want to retain it. The timings exclude
-the UI, dataset creation and cold startup; they are not search or rendering
-benchmarks. A normal test run leaves the measurement inactive.
+application's own database. The catalog measurement uses 10,000 generated
+recipes and ingredients and runs the same in-memory filtering and sorting as the
+app. Check that both `database.json` and `catalog.json` exist in
+`artifacts/performance-baselines`. These files are overwritten on another run.
+The timings exclude UI rendering, data generation and cold startup; filtering
+timings also exclude database loading. A normal test run leaves measurements inactive.
 
 ## 2. Guided app capture
 

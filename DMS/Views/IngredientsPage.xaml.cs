@@ -71,8 +71,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
     private void ApplyFilter()
     {
         var query = SearchBox.Text ?? "";
-        _filteredIngredients = _ingredients.Where(ingredient =>
-            query.Length == 0 || ingredient.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        _filteredIngredients = CatalogFilter.Ingredients(_ingredients, query);
         IngredientsListView.ItemsSource = _filteredIngredients;
         var hasItems = _ingredients.Count > 0;
         EmptyStateTitle.Text = L.Get(hasItems ? "IngredientNoMatches" : "String_Text_No_ingredients_yet_affb49");

@@ -121,18 +121,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var query = SearchBox.Text?.Trim() ?? "";
         var category = (CategoryFilter.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
         var sort = (SortField.SelectedItem as ComboBoxItem)?.Tag as string ?? "name";
-        string SortKey(RecipeItemViewModel item) => sort switch
-        {
-            "category" => item.CategoryDisplay,
-            "portion" => item.PortionSize,
-            "allergens" => item.AllergensDisplay,
-            _ => item.Name
-        };
-        var items = _recipes.Where(recipe =>
-            (category.Length == 0 || recipe.Category.Equals(category, StringComparison.OrdinalIgnoreCase)) &&
-            (query.Length == 0 || recipe.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) || recipe.CategoryDisplay.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
-        items = _sortAscending ? items.OrderBy(SortKey, StringComparer.CurrentCultureIgnoreCase) : items.OrderByDescending(SortKey, StringComparer.CurrentCultureIgnoreCase);
-        _filteredRecipes = items.ToList();
+        _filteredRecipes = CatalogFilter.Recipes(_recipes, query, category, sort, _sortAscending);
         RecipesListView.ItemsSource = _filteredRecipes;
         EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("String_Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
         EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

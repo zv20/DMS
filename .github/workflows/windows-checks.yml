@@ -39,6 +39,7 @@ jobs:
           dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category=PerformanceBaseline"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (!(Test-Path -LiteralPath $env:DMS_PERF_RESULTS_PATH)) { throw 'Performance results were not created.' }
+          if (!(Test-Path -LiteralPath (Join-Path (Split-Path $env:DMS_PERF_RESULTS_PATH) 'catalog.json'))) { throw 'Catalog performance results were not created.' }
 
       - name: Measure startup signal
         if: ${{ !inputs.skip_startup }}
