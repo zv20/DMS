@@ -12,6 +12,9 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
 }
 $exe = (Resolve-Path -LiteralPath $Executable).Path
 $databasePath = (Resolve-Path -LiteralPath $Database).Path
+$output = [System.IO.Path]::GetFullPath($OutputPath)
+New-Item -ItemType Directory -Path (Split-Path $output) -Force | Out-Null
+$progressPath = Join-Path (Split-Path $output) 'navigation-progress.json'
 $folder = Join-Path $env:RUNNER_TEMP ('dms-navigation-' + [guid]::NewGuid().ToString('N'))
 $dataFolder = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
 New-Item -ItemType Directory -Path $folder -Force | Out-Null
@@ -55,6 +58,7 @@ try {
             $watch.Stop()
             $app.Refresh()
             $samples.Add([pscustomobject]@{ iteration = $iteration; scenario = $page; signal = $signal; elapsed_seconds = [math]::Round($soakWatch.Elapsed.TotalSeconds, 1); milliseconds = [math]::Round($watch.Elapsed.TotalMilliseconds, 1); working_set_bytes = $app.WorkingSet64; private_bytes = $app.PrivateMemorySize64 })
+            [pscustomobject]@{ complete = $false; note = 'Partial diagnostic: scenario did not necessarily finish.'; samples = $samples } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $progressPath -Encoding UTF8
     }
     $soakWatch = [System.Diagnostics.Stopwatch]::StartNew()
     Measure-Step 'templateBuilder' 0 '^templateBuilder:1$'
@@ -84,8 +88,6 @@ try {
     Start-Sleep -Seconds 15
     $app.Refresh()
     $settled = [pscustomobject]@{ working_set_bytes = $app.WorkingSet64; private_bytes = $app.PrivateMemorySize64 }
-    $output = [System.IO.Path]::GetFullPath($OutputPath)
-    New-Item -ItemType Directory -Path (Split-Path $output) -Force | Out-Null
     [pscustomobject]@{
         schemaVersion = 1
         scope = 'Navigation and preview: test command to first rendering callback after data load and binding. PDF: test command through rendering, PDF creation and file write. Excludes actual mouse input and does not guarantee displayed pixels or complete interactivity.'
@@ -97,6 +99,7 @@ try {
         settled_after_navigation = $settled
         samples = $samples
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $output -Encoding UTF8
+    Remove-Item -LiteralPath $progressPath -Force -ErrorAction SilentlyContinue
 }
 finally {
     if ($null -ne $app) {

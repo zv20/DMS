@@ -70,8 +70,9 @@ jobs:
             -SoakSeconds ${{ inputs.soak_seconds || (github.event_name == 'push' && contains(github.event.head_commit.message, '[perf-soak]') && 900) || 0 }}
 
       - name: Upload performance results
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: performance-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/dms-performance/*.json
-          if-no-files-found: error
+          if-no-files-found: warn
