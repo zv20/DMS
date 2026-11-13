@@ -54,6 +54,7 @@ try {
                 $signal = if (Test-Path -LiteralPath $env:DMS_QA_PAGE_READY_FILE) {
                     try { Get-Content -LiteralPath $env:DMS_QA_PAGE_READY_FILE -Raw } catch { '' }
                 } else { '' }
+                if ($signal -match '^templateBuilder(NoMeals|Overflow):0$') { throw "Template preview cannot complete: $signal" }
             } until ($signal -match $expectedPattern)
             $watch.Stop()
             $app.Refresh()
@@ -100,6 +101,11 @@ try {
         samples = $samples
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $output -Encoding UTF8
     Remove-Item -LiteralPath $progressPath -Force -ErrorAction SilentlyContinue
+}
+catch {
+    $log = Join-Path $dataFolder 'Logs/dms.log'
+    if (Test-Path -LiteralPath $log) { Write-Host 'DMS diagnostic log (generated test data):'; Get-Content -LiteralPath $log -Tail 100 }
+    throw
 }
 finally {
     if ($null -ne $app) {

@@ -226,7 +226,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (!string.IsNullOrEmpty(qaName) && qaTemplate == null) throw new InvalidOperationException("Performance template is missing.");
             if (qaTemplate != null)
             {
-                await SelectTemplateAsync(qaTemplate);
+                var editable = TemplateConversion.ToEditableCopy(qaTemplate);
+                await _database.HydrateTemplateImagesAsync(editable);
+                if (_leaving) return;
+                SetDocument(editable, qaTemplate.Name, takeOwnership: true);
                 if (_loadedName != qaName || _document.DecorativeImages.Count(image => !string.IsNullOrEmpty(image.DataUri)) != 4)
                     throw new InvalidOperationException("Performance template images were not loaded.");
             }
@@ -1054,8 +1057,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             if (generation == _renderGeneration)
             {
                 StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
-                if (!_renderPending && result.HasMeals && !result.Overflowed)
-                    PerformancePageSignal.AfterRender(this, "templateBuilder", 1);
+                if (!_renderPending)
+                {
+                    if (!result.HasMeals) PerformancePageSignal.Write("templateBuilderNoMeals", 0);
+                    else if (result.Overflowed) PerformancePageSignal.Write("templateBuilderOverflow", 0);
+                    else PerformancePageSignal.AfterRender(this, "templateBuilder", 1);
+                }
             }
             }
             catch (OperationCanceledException) when (_leaving || _switching || _renderPending) { }
