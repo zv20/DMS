@@ -9,17 +9,6 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted') {
     throw 'Navigation measurement requires a disposable GitHub-hosted runner.'
 }
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-Add-Type @'
-using System.Runtime.InteropServices;
-public static class DmsNavigationInput
-{
-    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr handle);
-    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
-    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, System.UIntPtr extraInfo);
-}
-'@
 $exe = (Resolve-Path -LiteralPath $Executable).Path
 $databasePath = (Resolve-Path -LiteralPath $Database).Path
 $folder = Join-Path $env:RUNNER_TEMP ('dms-navigation-' + [guid]::NewGuid().ToString('N'))
@@ -30,6 +19,7 @@ New-Item -ItemType Directory -Path $dataFolder -Force | Out-Null
 Copy-Item -LiteralPath $databasePath -Destination (Join-Path $dataFolder 'dms.db')
 $env:DMS_QA_READY_FILE = Join-Path $folder 'startup.txt'
 $env:DMS_QA_PAGE_READY_FILE = Join-Path $folder 'page.txt'
+$env:DMS_QA_NAVIGATION_FILE = Join-Path $folder 'navigate.txt'
 $app = $null
 try {
     $app = Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) -PassThru
@@ -39,24 +29,15 @@ try {
         if ($app.HasExited) { throw 'DMS exited before initial navigation.' }
         if ([DateTime]::UtcNow -ge $deadline) { throw 'DMS did not start within 45 seconds.' }
         Start-Sleep -Milliseconds 50
-    } until ((Test-Path -LiteralPath $env:DMS_QA_READY_FILE) -and $app.MainWindowHandle -ne 0)
-
-    $window = [System.Windows.Automation.AutomationElement]::FromHandle($app.MainWindowHandle)
-    if ($null -eq $window) { throw 'Could not access the DMS window through UI Automation.' }
+    } until (Test-Path -LiteralPath $env:DMS_QA_READY_FILE)
     $samples = @()
     foreach ($iteration in 1..3) {
         foreach ($page in @('recipes', 'ingredients')) {
-            $id = if ($page -eq 'recipes') { 'PerformanceNavRecipes' } else { 'PerformanceNavIngredients' }
-            $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::AutomationIdProperty, $id)
-            $item = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
-            if ($null -eq $item) { throw "UI Automation could not find $id." }
             Remove-Item -LiteralPath $env:DMS_QA_PAGE_READY_FILE -Force -ErrorAction SilentlyContinue
             $watch = [System.Diagnostics.Stopwatch]::StartNew()
-            $point = $item.GetClickablePoint()
-            [void][DmsNavigationInput]::SetForegroundWindow($app.MainWindowHandle)
-            if (-not [DmsNavigationInput]::SetCursorPos([int]$point.X, [int]$point.Y)) { throw "Unable to position pointer for $page." }
-            [DmsNavigationInput]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
-            [DmsNavigationInput]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
+            $command = Join-Path $folder 'command.tmp'
+            [System.IO.File]::WriteAllText($command, $page)
+            Move-Item -LiteralPath $command -Destination $env:DMS_QA_NAVIGATION_FILE
             $deadline = [DateTime]::UtcNow.AddSeconds(45)
             do {
                 $app.Refresh()
@@ -76,8 +57,8 @@ try {
     New-Item -ItemType Directory -Path (Split-Path $output) -Force | Out-Null
     [pscustomobject]@{
         schemaVersion = 1
-        scope = 'UI Automation target and click to first rendering callback after database load and list binding; not a guarantee of displayed pixels or complete user interactivity.'
-        notes = 'Generated database, 1,000 recipes and 1,000 ingredients; memory sampled after each navigation. Includes up to 50 ms polling overhead.'
+        scope = 'Test command to first rendering callback after normal navigation, database load and list binding; excludes actual mouse input and does not guarantee displayed pixels or complete interactivity.'
+        notes = 'Generated database, 1,000 recipes and 1,000 ingredients; memory sampled after each navigation. Includes command and response polling overhead.'
         samples = $samples
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $output -Encoding UTF8
 }
@@ -88,5 +69,6 @@ finally {
     }
     Remove-Item Env:DMS_QA_READY_FILE -ErrorAction SilentlyContinue
     Remove-Item Env:DMS_QA_PAGE_READY_FILE -ErrorAction SilentlyContinue
+    Remove-Item Env:DMS_QA_NAVIGATION_FILE -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
 }

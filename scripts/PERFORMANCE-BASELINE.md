@@ -13,10 +13,12 @@ runs the regular tests, runs the generated database benchmark, and measures
 process launch to the app's initial navigation signal three times. This signal
 is emitted before the initial page finishes loading; it is not a measurement of
 fully interactive startup. The first run may create the runner's database, and
-later runs reuse it. An experimental UI Automation scenario then loads a
+later runs reuse it. An experimental navigation scenario then loads a
 generated database and alternates between Recipes and Ingredients three times.
 It checks each page's item count and records time to the first rendering callback
 after data loading and list binding, plus process memory at each checkpoint.
+It uses an opt-in test command to trigger the normal navigation code, not a
+physical mouse click; command and response polling add overhead.
 The callback does not guarantee that all pixels have appeared or that the page
 is fully interactive. The release workflow calls the functional and database
 checks before packaging; it skips both experimental UI measurements.

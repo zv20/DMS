@@ -18,6 +18,7 @@ public sealed partial class MainWindow : Window
     private readonly WindowSizeLimits _sizeLimits;
     private RectInt32? _normalPlacement;
     private bool _placementLoaded, _closing, _allowClose;
+    private DispatcherTimer? _performanceNavigationTimer;
 
     public MainWindow(bool openSettings = false)
     {
@@ -66,6 +67,7 @@ public sealed partial class MainWindow : Window
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
                 throw new InvalidOperationException("The initial page could not be opened.");
+            StartPerformanceNavigation();
             // An opt-in signal lets the packaging check verify that the installed
             // app reached its main window and loaded application resources.
             var readyFile = Environment.GetEnvironmentVariable("DMS_QA_READY_FILE");
@@ -135,6 +137,7 @@ public sealed partial class MainWindow : Window
         }
         finally
         {
+            _performanceNavigationTimer?.Stop();
             _allowClose = true;
             Close();
         }
@@ -176,7 +179,13 @@ public sealed partial class MainWindow : Window
             _ => null
         };
 
-        if (pageType != null && ContentFrame != null)
+        if (pageType != null)
+            await NavigateToAsync(pageType, args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer);
+    }
+
+    private async Task NavigateToAsync(Type pageType, object? selectedItem)
+    {
+        if (ContentFrame != null)
         {
             try
             {
@@ -199,7 +208,7 @@ public sealed partial class MainWindow : Window
                 }
                 finally { _navigationPending = false; }
             }
-            NavView.SelectedItem = args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer;
+            NavView.SelectedItem = selectedItem;
             if (!ContentFrame.Navigate(pageType)) throw new InvalidOperationException("The selected page could not be opened.");
             }
             catch (Exception ex)
@@ -209,6 +218,28 @@ public sealed partial class MainWindow : Window
                 await ShowNavigationErrorAsync();
             }
         }
+    }
+
+    private void StartPerformanceNavigation()
+    {
+        var path = Environment.GetEnvironmentVariable("DMS_QA_NAVIGATION_FILE");
+        if (string.IsNullOrWhiteSpace(path)) return;
+        _performanceNavigationTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _performanceNavigationTimer.Tick += async (_, _) =>
+        {
+            if (!System.IO.File.Exists(path)) return;
+            try
+            {
+                var tag = System.IO.File.ReadAllText(path).Trim();
+                System.IO.File.Delete(path);
+                var pageType = tag switch { "recipes" => typeof(RecipesPage), "ingredients" => typeof(IngredientsPage), _ => null };
+                if (pageType == null) return;
+                var item = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
+                await NavigateToAsync(pageType, item);
+            }
+            catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to process performance navigation command"); }
+        };
+        _performanceNavigationTimer.Start();
     }
 
     public void OpenMenuOutput(DateTime date, bool print)
