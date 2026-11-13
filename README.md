@@ -86,6 +86,12 @@ The installer is written to `artifacts/installer/`. For releases, update
 builds, tests and checks installed startup before publishing the installer and
 portable ZIP.
 
+The [Windows package check](.github/workflows/package-check.yml) runs the same
+tests and package/install checks without publishing a release. It can be run
+manually in GitHub Actions once the workflow exists on the default branch, and
+also runs when its packaging workflows change. Its MSI and ZIP are test
+artifacts, not a versioned release.
+
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
 placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in
 `%APPDATA%\DMS\RestoreBackups`, and logs in Settings or `%APPDATA%\DMS\Logs\dms.log`.

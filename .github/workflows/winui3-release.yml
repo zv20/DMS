@@ -22,111 +22,31 @@ jobs:
     with:
       skip_startup: true
 
-  release:
-    name: Build, package, and release (Windows)
+  package:
+    name: Build and verify packages
     needs: tests
-    runs-on: windows-latest
-    timeout-minutes: 45
-    env:
-      RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-package.yml
+    with:
+      version: ${{ inputs.version || github.ref_name }}
 
+  release:
+    name: Publish GitHub release
+    needs: package
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
+      - name: Download tested packages
+        uses: actions/download-artifact@v4
         with:
-          dotnet-version: 10.0.x
-
-      - name: Publish self-contained x64 app
-        run: >-
-          dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64
-          --self-contained true -p:Platform=x64
-          --output artifacts/DMS-win-x64
-
-      - name: Build portable ZIP
-        shell: pwsh
-        run: |
-          $version = $env:RELEASE_VERSION.TrimStart('v')
-          Compress-Archive -Path artifacts/DMS-win-x64/* -DestinationPath "artifacts/DMS-$version-portable.zip"
-
-      - name: Install WiX Toolset
-        run: |
-          dotnet tool install --global wix --version 5.0.2
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          wix extension add --global WixToolset.UI.wixext/5.0.2
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          wix extension add --global WixToolset.Util.wixext/5.0.2
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Build MSI installer
-        shell: pwsh
-        run: |
-          $version = $env:RELEASE_VERSION.TrimStart('v')
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'MSI releases require a three-part numeric version.' }
-          New-Item -ItemType Directory -Force artifacts/installer | Out-Null
-          $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
-          wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $installer = New-Object -ComObject WindowsInstaller.Installer
-          $database = $installer.OpenDatabase((Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path, 0)
-          foreach ($dialog in @('WelcomeDlg', 'VerifyReadyDlg', 'ExitDialog')) {
-            $view = $database.OpenView("SELECT ``Dialog`` FROM ``Dialog`` WHERE ``Dialog`` = '$dialog'")
-            $view.Execute()
-            if (!$view.Fetch()) { throw "Missing installer dialog: $dialog" }
-            $view.Close()
-          }
-
-      - name: Install and start packaged DMS with disposable data
-        shell: pwsh
-        run: |
-          $version = $env:RELEASE_VERSION.TrimStart('v')
-          $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
-          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
-          $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
-          # A leftover Inno uninstall entry must not block MSI installation.
-          $legacyKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{62CF39B5-8F17-4242-9DE5-99B3A75219ED}_is1'
-          New-Item -Path $legacyKey -Force | Out-Null
-          New-ItemProperty -Path $legacyKey -Name UninstallString -Value 'legacy-uninstaller.exe' -Force | Out-Null
-          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$setup`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$setupLog`"") -Wait -PassThru
-          if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
-          foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
-            if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
-          }
-          $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
-          $env:DMS_QA_READY_FILE = Join-Path $env:RUNNER_TEMP 'dms-ready.txt'
-          Remove-Item $env:DMS_QA_READY_FILE -Force -ErrorAction SilentlyContinue
-          $app = Start-Process -FilePath (Join-Path $installDir 'DMS.exe') -WorkingDirectory $installDir -PassThru
-          try {
-            $deadline = (Get-Date).AddSeconds(45)
-            while ((Get-Date) -lt $deadline -and !(Test-Path $env:DMS_QA_READY_FILE)) {
-              $app.Refresh()
-              if ($app.HasExited) { throw "Installed DMS exited before its main window was ready. Exit code: $($app.ExitCode)" }
-              Start-Sleep -Seconds 1
-            }
-            if (!(Test-Path $env:DMS_QA_READY_FILE)) { throw 'Installed DMS did not reach its main window within 45 seconds.' }
-            $localized = Get-Content $env:DMS_QA_READY_FILE -Raw
-            if (!$localized -or $localized.Trim() -eq 'MenuViewSelected') { throw 'Installed DMS did not load its localized resources.' }
-            Write-Host 'Installed DMS reached its main window and loaded localized resources.'
-          } finally {
-            $app.Refresh()
-            if (!$app.HasExited) {
-              Stop-Process -Id $app.Id -Force
-              $app.WaitForExit()
-            }
-          }
-          $database = Join-Path $dataDir 'dms.db'
-          if (!(Test-Path $database)) { throw 'DMS did not create its database.' }
-          $databaseHash = (Get-FileHash $database).Hash
-          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$setup`"", '/qn', '/norestart') -Wait -PassThru
-          if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
-          if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
-          if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
-
+          name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          name: DMS ${{ env.RELEASE_VERSION }}
-          prerelease: ${{ contains(env.RELEASE_VERSION, '-') }}
+          name: DMS ${{ inputs.version || github.ref_name }}
+          prerelease: ${{ contains(inputs.version || github.ref_name, '-') }}
           generate_release_notes: true
           body_path: CHANGELOG.md
           fail_on_unmatched_files: true

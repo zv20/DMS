@@ -19,4 +19,8 @@
   <ItemGroup>
     <ProjectReference Include="..\DMS\DMS.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures\v1-cdaa8a2.db" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,25 @@
+name: Windows package check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/package-check.yml'
+      - '.github/workflows/windows-package.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Windows tests
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      skip_startup: true
+
+  package:
+    name: Build and verify packages without release
+    needs: tests
+    uses: ./.github/workflows/windows-package.yml
+    with:
+      version: '0.0.0'
