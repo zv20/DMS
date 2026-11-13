@@ -15,12 +15,14 @@ callback after the planner's data has loaded, three times. Neither signal proves
 that all pixels are visible or that startup is fully interactive. The first run may create the runner's database, and
 later runs reuse it. An experimental navigation scenario then loads a
 generated database and alternates between Recipes, Ingredients and Template
-Builder for 20 cycles, with pauses. It checks the catalog item counts and waits
-for a populated template preview, recording the first rendering callback after
+Builder for at least 20 cycles, with pauses. The generated template has four
+distinct bundled images, each about 1,055 by 1,491 pixels. It checks the catalog
+item counts and waits for an image-heavy populated template preview, recording the first rendering callback after
 data loading and list binding, plus memory at each checkpoint and after settling.
-It opens a populated output preview and measures PDF generation using the same
-rendering and PDF creation code as the app. It validates the PDF header and
-length, but bypasses the file picker and does not test printing or a printer.
+It opens a populated output preview and measures PDF and PNG generation using
+the same rendering code as the app. It validates PDF page count and object
+offsets, plus PNG dimensions, chunks, checksums and decompression, but bypasses
+the file picker and does not test printing or a printer.
 It uses an opt-in test command to trigger the normal navigation code, not a
 physical mouse click; command and response polling add overhead.
 The callback does not guarantee that all pixels have appeared or that the page
@@ -30,6 +32,16 @@ Open the workflow run in GitHub Actions and download its
 `performance-*` artifact to see `database.json`, `catalog.json`, `startup.json`
 and `navigation.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
+
+The separate **Windows performance soak** workflow runs the same image-heavy
+cycle for at least 15 minutes and records elapsed time and memory at each step.
+It is scheduled weekly and can be started manually. GitHub only enables scheduled
+workflows from the default branch, and manual dispatch requires the workflow to
+exist on the default branch, so the schedule is not active while this exists
+only on the performance branch. Use its samples for trend analysis rather than
+declaring a leak from a single run. A branch push whose commit message contains
+`[perf-soak]` also requests the 15-minute run. For actual mouse, file-picker and printer
+checks, follow [Windows interaction check](WINDOWS-INTERACTION-CHECK.md).
 
 Hosted runner hardware and load can vary; use these numbers to identify changes
 worth investigating, not as precise comparisons with your own PC. The workflow

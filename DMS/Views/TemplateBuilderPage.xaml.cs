@@ -221,7 +221,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
             await ReloadTemplatesAsync();
             if (_leaving) return;
-            SetDocument(NewTemplate(), null); await LoadWeekAsync();
+            var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
+            var qaTemplate = _templates.FirstOrDefault(template => template.Name == qaName);
+            if (!string.IsNullOrEmpty(qaName) && qaTemplate == null) throw new InvalidOperationException("Performance template is missing.");
+            if (qaTemplate != null)
+            {
+                await SelectTemplateAsync(qaTemplate);
+                if (_loadedName != qaName || string.IsNullOrEmpty(_document.BackgroundImageDataUri) || _document.DecorativeImages.Count(image => !string.IsNullOrEmpty(image.DataUri)) != 3)
+                    throw new InvalidOperationException("Performance template images were not loaded.");
+            }
+            else SetDocument(NewTemplate(), null);
+            await LoadWeekAsync();
             if (!_leaving) SetCanvasZoom(70);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load the template builder"); StatusText.Text = L.Get("ErrorTemplate"); }

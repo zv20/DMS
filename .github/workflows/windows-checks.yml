@@ -5,11 +5,19 @@ on:
     branches: ['**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      soak_seconds:
+        description: 'Minimum navigation soak duration in seconds (0 runs the standard 20 cycles)'
+        type: number
+        default: 0
   workflow_call:
     inputs:
       skip_startup:
         type: boolean
         default: false
+      soak_seconds:
+        type: number
+        default: 0
 
 permissions:
   contents: read
@@ -58,7 +66,8 @@ jobs:
           ./scripts/measure-navigation.ps1 `
             -Executable 'DMS/bin/x64/Release/net10.0-windows10.0.22621.0/win-x64/DMS.exe' `
             -Database (Join-Path $env:RUNNER_TEMP 'dms-performance-fixture/generated.db') `
-            -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/navigation.json')
+            -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/navigation.json') `
+            -SoakSeconds ${{ inputs.soak_seconds || (github.event_name == 'push' && contains(github.event.head_commit.message, '[perf-soak]') && 900) || 0 }}
 
       - name: Upload performance results
         uses: actions/upload-artifact@v4

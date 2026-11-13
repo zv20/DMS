@@ -97,7 +97,10 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;
-            TemplateSelector.SelectedIndex = 0;
+            var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
+            var qaTemplate = templates.FirstOrDefault(template => template.Name == qaName);
+            if (!string.IsNullOrEmpty(qaName) && qaTemplate == null) throw new InvalidOperationException("Performance template is missing.");
+            TemplateSelector.SelectedItem = qaTemplate ?? templates[0];
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load print and export"); StatusText.Text = L.Get("ErrorOutput"); }
     }
@@ -156,6 +159,9 @@ public sealed partial class TemplateOutputPage : Page
             var ingredients = await _database.GetAllIngredientsAsync();
             template = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(template);
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME")) &&
+                (string.IsNullOrEmpty(template.Document?.BackgroundImageDataUri) || template.Document.DecorativeImages.Count(image => !string.IsNullOrEmpty(image.DataUri)) != 3))
+                throw new InvalidOperationException("Performance output images were not loaded.");
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
             _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
@@ -442,6 +448,20 @@ public sealed partial class TemplateOutputPage : Page
             var pdf = await CreatePdfBytesAsync();
             await System.IO.File.WriteAllBytesAsync(path, pdf);
             PerformancePageSignal.Write("pdf", pdf.Length);
+        }
+        finally { _busy = false; SetReady(_ready); }
+    }
+
+    internal async Task ExportPerformancePngAsync(string path)
+    {
+        if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
+        _busy = true;
+        SetReady(true);
+        try
+        {
+            var png = await RenderPageAsync(_previewPages[0].Page, BitmapEncoder.PngEncoderId);
+            await System.IO.File.WriteAllBytesAsync(path, png);
+            PerformancePageSignal.Write("png", png.Length);
         }
         finally { _busy = false; SetReady(_ready); }
     }

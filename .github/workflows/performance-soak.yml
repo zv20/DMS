@@ -1,0 +1,15 @@
+name: Windows performance soak
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  soak:
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      soak_seconds: 900

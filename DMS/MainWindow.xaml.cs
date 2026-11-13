@@ -233,11 +233,24 @@ public sealed partial class MainWindow : Window
                 var tag = System.IO.File.ReadAllText(path).Trim();
                 System.IO.File.Delete(path);
                 if (tag == "output") { OpenMenuOutput(new DateTime(2026, 1, 5), false); return; }
+                if (tag == "closeOutput")
+                {
+                    CloseMenuOutput();
+                    if (OutputOverlay.Visibility == Visibility.Collapsed) PerformancePageSignal.Write("closeOutput", 1);
+                    return;
+                }
                 if (tag == "pdf")
                 {
                     var output = Environment.GetEnvironmentVariable("DMS_QA_PDF_PATH");
                     if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
                         await preview.ExportPerformancePdfAsync(output);
+                    return;
+                }
+                if (tag == "png")
+                {
+                    var output = Environment.GetEnvironmentVariable("DMS_QA_PNG_PATH");
+                    if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
+                        await preview.ExportPerformancePngAsync(output);
                     return;
                 }
                 var pageType = tag switch { "recipes" => typeof(RecipesPage), "ingredients" => typeof(IngredientsPage), "templateBuilder" => typeof(TemplateBuilderPage), _ => null };

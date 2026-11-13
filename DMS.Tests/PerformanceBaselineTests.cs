@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using DMS.Services;
+using DMS.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -94,6 +95,20 @@ public sealed class PerformanceBaselineTests(ITestOutputHelper output)
                 var uiDatabasePath = Environment.GetEnvironmentVariable("DMS_PERF_UI_DATABASE_PATH");
                 if (!string.IsNullOrWhiteSpace(uiDatabasePath))
                 {
+                    var assembly = typeof(DatabaseService).Assembly;
+                    var imageIds = new List<string>();
+                    foreach (var season in new[] { "spring", "summer", "autumn", "winter" })
+                    {
+                        var resource = assembly.GetManifestResourceNames().Single(name => name.EndsWith($".season-{season}.png", StringComparison.Ordinal));
+                        using var stream = assembly.GetManifestResourceStream(resource)!;
+                        using var imageBytes = new MemoryStream();
+                        await stream.CopyToAsync(imageBytes);
+                        imageIds.Add((await database.SaveTemplateImageAsync($"Performance {season}", "image/png", imageBytes.ToArray())).Id);
+                    }
+                    var document = new TemplateDocument { BackgroundImageAssetId = imageIds[0], BackgroundImageOpacity = 0.15 };
+                    for (var i = 1; i < imageIds.Count; i++)
+                        document.DecorativeImages.Add(new TemplateImage { AssetId = imageIds[i], X = 20 + i * 90, Y = 15, Width = 60, Height = 80, ReserveTextSpace = false });
+                    await database.SaveTemplateAsync(new MenuTemplate { Name = "Performance Images", Document = document });
                     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(uiDatabasePath))!);
                     await database.CreateBackupAsync(Path.GetFullPath(uiDatabasePath));
                 }
