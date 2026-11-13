@@ -66,6 +66,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         }
         ApplyFilter();
         SetPageStatus(null);
+        PerformancePageSignal.AfterRender(this, "ingredients", _filteredIngredients.Count);
     }
 
     private void ApplyFilter()

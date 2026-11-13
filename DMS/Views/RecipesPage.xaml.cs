@@ -113,6 +113,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         }
         ApplyFilter();
         SetPageStatus(null);
+        PerformancePageSignal.AfterRender(this, "recipes", _filteredRecipes.Count);
     }
 
     private void ApplyFilter()

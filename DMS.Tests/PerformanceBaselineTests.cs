@@ -91,6 +91,12 @@ public sealed class PerformanceBaselineTests(ITestOutputHelper output)
                 await Measure("load_week_menu", 7 * slots, async () => (await database.GetMenuAsync(start, start.AddDays(6))).Count);
                 await Measure("load_year_menu", days * slots, async () => (await database.GetMenuAsync(start, start.AddDays(days - 1))).Count);
                 await Measure("load_week_categories", 7 * slots, async () => (await database.GetMenuCategoriesAsync(start, start.AddDays(6))).Count);
+                var uiDatabasePath = Environment.GetEnvironmentVariable("DMS_PERF_UI_DATABASE_PATH");
+                if (!string.IsNullOrWhiteSpace(uiDatabasePath))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(uiDatabasePath))!);
+                    await database.CreateBackupAsync(Path.GetFullPath(uiDatabasePath));
+                }
             }
 
             var result = new

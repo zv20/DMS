@@ -13,15 +13,23 @@ runs the regular tests, runs the generated database benchmark, and measures
 process launch to the app's initial navigation signal three times. This signal
 is emitted before the initial page finishes loading; it is not a measurement of
 fully interactive startup. The first run may create the runner's database, and
-later runs reuse it. The release workflow calls the functional and database
-checks before packaging; it skips the experimental startup measurement.
+later runs reuse it. An experimental UI Automation scenario then loads a
+generated database and alternates between Recipes and Ingredients three times.
+It checks each page's item count and records time to the first rendering callback
+after data loading and list binding, plus process memory at each checkpoint.
+The callback does not guarantee that all pixels have appeared or that the page
+is fully interactive. The release workflow calls the functional and database
+checks before packaging; it skips both experimental UI measurements.
 Open the workflow run in GitHub Actions and download its
-`performance-*` artifact to see `database.json`, `catalog.json` and `startup.json`. The workflow must be
+`performance-*` artifact to see `database.json`, `catalog.json`, `startup.json`
+and `navigation.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
 
 Hosted runner hardware and load can vary; use these numbers to identify changes
 worth investigating, not as precise comparisons with your own PC. The workflow
-does not run the interactive UI capture or measure perceived responsiveness.
+does not run the manual capture or measure perceived responsiveness. The
+navigation script replaces the DMS data directory and force-stops the app, so
+it explicitly runs only on a disposable GitHub-hosted Windows runner.
 
 ## Prepare
 

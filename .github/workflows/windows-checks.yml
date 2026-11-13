@@ -36,10 +36,12 @@ jobs:
         shell: pwsh
         run: |
           $env:DMS_PERF_RESULTS_PATH = Join-Path $env:RUNNER_TEMP 'dms-performance/database.json'
+          $env:DMS_PERF_UI_DATABASE_PATH = Join-Path $env:RUNNER_TEMP 'dms-performance-fixture/generated.db'
           dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category=PerformanceBaseline"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (!(Test-Path -LiteralPath $env:DMS_PERF_RESULTS_PATH)) { throw 'Performance results were not created.' }
           if (!(Test-Path -LiteralPath (Join-Path (Split-Path $env:DMS_PERF_RESULTS_PATH) 'catalog.json'))) { throw 'Catalog performance results were not created.' }
+          if (!(Test-Path -LiteralPath $env:DMS_PERF_UI_DATABASE_PATH)) { throw 'Navigation fixture was not created.' }
 
       - name: Measure startup signal
         if: ${{ !inputs.skip_startup }}
@@ -48,6 +50,15 @@ jobs:
           ./scripts/measure-startup.ps1 `
             -Executable 'DMS/bin/x64/Release/net10.0-windows10.0.22621.0/win-x64/DMS.exe' `
             -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/startup.json')
+
+      - name: Measure page navigation
+        if: ${{ !inputs.skip_startup }}
+        shell: pwsh
+        run: |
+          ./scripts/measure-navigation.ps1 `
+            -Executable 'DMS/bin/x64/Release/net10.0-windows10.0.22621.0/win-x64/DMS.exe' `
+            -Database (Join-Path $env:RUNNER_TEMP 'dms-performance-fixture/generated.db') `
+            -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/navigation.json')
 
       - name: Upload performance results
         uses: actions/upload-artifact@v4
