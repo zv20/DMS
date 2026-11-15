@@ -14,6 +14,8 @@ public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
     private bool _navigationPending;
+    private readonly Dictionary<NavigationViewItem, string> _navigationLabels = new();
+    private bool? _compactNavigation;
     private readonly WindowSizeLimits _sizeLimits;
     private RectInt32? _normalPlacement;
     private bool _placementLoaded, _closing, _allowClose;
@@ -23,6 +25,15 @@ public sealed partial class MainWindow : Window
     {
         _openSettings = openSettings;
         this.InitializeComponent();
+        foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
+        {
+            var label = item.Content?.ToString() ?? "";
+            _navigationLabels.Add(item, label);
+            ToolTipService.SetToolTip(item, label);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
+            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
+        }
+        NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
         WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
@@ -34,6 +45,28 @@ public sealed partial class MainWindow : Window
         WindowPlacement.Center(AppWindow);
         AppWindow.Changed += WindowPlacementChanged;
         AppWindow.Closing += MainWindow_Closing;
+    }
+
+    private void UpdateNavigationLayout()
+    {
+        var compact = NavView.ActualWidth < 1000;
+        if (_compactNavigation != compact)
+        {
+            _compactNavigation = compact;
+            foreach (var (item, label) in _navigationLabels)
+                item.Content = compact ? null : label;
+        }
+        UpdateNavigationSpacing();
+    }
+
+    private void UpdateNavigationSpacing()
+    {
+        var menuWidth = _navigationLabels.Keys.Sum(item => item.ActualWidth);
+        if (menuWidth <= 0 || NavView.ActualWidth <= 0) return;
+        // Leave room for Settings and the overflow button when the window is narrow.
+        var available = Math.Max(0, NavView.ActualWidth - menuWidth - 120);
+        var padding = Math.Min(available, Math.Max(0, (NavView.ActualWidth - menuWidth) / 2 - 4));
+        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)

@@ -41,6 +41,10 @@
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
 
+            <NavigationView.PaneHeader>
+                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
+            </NavigationView.PaneHeader>
+
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
                 <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
