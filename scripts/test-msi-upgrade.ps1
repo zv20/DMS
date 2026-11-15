@@ -86,4 +86,4 @@ try {
     }
     if (!(Test-Path $ready)) { throw 'Upgraded DMS did not reach its main window.' }
 } finally { Stop-App $app }
-Write-Host "Upgraded 0.0.12 to $Version, preserved existing data, and started DMS."
+Write-Host "Upgraded 0.0.13 to $Version, preserved existing data, and started DMS."
