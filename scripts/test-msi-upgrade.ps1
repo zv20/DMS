@@ -57,13 +57,20 @@ Install-Msi $CurrentMsi
 if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-Content $marker -Raw).Trim() -ne 'existing user data') {
     throw 'Upgrade removed or changed existing data.'
 }
-$installer = New-Object -ComObject WindowsInstaller.Installer
-$products = @(foreach ($product in $installer.Products) { "$product" })
+Add-Type @'
+using System.Runtime.InteropServices;
+public static class MsiState {
+    [DllImport("msi.dll", CharSet = CharSet.Unicode)]
+    public static extern int MsiQueryProductState(string product);
+}
+'@
 $oldCode = Get-ProductCode $PreviousMsi
 $newCode = Get-ProductCode $CurrentMsi
-Write-Host "Installed Windows Installer products: $($products -join ', ')"
+$oldState = [MsiState]::MsiQueryProductState($oldCode)
+$newState = [MsiState]::MsiQueryProductState($newCode)
+Write-Host "Windows Installer product states: old=$oldState new=$newState"
 Select-String -Path $log -Pattern 'FindRelatedProducts|RemoveExistingProducts|UPGRADINGPRODUCTCODE|WIX_UPGRADE_DETECTED' | ForEach-Object { Write-Host $_.Line }
-if ($oldCode -eq $newCode -or $products -contains $oldCode -or $products -notcontains $newCode) {
+if ($oldCode -eq $newCode -or $oldState -ne -1 -or $newState -ne 5) {
     throw "Expected the old MSI to be removed and $Version to be installed (old: $oldCode, new: $newCode)."
 }
 
