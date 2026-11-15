@@ -36,14 +36,14 @@ jobs:
     needs: package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download tested packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: DMS ${{ inputs.version || github.ref_name }}
           prerelease: ${{ contains(inputs.version || github.ref_name, '-') }}

@@ -19,9 +19,9 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -121,7 +121,7 @@ jobs:
           ./scripts/test-msi-upgrade.ps1 -PreviousMsi (Join-Path $env:RUNNER_TEMP 'DMS-Setup-0.0.12.msi') -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path -Version $version
 
       - name: Upload tested packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
