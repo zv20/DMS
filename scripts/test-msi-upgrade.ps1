@@ -58,9 +58,11 @@ if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-
     throw 'Upgrade removed or changed existing data.'
 }
 $installer = New-Object -ComObject WindowsInstaller.Installer
-$products = @($installer.Products | ForEach-Object { $_ })
+$products = @(foreach ($product in $installer.Products) { "$product" })
 $oldCode = Get-ProductCode $PreviousMsi
 $newCode = Get-ProductCode $CurrentMsi
+Write-Host "Installed Windows Installer products: $($products -join ', ')"
+Select-String -Path $log -Pattern 'FindRelatedProducts|RemoveExistingProducts|UPGRADINGPRODUCTCODE|WIX_UPGRADE_DETECTED' | ForEach-Object { Write-Host $_.Line }
 if ($oldCode -eq $newCode -or $products -contains $oldCode -or $products -notcontains $newCode) {
     throw "Expected the old MSI to be removed and $Version to be installed (old: $oldCode, new: $newCode)."
 }
