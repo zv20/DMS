@@ -509,6 +509,15 @@ public partial class DatabaseService : IDisposable
     }
 
     // Menu operations
+    public async Task ClearMenuDayAsync(DateTime date)
+    {
+        await InitializeAsync();
+        using var cmd = _connection!.CreateCommand();
+        cmd.CommandText = "DELETE FROM menu WHERE date = @date";
+        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     public async Task<List<MenuEntry>> GetMenuAsync(DateTime start, DateTime end)
     {
         await InitializeAsync();

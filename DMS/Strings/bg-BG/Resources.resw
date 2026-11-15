@@ -566,4 +566,6 @@
   <data name="AllergenChooseColor" xml:space="preserve"><value>Изберете цвят</value></data>
   <data name="RemoveAllergen" xml:space="preserve"><value>Премахни алергена {0}</value></data>
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Добавен от избрана съставка</value></data>
+  <data name="PlannerClearDay" xml:space="preserve"><value>Изчисти деня</value></data>
+  <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Да се изчистят ли всички ястия за {0}?</value></data>
 </root>

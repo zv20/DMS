@@ -15,7 +15,7 @@
             </Grid.ColumnDefinitions>
         <StackPanel Spacing="8" HorizontalAlignment="Stretch">
             <!-- Language Section -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="🌐 Language &amp; Region" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Language_Region_5d78df" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -28,7 +28,7 @@
             </Expander>
 
             <!-- Theme Section -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="🎨 Appearance" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Appearance_be0e75" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -50,7 +50,7 @@
             </Expander>
 
             <!-- Planning Section -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="📅 Planning" FontSize="16" FontWeight="SemiBold" x:Uid="Text_Planning_53aa11" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -67,7 +67,7 @@
             </Expander>
 
             <!-- Data Management Section -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="💾 Data Management" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Data_Management_a0cf50" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -95,7 +95,7 @@
             </Expander>
 
             <!-- Local diagnostic log -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="LogViewerTitle" /></Expander.Header>
                     <StackPanel Margin="16,8,16,16" Spacing="10">
 
@@ -114,7 +114,7 @@
             </Expander>
 
             <!-- About Section -->
-            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="ℹ️ About" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_About_3e3c26" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="8">
 

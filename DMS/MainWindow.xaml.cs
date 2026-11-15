@@ -14,7 +14,8 @@ public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
     private bool _navigationPending;
-    private bool _paneCollapsedForSize;
+    private readonly Dictionary<NavigationViewItem, string> _navigationLabels = new();
+    private bool? _compactNavigation;
     private readonly WindowSizeLimits _sizeLimits;
     private RectInt32? _normalPlacement;
     private bool _placementLoaded, _closing, _allowClose;
@@ -24,6 +25,15 @@ public sealed partial class MainWindow : Window
     {
         _openSettings = openSettings;
         this.InitializeComponent();
+        foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
+        {
+            var label = item.Content?.ToString() ?? "";
+            _navigationLabels.Add(item, label);
+            ToolTipService.SetToolTip(item, label);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
+            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
+        }
+        NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
         WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
@@ -31,28 +41,32 @@ public sealed partial class MainWindow : Window
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
         this.SystemBackdrop = new MicaBackdrop();
-        RootGrid.SizeChanged += RootGrid_SizeChanged;
         _sizeLimits = new WindowSizeLimits(this, RootGrid);
         WindowPlacement.Center(AppWindow);
         AppWindow.Changed += WindowPlacementChanged;
         AppWindow.Closing += MainWindow_Closing;
     }
 
-    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void UpdateNavigationLayout()
     {
-        var paneMode = e.NewSize.Width < 600 ? NavigationViewPaneDisplayMode.LeftMinimal : NavigationViewPaneDisplayMode.LeftCompact;
-        if (NavView.PaneDisplayMode != paneMode) NavView.PaneDisplayMode = paneMode;
-        // Preserve enough content width for planners and editors on narrow windows.
-        if (e.NewSize.Width < 850 && NavView.IsPaneOpen)
+        var compact = NavView.ActualWidth < 1000;
+        if (_compactNavigation != compact)
         {
-            NavView.IsPaneOpen = false;
-            _paneCollapsedForSize = true;
+            _compactNavigation = compact;
+            foreach (var (item, label) in _navigationLabels)
+                item.Content = compact ? null : label;
         }
-        else if (e.NewSize.Width >= 1050 && _paneCollapsedForSize)
-        {
-            NavView.IsPaneOpen = true;
-            _paneCollapsedForSize = false;
-        }
+        UpdateNavigationSpacing();
+    }
+
+    private void UpdateNavigationSpacing()
+    {
+        var menuWidth = _navigationLabels.Keys.Sum(item => item.ActualWidth);
+        if (menuWidth <= 0 || NavView.ActualWidth <= 0) return;
+        // Leave room for Settings and the overflow button when the window is narrow.
+        var available = Math.Max(0, NavView.ActualWidth - menuWidth - 120);
+        var padding = Math.Min(available, Math.Max(0, (NavView.ActualWidth - menuWidth) / 2 - 4));
+        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)

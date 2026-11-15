@@ -36,13 +36,14 @@
         <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <NavigationView
             x:Name="NavView"
-            PaneDisplayMode="LeftCompact"
-            CompactPaneLength="64"
-            OpenPaneLength="300"
-            IsPaneOpen="True"
+            PaneDisplayMode="Top"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
+
+            <NavigationView.PaneHeader>
+                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
+            </NavigationView.PaneHeader>
 
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
@@ -52,6 +53,12 @@
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPointerOver" Color="White" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPressed" Color="White" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>
@@ -74,7 +81,9 @@
             </NavigationView.MenuItems>
 
             <!-- Frame for page navigation -->
-            <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
+            <Border BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
+                <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
+            </Border>
         </NavigationView>
         </Grid>
         <Grid x:Name="OutputOverlay" Grid.Row="1" Background="#99000000" Visibility="Collapsed" KeyDown="OutputOverlay_KeyDown">

@@ -14,6 +14,23 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task ClearingDayPreservesOtherDaysAndCategoriesAcrossRestart()
+    {
+        using (var database = Open())
+        {
+            var recipe = await database.SaveRecipeAsync(new Recipe { Name = "Soup", Category = "soup" });
+            await database.SaveMenuSlotAsync(_day, "slot1", "soup", recipe);
+            await database.SaveMenuSlotAsync(_day, "slot2", "main", recipe);
+            await database.SaveMenuSlotAsync(_day.AddDays(1), "slot1", "soup", recipe);
+            await database.ClearMenuDayAsync(_day);
+        }
+        using var reopened = Open();
+        Assert.Empty(await reopened.GetMenuAsync(_day, _day));
+        Assert.Single(await reopened.GetMenuAsync(_day.AddDays(1), _day.AddDays(1)));
+        Assert.Equal(2, (await reopened.GetMenuCategoriesAsync(_day, _day)).Count);
+    }
+
+    [Fact]
     public async Task DeletedDefaultAllergensStayDeletedAcrossRestarts()
     {
         using (var database = Open())

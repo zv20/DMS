@@ -566,4 +566,6 @@
   <data name="AllergenChooseColor" xml:space="preserve"><value>Choose color</value></data>
   <data name="RemoveAllergen" xml:space="preserve"><value>Remove allergen {0}</value></data>
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Included by a selected ingredient</value></data>
+  <data name="PlannerClearDay" xml:space="preserve"><value>Clear day</value></data>
+  <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Clear all meals for {0}?</value></data>
 </root>

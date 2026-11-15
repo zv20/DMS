@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.14
+
+- Moved navigation to the top, with highlighted selection and a compact icon layout for narrower windows.
+- Opened Settings sections by default.
+- Improved the weekly planner with aligned meal rows, more space for recipe names, and a confirmed action to clear a day.
+- Added Backspace support for clearing a selected meal.
+
 ## 0.0.13
 
 - Improved the Windows build and test pipeline, including automated checks for database recovery, performance, packaging, and installation upgrades.
