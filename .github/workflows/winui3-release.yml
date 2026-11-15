@@ -15,12 +15,18 @@ permissions:
 
 jobs:
   tests:
-    name: Windows tests
+    name: Wait for push tests
     permissions:
       contents: read
-    uses: ./.github/workflows/windows-checks.yml
-    with:
-      skip_startup: true
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 21
+    steps:
+      - uses: actions/checkout@v6
+      - name: Require successful push tests for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/wait-for-push-tests.sh
 
   package:
     name: Build and verify packages

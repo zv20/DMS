@@ -80,10 +80,11 @@ wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixex
 The installer is written to `artifacts/installer/`. For releases, update
 `<Version>` in `DMS/DMS.csproj` and `CHANGELOG.md`, then push a matching
 `v<version>` tag. The [release workflow](.github/workflows/winui3-release.yml)
-builds, tests and checks installed startup before publishing the installer.
+waits for the push tests for the exact tagged commit, then builds and checks the
+installer before publishing it. Push the commit to a branch before tagging it.
 
 The [package check](.github/workflows/package-check.yml) runs the same
-tests and package/install checks without publishing a release. It can be run
+push-test gate and package/install checks without publishing a release. It can be run
 manually in GitHub Actions once the workflow exists on the default branch, and
 also runs when its packaging workflows change. Its MSI is a test
 artifact, not a versioned release.
