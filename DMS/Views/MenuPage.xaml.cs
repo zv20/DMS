@@ -246,7 +246,14 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
                 panel.Children.Add(button);
             }
-            else for (var slot = 0; slot < settings.MealsPerDay; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories, settings.MealCategories));
+            else
+            {
+                for (var slot = 0; slot < settings.MealsPerDay; slot++) panel.Children.Add(CreateSlot(day, slot, entries, recipes, categories, settings.MealCategories));
+                var clearDay = new Button { Content = L.Get("PlannerClearDay"), HorizontalAlignment = HorizontalAlignment.Stretch };
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clearDay, $"{L.Get("PlannerClearDay")} {day:D}");
+                clearDay.Click += async (_, _) => await ClearDayAsync(day);
+                panel.Children.Add(clearDay);
+            }
             var card = new Border { Child = panel, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 };
             card.PointerEntered += (_, _) =>
             {
@@ -280,6 +287,32 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         PerformancePageSignal.AfterRender(this, "menu", recipes.Count);
         _pendingSlotFailures = 0;
         ResizeCalendarCards();
+    }
+
+    private async Task ClearDayAsync(DateTime day)
+    {
+        if (_busy || _activeSlotSaves > 0 || !await ConfirmDiscardAsync()) return;
+        _busy = true;
+        SetPlannerInteraction();
+        var cleared = false;
+        try
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("PlannerClearDay"),
+                Content = string.Format(L.Get("PlannerClearDayConfirm"), day.ToString("D")),
+                PrimaryButtonText = L.Get("PlannerClearDay"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Close };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            await _database.ClearMenuDayAsync(day);
+            cleared = true;
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not clear planner day {Date}", day);
+            var error = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("DataSaveFailed"), CloseButtonText = L.Get("OutputClose") };
+            await error.ShowAsync();
+        }
+        finally { _busy = false; SetPlannerInteraction(); }
+        if (cleared) await RefreshAsync();
     }
 
     private static MenuEntry? FindSlotEntry(DateTime day, int index, IReadOnlyList<MenuEntry> entries)
@@ -367,6 +400,12 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }
         search.GotFocus += (_, _) => { _activeRecipeSearch = search; Suggest(); };
+        search.KeyDown += async (_, args) =>
+        {
+            if (args.Key != Windows.System.VirtualKey.Back || current == null || search.Text != current.Name) return;
+            args.Handled = true;
+            await SaveAsync(null, DisplayedCategory());
+        };
         SearchPicker.ReopenOnClick(search, Suggest);
         search.TextChanged += async (_, args) =>
         {
@@ -409,12 +448,6 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         Grid.SetRow(search, 1);
         Grid.SetColumnSpan(search, 2);
         mealRow.Children.Add(search);
-        var clear = new Button { Content = new FontIcon { Glyph = "\uE711", FontSize = 12 }, Width = 32, Height = 32, MinWidth = 0, Padding = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
-        ToolTipService.SetToolTip(clear, L.Get("Text_Clear_719ea3"));
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{L.Get("Text_Clear_719ea3")} {index + 1}");
-        clear.Click += async (_, _) => await SaveAsync(null, DisplayedCategory());
-        Grid.SetColumn(clear, 1);
-        mealRow.Children.Add(clear);
         panel.Children.Add(mealRow);
         panel.Children.Add(status);
         panel.Children.Add(retry);
