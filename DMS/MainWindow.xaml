@@ -49,6 +49,12 @@
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPointerOver" Color="White" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPressed" Color="White" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>
@@ -71,7 +77,9 @@
             </NavigationView.MenuItems>
 
             <!-- Frame for page navigation -->
-            <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
+            <Border BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
+                <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
+            </Border>
         </NavigationView>
         </Grid>
         <Grid x:Name="OutputOverlay" Grid.Row="1" Background="#99000000" Visibility="Collapsed" KeyDown="OutputOverlay_KeyDown">
