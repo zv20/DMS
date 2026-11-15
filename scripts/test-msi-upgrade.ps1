@@ -24,6 +24,16 @@ function Stop-App($App) {
     }
 }
 
+function Get-ProductCode([string] $Path) {
+    $installer = New-Object -ComObject WindowsInstaller.Installer
+    $msi = $installer.OpenDatabase($Path, 0)
+    $view = $msi.OpenView("SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductCode'")
+    $view.Execute()
+    $code = $view.Fetch().StringData(1)
+    $view.Close()
+    return $code
+}
+
 # GitHub-hosted runner only: discard the fresh-install smoke test's data.
 if (Test-Path $dataDir) { Remove-Item $dataDir -Recurse -Force }
 Install-Msi $PreviousMsi
@@ -47,9 +57,12 @@ Install-Msi $CurrentMsi
 if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-Content $marker -Raw).Trim() -ne 'existing user data') {
     throw 'Upgrade removed or changed existing data.'
 }
-$entries = @(Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq 'DMS' -and $_.WindowsInstaller -eq 1 })
-if ($entries.Count -ne 1 -or $entries[0].DisplayVersion -ne $Version) {
-    throw "Expected one installed DMS MSI at version $Version; found: $($entries | Out-String)"
+$installer = New-Object -ComObject WindowsInstaller.Installer
+$products = @($installer.Products | ForEach-Object { $_ })
+$oldCode = Get-ProductCode $PreviousMsi
+$newCode = Get-ProductCode $CurrentMsi
+if ($oldCode -eq $newCode -or $products -contains $oldCode -or $products -notcontains $newCode) {
+    throw "Expected the old MSI to be removed and $Version to be installed (old: $oldCode, new: $newCode)."
 }
 
 Remove-Item $ready -Force -ErrorAction SilentlyContinue
