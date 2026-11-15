@@ -3,12 +3,6 @@ name: Release - tag and manual
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Release version without the v prefix (for example 0.0.1)"
-        required: true
-        type: string
 
 permissions:
   contents: write
@@ -23,9 +17,16 @@ jobs:
     timeout-minutes: 21
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Verify tagged commit is on release branch
+        run: |
+          git fetch origin release
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/release || { echo 'Tagged commit is not on the release branch.' >&2; exit 1; }
       - name: Require successful push tests for this commit
         env:
           GH_TOKEN: ${{ github.token }}
+          TEST_BRANCH: release
         run: bash scripts/wait-for-push-tests.sh
 
   package:
@@ -35,7 +36,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/windows-package.yml
     with:
-      version: ${{ inputs.version || github.ref_name }}
+      version: ${{ github.ref_name }}
 
   release:
     name: Publish GitHub release
@@ -51,8 +52,8 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          name: DMS ${{ inputs.version || github.ref_name }}
-          prerelease: ${{ contains(inputs.version || github.ref_name, '-') }}
+          name: DMS ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true
           body_path: CHANGELOG.md
           fail_on_unmatched_files: true

@@ -7,7 +7,7 @@ set -euo pipefail
 
 for ((attempt = 1; attempt <= 80; attempt++)); do
   run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/windows-checks.yml/runs?head_sha=$GITHUB_SHA&event=push&per_page=100" |
-    jq -c --arg sha "$GITHUB_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .event == "push")] | sort_by(.created_at) | last // empty')
+    jq -c --arg sha "$GITHUB_SHA" --arg branch "${TEST_BRANCH:-release}" '[.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == $branch)] | sort_by(.created_at) | last // empty')
   if [[ -n "$run" ]]; then
     status=$(jq -r '.status' <<< "$run")
     conclusion=$(jq -r '.conclusion // ""' <<< "$run")

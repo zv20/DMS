@@ -1,0 +1,24 @@
+name: Release branch - require test
+
+on:
+  pull_request_target:
+    branches: [release]
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  source:
+    name: Require pull request from test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source branch
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [[ "$HEAD_BRANCH" != test || "$HEAD_REPO" != "$BASE_REPO" ]]; then
+            echo 'Release accepts pull requests from this repository’s test branch only.' >&2
+            exit 1
+          fi

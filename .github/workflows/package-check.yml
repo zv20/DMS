@@ -3,7 +3,7 @@ name: Package check - manual and changes
 on:
   workflow_dispatch:
   push:
-    branches: ['**']
+    branches: [release]
     paths:
       - '.github/workflows/package-check.yml'
       - '.github/workflows/windows-package.yml'
@@ -17,6 +17,7 @@ permissions:
 jobs:
   tests:
     name: Wait for push tests
+    if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     timeout-minutes: 21
     steps:
@@ -24,6 +25,7 @@ jobs:
       - name: Require successful push tests for this commit
         env:
           GH_TOKEN: ${{ github.token }}
+          TEST_BRANCH: release
         run: bash scripts/wait-for-push-tests.sh
 
   package:

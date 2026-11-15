@@ -1,9 +1,8 @@
-name: Tests - push and PR
+name: Windows tests - test and release
 
 on:
   push:
-    branches: ['**']
-  pull_request:
+    branches: [test, release]
   workflow_dispatch:
     inputs:
       soak_seconds:

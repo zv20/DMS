@@ -79,14 +79,16 @@ wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixex
 
 The installer is written to `artifacts/installer/`. For releases, update
 `<Version>` in `DMS/DMS.csproj` and `CHANGELOG.md`, then push a matching
-`v<version>` tag. The [release workflow](.github/workflows/winui3-release.yml)
-waits for the push tests for the exact tagged commit, then builds and checks the
-installer before publishing it. Push the commit to a branch before tagging it.
+`v<version>` tag on a commit from the `release` branch. Feature branches are
+tested locally, then merged into `test` for Windows CI. Promote changes from
+`test` to `release` by pull request. The release branch runs Windows tests again
+for the merged commit. The [release workflow](.github/workflows/winui3-release.yml)
+requires those tests to pass before building and checking the MSI.
 
 The [package check](.github/workflows/package-check.yml) runs the same
 push-test gate and package/install checks without publishing a release. It can be run
-manually in GitHub Actions once the workflow exists on the default branch, and
-also runs when its packaging workflows change. Its MSI is a test
+manually on `release` in GitHub Actions and also runs when its packaging
+workflows change on `release`. Its MSI is a test
 artifact, not a versioned release.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
