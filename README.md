@@ -35,9 +35,6 @@ before installing the MSI. Your database and backups are stored separately in
 `%APPDATA%\DMS`; keep a backup before changing installations. Choose the
 language and restore a backup in DMS Settings after installation.
 
-For a portable copy, download `DMS-<version>-portable.zip`, extract the whole
-archive and run `DMS.exe` from the extracted folder.
-
 Start by adding ingredients and recipes, assign recipes in **Menu Planner**,
 then use **Print / Export** to create your menu. In **Settings**, use **Create
 Backup** to save all your data, including template images. **Restore Backup**
@@ -83,14 +80,13 @@ wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixex
 The installer is written to `artifacts/installer/`. For releases, update
 `<Version>` in `DMS/DMS.csproj` and `CHANGELOG.md`, then push a matching
 `v<version>` tag. The [release workflow](.github/workflows/winui3-release.yml)
-builds, tests and checks installed startup before publishing the installer and
-portable ZIP.
+builds, tests and checks installed startup before publishing the installer.
 
 The [package check](.github/workflows/package-check.yml) runs the same
 tests and package/install checks without publishing a release. It can be run
 manually in GitHub Actions once the workflow exists on the default branch, and
-also runs when its packaging workflows change. Its MSI and ZIP are test
-artifacts, not a versioned release.
+also runs when its packaging workflows change. Its MSI is a test
+artifact, not a versioned release.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
 placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in

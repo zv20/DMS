@@ -41,7 +41,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts
+          path: artifacts/installer
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -50,6 +50,4 @@ jobs:
           generate_release_notes: true
           body_path: CHANGELOG.md
           fail_on_unmatched_files: true
-          files: |
-            artifacts/installer/*.msi
-            artifacts/*-portable.zip
+          files: artifacts/installer/*.msi

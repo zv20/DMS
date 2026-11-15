@@ -31,12 +31,6 @@ jobs:
           --self-contained true -p:Platform=x64
           --output artifacts/DMS-win-x64
 
-      - name: Build portable ZIP
-        shell: pwsh
-        run: |
-          $version = $env:RELEASE_VERSION.TrimStart('v')
-          Compress-Archive -Path artifacts/DMS-win-x64/* -DestinationPath "artifacts/DMS-$version-portable.zip"
-
       - name: Install WiX Toolset
         run: |
           dotnet tool install --global wix --version 5.0.2
@@ -124,7 +118,5 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            artifacts/installer/*.msi
-            artifacts/*-portable.zip
+          path: artifacts/installer/*.msi
           if-no-files-found: error
