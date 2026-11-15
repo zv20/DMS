@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.13
+
+- Improved the Windows build and test pipeline, including automated checks for database recovery, performance, packaging, and installation upgrades.
+- Added performance measurements for startup, navigation, image-heavy templates, and menu exports.
+- Fixed Visual Studio solution platform mappings for Windows development.
+
 ## 0.0.12
 
 - Made meal categories and the number of meals per day configurable, with additional pages for larger menus when needed.

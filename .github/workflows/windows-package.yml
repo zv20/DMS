@@ -110,6 +110,16 @@ jobs:
           if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
           if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
 
+      - name: Verify upgrade from the released 0.0.12 MSI
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v0.0.12 --repo ${{ github.repository }} --pattern 'DMS-Setup-0.0.12.msi' --dir "$env:RUNNER_TEMP"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $version = $env:RELEASE_VERSION.TrimStart('v')
+          ./scripts/test-msi-upgrade.ps1 -PreviousMsi (Join-Path $env:RUNNER_TEMP 'DMS-Setup-0.0.12.msi') -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path -Version $version
+
       - name: Upload tested packages
         uses: actions/upload-artifact@v4
         with:
