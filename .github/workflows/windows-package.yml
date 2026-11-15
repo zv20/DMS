@@ -1,4 +1,4 @@
-name: Build Windows packages
+name: Package build - reusable
 
 on:
   workflow_call:

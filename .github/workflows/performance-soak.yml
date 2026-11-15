@@ -1,4 +1,4 @@
-name: Windows performance soak
+name: Performance soak - weekly and manual
 
 on:
   schedule:

@@ -7,7 +7,7 @@ after changes, using the same dataset, build configuration and actions.
 
 ## Automatic Windows checks on GitHub
 
-The **Windows tests** workflow runs on branch pushes, pull requests, and manual
+The **Tests - push and PR** workflow runs on branch pushes, pull requests, and manual
 dispatch. It compiles the test project and its app dependency in Release x64,
 runs the regular tests, runs the generated database benchmark, and measures
 process launch to both the initial navigation signal and a later rendering
@@ -33,7 +33,7 @@ Open the workflow run in GitHub Actions and download its
 and `navigation.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
 
-The separate **Windows performance soak** workflow runs the same image-heavy
+The separate **Performance soak - weekly and manual** workflow runs the same image-heavy
 cycle for at least 15 minutes and records elapsed time and memory at each step.
 It is scheduled weekly and can be started manually. GitHub only enables scheduled
 workflows from the default branch, and manual dispatch requires the workflow to

@@ -1,4 +1,4 @@
-name: Windows tests
+name: Tests - push and PR
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Release WinUI 3
+name: Release - tag and manual
 
 on:
   push:
