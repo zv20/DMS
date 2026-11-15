@@ -270,6 +270,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         // A newer request supersedes this snapshot, so the next iteration renders it.
         if (_refreshPending) return;
         _weekendPlanningEnabled = weekend;
+        CalendarGrid.ColumnSpacing = monthly ? 8 : 2;
         PeriodLabel.Text = period;
         _activeRecipeSearch = null;
         CalendarGrid.Children.Clear();
