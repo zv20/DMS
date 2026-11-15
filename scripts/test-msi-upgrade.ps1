@@ -28,10 +28,10 @@ function Get-ProductCode([string] $Path) {
     $installer = New-Object -ComObject WindowsInstaller.Installer
     $msi = $installer.OpenDatabase($Path, 0)
     $view = $msi.OpenView("SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductCode'")
-    $view.Execute()
-    $code = $view.Fetch().StringData(1)
-    $view.Close()
-    return $code
+    [void]$view.Execute()
+    $code = [string]$view.Fetch().StringData(1)
+    [void]$view.Close()
+    return $code.Trim()
 }
 
 # GitHub-hosted runner only: discard the fresh-install smoke test's data.
