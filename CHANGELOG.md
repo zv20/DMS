@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.15
+
+- Kept the selected recipe, ingredient, or allergen highlighted while its editor is open.
+- Adjusted weekly planner recipe suggestions to fit within the window.
+- Simplified template output so ingredients containing allergens are highlighted without a separate allergen list.
+- Strengthened backup restore validation and added limits for template images.
+- Improved the safety of installer upgrade checks and simplified shared application code.
+
 ## 0.0.14
 
 - Moved navigation to the top, with highlighted selection and a compact icon layout for narrower windows.
