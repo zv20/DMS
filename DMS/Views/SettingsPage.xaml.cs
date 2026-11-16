@@ -78,16 +78,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
     {
         try
         {
-            var result = await new ContentDialog
-            {
-                XamlRoot = XamlRoot,
-                Title = L.Get("LogViewerClearTitle"),
-                Content = L.Get("LogViewerClearConfirmation"),
-                PrimaryButtonText = L.Get("LogViewerClearAction"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close
-            }.ShowAsync();
-            if (result != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("LogViewerClearTitle"),
+                L.Get("LogViewerClearConfirmation"), "LogViewerClearAction")) return;
             App.LogStore.Clear();
             RefreshLogViewer();
         }
@@ -157,16 +149,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             try
             {
                 if (!await CanLeaveAsync()) { RestoreLanguageSelection(previousLanguage); return; }
-                var dialog = new ContentDialog
-                {
-                    XamlRoot = XamlRoot,
-                    Title = L.Get("LanguageReloadTitle"),
-                    Content = L.Get("LanguageReloadMessage"),
-                    PrimaryButtonText = L.Get("LanguageReloadConfirm"),
-                    CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                    DefaultButton = ContentDialogButton.Close
-                };
-                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("LanguageReloadTitle"),
+                    L.Get("LanguageReloadMessage"), "LanguageReloadConfirm"))
                 {
                     RestoreLanguageSelection(previousLanguage);
                     return;
@@ -199,68 +183,51 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         finally { _suppressSettingChanges = false; }
     }
 
-    private async void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void AppearanceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_suppressSettingChanges) return;
-        if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string theme)
+        if (_suppressSettingChanges || sender is not ComboBox { SelectedItem: ComboBoxItem { Tag: string value } } comboBox) return;
+        var isTheme = comboBox == ThemeComboBox;
+        ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+        var saved = false;
+        try
         {
-            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
-            var saved = false;
-            try
-            {
-                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-                settings.Theme = theme;
-                await _databaseService.SaveSettingsAsync(settings);
-                saved = true;
-                _selectedTheme = theme;
-                AppearanceService.ApplyTheme(App.CurrentWindow, theme, settings.AccentColor);
-                AppearanceStatus.Text = "";
-            }
-            catch (Exception ex)
-            {
-                App.Logger.LogError(ex, saved ? "Theme was saved but could not be applied" : "Could not save theme");
-                if (!saved)
-                {
-                    _suppressSettingChanges = true;
-                    try { ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedTheme) ?? ThemeComboBox.Items[0]; }
-                    finally { _suppressSettingChanges = false; }
-                }
-                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
-            }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
-        }
-    }
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            if (isTheme) settings.Theme = value;
+            else settings.AccentColor = value;
+            await _databaseService.SaveSettingsAsync(settings);
+            saved = true;
 
-    private async void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressSettingChanges) return;
-        if (AccentColorComboBox.SelectedItem is ComboBoxItem item && item.Tag is string accent)
-        {
-            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
-            var saved = false;
-            try
+            if (isTheme)
             {
-                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-                settings.AccentColor = accent;
-                await _databaseService.SaveSettingsAsync(settings);
-                saved = true;
-                _selectedAccent = accent;
-                AppearanceService.ApplyAccent(accent);
-                AppearanceStatus.Text = "";
+                _selectedTheme = value;
+                AppearanceService.ApplyTheme(App.CurrentWindow, value, settings.AccentColor);
             }
-            catch (Exception ex)
+            else
             {
-                App.Logger.LogError(ex, saved ? "Accent was saved but could not be applied" : "Could not save accent color");
-                if (!saved)
-                {
-                    _suppressSettingChanges = true;
-                    try { AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedAccent) ?? AccentColorComboBox.Items[0]; }
-                    finally { _suppressSettingChanges = false; }
-                }
-                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
+                _selectedAccent = value;
+                AppearanceService.ApplyAccent(value);
             }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
+            AppearanceStatus.Text = "";
         }
+        catch (Exception ex)
+        {
+            var setting = isTheme ? "theme" : "accent color";
+            if (saved) App.Logger.LogError(ex, "Saved {Setting} but could not apply it", setting);
+            else
+            {
+                App.Logger.LogError(ex, "Could not save {Setting}", setting);
+                _suppressSettingChanges = true;
+                try
+                {
+                    var previous = isTheme ? _selectedTheme : _selectedAccent;
+                    comboBox.SelectedItem = comboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == previous) ?? comboBox.Items[0];
+                }
+                finally { _suppressSettingChanges = false; }
+            }
+            AppearanceStatus.Text = L.Get(saved ? "LogViewerSavedApplyFailed" : "DataSaveFailed");
+        }
+        finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
     }
 
     private void AddCategoryEditor(string id, string name, bool canRemove = false)
@@ -299,10 +266,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         _confirmingPlanning = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"),
-                Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            return await EditorDialogs.ConfirmDiscardAsync(XamlRoot);
         }
         finally { _confirmingPlanning = false; }
     }
@@ -417,10 +381,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             var file = await picker.PickSingleFileAsync();
             if (file == null) return;
             if (!await CanLeaveAsync()) return;
-            var confirm = new ContentDialog { Title = L.Get("Text_Restore_Database_04f0a6"), Content = L.Get("RestoreWarning"),
-                PrimaryButtonText = L.Get("Text_Restore_3cbe6d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Restore_Database_04f0a6"),
+                L.Get("RestoreWarning"), "Text_Restore_3cbe6d")) return;
             await App.RestoreAndReloadAsync(file.Path);
             restored = true;
             return;
@@ -463,51 +425,45 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         }
     }
 
-    private async void VacuumButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (!VacuumButton.IsEnabled) return;
-        VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
-        DatabaseStatus.Text = "";
-        var completed = false;
-        try
-        {
-            var confirmation = new ContentDialog { Title = L.Get("Text_Vacuum_Database_0a823e"),
-                Content = L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"),
-                PrimaryButtonText = L.Get("Text_Vacuum_5fe15d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await confirmation.ShowAsync() != ContentDialogResult.Primary) return;
-            await _databaseService.VacuumAsync();
-            completed = true;
-            DatabaseStatus.Text = L.Get("Text_Database_optimized_successfully_4e0a52");
-            await new ContentDialog { Title = L.Get("Text_Vacuum_Complete_43b708"), Content = DatabaseStatus.Text,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
-        }
-        catch (Exception ex)
-        {
-            App.Logger.LogError(ex, completed ? "Database vacuum completed, but its confirmation failed" : "Database vacuum failed");
-            DatabaseStatus.Text = L.Get(completed ? "Text_Database_optimized_successfully_4e0a52" : "LogViewerMaintenanceFailed");
-        }
-        finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
-    }
+    private async void VacuumButton_Click(object sender, RoutedEventArgs e) => await RunMaintenanceAsync(vacuum: true);
 
-    private async void ReindexButton_Click(object sender, RoutedEventArgs e)
+    private async void ReindexButton_Click(object sender, RoutedEventArgs e) => await RunMaintenanceAsync(vacuum: false);
+
+    private async Task RunMaintenanceAsync(bool vacuum)
     {
-        if (!ReindexButton.IsEnabled) return;
+        if (!VacuumButton.IsEnabled || !ReindexButton.IsEnabled) return;
         VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
         DatabaseStatus.Text = "";
         var completed = false;
+        var action = vacuum ? "vacuum" : "reindex";
+        var successKey = vacuum ? "Text_Database_optimized_successfully_4e0a52" : "Text_Database_indexes_rebuilt_1fdc67";
         try
         {
-            await _databaseService.ReindexAsync();
+            if (vacuum)
+            {
+                if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Vacuum_Database_0a823e"),
+                    L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"), "Text_Vacuum_5fe15d")) return;
+                await _databaseService.VacuumAsync();
+            }
+            else
+            {
+                await _databaseService.ReindexAsync();
+            }
             completed = true;
-            DatabaseStatus.Text = L.Get("Text_Database_indexes_rebuilt_1fdc67");
-            await new ContentDialog { Title = L.Get("Text_Reindex_Complete_6eb4e1"), Content = DatabaseStatus.Text,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
+            DatabaseStatus.Text = L.Get(successKey);
+            await new ContentDialog
+            {
+                Title = L.Get(vacuum ? "Text_Vacuum_Complete_43b708" : "Text_Reindex_Complete_6eb4e1"),
+                Content = DatabaseStatus.Text,
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
+                XamlRoot = XamlRoot
+            }.ShowAsync();
         }
         catch (Exception ex)
         {
-            App.Logger.LogError(ex, completed ? "Database reindex completed, but its confirmation failed" : "Database reindex failed");
-            DatabaseStatus.Text = L.Get(completed ? "Text_Database_indexes_rebuilt_1fdc67" : "LogViewerMaintenanceFailed");
+            if (completed) App.Logger.LogError(ex, "Database {Action} completed, but its confirmation failed", action);
+            else App.Logger.LogError(ex, "Database {Action} failed", action);
+            DatabaseStatus.Text = L.Get(completed ? successKey : "LogViewerMaintenanceFailed");
         }
         finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
     }

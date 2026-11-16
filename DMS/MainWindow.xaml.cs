@@ -159,14 +159,21 @@ public sealed partial class MainWindow : Window
 
     private void RestoreNavigationSelection()
     {
-        if (ContentFrame.CurrentSourcePageType == typeof(SettingsPage)) { NavView.SelectedItem = NavView.SettingsItem; return; }
-        var tag = ContentFrame.CurrentSourcePageType == typeof(MenuPage) ? "menu" :
-            ContentFrame.CurrentSourcePageType == typeof(RecipesPage) ? "recipes" :
-            ContentFrame.CurrentSourcePageType == typeof(IngredientsPage) ? "ingredients" :
-            ContentFrame.CurrentSourcePageType == typeof(AllergensPage) ? "allergens" :
-            ContentFrame.CurrentSourcePageType == typeof(TemplateBuilderPage) ? "templateBuilder" : null;
-        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, tag));
+        var pageType = ContentFrame.CurrentSourcePageType;
+        NavView.SelectedItem = pageType == typeof(SettingsPage) ? NavView.SettingsItem :
+            NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => PageForTag(item.Tag as string) == pageType);
     }
+
+    private static Type? PageForTag(string? tag) => tag switch
+    {
+        "menu" => typeof(MenuPage),
+        "recipes" => typeof(RecipesPage),
+        "ingredients" => typeof(IngredientsPage),
+        "allergens" => typeof(AllergensPage),
+        "templateBuilder" => typeof(TemplateBuilderPage),
+        "settings" => typeof(SettingsPage),
+        _ => null
+    };
 
     private async Task ShowNavigationErrorAsync()
     {
@@ -182,16 +189,7 @@ public sealed partial class MainWindow : Window
     private async void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
         var tag = (args.InvokedItemContainer as NavigationViewItem)?.Tag as string;
-        Type? pageType = args.IsSettingsInvoked ? typeof(SettingsPage) : tag switch
-        {
-            "menu" => typeof(MenuPage),
-            "recipes" => typeof(RecipesPage),
-            "ingredients" => typeof(IngredientsPage),
-            "allergens" => typeof(AllergensPage),
-            "templateBuilder" => typeof(TemplateBuilderPage),
-            "settings" => typeof(SettingsPage),
-            _ => null
-        };
+        var pageType = args.IsSettingsInvoked ? typeof(SettingsPage) : PageForTag(tag);
 
         if (pageType != null)
             await NavigateToAsync(pageType, args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer);
@@ -253,21 +251,15 @@ public sealed partial class MainWindow : Window
                     if (OutputOverlay.Visibility == Visibility.Collapsed) PerformancePageSignal.Write("closeOutput", 1);
                     return;
                 }
-                if (tag == "pdf")
+                if (tag is "pdf" or "png")
                 {
-                    var output = Environment.GetEnvironmentVariable("DMS_QA_PDF_PATH");
+                    var output = Environment.GetEnvironmentVariable(tag == "pdf" ? "DMS_QA_PDF_PATH" : "DMS_QA_PNG_PATH");
                     if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
-                        await preview.ExportPerformancePdfAsync(output);
+                        await preview.ExportPerformanceAsync(tag, output);
                     return;
                 }
-                if (tag == "png")
-                {
-                    var output = Environment.GetEnvironmentVariable("DMS_QA_PNG_PATH");
-                    if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
-                        await preview.ExportPerformancePngAsync(output);
-                    return;
-                }
-                var pageType = tag switch { "recipes" => typeof(RecipesPage), "ingredients" => typeof(IngredientsPage), "templateBuilder" => typeof(TemplateBuilderPage), _ => null };
+                if (tag is not ("recipes" or "ingredients" or "templateBuilder")) return;
+                var pageType = PageForTag(tag);
                 if (pageType == null) return;
                 var item = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
                 await NavigateToAsync(pageType, item);

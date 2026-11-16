@@ -8,7 +8,8 @@ namespace DMS.Services;
 
 public partial class DatabaseService
 {
-    private const int MaxImageBytes = 4 * 1024 * 1024;
+    internal const int MaxImageBytes = 4 * 1024 * 1024;
+    private const string ValidImageBlob = "CASE WHEN typeof(data) = 'blob' THEN length(data) BETWEEN 1 AND @maxBytes ELSE 0 END";
 
     private void InitializeTemplateImages()
     {
@@ -30,14 +31,8 @@ public partial class DatabaseService
         check.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version = 2";
         if (Convert.ToInt64(check.ExecuteScalar()) == 0)
         {
-            var rows = new List<(string Name, string Json)>();
-            using (var select = _connection.CreateCommand())
-            {
-                select.Transaction = transaction;
-                select.CommandText = "SELECT name, data_json FROM templates";
-                using var reader = select.ExecuteReader();
-                while (reader.Read()) rows.Add((reader.GetString(0), reader.GetString(1)));
-            }
+            // Close the reader before updating templates in the same transaction.
+            var rows = ReadTemplateRows(transaction).ToList();
             foreach (var (name, json) in rows)
             {
                 MenuTemplate? template;
@@ -79,19 +74,13 @@ public partial class DatabaseService
             if (Convert.ToInt64(legacyCheck.ExecuteScalar()) == 0)
             {
                 var obsolete = new List<string>();
-                using (var select = _connection.CreateCommand())
+                foreach (var (name, json) in ReadTemplateRows(transaction))
                 {
-                    select.Transaction = transaction;
-                    select.CommandText = "SELECT name, data_json FROM templates";
-                    using var reader = select.ExecuteReader();
-                    while (reader.Read())
+                    try
                     {
-                        try
-                        {
-                            if (JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1))?.Document == null) obsolete.Add(reader.GetString(0));
-                        }
-                        catch (JsonException) { obsolete.Add(reader.GetString(0)); }
+                        if (JsonSerializer.Deserialize<MenuTemplate>(json)?.Document == null) obsolete.Add(name);
                     }
+                    catch (JsonException) { obsolete.Add(name); }
                 }
                 foreach (var name in obsolete)
                 {
@@ -116,11 +105,21 @@ public partial class DatabaseService
         transaction.Commit();
     }
 
+    private IEnumerable<(string Name, string Json)> ReadTemplateRows(SqliteTransaction transaction)
+    {
+        using var command = _connection!.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT name, data_json FROM templates";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            yield return (reader.GetString(0), reader.GetString(1));
+    }
+
     private void SeedSeasonalTemplatePresets()
     {
         var assembly = typeof(DatabaseService).Assembly;
         var firstResource = $"{assembly.GetName().Name}.Assets.Templates.{SeasonalTemplateDefaults.All[0].AssetFile}";
-        if (assembly.GetManifestResourceStream(firstResource) == null)
+        if (assembly.GetManifestResourceInfo(firstResource) == null)
         {
             // Unit-test hosts can link the service source without bundling the
             // application assets. The published app always embeds these files.
@@ -188,7 +187,7 @@ public partial class DatabaseService
         return ReadTemplateImage(id, transaction)!;
     }
 
-    private static bool ValidImageSignature(string contentType, byte[] data)
+    internal static bool ValidImageSignature(string contentType, byte[] data)
     {
         var png = data.Length >= 8 && data.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
         var jpeg = data.Length >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF;
@@ -199,10 +198,33 @@ public partial class DatabaseService
     {
         using var cmd = _connection!.CreateCommand();
         cmd.Transaction = transaction;
-        cmd.CommandText = "SELECT id,name,content_type,data FROM template_image_assets WHERE id=@id";
+        cmd.CommandText = $"SELECT id,name,content_type,CASE WHEN {ValidImageBlob} THEN data END FROM template_image_assets WHERE id=@id";
         cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
         using var reader = cmd.ExecuteReader();
-        return reader.Read() ? new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = reader.GetString(2), Data = (byte[])reader[3] } : null;
+        if (!reader.Read()) return null;
+        if (reader.IsDBNull(3)) throw new InvalidDataException("Stored template image size or type is invalid.");
+        var contentType = reader.GetString(2);
+        var data = (byte[])reader[3];
+        if (!ValidImageSignature(contentType, data)) throw new InvalidDataException("Stored template image format is invalid.");
+        return new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = contentType, Data = data };
+    }
+
+    private static void ValidateBackupImageAssets(SqliteConnection source)
+    {
+        using var cmd = source.CreateCommand();
+        cmd.CommandText = $"SELECT 1 FROM template_image_assets WHERE NOT ({ValidImageBlob}) LIMIT 1";
+        cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
+        if (cmd.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains an invalid template image size or type.");
+    }
+
+    private bool TemplateImageExists(string id, SqliteTransaction transaction)
+    {
+        using var cmd = _connection!.CreateCommand();
+        cmd.Transaction = transaction;
+        cmd.CommandText = "SELECT 1 FROM template_image_assets WHERE id=@id";
+        cmd.Parameters.AddWithValue("@id", id);
+        return cmd.ExecuteScalar() != null;
     }
 
     private HashSet<string> ExtractTemplateImages(MenuTemplate template, SqliteTransaction transaction, bool preserveBrokenReferences = false)
@@ -234,7 +256,7 @@ public partial class DatabaseService
                 if (string.IsNullOrWhiteSpace(id)) return (null, uri);
                 if (preserveBrokenReferences)
                 {
-                    if (ReadTemplateImage(id, transaction) != null) refs.Add(id);
+                    if (TemplateImageExists(id, transaction)) refs.Add(id);
                     else _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);
                     return (id, uri);
                 }
@@ -242,7 +264,7 @@ public partial class DatabaseService
             }
             if (!string.IsNullOrWhiteSpace(id))
             {
-                if (ReadTemplateImage(id, transaction) == null)
+                if (!TemplateImageExists(id, transaction))
                 {
                     if (!preserveBrokenReferences) throw new InvalidDataException($"Missing template image: {id}");
                     _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);
@@ -254,13 +276,6 @@ public partial class DatabaseService
             return (null, uri);
         }
 
-        (template.BackgroundImageAssetId, template.BackgroundImageDataUri) = Extract(template.BackgroundImageAssetId, template.BackgroundImageDataUri, template.Name);
-        foreach (var layer in template.ImageLayers ?? [])
-        {
-            if (layer == null) continue;
-            var result = Extract(layer.AssetId, layer.DataUri, layer.AltText);
-            layer.AssetId = result.Id; layer.DataUri = result.Uri ?? "";
-        }
         if (template.Document != null)
         {
             var doc = template.Document;
@@ -299,7 +314,14 @@ public partial class DatabaseService
         {
             if (string.IsNullOrWhiteSpace(id)) return existing;
             if (cache.TryGetValue(id, out var cached)) return cached ?? existing;
-            var image = ReadTemplateImage(id);
+            TemplateImageAsset? image;
+            try { image = ReadTemplateImage(id); }
+            catch (InvalidDataException ex)
+            {
+                _logger.LogWarning(ex, "Template {Template} contains an unreadable image {Image}", template.Name, id);
+                cache[id] = null;
+                return existing;
+            }
             if (image == null)
             {
                 _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);
@@ -310,8 +332,6 @@ public partial class DatabaseService
             cache[id] = dataUri;
             return dataUri;
         }
-        template.BackgroundImageDataUri = Uri(template.BackgroundImageAssetId, template.BackgroundImageDataUri);
-        foreach (var layer in template.ImageLayers ?? []) if (layer != null) layer.DataUri = Uri(layer.AssetId, layer.DataUri) ?? "";
         if (template.Document != null)
         {
             var doc = template.Document;
@@ -380,7 +400,7 @@ public partial class DatabaseService
         ArgumentNullException.ThrowIfNull(expectedTemplateNames);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
-        if (ReadTemplateImage(id, transaction) == null) throw new InvalidOperationException("The image no longer exists.");
+        if (!TemplateImageExists(id, transaction)) throw new InvalidOperationException("The image no longer exists.");
         var actual = ReadTemplateImageUsage(id, transaction);
         if (!actual.ToHashSet(StringComparer.Ordinal).SetEquals(expectedTemplateNames))
             throw new InvalidOperationException("The templates using this image changed. Review the list and try again.");
@@ -453,7 +473,6 @@ internal static class SeasonalTemplateDefaults
                 ["heading"] = new() { FontFamily = "Arial", FontSize = 17, Color = definition.HeaderColor, Bold = true },
                 ["menu"] = new() { FontFamily = "Arial", FontSize = 14, Color = definition.BodyColor },
                 ["ingredients"] = new() { FontFamily = "Arial", FontSize = 12, Color = definition.BodyColor },
-                ["allergens"] = new() { FontFamily = "Arial", FontSize = 12, Color = "#C60000", Bold = true, Underline = true },
                 ["footer"] = new() { FontFamily = "Arial", FontSize = 10, Color = definition.BodyColor, Alignment = "center" }
             }
         }

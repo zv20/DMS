@@ -30,13 +30,16 @@
             Padding="16,4,16,12"
             HorizontalContentAlignment="Stretch"
             ItemContainerStyle="{StaticResource ListCardItemStyle}"
-            SelectionMode="None"
+            SelectionMode="Single"
+            SelectionChanged="AllergensListView_SelectionChanged"
             IsItemClickEnabled="True"
             ItemClick="AllergensListView_ItemClick">
             <ListView.Resources>
                 <CornerRadius x:Key="ListViewItemCornerRadius">10</CornerRadius>
                 <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="DmsAccentSubtleBrush" />
                 <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="DmsAccentSubtlePressedBrush" />
+                <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="DmsAccentSubtleBrush" />
+                <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentSubtleBrush" />
             </ListView.Resources>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:AllergenItemViewModel">

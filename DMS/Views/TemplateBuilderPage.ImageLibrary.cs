@@ -1,11 +1,9 @@
 using DMS.Models;
+using DMS.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
 using L = DMS.Services.Localization;
 
 namespace DMS.Views;
@@ -14,7 +12,7 @@ public sealed partial class TemplateBuilderPage
 {
     private async void ImageLibrary_Click(object sender, RoutedEventArgs e)
     {
-        if (_saving || _switching || _addingImage) return;
+        if (_saving || _switching) return;
         _saving = true;
         UpdateInlineText();
         EndImageDrag();
@@ -73,15 +71,15 @@ public sealed partial class TemplateBuilderPage
                     if (selector.SelectedItem is not GridViewItem { Tag: string id }) return;
                     try
                     {
-                        var image = await _database.GetTemplateImageAsync(id);
                         var names = await _database.GetTemplateImageUsageAsync(id);
-                        if (currentGeneration != generation || image == null) return;
+                        if (currentGeneration != generation) return;
                         usage.Text = names.Count == 0 ? L.Get("TplImageUnused") : string.Join("\n", names.Select(name => "• " + name));
                         // Name and deletion remain available even for an older unreadable image.
                         rename.IsEnabled = delete.IsEnabled = true;
-                        using var stream = await OpenLibraryImageAsync(image.Data);
-                        var bitmap = new BitmapImage { DecodePixelWidth = 256 };
-                        await bitmap.SetSourceAsync(stream);
+                        var image = await _database.GetTemplateImageAsync(id);
+                        if (currentGeneration != generation || image == null) return;
+                        using var stream = await TemplateBitmapCache.OpenImageStreamAsync(image.Data);
+                        await TemplateBitmapCache.DecodeBitmapAsync(stream, 256);
                         if (currentGeneration != generation) return;
                         dialog.IsPrimaryButtonEnabled = true;
                     }
@@ -114,10 +112,9 @@ public sealed partial class TemplateBuilderPage
                 else
                 {
                     var image = await _database.GetTemplateImageAsync(chosenId) ?? throw new InvalidOperationException(L.Get("TplImageInvalid"));
-                    using var stream = await OpenLibraryImageAsync(image.Data);
-                    var decoder = await BitmapDecoder.CreateAsync(stream);
-                    if (decoder.OrientedPixelWidth == 0 || decoder.OrientedPixelHeight == 0) throw new InvalidOperationException(L.Get("TplImageInvalid"));
-                    PlaceLibraryImage(image, decoder.OrientedPixelWidth, decoder.OrientedPixelHeight);
+                    using var stream = await TemplateBitmapCache.OpenImageStreamAsync(image.Data);
+                    var (width, height) = await TemplateBitmapCache.ReadImageDimensionsAsync(stream);
+                    PlaceLibraryImage(image, width, height);
                     return;
                 }
             }
@@ -132,24 +129,11 @@ public sealed partial class TemplateBuilderPage
         {
             var asset = await _database.GetTemplateImageAsync(id);
             if (asset == null) return;
-            using var stream = await OpenLibraryImageAsync(asset.Data);
-            var bitmap = new BitmapImage { DecodePixelWidth = 120 };
-            await bitmap.SetSourceAsync(stream);
+            using var stream = await TemplateBitmapCache.OpenImageStreamAsync(asset.Data);
+            var (bitmap, _) = await TemplateBitmapCache.DecodeBitmapAsync(stream, 120);
             target.Source = bitmap;
         }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load an image library thumbnail"); }
-    }
-
-    private static async Task<InMemoryRandomAccessStream> OpenLibraryImageAsync(byte[] bytes)
-    {
-        var stream = new InMemoryRandomAccessStream();
-        try
-        {
-            using var writer = new DataWriter(stream.GetOutputStreamAt(0));
-            writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
-            return stream;
-        }
-        catch { stream.Dispose(); throw; }
     }
 
     private bool CanvasUsesImage(string id) => _document.DecorativeImages.Any(image => image.AssetId == id) || _document.BackgroundImageAssetId == id;
@@ -169,10 +153,8 @@ public sealed partial class TemplateBuilderPage
         }
         if (currentSavedTemplateDeleted || usesOnCanvas)
             content.Children.Add(new TextBlock { Text = L.Get(currentSavedTemplateDeleted ? "TplLibraryOpenTemplateWarning" : "TplLibraryOpenCanvasWarning"), TextWrapping = TextWrapping.Wrap });
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLibraryDelete"), Content = content,
-            PrimaryButtonText = L.Get(names.Count > 0 ? "TplLibraryDeleteAll" : "String_Text_Delete_f6fdbe"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
+        if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("TplLibraryDelete"), content,
+            names.Count > 0 ? "TplLibraryDeleteAll" : "String_Text_Delete_f6fdbe")) return false;
         // The database checks that this exact usage list is still current, then
         // removes the saved templates and image in one transaction.
         try { await _database.DeleteTemplateImageAsync(asset.Id, names); }
@@ -192,11 +174,6 @@ public sealed partial class TemplateBuilderPage
                 _loadedTemplate = new MenuTemplate { Document = _document };
                 _loadedName = null;
                 RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = false;
-            }
-            else
-            {
-                if (_loadedTemplate.BackgroundImageAssetId == asset.Id) { _loadedTemplate.BackgroundImageAssetId = null; _loadedTemplate.BackgroundImageDataUri = null; }
-                _loadedTemplate.ImageLayers.RemoveAll(image => image.AssetId == asset.Id);
             }
             _dirty = true; RefreshDecorationList(); Render();
         }

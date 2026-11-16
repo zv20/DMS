@@ -123,10 +123,12 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     public async Task RestoreCreatesUsableRecoveryBackupAndCopiesSavedImages()
     {
         var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
+        var day = new DateTime(2026, 1, 5);
         string assetId;
         using (var from = Open("source.db"))
         {
-            await from.SaveRecipeAsync(new Recipe { Name = "Restored", Category = "soup" });
+            var recipeId = await from.SaveRecipeAsync(new Recipe { Name = "Restored", Category = "soup" });
+            await from.SaveMenuSlotAsync(day, "slot1", "soup", recipeId);
             assetId = (await from.SaveTemplateImageAsync("Logo", "image/png", png)).Id;
             await from.SaveTemplateAsync(new MenuTemplate { Name = "Menu", Document = new TemplateDocument { DecorativeImages = [new TemplateImage { AssetId = assetId }] } });
             await from.CreateBackupAsync(PathFor("backup.db"));
@@ -135,7 +137,12 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         {
             await current.SaveRecipeAsync(new Recipe { Name = "Before", Category = "soup" });
             await current.RestoreFromAsync(PathFor("backup.db"));
-            Assert.Equal("Restored", Assert.Single(await current.GetAllRecipesAsync()).Name);
+            var recipe = Assert.Single(await current.GetAllRecipesAsync());
+            Assert.Equal("Restored", recipe.Name);
+            Assert.Equal("slot1", Assert.Single(await current.GetMenuAsync(day, day)).Slot);
+            Assert.Equal("soup", Assert.Single(await current.GetMenuCategoriesAsync(day, day)).Category);
+            await current.SaveMenuSlotAsync(day, "slot1", "main", recipe.Id);
+            Assert.Equal("main", Assert.Single(await current.GetMenuCategoriesAsync(day, day)).Category);
             Assert.Equal(png, (await current.GetTemplateImageAsync(assetId))!.Data);
             Assert.Equal(new[] { "Menu" }, await current.GetTemplateImageUsageAsync(assetId));
         }

@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
-using Windows.Graphics.Imaging;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using L = DMS.Services.Localization;
@@ -16,7 +15,7 @@ namespace DMS.Views;
 
 public sealed partial class TemplateBuilderPage
 {
-    private bool _addingImage, _draggingImage, _dirtyBeforeImageDrag;
+    private bool _draggingImage, _dirtyBeforeImageDrag;
     private uint _imagePointerId;
     private Point _imagePointerStart, _imagePositionStart;
     private string? _imageToReveal;
@@ -93,8 +92,8 @@ public sealed partial class TemplateBuilderPage
 
     private async void AddDecoration_Click(object sender, RoutedEventArgs e)
     {
-        if (_addingImage || _saving || _switching) return;
-        _addingImage = _saving = true; AddImageMenuItem.IsEnabled = false;
+        if (_saving || _switching) return;
+        _saving = true; AddImageMenuItem.IsEnabled = false;
         var document = _document;
         try
         {
@@ -103,22 +102,23 @@ public sealed partial class TemplateBuilderPage
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSingleFileAsync();
             if (file == null || !ReferenceEquals(document, _document)) return;
-            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
             using var stream = await file.OpenReadAsync();
-            var decoder = await BitmapDecoder.CreateAsync(stream);
-            var sourceWidth = (double)decoder.OrientedPixelWidth;
-            var sourceHeight = (double)decoder.OrientedPixelHeight;
-            if (sourceWidth <= 0 || sourceHeight <= 0) throw new InvalidOperationException(L.Get("TplImageInvalid"));
-            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
-            if (buffer.Length > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
-            var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
-            if (!ReferenceEquals(document, _document)) return;
+            if (stream.Size > DatabaseService.MaxImageBytes) { StatusText.Text = L.Get("TplImageLimit"); return; }
+            using var reader = new DataReader(stream.GetInputStreamAt(0));
+            var length = await reader.LoadAsync(DatabaseService.MaxImageBytes + 1);
+            if (length > DatabaseService.MaxImageBytes) { StatusText.Text = L.Get("TplImageLimit"); return; }
+            var bytes = new byte[length];
+            reader.ReadBytes(bytes);
             var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+            if (!DatabaseService.ValidImageSignature(mime, bytes)) throw new InvalidOperationException(L.Get("TplImageInvalid"));
+            using var imageStream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
+            var (sourceWidth, sourceHeight) = await TemplateBitmapCache.ReadImageDimensionsAsync(imageStream);
+            if (!ReferenceEquals(document, _document)) return;
             var asset = await _database.SaveTemplateImageAsync(file.DisplayName, mime, bytes);
             PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to add an image to the template"); StatusText.Text = L.Get("ErrorTemplate"); }
-        finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; }
+        finally { _saving = false; AddImageMenuItem.IsEnabled = true; }
     }
 
     private void PlaceLibraryImage(TemplateImageAsset asset, double sourceWidth, double sourceHeight)
@@ -136,11 +136,11 @@ public sealed partial class TemplateBuilderPage
         StopInlineEditing();
         _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
         _imageToReveal = image.Id;
-        RefreshDecorationList(image.Id);
+        RefreshDecorationList();
         BuildContextTools(); Render();
     }
 
-    private void RefreshDecorationList(string? selectedId = null)
+    private void RefreshDecorationList()
     {
         PageImagesMenu.Items.Clear();
         foreach (var image in _document.DecorativeImages)
@@ -275,7 +275,7 @@ public sealed partial class TemplateBuilderPage
             if (name == null) return;
             SnapshotBeforeEdit();
             image.AltText = name; _dirty = true;
-            RefreshDecorationList(image.Id); Render();
+            RefreshDecorationList(); Render();
             StatusText.Text = L.Get("TplImageChangesPending");
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to rename the image block"); StatusText.Text = L.Get("ErrorTemplate"); }
@@ -288,9 +288,8 @@ public sealed partial class TemplateBuilderPage
         _saving = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplImageDelete"), Content = L.Get("TplImageDeletePrompt"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("TplImageDelete"),
+                L.Get("TplImageDeletePrompt"), "String_Text_Delete_f6fdbe")) return;
             SnapshotBeforeEdit();
             if (_selectedBlock == $"image:{image.Id}") DismissContextTools();
             _document.DecorativeImages.Remove(image);
@@ -307,6 +306,6 @@ public sealed partial class TemplateBuilderPage
         _document.DecorativeImages.Remove(image);
         if (forward) _document.DecorativeImages.Add(image);
         else _document.DecorativeImages.Insert(0, image);
-        _dirty = true; RefreshDecorationList(image.Id); Render();
+        _dirty = true; RefreshDecorationList(); Render();
     }
 }

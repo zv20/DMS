@@ -6,9 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
-using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
@@ -28,7 +26,7 @@ public static class TemplateRenderer
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
         var populated = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
-        var visible = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
+        var visible = template.HideEmptyDays ? populated : TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, false, includeWeekend);
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 1;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -37,10 +35,6 @@ public static class TemplateRenderer
         var dayEntries = visible.Select(day => entries
             .Where(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeMap.ContainsKey(entry.RecipeId))
             .OrderBy(entry => MenuOutputService.SlotOrder(entry.Slot)).ToArray()).ToArray();
-        var recipeAllergens = dayEntries.SelectMany(day => day).Select(entry => entry.RecipeId).Distinct()
-            .ToDictionary(id => id, id => recipeMap[id].Allergens
-                .Concat(recipeMap[id].Ingredients.SelectMany(name => ingredientMap.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
-                .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray());
         var floor = double.IsFinite(template.MinimumFontSize) ? Math.Clamp(template.MinimumFontSize, 10, 36) : 14;
         var ceiling = double.IsFinite(template.MaximumFontSize) ? Math.Clamp(template.MaximumFontSize, floor, 48) : Math.Max(18, floor);
         var start = double.IsFinite(template.FontSize) ? Math.Clamp(template.FontSize, floor, ceiling) : floor;
@@ -62,13 +56,13 @@ public static class TemplateRenderer
         TemplatePageLayout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
-            panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, recipeAllergens, font, template, null, lifetime)).ToArray();
+            panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, font, template, null, lifetime)).ToArray();
             required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
             fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink)
             {
                 if (onSelected != null)
-                    panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, recipeAllergens, font, template, onSelected, lifetime)).ToArray();
+                    panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, font, template, onSelected, lifetime)).ToArray();
                 break;
             }
         }
@@ -83,13 +77,13 @@ public static class TemplateRenderer
             var dayOverflow = required[i] > fit.DayHeights[i] + .5;
             var scroller = new ScrollViewer { Content = panels[i], VerticalScrollMode = dayOverflow ? ScrollMode.Auto : ScrollMode.Disabled, VerticalScrollBarVisibility = dayOverflow ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Disabled };
             var appearance = DayAppearance(template, visible[i]);
-            var backgroundColor = ParseColor(appearance?.BackgroundColor, Colors.Transparent);
+            var backgroundColor = RgbColor.ParseOrDefault(appearance?.BackgroundColor, Colors.Transparent);
             var backgroundOpacity = appearance != null && double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
             // Put the alpha in the color itself. This keeps the text and border fully
             // opaque while making only the block fill transparent on every renderer.
             var background = new SolidColorBrush(Windows.UI.Color.FromArgb(
                 (byte)Math.Round(backgroundOpacity * byte.MaxValue), backgroundColor.R, backgroundColor.G, backgroundColor.B));
-            var borderColor = dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray);
+            var borderColor = dayOverflow ? Colors.Red : RgbColor.ParseOrDefault(appearance?.BorderColor, Colors.LightGray);
             var borderOpacity = appearance != null && double.IsFinite(appearance.BorderOpacity) ? Math.Clamp(appearance.BorderOpacity, 0, 1) : 1;
             var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(borderOpacity * byte.MaxValue), borderColor.R, borderColor.G, borderColor.B)), Background = background, CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
             Selectable(border, $"day:{visible[i]}", onSelected, lifetime);
@@ -140,11 +134,14 @@ public static class TemplateRenderer
         content.Children.Add(inset);
         var foreground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: true }), onSelected, bitmapCache, decodeWidth, cancellationToken, lifetime);
         content.Children.Add(foreground.Layer);
-        var pageColor = ParseColor(template.BackgroundColor, Colors.White);
+        var pageColor = RgbColor.ParseOrDefault(template.BackgroundColor, Colors.White);
         var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected, lifetime);
-        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri, bitmapCache, decodeWidth, cancellationToken, lifetime), canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last, lifetime);
+        var backgroundReady = TemplatePageImages.LoadImageAsync(backgroundImage, template.BackgroundImageDataUri,
+            bitmapCache, decodeWidth, cancellationToken, lifetime, isBackground: true);
+        var imagesReady = Task.WhenAll(backgroundReady, canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady);
+        return new TemplatePageResult(page, overflow, imagesReady, populated.Length > 0, first, last, lifetime);
         }
         catch { lifetime.Dispose(); throw; }
     }
@@ -193,23 +190,21 @@ public static class TemplateRenderer
         return double.IsFinite(thickness) ? Math.Clamp(thickness, 0, 20) : 1;
     }
 
-    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, Dictionary<int, string[]> recipeAllergens, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected, TemplateVisualLifetime lifetime)
+    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected, TemplateVisualLifetime lifetime)
     {
         var panel = new StackPanel { Spacing = double.IsFinite(template.MealLineSpacing) ? Math.Clamp(template.MealLineSpacing, 0, 20) : 1 };
         var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;
         var heading = StyledText(day.ToString("dddd, d MMMM"), GetTextStyle(template, $"heading:{dayIndex}"), scale);
         Selectable(heading, $"heading:{dayIndex}", onSelected, lifetime);
         panel.Children.Add(heading);
+        if (entries.Count == 0) return panel;
+
+        var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
+        var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
         foreach (var entry in entries)
         {
             var recipe = recipes[entry.RecipeId];
-            var allergens = recipeAllergens[entry.RecipeId];
-            var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
-            var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
-            var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
-            // Keep each editable part as its own element. Runs inside one TextBlock
-            // cannot receive pointer input, which made the builder's previous
-            // menu/ingredients/allergens selector ambiguous.
+            // Separate text blocks keep the title and ingredients independently selectable.
             var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
@@ -238,12 +233,6 @@ public static class TemplateRenderer
                 Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
                 meal.Children.Add(ingredientBlock);
             }
-            if (allergens.Length > 0)
-            {
-                var allergenBlock = StyledText(" · " + string.Join(", ", allergens), allergenStyle, scale);
-                Selectable(allergenBlock, $"allergens:{dayIndex}", onSelected, lifetime);
-                meal.Children.Add(allergenBlock);
-            }
             panel.Children.Add(meal);
         }
         return panel;
@@ -256,41 +245,10 @@ public static class TemplateRenderer
         else block.Inlines.Add(run);
     }
 
-    private static Windows.UI.Color ParseColor(string? value, Windows.UI.Color fallback)
-    {
-        if (value == null || !System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$")) return fallback;
-        return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
-    }
-
     private static SolidColorBrush Brush(string? value, double opacity)
     {
-        var color = ParseColor(value, Colors.Black);
+        var color = RgbColor.ParseOrDefault(value, Colors.Black);
         var alpha = (byte)Math.Round((double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1) * byte.MaxValue);
         return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
-    }
-
-    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken, TemplateVisualLifetime lifetime)
-    {
-        if (string.IsNullOrEmpty(dataUri)) return;
-        if (!dataUri.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase) && !dataUri.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Unsupported template image.");
-        if (dataUri.Length > 14_000_000) throw new InvalidOperationException("Template image is too large.");
-        try
-        {
-            if (bitmapCache != null)
-            {
-                var cached = await bitmapCache.GetAsync(dataUri, decodeWidth, 10 * 1024 * 1024);
-                if (!cancellationToken.IsCancellationRequested && !lifetime.IsDisposed) target.Source = cached;
-                return;
-            }
-            var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
-            if (bytes.Length > 10 * 1024 * 1024) throw new InvalidOperationException("Template image is too large.");
-            using var stream = new InMemoryRandomAccessStream();
-            using var writer = new DataWriter(stream.GetOutputStreamAt(0));
-            writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
-            var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
-            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && !lifetime.IsDisposed) target.Source = bitmap;
-        }
-        catch (FormatException ex) { throw new InvalidOperationException("Invalid template image.", ex); }
     }
 }

@@ -8,6 +8,7 @@ on:
       - '.github/workflows/package-check.yml'
       - '.github/workflows/windows-package.yml'
       - 'scripts/test-msi-upgrade.ps1'
+      - 'scripts/wait-for-app-file.ps1'
       - 'scripts/wait-for-push-tests.sh'
 
 permissions:
@@ -25,12 +26,9 @@ jobs:
       - name: Require successful push tests for this commit
         env:
           GH_TOKEN: ${{ github.token }}
-          TEST_BRANCH: release
         run: bash scripts/wait-for-push-tests.sh
 
   package:
     name: Build and verify packages without release
     needs: tests
     uses: ./.github/workflows/windows-package.yml
-    with:
-      version: '0.0.14'

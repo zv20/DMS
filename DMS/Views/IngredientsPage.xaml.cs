@@ -15,7 +15,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 {
     private readonly DatabaseService _database;
     private int _pageGeneration;
-    private ObservableCollection<IngredientItemViewModel> _ingredients = new();
+    private readonly List<IngredientItemViewModel> _ingredients = new();
     private List<IngredientItemViewModel> _filteredIngredients = new();
     private readonly SideEditorController _editor;
 
@@ -25,6 +25,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
+        _editor.EditingChanged += UpdateSelection;
         Loaded += IngredientsPage_Loaded;
     }
 
@@ -58,7 +59,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         var ingredients = await _database.GetAllIngredientsAsync();
         var allergens = await _database.GetAllAllergensAsync();
         if (generation != _pageGeneration) return;
-        var allergenIcons = allergens.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
+        var allergenIcons = AllergenDisplay.BuildIconLookup(allergens);
         _ingredients.Clear();
         foreach (var ingredient in ingredients)
         {
@@ -74,13 +75,19 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         var query = SearchBox.Text ?? "";
         _filteredIngredients = CatalogFilter.Ingredients(_ingredients, query);
         IngredientsListView.ItemsSource = _filteredIngredients;
-        var hasItems = _ingredients.Count > 0;
-        EmptyStateTitle.Text = L.Get(hasItems ? "IngredientNoMatches" : "String_Text_No_ingredients_yet_affb49");
-        EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
-        ClearSearchButton.Visibility = hasItems && _filteredIngredients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyStatePanel.Visibility = _filteredIngredients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        IngredientsListView.Visibility = _filteredIngredients.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        UpdateSelection();
+        CatalogEmptyState.Update(_ingredients.Count, _filteredIngredients.Count, IngredientsListView, EmptyStatePanel,
+            EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_ingredients_yet_affb49", "IngredientNoMatches");
     }
+
+    private void UpdateSelection()
+    {
+        if (_editor == null) return;
+        var selected = _filteredIngredients.FirstOrDefault(item => item.Id == _editor.EditingId);
+        if (!ReferenceEquals(IngredientsListView.SelectedItem, selected)) IngredientsListView.SelectedItem = selected;
+    }
+
+    private void IngredientsListView_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSelection();
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
@@ -117,26 +124,10 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         }
     }
 
-    private async void DeleteIngredientButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
-        button.IsEnabled = false;
-        try
-        {
-            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Ingredient_79a0ab"), Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
-            try { await _database.DeleteIngredientAsync(id); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete ingredient {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
-            if (_editor.EditingId == id) _editor.Close();
-            try { await LoadIngredientsAsync(); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Deleted ingredient {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
-        }
-        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm ingredient deletion"); SetPageStatus("DataDialogFailed"); }
-        finally { button.IsEnabled = true; }
-    }
+    private async void DeleteIngredientButton_Click(object sender, RoutedEventArgs e) =>
+        await _editor.DeleteItemAsync(sender, "Text_Delete_Ingredient_79a0ab",
+            "Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2",
+            _database.DeleteIngredientAsync, LoadIngredientsAsync, SetPageStatus);
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
 
@@ -235,7 +226,7 @@ public class IngredientItemViewModel
     public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string AllergensDisplay => Allergens.Count > 0
-        ? string.Join("  ", Allergens.Select(allergen => $"{(AllergenIcons.TryGetValue(allergen, out var icon) ? icon : AllergenDisplay.Icon(allergen))} {L.Allergen(allergen)}"))
+        ? AllergenDisplay.FormatList(Allergens, AllergenIcons)
         : L.Get("Text_No_allergens_238938");
 
     public IngredientItemViewModel() { }

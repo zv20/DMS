@@ -384,7 +384,6 @@
   <data name="OutputPreparing" xml:space="preserve"><value>Подготвяне на прегледа...</value></data>
   <data name="OutputImageTooLarge" xml:space="preserve"><value>Изображението в шаблона е твърде голямо. Изберете по-малко изображение в редактора.</value></data>
   <data name="OutputPreviewFailed" xml:space="preserve"><value>Прегледът не може да бъде зареден.</value></data>
-  <data name="OutputWebViewRequired" xml:space="preserve"><value>Прегледът изисква WebView2: </value></data>
   <data name="OutputPdfSaved" xml:space="preserve"><value>PDF е запазен.</value></data>
   <data name="OutputPdfFailed" xml:space="preserve"><value>Неуспешно запазване на PDF.</value></data>
   <data name="OutputImageOverflow" xml:space="preserve"><value>Менюто е по-дълго от едно изображение. Използвайте PDF или намалете размера на текста.</value></data>

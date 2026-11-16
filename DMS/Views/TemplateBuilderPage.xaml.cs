@@ -218,7 +218,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var settings = await _database.GetSettingsAsync();
             if (_leaving) return;
             _recentTemplateColors = settings?.RecentTemplateColors?
-                .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
+                .Where(color => RgbColor.TryParse(color, out _)).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
             await ReloadTemplatesAsync();
             if (_leaving) return;
             var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
@@ -331,10 +331,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 selected = chosenTemplate;
             else if (result == ContentDialogResult.Secondary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate templateToDelete } && !templateToDelete.IsPreset)
             {
-                var confirmation = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
-                    Content = string.Format(L.Get("DeleteTemplatePrompt"), templateToDelete.Name), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                    CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-                if (await confirmation.ShowAsync() == ContentDialogResult.Primary)
+                if (await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Template_c07327"),
+                    L.Format("DeleteTemplatePrompt", templateToDelete.Name), "String_Text_Delete_f6fdbe"))
                 {
                     await _database.DeleteTemplateAsync(templateToDelete.Name);
                     await ReloadTemplatesAsync();
@@ -470,13 +468,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            var saved = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(_loadedTemplate)) ?? new MenuTemplate();
-            saved.Name = name; saved.Document = _document;
-            // The editable document owns its images. Retaining inactive browser
-            // layers would incorrectly report usage after a block was removed.
-            saved.BackgroundImageAssetId = null; saved.BackgroundImageDataUri = null;
-            saved.ImageLayers = [];
-            if (!string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
+            var saved = new MenuTemplate
+            {
+                Name = name,
+                Document = _document,
+                IsPreset = _loadedTemplate.IsPreset && string.Equals(name, _loadedName, StringComparison.Ordinal)
+            };
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved;
             _loadedName = name; _dirty = false; _savedDocumentJson = SerializeDocument();
@@ -544,10 +541,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _saving = true; RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = SaveButton.IsEnabled = false;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
-                Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Template_c07327"),
+                L.Get("TplDeletePrompt"), "String_Text_Delete_f6fdbe")) return;
             await _database.DeleteTemplateAsync(name);
             SetDocument(NewTemplate(), null);
             try { await ReloadTemplatesAsync(); }
@@ -566,9 +561,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         UpdateInlineText();
         if (!_dirty) return true;
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"), Content = L.Get("SideEditorDiscardMessage"),
-            PrimaryButtonText = L.Get("RecipeDiscardButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        return await EditorDialogs.ConfirmDiscardAsync(XamlRoot);
     }
 
     private async void WeekPicker_DateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args)
@@ -578,15 +571,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         var generation = ++_generation;
         var day = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
-        var monday = day.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
+        var monday = MenuOutputService.WeekStart(day);
         try
         {
-            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            var (settings, entries, recipes, ingredients) = await MenuOutputService.LoadWeekAsync(_database, monday);
             var weekendEnabled = settings.WeekendPlanningEnabled;
-            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
-                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
-            var recipes = await _database.GetAllRecipesAsync();
-            var ingredients = await _database.GetAllIngredientsAsync();
             if (generation != _generation) return;
             _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled; _mealsPerDay = settings.MealsPerDay; _previewPageIndex = 0;
             for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
@@ -620,14 +609,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _dirty = true;
         Render();
     }
-
-    private static Windows.UI.Color ParseColor(string? value)
-    {
-        if (value is { Length: 7 } && value[0] == '#' && uint.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
-            return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
-        return Microsoft.UI.Colors.Black;
-    }
-    private static string AnchorKey(string key) => key;
 
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
     {
@@ -755,7 +736,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 InlineEditor.FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * zoom : 14 * zoom, 6, 144);
                 InlineEditor.FontWeight = style.Bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
                 InlineEditor.FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
-                InlineEditor.Foreground = new SolidColorBrush(ParseColor(style.Color));
+                InlineEditor.Foreground = new SolidColorBrush(RgbColor.ParseOrDefault(style.Color, Microsoft.UI.Colors.Black));
                 InlineEditor.TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left };
                 InlineEditor.VerticalContentAlignment = _editingBlock == "footer" ? VerticalAlignment.Bottom : VerticalAlignment.Top;
             }
@@ -869,12 +850,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 {
                     _document.ShowHeaderReflection = value; _dirty = true; Render();
                 });
-            if (parts[0] is "allergens")
+            if (parts[0] == "ingredients")
                 AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, (value, opacity) =>
                 {
                     _document.AllergenAccentColor = value; _document.AllergenAccentOpacity = opacity; _dirty = true; Render();
                 }, _document.AllergenAccentOpacity);
-            if (parts[0] is not ("ingredients" or "allergens"))
+            else
             {
             var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
             foreach (var (glyph, tip) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
@@ -888,7 +869,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             ToolTipService.SetToolTip(alignment, L.Get("TplHeaderAlignment"));
             ContextTools.Children.Add(alignment);
             }
-            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredients" or "allergens")
+            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredients")
             {
                 var all = new Button { Content = new FontIcon { Glyph = "\uE8C8" } };
                 ToolTipService.SetToolTip(all, L.Get("TplApplyWeekdayStyle"));
@@ -948,7 +929,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void AddContextColor(string label, string initial, Action<string, double> change, double initialOpacity = 1)
     {
-        var initialColor = ParseColor(initial);
+        var initialColor = RgbColor.ParseOrDefault(initial, Microsoft.UI.Colors.Black);
         var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
         var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
@@ -965,11 +946,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             foreach (var recentColor in _recentTemplateColors)
             {
                 var color = recentColor;
-                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
+                var recentRgb = RgbColor.ParseOrDefault(color, Microsoft.UI.Colors.Black);
+                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(recentRgb), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
                 ToolTipService.SetToolTip(recentButton, color);
                 recentButton.Click += (_, _) =>
                 {
-                    var recentRgb = ParseColor(color);
                     picker.Color = Windows.UI.Color.FromArgb(picker.Color.A, recentRgb.R, recentRgb.G, recentRgb.B);
                 };
                 recent.Children.Add(recentButton);
@@ -991,8 +972,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         button.Flyout = flyout;
         ContextTools.Children.Add(button);
     }
-
-    private static bool IsColorHex(string color) => color.Length == 7 && color[0] == '#' && uint.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out _);
 
     private async Task RememberTemplateColorAsync(string color)
     {
@@ -1042,7 +1021,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
-                _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock));
+                _selectionAnchor = FindAnchor(result.Page, _selectedBlock);
                 RevealNewImage();
                 PositionContextTools();
             });
@@ -1051,7 +1030,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             PageHost.Content = result.Page;
             previous?.Dispose();
             if (_selectedBlock != null)
-                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
+                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, _selectedBlock); PositionContextTools(); });
             StatusText.Text = "";
             await result.ImagesReady;
             if (generation == _renderGeneration)

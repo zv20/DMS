@@ -50,7 +50,6 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             if (element == search) return;
         search.IsSuggestionListOpen = false;
     }
-    private static DateTime WeekStart(DateTime day) => day.Date.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
     private void UpdateViewButtons()
     {
         var accent = (Style)Application.Current.Resources["AccentButtonStyle"];
@@ -87,10 +86,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         _confirmingDiscard = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"),
-                Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            return await EditorDialogs.ConfirmDiscardAsync(XamlRoot);
         }
         finally { _confirmingDiscard = false; }
     }
@@ -208,11 +204,17 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var settings = await _database.GetSettingsAsync() ?? new AppSettings();
         var weekend = settings.WeekendPlanningEnabled;
         var recipes = await _database.GetAllRecipesAsync();
-        var first = monthly ? new DateTime(date.Year, date.Month, 1) : WeekStart(date);
-        var start = WeekStart(first);
+        var first = monthly ? new DateTime(date.Year, date.Month, 1) : MenuOutputService.WeekStart(date);
+        var start = MenuOutputService.WeekStart(first);
         var end = monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(weekend ? 6 : 4);
         var calendarEnd = monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
-        var entries = await _database.GetMenuAsync(start, calendarEnd);
+        var entriesByDay = (await _database.GetMenuAsync(start, calendarEnd)).ToLookup(entry => entry.Date.Date);
+        var recipesById = recipes.ToDictionary(recipe => recipe.Id);
+        var recipesByCategory = monthly ? null : recipes
+            .GroupBy(recipe => recipe.Category, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key,
+                group => new Lazy<Recipe[]>(() => group.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase).ToArray()),
+                StringComparer.OrdinalIgnoreCase);
         var categories = monthly
             ? new Dictionary<(DateTime Date, string Slot), string>()
             : (await _database.GetMenuCategoriesAsync(start, calendarEnd))
@@ -230,22 +232,19 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var weeklyCells = new List<List<UIElement>>();
         foreach (var day in displayedDays)
         {
-            var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-            var isDisabledWeekend = isWeekend && !weekend;
+            var dayEntries = entriesByDay[day];
             var panel = new StackPanel { Spacing = 8 };
             panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = monthly ? 14 : 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             if (monthly)
             {
-                var names = isDisabledWeekend
-                    ? Enumerable.Empty<string>()
-                    : Enumerable.Range(0, settings.MealsPerDay).Select(index =>
-                    {
-                        var entry = FindSlotEntry(day, index, entries);
-                        var name = recipes.FirstOrDefault(recipe => recipe.Id == entry?.RecipeId)?.Name;
-                        return name == null ? null : $"{index + 1}. {name}";
-                    }).OfType<string>();
+                var names = Enumerable.Range(0, settings.MealsPerDay).Select(index =>
+                {
+                    var entry = MenuOutputService.FindSlotEntry(index, dayEntries);
+                    return entry != null && recipesById.TryGetValue(entry.RecipeId, out var recipe)
+                        ? $"{index + 1}. {recipe.Name}" : null;
+                }).OfType<string>();
                 var summary = string.Join("\n", names);
-                var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, IsEnabled = !isDisabledWeekend, Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8) };
+                var button = new Button { Content = new TextBlock { Text = summary.Length > 0 ? summary : L.Get("Text_Plan_menu_0031d0"), TextWrapping = TextWrapping.Wrap }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 80, Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8) };
                 button.Click += async (_, _) => await ChangeViewAsync(() => { _date = day; _monthly = false; });
                 panel.Children.Add(button);
             }
@@ -253,24 +252,20 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             {
                 var cells = new List<UIElement> { panel.Children[0] };
                 panel.Children.Clear();
-                for (var slot = 0; slot < settings.MealsPerDay; slot++) cells.Add(CreateSlot(day, slot, entries, recipes, categories, settings.MealCategories));
+                for (var slot = 0; slot < settings.MealsPerDay; slot++)
+                {
+                    var entry = MenuOutputService.FindSlotEntry(slot, dayEntries);
+                    var recipe = entry == null ? null : recipesById.GetValueOrDefault(entry.RecipeId);
+                    cells.Add(CreateSlot(day, slot, recipe, recipesByCategory!, categories, settings.MealCategories));
+                }
                 var clearDay = new Button { Content = L.Get("PlannerClearDay"), HorizontalAlignment = HorizontalAlignment.Stretch };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clearDay, $"{L.Get("PlannerClearDay")} {day:D}");
                 clearDay.Click += async (_, _) => await ClearDayAsync(day);
                 cells.Add(clearDay);
                 weeklyCells.Add(cells);
             }
-            var card = new Border { Child = monthly ? panel : null, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = isDisabledWeekend || (monthly && day.Month != first.Month) ? 0.4 : 1 };
-            card.PointerEntered += (_, _) =>
-            {
-                card.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentSubtleBrush"];
-                card.BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
-            };
-            card.PointerExited += (_, _) =>
-            {
-                card.ClearValue(Border.BackgroundProperty);
-                card.ClearValue(Border.BorderBrushProperty);
-            };
+            var card = new Border { Child = monthly ? panel : null, Style = (Style)Application.Current.Resources["PlannerDayCardStyle"], Opacity = monthly && day.Month != first.Month ? 0.4 : 1 };
+            AttachDayHover(card, card);
             cards.Add(card);
         }
         // A newer request supersedes this snapshot, so the next iteration renders it.
@@ -304,17 +299,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                         row == rowCount - 1 ? new Thickness(10, 0, 10, 10) : new Thickness(10, 4, 10, 8);
                     Grid.SetColumn(cell, dayIndex);
                     Grid.SetRow(cell, row);
-                    var dayCard = cards[dayIndex];
-                    cell.PointerEntered += (_, _) =>
-                    {
-                        dayCard.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentSubtleBrush"];
-                        dayCard.BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
-                    };
-                    cell.PointerExited += (_, _) =>
-                    {
-                        dayCard.ClearValue(Border.BackgroundProperty);
-                        dayCard.ClearValue(Border.BorderBrushProperty);
-                    };
+                    AttachDayHover(cell, cards[dayIndex]);
                     CalendarGrid.Children.Add(cell);
                 }
             }
@@ -333,11 +318,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var cleared = false;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("PlannerClearDay"),
-                Content = string.Format(L.Get("PlannerClearDayConfirm"), day.ToString("D")),
-                PrimaryButtonText = L.Get("PlannerClearDay"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("PlannerClearDay"),
+                L.Format("PlannerClearDayConfirm", day.ToString("D")), "PlannerClearDay")) return;
             await _database.ClearMenuDayAsync(day);
             cleared = true;
         }
@@ -351,11 +333,18 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         if (cleared) await RefreshAsync();
     }
 
-    private static MenuEntry? FindSlotEntry(DateTime day, int index, IReadOnlyList<MenuEntry> entries)
+    private static void AttachDayHover(UIElement target, Border card)
     {
-        string[] oldNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
-        return entries.FirstOrDefault(e => e.Date.Date == day.Date && e.Slot == $"slot{index + 1}")
-            ?? (index < Categories.Length ? entries.FirstOrDefault(e => e.Date.Date == day.Date && (e.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || e.Slot == oldNames[index])) : null);
+        target.PointerEntered += (_, _) =>
+        {
+            card.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentSubtleBrush"];
+            card.BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
+        };
+        target.PointerExited += (_, _) =>
+        {
+            card.ClearValue(Border.BackgroundProperty);
+            card.ClearValue(Border.BorderBrushProperty);
+        };
     }
 
     private static void InvalidateRecipeTextBox(DependencyObject element)
@@ -365,14 +354,11 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             InvalidateRecipeTextBox(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i));
     }
 
-    private StackPanel CreateSlot(DateTime day, int index, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
+    private StackPanel CreateSlot(DateTime day, int index, Recipe? current, IReadOnlyDictionary<string, Lazy<Recipe[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
     {
         var slot = $"slot{index + 1}";
-        var entry = FindSlotEntry(day, index, entries);
-        var current = recipes.FirstOrDefault(r => r.Id == entry?.RecipeId);
-        var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
+        var selectedCategory = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
         var panel = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Top };
-        var selectedCategory = category;
         var select = new Button { Width = 36, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
         var categoryMenu = new MenuFlyout();
         select.Flyout = categoryMenu;
@@ -391,8 +377,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var retry = new Button { Content = L.Get("RetryAction"), MinWidth = 0, Visibility = Visibility.Collapsed };
         bool saving = false, hasPending = false;
         Recipe? pendingRecipe = null;
-        string pendingCategory = category;
-        string DisplayedCategory() => selectedCategory;
+        var pendingCategory = selectedCategory;
         void UpdateCategoryButton(int categoryIndex)
         {
             var selected = mealCategories[categoryIndex];
@@ -418,10 +403,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             ToolTipService.SetToolTip(search, recipe?.Name ?? "");
             try
             {
-                await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id, entry?.Slot);
-                category = requestedCategory;
+                await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id);
                 current = recipe;
-                entry = recipe == null ? null : new MenuEntry { Date = day, Slot = slot, RecipeId = recipe.Id };
                 ClearPending();
                 status.Text = L.Get("Text_Saved_499dc6");
                 status.Visibility = Visibility.Visible;
@@ -448,8 +431,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             try
             {
-                var displayedCategory = DisplayedCategory();
-                search.ItemsSource = recipes.Where(r => r.Category.Equals(displayedCategory, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                var recipes = recipesByCategory.GetValueOrDefault(selectedCategory)?.Value ?? Array.Empty<Recipe>();
+                var query = search.Text.Trim();
+                search.ItemsSource = query.Length == 0 ? recipes :
+                    Array.FindAll(recipes, recipe => recipe.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }
@@ -458,7 +443,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             if (args.Key != Windows.System.VirtualKey.Back || current == null || search.Text != current.Name) return;
             args.Handled = true;
-            await SaveAsync(null, DisplayedCategory());
+            await SaveAsync(null, selectedCategory);
         };
         SearchPicker.ReopenOnClick(search, Suggest);
         search.TextChanged += async (_, args) =>
@@ -468,9 +453,9 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             // before retrying so Retry cannot save an older, hidden choice.
             if (hasPending) retry.Visibility = Visibility.Collapsed;
             Suggest();
-            if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, DisplayedCategory());
+            if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, selectedCategory);
         };
-        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, DisplayedCategory()); };
+        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, selectedCategory); };
         categoryMenu.Opening += (_, _) =>
         {
             if (categoryMenu.Items.Count != 0) return;
@@ -485,7 +470,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                     if (selectedCategory == option.Id) return;
                     selectedCategory = option.Id;
                     UpdateCategoryButton(optionIndex);
-                    await SaveAsync(null, DisplayedCategory());
+                    await SaveAsync(null, selectedCategory);
                     Suggest();
                 };
                 categoryMenu.Items.Add(item);

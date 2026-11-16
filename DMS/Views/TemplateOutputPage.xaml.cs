@@ -20,6 +20,7 @@ namespace DMS.Views;
 /// <summary>Prints the same native page renderer used in the template editor.</summary>
 public sealed partial class TemplateOutputPage : Page
 {
+    private const int PrintDecodeLimit = 3600; // Covers the long edge of A4 at 300 DPI.
     private readonly DatabaseService _database;
     private static readonly string[] PngExtensions = [".png"];
     private static readonly string[] JpegExtensions = [".jpg", ".jpeg"];
@@ -46,7 +47,6 @@ public sealed partial class TemplateOutputPage : Page
     private DateTime _monday;
     private DateTime? _firstDay, _lastDay;
     private TemplateDocument? _document;
-    private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
 
@@ -93,7 +93,7 @@ public sealed partial class TemplateOutputPage : Page
             {
                 ToolTipService.SetToolTip(PrintButton, L.Get("TemplateOutputPrintUnsupported"));
             }
-            var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.Document != null).ToList();
+            var templates = await _database.GetAllTemplatesAsync();
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;
@@ -115,7 +115,7 @@ public sealed partial class TemplateOutputPage : Page
         DisposePages(_previewPages); _previewPages = [];
         TemplateSelector.ItemsSource = null;
         _document = null; _pageEntries.Clear();
-        _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
+        _recipes.Clear(); _ingredients.Clear();
         _previewBitmaps.Clear();
         try { UnregisterPrinting(); }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to release print resources"); }
@@ -145,18 +145,13 @@ public sealed partial class TemplateOutputPage : Page
         SetReady(false);
         if (TemplateSelector.SelectedItem is not MenuTemplate { Document: not null } template) return;
         var date = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
-        var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
+        var monday = MenuOutputService.WeekStart(date);
         await _refreshGate.WaitAsync();
         try
         {
             if (!_loaded || generation != _generation) return;
             _previewBitmaps.Clear();
-            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
-            var weekendEnabled = settings.WeekendPlanningEnabled;
-            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
-                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
-            var recipes = await _database.GetAllRecipesAsync();
-            var ingredients = await _database.GetAllIngredientsAsync();
+            var (settings, entries, recipes, ingredients) = await MenuOutputService.LoadWeekAsync(_database, monday);
             template = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(template);
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME")) &&
@@ -164,14 +159,14 @@ public sealed partial class TemplateOutputPage : Page
                 throw new InvalidOperationException("Performance output images were not loaded.");
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
-            _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            _recipes = recipes; _ingredients = ingredients; _weekendEnabled = settings.WeekendPlanningEnabled;
             bool Fits(IReadOnlyList<MenuEntry> pageEntries)
             {
                 var measured = TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, _entries, _recipes, Fits);
+            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, entries, _recipes, Fits);
             var results = new List<TemplatePageResult>();
             try
             {
@@ -353,7 +348,8 @@ public sealed partial class TemplateOutputPage : Page
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
             ReleasePrintResources();
             foreach (var pageEntries in _pageEntries)
-                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps));
+                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients,
+                    includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps, decodeWidth: PrintDecodeLimit));
             await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
             if (!_loaded) return;
             if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
@@ -438,30 +434,21 @@ public sealed partial class TemplateOutputPage : Page
         return ImagePdf.Create(images, 1588, 2246);
     }
 
-    internal async Task ExportPerformancePdfAsync(string path)
+    internal async Task ExportPerformanceAsync(string format, string path)
     {
         if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
         _busy = true;
         SetReady(true);
         try
         {
-            var pdf = await CreatePdfBytesAsync();
-            await System.IO.File.WriteAllBytesAsync(path, pdf);
-            PerformancePageSignal.Write("pdf", pdf.Length);
-        }
-        finally { _busy = false; SetReady(_ready); }
-    }
-
-    internal async Task ExportPerformancePngAsync(string path)
-    {
-        if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
-        _busy = true;
-        SetReady(true);
-        try
-        {
-            var png = await RenderPageAsync(_previewPages[0].Page, BitmapEncoder.PngEncoderId);
-            await System.IO.File.WriteAllBytesAsync(path, png);
-            PerformancePageSignal.Write("png", png.Length);
+            var bytes = format switch
+            {
+                "pdf" => await CreatePdfBytesAsync(),
+                "png" => await RenderPageAsync(_previewPages[0].Page, BitmapEncoder.PngEncoderId),
+                _ => throw new ArgumentOutOfRangeException(nameof(format))
+            };
+            await System.IO.File.WriteAllBytesAsync(path, bytes);
+            PerformancePageSignal.Write(format, bytes.Length);
         }
         finally { _busy = false; SetReady(_ready); }
     }

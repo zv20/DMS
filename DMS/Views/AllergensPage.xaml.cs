@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
-using System.Collections.ObjectModel;
 using Windows.UI;
 using Microsoft.UI.Text;
 
@@ -17,7 +16,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 {
     private readonly DatabaseService _database;
     private int _pageGeneration;
-    private ObservableCollection<AllergenItemViewModel> _allergens = new();
+    private readonly List<AllergenItemViewModel> _allergens = new();
     private List<AllergenItemViewModel> _filteredAllergens = new();
     private readonly SideEditorController _editor;
 
@@ -27,6 +26,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
+        _editor.EditingChanged += UpdateSelection;
         Loaded += AllergensPage_Loaded;
     }
 
@@ -75,13 +75,19 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             allergen.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
             allergen.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
         AllergensListView.ItemsSource = _filteredAllergens;
-        var hasItems = _allergens.Count > 0;
-        EmptyStateTitle.Text = L.Get(hasItems ? "AllergenNoMatches" : "String_Text_No_allergens_yet_6f883b");
-        EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
-        ClearSearchButton.Visibility = hasItems && _filteredAllergens.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyStatePanel.Visibility = _filteredAllergens.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        AllergensListView.Visibility = _filteredAllergens.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        UpdateSelection();
+        CatalogEmptyState.Update(_allergens.Count, _filteredAllergens.Count, AllergensListView, EmptyStatePanel,
+            EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_allergens_yet_6f883b", "AllergenNoMatches");
     }
+
+    private void UpdateSelection()
+    {
+        if (_editor == null) return;
+        var selected = _filteredAllergens.FirstOrDefault(item => item.Id == _editor.EditingId);
+        if (!ReferenceEquals(AllergensListView.SelectedItem, selected)) AllergensListView.SelectedItem = selected;
+    }
+
+    private void AllergensListView_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSelection();
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
@@ -118,26 +124,10 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         }
     }
 
-    private async void DeleteAllergenButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
-        button.IsEnabled = false;
-        try
-        {
-            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Allergen_7b0000"), Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
-            try { await _database.DeleteAllergenAsync(id); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete allergen {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
-            if (_editor.EditingId == id) _editor.Close();
-            try { await LoadAllergensAsync(); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Deleted allergen {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
-        }
-        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm allergen deletion"); SetPageStatus("DataDialogFailed"); }
-        finally { button.IsEnabled = true; }
-    }
+    private async void DeleteAllergenButton_Click(object sender, RoutedEventArgs e) =>
+        await _editor.DeleteItemAsync(sender, "Text_Delete_Allergen_7b0000",
+            "Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f",
+            _database.DeleteAllergenAsync, LoadAllergensAsync, SetPageStatus);
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
 
@@ -175,7 +165,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
 
         var colorLabel = new TextBlock { Text = L.Get("Text_Color_1d0c83"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(colorLabel);
-        var picker = new ColorPicker { Color = ParseColorHex(allergen.Color), ColorSpectrumShape = ColorSpectrumShape.Ring,
+        var picker = new ColorPicker { Color = AllergenItemViewModel.ParseColorHex(allergen.Color), ColorSpectrumShape = ColorSpectrumShape.Ring,
             IsAlphaEnabled = false, IsHexInputVisible = true, Width = 288 };
         var swatch = new Border { Width = 24, Height = 24, CornerRadius = new CornerRadius(5), Background = new SolidColorBrush(picker.Color) };
         var colorText = new TextBlock { Text = allergen.Color, VerticalAlignment = VerticalAlignment.Center };
@@ -219,15 +209,6 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         nameBox.Focus(FocusState.Programmatic);
         return Task.CompletedTask;
     }
-
-    private static Color ParseColorHex(string hex)
-    {
-        hex = hex.TrimStart('#');
-        var r = Convert.ToByte(hex.Substring(0, 2), 16);
-        var g = Convert.ToByte(hex.Substring(2, 2), 16);
-        var b = Convert.ToByte(hex.Substring(4, 2), 16);
-        return Windows.UI.Color.FromArgb(255, r, g, b);
-    }
 }
 
 public class AllergenItemViewModel
@@ -256,17 +237,11 @@ public class AllergenItemViewModel
         {
             Id = Id,
             Name = Name,
-            Color = Color
-            ,Icon = Icon
+            Color = Color,
+            Icon = Icon
         };
     }
 
-    private static Color ParseColorHex(string hex)
-    {
-        hex = hex.TrimStart('#');
-        var r = Convert.ToByte(hex.Substring(0, 2), 16);
-        var g = Convert.ToByte(hex.Substring(2, 2), 16);
-        var b = Convert.ToByte(hex.Substring(4, 2), 16);
-        return Windows.UI.Color.FromArgb(255, r, g, b);
-    }
+    internal static Color ParseColorHex(string hex) =>
+        RgbColor.ParseOrDefault(hex, Windows.UI.Color.FromArgb(255, 52, 152, 219));
 }
