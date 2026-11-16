@@ -1,0 +1,24 @@
+<UserControl
+    x:Class="DMS.Views.SetupPreview"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <NavigationView x:Name="PreviewNavigation" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" IsSettingsVisible="True" Background="Transparent">
+            <NavigationView.Resources>
+                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
+                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
+                <SolidColorBrush x:Key="TopNavigationViewSelectionIndicatorForeground" Color="White" />
+            </NavigationView.Resources>
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Uid="NavMenu" Content="Menu Planner" Icon="Calendar" />
+                <NavigationViewItem x:Uid="NavRecipes" Content="Recipes" />
+                <NavigationViewItem x:Uid="NavIngredients" Content="Ingredients" />
+                <NavigationViewItem x:Uid="NavAllergens" Content="Allergens" />
+                <NavigationViewItem x:Uid="NavTemplateBuilder" Content="Template Builder" Icon="Edit" />
+            </NavigationView.MenuItems>
+            <Border BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
+                <ContentControl x:Name="PreviewContent" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+            </Border>
+        </NavigationView>
+    </Grid>
+</UserControl>

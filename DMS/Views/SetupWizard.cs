@@ -19,15 +19,17 @@ internal static class SetupWizard
         var completed = new TaskCompletionSource<bool>();
         var step = 0;
         var overlay = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.White), RequestedTheme = ElementTheme.Light };
-        Grid.SetRowSpan(overlay, 2);
+        Grid.SetRow(overlay, 1);
         var columns = new Grid();
-        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
+        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(360) });
         columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var sidebar = new StackPanel { Spacing = 16, Padding = new Thickness(24) };
+        var sidebar = new StackPanel { Spacing = 16, Padding = new Thickness(28, 32, 28, 28) };
         var previewHost = new Grid { IsHitTestVisible = false };
         Grid.SetColumn(previewHost, 1);
-        columns.Children.Add(new ScrollViewer { Content = sidebar, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-        columns.Children.Add(previewHost);
+        columns.Children.Add(new ScrollViewer { Content = sidebar, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        var previewFrame = new Border { Child = previewHost, Margin = new Thickness(0, 20, 20, 20), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.LightGray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10) };
+        Grid.SetColumn(previewFrame, 1);
+        columns.Children.Add(previewFrame);
         overlay.Children.Add(columns);
         host.Children.Add(overlay);
 
@@ -36,16 +38,26 @@ internal static class SetupWizard
         {
             Localization.Apply(settings.Language);
             AppearanceService.ApplyAccent(settings.AccentColor);
-            previewHost.RequestedTheme = settings.Theme switch { "dark" => ElementTheme.Dark, "system" => ElementTheme.Default, _ => ElementTheme.Light };
             var page = new MenuPage();
             page.SetSetupPreview(settings, monthly: step == 4);
+            var preview = new SetupPreview(page)
+            {
+                RequestedTheme = settings.Theme switch
+                {
+                    "dark" => ElementTheme.Dark,
+                    "system" when Application.Current.RequestedTheme == ApplicationTheme.Dark => ElementTheme.Dark,
+                    _ => ElementTheme.Light
+                }
+            };
             previewHost.Children.Clear();
-            previewHost.Children.Add(page);
+            previewHost.Children.Add(preview);
         }
         void Render()
         {
             sidebar.Children.Clear();
-            sidebar.Children.Add(new TextBlock { Text = T($"Setup {step + 1} of 5", $"Настройка {step + 1} от 5"), FontSize = 25, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            sidebar.Children.Add(new TextBlock { Text = "DMS", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            sidebar.Children.Add(new TextBlock { Text = T("Set up your kitchen", "Настройте вашата кухня"), FontSize = 25, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+            sidebar.Children.Add(new TextBlock { Text = T($"Step {step + 1} of 5", $"Стъпка {step + 1} от 5"), Opacity = 0.7 });
             if (step == 0)
             {
                 sidebar.Children.Add(new TextBlock { Text = T("Language", "Език") });
@@ -58,8 +70,8 @@ internal static class SetupWizard
                 sidebar.Children.Add(new TextBlock { Text = T("Appearance", "Изглед") });
                 var themes = new[] { "light", "dark", "system" };
                 var accents = new[] { "orange", "blue", "green", "purple", "red", "teal" };
-                var theme = new ComboBox { ItemsSource = themes, SelectedIndex = Math.Max(0, Array.IndexOf(themes, settings.Theme)) };
-                var accent = new ComboBox { ItemsSource = accents, SelectedIndex = Math.Max(0, Array.IndexOf(accents, settings.AccentColor)) };
+                var theme = new ComboBox { Header = T("Theme", "Тема"), ItemsSource = new[] { T("Light", "Светла"), T("Dark", "Тъмна"), T("System", "Системна") }, SelectedIndex = Math.Max(0, Array.IndexOf(themes, settings.Theme)), HorizontalAlignment = HorizontalAlignment.Stretch };
+                var accent = new ComboBox { Header = T("Accent color", "Основен цвят"), ItemsSource = new[] { T("Orange", "Оранжев"), T("Blue", "Син"), T("Green", "Зелен"), T("Purple", "Лилав"), T("Red", "Червен"), T("Teal", "Тюркоазен") }, SelectedIndex = Math.Max(0, Array.IndexOf(accents, settings.AccentColor)), HorizontalAlignment = HorizontalAlignment.Stretch };
                 theme.SelectionChanged += (_, _) => { settings.Theme = themes[theme.SelectedIndex]; Preview(); };
                 accent.SelectionChanged += (_, _) => { settings.AccentColor = accents[accent.SelectedIndex]; Preview(); };
                 sidebar.Children.Add(theme); sidebar.Children.Add(accent);
