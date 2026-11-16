@@ -26,6 +26,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
+        _editor.EditingChanged += UpdateSelection;
         Loaded += AllergensPage_Loaded;
     }
 
@@ -74,9 +75,19 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             allergen.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
             allergen.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
         AllergensListView.ItemsSource = _filteredAllergens;
+        UpdateSelection();
         CatalogEmptyState.Update(_allergens.Count, _filteredAllergens.Count, AllergensListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_allergens_yet_6f883b", "AllergenNoMatches");
     }
+
+    private void UpdateSelection()
+    {
+        if (_editor == null) return;
+        var selected = _filteredAllergens.FirstOrDefault(item => item.Id == _editor.EditingId);
+        if (!ReferenceEquals(AllergensListView.SelectedItem, selected)) AllergensListView.SelectedItem = selected;
+    }
+
+    private void AllergensListView_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSelection();
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 

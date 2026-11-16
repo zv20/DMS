@@ -20,7 +20,8 @@ internal sealed class SideEditorController
     private readonly StackPanel _content;
     private bool _dirty, _opening, _saving, _confirming;
     private Func<Task<bool>>? _saveAction;
-    private int? EditingId { get; set; }
+    public int? EditingId { get; private set; }
+    public event Action? EditingChanged;
 
     public SideEditorController(Page page, ColumnDefinition column, Border panel, TextBlock title, TextBlock status,
         StackPanel content, Button save, Button cancel, Button close)
@@ -59,6 +60,7 @@ internal sealed class SideEditorController
         _title.Text = title;
         _status.Text = "";
         EditingId = id;
+        EditingChanged?.Invoke();
         _saveAction = saveAction;
         _dirty = false;
         Resize();
@@ -83,6 +85,7 @@ internal sealed class SideEditorController
         _column.Width = new GridLength(0);
         _content.Children.Clear();
         EditingId = null;
+        EditingChanged?.Invoke();
         _saveAction = null;
         _dirty = false;
     }

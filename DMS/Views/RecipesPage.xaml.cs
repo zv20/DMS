@@ -43,6 +43,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
     private async void RecipesPage_Loaded(object sender, RoutedEventArgs e)
     {
         RecipesListView.ItemsSource = _filteredRecipes;
+        UpdateRecipeSelection();
         try { await LoadRecipesAsync(); }
         catch (Exception ex) { App.Logger.LogError(ex, "Failed to load recipes"); SetPageStatus("DataLoadFailed"); }
     }
@@ -124,6 +125,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var sort = (SortField.SelectedItem as ComboBoxItem)?.Tag as string ?? "name";
         _filteredRecipes = CatalogFilter.Recipes(_recipes, query, category, sort, _sortAscending);
         RecipesListView.ItemsSource = _filteredRecipes;
+        UpdateRecipeSelection();
         CatalogEmptyState.Update(_recipes.Count, _filteredRecipes.Count, RecipesListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_recipes_yet_0e52a2", "RecipeNoMatches");
     }
@@ -235,8 +237,17 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         EditorContent.Children.Clear();
         _saveRecipe = null;
         _editingRecipeId = null;
+        UpdateRecipeSelection();
         _editorDirty = false;
     }
+
+    private void UpdateRecipeSelection()
+    {
+        var selected = _filteredRecipes.FirstOrDefault(recipe => recipe.Id == _editingRecipeId);
+        if (!ReferenceEquals(RecipesListView.SelectedItem, selected)) RecipesListView.SelectedItem = selected;
+    }
+
+    private void RecipesListView_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateRecipeSelection();
 
     private async Task OpenRecipeEditorAsync(RecipeItemViewModel? existingRecipe)
     {
@@ -402,6 +413,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(allergenChips);
 
         _editingRecipeId = isEditing ? recipe.Id : null;
+        UpdateRecipeSelection();
         _editorDirty = false;
         nameBox.TextChanged += (_, _) => _editorDirty = true;
         categoryBox.SelectionChanged += (_, _) => _editorDirty = true;

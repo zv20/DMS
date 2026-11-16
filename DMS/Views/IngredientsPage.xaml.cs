@@ -25,6 +25,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         ResponsiveToolbar.Attach(ListToolbar, SearchBox);
         _database = App.Services.GetRequiredService<DatabaseService>();
         _editor = new SideEditorController(this, EditorColumn, EditorPanel, EditorTitle, EditorStatus, EditorContent, EditorSaveButton, EditorCancelButton, EditorCloseButton);
+        _editor.EditingChanged += UpdateSelection;
         Loaded += IngredientsPage_Loaded;
     }
 
@@ -74,9 +75,19 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         var query = SearchBox.Text ?? "";
         _filteredIngredients = CatalogFilter.Ingredients(_ingredients, query);
         IngredientsListView.ItemsSource = _filteredIngredients;
+        UpdateSelection();
         CatalogEmptyState.Update(_ingredients.Count, _filteredIngredients.Count, IngredientsListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_ingredients_yet_affb49", "IngredientNoMatches");
     }
+
+    private void UpdateSelection()
+    {
+        if (_editor == null) return;
+        var selected = _filteredIngredients.FirstOrDefault(item => item.Id == _editor.EditingId);
+        if (!ReferenceEquals(IngredientsListView.SelectedItem, selected)) IngredientsListView.SelectedItem = selected;
+    }
+
+    private void IngredientsListView_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSelection();
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
