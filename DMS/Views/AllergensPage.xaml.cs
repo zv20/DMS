@@ -235,12 +235,6 @@ public class AllergenItemViewModel
         };
     }
 
-    internal static Color ParseColorHex(string hex)
-    {
-        // Older values can omit the prefix or carry extra characters after the RGB digits.
-        var digits = hex.AsSpan().TrimStart('#');
-        if (digits.Length >= 6 && RgbColor.TryParseDigits(digits[..6], out var color))
-            return color;
-        return Windows.UI.Color.FromArgb(255, 52, 152, 219);
-    }
+    internal static Color ParseColorHex(string hex) =>
+        RgbColor.ParseOrDefault(hex, Windows.UI.Color.FromArgb(255, 52, 152, 219));
 }

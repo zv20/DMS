@@ -256,7 +256,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 {
                     var entry = MenuOutputService.FindSlotEntry(slot, dayEntries);
                     var recipe = entry == null ? null : recipesById.GetValueOrDefault(entry.RecipeId);
-                    cells.Add(CreateSlot(day, slot, entry, recipe, recipesByCategory!, categories, settings.MealCategories));
+                    cells.Add(CreateSlot(day, slot, recipe, recipesByCategory!, categories, settings.MealCategories));
                 }
                 var clearDay = new Button { Content = L.Get("PlannerClearDay"), HorizontalAlignment = HorizontalAlignment.Stretch };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clearDay, $"{L.Get("PlannerClearDay")} {day:D}");
@@ -354,7 +354,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             InvalidateRecipeTextBox(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i));
     }
 
-    private StackPanel CreateSlot(DateTime day, int index, MenuEntry? entry, Recipe? current, IReadOnlyDictionary<string, Lazy<Recipe[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
+    private StackPanel CreateSlot(DateTime day, int index, Recipe? current, IReadOnlyDictionary<string, Lazy<Recipe[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
     {
         var slot = $"slot{index + 1}";
         var selectedCategory = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
@@ -403,9 +403,8 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             ToolTipService.SetToolTip(search, recipe?.Name ?? "");
             try
             {
-                await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id, entry?.Slot);
+                await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id);
                 current = recipe;
-                entry = recipe == null ? null : new MenuEntry { Date = day, Slot = slot, RecipeId = recipe.Id };
                 ClearPending();
                 status.Text = L.Get("Text_Saved_499dc6");
                 status.Visibility = Visibility.Visible;

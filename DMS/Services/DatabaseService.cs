@@ -554,7 +554,7 @@ public partial class DatabaseService : IDisposable
     }
 
     /// <summary>Save a slot's category and assignment as one indivisible change.</summary>
-    public async Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId, string? previousSlot = null)
+    public async Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(slot);
         ArgumentException.ThrowIfNullOrWhiteSpace(category);
@@ -595,15 +595,6 @@ public partial class DatabaseService : IDisposable
             updateMenu.ExecuteNonQuery();
         }
 
-        if (!string.IsNullOrWhiteSpace(previousSlot) && !string.Equals(previousSlot, slot, StringComparison.Ordinal))
-        {
-            using var removePrevious = _connection.CreateCommand();
-            removePrevious.Transaction = transaction;
-            removePrevious.CommandText = "DELETE FROM menu WHERE date=@date AND slot=@slot";
-            removePrevious.Parameters.AddWithValue("@date", dateValue);
-            removePrevious.Parameters.AddWithValue("@slot", previousSlot);
-            removePrevious.ExecuteNonQuery();
-        }
         transaction.Commit();
     }
 
