@@ -21,13 +21,22 @@ internal static class SetupWizard
         var overlay = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.White), RequestedTheme = ElementTheme.Light };
         Grid.SetRow(overlay, 1);
         var columns = new Grid();
-        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(360) });
+        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(380) });
         columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var sidebar = new StackPanel { Spacing = 16, Padding = new Thickness(28, 32, 28, 28) };
+        var sidebar = new StackPanel { Spacing = 16, Padding = new Thickness(24, 28, 24, 28) };
         var previewHost = new Grid { IsHitTestVisible = false };
         Grid.SetColumn(previewHost, 1);
-        columns.Children.Add(new ScrollViewer { Content = sidebar, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        var previewFrame = new Border { Child = previewHost, Margin = new Thickness(0, 20, 20, 20), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.LightGray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10) };
+        var sidebarCard = new Border
+        {
+            Margin = new Thickness(20),
+            Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 248, 248, 248)),
+            BorderBrush = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 229, 229, 229)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Child = new ScrollViewer { Content = sidebar, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled }
+        };
+        columns.Children.Add(sidebarCard);
+        var previewFrame = new Border { Child = previewHost, Margin = new Thickness(0, 20, 20, 20), BorderBrush = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 229, 229, 229)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12) };
         Grid.SetColumn(previewFrame, 1);
         columns.Children.Add(previewFrame);
         overlay.Children.Add(columns);
@@ -55,7 +64,7 @@ internal static class SetupWizard
         void Render()
         {
             sidebar.Children.Clear();
-            sidebar.Children.Add(new TextBlock { Text = "DMS", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            sidebar.Children.Add(new TextBlock { Text = "DMS", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = (Brush)Application.Current.Resources["DmsAccentBrush"] });
             sidebar.Children.Add(new TextBlock { Text = T("Set up your kitchen", "Настройте вашата кухня"), FontSize = 25, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             sidebar.Children.Add(new TextBlock { Text = T($"Step {step + 1} of 5", $"Стъпка {step + 1} от 5"), Opacity = 0.7 });
             if (step == 0)

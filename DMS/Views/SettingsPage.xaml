@@ -14,6 +14,13 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
         <StackPanel Spacing="8" HorizontalAlignment="Stretch">
+            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="SetupSection" /></Expander.Header>
+                <StackPanel Margin="16,8,16,16" Spacing="12">
+                    <TextBlock TextWrapping="Wrap" x:Uid="SetupSectionHint" />
+                    <Button x:Name="RunSetupButton" Click="RunSetup_Click" HorizontalAlignment="Left" x:Uid="RunSetup" />
+                </StackPanel>
+            </Expander>
             <!-- Language Section -->
             <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="🌐 Language &amp; Region" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Language_Region_5d78df" /></Expander.Header>
@@ -57,7 +64,6 @@
                     <ToggleSwitch x:Name="WeekendPlanningToggle" Header="Weekend menus" OffContent="Weekdays only" OnContent="Include Saturday and Sunday" Toggled="WeekendPlanningToggle_Toggled" x:Uid="Text_Weekend_Planning_53aa12" />
                     <TextBlock Text="Weekend days are disabled by default." Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" x:Uid="Text_Weekend_Planning_Hint_53aa13" />
                     <NumberBox x:Name="MealsPerDayBox" Minimum="1" Maximum="100" SpinButtonPlacementMode="Compact" IsEnabled="False" x:Uid="MealsPerDay" />
-                    <Button x:Name="RunSetupButton" Click="RunSetup_Click" x:Uid="RunSetup" />
                     <TextBlock TextWrapping="Wrap" x:Uid="MealsPerDayHint" />
                     <TextBlock FontWeight="SemiBold" x:Uid="MealCategoriesHeading" />
                     <StackPanel x:Name="MealCategoryRows" Spacing="8" />
