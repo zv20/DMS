@@ -1,9 +1,9 @@
 using DMS.Models;
 using DMS.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace DMS.Views;
 
@@ -11,78 +11,138 @@ internal static class SetupWizard
 {
     public static async Task<bool> ShowAsync(XamlRoot root, DatabaseService database)
     {
+        if (root.Content is not Grid host) throw new InvalidOperationException("Setup requires the main window.");
         var settings = await database.GetSettingsAsync() ?? new AppSettings();
+        var originalLanguage = settings.Language;
+        var originalAccent = settings.AccentColor;
         var originalMeals = settings.MealsPerDay;
-        var language = settings.Language;
-        var theme = settings.Theme;
-        var accent = settings.AccentColor;
-        var weekend = settings.WeekendPlanningEnabled;
-        var meals = settings.MealsPerDay;
-        var categories = settings.MealCategories.Select(c => new MealCategory { Id = c.Id, Name = c.Name }).ToList();
+        var completed = new TaskCompletionSource<bool>();
         var step = 0;
-        string T(string en, string bg) => language == "en" ? en : bg;
-        while (step < 5)
+        var overlay = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.White), RequestedTheme = ElementTheme.Light };
+        Grid.SetRowSpan(overlay, 2);
+        var columns = new Grid();
+        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
+        columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var sidebar = new StackPanel { Spacing = 16, Padding = new Thickness(24) };
+        var previewHost = new Grid { IsHitTestVisible = false };
+        Grid.SetColumn(previewHost, 1);
+        columns.Children.Add(new ScrollViewer { Content = sidebar, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        columns.Children.Add(previewHost);
+        overlay.Children.Add(columns);
+        host.Children.Add(overlay);
+
+        string T(string english, string bulgarian) => settings.Language == "en" ? english : bulgarian;
+        void Preview()
         {
-            var content = new StackPanel { Spacing = 12, MinWidth = 320 };
-            var dialog = new ContentDialog { XamlRoot = root, Title = T($"Setup · {step + 1} of 5", $"Настройка · {step + 1} от 5"), Content = content,
-                PrimaryButtonText = step == 4 ? T("Finish", "Готово") : T("Next", "Напред"),
-                SecondaryButtonText = step == 0 ? "" : T("Back", "Назад"),
-                CloseButtonText = T("Cancel", "Отказ"), DefaultButton = ContentDialogButton.Primary };
+            Localization.Apply(settings.Language);
+            AppearanceService.ApplyAccent(settings.AccentColor);
+            previewHost.RequestedTheme = settings.Theme switch { "dark" => ElementTheme.Dark, "system" => ElementTheme.Default, _ => ElementTheme.Light };
+            var page = new MenuPage();
+            page.SetSetupPreview(settings, monthly: step == 4);
+            previewHost.Children.Clear();
+            previewHost.Children.Add(page);
+        }
+        void Render()
+        {
+            sidebar.Children.Clear();
+            sidebar.Children.Add(new TextBlock { Text = T($"Setup {step + 1} of 5", $"Настройка {step + 1} от 5"), FontSize = 25, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
             if (step == 0)
             {
-                content.Children.Add(new TextBlock { Text = T("Choose your language", "Изберете език"), TextWrapping = TextWrapping.Wrap });
-                var choice = new ComboBox { ItemsSource = new[] { "Български", "English" }, SelectedIndex = language == "en" ? 1 : 0 };
-                var preview = new TextBlock { TextWrapping = TextWrapping.Wrap };
-                void Update() { language = choice.SelectedIndex == 1 ? "en" : "bg"; preview.Text = T("Menu planning  ·  Recipes  ·  Settings", "Планиране на меню  ·  Рецепти  ·  Настройки"); }
-                choice.SelectionChanged += (_, _) => Update(); Update(); content.Children.Add(choice); content.Children.Add(preview);
+                sidebar.Children.Add(new TextBlock { Text = T("Language", "Език") });
+                var choice = new ComboBox { ItemsSource = new[] { "Български", "English" }, SelectedIndex = settings.Language == "en" ? 1 : 0 };
+                choice.SelectionChanged += (_, _) => { settings.Language = choice.SelectedIndex == 1 ? "en" : "bg"; Render(); };
+                sidebar.Children.Add(choice);
             }
             else if (step == 1)
             {
-                content.Children.Add(new TextBlock { Text = T("Choose appearance and accent", "Изберете изглед и основен цвят") });
-                var themes = new[] { "light", "dark", "system" }; var accents = new[] { "orange", "blue", "green", "purple", "red", "teal" };
-                var themeChoice = new ComboBox { ItemsSource = themes, SelectedIndex = Math.Max(0, Array.IndexOf(themes, theme)) };
-                var accentChoice = new ComboBox { ItemsSource = accents, SelectedIndex = Math.Max(0, Array.IndexOf(accents, accent)) };
-                var preview = new Button { Content = T("Menu planning", "Планиране на меню"), Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)) };
-                var previewFrame = new Border { Padding = new Thickness(12), Child = preview };
-                void Update() { theme = themes[themeChoice.SelectedIndex]; accent = accents[accentChoice.SelectedIndex]; previewFrame.Background = new SolidColorBrush(theme == "dark" ? Color.FromArgb(255, 50, 50, 50) : Color.FromArgb(255, 255, 255, 255)); preview.Background = new SolidColorBrush(accent switch { "blue" => Color.FromArgb(255, 0, 103, 192), "green" => Color.FromArgb(255, 16, 124, 16), "purple" => Color.FromArgb(255, 117, 49, 166), "red" => Color.FromArgb(255, 196, 43, 28), "teal" => Color.FromArgb(255, 0, 122, 120), _ => Color.FromArgb(255, 194, 88, 0) }); }
-                themeChoice.SelectionChanged += (_, _) => Update(); accentChoice.SelectionChanged += (_, _) => Update(); Update();
-                content.Children.Add(themeChoice); content.Children.Add(accentChoice); content.Children.Add(previewFrame);
+                sidebar.Children.Add(new TextBlock { Text = T("Appearance", "Изглед") });
+                var themes = new[] { "light", "dark", "system" };
+                var accents = new[] { "orange", "blue", "green", "purple", "red", "teal" };
+                var theme = new ComboBox { ItemsSource = themes, SelectedIndex = Math.Max(0, Array.IndexOf(themes, settings.Theme)) };
+                var accent = new ComboBox { ItemsSource = accents, SelectedIndex = Math.Max(0, Array.IndexOf(accents, settings.AccentColor)) };
+                theme.SelectionChanged += (_, _) => { settings.Theme = themes[theme.SelectedIndex]; Preview(); };
+                accent.SelectionChanged += (_, _) => { settings.AccentColor = accents[accent.SelectedIndex]; Preview(); };
+                sidebar.Children.Add(theme); sidebar.Children.Add(accent);
             }
             else if (step == 2)
             {
-                content.Children.Add(new TextBlock { Text = T("Meals per day", "Хранения на ден") });
-                var count = new NumberBox { Minimum = 1, Maximum = 100, Value = meals, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
-                var preview = new StackPanel { Spacing = 4 };
-                void Update() { if (!double.IsFinite(count.Value) || count.Value < 1 || count.Value > 100 || count.Value != Math.Floor(count.Value)) return; meals = (int)count.Value; preview.Children.Clear(); for (var i = 1; i <= Math.Min(meals, 5); i++) preview.Children.Add(new TextBlock { Text = T($"Meal {i}  —  Select recipe", $"Хранене {i}  —  Изберете рецепта") }); if (meals > 5) preview.Children.Add(new TextBlock { Text = "…" }); }
-                count.ValueChanged += (_, _) => Update(); Update(); content.Children.Add(count); content.Children.Add(preview);
-                content.Children.Add(new TextBlock { Text = T("Changing this later clears saved menu plans. Back up your plans first.", "Промяната по-късно изтрива запазените менюта. Първо направете резервно копие."), TextWrapping = TextWrapping.Wrap });
+                sidebar.Children.Add(new TextBlock { Text = T("Meals per day", "Хранения на ден") });
+                var count = new NumberBox { Minimum = 1, Maximum = 100, Value = settings.MealsPerDay, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+                count.ValueChanged += (_, _) => { if (double.IsFinite(count.Value) && count.Value >= 1 && count.Value <= 100 && count.Value == Math.Floor(count.Value)) { settings.MealsPerDay = (int)count.Value; Preview(); } };
+                sidebar.Children.Add(count);
+                sidebar.Children.Add(new TextBlock { Text = T("Changing this clears saved menu plans. Back up your plans first.", "Промяната изтрива запазените менюта. Първо направете резервно копие."), TextWrapping = TextWrapping.Wrap });
             }
             else if (step == 3)
             {
-                content.Children.Add(new TextBlock { Text = T("Meal categories", "Категории за хранене") });
-                var rows = new StackPanel { Spacing = 6 };
-                void Rebuild() { rows.Children.Clear(); foreach (var category in categories.ToArray()) { var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; var input = new TextBox { Width = 230, Text = string.IsNullOrWhiteSpace(category.Name) ? Localization.Category(category.Id) : category.Name }; input.TextChanged += (_, _) => category.Name = input.Text; var remove = new Button { Content = "×" }; remove.Click += (_, _) => { if (categories.Count > 1) { categories.Remove(category); Rebuild(); } }; row.Children.Add(input); row.Children.Add(remove); rows.Children.Add(row); } }
-                Rebuild(); var add = new Button { Content = T("Add category", "Добави категория") }; add.Click += (_, _) => { categories.Add(new MealCategory { Id = Guid.NewGuid().ToString("N") }); Rebuild(); };
-                content.Children.Add(new ScrollViewer { Content = rows, MaxHeight = 230 }); content.Children.Add(add);
+                sidebar.Children.Add(new TextBlock { Text = T("Meal categories", "Категории за хранене") });
+                foreach (var category in settings.MealCategories.ToArray())
+                {
+                    var row = new Grid { ColumnSpacing = 8 };
+                    row.ColumnDefinitions.Add(new ColumnDefinition()); row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                    var input = new TextBox { Text = string.IsNullOrWhiteSpace(category.Name) ? Localization.Category(category.Id) : category.Name };
+                    input.TextChanged += (_, _) => category.Name = input.Text;
+                    var remove = new Button { Content = "×" };
+                    remove.Click += (_, _) => { if (settings.MealCategories.Count > 1) { settings.MealCategories.Remove(category); Render(); } };
+                    row.Children.Add(input); Grid.SetColumn(remove, 1); row.Children.Add(remove); sidebar.Children.Add(row);
+                }
+                var add = new Button { Content = T("Add category", "Добави категория") };
+                add.Click += (_, _) => { settings.MealCategories.Add(new MealCategory { Id = Guid.NewGuid().ToString("N") }); Render(); };
+                sidebar.Children.Add(add);
             }
             else
             {
-                var toggle = new ToggleSwitch { Header = T("Include weekends", "Включи почивните дни"), IsOn = weekend };
-                var preview = new TextBlock { FontFamily = new FontFamily("Consolas"), TextWrapping = TextWrapping.Wrap };
-                void Update() { weekend = toggle.IsOn; preview.Text = weekend ? T("Mon Tue Wed Thu Fri Sat Sun\n 1   2   3   4   5   6   7\n 8   9  10  11  12  13  14", "Пн  Вт  Ср  Чт  Пт  Сб  Нд\n 1   2   3   4   5   6   7\n 8   9  10  11  12  13  14") : T("Mon Tue Wed Thu Fri\n 1   2   3   4   5\n 8   9  10  11  12", "Пн  Вт  Ср  Чт  Пт\n 1   2   3   4   5\n 8   9  10  11  12"); }
-                toggle.Toggled += (_, _) => Update(); Update(); content.Children.Add(toggle); content.Children.Add(preview);
+                var weekends = new ToggleSwitch { Header = T("Include weekends", "Включи почивните дни"), IsOn = settings.WeekendPlanningEnabled };
+                weekends.Toggled += (_, _) => { settings.WeekendPlanningEnabled = weekends.IsOn; Preview(); };
+                sidebar.Children.Add(weekends);
             }
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.None) return false;
-            if (result == ContentDialogResult.Secondary) { step--; continue; }
-            if (step == 3 && (categories.Any(c => string.IsNullOrWhiteSpace(c.Name) && c.Id.Length == 32) || categories.Select(c => string.IsNullOrWhiteSpace(c.Name) ? Localization.Category(c.Id) : c.Name.Trim()).Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != categories.Count)) continue;
-            step++;
+            var status = new TextBlock { TextWrapping = TextWrapping.Wrap };
+            sidebar.Children.Add(status);
+            var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            var cancel = new Button { Content = T("Cancel", "Отказ") };
+            cancel.Click += (_, _) => completed.TrySetResult(false);
+            controls.Children.Add(cancel);
+            if (step > 0)
+            {
+                var back = new Button { Content = T("Back", "Назад") };
+                back.Click += (_, _) => { step--; Render(); };
+                controls.Children.Add(back);
+            }
+            var next = new Button { Content = step == 4 ? T("Finish", "Готово") : T("Next", "Напред"), Style = (Style)Application.Current.Resources["AccentButtonStyle"] };
+            next.Click += async (_, _) =>
+            {
+                if (step == 3)
+                {
+                    var names = settings.MealCategories.Select(c => string.IsNullOrWhiteSpace(c.Name) ? (c.Id.Length == 32 ? "" : Localization.Category(c.Id)) : c.Name.Trim()).ToArray();
+                    if (names.Any(string.IsNullOrWhiteSpace) || names.Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != names.Length) { status.Text = Localization.Get("MealSettingsInvalid"); return; }
+                }
+                if (step < 4) { step++; Render(); return; }
+                next.IsEnabled = false;
+                try
+                {
+                    var clear = settings.MealsPerDay != originalMeals;
+                    if (clear && !await EditorDialogs.ConfirmAsync(root, T("Clear saved plans?", "Изтриване на запазените менюта?"), T("Changing meals per day deletes all saved menu plans. Back up first. Recipes and ingredients are kept.", "Промяната на храненията на ден изтрива всички запазени менюта. Първо направете резервно копие. Рецептите и съставките се запазват."), "String_Text_Delete_f6fdbe")) return;
+                    await database.CompleteSetupAsync(settings, clear);
+                    completed.TrySetResult(true);
+                }
+                catch (Exception ex) { App.Logger.LogError(ex, "Could not complete setup"); status.Text = Localization.Get("DataSaveFailed"); }
+                finally { next.IsEnabled = true; }
+            };
+            controls.Children.Add(next); sidebar.Children.Add(controls);
+            Preview();
         }
-        var clearPlans = meals != originalMeals;
-        if (clearPlans && !await EditorDialogs.ConfirmAsync(root, T("Clear saved plans?", "Изтриване на запазените менюта?"),
-            T("Changing meals per day deletes all saved menu plans. Back up your plans first. Recipes and ingredients are kept.", "Промяната на храненията на ден изтрива всички запазени менюта. Първо направете резервно копие. Рецептите и съставките се запазват."), "String_Text_Delete_f6fdbe")) return false;
-        settings.Language = language; settings.Theme = theme; settings.AccentColor = accent; settings.MealsPerDay = meals; settings.MealCategories = categories; settings.WeekendPlanningEnabled = weekend;
-        await database.CompleteSetupAsync(settings, clearPlans);
-        return true;
+        try
+        {
+            Render();
+            return await completed.Task;
+        }
+        finally
+        {
+            host.Children.Remove(overlay);
+            if (!completed.Task.IsCompletedSuccessfully || !completed.Task.Result)
+            {
+                Localization.Apply(originalLanguage);
+                AppearanceService.ApplyAccent(originalAccent);
+            }
+        }
     }
 }
