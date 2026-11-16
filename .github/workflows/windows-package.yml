@@ -113,7 +113,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $previousVersion = '0.0.13'
+          $previousVersion = '0.0.15'
           $previousMsi = "DMS-Setup-$previousVersion.msi"
           gh release download "v$previousVersion" --repo ${{ github.repository }} --pattern $previousMsi --dir "$env:RUNNER_TEMP"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

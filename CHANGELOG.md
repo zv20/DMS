@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.16
+
+- Added a first-run setup with live planner previews for language, appearance, meal count, categories, and weekends.
+- Added an option in Settings to run setup again.
+- Added a backup warning and confirmation before changing meals per day clears saved menu plans.
+- Made saved meal categories removable in Settings.
+
 ## 0.0.15
 
 - Kept the selected recipe, ingredient, or allergen highlighted while its editor is open.
