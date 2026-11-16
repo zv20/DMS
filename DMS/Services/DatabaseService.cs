@@ -661,12 +661,31 @@ public partial class DatabaseService : IDisposable
     private static int ParseMealsPerDay(string value) => int.TryParse(value, out var count) && count is >= 1 and <= 100
         ? count : throw new InvalidDataException("The saved meals per day setting is invalid.");
 
-    public async Task SaveSettingsAsync(AppSettings settings)
+    public Task SaveSettingsAsync(AppSettings settings) => SaveSettingsAsync(settings, false, false);
+
+    public Task CompleteSetupAsync(AppSettings settings, bool clearPlans) => SaveSettingsAsync(settings, clearPlans, true);
+
+    public async Task<bool> IsSetupCompleteAsync()
+    {
+        await InitializeAsync();
+        using var command = _connection!.CreateCommand();
+        command.CommandText = "SELECT value FROM settings WHERE key = 'setup_complete'";
+        return string.Equals(await command.ExecuteScalarAsync() as string, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task SaveSettingsAsync(AppSettings settings, bool clearPlans, bool completeSetup)
     {
         var mealCategories = System.Text.Json.JsonSerializer.Serialize(settings.MealCategories);
         ParseMealCategories(mealCategories);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
+        if (clearPlans)
+        {
+            using var clear = _connection.CreateCommand();
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM menu; DELETE FROM menu_slot_categories";
+            await clear.ExecuteNonQueryAsync();
+        }
         using var cmd = _connection.CreateCommand();
         cmd.Transaction = transaction;
         cmd.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES (@key, @value)";
@@ -692,6 +711,13 @@ public partial class DatabaseService : IDisposable
             cmd.Parameters.Clear();
             cmd.Parameters.AddWithValue("@key", key);
             cmd.Parameters.AddWithValue("@value", value);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        if (completeSetup)
+        {
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@key", "setup_complete");
+            cmd.Parameters.AddWithValue("@value", "true");
             await cmd.ExecuteNonQueryAsync();
         }
         transaction.Commit();

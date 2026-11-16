@@ -560,6 +560,10 @@
   <data name="SavePlanning.Content" xml:space="preserve"><value>Запази настройките</value></data>
   <data name="MealCategoryName" xml:space="preserve"><value>Име на категория</value></data>
   <data name="RemoveNewCategory" xml:space="preserve"><value>Премахни новата категория</value></data>
+  <data name="RemoveMealCategory" xml:space="preserve"><value>Премахни категорията</value></data>
+  <data name="RunSetup.Content" xml:space="preserve"><value>Стартиране на настройката</value></data>
+  <data name="MealCategoryRequired" xml:space="preserve"><value>Оставете поне една категория за хранене.</value></data>
+  <data name="RemoveMealCategoryWarning" xml:space="preserve"><value>Категорията ще бъде премахната при запазване. Съществуващите рецепти и избрани ястия запазват категорията си, но тя няма да бъде достъпна за нов избор. При нужда променете категорията на засегнатите рецепти и ястия.</value></data>
   <data name="MealSettingsInvalid" xml:space="preserve"><value>Въведете цяло число и уникално, непразно име за всяка категория.</value></data>
   <data name="AllergenIcon" xml:space="preserve"><value>Икона</value></data>
   <data name="AllergenChooseColor" xml:space="preserve"><value>Изберете цвят</value></data>
