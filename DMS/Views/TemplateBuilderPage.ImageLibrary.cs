@@ -157,10 +157,8 @@ public sealed partial class TemplateBuilderPage
         }
         if (currentSavedTemplateDeleted || usesOnCanvas)
             content.Children.Add(new TextBlock { Text = L.Get(currentSavedTemplateDeleted ? "TplLibraryOpenTemplateWarning" : "TplLibraryOpenCanvasWarning"), TextWrapping = TextWrapping.Wrap });
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplLibraryDelete"), Content = content,
-            PrimaryButtonText = L.Get(names.Count > 0 ? "TplLibraryDeleteAll" : "String_Text_Delete_f6fdbe"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
+        if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("TplLibraryDelete"), content,
+            names.Count > 0 ? "TplLibraryDeleteAll" : "String_Text_Delete_f6fdbe")) return false;
         // The database checks that this exact usage list is still current, then
         // removes the saved templates and image in one transaction.
         try { await _database.DeleteTemplateImageAsync(asset.Id, names); }

@@ -78,16 +78,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
     {
         try
         {
-            var result = await new ContentDialog
-            {
-                XamlRoot = XamlRoot,
-                Title = L.Get("LogViewerClearTitle"),
-                Content = L.Get("LogViewerClearConfirmation"),
-                PrimaryButtonText = L.Get("LogViewerClearAction"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close
-            }.ShowAsync();
-            if (result != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("LogViewerClearTitle"),
+                L.Get("LogViewerClearConfirmation"), "LogViewerClearAction")) return;
             App.LogStore.Clear();
             RefreshLogViewer();
         }
@@ -157,16 +149,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             try
             {
                 if (!await CanLeaveAsync()) { RestoreLanguageSelection(previousLanguage); return; }
-                var dialog = new ContentDialog
-                {
-                    XamlRoot = XamlRoot,
-                    Title = L.Get("LanguageReloadTitle"),
-                    Content = L.Get("LanguageReloadMessage"),
-                    PrimaryButtonText = L.Get("LanguageReloadConfirm"),
-                    CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                    DefaultButton = ContentDialogButton.Close
-                };
-                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("LanguageReloadTitle"),
+                    L.Get("LanguageReloadMessage"), "LanguageReloadConfirm"))
                 {
                     RestoreLanguageSelection(previousLanguage);
                     return;
@@ -397,10 +381,8 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             var file = await picker.PickSingleFileAsync();
             if (file == null) return;
             if (!await CanLeaveAsync()) return;
-            var confirm = new ContentDialog { Title = L.Get("Text_Restore_Database_04f0a6"), Content = L.Get("RestoreWarning"),
-                PrimaryButtonText = L.Get("Text_Restore_3cbe6d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Restore_Database_04f0a6"),
+                L.Get("RestoreWarning"), "Text_Restore_3cbe6d")) return;
             await App.RestoreAndReloadAsync(file.Path);
             restored = true;
             return;

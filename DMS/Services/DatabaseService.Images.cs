@@ -30,14 +30,8 @@ public partial class DatabaseService
         check.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version = 2";
         if (Convert.ToInt64(check.ExecuteScalar()) == 0)
         {
-            var rows = new List<(string Name, string Json)>();
-            using (var select = _connection.CreateCommand())
-            {
-                select.Transaction = transaction;
-                select.CommandText = "SELECT name, data_json FROM templates";
-                using var reader = select.ExecuteReader();
-                while (reader.Read()) rows.Add((reader.GetString(0), reader.GetString(1)));
-            }
+            // Close the reader before updating templates in the same transaction.
+            var rows = ReadTemplateRows(transaction).ToList();
             foreach (var (name, json) in rows)
             {
                 MenuTemplate? template;
@@ -79,19 +73,13 @@ public partial class DatabaseService
             if (Convert.ToInt64(legacyCheck.ExecuteScalar()) == 0)
             {
                 var obsolete = new List<string>();
-                using (var select = _connection.CreateCommand())
+                foreach (var (name, json) in ReadTemplateRows(transaction))
                 {
-                    select.Transaction = transaction;
-                    select.CommandText = "SELECT name, data_json FROM templates";
-                    using var reader = select.ExecuteReader();
-                    while (reader.Read())
+                    try
                     {
-                        try
-                        {
-                            if (JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1))?.Document == null) obsolete.Add(reader.GetString(0));
-                        }
-                        catch (JsonException) { obsolete.Add(reader.GetString(0)); }
+                        if (JsonSerializer.Deserialize<MenuTemplate>(json)?.Document == null) obsolete.Add(name);
                     }
+                    catch (JsonException) { obsolete.Add(name); }
                 }
                 foreach (var name in obsolete)
                 {
@@ -114,6 +102,16 @@ public partial class DatabaseService
             }
         }
         transaction.Commit();
+    }
+
+    private IEnumerable<(string Name, string Json)> ReadTemplateRows(SqliteTransaction transaction)
+    {
+        using var command = _connection!.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT name, data_json FROM templates";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            yield return (reader.GetString(0), reader.GetString(1));
     }
 
     private void SeedSeasonalTemplatePresets()

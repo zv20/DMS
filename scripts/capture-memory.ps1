@@ -28,15 +28,9 @@ if ($CaptureDumps -and -not (Get-Command dotnet-dump -ErrorAction SilentlyContin
     throw 'dotnet-dump is not available. Install it first or run without -CaptureDumps.'
 }
 
-if ($ProcessId -eq 0) {
-    $candidates = @(Get-Process -Name DMS -ErrorAction SilentlyContinue)
-    if ($candidates.Count -ne 1) {
-        throw "Expected one DMS process, found $($candidates.Count). Start DMS or pass -ProcessId."
-    }
-    $ProcessId = $candidates[0].Id
-}
-$process = Get-Process -Id $ProcessId -ErrorAction Stop
-if ($process.ProcessName -ne 'DMS') { throw "Process $ProcessId is not DMS." }
+. "$PSScriptRoot/dms-capture-helpers.ps1"
+$process = Get-DmsCaptureProcess $ProcessId
+$ProcessId = $process.Id
 $startedAt = $process.StartTime.ToUniversalTime()
 $runPath = Join-Path $OutputRoot ('run-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Path $runPath -Force | Out-Null
@@ -52,20 +46,7 @@ $revision = try { (& git -C (Join-Path $PSScriptRoot '..') rev-parse HEAD 2>$nul
     Note = 'Checkout revision is not proof of the loaded binary revision.'
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runPath 'run.json') -Encoding UTF8
 
-$job = Start-Job -ArgumentList $ProcessId, $startedAt.Ticks, $csvPath -ScriptBlock {
-    param($targetId, $startTicks, $path)
-    'timestamp_utc,pid,working_set_bytes,private_bytes,status' | Set-Content -LiteralPath $path -Encoding UTF8
-    while ($true) {
-        $stamp = [DateTime]::UtcNow.ToString('o')
-        $p = Get-Process -Id $targetId -ErrorAction SilentlyContinue
-        if ($null -eq $p -or $p.StartTime.ToUniversalTime().Ticks -ne $startTicks) {
-            "$stamp,$targetId,,,exited_or_restarted" | Add-Content -LiteralPath $path -Encoding UTF8
-            break
-        }
-        "$stamp,$targetId,$($p.WorkingSet64),$($p.PrivateMemorySize64),running" | Add-Content -LiteralPath $path -Encoding UTF8
-        Start-Sleep -Seconds 1
-    }
-}
+$job = Start-DmsMemorySampler $ProcessId $startedAt.Ticks $csvPath -IncludeProcessId
 
 $steps = @(
     @{ Name = '01-baseline'; Prompt = 'Stay on Menu Planner after a fresh app start; wait 15 seconds.' },

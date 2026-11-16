@@ -20,7 +20,7 @@ public sealed class SettingsService
         var selected = language is "bg" or "en" ? language : DefaultLanguage;
         var settings = await _database.GetSettingsAsync() ?? new AppSettings();
         settings.Language = selected;
-        await SaveAsync(settings);
+        await _database.SaveSettingsAsync(settings);
         _language = selected;
     }
 
@@ -30,6 +30,4 @@ public sealed class SettingsService
         _language = settings.Language is "bg" or "en" ? settings.Language : DefaultLanguage;
         return settings;
     }
-
-    public Task SaveAsync(AppSettings settings) => _database.SaveSettingsAsync(settings);
 }

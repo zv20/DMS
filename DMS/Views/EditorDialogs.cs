@@ -9,13 +9,13 @@ internal static class EditorDialogs
     public static Task<bool> ConfirmDiscardAsync(XamlRoot root, string messageKey = "SideEditorDiscardMessage") =>
         ConfirmAsync(root, Localization.Get("RecipeDiscardTitle"), Localization.Get(messageKey), "RecipeDiscardButton");
 
-    public static async Task<bool> ConfirmAsync(XamlRoot root, string title, string message, string actionKey)
+    public static async Task<bool> ConfirmAsync(XamlRoot root, string title, object content, string actionKey)
     {
         var dialog = new ContentDialog
         {
             XamlRoot = root,
             Title = title,
-            Content = message,
+            Content = content,
             PrimaryButtonText = Localization.Get(actionKey),
             CloseButtonText = Localization.Get("Text_Cancel_77dfd2"),
             DefaultButton = ContentDialogButton.Close

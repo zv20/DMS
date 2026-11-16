@@ -288,9 +288,8 @@ public sealed partial class TemplateBuilderPage
         _saving = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("TplImageDelete"), Content = L.Get("TplImageDeletePrompt"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("TplImageDelete"),
+                L.Get("TplImageDeletePrompt"), "String_Text_Delete_f6fdbe")) return;
             SnapshotBeforeEdit();
             if (_selectedBlock == $"image:{image.Id}") DismissContextTools();
             _document.DecorativeImages.Remove(image);

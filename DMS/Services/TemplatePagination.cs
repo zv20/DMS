@@ -27,9 +27,10 @@ public static class TemplatePagination
             return true;
         }
 
-        foreach (var group in entries.OrderBy(e => MenuOutputService.SlotOrder(e.Slot)).ThenBy(e => e.Date).GroupBy(e => MenuOutputService.SlotOrder(e.Slot)))
+        var slotGroups = entries.GroupBy(entry => MenuOutputService.SlotOrder(entry.Slot)).OrderBy(group => group.Key);
+        foreach (var group in slotGroups)
         {
-            var groupEntries = group.ToArray();
+            var groupEntries = group.OrderBy(entry => entry.Date).ToArray();
             if (Add(groupEntries)) continue;
             foreach (var entry in groupEntries)
                 if (!Add([entry])) return null;
