@@ -35,10 +35,6 @@ public static class TemplateRenderer
         var dayEntries = visible.Select(day => entries
             .Where(entry => entry.Date.Date == monday.Date.AddDays(day) && recipeMap.ContainsKey(entry.RecipeId))
             .OrderBy(entry => MenuOutputService.SlotOrder(entry.Slot)).ToArray()).ToArray();
-        var recipeAllergens = dayEntries.SelectMany(day => day).Select(entry => entry.RecipeId).Distinct()
-            .ToDictionary(id => id, id => recipeMap[id].Allergens
-                .Concat(recipeMap[id].Ingredients.SelectMany(name => ingredientMap.TryGetValue(name, out var ingredient) ? ingredient.Allergens : []))
-                .Distinct(StringComparer.OrdinalIgnoreCase).Select(Localization.Allergen).ToArray());
         var floor = double.IsFinite(template.MinimumFontSize) ? Math.Clamp(template.MinimumFontSize, 10, 36) : 14;
         var ceiling = double.IsFinite(template.MaximumFontSize) ? Math.Clamp(template.MaximumFontSize, floor, 48) : Math.Max(18, floor);
         var start = double.IsFinite(template.FontSize) ? Math.Clamp(template.FontSize, floor, ceiling) : floor;
@@ -60,13 +56,13 @@ public static class TemplateRenderer
         TemplatePageLayout.Result fit = new(new double[visible.Length], true);
         for (var font = start; ; font = Math.Max(floor, font - .5))
         {
-            panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, recipeAllergens, font, template, null, lifetime)).ToArray();
+            panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, font, template, null, lifetime)).ToArray();
             required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
             fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace);
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink)
             {
                 if (onSelected != null)
-                    panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, recipeAllergens, font, template, onSelected, lifetime)).ToArray();
+                    panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, font, template, onSelected, lifetime)).ToArray();
                 break;
             }
         }
@@ -194,7 +190,7 @@ public static class TemplateRenderer
         return double.IsFinite(thickness) ? Math.Clamp(thickness, 0, 20) : 1;
     }
 
-    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, Dictionary<int, string[]> recipeAllergens, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected, TemplateVisualLifetime lifetime)
+    private static StackPanel BuildDay(DateTime day, int dayIndex, IReadOnlyList<MenuEntry> entries, Dictionary<int, Recipe> recipes, Dictionary<string, Ingredient> ingredients, double size, TemplateDocument template, Action<string, FrameworkElement>? onSelected, TemplateVisualLifetime lifetime)
     {
         var panel = new StackPanel { Spacing = double.IsFinite(template.MealLineSpacing) ? Math.Clamp(template.MealLineSpacing, 0, 20) : 1 };
         var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;
@@ -205,14 +201,10 @@ public static class TemplateRenderer
 
         var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
         var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
-        var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
         foreach (var entry in entries)
         {
             var recipe = recipes[entry.RecipeId];
-            var allergens = recipeAllergens[entry.RecipeId];
-            // Keep each editable part as its own element. Runs inside one TextBlock
-            // cannot receive pointer input, which made the builder's previous
-            // menu/ingredients/allergens selector ambiguous.
+            // Separate text blocks keep the title and ingredients independently selectable.
             var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
@@ -240,12 +232,6 @@ public static class TemplateRenderer
                 }
                 Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
                 meal.Children.Add(ingredientBlock);
-            }
-            if (allergens.Length > 0)
-            {
-                var allergenBlock = StyledText(" · " + string.Join(", ", allergens), allergenStyle, scale);
-                Selectable(allergenBlock, $"allergens:{dayIndex}", onSelected, lifetime);
-                meal.Children.Add(allergenBlock);
             }
             panel.Children.Add(meal);
         }

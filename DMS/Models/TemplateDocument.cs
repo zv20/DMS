@@ -28,7 +28,7 @@ public sealed class TemplateDocument
     public List<TemplateImage> DecorativeImages { get; set; } = new();
     // Null means automatic; an explicit value is retained rather than silently resized.
     public double?[] DayHeights { get; set; } = new double?[7];
-    // Keys: header/date/footer, or heading/menu/ingredients/allergens with
+    // Keys: header/date/footer, or heading/menu/ingredients with
     // optional :0 through :6 day overrides. Missing values retain defaults.
     public Dictionary<string, TemplateTextStyle> TextStyles { get; set; } = new();
     public Dictionary<string, TemplateBlockAppearance> BlockAppearances { get; set; } = new();

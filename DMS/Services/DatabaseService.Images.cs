@@ -473,7 +473,6 @@ internal static class SeasonalTemplateDefaults
                 ["heading"] = new() { FontFamily = "Arial", FontSize = 17, Color = definition.HeaderColor, Bold = true },
                 ["menu"] = new() { FontFamily = "Arial", FontSize = 14, Color = definition.BodyColor },
                 ["ingredients"] = new() { FontFamily = "Arial", FontSize = 12, Color = definition.BodyColor },
-                ["allergens"] = new() { FontFamily = "Arial", FontSize = 12, Color = "#C60000", Bold = true, Underline = true },
                 ["footer"] = new() { FontFamily = "Arial", FontSize = 10, Color = definition.BodyColor, Alignment = "center" }
             }
         }

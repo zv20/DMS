@@ -850,12 +850,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 {
                     _document.ShowHeaderReflection = value; _dirty = true; Render();
                 });
-            if (parts[0] is "allergens")
+            if (parts[0] == "ingredients")
                 AddContextColor("TplBuilderAllergenAccent", _document.AllergenAccentColor, (value, opacity) =>
                 {
                     _document.AllergenAccentColor = value; _document.AllergenAccentOpacity = opacity; _dirty = true; Render();
                 }, _document.AllergenAccentOpacity);
-            if (parts[0] is not ("ingredients" or "allergens"))
+            else
             {
             var alignment = new ComboBox { Width = 76, Padding = new Thickness(8, 4, 8, 4) };
             foreach (var (glyph, tip) in new[] { ("\uE8E4", "TplLeft"), ("\uE8E3", "TplCenter"), ("\uE8E2", "TplRight") })
@@ -869,7 +869,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             ToolTipService.SetToolTip(alignment, L.Get("TplHeaderAlignment"));
             ContextTools.Children.Add(alignment);
             }
-            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredients" or "allergens")
+            if (parts.Length == 2 && parts[0] is "heading" or "menu" or "ingredients")
             {
                 var all = new Button { Content = new FontIcon { Glyph = "\uE8C8" } };
                 ToolTipService.SetToolTip(all, L.Get("TplApplyWeekdayStyle"));
