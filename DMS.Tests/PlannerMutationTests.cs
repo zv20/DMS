@@ -14,6 +14,26 @@ public sealed class PlannerMutationTests : IDisposable
     private DatabaseService Open() { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathForDb); }
 
     [Fact]
+    public async Task CompletingSetupCanClearPlansAndKeepRecipesAcrossRestart()
+    {
+        using (var database = Open())
+        {
+            Assert.False(await database.IsSetupCompleteAsync());
+            var recipeId = await database.SaveRecipeAsync(new Recipe { Name = "Soup", Category = "soup" });
+            await database.SaveMenuSlotAsync(_day, "slot5", "soup", recipeId);
+            var settings = (await database.GetSettingsAsync())!;
+            settings.MealsPerDay = 3;
+            await database.CompleteSetupAsync(settings, clearPlans: true);
+        }
+        using var reopened = Open();
+        Assert.True(await reopened.IsSetupCompleteAsync());
+        Assert.Equal(3, (await reopened.GetSettingsAsync())!.MealsPerDay);
+        Assert.Empty(await reopened.GetMenuAsync(_day, _day));
+        Assert.Empty(await reopened.GetMenuCategoriesAsync(_day, _day));
+        Assert.Single(await reopened.GetAllRecipesAsync());
+    }
+
+    [Fact]
     public async Task ClearingDayPreservesOtherDaysAndCategoriesAcrossRestart()
     {
         using (var database = Open())

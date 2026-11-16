@@ -25,6 +25,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     private int _headerLayout = -1;
     private Button? _lastOutputButton;
     private AutoSuggestBox? _activeRecipeSearch;
+    private AppSettings? _previewSettings;
 
     public MenuPage()
     {
@@ -33,6 +34,15 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         _database = App.Services.GetRequiredService<DatabaseService>();
         UpdateViewButtons();
         Loaded += async (_, _) => await RefreshAsync();
+    }
+
+    internal void SetSetupPreview(AppSettings settings, bool monthly)
+    {
+        _previewSettings = settings;
+        _monthly = monthly;
+        IsHitTestVisible = false;
+        UpdateViewButtons();
+        if (IsLoaded) _ = RefreshAsync();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -201,14 +211,25 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     {
         var monthly = _monthly;
         var date = _date;
-        var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+        var settings = _previewSettings ?? await _database.GetSettingsAsync() ?? new AppSettings();
         var weekend = settings.WeekendPlanningEnabled;
-        var recipes = await _database.GetAllRecipesAsync();
+        var recipes = _previewSettings == null ? await _database.GetAllRecipesAsync() :
+            settings.MealCategories.Select((category, index) => new Recipe
+            {
+                Id = index + 1,
+                Category = category.Id,
+                Name = L.Language == "en-US" ? $"Example meal {index + 1}" : $"Примерно ястие {index + 1}"
+            }).ToList();
         var first = monthly ? new DateTime(date.Year, date.Month, 1) : MenuOutputService.WeekStart(date);
         var start = MenuOutputService.WeekStart(first);
         var end = monthly ? first.AddMonths(1).AddDays(-1) : start.AddDays(weekend ? 6 : 4);
         var calendarEnd = monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
-        var entriesByDay = (await _database.GetMenuAsync(start, calendarEnd)).ToLookup(entry => entry.Date.Date);
+        var entries = _previewSettings == null ? await _database.GetMenuAsync(start, calendarEnd) :
+            Enumerable.Range(0, (calendarEnd - start).Days + 1)
+                .SelectMany(offset => Enumerable.Range(0, Math.Min(settings.MealsPerDay, recipes.Count))
+                    .Select(slot => new MenuEntry { Date = start.AddDays(offset), Slot = $"slot{slot + 1}", RecipeId = recipes[slot].Id }))
+                .ToList();
+        var entriesByDay = entries.ToLookup(entry => entry.Date.Date);
         var recipesById = recipes.ToDictionary(recipe => recipe.Id);
         var recipesByCategory = monthly ? null : recipes
             .GroupBy(recipe => recipe.Category, StringComparer.OrdinalIgnoreCase)
@@ -217,7 +238,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 StringComparer.OrdinalIgnoreCase);
         var categories = monthly
             ? new Dictionary<(DateTime Date, string Slot), string>()
-            : (await _database.GetMenuCategoriesAsync(start, calendarEnd))
+            : (_previewSettings == null ? await _database.GetMenuCategoriesAsync(start, calendarEnd) : new List<MenuSlotCategory>())
                 .ToDictionary(item => (item.Date.Date, item.Slot), item => item.Category);
         var period = monthly ? first.ToString("MMMM yyyy") : $"{start:dd MMM} – {end:dd MMM yyyy}";
         var columns = weekend ? 7 : 5;

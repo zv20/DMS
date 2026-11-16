@@ -81,6 +81,18 @@ public sealed partial class MainWindow : Window
             NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
                 throw new InvalidOperationException("The initial page could not be opened.");
+            var database = App.Services.GetRequiredService<DatabaseService>();
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DMS_QA_READY_FILE")) && !await database.IsSetupCompleteAsync())
+            {
+                if (await SetupWizard.ShowAsync(RootGrid.XamlRoot, database))
+                {
+                    await App.Services.GetRequiredService<SettingsService>().LoadAsync();
+                    var configured = await database.GetSettingsAsync();
+                    Localization.Apply(configured!.Language);
+                    App.ReloadLanguage();
+                    return;
+                }
+            }
             StartPerformanceNavigation();
             // An opt-in signal lets the packaging check verify that the installed
             // app reached its main window and loaded application resources.

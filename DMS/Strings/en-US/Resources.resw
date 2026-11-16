@@ -560,6 +560,12 @@
   <data name="SavePlanning.Content" xml:space="preserve"><value>Save meal settings</value></data>
   <data name="MealCategoryName" xml:space="preserve"><value>Category name</value></data>
   <data name="RemoveNewCategory" xml:space="preserve"><value>Remove new category</value></data>
+  <data name="RemoveMealCategory" xml:space="preserve"><value>Remove category</value></data>
+  <data name="RunSetup.Content" xml:space="preserve"><value>Run setup</value></data>
+  <data name="SetupSection.Text" xml:space="preserve"><value>⚙️ Setup</value></data>
+  <data name="SetupSectionHint.Text" xml:space="preserve"><value>Review your language, appearance, and planning setup.</value></data>
+  <data name="MealCategoryRequired" xml:space="preserve"><value>Keep at least one meal category.</value></data>
+  <data name="RemoveMealCategoryWarning" xml:space="preserve"><value>Removing this category takes effect when you save. Existing recipes and meal assignments keep their category, but it will no longer be available for new selections. Reassign affected recipes and meals as needed.</value></data>
   <data name="MealSettingsInvalid" xml:space="preserve"><value>Enter a whole number and a unique, non-empty name for each category.</value></data>
   <data name="AllergenIcon" xml:space="preserve"><value>Icon</value></data>
   <data name="AllergenChooseColor" xml:space="preserve"><value>Choose color</value></data>

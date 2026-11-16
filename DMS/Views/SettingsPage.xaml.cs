@@ -230,26 +230,33 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
     }
 
-    private void AddCategoryEditor(string id, string name, bool canRemove = false)
+    private void AddCategoryEditor(string id, string name)
     {
         var box = new TextBox { Text = name, PlaceholderText = L.Get("MealCategoryName"), MaxLength = 120 };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, L.Get("MealCategoryName"));
         _categoryEditors.Add((id, box));
-        if (!canRemove) { MealCategoryRows.Children.Add(box); return; }
         var row = new Grid { ColumnSpacing = 8 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.Children.Add(box);
         var remove = new Button { Content = "×" };
-        ToolTipService.SetToolTip(remove, L.Get("RemoveNewCategory"));
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(remove, L.Get("RemoveNewCategory"));
-        remove.Click += (_, _) => { _categoryEditors.RemoveAll(item => item.Name == box); MealCategoryRows.Children.Remove(row); };
+        ToolTipService.SetToolTip(remove, L.Get("RemoveMealCategory"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(remove, L.Get("RemoveMealCategory"));
+        remove.Click += async (_, _) =>
+        {
+            if (_categoryEditors.Count <= 1) { PlanningStatus.Text = L.Get("MealCategoryRequired"); return; }
+            if (_savedCategories.Any(category => category.Id == id) &&
+                !await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("RemoveMealCategory"), L.Get("RemoveMealCategoryWarning"), "RemoveMealCategory")) return;
+            _categoryEditors.RemoveAll(item => item.Name == box);
+            MealCategoryRows.Children.Remove(row);
+            PlanningStatus.Text = "";
+        };
         Grid.SetColumn(remove, 1);
         row.Children.Add(remove);
         MealCategoryRows.Children.Add(row);
     }
 
-    private void AddMealCategory_Click(object sender, RoutedEventArgs e) => AddCategoryEditor(Guid.NewGuid().ToString("N"), "", true);
+    private void AddMealCategory_Click(object sender, RoutedEventArgs e) => AddCategoryEditor(Guid.NewGuid().ToString("N"), "");
 
     private void CapturePlanningSnapshot()
     {
@@ -273,10 +280,25 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
 
     private void SetPlanningEditorsEnabled(bool enabled)
     {
-        MealsPerDayBox.IsEnabled = enabled;
+        MealsPerDayBox.IsEnabled = false;
         foreach (var (_, box) in _categoryEditors) box.IsEnabled = enabled;
         foreach (var row in MealCategoryRows.Children.OfType<Grid>())
             foreach (var button in row.Children.OfType<Button>()) button.IsEnabled = enabled;
+    }
+
+    private async void RunSetup_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await CanLeaveAsync()) return;
+        RunSetupButton.IsEnabled = false;
+        try
+        {
+            if (!await SetupWizard.ShowAsync(XamlRoot, _databaseService)) return;
+            var settings = await _settingsService.LoadAsync();
+            Localization.Apply(settings.Language);
+            App.ReloadLanguage();
+        }
+        catch (Exception ex) { App.Logger.LogError(ex, "Could not complete setup"); PlanningStatus.Text = L.Get("DataSaveFailed"); }
+        finally { RunSetupButton.IsEnabled = true; }
     }
 
     private async void SavePlanning_Click(object sender, RoutedEventArgs e)
