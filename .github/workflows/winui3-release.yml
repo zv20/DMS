@@ -48,12 +48,32 @@ jobs:
         with:
           name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/installer
+      - name: Extract release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+
+          version = os.environ['RELEASE_TAG'].removeprefix('v')
+          lines = pathlib.Path('CHANGELOG.md').read_text(encoding='utf-8').splitlines()
+          heading = f'## {version}'
+          if lines.count(heading) != 1:
+              raise SystemExit(f'Expected exactly one changelog section for {version}')
+          start = lines.index(heading)
+          end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith('## ')), len(lines))
+          notes = '\n'.join(lines[start:end]).strip()
+          if not any(line.strip() for line in lines[start + 1:end]):
+              raise SystemExit(f'Changelog section for {version} is empty')
+          pathlib.Path('release-notes.md').write_text(notes + '\n', encoding='utf-8')
+          PY
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
           name: DMS ${{ github.ref_name }}
           prerelease: ${{ contains(github.ref_name, '-') }}
-          generate_release_notes: true
-          body_path: CHANGELOG.md
+          generate_release_notes: false
+          body_path: release-notes.md
           fail_on_unmatched_files: true
           files: artifacts/installer/*.msi
