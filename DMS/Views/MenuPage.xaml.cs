@@ -211,6 +211,11 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var calendarEnd = monthly ? start.AddDays(((end - start).Days / 7 + 1) * 7 - 1) : end;
         var entriesByDay = (await _database.GetMenuAsync(start, calendarEnd)).ToLookup(entry => entry.Date.Date);
         var recipesById = recipes.ToDictionary(recipe => recipe.Id);
+        var recipesByCategory = monthly ? null : recipes
+            .GroupBy(recipe => recipe.Category, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key,
+                group => new Lazy<Recipe[]>(() => group.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase).ToArray()),
+                StringComparer.OrdinalIgnoreCase);
         var categories = monthly
             ? new Dictionary<(DateTime Date, string Slot), string>()
             : (await _database.GetMenuCategoriesAsync(start, calendarEnd))
@@ -256,7 +261,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 {
                     var entry = FindSlotEntry(slot, dayEntries);
                     var recipe = entry == null ? null : recipesById.GetValueOrDefault(entry.RecipeId);
-                    cells.Add(CreateSlot(day, slot, entry, recipe, recipes, categories, settings.MealCategories));
+                    cells.Add(CreateSlot(day, slot, entry, recipe, recipesByCategory!, categories, settings.MealCategories));
                 }
                 var clearDay = new Button { Content = L.Get("PlannerClearDay"), HorizontalAlignment = HorizontalAlignment.Stretch };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clearDay, $"{L.Get("PlannerClearDay")} {day:D}");
@@ -365,7 +370,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             InvalidateRecipeTextBox(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i));
     }
 
-    private StackPanel CreateSlot(DateTime day, int index, MenuEntry? entry, Recipe? current, IReadOnlyList<Recipe> recipes, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
+    private StackPanel CreateSlot(DateTime day, int index, MenuEntry? entry, Recipe? current, IReadOnlyDictionary<string, Lazy<Recipe[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
     {
         var slot = $"slot{index + 1}";
         var category = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
@@ -446,8 +451,10 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             try
             {
-                var displayedCategory = DisplayedCategory();
-                search.ItemsSource = recipes.Where(r => r.Category.Equals(displayedCategory, StringComparison.OrdinalIgnoreCase) && r.Name.Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                var recipes = recipesByCategory.GetValueOrDefault(DisplayedCategory())?.Value ?? Array.Empty<Recipe>();
+                var query = search.Text.Trim();
+                search.ItemsSource = query.Length == 0 ? recipes :
+                    Array.FindAll(recipes, recipe => recipe.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex) { App.Logger.LogError(ex, "Could not load meal suggestions"); status.Text = L.Get("DataLoadFailed"); status.Visibility = Visibility.Visible; }
         }

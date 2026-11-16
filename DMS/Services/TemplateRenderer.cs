@@ -27,7 +27,7 @@ public static class TemplateRenderer
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
         var populated = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
-        var visible = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
+        var visible = template.HideEmptyDays ? populated : TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, false, includeWeekend);
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 1;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -199,13 +199,15 @@ public static class TemplateRenderer
         var heading = StyledText(day.ToString("dddd, d MMMM"), GetTextStyle(template, $"heading:{dayIndex}"), scale);
         Selectable(heading, $"heading:{dayIndex}", onSelected, lifetime);
         panel.Children.Add(heading);
+        if (entries.Count == 0) return panel;
+
+        var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
+        var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
+        var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
         foreach (var entry in entries)
         {
             var recipe = recipes[entry.RecipeId];
             var allergens = recipeAllergens[entry.RecipeId];
-            var menuStyle = GetTextStyle(template, $"menu:{dayIndex}");
-            var ingredientStyle = GetTextStyle(template, $"ingredients:{dayIndex}");
-            var allergenStyle = GetTextStyle(template, $"allergens:{dayIndex}");
             // Keep each editable part as its own element. Runs inside one TextBlock
             // cannot receive pointer input, which made the builder's previous
             // menu/ingredients/allergens selector ambiguous.
