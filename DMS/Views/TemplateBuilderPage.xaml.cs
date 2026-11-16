@@ -218,7 +218,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var settings = await _database.GetSettingsAsync();
             if (_leaving) return;
             _recentTemplateColors = settings?.RecentTemplateColors?
-                .Where(IsColorHex).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
+                .Where(color => RgbColor.TryParse(color, out _)).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList() ?? [];
             await ReloadTemplatesAsync();
             if (_leaving) return;
             var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
@@ -611,12 +611,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Render();
     }
 
-    private static Windows.UI.Color ParseColor(string? value)
-    {
-        if (value is { Length: 7 } && value[0] == '#' && uint.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
-            return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
-        return Microsoft.UI.Colors.Black;
-    }
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
     {
         if (root is FrameworkElement { Tag: string tag } element && tag == key) return element;
@@ -743,7 +737,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 InlineEditor.FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * zoom : 14 * zoom, 6, 144);
                 InlineEditor.FontWeight = style.Bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
                 InlineEditor.FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
-                InlineEditor.Foreground = new SolidColorBrush(ParseColor(style.Color));
+                InlineEditor.Foreground = new SolidColorBrush(RgbColor.ParseOrDefault(style.Color, Microsoft.UI.Colors.Black));
                 InlineEditor.TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left };
                 InlineEditor.VerticalContentAlignment = _editingBlock == "footer" ? VerticalAlignment.Bottom : VerticalAlignment.Top;
             }
@@ -936,7 +930,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
 
     private void AddContextColor(string label, string initial, Action<string, double> change, double initialOpacity = 1)
     {
-        var initialColor = ParseColor(initial);
+        var initialColor = RgbColor.ParseOrDefault(initial, Microsoft.UI.Colors.Black);
         var alpha = (byte)Math.Round((double.IsFinite(initialOpacity) ? Math.Clamp(initialOpacity, 0, 1) : 1) * byte.MaxValue);
         var swatch = new Border { Width = 18, Height = 18, Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, initialColor.R, initialColor.G, initialColor.B)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1) };
         var button = new Button { Content = swatch, Padding = new Thickness(5), MinWidth = 32 };
@@ -953,11 +947,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             foreach (var recentColor in _recentTemplateColors)
             {
                 var color = recentColor;
-                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(ParseColor(color)), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
+                var recentRgb = RgbColor.ParseOrDefault(color, Microsoft.UI.Colors.Black);
+                var recentButton = new Button { Width = 38, Height = 28, Padding = new Thickness(2), Margin = new Thickness(0, 0, 5, 5), Content = new Border { Width = 32, Height = 22, Background = new SolidColorBrush(recentRgb), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2) } };
                 ToolTipService.SetToolTip(recentButton, color);
                 recentButton.Click += (_, _) =>
                 {
-                    var recentRgb = ParseColor(color);
                     picker.Color = Windows.UI.Color.FromArgb(picker.Color.A, recentRgb.R, recentRgb.G, recentRgb.B);
                 };
                 recent.Children.Add(recentButton);
@@ -979,8 +973,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         button.Flyout = flyout;
         ContextTools.Children.Add(button);
     }
-
-    private static bool IsColorHex(string color) => color.Length == 7 && color[0] == '#' && uint.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out _);
 
     private async Task RememberTemplateColorAsync(string color)
     {

@@ -82,13 +82,13 @@ public static class TemplateRenderer
             var dayOverflow = required[i] > fit.DayHeights[i] + .5;
             var scroller = new ScrollViewer { Content = panels[i], VerticalScrollMode = dayOverflow ? ScrollMode.Auto : ScrollMode.Disabled, VerticalScrollBarVisibility = dayOverflow ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Disabled };
             var appearance = DayAppearance(template, visible[i]);
-            var backgroundColor = ParseColor(appearance?.BackgroundColor, Colors.Transparent);
+            var backgroundColor = RgbColor.ParseOrDefault(appearance?.BackgroundColor, Colors.Transparent);
             var backgroundOpacity = appearance != null && double.IsFinite(appearance.Opacity) ? Math.Clamp(appearance.Opacity, 0, 1) : 1;
             // Put the alpha in the color itself. This keeps the text and border fully
             // opaque while making only the block fill transparent on every renderer.
             var background = new SolidColorBrush(Windows.UI.Color.FromArgb(
                 (byte)Math.Round(backgroundOpacity * byte.MaxValue), backgroundColor.R, backgroundColor.G, backgroundColor.B));
-            var borderColor = dayOverflow ? Colors.Red : ParseColor(appearance?.BorderColor, Colors.LightGray);
+            var borderColor = dayOverflow ? Colors.Red : RgbColor.ParseOrDefault(appearance?.BorderColor, Colors.LightGray);
             var borderOpacity = appearance != null && double.IsFinite(appearance.BorderOpacity) ? Math.Clamp(appearance.BorderOpacity, 0, 1) : 1;
             var border = new Border { Child = scroller, Padding = new Thickness(DayPadding(template, visible[i])), BorderThickness = new Thickness(dayOverflow ? Math.Max(1, DayBorderThickness(template, visible[i])) : DayBorderThickness(template, visible[i])), BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(borderOpacity * byte.MaxValue), borderColor.R, borderColor.G, borderColor.B)), Background = background, CornerRadius = new CornerRadius(appearance != null && double.IsFinite(appearance.CornerRadius) ? Math.Clamp(appearance.CornerRadius, 0, 100) : 4) };
             Selectable(border, $"day:{visible[i]}", onSelected, lifetime);
@@ -139,7 +139,7 @@ public static class TemplateRenderer
         content.Children.Add(inset);
         var foreground = TemplatePageImages.CreateLayer(canvasImages.Where(image => image is { IsCanvasBackground: false, InFrontOfText: true }), onSelected, bitmapCache, decodeWidth, cancellationToken, lifetime);
         content.Children.Add(foreground.Layer);
-        var pageColor = ParseColor(template.BackgroundColor, Colors.White);
+        var pageColor = RgbColor.ParseOrDefault(template.BackgroundColor, Colors.White);
         var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected, lifetime);
@@ -257,15 +257,9 @@ public static class TemplateRenderer
         else block.Inlines.Add(run);
     }
 
-    private static Windows.UI.Color ParseColor(string? value, Windows.UI.Color fallback)
-    {
-        if (value == null || !System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$")) return fallback;
-        return Windows.UI.Color.FromArgb(255, Convert.ToByte(value.Substring(1, 2), 16), Convert.ToByte(value.Substring(3, 2), 16), Convert.ToByte(value.Substring(5, 2), 16));
-    }
-
     private static SolidColorBrush Brush(string? value, double opacity)
     {
-        var color = ParseColor(value, Colors.Black);
+        var color = RgbColor.ParseOrDefault(value, Colors.Black);
         var alpha = (byte)Math.Round((double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1) * byte.MaxValue);
         return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
     }

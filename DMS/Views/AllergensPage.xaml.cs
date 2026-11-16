@@ -237,10 +237,10 @@ public class AllergenItemViewModel
 
     internal static Color ParseColorHex(string hex)
     {
-        hex = hex.TrimStart('#');
-        var r = Convert.ToByte(hex.Substring(0, 2), 16);
-        var g = Convert.ToByte(hex.Substring(2, 2), 16);
-        var b = Convert.ToByte(hex.Substring(4, 2), 16);
-        return Windows.UI.Color.FromArgb(255, r, g, b);
+        // Older values can omit the prefix or carry extra characters after the RGB digits.
+        var digits = hex.AsSpan().TrimStart('#');
+        if (digits.Length >= 6 && RgbColor.TryParseDigits(digits[..6], out var color))
+            return color;
+        return Windows.UI.Color.FromArgb(255, 52, 152, 219);
     }
 }

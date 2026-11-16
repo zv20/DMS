@@ -14,7 +14,6 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
     private readonly DatabaseService _database;
     private static readonly string[] Categories = ["soup", "main", "dessert", "other"];
     private static readonly string[] CategoryIcons = ["🥣", "🍽️", "🍰", "➕"];
-    private static readonly string[] LegacySlotNames = ["Breakfast", "Lunch", "Dinner", "Snack"];
     private DateTime _date = DateTime.Today;
     private bool _monthly = true;
     private bool _busy, _refreshPending;
@@ -240,7 +239,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             {
                 var names = Enumerable.Range(0, settings.MealsPerDay).Select(index =>
                 {
-                    var entry = FindSlotEntry(index, dayEntries);
+                    var entry = MenuOutputService.FindSlotEntry(index, dayEntries);
                     return entry != null && recipesById.TryGetValue(entry.RecipeId, out var recipe)
                         ? $"{index + 1}. {recipe.Name}" : null;
                 }).OfType<string>();
@@ -255,7 +254,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 panel.Children.Clear();
                 for (var slot = 0; slot < settings.MealsPerDay; slot++)
                 {
-                    var entry = FindSlotEntry(slot, dayEntries);
+                    var entry = MenuOutputService.FindSlotEntry(slot, dayEntries);
                     var recipe = entry == null ? null : recipesById.GetValueOrDefault(entry.RecipeId);
                     cells.Add(CreateSlot(day, slot, entry, recipe, recipesByCategory!, categories, settings.MealCategories));
                 }
@@ -346,14 +345,6 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             card.ClearValue(Border.BackgroundProperty);
             card.ClearValue(Border.BorderBrushProperty);
         };
-    }
-
-    private static MenuEntry? FindSlotEntry(int index, IEnumerable<MenuEntry> entries)
-    {
-        var slot = $"slot{index + 1}";
-        return entries.FirstOrDefault(entry => entry.Slot == slot)
-            ?? (index < Categories.Length ? entries.FirstOrDefault(entry =>
-                entry.Slot.Equals(Categories[index], StringComparison.OrdinalIgnoreCase) || entry.Slot == LegacySlotNames[index]) : null);
     }
 
     private static void InvalidateRecipeTextBox(DependencyObject element)
