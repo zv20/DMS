@@ -32,12 +32,12 @@
                 <Expander.Header><TextBlock Text="🎨 Appearance" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Appearance_be0e75" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
-                    <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="ThemeComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
+                    <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="AppearanceComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
                         <ComboBoxItem Tag="light" Content="☀️ Light"  x:Uid="Text_Light_200060" />
                         <ComboBoxItem Tag="dark" Content="🌙 Dark"  x:Uid="Text_Dark_9cc40d" />
                         <ComboBoxItem Tag="system" Content="💻 System Default"  x:Uid="Text_System_Default_363703" />
                     </ComboBox>
-                    <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AccentColorComboBox_SelectionChanged" Margin="0,8,0,0" x:Uid="Text_Accent_Color_2bef52">
+                    <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AppearanceComboBox_SelectionChanged" Margin="0,8,0,0" x:Uid="Text_Accent_Color_2bef52">
                         <ComboBoxItem Tag="blue" Content="🔵 Blue"  x:Uid="Text_Blue_b81516" />
                         <ComboBoxItem Tag="green" Content="🟢 Green"  x:Uid="Text_Green_f66748" />
                         <ComboBoxItem Tag="purple" Content="🟣 Purple"  x:Uid="Text_Purple_a14112" />

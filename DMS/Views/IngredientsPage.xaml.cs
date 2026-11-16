@@ -117,24 +117,10 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         }
     }
 
-    private async void DeleteIngredientButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
-        button.IsEnabled = false;
-        try
-        {
-            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Ingredient_79a0ab"),
-                L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"), "String_Text_Delete_f6fdbe")) return;
-            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
-            try { await _database.DeleteIngredientAsync(id); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete ingredient {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
-            if (_editor.EditingId == id) _editor.Close();
-            try { await LoadIngredientsAsync(); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Deleted ingredient {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
-        }
-        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm ingredient deletion"); SetPageStatus("DataDialogFailed"); }
-        finally { button.IsEnabled = true; }
-    }
+    private async void DeleteIngredientButton_Click(object sender, RoutedEventArgs e) =>
+        await _editor.DeleteItemAsync(sender, "Text_Delete_Ingredient_79a0ab",
+            "Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2",
+            _database.DeleteIngredientAsync, LoadIngredientsAsync, SetPageStatus);
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
 

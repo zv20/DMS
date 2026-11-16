@@ -199,68 +199,51 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         finally { _suppressSettingChanges = false; }
     }
 
-    private async void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void AppearanceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_suppressSettingChanges) return;
-        if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string theme)
+        if (_suppressSettingChanges || sender is not ComboBox { SelectedItem: ComboBoxItem { Tag: string value } } comboBox) return;
+        var isTheme = comboBox == ThemeComboBox;
+        ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
+        var saved = false;
+        try
         {
-            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
-            var saved = false;
-            try
-            {
-                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-                settings.Theme = theme;
-                await _databaseService.SaveSettingsAsync(settings);
-                saved = true;
-                _selectedTheme = theme;
-                AppearanceService.ApplyTheme(App.CurrentWindow, theme, settings.AccentColor);
-                AppearanceStatus.Text = "";
-            }
-            catch (Exception ex)
-            {
-                App.Logger.LogError(ex, saved ? "Theme was saved but could not be applied" : "Could not save theme");
-                if (!saved)
-                {
-                    _suppressSettingChanges = true;
-                    try { ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedTheme) ?? ThemeComboBox.Items[0]; }
-                    finally { _suppressSettingChanges = false; }
-                }
-                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
-            }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
-        }
-    }
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            if (isTheme) settings.Theme = value;
+            else settings.AccentColor = value;
+            await _databaseService.SaveSettingsAsync(settings);
+            saved = true;
 
-    private async void AccentColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressSettingChanges) return;
-        if (AccentColorComboBox.SelectedItem is ComboBoxItem item && item.Tag is string accent)
-        {
-            ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = false;
-            var saved = false;
-            try
+            if (isTheme)
             {
-                var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
-                settings.AccentColor = accent;
-                await _databaseService.SaveSettingsAsync(settings);
-                saved = true;
-                _selectedAccent = accent;
-                AppearanceService.ApplyAccent(accent);
-                AppearanceStatus.Text = "";
+                _selectedTheme = value;
+                AppearanceService.ApplyTheme(App.CurrentWindow, value, settings.AccentColor);
             }
-            catch (Exception ex)
+            else
             {
-                App.Logger.LogError(ex, saved ? "Accent was saved but could not be applied" : "Could not save accent color");
-                if (!saved)
-                {
-                    _suppressSettingChanges = true;
-                    try { AccentColorComboBox.SelectedItem = AccentColorComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == _selectedAccent) ?? AccentColorComboBox.Items[0]; }
-                    finally { _suppressSettingChanges = false; }
-                }
-                AppearanceStatus.Text = saved ? L.Get("LogViewerSavedApplyFailed") : L.Get("DataSaveFailed");
+                _selectedAccent = value;
+                AppearanceService.ApplyAccent(value);
             }
-            finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
+            AppearanceStatus.Text = "";
         }
+        catch (Exception ex)
+        {
+            var setting = isTheme ? "theme" : "accent color";
+            if (saved) App.Logger.LogError(ex, "Saved {Setting} but could not apply it", setting);
+            else
+            {
+                App.Logger.LogError(ex, "Could not save {Setting}", setting);
+                _suppressSettingChanges = true;
+                try
+                {
+                    var previous = isTheme ? _selectedTheme : _selectedAccent;
+                    comboBox.SelectedItem = comboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == previous) ?? comboBox.Items[0];
+                }
+                finally { _suppressSettingChanges = false; }
+            }
+            AppearanceStatus.Text = L.Get(saved ? "LogViewerSavedApplyFailed" : "DataSaveFailed");
+        }
+        finally { ThemeComboBox.IsEnabled = AccentColorComboBox.IsEnabled = true; }
     }
 
     private void AddCategoryEditor(string id, string name, bool canRemove = false)

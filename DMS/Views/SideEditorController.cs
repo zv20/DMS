@@ -20,7 +20,7 @@ internal sealed class SideEditorController
     private readonly StackPanel _content;
     private bool _dirty, _opening, _saving, _confirming;
     private Func<Task<bool>>? _saveAction;
-    public int? EditingId { get; private set; }
+    private int? EditingId { get; set; }
 
     public SideEditorController(Page page, ColumnDefinition column, Border panel, TextBlock title, TextBlock status,
         StackPanel content, Button save, Button cancel, Button close)
@@ -88,6 +88,42 @@ internal sealed class SideEditorController
     }
 
     public async Task<bool> CanLeaveAsync() => !_opening && !_saving && !_confirming && await ConfirmDiscardAsync();
+
+    public async Task DeleteItemAsync(object sender, string titleKey, string messageKey,
+        Func<int, Task> delete, Func<Task> refresh, Action<string?> setPageStatus)
+    {
+        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
+        var pageName = _page.GetType().Name;
+        button.IsEnabled = false;
+        try
+        {
+            if (!await EditorDialogs.ConfirmAsync(_page.XamlRoot, Localization.Get(titleKey),
+                Localization.Get(messageKey), "String_Text_Delete_f6fdbe")) return;
+            if (EditingId == id && !await CanLeaveAsync()) return;
+
+            try { await delete(id); }
+            catch (Exception ex)
+            {
+                App.Logger.LogError(ex, "Failed to delete item {Id} on {Page}", id, pageName);
+                setPageStatus("DataDeleteFailed");
+                return;
+            }
+
+            if (EditingId == id) Close();
+            try { await refresh(); }
+            catch (Exception ex)
+            {
+                App.Logger.LogError(ex, "Deleted item {Id} on {Page} but refresh failed", id, pageName);
+                setPageStatus("DataDeletedRefreshFailed");
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Failed to confirm item deletion on {Page}", pageName);
+            setPageStatus("DataDialogFailed");
+        }
+        finally { button.IsEnabled = true; }
+    }
 
     private async Task<bool> ConfirmDiscardAsync()
     {

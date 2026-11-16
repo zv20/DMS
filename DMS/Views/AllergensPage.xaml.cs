@@ -117,24 +117,10 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         }
     }
 
-    private async void DeleteAllergenButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: int id } button || !button.IsEnabled) return;
-        button.IsEnabled = false;
-        try
-        {
-            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Allergen_7b0000"),
-                L.Get("Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f"), "String_Text_Delete_f6fdbe")) return;
-            if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
-            try { await _database.DeleteAllergenAsync(id); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete allergen {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
-            if (_editor.EditingId == id) _editor.Close();
-            try { await LoadAllergensAsync(); }
-            catch (Exception ex) { App.Logger.LogError(ex, "Deleted allergen {Id} but refresh failed", id); SetPageStatus("DataDeletedRefreshFailed"); }
-        }
-        catch (Exception ex) { App.Logger.LogError(ex, "Failed to confirm allergen deletion"); SetPageStatus("DataDialogFailed"); }
-        finally { button.IsEnabled = true; }
-    }
+    private async void DeleteAllergenButton_Click(object sender, RoutedEventArgs e) =>
+        await _editor.DeleteItemAsync(sender, "Text_Delete_Allergen_7b0000",
+            "Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f",
+            _database.DeleteAllergenAsync, LoadAllergensAsync, SetPageStatus);
 
     public Task<bool> CanLeaveAsync() => _editor.CanLeaveAsync();
 
