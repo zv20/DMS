@@ -1,10 +1,12 @@
 param(
     [Parameter(Mandatory)] [string] $PreviousMsi,
-    [Parameter(Mandatory)] [string] $CurrentMsi,
-    [Parameter(Mandatory)] [string] $Version
+    [Parameter(Mandatory)] [string] $CurrentMsi
 )
 
 $ErrorActionPreference = 'Stop'
+if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted') {
+    throw 'The MSI upgrade test requires a disposable GitHub-hosted runner.'
+}
 . "$PSScriptRoot/wait-for-app-file.ps1"
 $installDir = Join-Path $env:RUNNER_TEMP 'DMS-upgrade'
 $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
@@ -36,7 +38,7 @@ function Get-ProductCode([string] $Path) {
 }
 
 # GitHub-hosted runner only: discard the fresh-install smoke test's data.
-if (Test-Path $dataDir) { Remove-Item $dataDir -Recurse -Force }
+if (Test-Path -LiteralPath $dataDir) { Remove-Item -LiteralPath $dataDir -Recurse -Force }
 Install-Msi $PreviousMsi
 $exe = Join-Path $installDir 'DMS.exe'
 if (!(Test-Path $exe)) { throw 'Previous DMS executable was not installed.' }
@@ -75,4 +77,4 @@ $app = Start-Process $exe -WorkingDirectory $installDir -PassThru
 try {
     Wait-DmsAppFile $app $ready 'Upgraded DMS main window startup'
 } finally { Stop-App $app }
-Write-Host "Upgraded 0.0.13 to $Version, preserved existing data, and started DMS."
+Write-Host "Upgraded $(Split-Path -Leaf $PreviousMsi) to $(Split-Path -Leaf $CurrentMsi), preserved existing data, and started DMS."

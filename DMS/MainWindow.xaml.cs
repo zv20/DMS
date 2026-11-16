@@ -251,18 +251,11 @@ public sealed partial class MainWindow : Window
                     if (OutputOverlay.Visibility == Visibility.Collapsed) PerformancePageSignal.Write("closeOutput", 1);
                     return;
                 }
-                if (tag == "pdf")
+                if (tag is "pdf" or "png")
                 {
-                    var output = Environment.GetEnvironmentVariable("DMS_QA_PDF_PATH");
+                    var output = Environment.GetEnvironmentVariable(tag == "pdf" ? "DMS_QA_PDF_PATH" : "DMS_QA_PNG_PATH");
                     if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
-                        await preview.ExportPerformancePdfAsync(output);
-                    return;
-                }
-                if (tag == "png")
-                {
-                    var output = Environment.GetEnvironmentVariable("DMS_QA_PNG_PATH");
-                    if (OutputFrame.Content is TemplateOutputPage preview && !string.IsNullOrWhiteSpace(output))
-                        await preview.ExportPerformancePngAsync(output);
+                        await preview.ExportPerformanceAsync(tag, output);
                     return;
                 }
                 if (tag is not ("recipes" or "ingredients" or "templateBuilder")) return;

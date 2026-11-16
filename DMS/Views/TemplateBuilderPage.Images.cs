@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
-using Windows.Graphics.Imaging;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using L = DMS.Services.Localization;
@@ -103,17 +102,18 @@ public sealed partial class TemplateBuilderPage
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSingleFileAsync();
             if (file == null || !ReferenceEquals(document, _document)) return;
-            if ((await file.GetBasicPropertiesAsync()).Size > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
             using var stream = await file.OpenReadAsync();
-            var decoder = await BitmapDecoder.CreateAsync(stream);
-            var sourceWidth = (double)decoder.OrientedPixelWidth;
-            var sourceHeight = (double)decoder.OrientedPixelHeight;
-            if (sourceWidth <= 0 || sourceHeight <= 0) throw new InvalidOperationException(L.Get("TplImageInvalid"));
-            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
-            if (buffer.Length > 4 * 1024 * 1024) { StatusText.Text = L.Get("TplImageLimit"); return; }
-            var bytes = new byte[buffer.Length]; using (var reader = DataReader.FromBuffer(buffer)) reader.ReadBytes(bytes);
-            if (!ReferenceEquals(document, _document)) return;
+            if (stream.Size > DatabaseService.MaxImageBytes) { StatusText.Text = L.Get("TplImageLimit"); return; }
+            using var reader = new DataReader(stream.GetInputStreamAt(0));
+            var length = await reader.LoadAsync(DatabaseService.MaxImageBytes + 1);
+            if (length > DatabaseService.MaxImageBytes) { StatusText.Text = L.Get("TplImageLimit"); return; }
+            var bytes = new byte[length];
+            reader.ReadBytes(bytes);
             var mime = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+            if (!DatabaseService.ValidImageSignature(mime, bytes)) throw new InvalidOperationException(L.Get("TplImageInvalid"));
+            using var imageStream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
+            var (sourceWidth, sourceHeight) = await TemplateBitmapCache.ReadImageDimensionsAsync(imageStream);
+            if (!ReferenceEquals(document, _document)) return;
             var asset = await _database.SaveTemplateImageAsync(file.DisplayName, mime, bytes);
             PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }

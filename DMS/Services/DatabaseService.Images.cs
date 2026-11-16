@@ -8,7 +8,8 @@ namespace DMS.Services;
 
 public partial class DatabaseService
 {
-    private const int MaxImageBytes = 4 * 1024 * 1024;
+    internal const int MaxImageBytes = 4 * 1024 * 1024;
+    private const string ValidImageBlob = "CASE WHEN typeof(data) = 'blob' THEN length(data) BETWEEN 1 AND @maxBytes ELSE 0 END";
 
     private void InitializeTemplateImages()
     {
@@ -186,7 +187,7 @@ public partial class DatabaseService
         return ReadTemplateImage(id, transaction)!;
     }
 
-    private static bool ValidImageSignature(string contentType, byte[] data)
+    internal static bool ValidImageSignature(string contentType, byte[] data)
     {
         var png = data.Length >= 8 && data.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
         var jpeg = data.Length >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF;
@@ -197,10 +198,24 @@ public partial class DatabaseService
     {
         using var cmd = _connection!.CreateCommand();
         cmd.Transaction = transaction;
-        cmd.CommandText = "SELECT id,name,content_type,data FROM template_image_assets WHERE id=@id";
+        cmd.CommandText = $"SELECT id,name,content_type,CASE WHEN {ValidImageBlob} THEN data END FROM template_image_assets WHERE id=@id";
         cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
         using var reader = cmd.ExecuteReader();
-        return reader.Read() ? new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = reader.GetString(2), Data = (byte[])reader[3] } : null;
+        if (!reader.Read()) return null;
+        if (reader.IsDBNull(3)) throw new InvalidDataException("Stored template image size or type is invalid.");
+        var contentType = reader.GetString(2);
+        var data = (byte[])reader[3];
+        if (!ValidImageSignature(contentType, data)) throw new InvalidDataException("Stored template image format is invalid.");
+        return new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = contentType, Data = data };
+    }
+
+    private static void ValidateBackupImageAssets(SqliteConnection source)
+    {
+        using var cmd = source.CreateCommand();
+        cmd.CommandText = $"SELECT 1 FROM template_image_assets WHERE NOT ({ValidImageBlob}) LIMIT 1";
+        cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
+        if (cmd.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains an invalid template image size or type.");
     }
 
     private bool TemplateImageExists(string id, SqliteTransaction transaction)
@@ -299,7 +314,14 @@ public partial class DatabaseService
         {
             if (string.IsNullOrWhiteSpace(id)) return existing;
             if (cache.TryGetValue(id, out var cached)) return cached ?? existing;
-            var image = ReadTemplateImage(id);
+            TemplateImageAsset? image;
+            try { image = ReadTemplateImage(id); }
+            catch (InvalidDataException ex)
+            {
+                _logger.LogWarning(ex, "Template {Template} contains an unreadable image {Image}", template.Name, id);
+                cache[id] = null;
+                return existing;
+            }
             if (image == null)
             {
                 _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);

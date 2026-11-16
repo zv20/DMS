@@ -32,5 +32,3 @@ jobs:
     name: Build and verify packages without release
     needs: tests
     uses: ./.github/workflows/windows-package.yml
-    with:
-      version: '0.0.14'

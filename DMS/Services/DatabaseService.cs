@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
+using System.Globalization;
 using System.IO;
 using DMS.Models;
 
@@ -12,6 +13,13 @@ public sealed class RecipeInUseException : InvalidOperationException
 
 public partial class DatabaseService : IDisposable
 {
+    private const string MenuDateFormat = "yyyy-MM-dd";
+    private const string MenuSelect = "SELECT id, date, slot, recipe_id FROM menu";
+    private const string MenuCategoriesSelect = "SELECT date, slot, category FROM menu_slot_categories";
+    private const string UpsertMenu = @"INSERT INTO menu(date, slot, recipe_id) VALUES(@date, @slot, @recipe)
+        ON CONFLICT(date, slot) DO UPDATE SET recipe_id=@recipe";
+    private const string UpsertMenuCategory = @"INSERT INTO menu_slot_categories(date, slot, category) VALUES(@date, @slot, @category)
+        ON CONFLICT(date, slot) DO UPDATE SET category=@category";
     private readonly ILogger<DatabaseService> _logger;
     private readonly bool _seedBuiltInTemplates;
     private readonly string _dbPath;
@@ -514,7 +522,7 @@ public partial class DatabaseService : IDisposable
         await InitializeAsync();
         using var cmd = _connection!.CreateCommand();
         cmd.CommandText = "DELETE FROM menu WHERE date = @date";
-        cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
+        cmd.Parameters.AddWithValue("@date", date.ToString(MenuDateFormat, CultureInfo.InvariantCulture));
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -523,20 +531,11 @@ public partial class DatabaseService : IDisposable
         await InitializeAsync();
         var list = new List<MenuEntry>();
         using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM menu WHERE date >= @start AND date <= @end ORDER BY date, slot";
-        cmd.Parameters.AddWithValue("@start", start.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@end", end.ToString("yyyy-MM-dd"));
+        cmd.CommandText = MenuSelect + " WHERE date >= @start AND date <= @end ORDER BY date, slot";
+        cmd.Parameters.AddWithValue("@start", start.ToString(MenuDateFormat, CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("@end", end.ToString(MenuDateFormat, CultureInfo.InvariantCulture));
         using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            list.Add(new MenuEntry
-            {
-                Id = reader.GetInt32(0),
-                Date = DateTime.Parse(reader.GetString(1)),
-                Slot = reader.GetString(2),
-                RecipeId = reader.GetInt32(3)
-            });
-        }
+        while (await reader.ReadAsync()) list.Add(ReadMenuEntry(reader));
         return list;
     }
 
@@ -544,14 +543,29 @@ public partial class DatabaseService : IDisposable
     {
         await InitializeAsync();
         using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT date, slot, category FROM menu_slot_categories WHERE date >= @start AND date <= @end ORDER BY date, slot";
-        cmd.Parameters.AddWithValue("@start", start.ToString("yyyy-MM-dd"));
-        cmd.Parameters.AddWithValue("@end", end.ToString("yyyy-MM-dd"));
+        cmd.CommandText = MenuCategoriesSelect + " WHERE date >= @start AND date <= @end ORDER BY date, slot";
+        cmd.Parameters.AddWithValue("@start", start.ToString(MenuDateFormat, CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("@end", end.ToString(MenuDateFormat, CultureInfo.InvariantCulture));
         using var reader = await cmd.ExecuteReaderAsync();
         var result = new List<MenuSlotCategory>();
-        while (await reader.ReadAsync()) result.Add(new MenuSlotCategory { Date = DateTime.Parse(reader.GetString(0)), Slot = reader.GetString(1), Category = reader.GetString(2) });
+        while (await reader.ReadAsync()) result.Add(ReadMenuCategory(reader));
         return result;
     }
+
+    private static MenuEntry ReadMenuEntry(SqliteDataReader reader) => new()
+    {
+        Id = checked((int)(long)reader.GetValue(0)),
+        Date = DateTime.ParseExact((string)reader.GetValue(1), MenuDateFormat, CultureInfo.InvariantCulture),
+        Slot = (string)reader.GetValue(2),
+        RecipeId = checked((int)(long)reader.GetValue(3))
+    };
+
+    private static MenuSlotCategory ReadMenuCategory(SqliteDataReader reader) => new()
+    {
+        Date = DateTime.ParseExact((string)reader.GetValue(0), MenuDateFormat, CultureInfo.InvariantCulture),
+        Slot = (string)reader.GetValue(1),
+        Category = (string)reader.GetValue(2)
+    };
 
     /// <summary>Save a slot's category and assignment as one indivisible change.</summary>
     public async Task SaveMenuSlotAsync(DateTime date, string slot, string category, int? recipeId)
@@ -570,12 +584,11 @@ public partial class DatabaseService : IDisposable
                 throw new InvalidOperationException("The selected recipe no longer exists.");
         }
 
-        var dateValue = date.ToString("yyyy-MM-dd");
+        var dateValue = date.ToString(MenuDateFormat, CultureInfo.InvariantCulture);
         using (var updateCategory = _connection.CreateCommand())
         {
             updateCategory.Transaction = transaction;
-            updateCategory.CommandText = @"INSERT INTO menu_slot_categories(date, slot, category) VALUES(@date, @slot, @category)
-                ON CONFLICT(date, slot) DO UPDATE SET category=@category";
+            updateCategory.CommandText = UpsertMenuCategory;
             updateCategory.Parameters.AddWithValue("@date", dateValue);
             updateCategory.Parameters.AddWithValue("@slot", slot);
             updateCategory.Parameters.AddWithValue("@category", category);
@@ -586,8 +599,7 @@ public partial class DatabaseService : IDisposable
         {
             updateMenu.Transaction = transaction;
             updateMenu.CommandText = recipeId.HasValue
-                ? @"INSERT INTO menu(date, slot, recipe_id) VALUES(@date, @slot, @recipe)
-                    ON CONFLICT(date, slot) DO UPDATE SET recipe_id=@recipe"
+                ? UpsertMenu
                 : "DELETE FROM menu WHERE date=@date AND slot=@slot";
             updateMenu.Parameters.AddWithValue("@date", dateValue);
             updateMenu.Parameters.AddWithValue("@slot", slot);
@@ -942,6 +954,8 @@ public partial class DatabaseService : IDisposable
             ["templates"] = ["name", "data_json", "is_preset", "created_at", "updated_at"],
             ["settings"] = ["key", "value"]
         };
+        var hasMenuCategories = BackupHasTable(source, "menu_slot_categories");
+        if (hasMenuCategories) required["menu_slot_categories"] = ["date", "slot", "category"];
         foreach (var (table, columns) in required)
         {
             using var command = source.CreateCommand();
@@ -997,12 +1011,39 @@ public partial class DatabaseService : IDisposable
                         throw new InvalidDataException("The selected backup contains an invalid ingredient list.");
                 }
             }
+            using (var menu = source.CreateCommand())
+            {
+                // Preparing the ordinary write checks its conflict key without writing to the backup.
+                menu.CommandText = UpsertMenu;
+                menu.Prepare();
+                menu.CommandText = MenuSelect;
+                using var reader = menu.ExecuteReader();
+                while (reader.Read()) ReadMenuEntry(reader);
+            }
+            if (hasMenuCategories)
+            {
+                using var categories = source.CreateCommand();
+                categories.CommandText = UpsertMenuCategory;
+                categories.Prepare();
+                categories.CommandText = MenuCategoriesSelect;
+                using var reader = categories.ExecuteReader();
+                while (reader.Read()) ReadMenuCategory(reader);
+            }
+            if (BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException
-            or InvalidCastException or FormatException or OverflowException)
+            or InvalidCastException or FormatException or OverflowException or SqliteException)
         {
             throw new InvalidDataException("The selected backup contains unreadable startup data.", ex);
         }
+    }
+
+    private static bool BackupHasTable(SqliteConnection source, string table)
+    {
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = @name COLLATE NOCASE";
+        command.Parameters.AddWithValue("@name", table);
+        return command.ExecuteScalar() != null;
     }
 
     public async Task VacuumAsync()

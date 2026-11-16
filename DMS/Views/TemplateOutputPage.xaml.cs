@@ -20,6 +20,7 @@ namespace DMS.Views;
 /// <summary>Prints the same native page renderer used in the template editor.</summary>
 public sealed partial class TemplateOutputPage : Page
 {
+    private const int PrintDecodeLimit = 3600; // Covers the long edge of A4 at 300 DPI.
     private readonly DatabaseService _database;
     private static readonly string[] PngExtensions = [".png"];
     private static readonly string[] JpegExtensions = [".jpg", ".jpeg"];
@@ -347,7 +348,8 @@ public sealed partial class TemplateOutputPage : Page
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
             ReleasePrintResources();
             foreach (var pageEntries in _pageEntries)
-                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps));
+                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients,
+                    includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps, decodeWidth: PrintDecodeLimit));
             await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
             if (!_loaded) return;
             if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
@@ -432,30 +434,21 @@ public sealed partial class TemplateOutputPage : Page
         return ImagePdf.Create(images, 1588, 2246);
     }
 
-    internal async Task ExportPerformancePdfAsync(string path)
+    internal async Task ExportPerformanceAsync(string format, string path)
     {
         if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
         _busy = true;
         SetReady(true);
         try
         {
-            var pdf = await CreatePdfBytesAsync();
-            await System.IO.File.WriteAllBytesAsync(path, pdf);
-            PerformancePageSignal.Write("pdf", pdf.Length);
-        }
-        finally { _busy = false; SetReady(_ready); }
-    }
-
-    internal async Task ExportPerformancePngAsync(string path)
-    {
-        if (!_ready || _busy || _previewPages.Count == 0) throw new InvalidOperationException("Output preview is not ready.");
-        _busy = true;
-        SetReady(true);
-        try
-        {
-            var png = await RenderPageAsync(_previewPages[0].Page, BitmapEncoder.PngEncoderId);
-            await System.IO.File.WriteAllBytesAsync(path, png);
-            PerformancePageSignal.Write("png", png.Length);
+            var bytes = format switch
+            {
+                "pdf" => await CreatePdfBytesAsync(),
+                "png" => await RenderPageAsync(_previewPages[0].Page, BitmapEncoder.PngEncoderId),
+                _ => throw new ArgumentOutOfRangeException(nameof(format))
+            };
+            await System.IO.File.WriteAllBytesAsync(path, bytes);
+            PerformancePageSignal.Write(format, bytes.Length);
         }
         finally { _busy = false; SetReady(_ready); }
     }

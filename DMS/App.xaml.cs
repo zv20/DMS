@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using DMS.Models;
 using DMS.Services;
 
 
@@ -51,8 +52,7 @@ public partial class App : Application
             var settings = await Services.GetRequiredService<SettingsService>().LoadAsync();
             if (startup.IsClosed) return;
             language = settings.Language;
-            Localization.Apply(language);
-            AppearanceService.ApplyAccent(settings.AccentColor);
+            ApplyUserSettings(settings);
             startup.ShowLoading(Localization.Get("StartupRecipes"));
             await database.GetAllRecipesAsync();
             if (startup.IsClosed) return;
@@ -116,8 +116,7 @@ public partial class App : Application
             startup.ShowRestoreLoading(Localization.Get("StartupReloading"));
 
             var settings = await Services.GetRequiredService<SettingsService>().LoadAsync();
-            Localization.Apply(settings.Language);
-            AppearanceService.ApplyAccent(settings.AccentColor);
+            ApplyUserSettings(settings);
             await Services.GetRequiredService<DatabaseService>().GetAllRecipesAsync();
             await Services.GetRequiredService<DatabaseService>().GetAllIngredientsAsync();
 
@@ -147,6 +146,12 @@ public partial class App : Application
             startup.RetryRequested += async (_, _) => await InitializeAndOpenAsync(startup);
             startup.ShowError(Localization.Get("RestoreReloadFailed"), ex.Message, Localization.Get("RetryAction"));
         }
+    }
+
+    private static void ApplyUserSettings(AppSettings settings)
+    {
+        Localization.Apply(settings.Language);
+        AppearanceService.ApplyAccent(settings.AccentColor);
     }
 
     private static IServiceProvider ConfigureServices()
