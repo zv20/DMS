@@ -179,11 +179,6 @@ public sealed partial class TemplateBuilderPage
                 _loadedName = null;
                 RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = false;
             }
-            else
-            {
-                if (_loadedTemplate.BackgroundImageAssetId == asset.Id) { _loadedTemplate.BackgroundImageAssetId = null; _loadedTemplate.BackgroundImageDataUri = null; }
-                _loadedTemplate.ImageLayers.RemoveAll(image => image.AssetId == asset.Id);
-            }
             _dirty = true; RefreshDecorationList(); Render();
         }
         try { await ReloadTemplatesAsync(); }

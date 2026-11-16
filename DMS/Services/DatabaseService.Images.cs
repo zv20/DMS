@@ -261,13 +261,6 @@ public partial class DatabaseService
             return (null, uri);
         }
 
-        (template.BackgroundImageAssetId, template.BackgroundImageDataUri) = Extract(template.BackgroundImageAssetId, template.BackgroundImageDataUri, template.Name);
-        foreach (var layer in template.ImageLayers ?? [])
-        {
-            if (layer == null) continue;
-            var result = Extract(layer.AssetId, layer.DataUri, layer.AltText);
-            layer.AssetId = result.Id; layer.DataUri = result.Uri ?? "";
-        }
         if (template.Document != null)
         {
             var doc = template.Document;
@@ -317,8 +310,6 @@ public partial class DatabaseService
             cache[id] = dataUri;
             return dataUri;
         }
-        template.BackgroundImageDataUri = Uri(template.BackgroundImageAssetId, template.BackgroundImageDataUri);
-        foreach (var layer in template.ImageLayers ?? []) if (layer != null) layer.DataUri = Uri(layer.AssetId, layer.DataUri) ?? "";
         if (template.Document != null)
         {
             var doc = template.Document;

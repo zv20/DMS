@@ -124,11 +124,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var sort = (SortField.SelectedItem as ComboBoxItem)?.Tag as string ?? "name";
         _filteredRecipes = CatalogFilter.Recipes(_recipes, query, category, sort, _sortAscending);
         RecipesListView.ItemsSource = _filteredRecipes;
-        EmptyStateTitle.Text = _recipes.Count == 0 ? L.Get("String_Text_No_recipes_yet_0e52a2") : L.Get("RecipeNoMatches");
-        EmptyStateHint.Visibility = _recipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        ClearSearchButton.Visibility = _recipes.Count > 0 && _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyStatePanel.Visibility = _filteredRecipes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        RecipesListView.Visibility = _filteredRecipes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        CatalogEmptyState.Update(_recipes.Count, _filteredRecipes.Count, RecipesListView, EmptyStatePanel,
+            EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_recipes_yet_0e52a2", "RecipeNoMatches");
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

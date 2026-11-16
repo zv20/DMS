@@ -92,7 +92,7 @@ public sealed partial class TemplateOutputPage : Page
             {
                 ToolTipService.SetToolTip(PrintButton, L.Get("TemplateOutputPrintUnsupported"));
             }
-            var templates = (await _database.GetAllTemplatesAsync()).Where(t => t.Document != null).ToList();
+            var templates = await _database.GetAllTemplatesAsync();
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
             TemplateSelector.ItemsSource = templates;

@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
 
 namespace DMS.Services;
@@ -143,7 +142,10 @@ public static class TemplateRenderer
         var pageOpacity = double.IsFinite(template.BackgroundOpacity) ? Math.Clamp(template.BackgroundOpacity, 0, 1) : 1;
         var page = new Border { Width = 794, Height = 1123, Background = new SolidColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(pageOpacity * byte.MaxValue), pageColor.R, pageColor.G, pageColor.B)), Child = content };
         Selectable(page, "page", onSelected, lifetime);
-        return new TemplatePageResult(page, overflow, Task.WhenAll(LoadImageAsync(backgroundImage, template.BackgroundImageDataUri, bitmapCache, decodeWidth, cancellationToken, lifetime), canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady), populated.Length > 0, first, last, lifetime);
+        var backgroundReady = TemplatePageImages.LoadImageAsync(backgroundImage, template.BackgroundImageDataUri,
+            bitmapCache, decodeWidth, cancellationToken, lifetime, isBackground: true);
+        var imagesReady = Task.WhenAll(backgroundReady, canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady);
+        return new TemplatePageResult(page, overflow, imagesReady, populated.Length > 0, first, last, lifetime);
         }
         catch { lifetime.Dispose(); throw; }
     }
@@ -262,28 +264,5 @@ public static class TemplateRenderer
         var color = RgbColor.ParseOrDefault(value, Colors.Black);
         var alpha = (byte)Math.Round((double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1) * byte.MaxValue);
         return new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B));
-    }
-
-    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken, TemplateVisualLifetime lifetime)
-    {
-        if (string.IsNullOrEmpty(dataUri)) return;
-        if (!dataUri.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase) && !dataUri.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Unsupported template image.");
-        if (dataUri.Length > 14_000_000) throw new InvalidOperationException("Template image is too large.");
-        try
-        {
-            if (bitmapCache != null)
-            {
-                var cached = await bitmapCache.GetAsync(dataUri, decodeWidth, 10 * 1024 * 1024);
-                if (!cancellationToken.IsCancellationRequested && !lifetime.IsDisposed) target.Source = cached;
-                return;
-            }
-            var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
-            if (bytes.Length > 10 * 1024 * 1024) throw new InvalidOperationException("Template image is too large.");
-            using var stream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
-            var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
-            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && !lifetime.IsDisposed) target.Source = bitmap;
-        }
-        catch (FormatException ex) { throw new InvalidOperationException("Invalid template image.", ex); }
     }
 }

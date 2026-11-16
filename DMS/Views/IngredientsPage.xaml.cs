@@ -74,12 +74,8 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         var query = SearchBox.Text ?? "";
         _filteredIngredients = CatalogFilter.Ingredients(_ingredients, query);
         IngredientsListView.ItemsSource = _filteredIngredients;
-        var hasItems = _ingredients.Count > 0;
-        EmptyStateTitle.Text = L.Get(hasItems ? "IngredientNoMatches" : "String_Text_No_ingredients_yet_affb49");
-        EmptyStateHint.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
-        ClearSearchButton.Visibility = hasItems && _filteredIngredients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyStatePanel.Visibility = _filteredIngredients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        IngredientsListView.Visibility = _filteredIngredients.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        CatalogEmptyState.Update(_ingredients.Count, _filteredIngredients.Count, IngredientsListView, EmptyStatePanel,
+            EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_ingredients_yet_affb49", "IngredientNoMatches");
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";

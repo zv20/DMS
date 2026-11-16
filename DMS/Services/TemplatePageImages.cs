@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace DMS.Services;
 
-/// <summary>Shared decorative-image layout and decoding for the native template page.</summary>
+/// <summary>Image layout and decoding for the native template page.</summary>
 public static class TemplatePageImages
 {
     private const double Margin = 40;
@@ -69,27 +69,41 @@ public static class TemplatePageImages
         return new ImageLayer(canvas, Task.WhenAll(loads));
     }
 
-    private static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache, int decodeWidth, CancellationToken cancellationToken, TemplateVisualLifetime? lifetime)
+    internal static async Task LoadImageAsync(Image target, string? dataUri, TemplateBitmapCache? bitmapCache,
+        int decodeWidth, CancellationToken cancellationToken, TemplateVisualLifetime? lifetime, bool isBackground = false)
     {
+        if (isBackground && string.IsNullOrEmpty(dataUri)) return;
         if (string.IsNullOrEmpty(dataUri) ||
             (!dataUri.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase) &&
              !dataUri.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase)))
-            throw new InvalidOperationException("Unsupported or missing decorative image.");
-        if (dataUri.Length > 6_000_000) throw new InvalidOperationException("Decorative image is too large.");
+            throw new InvalidOperationException(isBackground ? "Unsupported template image." : "Unsupported or missing decorative image.");
+
+        var maxBytes = (isBackground ? 10 : 4) * 1024 * 1024;
+        var maxUriLength = isBackground ? 14_000_000 : 6_000_000;
+        var sizeError = isBackground ? "Template image is too large." : "Decorative image is too large.";
+        if (dataUri.Length > maxUriLength) throw new InvalidOperationException(sizeError);
+
         try
         {
+            BitmapImage bitmap;
             if (bitmapCache != null)
             {
-                var cached = await bitmapCache.GetAsync(dataUri, decodeWidth, 4 * 1024 * 1024);
-                if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = cached;
-                return;
+                bitmap = await bitmapCache.GetAsync(dataUri, decodeWidth, maxBytes);
             }
-            var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
-            if (bytes.Length > 4 * 1024 * 1024) throw new InvalidOperationException("Decorative image is too large.");
-            using var stream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
-            var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
-            await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = bitmap;
+            else
+            {
+                var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
+                if (bytes.Length > maxBytes) throw new InvalidOperationException(sizeError);
+                using var stream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
+                bitmap = new BitmapImage();
+                if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
+                await bitmap.SetSourceAsync(stream);
+            }
+            if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = bitmap;
         }
-        catch (FormatException ex) { throw new InvalidOperationException("Invalid decorative image.", ex); }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException(isBackground ? "Invalid template image." : "Invalid decorative image.", ex);
+        }
     }
 }

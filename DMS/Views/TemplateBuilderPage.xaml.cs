@@ -468,13 +468,12 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            var saved = JsonSerializer.Deserialize<MenuTemplate>(JsonSerializer.Serialize(_loadedTemplate)) ?? new MenuTemplate();
-            saved.Name = name; saved.Document = _document;
-            // The editable document owns its images. Retaining inactive browser
-            // layers would incorrectly report usage after a block was removed.
-            saved.BackgroundImageAssetId = null; saved.BackgroundImageDataUri = null;
-            saved.ImageLayers = [];
-            if (!string.Equals(name, _loadedName, StringComparison.Ordinal)) saved.IsPreset = false;
+            var saved = new MenuTemplate
+            {
+                Name = name,
+                Document = _document,
+                IsPreset = _loadedTemplate.IsPreset && string.Equals(name, _loadedName, StringComparison.Ordinal)
+            };
             await _database.SaveTemplateAsync(saved);
             _loadedTemplate = saved;
             _loadedName = name; _dirty = false; _savedDocumentJson = SerializeDocument();
