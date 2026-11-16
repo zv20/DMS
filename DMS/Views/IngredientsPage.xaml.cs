@@ -15,7 +15,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
 {
     private readonly DatabaseService _database;
     private int _pageGeneration;
-    private ObservableCollection<IngredientItemViewModel> _ingredients = new();
+    private readonly List<IngredientItemViewModel> _ingredients = new();
     private List<IngredientItemViewModel> _filteredIngredients = new();
     private readonly SideEditorController _editor;
 
@@ -58,7 +58,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         var ingredients = await _database.GetAllIngredientsAsync();
         var allergens = await _database.GetAllAllergensAsync();
         if (generation != _pageGeneration) return;
-        var allergenIcons = allergens.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
+        var allergenIcons = AllergenDisplay.BuildIconLookup(allergens);
         _ingredients.Clear();
         foreach (var ingredient in ingredients)
         {
@@ -123,10 +123,8 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         button.IsEnabled = false;
         try
         {
-            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Ingredient_79a0ab"), Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Ingredient_79a0ab"),
+                L.Get("Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2"), "String_Text_Delete_f6fdbe")) return;
             if (_editor.EditingId == id && !await _editor.CanLeaveAsync()) return;
             try { await _database.DeleteIngredientAsync(id); }
             catch (Exception ex) { App.Logger.LogError(ex, "Failed to delete ingredient {Id}", id); SetPageStatus("DataDeleteFailed"); return; }
@@ -235,7 +233,7 @@ public class IngredientItemViewModel
     public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string AllergensDisplay => Allergens.Count > 0
-        ? string.Join("  ", Allergens.Select(allergen => $"{(AllergenIcons.TryGetValue(allergen, out var icon) ? icon : AllergenDisplay.Icon(allergen))} {L.Allergen(allergen)}"))
+        ? AllergenDisplay.FormatList(Allergens, AllergenIcons)
         : L.Get("Text_No_allergens_238938");
 
     public IngredientItemViewModel() { }

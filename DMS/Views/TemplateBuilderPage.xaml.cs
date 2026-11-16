@@ -331,10 +331,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 selected = chosenTemplate;
             else if (result == ContentDialogResult.Secondary && grid.SelectedItem is GridViewItem { Tag: MenuTemplate templateToDelete } && !templateToDelete.IsPreset)
             {
-                var confirmation = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
-                    Content = string.Format(L.Get("DeleteTemplatePrompt"), templateToDelete.Name), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                    CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-                if (await confirmation.ShowAsync() == ContentDialogResult.Primary)
+                if (await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Template_c07327"),
+                    L.Format("DeleteTemplatePrompt", templateToDelete.Name), "String_Text_Delete_f6fdbe"))
                 {
                     await _database.DeleteTemplateAsync(templateToDelete.Name);
                     await ReloadTemplatesAsync();
@@ -544,10 +542,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _saving = true; RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = SaveButton.IsEnabled = false;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("Text_Delete_Template_c07327"),
-                Content = L.Get("TplDeletePrompt"), PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Template_c07327"),
+                L.Get("TplDeletePrompt"), "String_Text_Delete_f6fdbe")) return;
             await _database.DeleteTemplateAsync(name);
             SetDocument(NewTemplate(), null);
             try { await ReloadTemplatesAsync(); }
@@ -566,9 +562,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         UpdateInlineText();
         if (!_dirty) return true;
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"), Content = L.Get("SideEditorDiscardMessage"),
-            PrimaryButtonText = L.Get("RecipeDiscardButton"), CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        return await EditorDialogs.ConfirmDiscardAsync(XamlRoot);
     }
 
     private async void WeekPicker_DateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args)
@@ -578,15 +572,11 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     {
         var generation = ++_generation;
         var day = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
-        var monday = day.AddDays(-((7 + (int)day.DayOfWeek - 1) % 7));
+        var monday = MenuOutputService.WeekStart(day);
         try
         {
-            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
+            var (settings, entries, recipes, ingredients) = await MenuOutputService.LoadWeekAsync(_database, monday);
             var weekendEnabled = settings.WeekendPlanningEnabled;
-            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
-                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
-            var recipes = await _database.GetAllRecipesAsync();
-            var ingredients = await _database.GetAllIngredientsAsync();
             if (generation != _generation) return;
             _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled; _mealsPerDay = settings.MealsPerDay; _previewPageIndex = 0;
             for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
@@ -627,8 +617,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
         return Microsoft.UI.Colors.Black;
     }
-    private static string AnchorKey(string key) => key;
-
     private static FrameworkElement? FindAnchor(DependencyObject root, string key)
     {
         if (root is FrameworkElement { Tag: string tag } element && tag == key) return element;
@@ -1042,7 +1030,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
-                _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock));
+                _selectionAnchor = FindAnchor(result.Page, _selectedBlock);
                 RevealNewImage();
                 PositionContextTools();
             });
@@ -1051,7 +1039,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             PageHost.Content = result.Page;
             previous?.Dispose();
             if (_selectedBlock != null)
-                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, AnchorKey(_selectedBlock)); PositionContextTools(); });
+                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, _selectedBlock); PositionContextTools(); });
             StatusText.Text = "";
             await result.ImagesReady;
             if (generation == _renderGeneration)

@@ -120,7 +120,7 @@ public partial class DatabaseService
     {
         var assembly = typeof(DatabaseService).Assembly;
         var firstResource = $"{assembly.GetName().Name}.Assets.Templates.{SeasonalTemplateDefaults.All[0].AssetFile}";
-        if (assembly.GetManifestResourceStream(firstResource) == null)
+        if (assembly.GetManifestResourceInfo(firstResource) == null)
         {
             // Unit-test hosts can link the service source without bundling the
             // application assets. The published app always embeds these files.
@@ -205,6 +205,15 @@ public partial class DatabaseService
         return reader.Read() ? new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = reader.GetString(2), Data = (byte[])reader[3] } : null;
     }
 
+    private bool TemplateImageExists(string id, SqliteTransaction transaction)
+    {
+        using var cmd = _connection!.CreateCommand();
+        cmd.Transaction = transaction;
+        cmd.CommandText = "SELECT 1 FROM template_image_assets WHERE id=@id";
+        cmd.Parameters.AddWithValue("@id", id);
+        return cmd.ExecuteScalar() != null;
+    }
+
     private HashSet<string> ExtractTemplateImages(MenuTemplate template, SqliteTransaction transaction, bool preserveBrokenReferences = false)
     {
         var refs = new HashSet<string>(StringComparer.Ordinal);
@@ -234,7 +243,7 @@ public partial class DatabaseService
                 if (string.IsNullOrWhiteSpace(id)) return (null, uri);
                 if (preserveBrokenReferences)
                 {
-                    if (ReadTemplateImage(id, transaction) != null) refs.Add(id);
+                    if (TemplateImageExists(id, transaction)) refs.Add(id);
                     else _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);
                     return (id, uri);
                 }
@@ -242,7 +251,7 @@ public partial class DatabaseService
             }
             if (!string.IsNullOrWhiteSpace(id))
             {
-                if (ReadTemplateImage(id, transaction) == null)
+                if (!TemplateImageExists(id, transaction))
                 {
                     if (!preserveBrokenReferences) throw new InvalidDataException($"Missing template image: {id}");
                     _logger.LogWarning("Template {Template} contains a missing image reference {Image}", template.Name, id);
@@ -380,7 +389,7 @@ public partial class DatabaseService
         ArgumentNullException.ThrowIfNull(expectedTemplateNames);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
-        if (ReadTemplateImage(id, transaction) == null) throw new InvalidOperationException("The image no longer exists.");
+        if (!TemplateImageExists(id, transaction)) throw new InvalidOperationException("The image no longer exists.");
         var actual = ReadTemplateImageUsage(id, transaction);
         if (!actual.ToHashSet(StringComparer.Ordinal).SetEquals(expectedTemplateNames))
             throw new InvalidOperationException("The templates using this image changed. Review the list and try again.");

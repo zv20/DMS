@@ -7,7 +7,7 @@ set -euo pipefail
 
 for ((attempt = 1; attempt <= 80; attempt++)); do
   run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/windows-checks.yml/runs?head_sha=$GITHUB_SHA&event=push&per_page=100" |
-    jq -c --arg sha "$GITHUB_SHA" --arg branch "${TEST_BRANCH:-release}" '[.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == $branch)] | sort_by(.created_at) | last // empty')
+    jq -c --arg sha "$GITHUB_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == "release")] | sort_by(.created_at) | last // empty')
   if [[ -n "$run" ]]; then
     status=$(jq -r '.status' <<< "$run")
     conclusion=$(jq -r '.conclusion // ""' <<< "$run")
@@ -26,5 +26,5 @@ for ((attempt = 1; attempt <= 80; attempt++)); do
   fi
   sleep 15
 done
-echo "Timed out waiting for push tests for $GITHUB_SHA. Push the commit on a branch and retry." >&2
+echo "Timed out waiting for release branch push tests for $GITHUB_SHA." >&2
 exit 1

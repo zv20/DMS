@@ -299,10 +299,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         _confirmingPlanning = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L.Get("RecipeDiscardTitle"),
-                Content = L.Get("SideEditorDiscardMessage"), PrimaryButtonText = L.Get("RecipeDiscardButton"),
-                CloseButtonText = L.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            return await EditorDialogs.ConfirmDiscardAsync(XamlRoot);
         }
         finally { _confirmingPlanning = false; }
     }
@@ -463,51 +460,45 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         }
     }
 
-    private async void VacuumButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (!VacuumButton.IsEnabled) return;
-        VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
-        DatabaseStatus.Text = "";
-        var completed = false;
-        try
-        {
-            var confirmation = new ContentDialog { Title = L.Get("Text_Vacuum_Database_0a823e"),
-                Content = L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"),
-                PrimaryButtonText = L.Get("Text_Vacuum_5fe15d"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await confirmation.ShowAsync() != ContentDialogResult.Primary) return;
-            await _databaseService.VacuumAsync();
-            completed = true;
-            DatabaseStatus.Text = L.Get("Text_Database_optimized_successfully_4e0a52");
-            await new ContentDialog { Title = L.Get("Text_Vacuum_Complete_43b708"), Content = DatabaseStatus.Text,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
-        }
-        catch (Exception ex)
-        {
-            App.Logger.LogError(ex, completed ? "Database vacuum completed, but its confirmation failed" : "Database vacuum failed");
-            DatabaseStatus.Text = L.Get(completed ? "Text_Database_optimized_successfully_4e0a52" : "LogViewerMaintenanceFailed");
-        }
-        finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
-    }
+    private async void VacuumButton_Click(object sender, RoutedEventArgs e) => await RunMaintenanceAsync(vacuum: true);
 
-    private async void ReindexButton_Click(object sender, RoutedEventArgs e)
+    private async void ReindexButton_Click(object sender, RoutedEventArgs e) => await RunMaintenanceAsync(vacuum: false);
+
+    private async Task RunMaintenanceAsync(bool vacuum)
     {
-        if (!ReindexButton.IsEnabled) return;
+        if (!VacuumButton.IsEnabled || !ReindexButton.IsEnabled) return;
         VacuumButton.IsEnabled = ReindexButton.IsEnabled = false;
         DatabaseStatus.Text = "";
         var completed = false;
+        var action = vacuum ? "vacuum" : "reindex";
+        var successKey = vacuum ? "Text_Database_optimized_successfully_4e0a52" : "Text_Database_indexes_rebuilt_1fdc67";
         try
         {
-            await _databaseService.ReindexAsync();
+            if (vacuum)
+            {
+                if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Vacuum_Database_0a823e"),
+                    L.Get("Text_This_will_optimize_the_database_file_size_Continue_db86eb"), "Text_Vacuum_5fe15d")) return;
+                await _databaseService.VacuumAsync();
+            }
+            else
+            {
+                await _databaseService.ReindexAsync();
+            }
             completed = true;
-            DatabaseStatus.Text = L.Get("Text_Database_indexes_rebuilt_1fdc67");
-            await new ContentDialog { Title = L.Get("Text_Reindex_Complete_6eb4e1"), Content = DatabaseStatus.Text,
-                CloseButtonText = L.Get("Text_OK_9ce3bd"), XamlRoot = XamlRoot }.ShowAsync();
+            DatabaseStatus.Text = L.Get(successKey);
+            await new ContentDialog
+            {
+                Title = L.Get(vacuum ? "Text_Vacuum_Complete_43b708" : "Text_Reindex_Complete_6eb4e1"),
+                Content = DatabaseStatus.Text,
+                CloseButtonText = L.Get("Text_OK_9ce3bd"),
+                XamlRoot = XamlRoot
+            }.ShowAsync();
         }
         catch (Exception ex)
         {
-            App.Logger.LogError(ex, completed ? "Database reindex completed, but its confirmation failed" : "Database reindex failed");
-            DatabaseStatus.Text = L.Get(completed ? "Text_Database_indexes_rebuilt_1fdc67" : "LogViewerMaintenanceFailed");
+            if (completed) App.Logger.LogError(ex, "Database {Action} completed, but its confirmation failed", action);
+            else App.Logger.LogError(ex, "Database {Action} failed", action);
+            DatabaseStatus.Text = L.Get(completed ? successKey : "LogViewerMaintenanceFailed");
         }
         finally { VacuumButton.IsEnabled = ReindexButton.IsEnabled = true; }
     }

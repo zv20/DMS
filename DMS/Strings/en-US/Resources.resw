@@ -384,7 +384,6 @@
   <data name="OutputPreparing" xml:space="preserve"><value>Preparing preview...</value></data>
   <data name="OutputImageTooLarge" xml:space="preserve"><value>This template image is too large to preview. Choose a smaller image in the template editor.</value></data>
   <data name="OutputPreviewFailed" xml:space="preserve"><value>Preview could not be loaded.</value></data>
-  <data name="OutputWebViewRequired" xml:space="preserve"><value>Preview needs the WebView2 runtime: </value></data>
   <data name="OutputPdfSaved" xml:space="preserve"><value>PDF saved.</value></data>
   <data name="OutputPdfFailed" xml:space="preserve"><value>PDF export failed.</value></data>
   <data name="OutputImageOverflow" xml:space="preserve"><value>The menu is longer than one image. Use PDF or reduce the template text size.</value></data>

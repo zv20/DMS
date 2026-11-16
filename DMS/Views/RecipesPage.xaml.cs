@@ -15,7 +15,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
 {
     private readonly DatabaseService _database;
     private int _pageGeneration;
-    private ObservableCollection<RecipeItemViewModel> _recipes = new();
+    private readonly List<RecipeItemViewModel> _recipes = new();
     private List<RecipeItemViewModel> _filteredRecipes = new();
     private bool _filtersReady;
     private bool _sortAscending = true;
@@ -105,7 +105,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         foreach (var category in categories) CategoryFilter.Items.Add(new ComboBoxItem { Tag = category.Id, Content = L.Category(category) });
         CategoryFilter.SelectedItem = CategoryFilter.Items.Cast<ComboBoxItem>().FirstOrDefault(item => string.Equals(item.Tag as string, selectedCategory, StringComparison.OrdinalIgnoreCase)) ?? CategoryFilter.Items[0];
         _filtersReady = true;
-        var allergenIcons = allergens.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
+        var allergenIcons = AllergenDisplay.BuildIconLookup(allergens);
         _recipes.Clear();
         foreach (var recipe in recipes)
         {
@@ -184,11 +184,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         button.IsEnabled = false;
         try
         {
-            var dialog = new ContentDialog { Title = L.Get("Text_Delete_Recipe_f011c8"),
-                Content = L.Get("Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450"),
-                PrimaryButtonText = L.Get("String_Text_Delete_f6fdbe"), CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Delete_Recipe_f011c8"),
+                L.Get("Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450"), "String_Text_Delete_f6fdbe")) return;
             if (_editingRecipeId == id && (_savingEditor || _openingEditor || !await ConfirmDiscardAsync())) return;
             try { await _database.DeleteRecipeAsync(id); }
             catch (RecipeInUseException ex)
@@ -221,16 +218,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         _confirmingDiscard = true;
         try
         {
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = L.Get("RecipeDiscardTitle"),
-            Content = L.Get("RecipeDiscardMessage"),
-            PrimaryButtonText = L.Get("RecipeDiscardButton"),
-            CloseButtonText = L.Get("Text_Cancel_77dfd2"),
-            DefaultButton = ContentDialogButton.Close
-        };
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            return await EditorDialogs.ConfirmDiscardAsync(XamlRoot, "RecipeDiscardMessage");
         }
         finally { _confirmingDiscard = false; }
     }
@@ -499,7 +487,7 @@ public class RecipeItemViewModel
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
     public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
     public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
-    public string AllergensDisplay => string.Join("  ", Allergens.Select(allergen => $"{(AllergenIcons.TryGetValue(allergen, out var icon) ? icon : AllergenDisplay.Icon(allergen))} {L.Allergen(allergen)}"));
+    public string AllergensDisplay => AllergenDisplay.FormatList(Allergens, AllergenIcons);
 
     public RecipeItemViewModel() { }
 

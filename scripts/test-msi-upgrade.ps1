@@ -5,6 +5,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/wait-for-app-file.ps1"
 $installDir = Join-Path $env:RUNNER_TEMP 'DMS-upgrade'
 $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
 $database = Join-Path $dataDir 'dms.db'
@@ -41,13 +42,7 @@ $exe = Join-Path $installDir 'DMS.exe'
 if (!(Test-Path $exe)) { throw 'Previous DMS executable was not installed.' }
 $old = Start-Process $exe -WorkingDirectory $installDir -PassThru
 try {
-    $deadline = (Get-Date).AddSeconds(45)
-    while ((Get-Date) -lt $deadline -and !(Test-Path $database)) {
-        $old.Refresh()
-        if ($old.HasExited) { throw "Previous DMS exited: $($old.ExitCode)" }
-        Start-Sleep -Seconds 1
-    }
-    if (!(Test-Path $database)) { throw 'Previous DMS did not create its database.' }
+    Wait-DmsAppFile $old $database 'Previous DMS database creation'
 } finally { Stop-App $old }
 
 $hash = (Get-FileHash $database).Hash
@@ -78,12 +73,6 @@ Remove-Item $ready -Force -ErrorAction SilentlyContinue
 $env:DMS_QA_READY_FILE = $ready
 $app = Start-Process $exe -WorkingDirectory $installDir -PassThru
 try {
-    $deadline = (Get-Date).AddSeconds(45)
-    while ((Get-Date) -lt $deadline -and !(Test-Path $ready)) {
-        $app.Refresh()
-        if ($app.HasExited) { throw "Upgraded DMS exited: $($app.ExitCode)" }
-        Start-Sleep -Seconds 1
-    }
-    if (!(Test-Path $ready)) { throw 'Upgraded DMS did not reach its main window.' }
+    Wait-DmsAppFile $app $ready 'Upgraded DMS main window startup'
 } finally { Stop-App $app }
 Write-Host "Upgraded 0.0.13 to $Version, preserved existing data, and started DMS."

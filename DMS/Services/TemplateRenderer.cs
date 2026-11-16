@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
-using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
@@ -285,9 +284,7 @@ public static class TemplateRenderer
             }
             var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
             if (bytes.Length > 10 * 1024 * 1024) throw new InvalidOperationException("Template image is too large.");
-            using var stream = new InMemoryRandomAccessStream();
-            using var writer = new DataWriter(stream.GetOutputStreamAt(0));
-            writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
+            using var stream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
             var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
             await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && !lifetime.IsDisposed) target.Source = bitmap;
         }

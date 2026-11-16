@@ -54,6 +54,27 @@ public sealed class TemplateBitmapCache
         _images.Clear(); _jobImages.Clear(); _pending.Clear();
     }
 
+    internal static async Task<InMemoryRandomAccessStream> OpenImageStreamAsync(byte[] bytes)
+    {
+        var stream = new InMemoryRandomAccessStream();
+        try
+        {
+            using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
+            {
+                writer.WriteBytes(bytes);
+                await writer.StoreAsync();
+                await writer.FlushAsync();
+            }
+            stream.Seek(0);
+            return stream;
+        }
+        catch
+        {
+            stream.Dispose();
+            throw;
+        }
+    }
+
     private async Task<(BitmapImage Bitmap, long Bytes)> DecodeAsync(string uri, int width, int maxBytes, CancellationToken cancellationToken)
     {
         await _decodeGate.WaitAsync(cancellationToken);
@@ -62,13 +83,8 @@ public sealed class TemplateBitmapCache
             cancellationToken.ThrowIfCancellationRequested();
             byte[]? bytes = Convert.FromBase64String(uri[(uri.IndexOf(',') + 1)..]);
             if (bytes.Length > maxBytes) throw new InvalidOperationException("Template image is too large.");
-            using var stream = new InMemoryRandomAccessStream();
-            using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-            {
-                writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync();
-            }
+            using var stream = await OpenImageStreamAsync(bytes);
             bytes = null;
-            stream.Seek(0);
             var decoder = await BitmapDecoder.CreateAsync(stream);
             cancellationToken.ThrowIfCancellationRequested();
             var sourceWidth = decoder.OrientedPixelWidth;

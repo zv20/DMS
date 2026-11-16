@@ -11,9 +11,6 @@ on:
         default: 0
   workflow_call:
     inputs:
-      skip_startup:
-        type: boolean
-        default: false
       soak_seconds:
         type: number
         default: 0
@@ -51,7 +48,6 @@ jobs:
           if (!(Test-Path -LiteralPath $env:DMS_PERF_UI_DATABASE_PATH)) { throw 'Navigation fixture was not created.' }
 
       - name: Measure startup signal
-        if: ${{ !inputs.skip_startup }}
         shell: pwsh
         run: |
           ./scripts/measure-startup.ps1 `
@@ -59,7 +55,6 @@ jobs:
             -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/startup.json')
 
       - name: Measure navigation, preview, and PDF
-        if: ${{ !inputs.skip_startup }}
         shell: pwsh
         run: |
           ./scripts/measure-navigation.ps1 `

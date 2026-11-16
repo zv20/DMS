@@ -46,7 +46,6 @@ public sealed partial class TemplateOutputPage : Page
     private DateTime _monday;
     private DateTime? _firstDay, _lastDay;
     private TemplateDocument? _document;
-    private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
 
@@ -115,7 +114,7 @@ public sealed partial class TemplateOutputPage : Page
         DisposePages(_previewPages); _previewPages = [];
         TemplateSelector.ItemsSource = null;
         _document = null; _pageEntries.Clear();
-        _entries.Clear(); _recipes.Clear(); _ingredients.Clear();
+        _recipes.Clear(); _ingredients.Clear();
         _previewBitmaps.Clear();
         try { UnregisterPrinting(); }
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to release print resources"); }
@@ -145,18 +144,13 @@ public sealed partial class TemplateOutputPage : Page
         SetReady(false);
         if (TemplateSelector.SelectedItem is not MenuTemplate { Document: not null } template) return;
         var date = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
-        var monday = date.AddDays(-((7 + (int)date.DayOfWeek - 1) % 7));
+        var monday = MenuOutputService.WeekStart(date);
         await _refreshGate.WaitAsync();
         try
         {
             if (!_loaded || generation != _generation) return;
             _previewBitmaps.Clear();
-            var settings = await _database.GetSettingsAsync() ?? new AppSettings();
-            var weekendEnabled = settings.WeekendPlanningEnabled;
-            var entries = (await _database.GetMenuAsync(monday, monday.AddDays(weekendEnabled ? 6 : 4)))
-                .Where(entry => MenuOutputService.IsVisibleSlot(entry.Slot, settings.MealsPerDay)).ToList();
-            var recipes = await _database.GetAllRecipesAsync();
-            var ingredients = await _database.GetAllIngredientsAsync();
+            var (settings, entries, recipes, ingredients) = await MenuOutputService.LoadWeekAsync(_database, monday);
             template = TemplateConversion.ToEditableCopy(template);
             await _database.HydrateTemplateImagesAsync(template);
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME")) &&
@@ -164,14 +158,14 @@ public sealed partial class TemplateOutputPage : Page
                 throw new InvalidOperationException("Performance output images were not loaded.");
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
-            _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled;
+            _recipes = recipes; _ingredients = ingredients; _weekendEnabled = settings.WeekendPlanningEnabled;
             bool Fits(IReadOnlyList<MenuEntry> pageEntries)
             {
                 var measured = TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, _entries, _recipes, Fits);
+            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, entries, _recipes, Fits);
             var results = new List<TemplatePageResult>();
             try
             {

@@ -16,7 +16,7 @@ namespace DMS.Views;
 
 public sealed partial class TemplateBuilderPage
 {
-    private bool _addingImage, _draggingImage, _dirtyBeforeImageDrag;
+    private bool _draggingImage, _dirtyBeforeImageDrag;
     private uint _imagePointerId;
     private Point _imagePointerStart, _imagePositionStart;
     private string? _imageToReveal;
@@ -93,8 +93,8 @@ public sealed partial class TemplateBuilderPage
 
     private async void AddDecoration_Click(object sender, RoutedEventArgs e)
     {
-        if (_addingImage || _saving || _switching) return;
-        _addingImage = _saving = true; AddImageMenuItem.IsEnabled = false;
+        if (_saving || _switching) return;
+        _saving = true; AddImageMenuItem.IsEnabled = false;
         var document = _document;
         try
         {
@@ -118,7 +118,7 @@ public sealed partial class TemplateBuilderPage
             PlaceLibraryImage(asset, sourceWidth, sourceHeight);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to add an image to the template"); StatusText.Text = L.Get("ErrorTemplate"); }
-        finally { _addingImage = _saving = false; AddImageMenuItem.IsEnabled = true; }
+        finally { _saving = false; AddImageMenuItem.IsEnabled = true; }
     }
 
     private void PlaceLibraryImage(TemplateImageAsset asset, double sourceWidth, double sourceHeight)
@@ -136,11 +136,11 @@ public sealed partial class TemplateBuilderPage
         StopInlineEditing();
         _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
         _imageToReveal = image.Id;
-        RefreshDecorationList(image.Id);
+        RefreshDecorationList();
         BuildContextTools(); Render();
     }
 
-    private void RefreshDecorationList(string? selectedId = null)
+    private void RefreshDecorationList()
     {
         PageImagesMenu.Items.Clear();
         foreach (var image in _document.DecorativeImages)
@@ -275,7 +275,7 @@ public sealed partial class TemplateBuilderPage
             if (name == null) return;
             SnapshotBeforeEdit();
             image.AltText = name; _dirty = true;
-            RefreshDecorationList(image.Id); Render();
+            RefreshDecorationList(); Render();
             StatusText.Text = L.Get("TplImageChangesPending");
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to rename the image block"); StatusText.Text = L.Get("ErrorTemplate"); }
@@ -307,6 +307,6 @@ public sealed partial class TemplateBuilderPage
         _document.DecorativeImages.Remove(image);
         if (forward) _document.DecorativeImages.Add(image);
         else _document.DecorativeImages.Insert(0, image);
-        _dirty = true; RefreshDecorationList(image.Id); Render();
+        _dirty = true; RefreshDecorationList(); Render();
     }
 }

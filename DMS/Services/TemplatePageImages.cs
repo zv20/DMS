@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Storage.Streams;
 
 namespace DMS.Services;
 
@@ -87,9 +86,7 @@ public static class TemplatePageImages
             }
             var bytes = Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
             if (bytes.Length > 4 * 1024 * 1024) throw new InvalidOperationException("Decorative image is too large.");
-            using var stream = new InMemoryRandomAccessStream();
-            using var writer = new DataWriter(stream.GetOutputStreamAt(0));
-            writer.WriteBytes(bytes); await writer.StoreAsync(); await writer.FlushAsync(); stream.Seek(0);
+            using var stream = await TemplateBitmapCache.OpenImageStreamAsync(bytes);
             var bitmap = new BitmapImage(); if (decodeWidth > 0) bitmap.DecodePixelWidth = decodeWidth;
             await bitmap.SetSourceAsync(stream); if (!cancellationToken.IsCancellationRequested && lifetime?.IsDisposed != true) target.Source = bitmap;
         }

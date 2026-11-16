@@ -96,10 +96,7 @@ internal sealed class SideEditorController
         _confirming = true;
         try
         {
-            var dialog = new ContentDialog { XamlRoot = _page.XamlRoot, Title = Localization.Get("RecipeDiscardTitle"),
-                Content = Localization.Get("SideEditorDiscardMessage"), PrimaryButtonText = Localization.Get("RecipeDiscardButton"),
-                CloseButtonText = Localization.Get("Text_Cancel_77dfd2"), DefaultButton = ContentDialogButton.Close };
-            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            return await EditorDialogs.ConfirmDiscardAsync(_page.XamlRoot);
         }
         finally { _confirming = false; }
     }
