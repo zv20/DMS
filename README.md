@@ -42,6 +42,9 @@ replaces current data with a saved backup. DMS also creates a backup when you
 close the app and keeps the latest three in the `AutomaticBackups` folder inside
 the data folder. Use **Open Data Folder** in Settings to find them. These copies
 are on the same computer, so keep a separate manual backup elsewhere as well.
+When upgrading an MSI installation, close DMS first. Setup saves a verified
+pre-update database backup, including template images, in **Documents\DMS Backups**.
+It stops the update if the backup fails. Keep a separate copy on another device.
 
 ## Change the code
 
@@ -68,13 +71,17 @@ Run the app from Visual Studio. To create an MSI installer, run:
 
 ```powershell
 dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 --output artifacts/DMS-win-x64
+dotnet publish installer/BackupHelper/BackupHelper.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/backup-helper
 $version = ([xml](Get-Content DMS/DMS.csproj -Raw)).Project.PropertyGroup[0].Version
 dotnet tool install --global wix --version 5.0.2
 wix extension add --global WixToolset.UI.wixext/5.0.2
 wix extension add --global WixToolset.Util.wixext/5.0.2
 New-Item -ItemType Directory -Force artifacts/installer
 $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
-wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -o "artifacts/installer/DMS-Setup-$version.msi"
+python scripts/installer-release-notes.py $version artifacts/installer/release-notes.rtf
+$releaseNotes = (Resolve-Path artifacts/installer/release-notes.rtf).Path
+$backupHelper = (Resolve-Path artifacts/backup-helper/BackupHelper.exe).Path
+wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -d "BackupHelper=$backupHelper" -o "artifacts/installer/DMS-Setup-$version.msi"
 ```
 
 The installer is written to `artifacts/installer/`. For releases, update

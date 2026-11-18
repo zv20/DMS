@@ -16,8 +16,21 @@
       <DialogRef Id="ProgressDlg" />
       <DialogRef Id="ResumeDlg" />
       <DialogRef Id="UserExit" />
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" />
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="NOT Installed" />
+      <Dialog Id="UpgradeInfoDlg" Width="370" Height="270" Title="[ProductName] Setup">
+        <Control Id="Title" Type="Text" X="15" Y="10" Width="340" Height="25" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Update DMS to version [ProductVersion]" />
+        <Control Id="ChangesLabel" Type="Text" X="20" Y="39" Width="330" Height="15" Text="Release history (including earlier versions):" />
+        <Control Id="Changes" Type="ScrollableText" X="20" Y="55" Width="330" Height="95" Sunken="yes" TabSkip="no">
+          <Text SourceFile="$(var.ReleaseNotesFile)" />
+        </Control>
+        <Control Id="Backup" Type="Text" X="20" Y="154" Width="330" Height="65" Text="Close DMS before continuing. Setup will automatically back up existing DMS data to Documents\DMS Backups before updating. If the backup fails, the update stops." />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back"><Publish Event="NewDialog" Value="WelcomeDlg" /></Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next"><Publish Event="NewDialog" Value="VerifyReadyDlg" /></Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel"><Publish Event="SpawnDialog" Value="CancelDlg" /></Control>
+      </Dialog>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="UpgradeInfoDlg" Condition="WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="NOT WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="UpgradeInfoDlg" Condition="NOT Installed AND WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="NOT Installed AND NOT WIX_UPGRADE_DETECTED" />
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Condition="Installed" />
       <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" />
       <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" />
@@ -32,6 +45,12 @@
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
     <Property Id="WixShellExecTarget" Value="[INSTALLFOLDER]DMS.exe" />
     <CustomAction Id="LaunchDms" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)" DllEntry="WixShellExec" Execute="immediate" Return="ignore" />
+    <Binary Id="UpgradeBackupHelper" SourceFile="$(var.BackupHelper)" />
+    <SetProperty Id="CreateUpgradeBackup" Value="[UILevel]" Before="CreateUpgradeBackup" Sequence="execute" Condition="WIX_UPGRADE_DETECTED AND NOT Installed" />
+    <CustomAction Id="CreateUpgradeBackup" BinaryRef="UpgradeBackupHelper" ExeCommand="[CustomActionData]" Execute="deferred" Impersonate="yes" Return="check" />
+    <InstallExecuteSequence>
+      <Custom Action="CreateUpgradeBackup" After="InstallInitialize" Condition="WIX_UPGRADE_DETECTED AND NOT Installed" />
+    </InstallExecuteSequence>
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="ProgramsFolder" Name="Programs">

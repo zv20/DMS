@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Improved the installer to identify updates and show release history.
+- Added an automatic, verified backup before updating an existing installation.
+- Stop updates when DMS is open or the backup cannot be created.
+
 ## 0.1.0
 
 - Added four simple seasonal menu templates.

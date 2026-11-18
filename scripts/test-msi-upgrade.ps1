@@ -13,6 +13,7 @@ $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
 $database = Join-Path $dataDir 'dms.db'
 $log = Join-Path $env:RUNNER_TEMP 'dms-upgrade.log'
 $ready = Join-Path $env:RUNNER_TEMP 'dms-upgrade-ready.txt'
+$backupDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'DMS Backups'
 
 function Install-Msi([string] $Path) {
     $result = Start-Process msiexec.exe -ArgumentList @('/i', "`"$Path`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$log`"") -Wait -PassThru
@@ -37,23 +38,6 @@ function Get-ProductCode([string] $Path) {
     return $code.Trim()
 }
 
-# GitHub-hosted runner only: discard the fresh-install smoke test's data.
-if (Test-Path -LiteralPath $dataDir) { Remove-Item -LiteralPath $dataDir -Recurse -Force }
-Install-Msi $PreviousMsi
-$exe = Join-Path $installDir 'DMS.exe'
-if (!(Test-Path $exe)) { throw 'Previous DMS executable was not installed.' }
-$old = Start-Process $exe -WorkingDirectory $installDir -PassThru
-try {
-    Wait-DmsAppFile $old $database 'Previous DMS database creation'
-} finally { Stop-App $old }
-
-$hash = (Get-FileHash $database).Hash
-$marker = Join-Path $dataDir 'upgrade-marker.txt'
-Set-Content $marker 'existing user data'
-Install-Msi $CurrentMsi
-if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-Content $marker -Raw).Trim() -ne 'existing user data') {
-    throw 'Upgrade removed or changed existing data.'
-}
 Add-Type @'
 using System.Runtime.InteropServices;
 public static class MsiState {
@@ -63,6 +47,41 @@ public static class MsiState {
 '@
 $oldCode = Get-ProductCode $PreviousMsi
 $newCode = Get-ProductCode $CurrentMsi
+
+# GitHub-hosted runner only: discard the fresh-install smoke test's data.
+if (Test-Path -LiteralPath $dataDir) { Remove-Item -LiteralPath $dataDir -Recurse -Force }
+Install-Msi $PreviousMsi
+$exe = Join-Path $installDir 'DMS.exe'
+if (!(Test-Path $exe)) { throw 'Previous DMS executable was not installed.' }
+$old = Start-Process $exe -WorkingDirectory $installDir -PassThru
+try {
+    Wait-DmsAppFile $old $database 'Previous DMS database creation'
+    $running = Start-Process msiexec.exe -ArgumentList @('/i', "`"$CurrentMsi`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$log`"") -Wait -PassThru
+    if ($running.ExitCode -eq 0 -or !(Select-String -Path $log -Pattern 'CreateUpgradeBackup' -Quiet)) { throw 'Upgrade should stop at the backup check while DMS is running.' }
+} finally { Stop-App $old }
+
+# Verify that a failed backup blocks the upgrade and leaves the old version intact.
+if (Test-Path -LiteralPath $backupDir) { Remove-Item -LiteralPath $backupDir -Recurse -Force }
+Set-Content -LiteralPath $backupDir -Value 'Block the backup directory'
+$failed = Start-Process msiexec.exe -ArgumentList @('/i', "`"$CurrentMsi`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$log`"") -Wait -PassThru
+if ($failed.ExitCode -eq 0 -or !(Test-Path $exe) -or !(Test-Path $database) -or [MsiState]::MsiQueryProductState($oldCode) -ne 5 -or !(Select-String -Path $log -Pattern 'CreateUpgradeBackup' -Quiet)) {
+    throw 'Upgrade did not stop safely when the backup could not be created.'
+}
+Remove-Item -LiteralPath $backupDir -Force
+
+python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('CREATE TABLE upgrade_backup_test (value BLOB)'); c.execute('INSERT INTO upgrade_backup_test VALUES (?)',(bytes([1,2,3]),)); c.commit(); c.close()" $database
+if ($LASTEXITCODE -ne 0) { throw 'Could not create backup test data.' }
+$hash = (Get-FileHash $database).Hash
+$marker = Join-Path $dataDir 'upgrade-marker.txt'
+Set-Content $marker 'existing user data'
+Install-Msi $CurrentMsi
+$backup = Get-ChildItem -LiteralPath $backupDir -Filter 'DMS-before-update-*.db' | Select-Object -First 1
+if (!$backup) { throw 'Upgrade did not create a backup.' }
+python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; assert c.execute('SELECT hex(value) FROM upgrade_backup_test').fetchone()[0] == '010203'; c.close()" $backup.FullName
+if ($LASTEXITCODE -ne 0) { throw 'The pre-update backup failed validation.' }
+if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-Content $marker -Raw).Trim() -ne 'existing user data') {
+    throw 'Upgrade removed or changed existing data.'
+}
 $oldState = [MsiState]::MsiQueryProductState($oldCode)
 $newState = [MsiState]::MsiQueryProductState($newCode)
 Write-Host "Windows Installer product states: old=$oldState new=$newState"
