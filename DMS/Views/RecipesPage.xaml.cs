@@ -59,11 +59,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         base.OnNavigatedFrom(e);
     }
 
-    private void SetPageStatus(string? key)
-    {
-        PageStatus.Text = key == null ? "" : L.Get(key);
-        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
-    }
+    private void SetPageStatus(string? key) => CatalogPageState.SetStatus(PageStatus, key);
 
     private void RecipeToolbar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -126,7 +122,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         _filteredRecipes = CatalogFilter.Recipes(_recipes, query, category, sort, _sortAscending);
         RecipesListView.ItemsSource = _filteredRecipes;
         UpdateRecipeSelection();
-        CatalogEmptyState.Update(_recipes.Count, _filteredRecipes.Count, RecipesListView, EmptyStatePanel,
+        CatalogPageState.UpdateEmptyState(_recipes.Count, _filteredRecipes.Count, RecipesListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_recipes_yet_0e52a2", "RecipeNoMatches");
     }
 

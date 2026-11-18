@@ -48,11 +48,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         base.OnNavigatedFrom(e);
     }
 
-    private void SetPageStatus(string? key)
-    {
-        PageStatus.Text = key == null ? "" : L.Get(key);
-        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
-    }
+    private void SetPageStatus(string? key) => CatalogPageState.SetStatus(PageStatus, key);
 
     private async Task LoadAllergensAsync()
     {
@@ -76,7 +72,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
             allergen.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
         AllergensListView.ItemsSource = _filteredAllergens;
         UpdateSelection();
-        CatalogEmptyState.Update(_allergens.Count, _filteredAllergens.Count, AllergensListView, EmptyStatePanel,
+        CatalogPageState.UpdateEmptyState(_allergens.Count, _filteredAllergens.Count, AllergensListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_allergens_yet_6f883b", "AllergenNoMatches");
     }
 

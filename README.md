@@ -95,7 +95,7 @@ requires those tests to pass before building and checking the MSI.
 The [package check](.github/workflows/package-check.yml) runs the same
 push-test gate and package/install checks without publishing a release. It can be run
 manually on `release` in GitHub Actions and also runs when its packaging
-workflows change on `release`. Its MSI is a test
+workflows, installer, release notes, or packaging scripts change on `release`. Its MSI is a test
 artifact, not a versioned release.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format

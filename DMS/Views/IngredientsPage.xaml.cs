@@ -47,11 +47,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         base.OnNavigatedFrom(e);
     }
 
-    private void SetPageStatus(string? key)
-    {
-        PageStatus.Text = key == null ? "" : L.Get(key);
-        PageStatus.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
-    }
+    private void SetPageStatus(string? key) => CatalogPageState.SetStatus(PageStatus, key);
 
     private async Task LoadIngredientsAsync()
     {
@@ -76,7 +72,7 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
         _filteredIngredients = CatalogFilter.Ingredients(_ingredients, query);
         IngredientsListView.ItemsSource = _filteredIngredients;
         UpdateSelection();
-        CatalogEmptyState.Update(_ingredients.Count, _filteredIngredients.Count, IngredientsListView, EmptyStatePanel,
+        CatalogPageState.UpdateEmptyState(_ingredients.Count, _filteredIngredients.Count, IngredientsListView, EmptyStatePanel,
             EmptyStateTitle, EmptyStateHint, ClearSearchButton, "String_Text_No_ingredients_yet_affb49", "IngredientNoMatches");
     }
 

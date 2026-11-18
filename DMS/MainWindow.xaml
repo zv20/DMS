@@ -54,12 +54,6 @@
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPointerOver" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPressed" Color="White" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>

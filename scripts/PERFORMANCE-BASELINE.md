@@ -35,10 +35,9 @@ present in the pushed branch (and Actions enabled for the repository) to run.
 
 The separate **Performance soak - weekly and manual** workflow runs the same image-heavy
 cycle for at least 15 minutes and records elapsed time and memory at each step.
-It is scheduled weekly and can be started manually. GitHub only enables scheduled
-workflows from the default branch, and manual dispatch requires the workflow to
-exist on the default branch, so the schedule is not active while this exists
-only on the performance branch. Use its samples for trend analysis rather than
+It is scheduled weekly and can be started manually. GitHub runs scheduled
+workflows from the default branch when Actions and the workflow are enabled.
+Use its samples for trend analysis rather than
 declaring a leak from a single run. A branch push whose commit message contains
 `[perf-soak]` also requests the 15-minute run. For actual mouse, file-picker and printer
 checks, follow [Windows interaction check](WINDOWS-INTERACTION-CHECK.md).

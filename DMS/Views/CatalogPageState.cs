@@ -4,9 +4,15 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace DMS.Views;
 
-internal static class CatalogEmptyState
+internal static class CatalogPageState
 {
-    public static void Update(int itemCount, int matchCount, FrameworkElement list, FrameworkElement panel,
+    public static void SetStatus(TextBlock status, string? key)
+    {
+        status.Text = key == null ? "" : Localization.Get(key);
+        status.Visibility = key == null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public static void UpdateEmptyState(int itemCount, int matchCount, FrameworkElement list, FrameworkElement panel,
         TextBlock title, FrameworkElement hint, FrameworkElement clearSearch, string emptyTitleKey, string noMatchesTitleKey)
     {
         var hasItems = itemCount > 0;

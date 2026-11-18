@@ -33,6 +33,9 @@ jobs:
       - name: Check localization
         run: python scripts/check-localization.py
 
+      - name: Check upgrade version selection
+        run: python scripts/test-previous-release.py
+
       - name: Run tests
         run: dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category!=PerformanceBaseline"
 
