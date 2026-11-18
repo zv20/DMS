@@ -54,7 +54,7 @@ public sealed partial class MainWindow : Window
         {
             _compactNavigation = compact;
             foreach (var (item, label) in _navigationLabels)
-                item.Content = compact && item != NavSettings ? null : label;
+                item.Content = compact ? null : label;
         }
         UpdateNavigationSpacing();
     }
