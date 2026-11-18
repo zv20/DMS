@@ -14,17 +14,21 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TitleBar x:Name="AppTitleBar" Grid.Row="0"
-                  Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
-        <TitleBar.Resources>
-            <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
-        </TitleBar.Resources>
-        <TitleBar.Content>
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48"
+              Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="TitleBarLeftInset" Width="0" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="48" />
+            <ColumnDefinition x:Name="TitleBarRightInset" Width="0" />
+        </Grid.ColumnDefinitions>
         <NavigationView
             x:Name="NavView"
+            Grid.Column="1"
             PaneDisplayMode="Top"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
+            IsTitleBarAutoPaddingEnabled="False"
             IsSettingsVisible="False"
             Height="48"
             HorizontalAlignment="Stretch"
@@ -77,8 +81,7 @@
             </NavigationView.MenuItems>
 
         </NavigationView>
-        </TitleBar.Content>
-        </TitleBar>
+        </Grid>
         <Border Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                 BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
             <Frame x:Name="ContentFrame" IsNavigationStackEnabled="False" />

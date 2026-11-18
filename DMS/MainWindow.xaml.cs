@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Input;
 using Windows.Graphics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,7 +36,8 @@ public sealed partial class MainWindow : Window
             ToolTipService.SetToolTip(item, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
         }
-        NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
+        NavView.SizeChanged += (_, _) => { UpdateNavigationLayout(); UpdateTitleBarRegions(); };
+        AppTitleBar.SizeChanged += (_, _) => UpdateTitleBarRegions();
         WindowIcon.Apply(this);
         CloseOutputButton.Content = Localization.Get("OutputClose");
         this.ExtendsContentIntoTitleBar = true;
@@ -70,10 +72,26 @@ public sealed partial class MainWindow : Window
         if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
+    private void UpdateTitleBarRegions()
+    {
+        if (AppTitleBar.XamlRoot == null || NavView.ActualWidth <= 0 || NavView.ActualHeight <= 0) return;
+        var scale = AppTitleBar.XamlRoot.RasterizationScale;
+        var left = AppWindow.TitleBar.LeftInset / scale;
+        var right = AppWindow.TitleBar.RightInset / scale;
+        if (Math.Abs(TitleBarLeftInset.Width.Value - left) > 0.5) TitleBarLeftInset.Width = new GridLength(left);
+        if (Math.Abs(TitleBarRightInset.Width.Value - right) > 0.5) TitleBarRightInset.Width = new GridLength(right);
+        var bounds = NavView.TransformToVisual(null).TransformBounds(new Windows.Foundation.Rect(0, 0, NavView.ActualWidth, NavView.ActualHeight));
+        var area = new RectInt32((int)Math.Round(bounds.X * scale), (int)Math.Round(bounds.Y * scale),
+            (int)Math.Round(bounds.Width * scale), (int)Math.Round(bounds.Height * scale));
+        InputNonClientPointerSource.GetForWindowId(AppWindow.Id).SetRegionRects(NonClientRegionKind.Passthrough, [area]);
+    }
+
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
+            RootGrid.XamlRoot.Changed += (_, _) => UpdateTitleBarRegions();
+            UpdateTitleBarRegions();
             var settings = await App.Services.GetRequiredService<DatabaseService>().GetSettingsAsync();
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             _placementLoaded = true;
