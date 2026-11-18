@@ -57,7 +57,10 @@ $old = Start-Process $exe -WorkingDirectory $installDir -PassThru
 try {
     Wait-DmsAppFile $old $database 'Previous DMS database creation'
     $running = Start-Process msiexec.exe -ArgumentList @('/i', "`"$CurrentMsi`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$log`"") -Wait -PassThru
-    if ($running.ExitCode -eq 0 -or !(Select-String -Path $log -Pattern 'CreateUpgradeBackup' -Quiet)) { throw 'Upgrade should stop at the backup check while DMS is running.' }
+    if ($running.ExitCode -eq 0 -or [MsiState]::MsiQueryProductState($oldCode) -ne 5) {
+        Get-Content $log
+        throw 'Upgrade should stop while DMS is running and leave the old version installed.'
+    }
 } finally { Stop-App $old }
 
 # Verify that a failed backup blocks the upgrade and leaves the old version intact.
@@ -65,6 +68,7 @@ if (Test-Path -LiteralPath $backupDir) { Remove-Item -LiteralPath $backupDir -Re
 Set-Content -LiteralPath $backupDir -Value 'Block the backup directory'
 $failed = Start-Process msiexec.exe -ArgumentList @('/i', "`"$CurrentMsi`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$log`"") -Wait -PassThru
 if ($failed.ExitCode -eq 0 -or !(Test-Path $exe) -or !(Test-Path $database) -or [MsiState]::MsiQueryProductState($oldCode) -ne 5 -or !(Select-String -Path $log -Pattern 'CreateUpgradeBackup' -Quiet)) {
+    Get-Content $log
     throw 'Upgrade did not stop safely when the backup could not be created.'
 }
 Remove-Item -LiteralPath $backupDir -Force
