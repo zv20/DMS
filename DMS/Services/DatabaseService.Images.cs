@@ -441,7 +441,18 @@ internal static class SeasonalTemplateDefaults
         new("Spring Garden", "season-spring.png", "#356B39", "#213A23"),
         new("Summer Table", "season-summer.png", "#9A5B08", "#253F65"),
         new("Autumn Harvest", "season-autumn.png", "#8C4818", "#563116"),
-        new("Winter Comfort", "season-winter.png", "#2D5D88", "#223C59")
+        new("Winter Comfort", "season-winter.png", "#2D5D88", "#223C59"),
+        new("Simple Spring", "simple-spring.png", "#356B39", "#213A23"),
+        new("Simple Summer", "simple-summer.png", "#9A5B08", "#253F65"),
+        new("Simple Autumn", "simple-autumn.png", "#8C4818", "#563116"),
+        new("Simple Winter", "simple-winter.png", "#2D5D88", "#223C59"),
+        new("Kids Spring", "kids-spring.png", "#356B39", "#213A23"),
+        new("Kids Summer", "kids-summer.png", "#9A5B08", "#253F65"),
+        new("Kids Autumn", "kids-autumn.png", "#8C4818", "#563116"),
+        new("Kids Winter", "kids-winter.png", "#2D5D88", "#223C59"),
+        new("Kids Christmas", "kids-christmas.png", "#356B39", "#213A23"),
+        new("Kids Easter", "kids-easter.png", "#356B39", "#213A23"),
+        new("Kids Rainy Day", "kids-rainy-day.png", "#2D5D88", "#223C59")
     ];
 
     internal static MenuTemplate Create(Definition definition, string assetId) => new()
