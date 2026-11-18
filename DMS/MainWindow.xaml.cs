@@ -25,8 +25,11 @@ public sealed partial class MainWindow : Window
     {
         _openSettings = openSettings;
         this.InitializeComponent();
+        NavSettings.Content = Localization.Get("Text_Settings_c7f73b");
         foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
         {
+            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
+            if (item == NavLogo) continue;
             var label = item.Content?.ToString() ?? "";
             _navigationLabels.Add(item, label);
             ToolTipService.SetToolTip(item, label);
@@ -34,8 +37,6 @@ public sealed partial class MainWindow : Window
         }
         NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
         WindowIcon.Apply(this);
-        if (NavView.SettingsItem is NavigationViewItem settingsItem)
-            settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
         CloseOutputButton.Content = Localization.Get("OutputClose");
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
@@ -53,8 +54,20 @@ public sealed partial class MainWindow : Window
         {
             _compactNavigation = compact;
             foreach (var (item, label) in _navigationLabels)
-                item.Content = compact ? null : label;
+                item.Content = compact && item != NavSettings ? null : label;
         }
+        UpdateNavigationSpacing();
+    }
+
+    private void UpdateNavigationSpacing()
+    {
+        var items = NavView.MenuItems.OfType<NavigationViewItem>().ToArray();
+        var totalWidth = items.Sum(item => item.ActualWidth);
+        var beforeLogo = items.TakeWhile(item => item != NavLogo).Sum(item => item.ActualWidth);
+        if (NavView.ActualWidth <= 0 || NavLogo.ActualWidth <= 0 || totalWidth <= 0) return;
+        var desired = NavView.ActualWidth / 2 - beforeLogo - NavLogo.ActualWidth / 2;
+        var padding = Math.Clamp(desired, 0, Math.Max(0, NavView.ActualWidth - totalWidth));
+        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
@@ -66,7 +79,7 @@ public sealed partial class MainWindow : Window
             _placementLoaded = true;
             CaptureNormalPlacement();
             AppearanceService.ApplyTheme(this, settings?.Theme ?? "light", settings?.AccentColor ?? "blue");
-            NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
+            NavView.SelectedItem = _openSettings ? NavSettings : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
                 throw new InvalidOperationException("The initial page could not be opened.");
             var database = App.Services.GetRequiredService<DatabaseService>();
@@ -160,8 +173,8 @@ public sealed partial class MainWindow : Window
     private void RestoreNavigationSelection()
     {
         var pageType = ContentFrame.CurrentSourcePageType;
-        NavView.SelectedItem = pageType == typeof(SettingsPage) ? NavView.SettingsItem :
-            NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => PageForTag(item.Tag as string) == pageType);
+        NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>()
+            .FirstOrDefault(item => PageForTag(item.Tag as string) == pageType);
     }
 
     private static Type? PageForTag(string? tag) => tag switch

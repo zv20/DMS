@@ -14,24 +14,26 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="DMS"
+        <TitleBar x:Name="AppTitleBar" Grid.Row="0"
                   Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
         <TitleBar.Resources>
             <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
         </TitleBar.Resources>
-        <TitleBar.IconSource>
-            <ImageIconSource ImageSource="Assets/logo.png" />
-        </TitleBar.IconSource>
         <TitleBar.Content>
         <NavigationView
             x:Name="NavView"
             PaneDisplayMode="Top"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
+            IsSettingsVisible="False"
             Height="48"
             HorizontalAlignment="Stretch"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
+
+            <NavigationView.PaneHeader>
+                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
+            </NavigationView.PaneHeader>
 
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
@@ -59,12 +61,18 @@
                 <NavigationViewItem x:Uid="NavIngredients" Tag="ingredients" Content="Ingredients">
                     <NavigationViewItem.Icon><PathIcon Data="F0 M 2,21 L 5,17 C 3,13 5,9 8,6 C 11,3 16,2 22,2 C 22,8 21,13 18,16 C 15,19 11,20 7,18 L 4,22 Z M 8,16.5 C 11,18 14,17.5 16.5,15 C 18.5,13 19.5,9 20,4 C 15,4.5 11,5.5 9,7.5 C 6.5,10 6,13 7,15.5 C 10,12.5 14,9.5 18,7 C 14,10.5 11,13.5 8,16.5 Z" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem x:Name="NavLogo" IsHitTestVisible="False" IsTabStop="False"
+                                    AutomationProperties.AccessibilityView="Raw">
+                    <Image Source="Assets/logo.png" Width="36" Height="36" />
+                </NavigationViewItem>
                 <NavigationViewItem x:Uid="NavAllergens" Tag="allergens" Content="Allergens">
                     <NavigationViewItem.Icon><PathIcon Data="F0 M 12,2 L 23,21 L 1,21 Z M 12,6 L 4.5,19 L 19.5,19 Z M 11,10 L 13,10 L 13,15 L 11,15 Z M 11,16.5 L 13,16.5 L 13,18 L 11,18 Z" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItemSeparator />
                 <NavigationViewItem x:Uid="NavTemplateBuilder" Tag="templateBuilder" Content="Template Builder">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavSettings" Tag="settings" Content="Settings">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Setting" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
