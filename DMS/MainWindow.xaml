@@ -14,36 +14,24 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Title Bar / Header -->
-        <Border x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Height="48">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- Logo + App Name -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <Image Source="Assets/logo.png" Width="32" Height="32" Margin="0,0,8,0" />
-                    <TextBlock Text="DMS" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-
-            </Grid>
-        </Border>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="DMS"
+                  Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+        <TitleBar.Resources>
+            <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
+        </TitleBar.Resources>
+        <TitleBar.IconSource>
+            <ImageIconSource ImageSource="Assets/logo.png" />
+        </TitleBar.IconSource>
+        <TitleBar.Content>
         <NavigationView
             x:Name="NavView"
             PaneDisplayMode="Top"
             IsBackButtonVisible="Collapsed"
+            IsPaneToggleButtonVisible="False"
+            Height="48"
+            HorizontalAlignment="Stretch"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
-
-            <NavigationView.PaneHeader>
-                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
-            </NavigationView.PaneHeader>
 
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
@@ -80,12 +68,13 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <!-- Frame for page navigation -->
-            <Border BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
-                <Frame x:Name="ContentFrame" Margin="0" IsNavigationStackEnabled="False" />
-            </Border>
         </NavigationView>
-        </Grid>
+        </TitleBar.Content>
+        </TitleBar>
+        <Border Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
+            <Frame x:Name="ContentFrame" IsNavigationStackEnabled="False" />
+        </Border>
         <Grid x:Name="OutputOverlay" Grid.Row="1" Background="#99000000" Visibility="Collapsed" KeyDown="OutputOverlay_KeyDown">
             <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="12" Margin="16" MaxWidth="1150" MaxHeight="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid RowDefinitions="Auto,*">

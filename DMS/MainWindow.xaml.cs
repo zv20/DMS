@@ -31,7 +31,6 @@ public sealed partial class MainWindow : Window
             _navigationLabels.Add(item, label);
             ToolTipService.SetToolTip(item, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
-            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
         }
         NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
         WindowIcon.Apply(this);
@@ -49,24 +48,13 @@ public sealed partial class MainWindow : Window
 
     private void UpdateNavigationLayout()
     {
-        var compact = NavView.ActualWidth < 1000;
+        var compact = NavView.ActualWidth < 800;
         if (_compactNavigation != compact)
         {
             _compactNavigation = compact;
             foreach (var (item, label) in _navigationLabels)
                 item.Content = compact ? null : label;
         }
-        UpdateNavigationSpacing();
-    }
-
-    private void UpdateNavigationSpacing()
-    {
-        var menuWidth = _navigationLabels.Keys.Sum(item => item.ActualWidth);
-        if (menuWidth <= 0 || NavView.ActualWidth <= 0) return;
-        // Leave room for Settings and the overflow button when the window is narrow.
-        var available = Math.Max(0, NavView.ActualWidth - menuWidth - 120);
-        var padding = Math.Min(available, Math.Max(0, (NavView.ActualWidth - menuWidth) / 2 - 4));
-        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
