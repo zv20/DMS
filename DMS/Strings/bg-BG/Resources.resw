@@ -9,6 +9,12 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Планиране на меню</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Рецепти</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TitleNavMenu.Text" xml:space="preserve"><value>Планиране на меню</value></data>
+  <data name="TitleNavRecipes.Text" xml:space="preserve"><value>Рецепти</value></data>
+  <data name="TitleNavIngredients.Text" xml:space="preserve"><value>Съставки</value></data>
+  <data name="TitleNavAllergens.Text" xml:space="preserve"><value>Алергени</value></data>
+  <data name="TitleNavTemplates.Text" xml:space="preserve"><value>Редактор на шаблони</value></data>
+  <data name="TitleNavSettings.Text" xml:space="preserve"><value>Настройки</value></data>
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Печат / Експорт</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Печат</value></data>
   <data name="TemplateOutputExport" xml:space="preserve"><value>Експорт</value></data>

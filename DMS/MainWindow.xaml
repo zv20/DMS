@@ -22,65 +22,37 @@
             <ColumnDefinition Width="48" />
             <ColumnDefinition x:Name="TitleBarRightInset" Width="0" />
         </Grid.ColumnDefinitions>
-        <NavigationView
-            x:Name="NavView"
-            Grid.Column="1"
-            PaneDisplayMode="Top"
-            IsBackButtonVisible="Collapsed"
-            IsPaneToggleButtonVisible="False"
-            IsTitleBarAutoPaddingEnabled="False"
-            IsSettingsVisible="False"
-            Height="48"
-            HorizontalAlignment="Stretch"
-            ItemInvoked="NavView_ItemInvoked"
-            Background="Transparent">
-
-            <NavigationView.PaneHeader>
-                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
-            </NavigationView.PaneHeader>
-
-            <NavigationView.Resources>
-                <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
-                <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
-                <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPointerOver" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPressed" Color="White" />
-            </NavigationView.Resources>
-
-            <NavigationView.MenuItems>
-                <NavigationViewItem x:Uid="NavMenu" Tag="menu" Content="Menu Planner">
-                    <NavigationViewItem.Icon><SymbolIcon Symbol="Calendar" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavRecipes" Tag="recipes" Content="Recipes">
-                    <NavigationViewItem.Icon><PathIcon Data="F0 M 2,3 L 9,3 C 10.2,3 11.3,3.4 12,4.2 C 12.7,3.4 13.8,3 15,3 L 22,3 L 22,19 L 15,19 C 13.5,19 12.5,19.6 12,20.5 C 11.5,19.6 10.5,19 9,19 L 2,19 Z M 4,5 L 4,17 L 9,17 C 9.8,17 10.5,17.1 11,17.4 L 11,6 C 10.5,5.3 9.8,5 9,5 Z M 13,6 L 13,17.4 C 13.5,17.1 14.2,17 15,17 L 20,17 L 20,5 L 15,5 C 14.2,5 13.5,5.3 13,6 Z" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavIngredients" Tag="ingredients" Content="Ingredients">
-                    <NavigationViewItem.Icon><PathIcon Data="F0 M 2,21 L 5,17 C 3,13 5,9 8,6 C 11,3 16,2 22,2 C 22,8 21,13 18,16 C 15,19 11,20 7,18 L 4,22 Z M 8,16.5 C 11,18 14,17.5 16.5,15 C 18.5,13 19.5,9 20,4 C 15,4.5 11,5.5 9,7.5 C 6.5,10 6,13 7,15.5 C 10,12.5 14,9.5 18,7 C 14,10.5 11,13.5 8,16.5 Z" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Name="NavLogo" IsHitTestVisible="False" IsTabStop="False"
-                                    AutomationProperties.AccessibilityView="Raw">
-                    <Image Source="Assets/logo.png" Width="36" Height="36" />
-                </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavAllergens" Tag="allergens" Content="Allergens">
-                    <NavigationViewItem.Icon><PathIcon Data="F0 M 12,2 L 23,21 L 1,21 Z M 12,6 L 4.5,19 L 19.5,19 Z M 11,10 L 13,10 L 13,15 L 11,15 Z M 11,16.5 L 13,16.5 L 13,18 L 11,18 Z" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Uid="NavTemplateBuilder" Tag="templateBuilder" Content="Template Builder">
-                    <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem x:Name="NavSettings" Tag="settings" Content="Settings">
-                    <NavigationViewItem.Icon><SymbolIcon Symbol="Setting" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-            </NavigationView.MenuItems>
-
-        </NavigationView>
+        <Grid x:Name="NavArea" Grid.Column="1">
+            <StackPanel x:Name="NavView" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel.Resources>
+                    <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="DmsAccentBrush" />
+                    <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="DmsAccentHoverBrush" />
+                    <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="DmsAccentPressedBrush" />
+                    <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="White" />
+                    <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="White" />
+                    <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="White" />
+                </StackPanel.Resources>
+                <ToggleButton x:Name="NavMenu" Tag="menu" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Calendar" /><TextBlock x:Uid="TitleNavMenu" x:Name="LabelMenu" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="NavRecipes" Tag="recipes" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><PathIcon Data="F0 M 2,3 L 9,3 C 10.2,3 11.3,3.4 12,4.2 C 12.7,3.4 13.8,3 15,3 L 22,3 L 22,19 L 15,19 C 13.5,19 12.5,19.6 12,20.5 C 11.5,19.6 10.5,19 9,19 L 2,19 Z M 4,5 L 4,17 L 9,17 C 9.8,17 10.5,17.1 11,17.4 L 11,6 C 10.5,5.3 9.8,5 9,5 Z M 13,6 L 13,17.4 C 13.5,17.1 14.2,17 15,17 L 20,17 L 20,5 L 15,5 C 14.2,5 13.5,5.3 13,6 Z" /><TextBlock x:Uid="TitleNavRecipes" x:Name="LabelRecipes" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="NavIngredients" Tag="ingredients" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><PathIcon Data="F0 M 2,21 L 5,17 C 3,13 5,9 8,6 C 11,3 16,2 22,2 C 22,8 21,13 18,16 C 15,19 11,20 7,18 L 4,22 Z M 8,16.5 C 11,18 14,17.5 16.5,15 C 18.5,13 19.5,9 20,4 C 15,4.5 11,5.5 9,7.5 C 6.5,10 6,13 7,15.5 C 10,12.5 14,9.5 18,7 C 14,10.5 11,13.5 8,16.5 Z" /><TextBlock x:Uid="TitleNavIngredients" x:Name="LabelIngredients" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <Image Source="Assets/logo.png" Width="36" Height="36" Margin="8,0" />
+                <ToggleButton x:Name="NavAllergens" Tag="allergens" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><PathIcon Data="F0 M 12,2 L 23,21 L 1,21 Z M 12,6 L 4.5,19 L 19.5,19 Z M 11,10 L 13,10 L 13,15 L 11,15 Z M 11,16.5 L 13,16.5 L 13,18 L 11,18 Z" /><TextBlock x:Uid="TitleNavAllergens" x:Name="LabelAllergens" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="NavTemplates" Tag="templateBuilder" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Edit" /><TextBlock x:Uid="TitleNavTemplates" x:Name="LabelTemplates" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="NavSettings" Tag="settings" Click="Navigation_Click" Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Setting" /><TextBlock x:Uid="TitleNavSettings" x:Name="LabelSettings" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+            </StackPanel>
+        </Grid>
         </Grid>
         <Border Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                 BorderBrush="{ThemeResource DmsAccentBrush}" BorderThickness="0,3,0,0">
