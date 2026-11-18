@@ -46,10 +46,9 @@
     <Property Id="WixShellExecTarget" Value="[INSTALLFOLDER]DMS.exe" />
     <CustomAction Id="LaunchDms" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)" DllEntry="WixShellExec" Execute="immediate" Return="ignore" />
     <Binary Id="UpgradeBackupHelper" SourceFile="$(var.BackupHelper)" />
-    <SetProperty Id="CreateUpgradeBackup" Value="[UILevel]" Before="CreateUpgradeBackup" Sequence="execute" Condition="WIX_UPGRADE_DETECTED AND NOT Installed" />
-    <CustomAction Id="CreateUpgradeBackup" BinaryRef="UpgradeBackupHelper" ExeCommand="[CustomActionData]" Execute="deferred" Impersonate="yes" Return="check" />
+    <CustomAction Id="CreateUpgradeBackup" BinaryRef="UpgradeBackupHelper" ExeCommand="[UILevel]" Execute="immediate" Return="check" />
     <InstallExecuteSequence>
-      <Custom Action="CreateUpgradeBackup" After="InstallInitialize" Condition="WIX_UPGRADE_DETECTED AND NOT Installed" />
+      <Custom Action="CreateUpgradeBackup" Before="InstallValidate" Condition="WIX_UPGRADE_DETECTED AND NOT Installed" />
     </InstallExecuteSequence>
 
     <StandardDirectory Id="LocalAppDataFolder">
