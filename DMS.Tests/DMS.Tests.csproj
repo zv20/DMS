@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DMS\DMS.csproj" />
+    <Compile Include="..\installer\BackupHelper\UpgradeBackup.cs" Link="UpgradeBackup.cs" />
   </ItemGroup>
 
   <ItemGroup>
