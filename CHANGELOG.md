@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0
+
+- Added four simple seasonal menu templates.
+- Added seven kid-friendly templates for the seasons, Christmas, Easter, and rainy days.
+
 ## 0.0.16
 
 - Added a first-run setup with live planner previews for language, appearance, meal count, categories, and weekends.
