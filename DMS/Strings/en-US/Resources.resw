@@ -9,12 +9,6 @@
   <data name="NavMenu.Content" xml:space="preserve"><value>Menu Planner</value></data>
   <data name="NavRecipes.Content" xml:space="preserve"><value>Recipes</value></data>
   <data name="NavTemplateBuilder.Content" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="TitleNavMenu.Text" xml:space="preserve"><value>Menu Planner</value></data>
-  <data name="TitleNavRecipes.Text" xml:space="preserve"><value>Recipes</value></data>
-  <data name="TitleNavIngredients.Text" xml:space="preserve"><value>Ingredients</value></data>
-  <data name="TitleNavAllergens.Text" xml:space="preserve"><value>Allergens</value></data>
-  <data name="TitleNavTemplates.Text" xml:space="preserve"><value>Template Builder</value></data>
-  <data name="TitleNavSettings.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="TemplateOutputTitle" xml:space="preserve"><value>Print / Export</value></data>
   <data name="TemplateOutputPrint" xml:space="preserve"><value>Print</value></data>
   <data name="TemplateOutputExport" xml:space="preserve"><value>Export</value></data>

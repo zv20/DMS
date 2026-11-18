@@ -1,9 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Windowing;
-using Microsoft.UI.Input;
 using Windows.Graphics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,8 +14,7 @@ public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
     private bool _navigationPending;
-    private ToggleButton[] _navigationItems = [];
-    private TextBlock[] _navigationLabels = [];
+    private readonly Dictionary<NavigationViewItem, string> _navigationLabels = new();
     private bool? _compactNavigation;
     private readonly WindowSizeLimits _sizeLimits;
     private RectInt32? _normalPlacement;
@@ -28,18 +25,18 @@ public sealed partial class MainWindow : Window
     {
         _openSettings = openSettings;
         this.InitializeComponent();
-        _navigationItems = [NavMenu, NavRecipes, NavIngredients, NavAllergens, NavTemplates, NavSettings];
-        _navigationLabels = [LabelMenu, LabelRecipes, LabelIngredients, LabelAllergens, LabelTemplates, LabelSettings];
-        for (var i = 0; i < _navigationItems.Length; i++)
+        foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
         {
-            var item = _navigationItems[i];
-            var label = _navigationLabels[i].Text;
+            var label = item.Content?.ToString() ?? "";
+            _navigationLabels.Add(item, label);
             ToolTipService.SetToolTip(item, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
+            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
         }
-        NavArea.SizeChanged += (_, _) => { UpdateNavigationLayout(); UpdateTitleBarRegions(); };
-        AppTitleBar.SizeChanged += (_, _) => UpdateTitleBarRegions();
+        NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
         WindowIcon.Apply(this);
+        if (NavView.SettingsItem is NavigationViewItem settingsItem)
+            settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
         CloseOutputButton.Content = Localization.Get("OutputClose");
         this.ExtendsContentIntoTitleBar = true;
         this.SetTitleBar(AppTitleBar);
@@ -52,43 +49,38 @@ public sealed partial class MainWindow : Window
 
     private void UpdateNavigationLayout()
     {
-        var compact = NavArea.ActualWidth < 800;
+        var compact = NavView.ActualWidth < 1000;
         if (_compactNavigation != compact)
         {
             _compactNavigation = compact;
-            foreach (var label in _navigationLabels)
-                label.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+            foreach (var (item, label) in _navigationLabels)
+                item.Content = compact ? null : label;
         }
+        UpdateNavigationSpacing();
     }
 
-    private void UpdateTitleBarRegions()
+    private void UpdateNavigationSpacing()
     {
-        if (AppTitleBar.XamlRoot == null || NavArea.ActualWidth <= 0 || NavArea.ActualHeight <= 0) return;
-        var scale = AppTitleBar.XamlRoot.RasterizationScale;
-        var left = AppWindow.TitleBar.LeftInset / scale;
-        var right = AppWindow.TitleBar.RightInset / scale;
-        if (Math.Abs(TitleBarLeftInset.Width.Value - left) > 0.5) TitleBarLeftInset.Width = new GridLength(left);
-        if (Math.Abs(TitleBarRightInset.Width.Value - right) > 0.5) TitleBarRightInset.Width = new GridLength(right);
-        var bounds = NavArea.TransformToVisual(null).TransformBounds(new Windows.Foundation.Rect(0, 0, NavArea.ActualWidth, NavArea.ActualHeight));
-        var area = new RectInt32((int)Math.Round(bounds.X * scale), (int)Math.Round(bounds.Y * scale),
-            (int)Math.Round(bounds.Width * scale), (int)Math.Round(bounds.Height * scale));
-        InputNonClientPointerSource.GetForWindowId(AppWindow.Id).SetRegionRects(NonClientRegionKind.Passthrough, [area]);
+        var menuWidth = _navigationLabels.Keys.Sum(item => item.ActualWidth);
+        if (menuWidth <= 0 || NavView.ActualWidth <= 0) return;
+        // Leave room for Settings and the overflow button when the window is narrow.
+        var available = Math.Max(0, NavView.ActualWidth - menuWidth - 120);
+        var padding = Math.Min(available, Math.Max(0, (NavView.ActualWidth - menuWidth) / 2 - 4));
+        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
-            RootGrid.XamlRoot.Changed += (_, _) => UpdateTitleBarRegions();
-            UpdateTitleBarRegions();
             var settings = await App.Services.GetRequiredService<DatabaseService>().GetSettingsAsync();
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             _placementLoaded = true;
             CaptureNormalPlacement();
             AppearanceService.ApplyTheme(this, settings?.Theme ?? "light", settings?.AccentColor ?? "blue");
+            NavView.SelectedItem = _openSettings ? NavView.SettingsItem : NavView.MenuItems[0];
             if (!ContentFrame.Navigate(_openSettings ? typeof(SettingsPage) : typeof(MenuPage)))
                 throw new InvalidOperationException("The initial page could not be opened.");
-            RestoreNavigationSelection();
             var database = App.Services.GetRequiredService<DatabaseService>();
             if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DMS_QA_READY_FILE")) && !await database.IsSetupCompleteAsync())
             {
@@ -106,12 +98,7 @@ public sealed partial class MainWindow : Window
             // app reached its main window and loaded application resources.
             var readyFile = Environment.GetEnvironmentVariable("DMS_QA_READY_FILE");
             if (!string.IsNullOrWhiteSpace(readyFile))
-            {
-                RootGrid.UpdateLayout();
-                if (_navigationItems.Any(item => !item.IsLoaded || item.ActualWidth <= 0 || item.ActualHeight <= 0))
-                    throw new InvalidOperationException("Title-bar navigation did not render its items.");
                 System.IO.File.WriteAllText(readyFile, Localization.Get("MenuViewSelected"));
-            }
         }
         catch (Exception ex)
         {
@@ -185,8 +172,8 @@ public sealed partial class MainWindow : Window
     private void RestoreNavigationSelection()
     {
         var pageType = ContentFrame.CurrentSourcePageType;
-        foreach (var item in _navigationItems)
-            item.IsChecked = PageForTag(item.Tag as string) == pageType;
+        NavView.SelectedItem = pageType == typeof(SettingsPage) ? NavView.SettingsItem :
+            NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => PageForTag(item.Tag as string) == pageType);
     }
 
     private static Type? PageForTag(string? tag) => tag switch
@@ -211,21 +198,22 @@ public sealed partial class MainWindow : Window
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to show the navigation error"); }
     }
 
-    private async void Navigation_Click(object sender, RoutedEventArgs args)
+    private async void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        var pageType = PageForTag((sender as ToggleButton)?.Tag as string);
+        var tag = (args.InvokedItemContainer as NavigationViewItem)?.Tag as string;
+        var pageType = args.IsSettingsInvoked ? typeof(SettingsPage) : PageForTag(tag);
 
         if (pageType != null)
-            await NavigateToAsync(pageType);
+            await NavigateToAsync(pageType, args.IsSettingsInvoked ? NavView.SettingsItem : args.InvokedItemContainer);
     }
 
-    private async Task NavigateToAsync(Type pageType)
+    private async Task NavigateToAsync(Type pageType, object? selectedItem)
     {
         if (ContentFrame != null)
         {
             try
             {
-            if (ContentFrame.CurrentSourcePageType == pageType) { RestoreNavigationSelection(); return; }
+            if (ContentFrame.CurrentSourcePageType == pageType) return;
             if (ContentFrame.Content is IUnsavedEditor editor)
             {
                 if (_navigationPending)
@@ -244,8 +232,8 @@ public sealed partial class MainWindow : Window
                 }
                 finally { _navigationPending = false; }
             }
+            NavView.SelectedItem = selectedItem;
             if (!ContentFrame.Navigate(pageType)) throw new InvalidOperationException("The selected page could not be opened.");
-            RestoreNavigationSelection();
             }
             catch (Exception ex)
             {
@@ -285,7 +273,8 @@ public sealed partial class MainWindow : Window
                 if (tag is not ("recipes" or "ingredients" or "templateBuilder")) return;
                 var pageType = PageForTag(tag);
                 if (pageType == null) return;
-                await NavigateToAsync(pageType);
+                var item = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
+                await NavigateToAsync(pageType, item);
             }
             catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to process performance navigation command"); }
         };
@@ -295,7 +284,7 @@ public sealed partial class MainWindow : Window
     public void OpenMenuOutput(DateTime date, bool print)
     {
         if (OutputOverlay.Visibility == Visibility.Visible) return;
-        foreach (var item in _navigationItems) item.IsEnabled = false;
+        NavView.IsEnabled = false;
         OutputOverlay.Visibility = Visibility.Visible;
         try
         {
@@ -311,7 +300,7 @@ public sealed partial class MainWindow : Window
         {
             OutputFrame.Content = null;
             OutputOverlay.Visibility = Visibility.Collapsed;
-            foreach (var item in _navigationItems) item.IsEnabled = true;
+            NavView.IsEnabled = true;
             throw;
         }
     }
@@ -336,7 +325,7 @@ public sealed partial class MainWindow : Window
         }
         OutputFrame.Content = null;
         OutputOverlay.Visibility = Visibility.Collapsed;
-        foreach (var item in _navigationItems) item.IsEnabled = true;
+        NavView.IsEnabled = true;
         if (ContentFrame.Content is MenuPage menu) menu.FocusOutputButton();
     }
 
