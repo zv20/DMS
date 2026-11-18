@@ -23,11 +23,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Logo + App Name -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <Image Source="Assets/logo.png" Width="24" Height="24" Margin="0,0,8,0" />
-                    <TextBlock Text="DMS" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
+                <!-- Menu button -->
+                <Button x:Name="MenuToggleButton" Grid.Column="0" Width="48" Height="32" Padding="0"
+                        Background="Transparent" BorderThickness="0" Click="MenuToggleButton_Click">
+                    <FontIcon Glyph="&#xE700;" FontSize="16" />
+                </Button>
 
             </Grid>
         </Border>
@@ -36,14 +36,14 @@
         <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <NavigationView
             x:Name="NavView"
-            PaneDisplayMode="Top"
+            PaneDisplayMode="LeftMinimal"
+            IsPaneOpen="False"
+            OpenPaneLength="280"
+            IsPaneToggleButtonVisible="False"
+            IsTitleBarAutoPaddingEnabled="False"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
-
-            <NavigationView.PaneHeader>
-                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
-            </NavigationView.PaneHeader>
 
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
