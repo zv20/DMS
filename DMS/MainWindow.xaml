@@ -36,15 +36,13 @@
         <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <NavigationView
             x:Name="NavView"
-            PaneDisplayMode="Left"
+            PaneDisplayMode="LeftCompact"
             IsPaneOpen="False"
-            CompactPaneLength="0"
+            CompactPaneLength="48"
             OpenPaneLength="280"
             IsPaneToggleButtonVisible="False"
             IsTitleBarAutoPaddingEnabled="False"
             IsBackButtonVisible="Collapsed"
-            PaneOpening="NavView_PaneOpening"
-            PaneClosed="NavView_PaneClosed"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
 

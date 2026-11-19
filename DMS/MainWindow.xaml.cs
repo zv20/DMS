@@ -51,10 +51,6 @@ public sealed partial class MainWindow : Window
         if (NavView.IsEnabled) NavView.IsPaneOpen = !NavView.IsPaneOpen;
     }
 
-    private void NavView_PaneOpening(NavigationView sender, object args) => sender.CompactPaneLength = 48;
-
-    private void NavView_PaneClosed(NavigationView sender, object args) => sender.CompactPaneLength = 0;
-
     private void UpdateTitleBarRegions()
     {
         if (AppTitleBar.XamlRoot == null || MenuToggleButton.ActualWidth <= 0 || MenuToggleButton.ActualHeight <= 0) return;
