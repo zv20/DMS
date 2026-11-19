@@ -2,7 +2,14 @@ name: Package build - reusable
 
 on:
   workflow_call:
+    outputs:
+      artifact_name:
+        description: 'Name of the verified MSI artifact'
+        value: ${{ jobs.package.outputs.artifact_name }}
     inputs:
+      ref:
+        type: string
+        required: false
       version:
         type: string
         required: false
@@ -15,8 +22,12 @@ jobs:
     name: Build and verify packages
     runs-on: windows-latest
     timeout-minutes: 45
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -132,9 +143,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./scripts/test-msi-upgrade.ps1 -PreviousMsi (Join-Path $env:RUNNER_TEMP $previousMsi) -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
 
+      - name: Name tested package artifact
+        id: artifact
+        shell: pwsh
+        run: '"name=windows-packages-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" >> $env:GITHUB_OUTPUT'
+
       - name: Upload tested packages
         uses: actions/upload-artifact@v6
         with:
-          name: windows-packages-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.artifact.outputs.name }}
           path: artifacts/installer/*.msi
           if-no-files-found: error

@@ -1,0 +1,167 @@
+name: Test and release
+
+on:
+  push:
+    branches: [test]
+
+concurrency:
+  group: dms-automatic-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare patch version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      commit: ${{ steps.prepare.outputs.commit }}
+      version: ${{ steps.prepare.outputs.version }}
+      changed: ${{ steps.prepare.outputs.changed }}
+      bootstrap: ${{ steps.prepare.outputs.bootstrap }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Prepare version and changelog
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin release --tags
+          test "$(git ls-remote origin refs/heads/test | cut -f1)" = "$SOURCE_SHA" || { echo 'test has advanced; a newer run will handle it.' >&2; exit 1; }
+          if ! git cat-file -e origin/release:.github/workflows/auto-release.yml 2>/dev/null ||
+             ! git show origin/release:.github/workflows/release-pr.yml | grep -q 'workflow_dispatch:'; then
+            echo 'Bootstrap run: tests only. Merge this workflow to release before automatic publishing.'
+            echo "commit=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            echo 'bootstrap=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --quiet origin/release HEAD; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh release list --limit 1000 --json tagName,isDraft,isPrerelease > "$RUNNER_TEMP/releases.json"
+          base=$(git merge-base origin/release HEAD)
+          git log --no-merges --format=%s "$base"..HEAD > "$RUNNER_TEMP/subjects.txt"
+          version=$(python3 scripts/prepare-release.py "$RUNNER_TEMP/releases.json" "$RUNNER_TEMP/subjects.txt")
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "Tag v$version already exists; resolve it before retrying." >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add DMS/DMS.csproj CHANGELOG.md
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: prepare release $version"
+            git push origin HEAD:refs/heads/test
+          fi
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+
+  tests:
+    name: Test prepared commit
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      ref: ${{ needs.prepare.outputs.commit }}
+
+  package:
+    name: Build and check installer
+    needs: [prepare, tests]
+    if: needs.prepare.outputs.bootstrap != 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-package.yml
+    with:
+      ref: ${{ needs.prepare.outputs.commit }}
+      version: ${{ needs.prepare.outputs.version }}
+
+  release:
+    name: Promote and publish
+    needs: [prepare, tests, package]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.package.outputs.artifact_name }}
+          path: artifacts/installer
+      - name: Promote tested commit through the protected branch
+        id: promote
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_SHA: ${{ needs.prepare.outputs.commit }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          candidate_tree=$(git rev-parse "$CANDIDATE_SHA^{tree}")
+          # A failed publish can be retried without merging the same commit twice.
+          prs=$(gh pr list --base release --head test --state all --limit 100 --json number,state,headRefOid,mergeCommit)
+          merged=$(jq -r --arg sha "$CANDIDATE_SHA" '[.[] | select(.state == "MERGED" and .headRefOid == $sha)] | first | .mergeCommit.oid // empty' <<< "$prs")
+          if [[ -n "$merged" ]]; then
+            git fetch origin release
+            git merge-base --is-ancestor "$merged" origin/release || exit 1
+            test "$(git rev-parse "$merged^{tree}")" = "$candidate_tree" || { echo 'The merged tree differs from the tested commit.' >&2; exit 1; }
+            echo "commit=$merged" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/test | cut -f1)" = "$CANDIDATE_SHA" || { echo 'test changed after testing; refusing to release it.' >&2; exit 1; }
+          git fetch origin release
+          merge_tree=$(git merge-tree --write-tree origin/release "$CANDIDATE_SHA")
+          test "$merge_tree" = "$candidate_tree" || { echo 'The release branch has changes not present in the tested commit. Merge release into test and retry.' >&2; exit 1; }
+          pr=$(jq -r --arg sha "$CANDIDATE_SHA" '[.[] | select(.state == "OPEN" and .headRefOid == $sha)] | first | .number // empty' <<< "$prs")
+          if [[ -z "$pr" ]]; then
+            gh pr create --base release --head test --title "Release DMS $RELEASE_VERSION" --body "Automated release of tested commit $CANDIDATE_SHA."
+            pr=$(gh pr list --base release --head test --state open --json number --jq '.[0].number')
+          fi
+          [[ "$pr" =~ ^[0-9]+$ ]] || exit 1
+          started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run release-pr.yml --ref test -f "expected_sha=$CANDIDATE_SHA" -f "pr_number=$pr"
+          run=''
+          for attempt in {1..30}; do
+            run=$(gh run list --workflow release-pr.yml --branch test --event workflow_dispatch --limit 100 --json databaseId,headSha,createdAt --jq "[.[] | select(.headSha == \"$CANDIDATE_SHA\" and .createdAt >= \"$started\")] | sort_by(.createdAt) | last | .databaseId // empty")
+            [[ -n "$run" ]] && break
+            sleep 2
+          done
+          [[ -n "$run" ]] || { echo 'Release branch check did not start.' >&2; exit 1; }
+          gh run watch "$run" --exit-status
+          gh pr merge "$pr" --merge --match-head-commit "$CANDIDATE_SHA"
+          merged=$(gh pr view "$pr" --json mergeCommit --jq '.mergeCommit.oid')
+          [[ "$merged" =~ ^[0-9a-f]{40}$ ]] || exit 1
+          git fetch origin release
+          test "$(git rev-parse "$merged^{tree}")" = "$candidate_tree" || { echo 'The merged tree differs from the tested commit; publication stopped.' >&2; exit 1; }
+          echo "commit=$merged" >> "$GITHUB_OUTPUT"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ steps.promote.outputs.commit }}
+        run: |
+          set -euo pipefail
+          python3 scripts/extract-release-notes.py "$RELEASE_VERSION" release-notes.md
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$RELEASE_VERSION" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/v$RELEASE_VERSION:refs/tags/v$RELEASE_VERSION"
+            test "$(git rev-list -n 1 "v$RELEASE_VERSION")" = "$RELEASE_COMMIT" || { echo 'The existing tag points to a different commit.' >&2; exit 1; }
+            gh release create "v$RELEASE_VERSION" artifacts/installer/*.msi --verify-tag --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+          else
+            gh release create "v$RELEASE_VERSION" artifacts/installer/*.msi --target "$RELEASE_COMMIT" --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+          fi

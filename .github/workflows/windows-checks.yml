@@ -1,8 +1,6 @@
-name: Windows tests - test and release
+name: Windows tests
 
 on:
-  push:
-    branches: [test, release]
   workflow_dispatch:
     inputs:
       soak_seconds:
@@ -11,6 +9,10 @@ on:
         default: 0
   workflow_call:
     inputs:
+      ref:
+        description: 'Commit to test'
+        type: string
+        required: false
       soak_seconds:
         type: number
         default: 0
@@ -25,6 +27,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -35,6 +39,9 @@ jobs:
 
       - name: Check upgrade version selection
         run: python scripts/test-previous-release.py
+
+      - name: Check release preparation
+        run: python scripts/test-prepare-release.py
 
       - name: Run tests
         run: dotnet test DMS.Tests/DMS.Tests.csproj --configuration Release -p:Platform=x64 --filter "Category!=PerformanceBaseline"
@@ -64,7 +71,7 @@ jobs:
             -Executable 'DMS/bin/x64/Release/net10.0-windows10.0.22621.0/win-x64/DMS.exe' `
             -Database (Join-Path $env:RUNNER_TEMP 'dms-performance-fixture/generated.db') `
             -OutputPath (Join-Path $env:RUNNER_TEMP 'dms-performance/navigation.json') `
-            -SoakSeconds ${{ inputs.soak_seconds || (github.event_name == 'push' && contains(github.event.head_commit.message, '[perf-soak]') && 900) || 0 }}
+            -SoakSeconds ${{ inputs.soak_seconds || 0 }}
 
       - name: Upload performance results
         if: ${{ always() }}

@@ -1,11 +1,22 @@
 name: Release branch - require test
 
 on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Tested test-branch commit'
+        required: true
+        type: string
+      pr_number:
+        description: 'Release pull request number'
+        required: true
+        type: string
   pull_request_target:
     branches: [release]
     types: [opened, reopened, synchronize, edited]
 
-permissions: {}
+permissions:
+  pull-requests: read
 
 jobs:
   source:
@@ -17,7 +28,19 @@ jobs:
           HEAD_BRANCH: ${{ github.head_ref }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           BASE_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$GITHUB_REF" == refs/heads/test && "$GITHUB_SHA" == "$EXPECTED_SHA" && "$PR_NUMBER" =~ ^[0-9]+$ ]] || exit 1
+            pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
+            [[ "$(jq -r .state <<< "$pr")" == open && "$(jq -r .base.ref <<< "$pr")" == release &&
+               "$(jq -r .head.ref <<< "$pr")" == test && "$(jq -r .head.repo.full_name <<< "$pr")" == "$BASE_REPO" &&
+               "$(jq -r .head.sha <<< "$pr")" == "$EXPECTED_SHA" ]] || exit 1
+            exit 0
+          fi
           if [[ "$HEAD_BRANCH" != test || "$HEAD_REPO" != "$BASE_REPO" ]]; then
             echo 'Release accepts pull requests from this repository’s test branch only.' >&2
             exit 1
