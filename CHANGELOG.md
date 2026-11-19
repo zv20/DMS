@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Download Microsoft runtimes with DMS setup
+
 ## 0.1.4
 
 - Fix Windows build and installer warnings

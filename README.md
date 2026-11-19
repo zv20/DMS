@@ -24,14 +24,15 @@ your computer.
 Requires **Windows 11 x64, build 22621 or newer**.
 
 1. Open the [latest release](https://github.com/zv20/DMS/releases/latest).
-2. Under **Assets**, download `DMS-Setup-<version>.msi` and run it.
+2. Under **Assets**, download `DMS-Setup-<version>.exe` and run it.
 3. Follow the installer, then open **DMS** from the Start menu.
 
-The installer includes the app's runtimes. You can install and use DMS without
-Visual Studio, developer tools or build commands.
+Setup uses Microsoft’s .NET 10 and Windows App Runtime installers. Keep an
+internet connection available during setup. If prompted, allow the .NET
+runtime installer to make changes to the computer.
 
-If you previously installed DMS using the EXE installer, uninstall that version
-before installing the MSI. Your database and backups are stored separately in
+If you previously installed DMS using the old Inno Setup installer, uninstall that version
+before running the new setup. Your database and backups are stored separately in
 `%APPDATA%\DMS`; keep a backup before changing installations. Choose the
 language and restore a backup in DMS Settings after installation.
 
@@ -67,30 +68,28 @@ dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
 
 For a repeatable memory investigation, see [memory diagnostics](scripts/MEMORY-DIAGNOSTICS.md).
 
-Run the app from Visual Studio. To create an MSI installer, run:
+Run the app from Visual Studio. To build the online setup, run:
 
 ```powershell
-dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 --output artifacts/DMS-win-x64
-dotnet publish installer/BackupHelper/BackupHelper.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/backup-helper
+dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64 --self-contained false -p:WindowsAppSDKSelfContained=false -p:PublishReadyToRun=false -p:Platform=x64 --output artifacts/DMS-win-x64
 $version = ([xml](Get-Content DMS/DMS.csproj -Raw)).Project.PropertyGroup[0].Version
 dotnet tool install --global wix --version 5.0.2
 wix extension add --global WixToolset.UI.wixext/5.0.2
 wix extension add --global WixToolset.Util.wixext/5.0.2
+wix extension add --global WixToolset.Bal.wixext/5.0.2
+wix extension add --global WixToolset.Netfx.wixext/5.0.2
 New-Item -ItemType Directory -Force artifacts/installer
 $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
 python scripts/installer-release-notes.py $version artifacts/installer/release-notes.rtf
 $releaseNotes = (Resolve-Path artifacts/installer/release-notes.rtf).Path
-$backupHelper = (Resolve-Path artifacts/backup-helper/BackupHelper.exe).Path
-wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -d "BackupHelper=$backupHelper" -o "artifacts/installer/DMS-Setup-$version.msi"
 ```
 
 The installer is written to `artifacts/installer/`.
 
 After the automatic release workflow is installed on `release`, push or merge
-feature work into `test`. The workflow prepares the next patch version, runs
-Windows tests once, builds and checks the MSI, then merges the tested commit
-through a protected pull request and publishes a matching GitHub release. It
-stops if tests, packaging, the branch check, or the merge fails. A newer push to
+feature work into `test`. The workflow runs Windows tests, prepares the next
+patch version, and merges it through a protected pull request. It then builds
+and checks the online setup before publishing the matching GitHub release. A newer push to
 `test` prevents an older tested commit from being merged.
 
 Add release notes under `## Unreleased` in `CHANGELOG.md`. The workflow turns

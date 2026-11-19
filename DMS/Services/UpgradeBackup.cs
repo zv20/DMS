@@ -1,12 +1,50 @@
+using System.Diagnostics;
+using System.IO;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+
+namespace DMS.Services;
 
 internal static class UpgradeBackup
 {
-    internal static string? Create(string sourcePath, string backupDirectory)
+    internal static int Run()
+    {
+        try
+        {
+            using var current = Process.GetCurrentProcess();
+            foreach (var process in Process.GetProcessesByName(current.ProcessName))
+            {
+                using (process)
+                {
+                    if (process.Id != current.Id)
+                        throw new InvalidOperationException("Close DMS before updating, then try again.");
+                }
+            }
+
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (string.IsNullOrWhiteSpace(appData))
+                throw new InvalidOperationException("Windows could not locate the DMS data folder.");
+            var database = Path.Combine(appData, "DMS", "dms.db");
+            var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var backup = Create(database, string.IsNullOrWhiteSpace(documents) ? null : Path.Combine(documents, "DMS Backups"));
+            if (backup != null)
+                App.LogStore.Write(LogLevel.Information, nameof(UpgradeBackup), $"Created pre-update backup at {backup}");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            App.LogStore.Write(LogLevel.Error, nameof(UpgradeBackup), "Could not create pre-update backup. Setup stopped.", ex);
+            return 1;
+        }
+    }
+
+    internal static string? Create(string sourcePath, string? backupDirectory)
     {
         try { _ = File.GetAttributes(sourcePath); }
         catch (FileNotFoundException) { return null; }
         catch (DirectoryNotFoundException) { return null; }
+        if (backupDirectory == null)
+            throw new IOException("Windows could not locate the Documents folder.");
         Directory.CreateDirectory(backupDirectory);
         var root = Path.GetPathRoot(Path.GetFullPath(backupDirectory))
             ?? throw new IOException("Could not determine the backup drive.");
