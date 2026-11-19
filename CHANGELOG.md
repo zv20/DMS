@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added a collapsible side navigation panel controlled by the title-bar menu button.
+- Reduced the title-bar height to give more space to the planner.
+- Removed unused resources and consolidated shared catalog status handling.
+- Automated patch releases after Windows tests and installer checks pass.
+
 ## 0.1.1
 
 - Improved the installer to identify updates and show release history.
