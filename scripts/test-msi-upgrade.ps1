@@ -78,7 +78,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not create backup test data.' }
 $hash = (Get-FileHash $database).Hash
 $marker = Join-Path $dataDir 'upgrade-marker.txt'
 Set-Content $marker 'existing user data'
-Install-Msi $CurrentMsi
+$currentSetup = [IO.Path]::ChangeExtension($CurrentMsi, 'exe')
+$setupLog = Join-Path $env:RUNNER_TEMP 'dms-upgrade-setup.log'
+$result = Start-Process $currentSetup -ArgumentList @('/quiet', '/norestart', "InstallFolder=`"$installDir`"", '/log', "`"$setupLog`"") -Wait -PassThru
+if ($result.ExitCode -ne 0) { Get-Content $setupLog; throw "Setup upgrade failed: $($result.ExitCode)" }
 $backup = Get-ChildItem -LiteralPath $backupDir -Filter 'DMS-before-update-*.db' | Select-Object -First 1
 if (!$backup) { throw 'Upgrade did not create a backup.' }
 python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; assert c.execute('SELECT hex(value) FROM upgrade_backup_test').fetchone()[0] == '010203'; c.close()" $backup.FullName

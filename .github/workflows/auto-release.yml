@@ -157,10 +157,10 @@ jobs:
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'MSI packages require a three-part numeric version.' }
           "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
 
-      - name: Publish self-contained x64 app
+      - name: Publish x64 app for shared runtimes
         run: >-
           dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64
-          --self-contained true -p:Platform=x64
+          --self-contained false -p:WindowsAppSDKSelfContained=false -p:PublishReadyToRun=false -p:Platform=x64
           --output artifacts/DMS-win-x64
 
       - name: Install WiX Toolset
@@ -171,12 +171,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           wix extension add --global WixToolset.Util.wixext/5.0.2
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Publish upgrade backup helper
-        run: >-
-          dotnet publish installer/BackupHelper/BackupHelper.csproj --configuration Release
-          --runtime win-x64 --self-contained true -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/backup-helper
+          wix extension add --global WixToolset.Bal.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          wix extension add --global WixToolset.Netfx.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build MSI installer
         shell: pwsh
@@ -187,8 +185,7 @@ jobs:
           python scripts/installer-release-notes.py $version artifacts/installer/release-notes.rtf
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $releaseNotes = (Resolve-Path artifacts/installer/release-notes.rtf).Path
-          $backupHelper = (Resolve-Path artifacts/backup-helper/BackupHelper.exe).Path
-          wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -d "BackupHelper=$backupHelper" -o "artifacts/installer/DMS-Setup-$version.msi"
+          wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -o "artifacts/installer/DMS-Setup-$version.msi"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $installer = New-Object -ComObject WindowsInstaller.Installer
           $database = $installer.OpenDatabase((Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path, 0)
@@ -199,19 +196,23 @@ jobs:
             $view.Close()
           }
 
+      - name: Build online setup
+        shell: pwsh
+        run: ./scripts/build-online-setup.ps1 -Msi "artifacts/installer/DMS-Setup-$env:RELEASE_VERSION.msi" -Version $env:RELEASE_VERSION
+
       - name: Install and start packaged DMS with disposable data
         shell: pwsh
         run: |
           . ./scripts/wait-for-app-file.ps1
           $version = $env:RELEASE_VERSION
           $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
-          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
+          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.exe").Path
           $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
           # A leftover Inno uninstall entry must not block MSI installation.
           $legacyKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{62CF39B5-8F17-4242-9DE5-99B3A75219ED}_is1'
           New-Item -Path $legacyKey -Force | Out-Null
           New-ItemProperty -Path $legacyKey -Name UninstallString -Value 'legacy-uninstaller.exe' -Force | Out-Null
-          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$setup`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$setupLog`"") -Wait -PassThru
+          $result = Start-Process -FilePath $setup -ArgumentList @('/quiet', '/norestart', "InstallFolder=`"$installDir`"", '/log', "`"$setupLog`"") -Wait -PassThru
           if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
             if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
@@ -235,7 +236,7 @@ jobs:
           $database = Join-Path $dataDir 'dms.db'
           if (!(Test-Path $database)) { throw 'DMS did not create its database.' }
           $databaseHash = (Get-FileHash $database).Hash
-          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$setup`"", '/qn', '/norestart') -Wait -PassThru
+          $result = Start-Process -FilePath $setup -ArgumentList @('/uninstall', '/quiet', '/norestart') -Wait -PassThru
           if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
           if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
           if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
@@ -249,10 +250,24 @@ jobs:
           $previousVersion = gh release list --repo ${{ github.repository }} --limit 1000 --json tagName,isDraft,isPrerelease | python scripts/previous-release.py $version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Write-Host "Testing upgrade from $previousVersion to $version"
-          $previousMsi = "DMS-Setup-$previousVersion.msi"
-          gh release download "v$previousVersion" --repo ${{ github.repository }} --pattern $previousMsi --dir "$env:RUNNER_TEMP"
+          $previousRelease = "v$previousVersion"
+          $previousSetup = "DMS-Setup-$previousVersion"
+          $assets = gh release view $previousRelease --repo ${{ github.repository }} --json assets --jq '.assets[].name'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ./scripts/test-msi-upgrade.ps1 -PreviousMsi (Join-Path $env:RUNNER_TEMP $previousMsi) -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
+          if ($assets -contains "$previousSetup.exe") {
+            gh release download $previousRelease --repo ${{ github.repository }} --pattern "$previousSetup.exe" --dir "$env:RUNNER_TEMP"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $extracted = Join-Path $env:RUNNER_TEMP 'previous-setup'
+            wix burn extract (Join-Path $env:RUNNER_TEMP "$previousSetup.exe") -o $extracted -oba "$extracted-ba"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $previousMsi = (Get-ChildItem -Path $extracted -Recurse -Filter "$previousSetup.msi").FullName
+            if (!$previousMsi) { throw 'Previous setup does not contain the DMS MSI.' }
+          } else {
+            gh release download $previousRelease --repo ${{ github.repository }} --pattern "$previousSetup.msi" --dir "$env:RUNNER_TEMP"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $previousMsi = Join-Path $env:RUNNER_TEMP "$previousSetup.msi"
+          }
+          ./scripts/test-msi-upgrade.ps1 -PreviousMsi $previousMsi -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
 
       - name: Name tested package artifact
         id: artifact
@@ -263,7 +278,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.artifact.outputs.name }}
-          path: artifacts/installer/*.msi
+          path: artifacts/installer/*.exe
           if-no-files-found: error
 
   release:
@@ -292,7 +307,7 @@ jobs:
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$RELEASE_VERSION" >/dev/null 2>&1; then
             git fetch origin "refs/tags/v$RELEASE_VERSION:refs/tags/v$RELEASE_VERSION"
             test "$(git rev-list -n 1 "v$RELEASE_VERSION")" = "$RELEASE_COMMIT" || { echo 'The existing tag points to a different commit.' >&2; exit 1; }
-            gh release create "v$RELEASE_VERSION" artifacts/installer/*.msi --verify-tag --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+            gh release create "v$RELEASE_VERSION" artifacts/installer/*.exe --verify-tag --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
           else
-            gh release create "v$RELEASE_VERSION" artifacts/installer/*.msi --target "$RELEASE_COMMIT" --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+            gh release create "v$RELEASE_VERSION" artifacts/installer/*.exe --target "$RELEASE_COMMIT" --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
           fi

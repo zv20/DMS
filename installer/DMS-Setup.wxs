@@ -1,0 +1,26 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+     xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+  <Bundle Name="DMS Setup" Manufacturer="DMS" Version="$(var.Version)"
+          UpgradeCode="4A69F762-3FF8-4D86-A443-E48D997539F8">
+    <BootstrapperApplication>
+      <bal:WixInternalUIBootstrapperApplication Theme="standard" />
+    </BootstrapperApplication>
+    <Variable Name="InstallFolder" Type="string" Value="" bal:Overridable="yes" />
+    <netfx:DotNetCoreSearch RuntimeType="core" Platform="x64" MajorVersion="10" Variable="DotNetRuntime" />
+    <Chain>
+      <ExePackage Id="DotNet" DisplayName="Microsoft .NET 10 Runtime (x64)"
+                  SourceFile="$(var.DotNetInstaller)" DownloadUrl="$(var.DotNetUrl)" Compressed="no"
+                  DetectCondition="DotNetRuntime &gt;= v$(var.DotNetVersion)" InstallArguments="/install /quiet /norestart"
+                  PerMachine="yes" Permanent="yes" bal:PrereqPackage="yes" />
+      <!-- Microsoft's installer checks package registration for the current user. -->
+      <ExePackage Id="WindowsAppRuntime" DisplayName="Microsoft Windows App Runtime (x64)"
+                  SourceFile="$(var.WinAppInstaller)" DownloadUrl="$(var.WinAppUrl)" Compressed="no"
+                  DetectCondition="0" InstallArguments="--quiet"
+                  Permanent="yes" bal:PrereqPackage="yes" />
+      <MsiPackage Id="DmsMsi" SourceFile="$(var.DmsMsi)" Compressed="yes" bal:PrimaryPackageType="default">
+        <MsiProperty Name="INSTALLFOLDER" Value="[InstallFolder]" Condition="InstallFolder" />
+      </MsiPackage>
+    </Chain>
+  </Bundle>
+</Wix>

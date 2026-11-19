@@ -26,6 +26,12 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        if (Environment.GetCommandLineArgs() is [_, "--backup-for-upgrade"])
+        {
+            Environment.Exit(UpgradeBackup.Run());
+            return;
+        }
+
         var services = ConfigureServices();
         Services = services;
         Logger = services.GetRequiredService<ILogger<App>>();
