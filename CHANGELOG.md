@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Adjust navigation pane width when opened
+
 ## 0.1.2
 
 - Added a collapsible side navigation panel controlled by the title-bar menu button.
