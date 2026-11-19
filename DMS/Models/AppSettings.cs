@@ -5,6 +5,7 @@ public sealed class AppSettings
     public string Language { get; set; } = "bg";
     public string Theme { get; set; } = "light";
     public string AccentColor { get; set; } = "orange";
+    public int LogRetentionDays { get; set; } = 30;
     public bool WeekendPlanningEnabled { get; set; }
     public int MealsPerDay { get; set; } = 4;
     public List<MealCategory> MealCategories { get; set; } = MealCategory.Defaults();

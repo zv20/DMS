@@ -425,6 +425,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             try
             {
                 await _database.SaveMenuSlotAsync(day, slot, requestedCategory, recipe?.Id);
+                App.Logger.LogInformation("Saved meal planner slot {Date} {Slot}", day, slot);
                 current = recipe;
                 ClearPending();
                 status.Text = L.Get("Text_Saved_499dc6");

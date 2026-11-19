@@ -52,7 +52,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
     {
         try
         {
-            var text = App.LogStore.ReadRecent(filter: _logFilter);
+            var text = App.LogStore.ReadRecent(filter: _logFilter, errorsOnly: LogFileComboBox.SelectedIndex == 1);
             LogViewerText.Text = string.IsNullOrWhiteSpace(text) ? L.Get("LogViewerEmpty") : text;
             LogViewerStatus.Text = App.LogStore.LastWriteFailure == null ? "" : L.Format("LogViewerUnavailable", App.LogStore.LastWriteFailure);
         }
@@ -61,6 +61,11 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             App.Logger.LogError(ex, "Could not read local diagnostic log");
             LogViewerStatus.Text = L.Format("LogViewerUnavailable", ex.Message);
         }
+    }
+
+    private void LogViewerFile_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_logFiltersReady) RefreshLogViewer();
     }
 
     private void LogViewerRefresh_Click(object sender, RoutedEventArgs e) => RefreshLogViewer();
@@ -115,6 +120,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
 
             // Theme (stored in settings)
             var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            LogRetentionComboBox.SelectedItem = LogRetentionComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == settings.LogRetentionDays.ToString()) ?? LogRetentionComboBox.Items[2];
             _selectedTheme = settings.Theme;
             _selectedAccent = settings.AccentColor;
             _selectedWeekend = settings.WeekendPlanningEnabled;
@@ -135,6 +141,31 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         {
             _suppressSettingChanges = false;
         }
+    }
+
+    private async void LogRetention_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressSettingChanges || LogRetentionComboBox.SelectedItem is not ComboBoxItem item ||
+            !int.TryParse(item.Tag?.ToString(), out var days)) return;
+        LogRetentionComboBox.IsEnabled = false;
+        try
+        {
+            var settings = await _databaseService.GetSettingsAsync() ?? new AppSettings();
+            settings.LogRetentionDays = days;
+            await _databaseService.SaveSettingsAsync(settings);
+            App.LogStore.SetRetentionDays(days);
+            App.Logger.LogInformation("Changed diagnostic retention to {Days} days", days);
+            RefreshLogViewer();
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogError(ex, "Could not save log retention setting");
+            LogViewerStatus.Text = L.Get("DataSaveFailed");
+            _suppressSettingChanges = true;
+            try { LogRetentionComboBox.SelectedItem = LogRetentionComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == App.LogStore.RetentionDays.ToString()); }
+            finally { _suppressSettingChanges = false; }
+        }
+        finally { LogRetentionComboBox.IsEnabled = true; }
     }
 
     private async void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -372,6 +403,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
+            App.Logger.LogInformation("Creating database backup");
             await _databaseService.CreateBackupAsync(file.Path);
             saved = true;
             DataStatus.Text = L.Get("Text_Database_backup_created_successfully_2b90d0");
@@ -405,6 +437,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             if (!await CanLeaveAsync()) return;
             if (!await EditorDialogs.ConfirmAsync(XamlRoot, L.Get("Text_Restore_Database_04f0a6"),
                 L.Get("RestoreWarning"), "Text_Restore_3cbe6d")) return;
+            App.Logger.LogInformation("Restoring database backup");
             await App.RestoreAndReloadAsync(file.Path);
             restored = true;
             return;

@@ -107,6 +107,17 @@
                     <StackPanel Margin="16,8,16,16" Spacing="10">
 
                         <TextBlock TextWrapping="Wrap" x:Uid="LogViewerHint" />
+                        <ComboBox x:Name="LogRetentionComboBox" SelectionChanged="LogRetention_SelectionChanged" x:Uid="LogRetention">
+                            <ComboBoxItem Tag="7" x:Uid="LogDays7" />
+                            <ComboBoxItem Tag="14" x:Uid="LogDays14" />
+                            <ComboBoxItem Tag="30" x:Uid="LogDays30" />
+                            <ComboBoxItem Tag="90" x:Uid="LogDays90" />
+                            <ComboBoxItem Tag="180" x:Uid="LogDays180" />
+                        </ComboBox>
+                        <ComboBox x:Name="LogFileComboBox" SelectionChanged="LogViewerFile_Changed" x:Uid="LogFile">
+                            <ComboBoxItem IsSelected="True" x:Uid="LogFileActivity" />
+                            <ComboBoxItem x:Uid="LogFileErrors" />
+                        </ComboBox>
                         <local:WrappingPanel HorizontalAlignment="Stretch">
                             <CheckBox x:Name="LogInformationCheckBox" Margin="0,0,16,0" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterInformation" />
                             <CheckBox x:Name="LogWarningCheckBox" Margin="0,0,16,0" IsChecked="True" Checked="LogViewerFilter_Changed" Unchecked="LogViewerFilter_Changed" x:Uid="LogFilterWarning" />

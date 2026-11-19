@@ -266,6 +266,7 @@ public sealed partial class TemplateOutputPage : Page
             System.Threading.Interlocked.Decrement(ref _activePrintTasks);
             _uiQueue.TryEnqueue(() =>
             {
+                App.Logger.LogInformation("Print task completed with status {Status}", args.Completion);
                 if (args.Completion == PrintTaskCompletion.Failed)
                 {
                     App.Logger.LogWarning("The print task reported a failure");
@@ -354,6 +355,7 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded) return;
             if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
+            App.Logger.LogInformation("Opening print dialog");
             await PrintManagerInterop.ShowPrintUIForWindowAsync(hwnd);
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to open the print dialog"); StatusText.Text = L.Get("ErrorOutput"); }
@@ -374,6 +376,7 @@ public sealed partial class TemplateOutputPage : Page
                 WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
                 var folder = await folderPicker.PickSingleFolderAsync();
                 if (folder == null) return;
+                App.Logger.LogInformation("Exporting menu images");
                 for (var i = 0; i < _previewPages.Count; i++)
                 {
                     var encoded = await RenderPageAsync(_previewPages[i].Page, BitmapEncoder.PngEncoderId);
@@ -381,6 +384,7 @@ public sealed partial class TemplateOutputPage : Page
                     outputStarted = true;
                     await FileIO.WriteBytesAsync(pageFile, encoded);
                 }
+                App.Logger.LogInformation("Exported menu images");
                 StatusText.Text = L.Get("TemplateOutputImagesSaved");
                 return;
             }
@@ -390,10 +394,12 @@ public sealed partial class TemplateOutputPage : Page
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
+            App.Logger.LogInformation("Exporting menu image");
             var encoderId = file.FileType.Equals(".png", StringComparison.OrdinalIgnoreCase) ? BitmapEncoder.PngEncoderId : BitmapEncoder.JpegEncoderId;
             var image = await RenderPageAsync(_previewPages[0].Page, encoderId);
             outputStarted = true;
             await FileIO.WriteBytesAsync(file, image);
+            App.Logger.LogInformation("Exported menu image");
             StatusText.Text = L.Get("TemplateOutputSaved");
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to export the menu as an image"); StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput"); }
@@ -414,9 +420,11 @@ public sealed partial class TemplateOutputPage : Page
             var file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
+            App.Logger.LogInformation("Exporting menu PDF");
             var pdf = await CreatePdfBytesAsync();
             outputStarted = true;
             await FileIO.WriteBytesAsync(file, pdf);
+            App.Logger.LogInformation("Exported menu PDF");
             StatusText.Text = L.Get("TemplateOutputPdfSaved");
         }
         catch (Exception ex)

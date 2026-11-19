@@ -150,6 +150,7 @@ public partial class App : Application
 
     private static void ApplyUserSettings(AppSettings settings)
     {
+        LogStore.SetRetentionDays(settings.LogRetentionDays);
         Localization.Apply(settings.Language);
         AppearanceService.ApplyAccent(settings.AccentColor);
     }

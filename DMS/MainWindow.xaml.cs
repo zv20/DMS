@@ -232,6 +232,7 @@ public sealed partial class MainWindow : Window
                 finally { _navigationPending = false; }
             }
             NavView.SelectedItem = selectedItem;
+            App.Logger.LogInformation("Opening page {Page}", pageType.Name);
             if (!ContentFrame.Navigate(pageType)) throw new InvalidOperationException("The selected page could not be opened.");
             }
             catch (Exception ex)
