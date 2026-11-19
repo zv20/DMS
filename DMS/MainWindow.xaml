@@ -43,6 +43,8 @@
             IsPaneToggleButtonVisible="False"
             IsTitleBarAutoPaddingEnabled="False"
             IsBackButtonVisible="Collapsed"
+            PaneOpening="NavView_PaneOpening"
+            PaneClosed="NavView_PaneClosed"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
 
