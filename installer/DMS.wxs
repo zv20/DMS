@@ -55,7 +55,7 @@
     <CustomAction Id="CreateUpgradeBackup" FileRef="DmsExecutable" ExeCommand="--backup-for-upgrade"
                   Execute="deferred" Impersonate="yes" Return="check" />
     <InstallExecuteSequence>
-      <Custom Action="Wix4CloseApplications_X64" Before="RejectRunningDms" Condition="NOT Installed" />
+      <Custom Action="override Wix4CloseApplications_X64" Before="RejectRunningDms" Condition="NOT Installed" />
       <Custom Action="RejectRunningDms" Before="InstallValidate" Condition="NOT Installed AND DMS_RUNNING" />
       <Custom Action="CreateUpgradeBackup" After="InstallFiles" Condition="NOT Installed" />
     </InstallExecuteSequence>
