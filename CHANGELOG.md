@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Fix Windows build and installer warnings
+- Keep navigation icons visible in compact pane
+- Add separate diagnostics retention and activity logging
+- Simplify test and release workflows
+
 ## 0.1.3
 
 - Adjust navigation pane width when opened
