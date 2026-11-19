@@ -12,8 +12,17 @@ permissions:
   contents: read
 
 jobs:
+  tests:
+    name: Test changes
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      ref: ${{ github.sha }}
+
   prepare:
     name: Prepare patch version
+    needs: tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,7 +30,6 @@ jobs:
       commit: ${{ steps.prepare.outputs.commit }}
       version: ${{ steps.prepare.outputs.version }}
       changed: ${{ steps.prepare.outputs.changed }}
-      bootstrap: ${{ steps.prepare.outputs.bootstrap }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -35,14 +43,6 @@ jobs:
           set -euo pipefail
           git fetch origin release --tags
           test "$(git ls-remote origin refs/heads/test | cut -f1)" = "$SOURCE_SHA" || { echo 'test has advanced; a newer run will handle it.' >&2; exit 1; }
-          if ! git cat-file -e origin/release:.github/workflows/auto-release.yml 2>/dev/null ||
-             ! git show origin/release:.github/workflows/release-pr.yml | grep -q 'workflow_dispatch:'; then
-            echo 'Bootstrap run: tests only. Merge this workflow to release before automatic publishing.'
-            echo "commit=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
-            echo 'bootstrap=true' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           if git diff --quiet origin/release HEAD; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
             exit 0
@@ -67,45 +67,23 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo 'changed=true' >> "$GITHUB_OUTPUT"
 
-  tests:
-    name: Test prepared commit
+  promote:
+    name: Promote tested changes
     needs: prepare
     if: needs.prepare.outputs.changed == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/windows-checks.yml
-    with:
-      ref: ${{ needs.prepare.outputs.commit }}
-
-  package:
-    name: Build and check installer
-    needs: [prepare, tests]
-    if: needs.prepare.outputs.bootstrap != 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/windows-package.yml
-    with:
-      ref: ${{ needs.prepare.outputs.commit }}
-      version: ${{ needs.prepare.outputs.version }}
-
-  release:
-    name: Promote and publish
-    needs: [prepare, tests, package]
     runs-on: ubuntu-latest
     permissions:
       actions: write
       contents: write
       pull-requests: write
+    outputs:
+      commit: ${{ steps.promote.outputs.commit }}
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
-      - uses: actions/download-artifact@v7
-        with:
-          name: ${{ needs.package.outputs.artifact_name }}
-          path: artifacts/installer
-      - name: Promote tested commit through the protected branch
+      - name: Promote versioned commit through the protected branch
         id: promote
         env:
           GH_TOKEN: ${{ github.token }}
@@ -130,7 +108,7 @@ jobs:
           test "$merge_tree" = "$candidate_tree" || { echo 'The release branch has changes not present in the tested commit. Merge release into test and retry.' >&2; exit 1; }
           pr=$(jq -r --arg sha "$CANDIDATE_SHA" '[.[] | select(.state == "OPEN" and .headRefOid == $sha)] | first | .number // empty' <<< "$prs")
           if [[ -z "$pr" ]]; then
-            gh pr create --base release --head test --title "Release DMS $RELEASE_VERSION" --body "Automated release of tested commit $CANDIDATE_SHA."
+            gh pr create --base release --head test --title "Release DMS $RELEASE_VERSION" --body "Automated release of versioned commit $CANDIDATE_SHA."
             pr=$(gh pr list --base release --head test --state open --json number --jq '.[0].number')
           fi
           [[ "$pr" =~ ^[0-9]+$ ]] || exit 1
@@ -150,11 +128,164 @@ jobs:
           git fetch origin release
           test "$(git rev-parse "$merged^{tree}")" = "$candidate_tree" || { echo 'The merged tree differs from the tested commit; publication stopped.' >&2; exit 1; }
           echo "commit=$merged" >> "$GITHUB_OUTPUT"
+  package:
+    name: Build and check release installer
+    needs: [prepare, promote]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.promote.outputs.commit }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve package version
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          $version = "$env:REQUESTED_VERSION".TrimStart('v')
+          if (!$version) {
+            $version = dotnet msbuild DMS/DMS.csproj -getProperty:Version -p:Platform=x64
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'MSI packages require a three-part numeric version.' }
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Publish self-contained x64 app
+        run: >-
+          dotnet publish DMS/DMS.csproj --configuration Release --runtime win-x64
+          --self-contained true -p:Platform=x64
+          --output artifacts/DMS-win-x64
+
+      - name: Install WiX Toolset
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish upgrade backup helper
+        run: >-
+          dotnet publish installer/BackupHelper/BackupHelper.csproj --configuration Release
+          --runtime win-x64 --self-contained true -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/backup-helper
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_VERSION
+          New-Item -ItemType Directory -Force artifacts/installer | Out-Null
+          $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
+          python scripts/installer-release-notes.py $version artifacts/installer/release-notes.rtf
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $releaseNotes = (Resolve-Path artifacts/installer/release-notes.rtf).Path
+          $backupHelper = (Resolve-Path artifacts/backup-helper/BackupHelper.exe).Path
+          wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -d "BackupHelper=$backupHelper" -o "artifacts/installer/DMS-Setup-$version.msi"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installer = New-Object -ComObject WindowsInstaller.Installer
+          $database = $installer.OpenDatabase((Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path, 0)
+          foreach ($dialog in @('WelcomeDlg', 'UpgradeInfoDlg', 'VerifyReadyDlg', 'ExitDialog')) {
+            $view = $database.OpenView("SELECT ``Dialog`` FROM ``Dialog`` WHERE ``Dialog`` = '$dialog'")
+            $view.Execute()
+            if (!$view.Fetch()) { throw "Missing installer dialog: $dialog" }
+            $view.Close()
+          }
+
+      - name: Install and start packaged DMS with disposable data
+        shell: pwsh
+        run: |
+          . ./scripts/wait-for-app-file.ps1
+          $version = $env:RELEASE_VERSION
+          $installDir = Join-Path $env:RUNNER_TEMP 'DMS-installed'
+          $setup = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
+          $setupLog = Join-Path $env:RUNNER_TEMP 'dms-setup.log'
+          # A leftover Inno uninstall entry must not block MSI installation.
+          $legacyKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{62CF39B5-8F17-4242-9DE5-99B3A75219ED}_is1'
+          New-Item -Path $legacyKey -Force | Out-Null
+          New-ItemProperty -Path $legacyKey -Name UninstallString -Value 'legacy-uninstaller.exe' -Force | Out-Null
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$setup`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"", '/l*v', "`"$setupLog`"") -Wait -PassThru
+          if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
+          foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
+            if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
+          }
+          $dataDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'DMS'
+          $env:DMS_QA_READY_FILE = Join-Path $env:RUNNER_TEMP 'dms-ready.txt'
+          Remove-Item $env:DMS_QA_READY_FILE -Force -ErrorAction SilentlyContinue
+          $app = Start-Process -FilePath (Join-Path $installDir 'DMS.exe') -WorkingDirectory $installDir -PassThru
+          try {
+            Wait-DmsAppFile $app $env:DMS_QA_READY_FILE 'Installed DMS main window startup'
+            $localized = Get-Content $env:DMS_QA_READY_FILE -Raw
+            if (!$localized -or $localized.Trim() -eq 'MenuViewSelected') { throw 'Installed DMS did not load its localized resources.' }
+            Write-Host 'Installed DMS reached its main window and loaded localized resources.'
+          } finally {
+            $app.Refresh()
+            if (!$app.HasExited) {
+              Stop-Process -Id $app.Id -Force
+              $app.WaitForExit()
+            }
+          }
+          $database = Join-Path $dataDir 'dms.db'
+          if (!(Test-Path $database)) { throw 'DMS did not create its database.' }
+          $databaseHash = (Get-FileHash $database).Hash
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$setup`"", '/qn', '/norestart') -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
+          if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
+          if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
+
+      - name: Verify upgrade from the previous MSI
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:RELEASE_VERSION
+          $previousVersion = gh release list --repo ${{ github.repository }} --limit 1000 --json tagName,isDraft,isPrerelease | python scripts/previous-release.py $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host "Testing upgrade from $previousVersion to $version"
+          $previousMsi = "DMS-Setup-$previousVersion.msi"
+          gh release download "v$previousVersion" --repo ${{ github.repository }} --pattern $previousMsi --dir "$env:RUNNER_TEMP"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/test-msi-upgrade.ps1 -PreviousMsi (Join-Path $env:RUNNER_TEMP $previousMsi) -CurrentMsi (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
+
+      - name: Name tested package artifact
+        id: artifact
+        shell: pwsh
+        run: '"name=windows-packages-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" >> $env:GITHUB_OUTPUT'
+
+      - name: Upload tested packages
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: artifacts/installer/*.msi
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [prepare, promote, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.promote.outputs.commit }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.package.outputs.artifact_name }}
+          path: artifacts/installer
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
-          RELEASE_COMMIT: ${{ steps.promote.outputs.commit }}
+          RELEASE_COMMIT: ${{ needs.promote.outputs.commit }}
         run: |
           set -euo pipefail
           python3 scripts/extract-release-notes.py "$RELEASE_VERSION" release-notes.md
