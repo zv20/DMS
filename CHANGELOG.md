@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2
 
 - Added a collapsible side navigation panel controlled by the title-bar menu button.
 - Reduced the title-bar height to give more space to the planner.
