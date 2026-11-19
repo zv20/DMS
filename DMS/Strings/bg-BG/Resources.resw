@@ -287,7 +287,7 @@
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Запазете всички данни, включително шаблоните и оригиналните изображения, в един файл. Възстановяването заменя текущите данни.</value></data>
   <data name="MenuViewSelected" xml:space="preserve"><value>Избран изглед</value></data>
   <data name="LogViewerTitle.Text" xml:space="preserve"><value>Диагностика и дневници</value></data>
-  <data name="LogViewerHint.Text" xml:space="preserve"><value>Дневниците остават на това устройство и може да съдържат пътища до файлове или имена на рецепти. Последните записи и подробности за грешки са показани по-долу.</value></data>
+  <data name="LogViewerHint.Text" xml:space="preserve"><value>Дневниците остават на това устройство и може да съдържат пътища до файлове или имена на рецепти. Дейността се пази до 14 дни, а предупрежденията и грешките — за избрания период. При достигане на ограниченията за размер по-старите записи се премахват по-рано.</value></data>
   <data name="LogFilterInformation.Content" xml:space="preserve"><value>Обичайна дейност</value></data>
   <data name="LogFilterWarning.Content" xml:space="preserve"><value>Предупреждения</value></data>
   <data name="LogFilterError.Content" xml:space="preserve"><value>Грешки</value></data>
@@ -355,4 +355,13 @@
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Добавен от избрана съставка</value></data>
   <data name="PlannerClearDay" xml:space="preserve"><value>Изчисти деня</value></data>
   <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Да се изчистят ли всички ястия за {0}?</value></data>
+  <data name="LogRetention.Header" xml:space="preserve"><value>Запазване на предупреждения и грешки</value></data>
+  <data name="LogDays7.Content" xml:space="preserve"><value>7 дни</value></data>
+  <data name="LogDays14.Content" xml:space="preserve"><value>14 дни</value></data>
+  <data name="LogDays30.Content" xml:space="preserve"><value>30 дни</value></data>
+  <data name="LogDays90.Content" xml:space="preserve"><value>90 дни</value></data>
+  <data name="LogDays180.Content" xml:space="preserve"><value>180 дни</value></data>
+  <data name="LogFile.Header" xml:space="preserve"><value>Дневник</value></data>
+  <data name="LogFileActivity.Content" xml:space="preserve"><value>Дейност</value></data>
+  <data name="LogFileErrors.Content" xml:space="preserve"><value>Предупреждения и грешки</value></data>
 </root>

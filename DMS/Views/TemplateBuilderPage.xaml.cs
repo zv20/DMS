@@ -475,6 +475,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 IsPreset = _loadedTemplate.IsPreset && string.Equals(name, _loadedName, StringComparison.Ordinal)
             };
             await _database.SaveTemplateAsync(saved);
+            App.Logger.LogInformation("Saved menu template");
             _loadedTemplate = saved;
             _loadedName = name; _dirty = false; _savedDocumentJson = SerializeDocument();
             RenameTemplateMenuItem.IsEnabled = DeleteButton.IsEnabled = !saved.IsPreset;

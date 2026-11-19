@@ -34,4 +34,24 @@ public sealed class AppearanceSettingsTests
         }
         finally { Directory.Delete(folder, recursive: true); }
     }
+    [Fact]
+    public async Task LogRetentionSettingPersistsAndInvalidValuesFallBack()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "DMS.Settings.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "settings.db");
+        try
+        {
+            using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, path);
+            var settings = (await database.GetSettingsAsync())!;
+            Assert.Equal(30, settings.LogRetentionDays);
+            settings.LogRetentionDays = 180;
+            await database.SaveSettingsAsync(settings);
+            Assert.Equal(180, (await database.GetSettingsAsync())!.LogRetentionDays);
+            settings.LogRetentionDays = 999;
+            await database.SaveSettingsAsync(settings);
+            Assert.Equal(30, (await database.GetSettingsAsync())!.LogRetentionDays);
+        }
+        finally { Directory.Delete(folder, recursive: true); }
+    }
 }

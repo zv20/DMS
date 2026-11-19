@@ -627,6 +627,7 @@ public partial class DatabaseService : IDisposable
                 case "language": settings.Language = value; break;
                 case "theme": settings.Theme = value == "default" ? "light" : value; break;
                 case "accent_color": settings.AccentColor = value; break;
+                case "log_retention_days": settings.LogRetentionDays = int.TryParse(value, out var days) && days is 7 or 14 or 30 or 90 or 180 ? days : 30; break;
                 case "weekend_planning_enabled": settings.WeekendPlanningEnabled = bool.TryParse(value, out var enabled) && enabled; break;
                 case "meals_per_day": settings.MealsPerDay = ParseMealsPerDay(value); break;
                 case "meal_categories":
@@ -695,6 +696,7 @@ public partial class DatabaseService : IDisposable
             ("language", settings.Language),
             ("theme", settings.Theme),
             ("accent_color", settings.AccentColor),
+            ("log_retention_days", settings.LogRetentionDays.ToString()),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("meals_per_day", Math.Clamp(settings.MealsPerDay, 1, 100).ToString()),
             ("meal_categories", mealCategories),

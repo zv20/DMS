@@ -287,7 +287,7 @@
   <data name="FullBackupHint.Text" xml:space="preserve"><value>Back up all saved data, including templates and original images, in one file. Restoring replaces current data.</value></data>
   <data name="MenuViewSelected" xml:space="preserve"><value>Selected view</value></data>
   <data name="LogViewerTitle.Text" xml:space="preserve"><value>Diagnostics and logs</value></data>
-  <data name="LogViewerHint.Text" xml:space="preserve"><value>Logs stay on this device and may include file paths or recipe names. Recent entries and error details appear below.</value></data>
+  <data name="LogViewerHint.Text" xml:space="preserve"><value>Logs stay on this device and may include file paths or recipe names. Activity is kept for up to 14 days; warnings and errors use the selected period. Size limits can remove older entries sooner.</value></data>
   <data name="LogFilterInformation.Content" xml:space="preserve"><value>Regular activity</value></data>
   <data name="LogFilterWarning.Content" xml:space="preserve"><value>Warnings</value></data>
   <data name="LogFilterError.Content" xml:space="preserve"><value>Errors</value></data>
@@ -355,4 +355,13 @@
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Included by a selected ingredient</value></data>
   <data name="PlannerClearDay" xml:space="preserve"><value>Clear day</value></data>
   <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Clear all meals for {0}?</value></data>
+  <data name="LogRetention.Header" xml:space="preserve"><value>Keep warnings and errors</value></data>
+  <data name="LogDays7.Content" xml:space="preserve"><value>7 days</value></data>
+  <data name="LogDays14.Content" xml:space="preserve"><value>14 days</value></data>
+  <data name="LogDays30.Content" xml:space="preserve"><value>30 days</value></data>
+  <data name="LogDays90.Content" xml:space="preserve"><value>90 days</value></data>
+  <data name="LogDays180.Content" xml:space="preserve"><value>180 days</value></data>
+  <data name="LogFile.Header" xml:space="preserve"><value>Log</value></data>
+  <data name="LogFileActivity.Content" xml:space="preserve"><value>Activity timeline</value></data>
+  <data name="LogFileErrors.Content" xml:space="preserve"><value>Warnings and errors</value></data>
 </root>

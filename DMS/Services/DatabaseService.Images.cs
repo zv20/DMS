@@ -163,7 +163,7 @@ public partial class DatabaseService
             insert.Parameters.AddWithValue("@data", JsonSerializer.Serialize(template));
             insert.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
             insert.ExecuteNonQuery();
-            ReplaceTemplateImageReferences(template.Name, [image.Id], transaction);
+            ReplaceTemplateImageReferences(template.Name, (string[])[image.Id], transaction);
         }
         transaction.Commit();
     }

@@ -92,5 +92,53 @@ public sealed class LocalLogStoreTests : IDisposable
         Assert.Empty(store.ReadRecent());
     }
 
+    [Fact]
+    public void WarningsAndErrorsAreAlsoKeptInSeparateLog()
+    {
+        var store = new LocalLogStore(_folder);
+        store.Write(LogLevel.Information, "Test", "opened settings");
+        store.Write(LogLevel.Error, "Test", "save failed");
+        Assert.Contains("opened settings", store.ReadRecent());
+        Assert.Contains("save failed", store.ReadRecent());
+        var errors = store.ReadRecent(errorsOnly: true);
+        Assert.Contains("save failed", errors);
+        Assert.DoesNotContain("opened settings", errors);
+        store.Clear();
+        Assert.False(File.Exists(store.ErrorFilePath));
+    }
+
+    [Fact]
+    public void RetentionPreservesRecentContextAndKeepsErrorsLonger()
+    {
+        var store = new LocalLogStore(_folder);
+        Directory.CreateDirectory(_folder);
+        var old = DateTimeOffset.Now.AddDays(-20).ToString("yyyy-MM-dd HH:mm:ss zzz");
+        var expired = DateTimeOffset.Now.AddDays(-40).ToString("yyyy-MM-dd HH:mm:ss zzz");
+        var recent = DateTimeOffset.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm:ss zzz");
+        var entries = $"[{expired}] Error Test: expired\nexception detail\n[{old}] Error Test: old\nold detail\n[{recent}] Information Test: recent\n";
+        File.WriteAllText(store.FilePath, entries);
+        File.WriteAllText(store.ErrorFilePath, entries);
+        store.SetRetentionDays(30);
+        Assert.DoesNotContain("old detail", store.ReadRecent());
+        Assert.Contains("recent", store.ReadRecent());
+        var errors = store.ReadRecent(errorsOnly: true);
+        Assert.DoesNotContain("expired", errors);
+        Assert.Contains("old detail", errors);
+        store.SetRetentionDays(7);
+        Assert.DoesNotContain("old detail", store.ReadRecent(errorsOnly: true));
+    }
+
+    [Fact]
+    public void ExistingWarningsAreCopiedBeforeActivityRetentionIsApplied()
+    {
+        var store = new LocalLogStore(_folder);
+        Directory.CreateDirectory(_folder);
+        var old = DateTimeOffset.Now.AddDays(-20).ToString("yyyy-MM-dd HH:mm:ss zzz");
+        File.WriteAllText(store.FilePath, $"[{old}] Error Test: legacy error\nlegacy details\n");
+        store.SetRetentionDays(30);
+        Assert.DoesNotContain("legacy error", store.ReadRecent());
+        Assert.Contains("legacy details", store.ReadRecent(errorsOnly: true));
+    }
+
     public void Dispose() { if (Directory.Exists(_folder)) Directory.Delete(_folder, true); }
 }

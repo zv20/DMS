@@ -18,7 +18,7 @@ public sealed class TemplateWeekendTests
             new MenuEntry { Date = monday.AddDays(5), RecipeId = 3 },
             new MenuEntry { Date = monday.AddDays(6), RecipeId = 99 }
         };
-        var visible = TemplatePageLayout.VisibleDayIndexes(monday, entries, [new Recipe { Id = 3 }], true, includeWeekend);
+        var visible = TemplatePageLayout.VisibleDayIndexes(monday, entries, (Recipe[])[new Recipe { Id = 3 }], true, includeWeekend);
         Assert.Equal(includeWeekend ? new[] { 0, 5 } : new[] { 0 }, visible);
     }
 

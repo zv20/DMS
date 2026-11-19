@@ -33,7 +33,7 @@ public static class TemplatePagination
             var groupEntries = group.OrderBy(entry => entry.Date).ToArray();
             if (Add(groupEntries)) continue;
             foreach (var entry in groupEntries)
-                if (!Add([entry])) return null;
+                if (!Add((MenuEntry[])[entry])) return null;
         }
         if (current.Count > 0) pages.Add(current);
         return pages;
