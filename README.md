@@ -84,19 +84,30 @@ $backupHelper = (Resolve-Path artifacts/backup-helper/BackupHelper.exe).Path
 wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -d "BackupHelper=$backupHelper" -o "artifacts/installer/DMS-Setup-$version.msi"
 ```
 
-The installer is written to `artifacts/installer/`. For releases, update
-`<Version>` in `DMS/DMS.csproj` and `CHANGELOG.md`, then push a matching
-`v<version>` tag on a commit from the `release` branch. Feature branches are
-tested locally, then merged into `test` for Windows CI. Promote changes from
-`test` to `release` by pull request. The release branch runs Windows tests again
-for the merged commit. The [release workflow](.github/workflows/winui3-release.yml)
-requires those tests to pass before building and checking the MSI.
+The installer is written to `artifacts/installer/`.
 
-The [package check](.github/workflows/package-check.yml) runs the same
-push-test gate and package/install checks without publishing a release. It can be run
-manually on `release` in GitHub Actions and also runs when its packaging
-workflows change on `release`. Its MSI is a test
-artifact, not a versioned release.
+After the automatic release workflow is installed on `release`, push or merge
+feature work into `test`. The workflow prepares the next patch version, runs
+Windows tests once, builds and checks the MSI, then merges the tested commit
+through a protected pull request and publishes a matching GitHub release. It
+stops if tests, packaging, the branch check, or the merge fails. A newer push to
+`test` prevents an older tested commit from being merged.
+
+Add release notes under `## Unreleased` in `CHANGELOG.md`. The workflow turns
+that section into the versioned release notes. If there is no such section, it
+uses commit subjects since the release branch's common ancestor. To change the
+major or minor version, edit `<Version>` in `DMS/DMS.csproj` before pushing to
+`test`; for example, `0.2.0` is released as `0.2.0`, and later releases advance
+the patch number. The workflow does not automatically change the major or minor
+version. A test run that fails leaves its prepared version on `test` for retry.
+
+One-time setup: enable **Allow GitHub Actions to create and approve pull
+requests** in repository Actions settings. Push the workflow changes to `test`,
+wait for its bootstrap test run, and merge its pull request into `release`.
+The bootstrap run tests only; automatic publishing starts with the next push to
+`test`. This retains the release branch's required source check. If a release
+fails after its pull request was merged, rerun the failed publish job; do not
+manually recreate a tag without checking its commit first.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
 placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in

@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Input;
 using Windows.Graphics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,8 +15,6 @@ public sealed partial class MainWindow : Window
 {
     private readonly bool _openSettings;
     private bool _navigationPending;
-    private readonly Dictionary<NavigationViewItem, string> _navigationLabels = new();
-    private bool? _compactNavigation;
     private readonly WindowSizeLimits _sizeLimits;
     private RectInt32? _normalPlacement;
     private bool _placementLoaded, _closing, _allowClose;
@@ -28,12 +27,12 @@ public sealed partial class MainWindow : Window
         foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
         {
             var label = item.Content?.ToString() ?? "";
-            _navigationLabels.Add(item, label);
             ToolTipService.SetToolTip(item, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
-            item.SizeChanged += (_, _) => UpdateNavigationSpacing();
         }
-        NavView.SizeChanged += (_, _) => UpdateNavigationLayout();
+        ToolTipService.SetToolTip(MenuToggleButton, Localization.Get("OpenNavigationMenu"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(MenuToggleButton, Localization.Get("OpenNavigationMenu"));
+        MenuToggleButton.SizeChanged += (_, _) => UpdateTitleBarRegions();
         WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = Localization.Get("Text_Settings_c7f73b");
@@ -47,32 +46,28 @@ public sealed partial class MainWindow : Window
         AppWindow.Closing += MainWindow_Closing;
     }
 
-    private void UpdateNavigationLayout()
+    private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
     {
-        var compact = NavView.ActualWidth < 1000;
-        if (_compactNavigation != compact)
-        {
-            _compactNavigation = compact;
-            foreach (var (item, label) in _navigationLabels)
-                item.Content = compact ? null : label;
-        }
-        UpdateNavigationSpacing();
+        if (NavView.IsEnabled) NavView.IsPaneOpen = !NavView.IsPaneOpen;
     }
 
-    private void UpdateNavigationSpacing()
+    private void UpdateTitleBarRegions()
     {
-        var menuWidth = _navigationLabels.Keys.Sum(item => item.ActualWidth);
-        if (menuWidth <= 0 || NavView.ActualWidth <= 0) return;
-        // Leave room for Settings and the overflow button when the window is narrow.
-        var available = Math.Max(0, NavView.ActualWidth - menuWidth - 120);
-        var padding = Math.Min(available, Math.Max(0, (NavView.ActualWidth - menuWidth) / 2 - 4));
-        if (Math.Abs(NavigationSpacer.Width - padding) > 1) NavigationSpacer.Width = padding;
+        if (AppTitleBar.XamlRoot == null || MenuToggleButton.ActualWidth <= 0 || MenuToggleButton.ActualHeight <= 0) return;
+        var scale = AppTitleBar.XamlRoot.RasterizationScale;
+        var bounds = MenuToggleButton.TransformToVisual(null).TransformBounds(
+            new Windows.Foundation.Rect(0, 0, MenuToggleButton.ActualWidth, MenuToggleButton.ActualHeight));
+        var area = new RectInt32((int)Math.Round(bounds.X * scale), (int)Math.Round(bounds.Y * scale),
+            (int)Math.Round(bounds.Width * scale), (int)Math.Round(bounds.Height * scale));
+        InputNonClientPointerSource.GetForWindowId(AppWindow.Id).SetRegionRects(NonClientRegionKind.Passthrough, [area]);
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
+            RootGrid.XamlRoot.Changed += (_, _) => UpdateTitleBarRegions();
+            UpdateTitleBarRegions();
             var settings = await App.Services.GetRequiredService<DatabaseService>().GetSettingsAsync();
             if (settings != null) WindowPlacement.RestoreOrCenter(AppWindow, settings);
             _placementLoaded = true;
@@ -285,6 +280,7 @@ public sealed partial class MainWindow : Window
     {
         if (OutputOverlay.Visibility == Visibility.Visible) return;
         NavView.IsEnabled = false;
+        MenuToggleButton.IsEnabled = false;
         OutputOverlay.Visibility = Visibility.Visible;
         try
         {
@@ -301,6 +297,7 @@ public sealed partial class MainWindow : Window
             OutputFrame.Content = null;
             OutputOverlay.Visibility = Visibility.Collapsed;
             NavView.IsEnabled = true;
+            MenuToggleButton.IsEnabled = true;
             throw;
         }
     }
@@ -326,6 +323,7 @@ public sealed partial class MainWindow : Window
         OutputFrame.Content = null;
         OutputOverlay.Visibility = Visibility.Collapsed;
         NavView.IsEnabled = true;
+        MenuToggleButton.IsEnabled = true;
         if (ContentFrame.Content is MenuPage menu) menu.FocusOutputButton();
     }
 

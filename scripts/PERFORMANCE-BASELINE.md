@@ -7,8 +7,9 @@ after changes, using the same dataset, build configuration and actions.
 
 ## Automatic Windows checks on GitHub
 
-The **Tests - push and PR** workflow runs on branch pushes, pull requests, and manual
-dispatch. It compiles the test project and its app dependency in Release x64,
+The **Test and release** workflow runs these checks on the prepared commit after
+a push to `test`. The **Windows tests** workflow can also be started manually.
+It compiles the test project and its app dependency in Release x64,
 runs the regular tests, runs the generated database benchmark, and measures
 process launch to both the initial navigation signal and a later rendering
 callback after the planner's data has loaded, three times. Neither signal proves
@@ -27,7 +28,7 @@ It uses an opt-in test command to trigger the normal navigation code, not a
 physical mouse click; command and response polling add overhead.
 The callback does not guarantee that all pixels have appeared or that the page
 is fully interactive. The release workflow calls the functional and database
-checks before packaging; it skips both experimental UI measurements.
+checks before packaging.
 Open the workflow run in GitHub Actions and download its
 `performance-*` artifact to see `database.json`, `catalog.json`, `startup.json`
 and `navigation.json`. The workflow must be
@@ -35,12 +36,10 @@ present in the pushed branch (and Actions enabled for the repository) to run.
 
 The separate **Performance soak - weekly and manual** workflow runs the same image-heavy
 cycle for at least 15 minutes and records elapsed time and memory at each step.
-It is scheduled weekly and can be started manually. GitHub only enables scheduled
-workflows from the default branch, and manual dispatch requires the workflow to
-exist on the default branch, so the schedule is not active while this exists
-only on the performance branch. Use its samples for trend analysis rather than
-declaring a leak from a single run. A branch push whose commit message contains
-`[perf-soak]` also requests the 15-minute run. For actual mouse, file-picker and printer
+It is scheduled weekly and can be started manually. GitHub runs scheduled
+workflows from the default branch when Actions and the workflow are enabled.
+Use its samples for trend analysis rather than
+declaring a leak from a single run. For actual mouse, file-picker and printer
 checks, follow [Windows interaction check](WINDOWS-INTERACTION-CHECK.md).
 
 Hosted runner hardware and load can vary; use these numbers to identify changes

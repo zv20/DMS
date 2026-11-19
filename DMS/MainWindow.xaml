@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
 
         <!-- Title Bar / Header -->
-        <Border x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Height="48">
+        <Border x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Height="32">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -23,11 +23,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Logo + App Name -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <Image Source="Assets/logo.png" Width="32" Height="32" Margin="0,0,8,0" />
-                    <TextBlock Text="DMS" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
+                <!-- Menu button -->
+                <Button x:Name="MenuToggleButton" Grid.Column="0" Width="48" Height="32" Padding="0"
+                        Background="Transparent" BorderThickness="0" Click="MenuToggleButton_Click">
+                    <FontIcon Glyph="&#xE700;" FontSize="16" />
+                </Button>
 
             </Grid>
         </Border>
@@ -36,14 +36,15 @@
         <Grid Grid.Row="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <NavigationView
             x:Name="NavView"
-            PaneDisplayMode="Top"
+            PaneDisplayMode="Left"
+            IsPaneOpen="False"
+            CompactPaneLength="0"
+            OpenPaneLength="280"
+            IsPaneToggleButtonVisible="False"
+            IsTitleBarAutoPaddingEnabled="False"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked"
             Background="Transparent">
-
-            <NavigationView.PaneHeader>
-                <Border x:Name="NavigationSpacer" Width="0" Height="1" IsHitTestVisible="False" />
-            </NavigationView.PaneHeader>
 
             <NavigationView.Resources>
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
@@ -53,12 +54,6 @@
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
-                <StaticResource x:Key="TopNavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelected" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPointerOver" Color="White" />
-                <SolidColorBrush x:Key="TopNavigationViewItemForegroundSelectedPressed" Color="White" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>
