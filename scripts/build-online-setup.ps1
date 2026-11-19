@@ -25,13 +25,20 @@ try {
         }
     }
 
+    $bundleDir = Join-Path $downloadDir "bundle"
+    New-Item -ItemType Directory $bundleDir | Out-Null
+    $bundlePath = Join-Path $bundleDir (Split-Path -Leaf $setupPath)
+
     # Burn hashes the runtime installers at build time and checks the downloads at setup time.
     $bal = Join-Path $env:USERPROFILE '.wix/extensions/WixToolset.Bal.wixext/5.0.2/wixext5/WixToolset.BootstrapperApplications.wixext.dll'
     wix build "$PSScriptRoot/../installer/DMS-Setup.wxs" -ext $bal -ext WixToolset.Netfx.wixext -arch x64 `
         -d "Version=$Version" -d "DmsMsi=$msiPath" -d "DotNetVersion=$dotnetVersion" `
         -d "DotNetInstaller=$dotnetInstaller" -d "DotNetUrl=$dotnetUrl" `
-        -d "WinAppInstaller=$winAppInstaller" -d "WinAppUrl=$winAppUrl" -o $setupPath
+        -d "WinAppInstaller=$winAppInstaller" -d "WinAppUrl=$winAppUrl" -o $bundlePath
     if ($LASTEXITCODE -ne 0) { throw "WiX bundle build failed with exit code $LASTEXITCODE." }
+    # WiX copies remote payloads beside its output. Keep only the bundle so the
+    # smoke test must obtain any missing runtimes using the download URLs.
+    Copy-Item -LiteralPath $bundlePath -Destination $setupPath -Force
     Write-Host "Online setup: $setupPath ($((Get-Item $setupPath).Length) bytes)"
 }
 finally {

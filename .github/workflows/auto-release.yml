@@ -278,7 +278,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.artifact.outputs.name }}
-          path: artifacts/installer/*.exe
+          path: artifacts/installer/DMS-Setup-*.exe
           if-no-files-found: error
 
   release:
@@ -307,7 +307,7 @@ jobs:
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$RELEASE_VERSION" >/dev/null 2>&1; then
             git fetch origin "refs/tags/v$RELEASE_VERSION:refs/tags/v$RELEASE_VERSION"
             test "$(git rev-list -n 1 "v$RELEASE_VERSION")" = "$RELEASE_COMMIT" || { echo 'The existing tag points to a different commit.' >&2; exit 1; }
-            gh release create "v$RELEASE_VERSION" artifacts/installer/*.exe --verify-tag --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+            gh release create "v$RELEASE_VERSION" artifacts/installer/DMS-Setup-*.exe --verify-tag --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
           else
-            gh release create "v$RELEASE_VERSION" artifacts/installer/*.exe --target "$RELEASE_COMMIT" --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
+            gh release create "v$RELEASE_VERSION" artifacts/installer/DMS-Setup-*.exe --target "$RELEASE_COMMIT" --title "DMS v$RELEASE_VERSION" --notes-file release-notes.md
           fi
