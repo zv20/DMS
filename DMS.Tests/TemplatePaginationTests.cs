@@ -21,7 +21,7 @@ public sealed class TemplatePaginationTests
     [Fact]
     public void RejectsAnIndividualEntryThatCannotFit()
     {
-        Assert.Null(TemplatePagination.Split([new MenuEntry { Slot = "slot1" }], _ => false));
+        Assert.Null(TemplatePagination.Split((MenuEntry[])[new MenuEntry { Slot = "slot1" }], _ => false));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public sealed class TemplatePaginationTests
     [Fact]
     public void ImagePdfContainsEachPageAndValidCrossReferenceOffsets()
     {
-        var bytes = ImagePdf.Create([new byte[] { 1, 2 }, new byte[] { 3, 4 }], 1588, 2246);
+        var bytes = ImagePdf.Create((byte[][])[new byte[] { 1, 2 }, new byte[] { 3, 4 }], 1588, 2246);
         var text = System.Text.Encoding.ASCII.GetString(bytes);
         Assert.Contains("/Count 2", text);
         Assert.Contains("/Kids [3 0 R 6 0 R]", text);

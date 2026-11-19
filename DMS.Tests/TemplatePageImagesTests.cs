@@ -12,7 +12,7 @@ public sealed class TemplatePageImagesTests
     {
         var left = new TemplateImage { X = 0, Y = 0, Width = 160, Height = 150 };
         var right = new TemplateImage { X = 650, Y = 900, Width = 140, Height = 160 };
-        var insets = TemplatePageImages.GetInsets([left, right]);
+        var insets = TemplatePageImages.GetInsets((TemplateImage[])[left, right]);
         Assert.Equal(128, insets.Left);
         Assert.Equal(112, insets.Right);
         Assert.False(insets.Overflowed);
@@ -22,9 +22,9 @@ public sealed class TemplatePageImagesTests
     [Fact]
     public void InvalidOrTooWideGeometryWarnsInsteadOfSilentlyOverlapping()
     {
-        Assert.True(TemplatePageImages.GetInsets([new TemplateImage { X = -1 }]).Overflowed);
-        Assert.True(TemplatePageImages.GetInsets([new TemplateImage { X = 0, Width = 600 }]).Overflowed);
-        Assert.False(TemplatePageImages.GetInsets([new TemplateImage { X = 0, Width = 600, ReserveTextSpace = false }]).Overflowed);
+        Assert.True(TemplatePageImages.GetInsets((TemplateImage[])[new TemplateImage { X = -1 }]).Overflowed);
+        Assert.True(TemplatePageImages.GetInsets((TemplateImage[])[new TemplateImage { X = 0, Width = 600 }]).Overflowed);
+        Assert.False(TemplatePageImages.GetInsets((TemplateImage[])[new TemplateImage { X = 0, Width = 600, ReserveTextSpace = false }]).Overflowed);
     }
 
     [Fact]

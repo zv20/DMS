@@ -67,8 +67,8 @@ public sealed class TemplatePageLayoutTests
     {
         var monday = new DateTime(2026, 10, 26);
         var visible = TemplatePageLayout.VisibleDayIndexes(monday,
-            [new MenuEntry { Date = monday, RecipeId = 1 }, new MenuEntry { Date = monday.AddDays(2), RecipeId = 1 }],
-            [new Recipe { Id = 1 }], true);
+            (MenuEntry[])[new MenuEntry { Date = monday, RecipeId = 1 }, new MenuEntry { Date = monday.AddDays(2), RecipeId = 1 }],
+            (Recipe[])[new Recipe { Id = 1 }], true);
         double?[] saved = [110, 300, 190, null, null];
         var result = TemplatePageLayout.Resolve([100, 150], visible.Select(index => saved[index]).ToArray(), 800);
         Assert.Equal(new[] { 110d, 190d }, result.DayHeights);
