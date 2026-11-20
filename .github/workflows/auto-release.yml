@@ -214,6 +214,11 @@ jobs:
           New-ItemProperty -Path $legacyKey -Name UninstallString -Value 'legacy-uninstaller.exe' -Force | Out-Null
           $result = Start-Process -FilePath $setup -ArgumentList @('/quiet', '/norestart', "InstallFolder=`"$installDir`"", '/log', "`"$setupLog`"") -Wait -PassThru
           if ($result.ExitCode -ne 0) { if (Test-Path $setupLog) { Get-Content $setupLog }; throw "Installer exited with $($result.ExitCode)" }
+          $installedDotNetPlans = @(Select-String -LiteralPath $setupLog -Pattern 'Planned package: DotNet, state: Present,.*execute: None,')
+          if (!$installedDotNetPlans -or ($installedDotNetPlans.Line -notmatch ', cache: No,')) {
+            Get-Content $setupLog
+            throw 'Setup must skip caching the .NET installer when .NET is already installed.'
+          }
           foreach ($path in @('DMS.exe', 'DMS.pri', 'Assets/logo.png')) {
             if (!(Test-Path (Join-Path $installDir $path))) { throw "Missing installed file: $path" }
           }

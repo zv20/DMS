@@ -9,8 +9,9 @@
     <Variable Name="InstallFolder" Type="string" Value="" bal:Overridable="yes" />
     <netfx:DotNetCoreSearch RuntimeType="core" Platform="x64" MajorVersion="10" Variable="DotNetRuntime" />
     <Chain>
+      <!-- Avoid touching the machine cache when the .NET runtime is already installed. -->
       <ExePackage Id="DotNet" DisplayName="Microsoft .NET 10 Runtime (x64)"
-                  SourceFile="$(var.DotNetInstaller)" DownloadUrl="$(var.DotNetUrl)" Compressed="no"
+                  SourceFile="$(var.DotNetInstaller)" DownloadUrl="$(var.DotNetUrl)" Compressed="no" Cache="remove"
                   DetectCondition="DotNetRuntime &gt;= v$(var.DotNetVersion)" InstallArguments="/install /quiet /norestart"
                   PerMachine="yes" Permanent="yes" bal:PrereqPackage="yes" />
       <!-- Microsoft's installer checks package registration for the current user. -->
