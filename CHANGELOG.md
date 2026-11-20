@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- Skip caching an installed .NET runtime
+- Keep downloaded prerequisites out of release assets
+
 ## 0.1.5
 
 - Download Microsoft runtimes with DMS setup
