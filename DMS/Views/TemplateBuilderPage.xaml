@@ -25,16 +25,16 @@
      </MenuFlyout></DropDownButton.Flyout>
     </DropDownButton>
     <CalendarDatePicker x:Name="WeekPicker" VerticalAlignment="Bottom" DateChanged="WeekPicker_DateChanged" />
-   <Button x:Name="UndoButton" Content="↶" MinWidth="32" />
-   <Button x:Name="RedoButton" Content="↷" MinWidth="32" />
-   <StackPanel x:Name="PreviewPageNavigation" Orientation="Horizontal" Spacing="4" Visibility="Collapsed">
+   <Button x:Name="UndoButton" VerticalAlignment="Bottom" Content="↶" MinWidth="32" />
+   <Button x:Name="RedoButton" VerticalAlignment="Bottom" Content="↷" MinWidth="32" />
+   <StackPanel x:Name="PreviewPageNavigation" VerticalAlignment="Bottom" Orientation="Horizontal" Spacing="4" Visibility="Collapsed">
     <Button x:Name="PreviousPreviewPageButton" Content="‹" Click="PreviousPreviewPage_Click" />
     <TextBlock x:Name="PreviewPageNumber" VerticalAlignment="Center" />
     <Button x:Name="NextPreviewPageButton" Content="›" Click="NextPreviewPage_Click" />
    </StackPanel>
     </StackPanel>
    </ScrollViewer>
-   <DropDownButton x:Name="CanvasSettingsButton" Grid.Column="1" VerticalAlignment="Center">
+   <DropDownButton x:Name="CanvasSettingsButton" Grid.Column="1" VerticalAlignment="Bottom">
     <DropDownButton.Flyout>
      <Flyout Placement="BottomEdgeAlignedRight">
       <ScrollViewer Width="280" MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
