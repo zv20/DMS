@@ -132,7 +132,7 @@
                         <TextBlock Text="DMS" FontWeight="SemiBold" />
                         <TextBlock x:Name="AppVersionText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
-                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
                     <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0"  x:Uid="Text_Built_for_meal_planning_and_recipe_management_49409f" />
                 </StackPanel>
             </Expander>

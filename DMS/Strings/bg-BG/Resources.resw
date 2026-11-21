@@ -65,7 +65,6 @@
   <data name="Text_Allergen_name_e_g_Gluten_Dairy_Nuts_723715" xml:space="preserve"><value>Име на алергена (напр. глутен, мляко, ядки)</value></data>
   <data name="Text_Allergen_name_is_required_94160b" xml:space="preserve"><value>Въведете име на алергена</value></data>
   <data name="Text_Allergens_537261" xml:space="preserve"><value>Алергени</value></data>
-  <data name="Text_Appearance_be0e75.Text" xml:space="preserve"><value>🎨 Външен вид</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_allergen_d1608f" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете този алерген?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази съставка?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази рецепта?</value></data>
@@ -113,7 +112,6 @@
   <data name="LanguageReloadMessage" xml:space="preserve"><value>Прозорецът на приложението ще се презареди, за да се приложи избраният език. Желаете ли да продължите?</value></data>
   <data name="LanguageReloadConfirm" xml:space="preserve"><value>Презареди</value></data>
   <data name="Text_Language_89b86a.Header" xml:space="preserve"><value>Език</value></data>
-  <data name="Text_Language_Region_5d78df.Text" xml:space="preserve"><value>🌐 Език и регион</value></data>
   <data name="Text_Light_200060.Content" xml:space="preserve"><value>☀️ Светла</value></data>
   <data name="Text_Main_62bce9" xml:space="preserve"><value>Основно</value></data>
   <data name="Text_Monthly_d31edb.Content" xml:space="preserve"><value>Месечно</value></data>
@@ -371,4 +369,5 @@
   <data name="TplBlockDate" xml:space="preserve"><value>Период</value></data>
   <data name="TplBlockDay" xml:space="preserve"><value>Ден</value></data>
   <data name="SettingsLanguageAppearance.Text" xml:space="preserve"><value>Език и външен вид</value></data>
+  <data name="RestoreInvalidBackup" xml:space="preserve"><value>Архивът съдържа неподдържани или нечетими данни. Вижте дневника за грешки за подробности.</value></data>
 </root>

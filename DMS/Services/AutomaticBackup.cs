@@ -34,9 +34,20 @@ internal static class AutomaticBackup
                 .OrderByDescending(Path.GetFileName, StringComparer.Ordinal).Skip(RetainedCount))
                 File.Delete(old);
         }
-        finally
+        catch
         {
-            if (File.Exists(temporary)) File.Delete(temporary);
+            DeleteFailedBackup(temporary);
+            throw;
+        }
+    }
+
+    internal static void DeleteFailedBackup(string temporary)
+    {
+        try { File.Delete(temporary); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            App.LogStore.Write(Microsoft.Extensions.Logging.LogLevel.Warning, nameof(AutomaticBackup),
+                $"Could not delete incomplete backup at {temporary}", error);
         }
     }
 

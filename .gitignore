@@ -1,6 +1,5 @@
 # Mac system files
 .DS_Store
-**/.DS_Store
 
 # Local Node dependencies
 node_modules/
@@ -35,11 +34,7 @@ obj/
 *.userosscache
 *.sln.docstates
 
-# Rider
-.idea/
-
-# VS Code
-.vscode/
+# VS Code workspaces
 *.code-workspace
 
 # NuGet

@@ -6,6 +6,12 @@ namespace DMS.Views;
 
 internal static class CatalogPageState
 {
+    public static bool HasDuplicateName(string candidate, IEnumerable<string> otherNames)
+    {
+        var trimmed = candidate.Trim();
+        return trimmed.Length > 0 && otherNames.Any(name => string.Equals(name.Trim(), trimmed, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static void SetStatus(TextBlock status, string? key)
     {
         status.Text = key == null ? "" : Localization.Get(key);

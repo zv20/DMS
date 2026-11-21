@@ -269,7 +269,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(nameBox);
         var duplicateWarning = new TextBlock { Text = L.Get("DuplicateRecipeWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         panel.Children.Add(duplicateWarning);
-        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _recipes.Any(item => item.Id != recipe.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = CatalogPageState.HasDuplicateName(nameBox.Text, _recipes.Where(item => item.Id != recipe.Id).Select(item => item.Name)) ? Visibility.Visible : Visibility.Collapsed;
         nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
         UpdateDuplicateWarning();
 
