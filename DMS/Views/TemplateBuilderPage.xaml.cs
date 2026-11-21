@@ -80,7 +80,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var statusCallback = StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
             StatusPanel.Visibility = string.IsNullOrWhiteSpace(StatusText.Text) ? Visibility.Collapsed : Visibility.Visible);
         _pageCleanup.Add(() => StatusText.UnregisterPropertyChangedCallback(TextBlock.TextProperty, statusCallback));
-        LayoutHeading.Header = L.Get("TplBuilderLayoutSection"); PageImagesMenu.Text = L.Get("TplPageImages");
+        CanvasSettingsButton.Content = L.Get("TplBuilderLayoutSection"); PageImagesMenu.Text = L.Get("TplPageImages");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
         AddImageMenuItem.Text = L.Get("TplAddImage");
@@ -104,7 +104,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _pageCleanup.Add(() => { ZoomOutButton.Click -= zoomOut; ZoomInButton.Click -= zoomIn; ZoomResetButton.Click -= zoomReset; CanvasZoomSlider.ValueChanged -= zoomChanged; PageScroll.ViewChanged -= viewChanged; });
         InlineEditor.TextChanged += InlineEditor_TextChanged;
         RoutedEventHandler editorLostFocus = (_, _) => RefreshInlineText();
-        SizeChangedEventHandler workspaceSizeChanged = (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
+        SizeChangedEventHandler workspaceSizeChanged = (_, _) => PositionContextTools();
         PointerEventHandler pagePointerPressed = Page_PointerPressed;
         KeyEventHandler pageKeyDown = (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(restoreFocus: true); e.Handled = true; } };
         InlineEditor.LostFocus += editorLostFocus; Workspace.SizeChanged += workspaceSizeChanged;
@@ -131,18 +131,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         RoutedEventHandler pageLoaded = async (_, _) => await InitializeAsync();
         Loaded += pageLoaded;
         _pageCleanup.Add(() => Loaded -= pageLoaded);
-    }
-
-    private void ResizeWorkspace(double width, double height)
-    {
-        var compact = width < 700;
-        Grid.SetColumn(SettingsPanel, compact ? 0 : 1);
-        Grid.SetColumnSpan(SettingsPanel, compact ? 2 : 1);
-        Grid.SetRow(SettingsPanel, compact ? 2 : 0);
-        Grid.SetRowSpan(SettingsPanel, compact ? 1 : 3);
-        SettingsPanel.Width = compact ? double.NaN : 270;
-        SettingsPanel.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
-        SettingsPanel.MaxHeight = compact ? Math.Clamp(height * 0.35, 72, 240) : double.PositiveInfinity;
     }
 
     private void SetCanvasZoom(double percent)
