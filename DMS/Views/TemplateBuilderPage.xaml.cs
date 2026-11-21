@@ -74,7 +74,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         UpdateHistoryControls();
         DeleteButton.Text = L.Get("TplDeleteTemplate");
         RenameTemplateMenuItem.Text = L.Get("TplRenameTemplate");
-        WeekPicker.Header = L.Get("TplPreview");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(WeekPicker, L.Get("TplPreview"));
         DaySpacingBox.Header = L.Get("TplBuilderDaySpacing"); MealSpacingBox.Header = L.Get("TplBuilderMealSpacing");
         DayHint.Text = L.Get("TplBuilderDayHint");
         var statusCallback = StatusText.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
