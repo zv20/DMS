@@ -134,6 +134,7 @@ public sealed partial class TemplateBuilderPage
         _document.DecorativeImages.Add(image);
         _dirty = true;
         StopInlineEditing();
+        _selectedFromBlockMenu = false;
         _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
         _imageToReveal = image.Id;
         RefreshDecorationList();

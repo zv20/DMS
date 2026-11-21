@@ -39,6 +39,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private int _renderGeneration;
     private string? _selectedBlock;
     private FrameworkElement? _selectionAnchor;
+    private bool _selectedFromBlockMenu;
     private bool _contextBinding, _updatingZoom;
     private string? _editingBlock;
     private bool _inlineTextChanged;
@@ -105,7 +106,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         RoutedEventHandler editorLostFocus = (_, _) => RefreshInlineText();
         SizeChangedEventHandler workspaceSizeChanged = (_, e) => { ResizeWorkspace(e.NewSize.Width, e.NewSize.Height); PositionContextTools(); };
         PointerEventHandler pagePointerPressed = Page_PointerPressed;
-        KeyEventHandler pageKeyDown = (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(); e.Handled = true; } };
+        KeyEventHandler pageKeyDown = (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _selectedBlock != null) { EndImageDrag(cancel: true); DismissContextTools(restoreFocus: true); e.Handled = true; } };
         InlineEditor.LostFocus += editorLostFocus; Workspace.SizeChanged += workspaceSizeChanged;
         AddHandler(UIElement.PointerPressedEvent, pagePointerPressed, true); KeyDown += pageKeyDown;
         _pageCleanup.Add(() => { InlineEditor.TextChanged -= InlineEditor_TextChanged; InlineEditor.LostFocus -= editorLostFocus; Workspace.SizeChanged -= workspaceSizeChanged; RemoveHandler(UIElement.PointerPressedEvent, pagePointerPressed); KeyDown -= pageKeyDown; });
@@ -648,7 +649,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         DismissContextTools();
     }
 
-    private void DismissContextTools()
+    private void DismissContextTools(bool restoreFocus = false)
     {
         EndImageDrag();
         StopInlineEditing();
@@ -660,6 +661,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         SelectionToolbar.Visibility = Visibility.Collapsed;
         SelectionOutline.Visibility = Visibility.Collapsed;
         ContextTools.Children.Clear();
+        if (restoreFocus && _selectedFromBlockMenu) FileMenuButton.Focus(FocusState.Keyboard);
+        _selectedFromBlockMenu = false;
     }
 
     private void FileMenu_Closed(object sender, object e) => SelectBlockMenu.Items.Clear();
@@ -692,12 +695,15 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 {
                     if ((parts[0] is "day" or "ingredients") && int.TryParse(parts[1], out var day))
                         label += $" · {_monday.AddDays(day):dddd}";
+                    if (parts[0] == "ingredients" && anchor.DataContext is Recipe recipe)
+                        label += $" · {recipe.Name}";
                     var item = new MenuFlyoutItem { Text = label };
                     item.Click += (_, _) => DispatcherQueue.TryEnqueue(() =>
                     {
                         if (!ReferenceEquals(PageHost.Content, page)) return;
                         anchor.StartBringIntoView();
                         SelectCanvasBlock(key, anchor);
+                        _selectedFromBlockMenu = true;
                         if (key is not ("header" or "footer"))
                             (ContextTools.Children.OfType<Control>().Skip(1).FirstOrDefault(c => c.IsEnabled && c.IsTabStop)
                                 ?? ContextTools.Children.OfType<Control>().FirstOrDefault())?.Focus(FocusState.Keyboard);
@@ -714,6 +720,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private void SelectCanvasBlock(string key, FrameworkElement anchor)
     {
         StopInlineEditing();
+        _selectedFromBlockMenu = false;
         _selectedBlock = key;
         _selectionAnchor = anchor;
         BuildContextTools();
@@ -813,7 +820,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         var close = new Button { Content = "✕", Padding = new Thickness(5) };
         ToolTipService.SetToolTip(close, L.Get("Text_Cancel_77dfd2"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(close, L.Get("Text_Cancel_77dfd2"));
-        close.Click += (_, _) => DismissContextTools();
+        close.Click += (_, _) => DismissContextTools(restoreFocus: true);
         ContextTools.Children.Add(close);
 
         var parts = key.Split(':');

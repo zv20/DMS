@@ -230,6 +230,7 @@ public static class TemplateRenderer
                     }
                     else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
                 }
+                if (onSelected != null) ingredientBlock.DataContext = recipe;
                 Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
                 meal.Children.Add(ingredientBlock);
             }
