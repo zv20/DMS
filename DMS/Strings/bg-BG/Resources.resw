@@ -370,4 +370,5 @@
   <data name="TplBlockNotice" xml:space="preserve"><value>Бележка в долния колонтитул</value></data>
   <data name="TplBlockDate" xml:space="preserve"><value>Период</value></data>
   <data name="TplBlockDay" xml:space="preserve"><value>Ден</value></data>
+  <data name="SettingsLanguageAppearance.Text" xml:space="preserve"><value>Език и външен вид</value></data>
 </root>
