@@ -209,7 +209,7 @@ public static class TemplateRenderer
             var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
-            if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
+            if (recipe.Calories > 0) title += " · " + Localization.Format("MenuEnergyKcal", recipe.Calories);
             var titleBlock = StyledText(title, menuStyle, scale);
             Selectable(titleBlock, $"menu:{dayIndex}", onSelected, lifetime);
             meal.Children.Add(titleBlock);

@@ -372,4 +372,22 @@
   <data name="RestoreInvalidBackup" xml:space="preserve"><value>Архивът съдържа неподдържани или нечетими данни. Вижте дневника за грешки за подробности.</value></data>
   <data name="TplDayFormat" xml:space="preserve"><value>Формат на деня</value></data>
   <data name="TplRangeFormat" xml:space="preserve"><value>Период</value></data>
+  <data name="PresetSpringGarden" xml:space="preserve"><value>Пролетна градина</value></data>
+  <data name="PresetSummerTable" xml:space="preserve"><value>Лятна трапеза</value></data>
+  <data name="PresetAutumnHarvest" xml:space="preserve"><value>Есенна реколта</value></data>
+  <data name="PresetWinterComfort" xml:space="preserve"><value>Зимен уют</value></data>
+  <data name="PresetSimpleSpring" xml:space="preserve"><value>Семпла пролет</value></data>
+  <data name="PresetSimpleSummer" xml:space="preserve"><value>Семпло лято</value></data>
+  <data name="PresetSimpleAutumn" xml:space="preserve"><value>Семпла есен</value></data>
+  <data name="PresetSimpleWinter" xml:space="preserve"><value>Семпла зима</value></data>
+  <data name="PresetKidsSpring" xml:space="preserve"><value>Детска пролет</value></data>
+  <data name="PresetKidsSummer" xml:space="preserve"><value>Детско лято</value></data>
+  <data name="PresetKidsAutumn" xml:space="preserve"><value>Детска есен</value></data>
+  <data name="PresetKidsWinter" xml:space="preserve"><value>Детска зима</value></data>
+  <data name="PresetKidsChristmas" xml:space="preserve"><value>Детска Коледа</value></data>
+  <data name="PresetKidsEaster" xml:space="preserve"><value>Детски Великден</value></data>
+  <data name="PresetKidsRainyDay" xml:space="preserve"><value>Дъждовен ден за деца</value></data>
+  <data name="PresetAllergenFooter" xml:space="preserve"><value>Алергените са отбелязани в червено.</value></data>
+  <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} ккал</value></data>
+  <data name="PresetArtwork" xml:space="preserve"><value>Илюстрация: {0}</value></data>
 </root>

@@ -307,7 +307,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 }
                 thumbnail.EffectiveViewportChanged += LoadVisibleThumbnail;
                 viewportHandlers.Add((thumbnail, LoadVisibleThumbnail));
-                tile.Children.Add(new TextBlock { Text = template.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+                tile.Children.Add(new TextBlock { Text = TemplateConversion.DisplayName(template), TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
                 var item = new GridViewItem { Tag = template, Content = tile };
                 grid.Items.Add(item);
                 if (string.Equals(template.Name, _loadedName, StringComparison.Ordinal)) grid.SelectedItem = item;
@@ -451,7 +451,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         try
         {
             var all = await _database.GetAllTemplatesAsync();
-            var nameBox = new TextBox { Header = L.Get("TplName"), Text = _loadedName ?? "" };
+            var displayedName = _loadedName == null ? "" : TemplateConversion.DisplayName(_loadedTemplate);
+            var nameBox = new TextBox { Header = L.Get("TplName"), Text = displayedName };
             var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
             var content = new StackPanel { Spacing = 8 };
             content.Children.Add(nameBox); content.Children.Add(error);
@@ -461,6 +462,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             dialog.PrimaryButtonClick += (_, args) =>
             {
                 name = nameBox.Text.Trim();
+                if (_loadedTemplate.IsPreset && name == displayedName && _loadedName != null) name = _loadedName;
                 var message = name.Length == 0 ? "TplBuilderNameRequired" : all.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(t.Name, _loadedName, StringComparison.Ordinal)) ? "TplBuilderNameExists" : null;
                 if (message != null) { args.Cancel = true; error.Text = L.Get(message); error.Visibility = Visibility.Visible; return; }
                 if (string.Equals(name, _loadedName, StringComparison.OrdinalIgnoreCase)) name = _loadedName!;
@@ -472,7 +474,17 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 Document = _document,
                 IsPreset = _loadedTemplate.IsPreset && string.Equals(name, _loadedName, StringComparison.Ordinal)
             };
+            var original = saved.IsPreset ? all.FirstOrDefault(t => t.IsPreset && t.Name == saved.Name)?.Document : null;
+            if (original != null)
+            {
+                var header = original.HeaderText == TemplateDocument.DefaultHeader && _document.HeaderText == L.Get("String_Text_Weekly_Menu_69fa95")
+                    ? original.HeaderText : _document.HeaderText;
+                var footer = original.FooterText == TemplateDocument.PresetFooter && _document.FooterText == L.Get("PresetAllergenFooter")
+                    ? original.FooterText : _document.FooterText;
+                saved.Document = _document.WithText(header, footer);
+            }
             await _database.SaveTemplateAsync(saved);
+            saved.Document = _document;
             App.Logger.LogInformation("Saved menu template");
             _loadedTemplate = saved;
             _loadedName = name; _dirty = false; _savedDocumentJson = SerializeDocument();

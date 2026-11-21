@@ -98,11 +98,12 @@ public sealed partial class TemplateOutputPage : Page
             var templates = await _database.GetAllTemplatesAsync();
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
-            TemplateSelector.ItemsSource = templates;
+            var choices = templates.Select(template => new ComboBoxItem { Content = TemplateConversion.DisplayName(template), Tag = template }).ToList();
+            TemplateSelector.ItemsSource = choices;
             var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
             var qaTemplate = templates.FirstOrDefault(template => template.Name == qaName);
             if (!string.IsNullOrEmpty(qaName) && qaTemplate == null) throw new InvalidOperationException("Performance template is missing.");
-            TemplateSelector.SelectedItem = qaTemplate ?? templates[0];
+            TemplateSelector.SelectedItem = choices[qaTemplate == null ? 0 : templates.IndexOf(qaTemplate)];
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load print and export"); StatusText.Text = L.Get("ErrorOutput"); }
     }
@@ -145,7 +146,7 @@ public sealed partial class TemplateOutputPage : Page
     {
         var generation = ++_generation;
         SetReady(false);
-        if (TemplateSelector.SelectedItem is not MenuTemplate { Document: not null } template) return;
+        if (TemplateSelector.SelectedItem is not ComboBoxItem { Tag: MenuTemplate { Document: not null } template }) return;
         var date = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
         var monday = MenuOutputService.WeekStart(date);
         await _refreshGate.WaitAsync();

@@ -490,7 +490,7 @@ public class RecipeItemViewModel
     public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
-    public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
+    public string CaloriesDisplay => Calories > 0 ? "🔥 " + L.Format("MenuEnergyKcal", Calories) : "";
     public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
     public string AllergensDisplay => AllergenDisplay.FormatList(Allergens, AllergenIcons);
 

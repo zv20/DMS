@@ -372,4 +372,22 @@
   <data name="RestoreInvalidBackup" xml:space="preserve"><value>The backup contains unsupported or unreadable data. See the error log for details.</value></data>
   <data name="TplDayFormat" xml:space="preserve"><value>Day heading</value></data>
   <data name="TplRangeFormat" xml:space="preserve"><value>Date range</value></data>
+  <data name="PresetSpringGarden" xml:space="preserve"><value>Spring Garden</value></data>
+  <data name="PresetSummerTable" xml:space="preserve"><value>Summer Table</value></data>
+  <data name="PresetAutumnHarvest" xml:space="preserve"><value>Autumn Harvest</value></data>
+  <data name="PresetWinterComfort" xml:space="preserve"><value>Winter Comfort</value></data>
+  <data name="PresetSimpleSpring" xml:space="preserve"><value>Simple Spring</value></data>
+  <data name="PresetSimpleSummer" xml:space="preserve"><value>Simple Summer</value></data>
+  <data name="PresetSimpleAutumn" xml:space="preserve"><value>Simple Autumn</value></data>
+  <data name="PresetSimpleWinter" xml:space="preserve"><value>Simple Winter</value></data>
+  <data name="PresetKidsSpring" xml:space="preserve"><value>Kids Spring</value></data>
+  <data name="PresetKidsSummer" xml:space="preserve"><value>Kids Summer</value></data>
+  <data name="PresetKidsAutumn" xml:space="preserve"><value>Kids Autumn</value></data>
+  <data name="PresetKidsWinter" xml:space="preserve"><value>Kids Winter</value></data>
+  <data name="PresetKidsChristmas" xml:space="preserve"><value>Kids Christmas</value></data>
+  <data name="PresetKidsEaster" xml:space="preserve"><value>Kids Easter</value></data>
+  <data name="PresetKidsRainyDay" xml:space="preserve"><value>Kids Rainy Day</value></data>
+  <data name="PresetAllergenFooter" xml:space="preserve"><value>Allergens are highlighted in red.</value></data>
+  <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} kcal</value></data>
+  <data name="PresetArtwork" xml:space="preserve"><value>{0} artwork</value></data>
 </root>
