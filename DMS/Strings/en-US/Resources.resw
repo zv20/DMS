@@ -364,4 +364,10 @@
   <data name="LogFile.Header" xml:space="preserve"><value>Log</value></data>
   <data name="LogFileActivity.Content" xml:space="preserve"><value>Activity timeline</value></data>
   <data name="LogFileErrors.Content" xml:space="preserve"><value>Warnings and errors</value></data>
+  <data name="CloseNavigationMenu" xml:space="preserve"><value>Close navigation menu</value></data>
+  <data name="TplSelectBlock" xml:space="preserve"><value>Select a block</value></data>
+  <data name="TplBlockPage" xml:space="preserve"><value>Page</value></data>
+  <data name="TplBlockNotice" xml:space="preserve"><value>Footer notice</value></data>
+  <data name="TplBlockDate" xml:space="preserve"><value>Date range</value></data>
+  <data name="TplBlockDay" xml:space="preserve"><value>Day</value></data>
 </root>

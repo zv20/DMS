@@ -662,6 +662,55 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Clear();
     }
 
+    private void FileMenu_Closed(object sender, object e) => SelectBlockMenu.Items.Clear();
+
+    private void FileMenu_Opening(object sender, object e)
+    {
+        SelectBlockMenu.Text = L.Get("TplSelectBlock");
+        SelectBlockMenu.Items.Clear();
+        if (PageHost.Content is not FrameworkElement page) return;
+        var imageNumber = 0;
+        void AddBlocks(DependencyObject node)
+        {
+            if (node is FrameworkElement { Tag: string key } anchor)
+            {
+                var parts = key.Split(':', 2);
+                var label = parts[0] switch
+                {
+                    "header" => L.Get("TplHeader"),
+                    "footer" => L.Get("TplFooter"),
+                    "page" => L.Get("TplBlockPage"),
+                    "notice" => L.Get("TplBlockNotice"),
+                    "date" => L.Get("TplBlockDate"),
+                    "day" => L.Get("TplBlockDay"),
+                    "ingredients" => L.Get("Text_Ingredients_f9e84e"),
+                    "heading" or "menu" when anchor is TextBlock text => text.Text,
+                    "image" => $"{L.Get("TplImageBlock")} {++imageNumber} {Microsoft.UI.Xaml.Automation.AutomationProperties.GetName(anchor)}".TrimEnd(),
+                    _ => null
+                };
+                if (label != null)
+                {
+                    if ((parts[0] is "day" or "ingredients") && int.TryParse(parts[1], out var day))
+                        label += $" · {_monday.AddDays(day):dddd}";
+                    var item = new MenuFlyoutItem { Text = label };
+                    item.Click += (_, _) => DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (!ReferenceEquals(PageHost.Content, page)) return;
+                        anchor.StartBringIntoView();
+                        SelectCanvasBlock(key, anchor);
+                        if (key is not ("header" or "footer"))
+                            (ContextTools.Children.OfType<Control>().Skip(1).FirstOrDefault(c => c.IsEnabled && c.IsTabStop)
+                                ?? ContextTools.Children.OfType<Control>().FirstOrDefault())?.Focus(FocusState.Keyboard);
+                    });
+                    SelectBlockMenu.Items.Add(item);
+                }
+            }
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                AddBlocks(VisualTreeHelper.GetChild(node, i));
+        }
+        AddBlocks(page);
+    }
+
     private void SelectCanvasBlock(string key, FrameworkElement anchor)
     {
         StopInlineEditing();
@@ -763,6 +812,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         ContextTools.Children.Clear();
         var close = new Button { Content = "✕", Padding = new Thickness(5) };
         ToolTipService.SetToolTip(close, L.Get("Text_Cancel_77dfd2"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(close, L.Get("Text_Cancel_77dfd2"));
         close.Click += (_, _) => DismissContextTools();
         ContextTools.Children.Add(close);
 

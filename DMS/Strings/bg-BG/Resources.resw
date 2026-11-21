@@ -364,4 +364,10 @@
   <data name="LogFile.Header" xml:space="preserve"><value>Дневник</value></data>
   <data name="LogFileActivity.Content" xml:space="preserve"><value>Дейност</value></data>
   <data name="LogFileErrors.Content" xml:space="preserve"><value>Предупреждения и грешки</value></data>
+  <data name="CloseNavigationMenu" xml:space="preserve"><value>Затвори навигационното меню</value></data>
+  <data name="TplSelectBlock" xml:space="preserve"><value>Избор на блок</value></data>
+  <data name="TplBlockPage" xml:space="preserve"><value>Страница</value></data>
+  <data name="TplBlockNotice" xml:space="preserve"><value>Бележка в долния колонтитул</value></data>
+  <data name="TplBlockDate" xml:space="preserve"><value>Период</value></data>
+  <data name="TplBlockDay" xml:space="preserve"><value>Ден</value></data>
 </root>

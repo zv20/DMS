@@ -30,8 +30,8 @@ public sealed partial class MainWindow : Window
             ToolTipService.SetToolTip(item, label);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, label);
         }
-        ToolTipService.SetToolTip(MenuToggleButton, Localization.Get("OpenNavigationMenu"));
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(MenuToggleButton, Localization.Get("OpenNavigationMenu"));
+        UpdateMenuToggleLabel();
+        NavView.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty, (_, _) => UpdateMenuToggleLabel());
         MenuToggleButton.SizeChanged += (_, _) => UpdateTitleBarRegions();
         WindowIcon.Apply(this);
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
@@ -44,6 +44,13 @@ public sealed partial class MainWindow : Window
         WindowPlacement.Center(AppWindow);
         AppWindow.Changed += WindowPlacementChanged;
         AppWindow.Closing += MainWindow_Closing;
+    }
+
+    private void UpdateMenuToggleLabel()
+    {
+        var label = Localization.Get(NavView.IsPaneOpen ? "CloseNavigationMenu" : "OpenNavigationMenu");
+        ToolTipService.SetToolTip(MenuToggleButton, label);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(MenuToggleButton, label);
     }
 
     private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
