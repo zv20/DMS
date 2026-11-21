@@ -44,7 +44,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private string? _editingBlock;
     private bool _inlineTextChanged;
     private bool _weekendEnabled;
-    private int _mealsPerDay = 4, _previewPageIndex;
+    private int _previewPageIndex;
     private List<string> _recentTemplateColors = [];
     private List<MenuEntry> _entries = [];
     private List<Recipe> _recipes = [];
@@ -82,6 +82,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _pageCleanup.Add(() => StatusText.UnregisterPropertyChangedCallback(TextBlock.TextProperty, statusCallback));
         CanvasSettingsButton.Content = L.Get("TplBuilderLayoutSection"); PageImagesMenu.Text = L.Get("TplPageImages");
         DayHeightsHeading.Text = L.Get("TplBuilderDayHeightsSection");
+        WeekPicker.Language = L.Language;
+        DayFormatBox.Header = L.Get("TplDayFormat");
+        RangeFormatBox.Header = L.Get("TplRangeFormat");
+        var sample = new DateTime(2025, 10, 20);
+        foreach (var format in TemplateDates.DayFormats)
+            DayFormatBox.Items.Add(new ComboBoxItem { Tag = format, Content = TemplateDates.Day(sample, format, L.Culture) });
+        foreach (var format in TemplateDates.RangeFormats)
+            RangeFormatBox.Items.Add(new ComboBoxItem { Tag = format, Content = TemplateDates.Range(sample, sample.AddDays(6), format, L.Culture) });
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
         AddImageMenuItem.Text = L.Get("TplAddImage");
         InitializeImageInteraction();
@@ -117,7 +125,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var row = new Grid { ColumnSpacing = 6 };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 0 });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var fixedBox = new CheckBox { Content = monday.AddDays(i).ToString("dddd"), MinWidth = 0, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            var fixedBox = new CheckBox { Content = monday.AddDays(i).ToString("dddd", L.Culture), MinWidth = 0, HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 ContentTemplate = (DataTemplate)Resources["SettingsLabelTemplate"] };
             var height = new NumberBox { Minimum = 40, Maximum = 500, MinWidth = 0, Width = 88, Value = 160, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, IsEnabled = false };
             Grid.SetColumn(height, 1);
@@ -386,6 +394,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _document.DecorativeImages ??= new();
         NormalizePageBackground();
         RefreshDecorationList();
+        DayFormatBox.SelectedIndex = Math.Max(0, Array.IndexOf(TemplateDates.DayFormats, _document.DayHeadingFormat));
+        RangeFormatBox.SelectedIndex = Math.Max(0, Array.IndexOf(TemplateDates.RangeFormats, _document.DateRangeFormat));
         HideEmptyDaysBox.IsChecked = _document.HideEmptyDays;
         for (var i = 0; i < 7; i++)
         {
@@ -567,8 +577,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var (settings, entries, recipes, ingredients) = await MenuOutputService.LoadWeekAsync(_database, monday);
             var weekendEnabled = settings.WeekendPlanningEnabled;
             if (generation != _generation) return;
-            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled; _mealsPerDay = settings.MealsPerDay; _previewPageIndex = 0;
-            for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd"); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
+            _monday = monday; _entries = entries; _recipes = recipes; _ingredients = ingredients; _weekendEnabled = weekendEnabled; _previewPageIndex = 0;
+            for (var i = 0; i < 7; i++) { _fixedBoxes[i].Content = monday.AddDays(i).ToString("dddd", L.Culture); _dayRows[i].Visibility = i < 5 || weekendEnabled ? Visibility.Visible : Visibility.Collapsed; }
             Render();
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load template preview data"); if (generation == _generation) StatusText.Text = L.Get("ErrorTemplate"); }
@@ -589,6 +599,16 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         SnapshotBeforeEdit();
         _document.DayHeights[index] = _fixedBoxes[index].IsChecked == true && double.IsFinite(_dayBoxes[index].Value) ? _dayBoxes[index].Value : null;
         _dirty = true; Render();
+    }
+
+    private void DateFormat_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding || sender is not ComboBox { SelectedItem: ComboBoxItem { Tag: string format } } box) return;
+        SnapshotBeforeEdit();
+        if (box == DayFormatBox) _document.DayHeadingFormat = format;
+        else _document.DateRangeFormat = format;
+        _dirty = true;
+        Render();
     }
 
     private void HideEmptyDays_Changed(object sender, RoutedEventArgs e)
@@ -682,7 +702,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 if (label != null)
                 {
                     if ((parts[0] is "day" or "ingredients") && int.TryParse(parts[1], out var day))
-                        label += $" · {_monday.AddDays(day):dddd}";
+                        label += " · " + _monday.AddDays(day).ToString("dddd", L.Culture);
                     if (parts[0] == "ingredients" && anchor.DataContext is Recipe recipe)
                         label += $" · {recipe.Name}";
                     var item = new MenuFlyoutItem { Text = label };
@@ -1051,19 +1071,19 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var generation = _renderGeneration;
             try
             {
-            bool Fits(IReadOnlyList<MenuEntry> entries)
+            bool Fits(int[] days)
             {
-                var measured = TemplateRenderer.Create(_document, _monday, entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
+                var measured = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true, pageDays: days);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            var pages = TemplatePagination.Plan(_mealsPerDay, _entries, _recipes, Fits);
+            var pages = TemplatePagination.Plan(TemplatePageLayout.VisibleDayIndexes(_monday, _entries, _recipes, _document.HideEmptyDays, _weekendEnabled), Fits);
             _previewPageIndex = Math.Clamp(_previewPageIndex, 0, pages.Count - 1);
             PreviewPageNavigation.Visibility = pages.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
             PreviewPageNumber.Text = $"{_previewPageIndex + 1} / {pages.Count}";
             PreviousPreviewPageButton.IsEnabled = _previewPageIndex > 0;
             NextPreviewPageButton.IsEnabled = _previewPageIndex + 1 < pages.Count;
-            var result = TemplateRenderer.Create(_document, _monday, pages[_previewPageIndex], _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token);
+            var result = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, SelectCanvasBlock, _weekendEnabled, _bitmapCache, 1600, _pageLifetime.Token, pageDays: pages[_previewPageIndex]);
             result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
@@ -1081,7 +1101,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             await result.ImagesReady;
             if (generation == _renderGeneration)
             {
-                StatusText.Text = !result.HasMeals ? L.Get("TplBuilderNoMeals") : result.Overflowed ? L.Get("TplBuilderOverflow") : "";
+                StatusText.Text = result.Overflowed ? L.Get("TplBuilderOverflow") : !result.HasMeals && pages.Count == 1 ? L.Get("TplBuilderNoMeals") : "";
                 if (!_renderPending)
                 {
                     if (!result.HasMeals) PerformancePageSignal.Write("templateBuilderNoMeals", 0);

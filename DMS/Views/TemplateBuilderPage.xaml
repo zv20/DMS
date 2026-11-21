@@ -39,6 +39,8 @@
      <Flyout Placement="BottomEdgeAlignedRight">
       <ScrollViewer Width="280" MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
        <StackPanel Spacing="10">
+        <ComboBox x:Name="DayFormatBox" SelectionChanged="DateFormat_Changed" />
+        <ComboBox x:Name="RangeFormatBox" SelectionChanged="DateFormat_Changed" />
         <NumberBox x:Name="DaySpacingBox" Minimum="0" Maximum="40" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Numbers_Changed" />
         <NumberBox x:Name="MealSpacingBox" Minimum="0" Maximum="20" HeaderTemplate="{StaticResource SettingsLabelTemplate}" ValueChanged="Numbers_Changed" />
         <CheckBox x:Name="HideEmptyDaysBox" MinWidth="0" HorizontalContentAlignment="Stretch" ContentTemplate="{StaticResource SettingsLabelTemplate}" Checked="HideEmptyDays_Changed" Unchecked="HideEmptyDays_Changed" />

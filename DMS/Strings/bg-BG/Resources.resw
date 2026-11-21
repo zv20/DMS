@@ -370,4 +370,6 @@
   <data name="TplBlockDay" xml:space="preserve"><value>Ден</value></data>
   <data name="SettingsLanguageAppearance.Text" xml:space="preserve"><value>Език и външен вид</value></data>
   <data name="RestoreInvalidBackup" xml:space="preserve"><value>Архивът съдържа неподдържани или нечетими данни. Вижте дневника за грешки за подробности.</value></data>
+  <data name="TplDayFormat" xml:space="preserve"><value>Формат на деня</value></data>
+  <data name="TplRangeFormat" xml:space="preserve"><value>Период</value></data>
 </root>

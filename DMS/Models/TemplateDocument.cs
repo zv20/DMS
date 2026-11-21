@@ -11,6 +11,8 @@ public sealed class TemplateDocument
     public double MinimumFontSize { get; set; } = 14;
     public double MaximumFontSize { get; set; } = 18;
     public bool AllowFontShrink { get; set; } = true;
+    public string DayHeadingFormat { get; set; } = "dddd, d MMMM";
+    public string DateRangeFormat { get; set; } = "d";
     public bool HideEmptyDays { get; set; } = true;
     public string FontFamily { get; set; } = "Arial";
     public string HeaderColor { get; set; } = "#000000";
