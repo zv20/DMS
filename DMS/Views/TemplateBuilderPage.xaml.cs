@@ -50,7 +50,6 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private List<Recipe> _recipes = [];
     private List<Ingredient> _ingredients = [];
     private DateTime _monday;
-    private static readonly string[] Fonts = ["Arial", "Times New Roman", "Georgia", "Verdana", "Tahoma", "Courier New"];
 
     public TemplateBuilderPage()
     {
@@ -797,7 +796,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                 var style = TemplateRenderer.GetTextStyle(_document, _selectedBlock);
                 InlineEditor.Width = SelectionOutline.Width; InlineEditor.Height = SelectionOutline.Height;
                 Canvas.SetLeft(InlineEditor, origin.X); Canvas.SetTop(InlineEditor, origin.Y);
-                InlineEditor.FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily);
+                InlineEditor.FontFamily = TemplateFonts.Resolve(style);
                 InlineEditor.FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * zoom : 14 * zoom, 6, 144);
                 InlineEditor.FontWeight = style.Bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
                 InlineEditor.FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal;
@@ -897,7 +896,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         else
         {
             var style = TemplateRenderer.GetTextStyle(_document, key);
-            var font = new ComboBox { Width = 115, ItemsSource = Fonts, SelectedItem = style.FontFamily };
+            var font = new ComboBox { Width = 115, ItemsSource = TemplateFonts.Families, SelectedItem = style.FontFamily };
             ToolTipService.SetToolTip(font, L.Get("TplFont"));
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(font, L.Get("TplFont"));
             font.SelectionChanged += (_, _) => { if (!_contextBinding && font.SelectedItem is string family) EditTextStyle(key, s => s.FontFamily = family); };
