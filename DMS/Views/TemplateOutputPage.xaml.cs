@@ -36,7 +36,8 @@ public sealed partial class TemplateOutputPage : Page
     private List<TemplatePageResult> _previewPages = [], _printPages = [];
     private readonly List<FrameworkElement> _printSurfaces = [];
     private readonly List<Viewbox> _printViewboxes = [];
-    private List<List<MenuEntry>> _pageEntries = [];
+    private List<int[]> _pageDays = [];
+    private List<MenuEntry> _weekEntries = [];
     private bool _ready;
     private bool _busy;
     private int _activePrintTasks;
@@ -59,6 +60,7 @@ public sealed partial class TemplateOutputPage : Page
         _uiQueue = DispatcherQueue;
         _database = App.Services.GetRequiredService<DatabaseService>();
         TemplateSelector.Header = L.Get("TemplateOutputTemplate");
+        WeekPicker.Language = L.Language;
         WeekPicker.Header = L.Get("TemplateOutputWeek");
         PrintButton.Content = L.Get("TemplateOutputPrint");
         PdfButton.Content = L.Get("TemplateOutputPdf");
@@ -96,11 +98,12 @@ public sealed partial class TemplateOutputPage : Page
             var templates = await _database.GetAllTemplatesAsync();
             if (!_loaded) return;
             templates.Insert(0, new MenuTemplate { Name = L.Get("OutputDefaultTemplate"), Document = new TemplateDocument { HeaderText = L.Get("String_Text_Weekly_Menu_69fa95") } });
-            TemplateSelector.ItemsSource = templates;
+            var choices = templates.Select(template => new ComboBoxItem { Content = TemplateConversion.DisplayName(template), Tag = template }).ToList();
+            TemplateSelector.ItemsSource = choices;
             var qaName = Environment.GetEnvironmentVariable("DMS_QA_TEMPLATE_NAME");
             var qaTemplate = templates.FirstOrDefault(template => template.Name == qaName);
             if (!string.IsNullOrEmpty(qaName) && qaTemplate == null) throw new InvalidOperationException("Performance template is missing.");
-            TemplateSelector.SelectedItem = qaTemplate ?? templates[0];
+            TemplateSelector.SelectedItem = choices[qaTemplate == null ? 0 : templates.IndexOf(qaTemplate)];
         }
         catch (Exception ex) { App.Logger.LogError(ex, "Unable to load print and export"); StatusText.Text = L.Get("ErrorOutput"); }
     }
@@ -114,7 +117,7 @@ public sealed partial class TemplateOutputPage : Page
         MultiPreviewHost.Content = null;
         DisposePages(_previewPages); _previewPages = [];
         TemplateSelector.ItemsSource = null;
-        _document = null; _pageEntries.Clear();
+        _document = null; _pageDays.Clear(); _weekEntries.Clear();
         _recipes.Clear(); _ingredients.Clear();
         _previewBitmaps.Clear();
         try { UnregisterPrinting(); }
@@ -143,7 +146,7 @@ public sealed partial class TemplateOutputPage : Page
     {
         var generation = ++_generation;
         SetReady(false);
-        if (TemplateSelector.SelectedItem is not MenuTemplate { Document: not null } template) return;
+        if (TemplateSelector.SelectedItem is not ComboBoxItem { Tag: MenuTemplate { Document: not null } template }) return;
         var date = WeekPicker.Date?.DateTime.Date ?? DateTime.Today;
         var monday = MenuOutputService.WeekStart(date);
         await _refreshGate.WaitAsync();
@@ -160,18 +163,19 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
             _recipes = recipes; _ingredients = ingredients; _weekendEnabled = settings.WeekendPlanningEnabled;
-            bool Fits(IReadOnlyList<MenuEntry> pageEntries)
+            bool Fits(int[] days)
             {
-                var measured = TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true);
+                var measured = TemplateRenderer.Create(_document, _monday, entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true, pageDays: days);
                 try { return !measured.Overflowed; }
                 finally { measured.Lifetime.Dispose(); }
             }
-            _pageEntries = TemplatePagination.Plan(settings.MealsPerDay, entries, _recipes, Fits);
+            _weekEntries = entries;
+            _pageDays = TemplatePagination.Plan(TemplatePageLayout.VisibleDayIndexes(monday, entries, _recipes, _document.HideEmptyDays, _weekendEnabled), Fits);
             var results = new List<TemplatePageResult>();
             try
             {
-                foreach (var pageEntries in _pageEntries)
-                    results.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token));
+                foreach (var days in _pageDays)
+                    results.Add(TemplateRenderer.Create(_document, _monday, _weekEntries, _recipes, _ingredients, includeWeekend: _weekendEnabled, bitmapCache: _previewBitmaps, decodeWidth: 2400, cancellationToken: _pageLifetime.Token, pageDays: days));
             }
             catch { DisposePages(results); throw; }
             var previous = _previewPages;
@@ -348,9 +352,9 @@ public sealed partial class TemplateOutputPage : Page
         {
             if (!PrintManager.IsSupported() || _printDocument == null) throw new InvalidOperationException(L.Get("TemplateOutputPrintUnsupported"));
             ReleasePrintResources();
-            foreach (var pageEntries in _pageEntries)
-                _printPages.Add(TemplateRenderer.Create(_document, _monday, pageEntries, _recipes, _ingredients,
-                    includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps, decodeWidth: PrintDecodeLimit));
+            foreach (var days in _pageDays)
+                _printPages.Add(TemplateRenderer.Create(_document, _monday, _weekEntries, _recipes, _ingredients,
+                    includeWeekend: _weekendEnabled, bitmapCache: _printBitmaps, decodeWidth: PrintDecodeLimit, pageDays: days));
             await Task.WhenAll(_printPages.Select(result => result.ImagesReady));
             if (!_loaded) return;
             if (_printPages.Any(result => result.Overflowed)) { SetReady(false); StatusText.Text = L.Get("TemplateOutputOverflow"); return; }

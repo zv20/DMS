@@ -20,13 +20,29 @@ public static class AppearanceService
         };
         var resources = Application.Current.Resources;
         SetBrush(resources, "DmsAccentBrush", color);
-        SetBrush(resources, "DmsAccentHoverBrush", Lighten(color, 0.12));
-        SetBrush(resources, "DmsAccentPressedBrush", Darken(color, 0.12));
+        var hover = Lighten(color, 0.12);
+        var pressed = Darken(color, 0.12);
+        SetBrush(resources, "DmsAccentHoverBrush", hover);
+        SetBrush(resources, "DmsAccentPressedBrush", pressed);
+        SetBrush(resources, "DmsNavForeground", NavigationForeground(color));
+        SetBrush(resources, "DmsNavHoverForeground", NavigationForeground(hover));
+        SetBrush(resources, "DmsNavPressedForeground", NavigationForeground(pressed));
         SetBrush(resources, "DmsAccentSubtleBrush", color);
         SetBrush(resources, "DmsAccentSubtlePressedBrush", color);
 
         // Keep WinUI controls that use the system accent in sync as well.
         resources["SystemAccentColor"] = color;
+    }
+
+    private static Color NavigationForeground(Color background)
+    {
+        static double Linear(byte channel)
+        {
+            var s = channel / 255.0;
+            return s <= 0.04045 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+        }
+        var luminance = 0.2126 * Linear(background.R) + 0.7152 * Linear(background.G) + 0.0722 * Linear(background.B);
+        return 1.05 / (luminance + 0.05) >= 4.5 ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
     }
 
     private static void SetBrush(ResourceDictionary resources, string key, Color color)

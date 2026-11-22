@@ -7,7 +7,7 @@ after changes, using the same dataset, build configuration and actions.
 
 ## Automatic Windows checks on GitHub
 
-The **Test and release** workflow runs these checks on the prepared commit after
+The **Test and release** workflow runs these checks on the pushed commit after
 a push to `test`. The **Windows tests** workflow can also be started manually.
 It compiles the test project and its app dependency in Release x64,
 runs the regular tests, runs the generated database benchmark, and measures
@@ -34,12 +34,7 @@ Open the workflow run in GitHub Actions and download its
 and `navigation.json`. The workflow must be
 present in the pushed branch (and Actions enabled for the repository) to run.
 
-The separate **Performance soak - weekly and manual** workflow runs the same image-heavy
-cycle for at least 15 minutes and records elapsed time and memory at each step.
-It is scheduled weekly and can be started manually. GitHub runs scheduled
-workflows from the default branch when Actions and the workflow are enabled.
-Use its samples for trend analysis rather than
-declaring a leak from a single run. For actual mouse, file-picker and printer
+The **Windows tests** workflow also runs weekly with a 900-second navigation soak. A manual run accepts a soak duration in seconds. For actual mouse, file-picker and printer
 checks, follow [Windows interaction check](WINDOWS-INTERACTION-CHECK.md).
 
 Hosted runner hardware and load can vary; use these numbers to identify changes

@@ -13,6 +13,24 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     private DatabaseService Open(string name) { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathFor(name)); }
 
     [Fact]
+    public async Task RestoreHistoricalFixtureAndBackUpToExactSemicolonPath()
+    {
+        var directory = PathFor("folder;one");
+        Directory.CreateDirectory(directory);
+        var live = Path.Combine(directory, "live;one.db");
+        var backup = Path.Combine(directory, "backup;two.db");
+        using (var source = new DatabaseService(NullLogger<DatabaseService>.Instance, live))
+        {
+            await source.RestoreFromAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "v1-cdaa8a2.db"));
+            await source.CreateBackupAsync(backup);
+        }
+        Assert.True(File.Exists(live));
+        using var restored = Open("restored.db");
+        await restored.RestoreFromAsync(backup);
+        Assert.Equal("Fixture bread", Assert.Single(await restored.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
     public async Task RestorePreservesDeletedDefaultAllergens()
     {
         using (var source = Open("source.db"))
@@ -62,6 +80,10 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     }
 
     [Theory]
+    [InlineData("INSERT INTO templates(name,data_json) VALUES('Broken','not-json')")]
+    [InlineData("ALTER TABLE allergens RENAME COLUMN color TO old_color; ALTER TABLE allergens ADD COLUMN color TEXT")]
+    [InlineData("PRAGMA foreign_keys=OFF; INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
+    [InlineData("DROP TABLE menu; CREATE TABLE menu(id INTEGER PRIMARY KEY,date TEXT,slot TEXT,recipe_id INTEGER,created_at TEXT, UNIQUE(date,slot)); INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
     [InlineData("UPDATE recipes SET ingredients_json='not-json'")]
     [InlineData("UPDATE recipes SET allergens_json='{}'")]
     [InlineData("UPDATE ingredients SET allergens_json='[42]'")]
@@ -184,7 +206,7 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathFor("source.db")};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "DROP TABLE schema_migrations; CREATE TABLE schema_migrations (unexpected INTEGER)";
+            command.CommandText = "DROP INDEX idx_menu_date; CREATE TABLE idx_menu_date (unexpected INTEGER)";
             command.ExecuteNonQuery();
         }
         using (var current = Open("current.db"))

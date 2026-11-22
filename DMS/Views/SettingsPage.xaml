@@ -15,49 +15,34 @@
             </Grid.ColumnDefinitions>
         <StackPanel Spacing="8" HorizontalAlignment="Stretch">
             <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="SetupSection" /></Expander.Header>
-                <StackPanel Margin="16,8,16,16" Spacing="12">
-                    <TextBlock TextWrapping="Wrap" x:Uid="SetupSectionHint" />
-                    <Button x:Name="RunSetupButton" Click="RunSetup_Click" HorizontalAlignment="Left" x:Uid="RunSetup" />
-                </StackPanel>
-            </Expander>
-            <!-- Language Section -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <Expander.Header><TextBlock Text="🌐 Language &amp; Region" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Language_Region_5d78df" /></Expander.Header>
-                <StackPanel Margin="16,8,16,16" Spacing="12">
-
-                    <ComboBox x:Name="LanguageComboBox" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
-                        <ComboBoxItem Tag="bg" Content="🇧🇬 Bulgarian"  x:Uid="Text_Bulgarian_a7a43a" />
-                        <ComboBoxItem Tag="en" Content="🇺🇸 English"  x:Uid="Text_English_531f36" />
-                    </ComboBox>
+                <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="SettingsLanguageAppearance" /></Expander.Header>
+                <StackPanel>
+                    <local:WrappingPanel>
+                        <ComboBox x:Name="LanguageComboBox" Margin="0,0,12,6" Header="Language" SelectionChanged="LanguageComboBox_SelectionChanged" x:Uid="Text_Language_89b86a">
+                            <ComboBoxItem Tag="bg" Content="🇧🇬 Bulgarian"  x:Uid="Text_Bulgarian_a7a43a" />
+                            <ComboBoxItem Tag="en" Content="🇺🇸 English"  x:Uid="Text_English_531f36" />
+                        </ComboBox>
+                        <ComboBox x:Name="ThemeComboBox" Margin="0,0,12,6" Header="Theme" SelectionChanged="AppearanceComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
+                            <ComboBoxItem Tag="light" Content="☀️ Light"  x:Uid="Text_Light_200060" />
+                            <ComboBoxItem Tag="dark" Content="🌙 Dark"  x:Uid="Text_Dark_9cc40d" />
+                            <ComboBoxItem Tag="system" Content="💻 System Default"  x:Uid="Text_System_Default_363703" />
+                        </ComboBox>
+                        <ComboBox x:Name="AccentColorComboBox" Margin="0,0,12,6" Header="Accent Color" SelectionChanged="AppearanceComboBox_SelectionChanged" x:Uid="Text_Accent_Color_2bef52">
+                            <ComboBoxItem Tag="blue" Content="🔵 Blue"  x:Uid="Text_Blue_b81516" />
+                            <ComboBoxItem Tag="green" Content="🟢 Green"  x:Uid="Text_Green_f66748" />
+                            <ComboBoxItem Tag="purple" Content="🟣 Purple"  x:Uid="Text_Purple_a14112" />
+                            <ComboBoxItem Tag="orange" Content="🟠 Orange"  x:Uid="Text_Orange_ed1c11" />
+                            <ComboBoxItem Tag="red" Content="🔴 Red"  x:Uid="Text_Red_6f6efe" />
+                            <ComboBoxItem Tag="teal" Content="🟢 Teal"  x:Uid="Text_Teal_ee7cb9" />
+                        </ComboBox>
+                    </local:WrappingPanel>
                     <TextBlock x:Name="LanguageStatus" TextWrapping="Wrap" />
-                </StackPanel>
-            </Expander>
-
-            <!-- Theme Section -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <Expander.Header><TextBlock Text="🎨 Appearance" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Appearance_be0e75" /></Expander.Header>
-                <StackPanel Margin="16,8,16,16" Spacing="12">
-
-                    <ComboBox x:Name="ThemeComboBox" Header="Theme" SelectionChanged="AppearanceComboBox_SelectionChanged" x:Uid="Text_Theme_a797e3">
-                        <ComboBoxItem Tag="light" Content="☀️ Light"  x:Uid="Text_Light_200060" />
-                        <ComboBoxItem Tag="dark" Content="🌙 Dark"  x:Uid="Text_Dark_9cc40d" />
-                        <ComboBoxItem Tag="system" Content="💻 System Default"  x:Uid="Text_System_Default_363703" />
-                    </ComboBox>
-                    <ComboBox x:Name="AccentColorComboBox" Header="Accent Color" SelectionChanged="AppearanceComboBox_SelectionChanged" Margin="0,8,0,0" x:Uid="Text_Accent_Color_2bef52">
-                        <ComboBoxItem Tag="blue" Content="🔵 Blue"  x:Uid="Text_Blue_b81516" />
-                        <ComboBoxItem Tag="green" Content="🟢 Green"  x:Uid="Text_Green_f66748" />
-                        <ComboBoxItem Tag="purple" Content="🟣 Purple"  x:Uid="Text_Purple_a14112" />
-                        <ComboBoxItem Tag="orange" Content="🟠 Orange"  x:Uid="Text_Orange_ed1c11" />
-                        <ComboBoxItem Tag="red" Content="🔴 Red"  x:Uid="Text_Red_6f6efe" />
-                        <ComboBoxItem Tag="teal" Content="🟢 Teal"  x:Uid="Text_Teal_ee7cb9" />
-                    </ComboBox>
                     <TextBlock x:Name="AppearanceStatus" TextWrapping="Wrap" />
                 </StackPanel>
             </Expander>
 
             <!-- Planning Section -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="📅 Planning" FontSize="16" FontWeight="SemiBold" x:Uid="Text_Planning_53aa11" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -73,8 +58,15 @@
                 </StackPanel>
             </Expander>
 
+            <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="SetupSection" /></Expander.Header>
+                <StackPanel Margin="16,8,16,16" Spacing="12">
+                    <TextBlock TextWrapping="Wrap" x:Uid="SetupSectionHint" />
+                    <Button x:Name="RunSetupButton" Click="RunSetup_Click" HorizontalAlignment="Left" x:Uid="RunSetup" />
+                </StackPanel>
+            </Expander>
             <!-- Data Management Section -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="💾 Data Management" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_Data_Management_a0cf50" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
 
@@ -102,7 +94,7 @@
             </Expander>
 
             <!-- Local diagnostic log -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="LogViewerTitle" /></Expander.Header>
                     <StackPanel Margin="16,8,16,16" Spacing="10">
 
@@ -132,7 +124,7 @@
             </Expander>
 
             <!-- About Section -->
-            <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Expander.Header><TextBlock Text="ℹ️ About" FontSize="16" FontWeight="SemiBold"  x:Uid="Text_About_3e3c26" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="8">
 
@@ -140,7 +132,7 @@
                         <TextBlock Text="DMS" FontWeight="SemiBold" />
                         <TextBlock x:Name="AppVersionText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
-                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite • Entity Framework Core" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="WinUI 3 • .NET 10 • SQLite" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" />
                     <TextBlock Text="Built for meal planning and recipe management" Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}" FontSize="12" Margin="0,4,0,0"  x:Uid="Text_Built_for_meal_planning_and_recipe_management_49409f" />
                 </StackPanel>
             </Expander>

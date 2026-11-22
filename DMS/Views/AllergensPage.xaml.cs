@@ -140,7 +140,7 @@ public sealed partial class AllergensPage : Page, IUnsavedEditor
         panel.Children.Add(nameBox);
         var duplicateWarning = new TextBlock { Text = L.Get("DuplicateAllergenWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         panel.Children.Add(duplicateWarning);
-        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _allergens.Any(item => item.Id != allergen.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = CatalogPageState.HasDuplicateName(nameBox.Text, _allergens.Where(item => item.Id != allergen.Id).Select(item => item.Name)) ? Visibility.Visible : Visibility.Collapsed;
         nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
         UpdateDuplicateWarning();
 

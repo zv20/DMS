@@ -1,4 +1,3 @@
-using DMS.Models;
 using DMS.Services;
 using Xunit;
 
@@ -7,34 +6,52 @@ namespace DMS.Tests;
 public sealed class TemplatePaginationTests
 {
     [Fact]
-    public void KeepsAllEntriesInOrderWhenSlotGroupsNeedSplitting()
+    public void StartsNextPageWithFirstDayThatDidNotFit()
     {
-        var monday = new DateTime(2026, 11, 9);
-        var entries = Enumerable.Range(1, 3).SelectMany(slot => Enumerable.Range(0, 5)
-            .Select(day => new MenuEntry { Slot = $"slot{slot}", Date = monday.AddDays(day), RecipeId = slot * 10 + day })).ToList();
-        var pages = TemplatePagination.Split(entries, items => items.Count <= 4);
-        Assert.NotNull(pages);
-        Assert.All(pages, page => Assert.InRange(page.Count, 1, 4));
-        Assert.Equal(entries.OrderBy(e => MenuOutputService.SlotOrder(e.Slot)).ThenBy(e => e.Date).Select(e => e.RecipeId), pages.SelectMany(page => page).Select(e => e.RecipeId));
+        int[] heights = [120, 180, 220, 160, 110];
+        var pages = TemplatePagination.Plan([0, 1, 2, 3, 4], days => days.Sum(day => heights[day]) <= 400);
+        Assert.Collection(pages,
+            first => Assert.Equal(new[] { 0, 1 }, first),
+            second => Assert.Equal(new[] { 2, 3 }, second),
+            last => Assert.Equal(new[] { 4 }, last));
     }
 
     [Fact]
-    public void RejectsAnIndividualEntryThatCannotFit()
+    public void OversizedDayGetsItsOwnPageAndLaterDaysStayTogether()
     {
-        Assert.Null(TemplatePagination.Split((MenuEntry[])[new MenuEntry { Slot = "slot1" }], _ => false));
+        var pages = TemplatePagination.Plan([0, 1, 3, 6], days => !days.Contains(1));
+        Assert.Collection(pages, p => Assert.Equal(new[] { 0 }, p),
+            p => Assert.Equal(new[] { 1 }, p), p => Assert.Equal(new[] { 3, 6 }, p));
     }
 
     [Fact]
-    public void PlanPreservesDefaultAndFallsBackWhenEntriesCannotFit()
+    public void WeekThatFitsKeepsItsOriginalPage()
     {
-        var entries = new List<MenuEntry> { new() { Slot = "slot1", RecipeId = 1 } };
-        var recipes = new List<Recipe> { new() { Id = 1 } };
-        var calls = 0;
-        bool NeverFits(IReadOnlyList<MenuEntry> _) { calls++; return false; }
-        Assert.Same(entries, Assert.Single(TemplatePagination.Plan(4, entries, recipes, NeverFits)));
-        Assert.Equal(0, calls);
-        Assert.Same(entries, Assert.Single(TemplatePagination.Plan(6, entries, recipes, NeverFits)));
-        Assert.True(calls > 0);
+        int[] days = [0, 1, 2, 3, 4];
+        Assert.Same(days, Assert.Single(TemplatePagination.Plan(days, _ => true)));
+    }
+
+    [Theory]
+    [InlineData("en-US", "dddd, d MMMM", "Monday, 2 November")]
+    [InlineData("bg-BG", "dddd, d MMMM", "понеделник, 2 ноември")]
+    [InlineData("bg-BG", "dddd", "понеделник")]
+    [InlineData("bg-BG", "dddd d", "понеделник 2")]
+    [InlineData("bg-BG", "d dddd", "2 понеделник")]
+    [InlineData("bg-BG", "%d", "2")]
+    public void FormatsDayUsingSelectedLanguage(string language, string format, string expected)
+    {
+        Assert.Equal(expected, TemplateDates.Day(new DateTime(2026, 11, 2), format,
+            System.Globalization.CultureInfo.GetCultureInfo(language)));
+    }
+
+    [Fact]
+    public void DateRangeUsesSelectedFormatAndAvoidsRepeatingASingleDay()
+    {
+        var culture = System.Globalization.CultureInfo.GetCultureInfo("bg-BG");
+        var first = new DateTime(2026, 11, 2);
+        Assert.Equal("2 ноември – 5 ноември", TemplateDates.Range(first, first.AddDays(3), "d MMMM", culture));
+        Assert.Equal("понеделник 2 – четвъртък 5", TemplateDates.Range(first, first.AddDays(3), "dddd d", culture));
+        Assert.Equal("02.11.2026", TemplateDates.Range(first, first, "dd.MM.yyyy", culture));
     }
 
     [Fact]

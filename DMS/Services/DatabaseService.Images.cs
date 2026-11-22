@@ -461,8 +461,8 @@ internal static class SeasonalTemplateDefaults
         IsPreset = true,
         Document = new TemplateDocument
         {
-            HeaderText = "Weekly Menu",
-            FooterText = "Allergens are highlighted in red.",
+            HeaderText = TemplateDocument.DefaultHeader,
+            FooterText = TemplateDocument.PresetFooter,
             FontFamily = "Arial",
             HeaderColor = definition.HeaderColor,
             BodyColor = definition.BodyColor,

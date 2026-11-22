@@ -460,7 +460,9 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
                 finally { App.CurrentWindow.Close(); }
                 return;
             }
-            DataStatus.Text = L.Get(restored ? "Text_Database_restored_successfully_Reopen_any_active_pages__48a860" : "LogViewerRestoreFailed");
+            DataStatus.Text = ex is System.IO.InvalidDataException && !restored
+                ? L.Get("RestoreInvalidBackup")
+                : L.Get(restored ? "Text_Database_restored_successfully_Reopen_any_active_pages__48a860" : "LogViewerRestoreFailed");
         }
         finally { BackupButton.IsEnabled = RestoreButton.IsEnabled = true; }
     }

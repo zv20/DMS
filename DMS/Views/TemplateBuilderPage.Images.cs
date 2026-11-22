@@ -127,13 +127,14 @@ public sealed partial class TemplateBuilderPage
         var scale = Math.Min(1, 200 / Math.Max(sourceWidth, sourceHeight));
         var image = new TemplateImage
         {
-            AssetId = asset.Id, DataUri = $"data:{asset.ContentType};base64,{Convert.ToBase64String(asset.Data)}", AltText = asset.Name,
+            AssetId = asset.Id, DataUri = $"data:{asset.ContentType};base64,{Convert.ToBase64String(asset.Data)}", AltText = LibraryImageName(asset),
             Width = Math.Max(1, sourceWidth * scale), Height = Math.Max(1, sourceHeight * scale), ReserveTextSpace = false
         };
         TemplateImagePlacement.Move(image, (TemplatePageLayout.PageWidth - image.Width) / 2, (TemplatePageLayout.PageHeight - image.Height) / 2);
         _document.DecorativeImages.Add(image);
         _dirty = true;
         StopInlineEditing();
+        _selectedFromBlockMenu = false;
         _selectedBlock = $"image:{image.Id}"; _selectionAnchor = null;
         _imageToReveal = image.Id;
         RefreshDecorationList();

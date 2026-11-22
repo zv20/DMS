@@ -8,6 +8,8 @@ public static class Localization
     private static readonly ResourceManager Manager = new();
     public static string Language { get; private set; } = "bg-BG";
 
+    public static CultureInfo Culture => CultureInfo.GetCultureInfo(Language);
+
     public static void Apply(string language)
     {
         Language = language == "en" ? "en-US" : "bg-BG";
