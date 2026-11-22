@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.7
 
 - Keep each day’s meals together across template preview, print, PDF and image export.
 - Choose localized day headings and date ranges, and use eight additional fonts offline.
