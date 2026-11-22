@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7
+
+- Keep each day’s meals together across template preview, print, PDF and image export.
+- Choose localized day headings and date ranges, and use eight additional fonts offline.
+- Gain canvas space with a settings dropdown and floating zoom controls. Select template blocks by keyboard.
+- Show localized preset titles, names and artwork labels while preserving custom text.
+- Simplify Settings and improve navigation contrast and accessibility.
+- Validate more backup data before restore and handle special characters in backup filenames.
+
 ## 0.1.6
 
 - Skip caching an installed .NET runtime

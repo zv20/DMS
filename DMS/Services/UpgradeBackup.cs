@@ -72,9 +72,10 @@ internal static class UpgradeBackup
             File.Move(temporary, completed);
             return completed;
         }
-        finally
+        catch
         {
-            if (File.Exists(temporary)) File.Delete(temporary);
+            AutomaticBackup.DeleteFailedBackup(temporary);
+            throw;
         }
     }
 

@@ -3,7 +3,18 @@ namespace DMS.Models;
 /// <summary>Editable configuration for the constrained A4 weekly document.</summary>
 public sealed class TemplateDocument
 {
-    public string HeaderText { get; set; } = "Weekly Menu";
+    internal const string DefaultHeader = "Weekly Menu";
+    internal const string PresetFooter = "Allergens are highlighted in red.";
+
+    internal TemplateDocument WithText(string header, string footer)
+    {
+        var copy = (TemplateDocument)MemberwiseClone();
+        copy.HeaderText = header;
+        copy.FooterText = footer;
+        return copy;
+    }
+
+    public string HeaderText { get; set; } = DefaultHeader;
     public bool ShowHeaderReflection { get; set; }
     public string FooterText { get; set; } = "";
     public string FooterNoticeText { get; set; } = "";
@@ -11,6 +22,8 @@ public sealed class TemplateDocument
     public double MinimumFontSize { get; set; } = 14;
     public double MaximumFontSize { get; set; } = 18;
     public bool AllowFontShrink { get; set; } = true;
+    public string DayHeadingFormat { get; set; } = "dddd, d MMMM";
+    public string DateRangeFormat { get; set; } = "d";
     public bool HideEmptyDays { get; set; } = true;
     public string FontFamily { get; set; } = "Arial";
     public string HeaderColor { get; set; } = "#000000";

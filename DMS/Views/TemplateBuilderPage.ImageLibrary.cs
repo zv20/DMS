@@ -36,7 +36,7 @@ public sealed partial class TemplateBuilderPage
                     var thumbnail = new Image { Width = 100, Height = 80, Stretch = Stretch.Uniform };
                     var tile = new StackPanel { Width = 110, Spacing = 4 };
                     tile.Children.Add(thumbnail);
-                    tile.Children.Add(new TextBlock { Text = asset.Name, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+                    tile.Children.Add(new TextBlock { Text = LibraryImageName(asset), TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
                     selector.Items.Add(new GridViewItem { Tag = asset.Id, Content = tile });
                     // Keep image bytes and decoding off the initial library load.
                     void LoadVisibleThumbnail(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
@@ -73,7 +73,7 @@ public sealed partial class TemplateBuilderPage
                     {
                         var names = await _database.GetTemplateImageUsageAsync(id);
                         if (currentGeneration != generation) return;
-                        usage.Text = names.Count == 0 ? L.Get("TplImageUnused") : string.Join("\n", names.Select(name => "• " + name));
+                        usage.Text = names.Count == 0 ? L.Get("TplImageUnused") : string.Join("\n", names.Select(name => "• " + LibraryTemplateName(name)));
                         // Name and deletion remain available even for an older unreadable image.
                         rename.IsEnabled = delete.IsEnabled = true;
                         var image = await _database.GetTemplateImageAsync(id);
@@ -101,9 +101,10 @@ public sealed partial class TemplateBuilderPage
                 var selected = assets.First(asset => asset.Id == chosenId);
                 if (action == "rename")
                 {
-                    var name = await PromptNameAsync("TplLibraryRename", "TplImageName", selected.Name,
+                    var displayedName = LibraryImageName(selected);
+                    var name = await PromptNameAsync("TplLibraryRename", "TplImageName", displayedName,
                         value => assets.Any(other => other.Id != chosenId && string.Equals(other.Name, value, StringComparison.OrdinalIgnoreCase)));
-                    if (name != null) await _database.RenameTemplateImageAsync(chosenId, name);
+                    if (name != null && name != displayedName) await _database.RenameTemplateImageAsync(chosenId, name);
                 }
                 else if (action == "delete")
                 {
@@ -136,6 +137,15 @@ public sealed partial class TemplateBuilderPage
         catch (Exception ex) { App.Logger.LogWarning(ex, "Unable to load an image library thumbnail"); }
     }
 
+    private string LibraryTemplateName(string name) => _templates.Find(item => item.Name == name) is { } template
+        ? TemplateConversion.DisplayName(template) : name;
+
+    private string LibraryImageName(TemplateImageAsset asset)
+    {
+        var preset = _templates.Find(t => t.IsPreset && t.Document?.BackgroundImageAssetId == asset.Id && asset.Name == t.Name + " artwork");
+        return preset == null ? asset.Name : L.Format("PresetArtwork", TemplateConversion.DisplayName(preset));
+    }
+
     private bool CanvasUsesImage(string id) => _document.DecorativeImages.Any(image => image.AssetId == id) || _document.BackgroundImageAssetId == id;
 
     private async Task<bool> DeleteLibraryImageAsync(TemplateImageAsset asset)
@@ -144,12 +154,12 @@ public sealed partial class TemplateBuilderPage
         var usesOnCanvas = CanvasUsesImage(asset.Id);
         var currentSavedTemplateDeleted = _loadedName != null && names.Contains(_loadedName, StringComparer.Ordinal);
         var content = new StackPanel { Spacing = 12 };
-        content.Children.Add(new TextBlock { Text = L.Format("TplLibraryDeletePrompt", asset.Name), TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(new TextBlock { Text = L.Format("TplLibraryDeletePrompt", LibraryImageName(asset)), TextWrapping = TextWrapping.Wrap });
         if (names.Count > 0)
         {
             content.Children.Add(new TextBlock { Text = L.Get("TplLibraryDeleteTemplatesWarning"), TextWrapping = TextWrapping.Wrap });
             content.Children.Add(new ScrollViewer { MaxHeight = 180, HorizontalScrollMode = ScrollMode.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = new TextBlock { Text = string.Join("\n", names.Select(name => "• " + name)), TextWrapping = TextWrapping.Wrap } });
+                Content = new TextBlock { Text = string.Join("\n", names.Select(name => "• " + LibraryTemplateName(name))), TextWrapping = TextWrapping.Wrap } });
         }
         if (currentSavedTemplateDeleted || usesOnCanvas)
             content.Children.Add(new TextBlock { Text = L.Get(currentSavedTemplateDeleted ? "TplLibraryOpenTemplateWarning" : "TplLibraryOpenCanvasWarning"), TextWrapping = TextWrapping.Wrap });

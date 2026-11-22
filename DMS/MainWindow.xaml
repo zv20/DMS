@@ -50,10 +50,10 @@
                 <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="DmsAccentBrush" />
                 <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="DmsAccentHoverBrush" />
                 <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="DmsAccentPressedBrush" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="White" />
-                <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="White" />
+                <StaticResource x:Key="NavigationViewItemForegroundSelected" ResourceKey="DmsNavForeground" />
+                <StaticResource x:Key="NavigationViewItemForegroundSelectedPointerOver" ResourceKey="DmsNavHoverForeground" />
+                <StaticResource x:Key="NavigationViewItemForegroundSelectedPressed" ResourceKey="DmsNavPressedForeground" />
+                <StaticResource x:Key="NavigationViewSelectionIndicatorForeground" ResourceKey="DmsNavForeground" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>

@@ -62,7 +62,7 @@ public partial class DatabaseService : IDisposable
             // The app owns one long-lived connection. Disabling ADO.NET pooling
             // makes backup/restore and test cleanup release WAL handles promptly
             // on Windows instead of leaving files locked by a pooled connection.
-            _connection = new SqliteConnection($"Data Source={_dbPath};Pooling=False");
+            _connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _dbPath, Pooling = false }.ToString());
             await _connection.OpenAsync();
 
             await ConfigureConnectionAsync();
@@ -505,7 +505,7 @@ public partial class DatabaseService : IDisposable
         _logger.LogInformation("Deleted allergen {Id}", id);
     }
 
-    private Allergen ReadAllergen(SqliteDataReader reader)
+    private static Allergen ReadAllergen(SqliteDataReader reader)
     {
         return new Allergen
         {
@@ -736,16 +736,19 @@ public partial class DatabaseService : IDisposable
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1));
-                if (template?.Document != null)
-                {
-                    template.Name = reader.GetString(0);
-                    template.IsPreset = reader.GetInt32(2) == 1;
-                    list.Add(template);
-                }
+                if (ReadTemplate(reader) is { } template) list.Add(template);
             }
         }
         return list;
+    }
+
+    private static MenuTemplate? ReadTemplate(SqliteDataReader reader)
+    {
+        var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(reader.GetString(1));
+        if (template?.Document == null) return null;
+        template.Name = reader.GetString(0);
+        template.IsPreset = reader.GetInt32(2) == 1;
+        return template;
     }
 
     public async Task HydrateTemplateImagesAsync(MenuTemplate template)
@@ -833,7 +836,7 @@ public partial class DatabaseService : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
         await InitializeAsync();
 
-        await using var destination = new SqliteConnection($"Data Source={destinationPath};Pooling=False");
+        await using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = destinationPath, Pooling = false }.ToString());
         await destination.OpenAsync();
         _connection!.BackupDatabase(destination);
         _logger.LogInformation("Created SQLite backup at {Path}", destinationPath);
@@ -1038,6 +1041,37 @@ public partial class DatabaseService : IDisposable
                     if (ingredient.Allergens.Any(value => value is null))
                         throw new InvalidDataException("The selected backup contains an invalid ingredient list.");
                 }
+            }
+            using (var allergens = source.CreateCommand())
+            {
+                allergens.CommandText = "SELECT COUNT(*) FROM pragma_table_info('allergens') WHERE name='icon' COLLATE NOCASE";
+                var icon = Convert.ToInt32(allergens.ExecuteScalar()) > 0 ? "icon" : "NULL";
+                allergens.CommandText = $"SELECT id, name, color, {icon} FROM allergens";
+                using var reader = allergens.ExecuteReader();
+                while (reader.Read()) ReadAllergen(reader);
+            }
+            using (var templates = source.CreateCommand())
+            {
+                // Migration 3 removes obsolete template formats from older backups.
+                templates.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=3";
+                if (BackupHasTable(source, "schema_migrations") && Convert.ToInt32(templates.ExecuteScalar()) > 0)
+                {
+                    templates.CommandText = "SELECT name, data_json, is_preset FROM templates";
+                    using var reader = templates.ExecuteReader();
+                    while (reader.Read())
+                        if (ReadTemplate(reader) == null)
+                            throw new InvalidDataException("The selected backup contains an unreadable template.");
+                }
+            }
+            using (var links = source.CreateCommand())
+            {
+                links.CommandText = "PRAGMA foreign_key_check";
+                if (links.ExecuteScalar() != null)
+                    throw new InvalidDataException("The selected backup contains broken database references.");
+                // Legacy menu tables may have no declared foreign key.
+                links.CommandText = "SELECT 1 FROM menu m WHERE NOT EXISTS (SELECT 1 FROM recipes r WHERE r.id=m.recipe_id) LIMIT 1";
+                if (links.ExecuteScalar() != null)
+                    throw new InvalidDataException("The selected backup contains a menu assignment with no matching recipe.");
             }
             using (var menu = source.CreateCommand())
             {

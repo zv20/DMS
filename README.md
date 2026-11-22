@@ -82,6 +82,9 @@ New-Item -ItemType Directory -Force artifacts/installer
 $publishDir = (Resolve-Path artifacts/DMS-win-x64).Path
 python scripts/installer-release-notes.py $version artifacts/installer/release-notes.rtf
 $releaseNotes = (Resolve-Path artifacts/installer/release-notes.rtf).Path
+$msi = "artifacts/installer/DMS-Setup-$version.msi"
+wix build installer/DMS.wxs -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch x64 -d "Version=$version" -d "PublishDir=$publishDir" -d "ReleaseNotesFile=$releaseNotes" -o $msi
+./scripts/build-online-setup.ps1 -Msi $msi -Version $version
 ```
 
 The installer is written to `artifacts/installer/`.
@@ -98,15 +101,9 @@ uses commit subjects since the release branch's common ancestor. To change the
 major or minor version, edit `<Version>` in `DMS/DMS.csproj` before pushing to
 `test`; for example, `0.2.0` is released as `0.2.0`, and later releases advance
 the patch number. The workflow does not automatically change the major or minor
-version. A test run that fails leaves its prepared version on `test` for retry.
+version.
 
-One-time setup: enable **Allow GitHub Actions to create and approve pull
-requests** in repository Actions settings. Push the workflow changes to `test`,
-wait for its bootstrap test run, and merge its pull request into `release`.
-The bootstrap run tests only; automatic publishing starts with the next push to
-`test`. This retains the release branch's required source check. If a release
-fails after its pull request was merged, rerun the failed publish job; do not
-manually recreate a tag without checking its commit first.
+For automatic promotion, enable **Allow GitHub Actions to create and approve pull requests** in repository Actions settings. If publishing fails after promotion, rerun the failed publish job.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
 placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in
@@ -117,6 +114,3 @@ backup/restore with images, language switching, template save/reopen, PDF/image
 export and A4 printing in the installed app. Record the revision and results.
 
 </details>
-
-The earlier browser/Electron app is on the [archive branch](https://github.com/zv20/DMS/tree/archive).
-Historical guides and migration plans remain in Git history.

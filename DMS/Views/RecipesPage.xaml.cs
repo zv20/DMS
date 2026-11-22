@@ -269,7 +269,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(nameBox);
         var duplicateWarning = new TextBlock { Text = L.Get("DuplicateRecipeWarning"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         panel.Children.Add(duplicateWarning);
-        void UpdateDuplicateWarning() => duplicateWarning.Visibility = !string.IsNullOrWhiteSpace(nameBox.Text) && _recipes.Any(item => item.Id != recipe.Id && string.Equals(item.Name.Trim(), nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ? Visibility.Visible : Visibility.Collapsed;
+        void UpdateDuplicateWarning() => duplicateWarning.Visibility = CatalogPageState.HasDuplicateName(nameBox.Text, _recipes.Where(item => item.Id != recipe.Id).Select(item => item.Name)) ? Visibility.Visible : Visibility.Collapsed;
         nameBox.TextChanged += (_, _) => UpdateDuplicateWarning();
         UpdateDuplicateWarning();
 
@@ -490,7 +490,7 @@ public class RecipeItemViewModel
     public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
-    public string CaloriesDisplay => Calories > 0 ? $"🔥 {Calories} kcal" : "";
+    public string CaloriesDisplay => Calories > 0 ? "🔥 " + L.Format("MenuEnergyKcal", Calories) : "";
     public string IngredientsDisplay => Ingredients.Count == 0 ? "" : $"{L.Get("Text_Ingredients_f9e84e")}: {string.Join(", ", Ingredients)}";
     public string AllergensDisplay => AllergenDisplay.FormatList(Allergens, AllergenIcons);
 

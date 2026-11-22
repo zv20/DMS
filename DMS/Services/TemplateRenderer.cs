@@ -15,7 +15,7 @@ public sealed record TemplatePageResult(FrameworkElement Page, bool Overflowed, 
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateRenderer
 {
-    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default, bool measureOnly = false)
+    public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default, bool measureOnly = false, int[]? pageDays = null)
     {
         var lifetime = new TemplateVisualLifetime();
         try
@@ -26,7 +26,8 @@ public static class TemplateRenderer
         const double pageContentHeight = 1123 - 80;
         var recipeMap = recipes.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First());
         var populated = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, true, includeWeekend);
-        var visible = template.HideEmptyDays ? populated : TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, false, includeWeekend);
+        var visible = pageDays ?? (template.HideEmptyDays ? populated : TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, false, includeWeekend));
+        var hasMeals = visible.Intersect(populated).Any();
         var fixedHeights = visible.Select(day => template.DayHeights != null && day < template.DayHeights.Length ? template.DayHeights[day] : null).ToArray();
         var dayGap = double.IsFinite(template.DaySpacing) ? Math.Clamp(template.DaySpacing, 0, 40) : 1;
         var ingredientMap = ingredients.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -49,7 +50,12 @@ public static class TemplateRenderer
         var noticeHeight = string.IsNullOrWhiteSpace(template.FooterNoticeText) ? 0 : notice.DesiredSize.Height + 4;
         var footerNeeded = footer.DesiredSize.Height + noticeHeight;
         var footerHeight = Math.Clamp(footerNeeded, 70, 240);
-        var dayArea = Math.Max(0, pageContentHeight - headerHeight - 36 - footerHeight);
+        DateTime? first = visible.Length > 0 ? monday.AddDays(visible[0]) : null;
+        DateTime? last = visible.Length > 0 ? monday.AddDays(visible[^1]) : null;
+        var date = StyledText(first.HasValue && last.HasValue ? TemplateDates.Range(first.Value, last.Value, template.DateRangeFormat, Localization.Culture) : "", GetTextStyle(template, "date"));
+        date.Measure(new Size(width, double.PositiveInfinity));
+        var dateHeight = Math.Max(36, date.DesiredSize.Height);
+        var dayArea = Math.Max(0, pageContentHeight - headerHeight - dateHeight - footerHeight);
         var daySpace = Math.Max(0, dayArea - Math.Max(0, visible.Length - 1) * dayGap);
         StackPanel[] panels = [];
         double[] required = [];
@@ -58,7 +64,7 @@ public static class TemplateRenderer
         {
             panels = visible.Select((day, index) => BuildDay(monday.AddDays(day), day, dayEntries[index], recipeMap, ingredientMap, font, template, null, lifetime)).ToArray();
             required = panels.Select((panel, index) => { var inset = DayPadding(template, visible[index]) + DayBorderThickness(template, visible[index]); panel.Measure(new Size(Math.Max(20, width - 2 * inset), double.PositiveInfinity)); return panel.DesiredSize.Height + 2 * inset; }).ToArray();
-            fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace);
+            fit = TemplatePageLayout.Resolve(required, fixedHeights, daySpace, maxHeight: Math.Max(TemplatePageLayout.DayMaxHeight, required.DefaultIfEmpty().Max()));
             if (!fit.Overflowed || font <= floor || !template.AllowFontShrink)
             {
                 if (onSelected != null)
@@ -69,7 +75,7 @@ public static class TemplateRenderer
         // Long footers consume available day space but are never silently clipped.
         var overflow = fit.Overflowed || insets.Overflowed || header.DesiredSize.Height + reflectionHeight > headerHeight || footerNeeded > footerHeight + .5;
         if (measureOnly)
-            return new TemplatePageResult(new Grid(), overflow, Task.CompletedTask, populated.Length > 0, null, null, lifetime);
+            return new TemplatePageResult(new Grid(), overflow, Task.CompletedTask, hasMeals, null, null, lifetime);
         var days = new Grid { RowSpacing = dayGap };
         for (var i = 0; i < visible.Length; i++)
         {
@@ -90,7 +96,7 @@ public static class TemplateRenderer
             Grid.SetRow(border, i); days.Children.Add(border);
         }
         var grid = new Grid();
-        foreach (var height in new[] { headerHeight, 36d, dayArea, footerHeight }) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(height) });
+        foreach (var height in new[] { headerHeight, dateHeight, dayArea, footerHeight }) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(height) });
         var headerPanel = new StackPanel();
         headerPanel.Children.Add(header);
         if (reflectionHeight > 0)
@@ -107,11 +113,6 @@ public static class TemplateRenderer
         var headerCell = new Border { Background = new SolidColorBrush(Colors.Transparent), Child = headerPanel };
         Selectable(headerCell, "header", onSelected, lifetime);
         grid.Children.Add(headerCell);
-        DateTime? first = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[0] : 0) : null;
-        DateTime? last = populated.Length > 0 ? monday.AddDays(template.HideEmptyDays ? populated[^1] : includeWeekend ? 6 : 4) : null;
-        var date = StyledText(first is DateTime startDate && last is DateTime endDate ? startDate == endDate ? $"{startDate:d}" : $"{startDate:d} – {endDate:d}" : "", GetTextStyle(template, "date"));
-        date.Measure(new Size(width, double.PositiveInfinity));
-        overflow |= date.DesiredSize.Height > 36;
         var dateCell = new Border { Background = new SolidColorBrush(Colors.Transparent), Child = date };
         Selectable(dateCell, "date", onSelected, lifetime);
         Grid.SetRow(dateCell, 1); grid.Children.Add(dateCell);
@@ -141,7 +142,7 @@ public static class TemplateRenderer
         var backgroundReady = TemplatePageImages.LoadImageAsync(backgroundImage, template.BackgroundImageDataUri,
             bitmapCache, decodeWidth, cancellationToken, lifetime, isBackground: true);
         var imagesReady = Task.WhenAll(backgroundReady, canvasBackground.ImagesReady, decorations.ImagesReady, foreground.ImagesReady);
-        return new TemplatePageResult(page, overflow, imagesReady, populated.Length > 0, first, last, lifetime);
+        return new TemplatePageResult(page, overflow, imagesReady, hasMeals, first, last, lifetime);
         }
         catch { lifetime.Dispose(); throw; }
     }
@@ -162,7 +163,7 @@ public static class TemplateRenderer
     }
 
     private static TextBlock StyledText(string text, TemplateTextStyle style, double scale = 1)
-        => new() { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = Brush(style.Color, style.Opacity), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
+        => new() { Text = text, FontFamily = TemplateFonts.Resolve(style), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, TextDecorations = style.Underline ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None, Foreground = Brush(style.Color, style.Opacity), TextAlignment = style.Alignment switch { "center" => TextAlignment.Center, "right" => TextAlignment.Right, _ => TextAlignment.Left }, TextWrapping = TextWrapping.Wrap };
 
     private static void Selectable(FrameworkElement element, string key, Action<string, FrameworkElement>? onSelected, TemplateVisualLifetime lifetime)
     {
@@ -194,7 +195,7 @@ public static class TemplateRenderer
     {
         var panel = new StackPanel { Spacing = double.IsFinite(template.MealLineSpacing) ? Math.Clamp(template.MealLineSpacing, 0, 20) : 1 };
         var scale = double.IsFinite(template.FontSize) && template.FontSize > 0 ? size / template.FontSize : 1;
-        var heading = StyledText(day.ToString("dddd, d MMMM"), GetTextStyle(template, $"heading:{dayIndex}"), scale);
+        var heading = StyledText(TemplateDates.Day(day, template.DayHeadingFormat, Localization.Culture), GetTextStyle(template, $"heading:{dayIndex}"), scale);
         Selectable(heading, $"heading:{dayIndex}", onSelected, lifetime);
         panel.Children.Add(heading);
         if (entries.Count == 0) return panel;
@@ -208,7 +209,7 @@ public static class TemplateRenderer
             var meal = new WrappingPanel();
             var title = $"{MenuOutputService.SlotOrder(entry.Slot)}. {recipe.Name}";
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
-            if (recipe.Calories > 0) title += $" · {recipe.Calories} kcal";
+            if (recipe.Calories > 0) title += " · " + Localization.Format("MenuEnergyKcal", recipe.Calories);
             var titleBlock = StyledText(title, menuStyle, scale);
             Selectable(titleBlock, $"menu:{dayIndex}", onSelected, lifetime);
             meal.Children.Add(titleBlock);
@@ -230,6 +231,7 @@ public static class TemplateRenderer
                     }
                     else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
                 }
+                if (onSelected != null) ingredientBlock.DataContext = recipe;
                 Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
                 meal.Children.Add(ingredientBlock);
             }
@@ -240,7 +242,7 @@ public static class TemplateRenderer
 
     private static void AddRun(TextBlock block, string text, TemplateTextStyle style, double scale, bool ingredientAllergen)
     {
-        var run = new Run { Text = text, FontFamily = new FontFamily(string.IsNullOrWhiteSpace(style.FontFamily) ? "Arial" : style.FontFamily), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = Brush(style.Color, style.Opacity) };
+        var run = new Run { Text = text, FontFamily = TemplateFonts.Resolve(style), FontSize = Math.Clamp(double.IsFinite(style.FontSize) ? style.FontSize * scale : 14, 6, 72), FontWeight = style.Bold ? FontWeights.Bold : FontWeights.Normal, FontStyle = style.Italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal, Foreground = Brush(style.Color, style.Opacity) };
         if (ingredientAllergen || style.Underline) { var underline = new Underline(); underline.Inlines.Add(run); block.Inlines.Add(underline); }
         else block.Inlines.Add(run);
     }
