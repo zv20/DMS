@@ -84,11 +84,10 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         WeekPicker.Language = L.Language;
         DayFormatBox.Header = L.Get("TplDayFormat");
         RangeFormatBox.Header = L.Get("TplRangeFormat");
-        var sample = new DateTime(2025, 10, 20);
         foreach (var format in TemplateDates.DayFormats)
-            DayFormatBox.Items.Add(new ComboBoxItem { Tag = format, Content = TemplateDates.Day(sample, format, L.Culture) });
+            DayFormatBox.Items.Add(new ComboBoxItem { Tag = format });
         foreach (var format in TemplateDates.RangeFormats)
-            RangeFormatBox.Items.Add(new ComboBoxItem { Tag = format, Content = TemplateDates.Range(sample, sample.AddDays(6), format, L.Culture) });
+            RangeFormatBox.Items.Add(new ComboBoxItem { Tag = format });
         HideEmptyDaysBox.Content = L.Get("TplBuilderHideEmptyDays");
         AddImageMenuItem.Text = L.Get("TplAddImage");
         InitializeImageInteraction();
@@ -612,6 +611,14 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _dirty = true; Render();
     }
 
+    private void UpdateDateFormatExamples(DateTime first, DateTime last)
+    {
+        foreach (var item in DayFormatBox.Items.Cast<ComboBoxItem>())
+            item.Content = TemplateDates.Day(first, (string)item.Tag, L.Culture);
+        foreach (var item in RangeFormatBox.Items.Cast<ComboBoxItem>())
+            item.Content = TemplateDates.Range(first, last, (string)item.Tag, L.Culture);
+    }
+
     private void DateFormat_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (_binding || sender is not ComboBox { SelectedItem: ComboBoxItem { Tag: string format } } box) return;
@@ -1105,6 +1112,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var previous = _previewLifetime;
             _previewLifetime = result.Lifetime;
             PageHost.Content = result.Page;
+            UpdateDateFormatExamples(result.FirstDay ?? _monday, result.LastDay ?? _monday.AddDays(_weekendEnabled ? 6 : 4));
             previous?.Dispose();
             if (_selectedBlock != null)
                 DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, _selectedBlock); PositionContextTools(); });
