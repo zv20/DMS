@@ -84,12 +84,6 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     [InlineData("ALTER TABLE allergens RENAME COLUMN color TO old_color; ALTER TABLE allergens ADD COLUMN color TEXT")]
     [InlineData("PRAGMA foreign_keys=OFF; INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
     [InlineData("DROP TABLE menu; CREATE TABLE menu(id INTEGER PRIMARY KEY,date TEXT,slot TEXT,recipe_id INTEGER,created_at TEXT, UNIQUE(date,slot)); INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
-    [InlineData("UPDATE recipes SET ingredients_json='not-json'")]
-    [InlineData("UPDATE recipes SET allergens_json='{}'")]
-    [InlineData("UPDATE ingredients SET allergens_json='[42]'")]
-    [InlineData("UPDATE recipes SET ingredients_json='[null]'")]
-    [InlineData("UPDATE recipes SET allergens_json='[null]'")]
-    [InlineData("UPDATE ingredients SET allergens_json='[null]'")]
     [InlineData("DROP TABLE ingredients; CREATE TABLE ingredients (name TEXT NOT NULL UNIQUE, id INTEGER PRIMARY KEY, allergens_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT '')")]
     [InlineData("ALTER TABLE settings RENAME TO old_settings; CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT); INSERT INTO settings SELECT * FROM old_settings; DROP TABLE old_settings; UPDATE settings SET value=NULL WHERE key='language'")]
     [InlineData("INSERT OR REPLACE INTO settings (key, value) VALUES ('meal_categories', 'not-json')")]
@@ -129,7 +123,7 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathFor("legacy.db")};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE recipes SET allergens_json='null'; DROP TABLE menu_slot_categories; ALTER TABLE allergens DROP COLUMN icon";
+            command.CommandText = "DROP TABLE menu_slot_categories; ALTER TABLE allergens DROP COLUMN icon";
             command.ExecuteNonQuery();
         }
         using var current = Open("current.db");

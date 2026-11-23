@@ -9,6 +9,22 @@ namespace DMS.Tests;
 public sealed class DatabaseRoundTripTests : IDisposable
 {
     [Fact]
+    public async Task CurrentSchemaStoresRecipeAndIngredientRelationshipsOnlyInTables()
+    {
+        using var db = Open("relational-schema.db");
+        await db.InitializeAsync();
+        using var connection = new SqliteConnection($"Data Source={db.GetDatabasePath()};Pooling=False");
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM pragma_table_info('recipes') UNION ALL SELECT name FROM pragma_table_info('ingredients')";
+        using var reader = command.ExecuteReader();
+        var columns = new List<string>();
+        while (reader.Read()) columns.Add(reader.GetString(0));
+        Assert.DoesNotContain("ingredients_json", columns);
+        Assert.DoesNotContain("allergens_json", columns);
+    }
+
+    [Fact]
     public async Task PendingAppTourIsConsumedOnlyOnce()
     {
         using var db = Open("app-tour.db");

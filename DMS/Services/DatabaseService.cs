@@ -148,15 +148,12 @@ public partial class DatabaseService : IDisposable
                 portion_size TEXT,
                 calories INTEGER,
                 instructions TEXT,
-                ingredients_json TEXT NOT NULL DEFAULT '[]',
-                allergens_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
             @"CREATE TABLE IF NOT EXISTS ingredients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
-                allergens_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
             @"CREATE TABLE IF NOT EXISTS menu (
@@ -350,19 +347,16 @@ public partial class DatabaseService : IDisposable
         using var cmd = _connection.CreateCommand();
         cmd.Transaction = transaction;
         var now = DateTime.UtcNow.ToString("O");
-        var ingredientsJson = System.Text.Json.JsonSerializer.Serialize(recipe.Ingredients);
-        var allergensJson = System.Text.Json.JsonSerializer.Serialize(recipe.Allergens);
-
         if (recipe.Id == 0)
         {
-            cmd.CommandText = @"INSERT INTO recipes (name, category, portion_size, calories, instructions, ingredients_json, allergens_json, created_at, updated_at)
-                               VALUES (@name, @category, @portion, @calories, @instructions, @ingredients, @allergens, @now, @now);
+            cmd.CommandText = @"INSERT INTO recipes (name, category, portion_size, calories, instructions, created_at, updated_at)
+                               VALUES (@name, @category, @portion, @calories, @instructions, @now, @now);
                                SELECT last_insert_rowid();";
         }
         else
         {
             cmd.CommandText = @"UPDATE recipes SET name=@name, category=@category, portion_size=@portion, calories=@calories,
-                               instructions=@instructions, ingredients_json=@ingredients, allergens_json=@allergens, updated_at=@now
+                               instructions=@instructions, updated_at=@now
                                WHERE id=@id";
             cmd.Parameters.AddWithValue("@id", recipe.Id);
         }
@@ -372,8 +366,6 @@ public partial class DatabaseService : IDisposable
         cmd.Parameters.AddWithValue("@portion", recipe.PortionSize);
         cmd.Parameters.AddWithValue("@calories", recipe.Calories);
         cmd.Parameters.AddWithValue("@instructions", recipe.Instructions ?? "");
-        cmd.Parameters.AddWithValue("@ingredients", ingredientsJson);
-        cmd.Parameters.AddWithValue("@allergens", allergensJson);
         cmd.Parameters.AddWithValue("@now", now);
 
         var result = await cmd.ExecuteScalarAsync();
@@ -416,8 +408,7 @@ public partial class DatabaseService : IDisposable
             PortionSize = reader.IsDBNull(3) ? "" : reader.GetString(3),
             Calories = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
             Instructions = reader.IsDBNull(5) ? "" : reader.GetString(5),
-            Ingredients = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(6)) ?? new(),
-            Allergens = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(7)) ?? new()
+            Ingredients = [], Allergens = []
         };
     }
 
@@ -443,7 +434,6 @@ public partial class DatabaseService : IDisposable
         using var transaction = _connection!.BeginTransaction();
         using var cmd = _connection!.CreateCommand();
         cmd.Transaction = transaction;
-        var allergensJson = System.Text.Json.JsonSerializer.Serialize(ingredient.Allergens);
         var now = DateTime.UtcNow.ToString("O");
 
         if (ingredient.Id != 0)
@@ -470,30 +460,6 @@ public partial class DatabaseService : IDisposable
                             throw new InvalidOperationException("Ingredient name conflicts with another ingredient.");
                     }
                 }
-                using var recipes = _connection.CreateCommand();
-                recipes.Transaction = transaction;
-                recipes.CommandText = "SELECT id, ingredients_json FROM recipes";
-                var changes = new List<(long Id, string Json)>();
-                using (var reader = await recipes.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        var names = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(1)) ?? [];
-                        if (firstMatch != ingredient.Id || !names.Any(name => string.Equals(name, oldName, StringComparison.OrdinalIgnoreCase))) continue;
-                        for (var i = 0; i < names.Count; i++)
-                            if (string.Equals(names[i], oldName, StringComparison.OrdinalIgnoreCase)) names[i] = ingredient.Name;
-                        changes.Add((reader.GetInt64(0), System.Text.Json.JsonSerializer.Serialize(names)));
-                    }
-                }
-                foreach (var (recipeId, json) in changes)
-                {
-                    using var update = _connection.CreateCommand();
-                    update.Transaction = transaction;
-                    update.CommandText = "UPDATE recipes SET ingredients_json=@json WHERE id=@id";
-                    update.Parameters.AddWithValue("@json", json);
-                    update.Parameters.AddWithValue("@id", recipeId);
-                    await update.ExecuteNonQueryAsync();
-                }
                 if (firstMatch == ingredient.Id)
                 {
                     using var updateRelations = _connection.CreateCommand();
@@ -508,18 +474,17 @@ public partial class DatabaseService : IDisposable
 
         if (ingredient.Id == 0)
         {
-            cmd.CommandText = @"INSERT INTO ingredients (name, allergens_json, created_at)
-                               VALUES (@name, @allergens, @now);
+            cmd.CommandText = @"INSERT INTO ingredients (name, created_at)
+                               VALUES (@name, @now);
                                SELECT last_insert_rowid();";
         }
         else
         {
-            cmd.CommandText = "UPDATE ingredients SET name=@name, allergens_json=@allergens WHERE id=@id";
+            cmd.CommandText = "UPDATE ingredients SET name=@name WHERE id=@id";
             cmd.Parameters.AddWithValue("@id", ingredient.Id);
         }
 
         cmd.Parameters.AddWithValue("@name", ingredient.Name);
-        cmd.Parameters.AddWithValue("@allergens", allergensJson);
         cmd.Parameters.AddWithValue("@now", now);
 
         var result = await cmd.ExecuteScalarAsync();
@@ -537,22 +502,9 @@ public partial class DatabaseService : IDisposable
         using (var ingredient = _connection.CreateCommand())
         {
             ingredient.Transaction = transaction;
-            ingredient.CommandText = "SELECT name FROM ingredients WHERE id=@id";
+            ingredient.CommandText = "SELECT 1 FROM recipe_ingredients WHERE ingredient_id=@id LIMIT 1";
             ingredient.Parameters.AddWithValue("@id", id);
-            var name = await ingredient.ExecuteScalarAsync() as string;
-            if (name != null)
-            {
-                using var recipes = _connection.CreateCommand();
-                recipes.Transaction = transaction;
-                recipes.CommandText = "SELECT ingredients_json FROM recipes";
-                using var reader = await recipes.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    var names = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(0)) ?? [];
-                    if (names.Any(item => string.Equals(item, name, StringComparison.OrdinalIgnoreCase)))
-                        throw new IngredientInUseException();
-                }
-            }
+            if (await ingredient.ExecuteScalarAsync() != null) throw new IngredientInUseException();
         }
         using var cmd = _connection!.CreateCommand();
         cmd.Transaction = transaction;
@@ -569,7 +521,7 @@ public partial class DatabaseService : IDisposable
         {
             Id = reader.GetInt32(0),
             Name = reader.GetString(1),
-            Allergens = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(2)) ?? new()
+            Allergens = []
         };
     }
 
@@ -1133,16 +1085,19 @@ public partial class DatabaseService : IDisposable
         using (var version = source.CreateCommand())
         {
             version.CommandText = "PRAGMA user_version";
-            if (Convert.ToInt64(version.ExecuteScalar()) > 4)
+            if (Convert.ToInt64(version.ExecuteScalar()) > 5)
                 throw new InvalidDataException("This backup was created by a newer DMS database version.");
         }
 
         // Older DMS databases may lack later optional tables or columns; schema
         // initialization can add those after the restore succeeds.
+        var relationalOnly = BackupHasMigration(source, 5);
         var required = new Dictionary<string, string[]>
         {
-            ["recipes"] = ["id", "name", "category", "portion_size", "calories", "instructions", "ingredients_json", "allergens_json", "created_at", "updated_at"],
-            ["ingredients"] = ["id", "name", "allergens_json", "created_at"],
+            ["recipes"] = relationalOnly
+                ? ["id", "name", "category", "portion_size", "calories", "instructions", "created_at", "updated_at"]
+                : ["id", "name", "category", "portion_size", "calories", "instructions", "ingredients_json", "allergens_json", "created_at", "updated_at"],
+            ["ingredients"] = relationalOnly ? ["id", "name", "created_at"] : ["id", "name", "allergens_json", "created_at"],
             ["allergens"] = ["id", "name", "color", "created_at"],
             ["menu"] = ["id", "date", "slot", "recipe_id", "created_at"],
             ["templates"] = ["name", "data_json", "is_preset", "created_at", "updated_at"],
@@ -1208,13 +1163,13 @@ public partial class DatabaseService : IDisposable
             {
                 recipes.CommandText = "SELECT * FROM recipes ORDER BY name";
                 using var reader = recipes.ExecuteReader();
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < required["recipes"].Length; i++)
                     if (!string.Equals(reader.GetName(i), required["recipes"][i], StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("The selected backup has an unsupported recipe column order.");
                 while (reader.Read())
                 {
                     var recipe = ReadRecipe(reader);
-                    if (recipe.Ingredients.Any(value => value is null) || recipe.Allergens.Any(value => value is null))
+                    if (!relationalOnly && (ReadNames(reader.GetString(6)).Any(value => value is null) || ReadNames(reader.GetString(7)).Any(value => value is null)))
                         throw new InvalidDataException("The selected backup contains an invalid recipe list.");
                 }
             }
@@ -1222,13 +1177,13 @@ public partial class DatabaseService : IDisposable
             {
                 ingredients.CommandText = "SELECT * FROM ingredients ORDER BY name";
                 using var reader = ingredients.ExecuteReader();
-                for (var i = 0; i < 3; i++)
+                for (var i = 0; i < required["ingredients"].Length; i++)
                     if (!string.Equals(reader.GetName(i), required["ingredients"][i], StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("The selected backup has an unsupported ingredient column order.");
                 while (reader.Read())
                 {
                     var ingredient = ReadIngredient(reader);
-                    if (ingredient.Allergens.Any(value => value is null))
+                    if (!relationalOnly && ReadNames(reader.GetString(2)).Any(value => value is null))
                         throw new InvalidDataException("The selected backup contains an invalid ingredient list.");
                 }
             }

@@ -29,6 +29,14 @@ public partial class DatabaseService
         command.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=4";
         if (Convert.ToInt64(command.ExecuteScalar()) == 0)
         {
+            if (!HasColumn("recipes", "ingredients_json"))
+            {
+                command.CommandText = "INSERT OR IGNORE INTO schema_migrations(version) VALUES (4)";
+                command.ExecuteNonQuery();
+                transaction.Commit();
+                InitializeRelationalStorage();
+                return;
+            }
             var recipes = new List<(long Id, List<string> Ingredients, List<string> Allergens)>();
             command.CommandText = "SELECT id,ingredients_json,allergens_json FROM recipes";
             using (var reader = command.ExecuteReader())
@@ -50,6 +58,36 @@ public partial class DatabaseService
             command.CommandText = "INSERT INTO schema_migrations(version) VALUES (4)";
             command.ExecuteNonQuery();
             command.CommandText = "PRAGMA user_version = 4";
+            command.ExecuteNonQuery();
+        }
+        transaction.Commit();
+        InitializeRelationalStorage();
+    }
+
+    private bool HasColumn(string table, string column)
+    {
+        using var command = _connection!.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name=@column";
+        command.Parameters.AddWithValue("@column", column);
+        return Convert.ToInt64(command.ExecuteScalar()) > 0;
+    }
+
+    private void InitializeRelationalStorage()
+    {
+        using var transaction = _connection!.BeginTransaction();
+        using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=5";
+        if (Convert.ToInt64(command.ExecuteScalar()) == 0)
+        {
+            // Version 4 has already moved every list value into relationship rows.
+            // SQLite 3.35+ supports transactional column removal, leaving no JSON cache.
+            if (HasColumn("recipes", "ingredients_json"))
+            {
+                command.CommandText = "ALTER TABLE recipes DROP COLUMN ingredients_json; ALTER TABLE recipes DROP COLUMN allergens_json; ALTER TABLE ingredients DROP COLUMN allergens_json;";
+                command.ExecuteNonQuery();
+            }
+            command.CommandText = "INSERT INTO schema_migrations(version) VALUES (5); PRAGMA user_version = 5;";
             command.ExecuteNonQuery();
         }
         transaction.Commit();
