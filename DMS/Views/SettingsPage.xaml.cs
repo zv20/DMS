@@ -332,6 +332,17 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         finally { RunSetupButton.IsEnabled = true; }
     }
 
+    private async void ShowTour_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await CanLeaveAsync()) return;
+        ShowTourButton.IsEnabled = false;
+        try
+        {
+            if (App.CurrentWindow is MainWindow window) await window.ShowTourAsync();
+        }
+        finally { ShowTourButton.IsEnabled = true; }
+    }
+
     private async void SavePlanning_Click(object sender, RoutedEventArgs e)
     {
         var names = _categoryEditors.Select(item => item.Name.Text.Trim()).ToArray();

@@ -91,10 +91,12 @@ public sealed partial class MainWindow : Window
                     await App.Services.GetRequiredService<SettingsService>().LoadAsync();
                     var configured = await database.GetSettingsAsync();
                     Localization.Apply(configured!.Language);
+                    await database.RequestAppTourAsync();
                     App.ReloadLanguage();
                     return;
                 }
             }
+            if (await database.TakePendingAppTourAsync()) await ShowTourAsync();
             StartPerformanceNavigation();
             // An opt-in signal lets the packaging check verify that the installed
             // app reached its main window and loaded application resources.
@@ -198,6 +200,17 @@ public sealed partial class MainWindow : Window
         "settings" => typeof(SettingsPage),
         _ => null
     };
+
+    public Task ShowTourAsync() => AppTour.ShowAsync(RootGrid.XamlRoot, NavigateTourStepAsync);
+
+    private Task NavigateTourStepAsync(string tag)
+    {
+        var pageType = PageForTag(tag);
+        if (pageType == null) return Task.CompletedTask;
+        var item = pageType == typeof(SettingsPage) ? NavView.SettingsItem :
+            NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
+        return NavigateToAsync(pageType, item);
+    }
 
     private async Task ShowNavigationErrorAsync()
     {

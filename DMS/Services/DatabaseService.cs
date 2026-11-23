@@ -793,6 +793,32 @@ public partial class DatabaseService : IDisposable
         return string.Equals(await command.ExecuteScalarAsync() as string, "true", StringComparison.OrdinalIgnoreCase);
     }
 
+    public async Task RequestAppTourAsync()
+    {
+        await InitializeAsync();
+        using var command = _connection!.CreateCommand();
+        command.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES ('app_tour_pending', 'true')";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<bool> TakePendingAppTourAsync()
+    {
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT value FROM settings WHERE key = 'app_tour_pending'";
+        if (!string.Equals(await command.ExecuteScalarAsync() as string, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            transaction.Commit();
+            return false;
+        }
+        command.CommandText = "UPDATE settings SET value = 'false' WHERE key = 'app_tour_pending'";
+        await command.ExecuteNonQueryAsync();
+        transaction.Commit();
+        return true;
+    }
+
     private async Task SaveSettingsAsync(AppSettings settings, bool clearPlans, bool completeSetup)
     {
         var mealCategories = System.Text.Json.JsonSerializer.Serialize(settings.MealCategories);

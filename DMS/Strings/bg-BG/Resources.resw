@@ -394,4 +394,19 @@
   <data name="PresetAllergenFooter" xml:space="preserve"><value>Алергените са подчертани.</value></data>
   <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} ккал</value></data>
   <data name="PresetArtwork" xml:space="preserve"><value>Илюстрация: {0}</value></data>
+  <data name="ShowTour.Content" xml:space="preserve"><value>Кратка обиколка</value></data>
+  <data name="TourNext" xml:space="preserve"><value>Напред</value></data>
+  <data name="TourBack" xml:space="preserve"><value>Назад</value></data>
+  <data name="TourSkip" xml:space="preserve"><value>Пропусни обиколката</value></data>
+  <data name="TourFinish" xml:space="preserve"><value>Готово</value></data>
+  <data name="TourMenuTitle" xml:space="preserve"><value>Планирайте седмицата</value></data>
+  <data name="TourMenuDescription" xml:space="preserve"><value>Използвайте Планера на менюто, за да добавяте рецепти към всяко хранене и ден.</value></data>
+  <data name="TourRecipesTitle" xml:space="preserve"><value>Създайте библиотека с рецепти</value></data>
+  <data name="TourRecipesDescription" xml:space="preserve"><value>Тук създавате рецепти. Съставките, порциите, калориите и алергените им се пазят заедно.</value></data>
+  <data name="TourIngredientsTitle" xml:space="preserve"><value>Управлявайте съставки и алергени</value></data>
+  <data name="TourIngredientsDescription" xml:space="preserve"><value>Задайте алергените на съставките веднъж. Рецептите ги наследяват автоматично, а можете да добавяте и алергени само за рецепта.</value></data>
+  <data name="TourTemplateTitle" xml:space="preserve"><value>Оформете менюто</value></data>
+  <data name="TourTemplateDescription" xml:space="preserve"><value>Използвайте Конструктора на шаблони, за да оформите седмичното меню преди печат или експортиране.</value></data>
+  <data name="TourSettingsTitle" xml:space="preserve"><value>Настройте работното пространство</value></data>
+  <data name="TourSettingsDescription" xml:space="preserve"><value>Настройки съдържа опциите за планиране, архиви, изглед, настройка и тази обиколка, когато ви потрябва.</value></data>
 </root>

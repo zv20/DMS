@@ -9,6 +9,17 @@ namespace DMS.Tests;
 public sealed class DatabaseRoundTripTests : IDisposable
 {
     [Fact]
+    public async Task PendingAppTourIsConsumedOnlyOnce()
+    {
+        using var db = Open("app-tour.db");
+
+        await db.RequestAppTourAsync();
+
+        Assert.True(await db.TakePendingAppTourAsync());
+        Assert.False(await db.TakePendingAppTourAsync());
+    }
+
+    [Fact]
     public async Task RecipeKeepsIngredientAndAdditionalAllergenSourcesSeparate()
     {
         using var db = Open("allergen-sources.db");
