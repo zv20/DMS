@@ -136,9 +136,8 @@ public partial class DatabaseService
             if (exists.ExecuteScalar() is long preset)
             {
                 var existing = ReadStoredTemplate(definition.Name, preset != 0, transaction);
-                var json = JsonSerializer.Serialize(existing);
-                if (SeasonalTemplateDefaults.TryApplyRoomierTypography(json, out var refreshed))
-                    WriteTemplateDocument(JsonSerializer.Deserialize<MenuTemplate>(refreshed)!, transaction);
+                if (SeasonalTemplateDefaults.TryApplyRoomierTypography(existing))
+                    WriteTemplateDocument(existing, transaction);
                 continue;
             }
 
@@ -495,35 +494,25 @@ internal static class SeasonalTemplateDefaults
     };
 
     /// <summary>Updates only the untouched first draft of a preset, never a user's customisation.</summary>
-    internal static bool TryApplyRoomierTypography(string json, out string refreshedJson)
+    internal static bool TryApplyRoomierTypography(MenuTemplate template)
     {
-        refreshedJson = json;
-        try
-        {
-            var template = JsonSerializer.Deserialize<MenuTemplate>(json);
-            var styles = template?.Document?.TextStyles;
-            if (template?.Document == null || styles == null
-                || !HasSize(styles, "header", 25) || !HasSize(styles, "date", 14)
-                || !HasSize(styles, "heading", 15) || !HasSize(styles, "menu", 11)
-                || !HasSize(styles, "ingredients", 10) || !HasSize(styles, "allergens", 10)
-                || !HasSize(styles, "footer", 9) || template.Document.MealLineSpacing != 2)
-                return false;
-
-            template.Document.MealLineSpacing = 4;
-            styles["header"].FontSize = 28;
-            styles["date"].FontSize = 15;
-            styles["heading"].FontSize = 17;
-            styles["menu"].FontSize = 14;
-            styles["ingredients"].FontSize = 12;
-            styles["allergens"].FontSize = 12;
-            styles["footer"].FontSize = 10;
-            refreshedJson = JsonSerializer.Serialize(template);
-            return true;
-        }
-        catch (JsonException)
-        {
+        var styles = template.Document?.TextStyles;
+        if (template.Document == null || styles == null
+            || !HasSize(styles, "header", 25) || !HasSize(styles, "date", 14)
+            || !HasSize(styles, "heading", 15) || !HasSize(styles, "menu", 11)
+            || !HasSize(styles, "ingredients", 10) || !HasSize(styles, "allergens", 10)
+            || !HasSize(styles, "footer", 9) || template.Document.MealLineSpacing != 2)
             return false;
-        }
+
+        template.Document.MealLineSpacing = 4;
+        styles["header"].FontSize = 28;
+        styles["date"].FontSize = 15;
+        styles["heading"].FontSize = 17;
+        styles["menu"].FontSize = 14;
+        styles["ingredients"].FontSize = 12;
+        styles["allergens"].FontSize = 12;
+        styles["footer"].FontSize = 10;
+        return true;
     }
 
     private static bool HasSize(Dictionary<string, TemplateTextStyle> styles, string key, double size)

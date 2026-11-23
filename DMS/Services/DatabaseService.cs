@@ -731,11 +731,16 @@ public partial class DatabaseService : IDisposable
         try
         {
             var categories = System.Text.Json.JsonSerializer.Deserialize<List<MealCategory>>(value);
-            if (categories is not { Count: > 0 } || categories.Any(c => c == null || string.IsNullOrWhiteSpace(c.Id)) || categories.Select(c => c.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != categories.Count)
-                throw new InvalidDataException("The saved meal categories are invalid.");
-            return categories;
+            ValidateMealCategories(categories);
+            return categories!;
         }
         catch (System.Text.Json.JsonException ex) { throw new InvalidDataException("The saved meal categories are invalid.", ex); }
+    }
+
+    private static void ValidateMealCategories(List<MealCategory>? categories)
+    {
+        if (categories is not { Count: > 0 } || categories.Any(c => c == null || string.IsNullOrWhiteSpace(c.Id)) || categories.Select(c => c.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != categories.Count)
+            throw new InvalidDataException("The saved meal categories are invalid.");
     }
 
     private static int ParseMealsPerDay(string value) => int.TryParse(value, out var count) && count is >= 1 and <= 100
@@ -781,8 +786,7 @@ public partial class DatabaseService : IDisposable
 
     private async Task SaveSettingsAsync(AppSettings settings, bool clearPlans, bool completeSetup)
     {
-        var mealCategories = System.Text.Json.JsonSerializer.Serialize(settings.MealCategories);
-        ParseMealCategories(mealCategories);
+        ValidateMealCategories(settings.MealCategories);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
         if (clearPlans)
@@ -1292,7 +1296,7 @@ public partial class DatabaseService : IDisposable
             using var check=source.CreateCommand(); check.CommandText=$"SELECT position FROM {table} ORDER BY position"; using var reader=check.ExecuteReader(); var i=0; while(reader.Read()) if(reader.GetInt32(0)!=i++) throw new InvalidDataException("Invalid settings order.");
         }
         using (var colors = source.CreateCommand()) { colors.CommandText="SELECT color FROM recent_template_colors"; using var reader=colors.ExecuteReader(); while(reader.Read()) _ = reader.GetString(0); }
-        using var categories=source.CreateCommand(); categories.CommandText="SELECT id,name FROM meal_categories ORDER BY position"; using var values=categories.ExecuteReader(); var list=new List<MealCategory>(); while(values.Read()) list.Add(new MealCategory { Id=values.GetString(0), Name=values.GetString(1) }); ParseMealCategories(System.Text.Json.JsonSerializer.Serialize(list));
+        using var categories=source.CreateCommand(); categories.CommandText="SELECT id,name FROM meal_categories ORDER BY position"; using var values=categories.ExecuteReader(); var list=new List<MealCategory>(); while(values.Read()) list.Add(new MealCategory { Id=values.GetString(0), Name=values.GetString(1) }); ValidateMealCategories(list);
     }
 
     private static bool BackupHasTable(SqliteConnection source, string table)
