@@ -216,7 +216,6 @@ public sealed partial class MainWindow : Window
     private FrameworkElement? FindTourTarget(string tag) => tag == "settings"
         ? NavView.SettingsItem as FrameworkElement
         : NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, tag));
-    }
 
     private async Task ShowNavigationErrorAsync()
     {
