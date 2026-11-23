@@ -18,7 +18,7 @@ internal static class AppTour
                 Title = $"{Localization.Get(step.TitleKey)} ({index + 1}/{AppTourPlan.Steps.Count})",
                 Content = new TextBlock { Text = Localization.Get(step.DescriptionKey), TextWrapping = TextWrapping.Wrap },
                 Target = targets[index],
-                PrimaryButtonText = Localization.Get(isLast ? "TourFinish" : "TourNext"),
+                ActionButtonContent = Localization.Get(isLast ? "TourFinish" : "TourNext"),
                 CloseButtonContent = Localization.Get("TourSkip")
             };
             tip.ActionButtonClick += (_, _) => completed.TrySetResult(true);
