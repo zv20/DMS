@@ -216,6 +216,18 @@ public partial class DatabaseService
         cmd.CommandText = $"SELECT 1 FROM template_image_assets WHERE NOT ({ValidImageBlob}) LIMIT 1";
         cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
         if (cmd.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains an invalid template image size or type.");
+
+        cmd.CommandText = "SELECT id, content_type, data FROM template_image_assets";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            var id = reader.GetString(0);
+            var contentType = reader.GetString(1);
+            var data = (byte[])reader[2];
+            var expectedId = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+            if (!ValidImageSignature(contentType, data) || !string.Equals(id, expectedId, StringComparison.Ordinal))
+                throw new InvalidDataException("The selected backup contains an invalid template image.");
+        }
     }
 
     private bool TemplateImageExists(string id, SqliteTransaction transaction)

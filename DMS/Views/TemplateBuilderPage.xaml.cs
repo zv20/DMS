@@ -39,6 +39,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
     private int _renderGeneration;
     private string? _selectedBlock;
     private FrameworkElement? _selectionAnchor;
+    private string? _selectionAnchorId;
     private bool _selectedFromBlockMenu;
     private bool _contextBinding, _updatingZoom;
     private string? _editingBlock;
@@ -638,12 +639,13 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         Render();
     }
 
-    private static FrameworkElement? FindAnchor(DependencyObject root, string key)
+    private static FrameworkElement? FindAnchor(DependencyObject root, string key, string? anchorId = null)
     {
-        if (root is FrameworkElement { Tag: string tag } element && tag == key) return element;
+        if (root is FrameworkElement { Tag: string tag } element && tag == key &&
+            (anchorId == null || Microsoft.UI.Xaml.Automation.AutomationProperties.GetAutomationId(element) == anchorId)) return element;
         for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
         {
-            var found = FindAnchor(VisualTreeHelper.GetChild(root, i), key);
+            var found = FindAnchor(VisualTreeHelper.GetChild(root, i), key, anchorId);
             if (found != null) return found;
         }
         return null;
@@ -712,6 +714,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
                     "notice" => L.Get("TplBlockNotice"),
                     "date" => L.Get("TplBlockDate"),
                     "day" => L.Get("TplBlockDay"),
+                    "ingredients" when Microsoft.UI.Xaml.Automation.AutomationProperties.GetAutomationId(anchor)?.EndsWith(":allergens", StringComparison.Ordinal) == true => L.Get("Text_Allergens_537261"),
                     "ingredients" => L.Get("Text_Ingredients_f9e84e"),
                     "heading" or "menu" when anchor is TextBlock text => text.Text,
                     "image" => $"{L.Get("TplImageBlock")} {++imageNumber} {Microsoft.UI.Xaml.Automation.AutomationProperties.GetName(anchor)}".TrimEnd(),
@@ -749,6 +752,8 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
         _selectedFromBlockMenu = false;
         _selectedBlock = key;
         _selectionAnchor = anchor;
+        _selectionAnchorId = Microsoft.UI.Xaml.Automation.AutomationProperties.GetAutomationId(anchor);
+        if (string.IsNullOrEmpty(_selectionAnchorId)) _selectionAnchorId = null;
         BuildContextTools();
         PositionContextTools();
         if (key is "header" or "footer")
@@ -1089,13 +1094,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             var generation = _renderGeneration;
             try
             {
-            bool Fits(int[] days)
-            {
-                var measured = TemplateRenderer.Create(_document, _monday, _entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true, pageDays: days);
-                try { return !measured.Overflowed; }
-                finally { measured.Lifetime.Dispose(); }
-            }
-            var pages = TemplatePagination.Plan(TemplatePageLayout.VisibleDayIndexes(_monday, _entries, _recipes, _document.HideEmptyDays, _weekendEnabled), Fits);
+            var pages = TemplateRenderer.PlanPages(_document, _monday, _entries, _recipes, _ingredients, _weekendEnabled);
             _previewPageIndex = Math.Clamp(_previewPageIndex, 0, pages.Count - 1);
             PreviewPageNavigation.Visibility = pages.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
             PreviewPageNumber.Text = $"{_previewPageIndex + 1} / {pages.Count}";
@@ -1105,7 +1104,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             result.Lifetime.AddLoaded(result.Page, (_, _) =>
             {
                 if (generation != _renderGeneration || _selectedBlock == null) return;
-                _selectionAnchor = FindAnchor(result.Page, _selectedBlock);
+                _selectionAnchor = FindAnchor(result.Page, _selectedBlock, _selectionAnchorId) ?? FindAnchor(result.Page, _selectedBlock);
                 RevealNewImage();
                 PositionContextTools();
             });
@@ -1115,7 +1114,7 @@ public sealed partial class TemplateBuilderPage : Page, IUnsavedEditor
             UpdateDateFormatExamples(result.FirstDay ?? _monday, result.LastDay ?? _monday.AddDays(_weekendEnabled ? 6 : 4));
             previous?.Dispose();
             if (_selectedBlock != null)
-                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, _selectedBlock); PositionContextTools(); });
+                DispatcherQueue.TryEnqueue(() => { if (generation != _renderGeneration || _selectedBlock == null) return; _selectionAnchor = FindAnchor(result.Page, _selectedBlock, _selectionAnchorId) ?? FindAnchor(result.Page, _selectedBlock); PositionContextTools(); });
             StatusText.Text = "";
             await result.ImagesReady;
             if (generation == _renderGeneration)

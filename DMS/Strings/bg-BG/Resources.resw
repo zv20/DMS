@@ -314,7 +314,9 @@
   <data name="DataSaveFailed" xml:space="preserve"><value>Промените не могат да бъдат запазени. Опитайте отново.</value></data>
   <data name="DataFilterFailed" xml:space="preserve"><value>Списъкът не може да бъде филтриран. Опитайте отново.</value></data>
   <data name="DataRecipeInUse" xml:space="preserve"><value>Рецептата се използва в менюта. Премахнете я от тях, преди да я изтриете.</value></data>
+  <data name="DataIngredientInUse" xml:space="preserve"><value>Тази съставка се използва в рецепти. Премахнете я от тях, преди да я изтриете.</value></data>
   <data name="ActionFailed" xml:space="preserve"><value>Действието не може да бъде изпълнено. Опитайте отново.</value></data>
+  <data name="ErrorPdfIncomplete" xml:space="preserve"><value>PDF файлът не можа да бъде експортиран докрай. Избраният файл може да е непълен.</value></data>
   <data name="ErrorPngIncomplete" xml:space="preserve"><value>Изображението не можа да бъде експортирано докрай. Избраният файл може да е непълен.</value></data>
   <data name="LogViewerSavedApplyFailed" xml:space="preserve"><value>Настройката е запазена, но не може да бъде приложена. Рестартирайте приложението и проверете дневника, ако проблемът продължи.</value></data>
   <data name="LogViewerMaintenanceFailed" xml:space="preserve"><value>Поддръжката на базата данни е неуспешна. Проверете диагностичния дневник за подробности.</value></data>
@@ -351,6 +353,8 @@
   <data name="AllergenChooseColor" xml:space="preserve"><value>Изберете цвят</value></data>
   <data name="RemoveAllergen" xml:space="preserve"><value>Премахни алергена {0}</value></data>
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Добавен от избрана съставка</value></data>
+  <data name="RecipeInheritedAllergens" xml:space="preserve"><value>От съставките</value></data>
+  <data name="RecipeAdditionalAllergens" xml:space="preserve"><value>Допълнителни алергени</value></data>
   <data name="PlannerClearDay" xml:space="preserve"><value>Изчисти деня</value></data>
   <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Да се изчистят ли всички ястия за {0}?</value></data>
   <data name="LogRetention.Header" xml:space="preserve"><value>Запазване на предупреждения и грешки</value></data>
@@ -387,7 +391,7 @@
   <data name="PresetKidsChristmas" xml:space="preserve"><value>Детска Коледа</value></data>
   <data name="PresetKidsEaster" xml:space="preserve"><value>Детски Великден</value></data>
   <data name="PresetKidsRainyDay" xml:space="preserve"><value>Дъждовен ден за деца</value></data>
-  <data name="PresetAllergenFooter" xml:space="preserve"><value>Алергените са отбелязани в червено.</value></data>
+  <data name="PresetAllergenFooter" xml:space="preserve"><value>Алергените са подчертани.</value></data>
   <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} ккал</value></data>
   <data name="PresetArtwork" xml:space="preserve"><value>Илюстрация: {0}</value></data>
 </root>

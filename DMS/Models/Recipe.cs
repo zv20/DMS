@@ -10,4 +10,5 @@ public sealed class Recipe
     public string Instructions { get; set; } = string.Empty;
     public List<string> Ingredients { get; set; } = [];
     public List<string> Allergens { get; set; } = [];
+    public List<string>? AdditionalAllergens { get; set; }
 }

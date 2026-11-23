@@ -15,6 +15,19 @@ public sealed record TemplatePageResult(FrameworkElement Page, bool Overflowed, 
 /// <summary>The same native page is used for the editor and output.</summary>
 public static class TemplateRenderer
 {
+    internal static List<int[]> PlanPages(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, bool includeWeekend)
+    {
+        bool Fits(int[] days)
+        {
+            var measured = Create(template, monday, entries, recipes, ingredients, includeWeekend: includeWeekend, measureOnly: true, pageDays: days);
+            try { return !measured.Overflowed; }
+            finally { measured.Lifetime.Dispose(); }
+        }
+
+        var visibleDays = TemplatePageLayout.VisibleDayIndexes(monday, entries, recipes, template.HideEmptyDays, includeWeekend);
+        return TemplatePagination.Plan(visibleDays, Fits);
+    }
+
     public static TemplatePageResult Create(TemplateDocument template, DateTime monday, IReadOnlyList<MenuEntry> entries, IReadOnlyList<Recipe> recipes, IReadOnlyList<Ingredient> ingredients, Action<string, FrameworkElement>? onSelected = null, bool includeWeekend = false, TemplateBitmapCache? bitmapCache = null, int decodeWidth = 0, CancellationToken cancellationToken = default, bool measureOnly = false, int[]? pageDays = null)
     {
         var lifetime = new TemplateVisualLifetime();
@@ -211,6 +224,7 @@ public static class TemplateRenderer
             if (!string.IsNullOrWhiteSpace(recipe.PortionSize)) title += $" ({recipe.PortionSize.Trim()})";
             if (recipe.Calories > 0) title += " · " + Localization.Format("MenuEnergyKcal", recipe.Calories);
             var titleBlock = StyledText(title, menuStyle, scale);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(titleBlock, entry.Slot);
             Selectable(titleBlock, $"menu:{dayIndex}", onSelected, lifetime);
             meal.Children.Add(titleBlock);
 
@@ -232,8 +246,21 @@ public static class TemplateRenderer
                     else AddRun(ingredientBlock, name, ingredientStyle, scale, false);
                 }
                 if (onSelected != null) ingredientBlock.DataContext = recipe;
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(ingredientBlock, entry.Slot);
                 Selectable(ingredientBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
                 meal.Children.Add(ingredientBlock);
+            }
+            var extraAllergens = AllergenDisplay.Unrepresented(recipe, ingredients);
+            if (extraAllergens.Count > 0)
+            {
+                var allergenBlock = StyledText("", ingredientStyle, scale);
+                AddRun(allergenBlock, " · " + Localization.Get("Text_Allergens_537261") + ": ", ingredientStyle, scale, false);
+                var emphasis = new TemplateTextStyle { FontFamily = ingredientStyle.FontFamily, FontSize = ingredientStyle.FontSize, Color = template.AllergenAccentColor, Opacity = template.AllergenAccentOpacity, Bold = true, Italic = ingredientStyle.Italic, Underline = true };
+                AddRun(allergenBlock, string.Join(", ", extraAllergens.Select(Localization.Allergen)), emphasis, scale, true);
+                if (onSelected != null) allergenBlock.DataContext = recipe;
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(allergenBlock, entry.Slot + ":allergens");
+                Selectable(allergenBlock, $"ingredients:{dayIndex}", onSelected, lifetime);
+                meal.Children.Add(allergenBlock);
             }
             panel.Children.Add(meal);
         }

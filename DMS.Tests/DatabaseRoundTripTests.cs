@@ -8,6 +8,91 @@ namespace DMS.Tests;
 
 public sealed class DatabaseRoundTripTests : IDisposable
 {
+    [Fact]
+    public async Task RecipeKeepsIngredientAndAdditionalAllergenSourcesSeparate()
+    {
+        using var db = Open("allergen-sources.db");
+        var gluten = new Allergen { Name = "Gluten" };
+        gluten.Id = await db.SaveAllergenAsync(gluten);
+        var nuts = new Allergen { Name = "Nuts" };
+        nuts.Id = await db.SaveAllergenAsync(nuts);
+        await db.SaveIngredientAsync(new Ingredient { Name = "Flour", Allergens = ["Gluten"] });
+        await db.SaveRecipeAsync(new Recipe
+        {
+            Name = "Bread", Category = "main", Ingredients = ["Flour", "Legacy ingredient"],
+            Allergens = ["Gluten", "Nuts"], AdditionalAllergens = ["Nuts"]
+        });
+
+        var recipe = Assert.Single(await db.GetAllRecipesAsync());
+        Assert.Equal(new[] { "Flour", "Legacy ingredient" }, recipe.Ingredients);
+        Assert.Equal(new[] { "Nuts" }, recipe.AdditionalAllergens);
+        Assert.Equal(new[] { "Gluten", "Nuts" }, recipe.Allergens);
+
+        gluten.Name = "Wheat";
+        await db.SaveAllergenAsync(gluten);
+        recipe = Assert.Single(await db.GetAllRecipesAsync());
+        Assert.Equal(new[] { "Wheat", "Nuts" }, recipe.Allergens);
+    }
+
+    [Fact]
+    public async Task BackupAndRestorePreserveAllergenSources()
+    {
+        using (var source = Open("relationship-source.db"))
+        {
+            await source.SaveAllergenAsync(new Allergen { Name = "Gluten" });
+            await source.SaveAllergenAsync(new Allergen { Name = "Nuts" });
+            await source.SaveIngredientAsync(new Ingredient { Name = "Flour", Allergens = ["Gluten"] });
+            await source.SaveRecipeAsync(new Recipe
+            {
+                Name = "Bread", Category = "main", Ingredients = ["Flour"],
+                Allergens = ["Gluten", "Nuts"], AdditionalAllergens = ["Nuts"]
+            });
+            await source.CreateBackupAsync(PathFor("relationship-backup.db"));
+        }
+
+        using var restored = Open("relationship-restored.db");
+        await restored.RestoreFromAsync(PathFor("relationship-backup.db"));
+        var recipe = Assert.Single(await restored.GetAllRecipesAsync());
+        Assert.Equal(new[] { "Flour" }, recipe.Ingredients);
+        Assert.Equal(new[] { "Nuts" }, recipe.AdditionalAllergens);
+        Assert.Equal(new[] { "Gluten", "Nuts" }, recipe.Allergens);
+    }
+
+    [Fact]
+    public async Task RenamingIngredientUpdatesExistingRecipes()
+    {
+        using var db = Open("rename.db");
+        var ingredient = new Ingredient { Name = "Flour", Allergens = ["gluten"] };
+        ingredient.Id = await db.SaveIngredientAsync(ingredient);
+        await db.SaveRecipeAsync(new Recipe { Name = "Bread", Category = "main", Ingredients = ["flour"] });
+        ingredient.Name = "Whole flour";
+        await db.SaveIngredientAsync(ingredient);
+        Assert.Equal("Whole flour", Assert.Single(Assert.Single(await db.GetAllRecipesAsync()).Ingredients));
+    }
+
+    [Fact]
+    public async Task RenamingCaseDistinctIngredientPreservesExistingLookup()
+    {
+        using var db = Open("case.db");
+        var first = await db.SaveIngredientAsync(new Ingredient { Name = "Flour" });
+        var second = await db.SaveIngredientAsync(new Ingredient { Name = "flour" });
+        await db.SaveRecipeAsync(new Recipe { Name = "Bread", Category = "main", Ingredients = ["flour"] });
+        await db.SaveIngredientAsync(new Ingredient { Id = second, Name = "Rice" });
+        Assert.Equal("flour", Assert.Single(Assert.Single(await db.GetAllRecipesAsync()).Ingredients));
+        await db.SaveIngredientAsync(new Ingredient { Id = first, Name = "Wheat" });
+        Assert.Equal("Wheat", Assert.Single(Assert.Single(await db.GetAllRecipesAsync()).Ingredients));
+    }
+
+    [Fact]
+    public async Task DeletingUsedIngredientIsRejected()
+    {
+        using var db = Open("delete.db");
+        var ingredientId = await db.SaveIngredientAsync(new Ingredient { Name = "Flour" });
+        await db.SaveRecipeAsync(new Recipe { Name = "Bread", Category = "main", Ingredients = ["flour"] });
+        await Assert.ThrowsAsync<IngredientInUseException>(() => db.DeleteIngredientAsync(ingredientId));
+        Assert.Contains(await db.GetAllIngredientsAsync(), ingredient => ingredient.Id == ingredientId);
+    }
+
     private static readonly byte[] Image = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
     private static readonly DateTime Day = new(2026, 1, 5);
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "DMS.RoundTrip.Tests", Guid.NewGuid().ToString("N"));

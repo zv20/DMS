@@ -11,6 +11,8 @@ public sealed class RecipeInUseException : InvalidOperationException
     public RecipeInUseException() : base("This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.") { }
 }
 
+public sealed class IngredientInUseException : InvalidOperationException;
+
 public partial class DatabaseService : IDisposable
 {
     private const string MenuDateFormat = "yyyy-MM-dd";
@@ -202,6 +204,7 @@ public partial class DatabaseService : IDisposable
         await SeedDefaultsAsync();
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
+        InitializeRelationships();
         if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
@@ -313,17 +316,39 @@ public partial class DatabaseService : IDisposable
     {
         await InitializeAsync();
         var recipes = new List<Recipe>();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM recipes ORDER BY name";
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) recipes.Add(ReadRecipe(reader));
+        using (var cmd = _connection!.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM recipes ORDER BY name";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) recipes.Add(ReadRecipe(reader));
+        }
+        var ingredients = ReadRelations("recipe_ingredients", "recipe_id", "ingredient_id", "ingredients", useCurrentNames: false);
+        var additional = ReadRelations("recipe_additional_allergens", "recipe_id", "allergen_id", "allergens");
+        var ingredientAllergens = ReadRelations("ingredient_allergens", "ingredient_id", "allergen_id", "allergens");
+        var ingredientIds = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = "SELECT id,name FROM ingredients ORDER BY name";
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) ingredientIds.TryAdd(reader.GetString(1), reader.GetInt64(0));
+        }
+        foreach (var recipe in recipes)
+        {
+            recipe.Ingredients = ingredients.GetValueOrDefault(recipe.Id) ?? [];
+            recipe.AdditionalAllergens = additional.GetValueOrDefault(recipe.Id) ?? [];
+            recipe.Allergens = recipe.Ingredients.Where(ingredientIds.ContainsKey)
+                .SelectMany(name => ingredientAllergens.GetValueOrDefault(ingredientIds[name]) ?? [])
+                .Concat(recipe.AdditionalAllergens).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
         return recipes;
     }
 
     public async Task<int> SaveRecipeAsync(Recipe recipe)
     {
         await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
+        using var transaction = _connection!.BeginTransaction();
+        using var cmd = _connection.CreateCommand();
+        cmd.Transaction = transaction;
         var now = DateTime.UtcNow.ToString("O");
         var ingredientsJson = System.Text.Json.JsonSerializer.Serialize(recipe.Ingredients);
         var allergensJson = System.Text.Json.JsonSerializer.Serialize(recipe.Allergens);
@@ -353,6 +378,9 @@ public partial class DatabaseService : IDisposable
 
         var result = await cmd.ExecuteScalarAsync();
         var id = recipe.Id == 0 ? Convert.ToInt32(result!) : recipe.Id;
+        ReplaceRelations("recipe_ingredients", "recipe_id", id, "ingredient_id", "ingredients", recipe.Ingredients, transaction);
+        ReplaceRelations("recipe_additional_allergens", "recipe_id", id, "allergen_id", "allergens", recipe.AdditionalAllergens ?? recipe.Allergens, transaction);
+        transaction.Commit();
         _logger.LogInformation("Saved recipe {Id}: {Name}", id, recipe.Name);
         return id;
     }
@@ -398,19 +426,85 @@ public partial class DatabaseService : IDisposable
     {
         await InitializeAsync();
         var list = new List<Ingredient>();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM ingredients ORDER BY name";
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) list.Add(ReadIngredient(reader));
+        using (var cmd = _connection!.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM ingredients ORDER BY name";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) list.Add(ReadIngredient(reader));
+        }
+        var allergens = ReadRelations("ingredient_allergens", "ingredient_id", "allergen_id", "allergens");
+        foreach (var ingredient in list) ingredient.Allergens = allergens.GetValueOrDefault(ingredient.Id) ?? [];
         return list;
     }
 
     public async Task<int> SaveIngredientAsync(Ingredient ingredient)
     {
         await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
         using var cmd = _connection!.CreateCommand();
+        cmd.Transaction = transaction;
         var allergensJson = System.Text.Json.JsonSerializer.Serialize(ingredient.Allergens);
         var now = DateTime.UtcNow.ToString("O");
+
+        if (ingredient.Id != 0)
+        {
+            using var previous = _connection.CreateCommand();
+            previous.Transaction = transaction;
+            previous.CommandText = "SELECT name FROM ingredients WHERE id=@id";
+            previous.Parameters.AddWithValue("@id", ingredient.Id);
+            var oldName = await previous.ExecuteScalarAsync() as string;
+            if (oldName != null && oldName != ingredient.Name)
+            {
+                using var candidates = _connection.CreateCommand();
+                candidates.Transaction = transaction;
+                candidates.CommandText = "SELECT id, name FROM ingredients ORDER BY name";
+                var firstMatch = 0L;
+                using (var reader = await candidates.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var candidateId = reader.GetInt64(0);
+                        var candidateName = reader.GetString(1);
+                        if (firstMatch == 0 && string.Equals(candidateName, oldName, StringComparison.OrdinalIgnoreCase)) firstMatch = candidateId;
+                        if (candidateId != ingredient.Id && string.Equals(candidateName, ingredient.Name, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidOperationException("Ingredient name conflicts with another ingredient.");
+                    }
+                }
+                using var recipes = _connection.CreateCommand();
+                recipes.Transaction = transaction;
+                recipes.CommandText = "SELECT id, ingredients_json FROM recipes";
+                var changes = new List<(long Id, string Json)>();
+                using (var reader = await recipes.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var names = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(1)) ?? [];
+                        if (firstMatch != ingredient.Id || !names.Any(name => string.Equals(name, oldName, StringComparison.OrdinalIgnoreCase))) continue;
+                        for (var i = 0; i < names.Count; i++)
+                            if (string.Equals(names[i], oldName, StringComparison.OrdinalIgnoreCase)) names[i] = ingredient.Name;
+                        changes.Add((reader.GetInt64(0), System.Text.Json.JsonSerializer.Serialize(names)));
+                    }
+                }
+                foreach (var (recipeId, json) in changes)
+                {
+                    using var update = _connection.CreateCommand();
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE recipes SET ingredients_json=@json WHERE id=@id";
+                    update.Parameters.AddWithValue("@json", json);
+                    update.Parameters.AddWithValue("@id", recipeId);
+                    await update.ExecuteNonQueryAsync();
+                }
+                if (firstMatch == ingredient.Id)
+                {
+                    using var updateRelations = _connection.CreateCommand();
+                    updateRelations.Transaction = transaction;
+                    updateRelations.CommandText = "UPDATE recipe_ingredients SET saved_name=@new WHERE ingredient_id=@id";
+                    updateRelations.Parameters.AddWithValue("@new", ingredient.Name);
+                    updateRelations.Parameters.AddWithValue("@id", ingredient.Id);
+                    await updateRelations.ExecuteNonQueryAsync();
+                }
+            }
+        }
 
         if (ingredient.Id == 0)
         {
@@ -430,6 +524,8 @@ public partial class DatabaseService : IDisposable
 
         var result = await cmd.ExecuteScalarAsync();
         var id = ingredient.Id == 0 ? Convert.ToInt32(result!) : ingredient.Id;
+        ReplaceRelations("ingredient_allergens", "ingredient_id", id, "allergen_id", "allergens", ingredient.Allergens, transaction);
+        transaction.Commit();
         _logger.LogInformation("Saved ingredient {Id}: {Name}", id, ingredient.Name);
         return id;
     }
@@ -437,10 +533,33 @@ public partial class DatabaseService : IDisposable
     public async Task DeleteIngredientAsync(int id)
     {
         await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using (var ingredient = _connection.CreateCommand())
+        {
+            ingredient.Transaction = transaction;
+            ingredient.CommandText = "SELECT name FROM ingredients WHERE id=@id";
+            ingredient.Parameters.AddWithValue("@id", id);
+            var name = await ingredient.ExecuteScalarAsync() as string;
+            if (name != null)
+            {
+                using var recipes = _connection.CreateCommand();
+                recipes.Transaction = transaction;
+                recipes.CommandText = "SELECT ingredients_json FROM recipes";
+                using var reader = await recipes.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var names = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(0)) ?? [];
+                    if (names.Any(item => string.Equals(item, name, StringComparison.OrdinalIgnoreCase)))
+                        throw new IngredientInUseException();
+                }
+            }
+        }
         using var cmd = _connection!.CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = "DELETE FROM ingredients WHERE id = @id";
         cmd.Parameters.AddWithValue("@id", id);
         await cmd.ExecuteNonQueryAsync();
+        transaction.Commit();
         _logger.LogInformation("Deleted ingredient {Id}", id);
     }
 
@@ -935,6 +1054,18 @@ public partial class DatabaseService : IDisposable
             if (objects.ExecuteScalar() != null)
                 throw new InvalidDataException("The selected backup contains unsupported database objects.");
         }
+        using (var definitions = source.CreateCommand())
+        {
+            definitions.CommandText = "SELECT sql FROM sqlite_schema WHERE type='table' AND sql IS NOT NULL";
+            using var reader = definitions.ExecuteReader();
+            while (reader.Read())
+            {
+                var sql = reader.GetString(0);
+                const string conflictClause = @"\bon\s*(?:(?:/\*[\s\S]*?\*/|--[^\r\n]*(?:\r?\n|$))\s*)*conflict\b";
+                if (System.Text.RegularExpressions.Regex.IsMatch(sql, conflictClause, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                    throw new InvalidDataException("The selected backup contains unsupported conflict rules.");
+            }
+        }
         using (var tables = source.CreateCommand())
         {
             tables.CommandText = "PRAGMA table_list";
@@ -956,7 +1087,13 @@ public partial class DatabaseService : IDisposable
                 var relationship = string.Join("|", Enumerable.Range(0, 6).Select(reader.GetString)).ToLowerInvariant();
                 if (relationship is not ("menu|recipes|recipe_id|id|no action|restrict"
                     or "template_image_references|templates|template_name|name|cascade|cascade"
-                    or "template_image_references|template_image_assets|asset_id|id|no action|restrict"))
+                    or "template_image_references|template_image_assets|asset_id|id|no action|restrict"
+                    or "recipe_ingredients|recipes|recipe_id|id|no action|cascade"
+                    or "recipe_ingredients|ingredients|ingredient_id|id|no action|set null"
+                    or "ingredient_allergens|ingredients|ingredient_id|id|no action|cascade"
+                    or "ingredient_allergens|allergens|allergen_id|id|no action|set null"
+                    or "recipe_additional_allergens|recipes|recipe_id|id|no action|cascade"
+                    or "recipe_additional_allergens|allergens|allergen_id|id|no action|set null"))
                     throw new InvalidDataException("The selected backup contains unsupported database relationships.");
             }
         }
@@ -970,7 +1107,7 @@ public partial class DatabaseService : IDisposable
         using (var version = source.CreateCommand())
         {
             version.CommandText = "PRAGMA user_version";
-            if (Convert.ToInt64(version.ExecuteScalar()) > 2)
+            if (Convert.ToInt64(version.ExecuteScalar()) > 4)
                 throw new InvalidDataException("This backup was created by a newer DMS database version.");
         }
 
@@ -987,15 +1124,42 @@ public partial class DatabaseService : IDisposable
         };
         var hasMenuCategories = BackupHasTable(source, "menu_slot_categories");
         if (hasMenuCategories) required["menu_slot_categories"] = ["date", "slot", "category"];
+        var hasRelationships = BackupHasMigration(source, 4);
+        if (hasRelationships)
+        {
+            required["recipe_ingredients"] = ["recipe_id", "position", "ingredient_id", "saved_name"];
+            required["ingredient_allergens"] = ["ingredient_id", "position", "allergen_id", "saved_name"];
+            required["recipe_additional_allergens"] = ["recipe_id", "position", "allergen_id", "saved_name"];
+        }
         foreach (var (table, columns) in required)
         {
             using var command = source.CreateCommand();
             command.CommandText = $"PRAGMA table_info(\"{table}\")";
             using var reader = command.ExecuteReader();
             var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            while (reader.Read()) found.Add(reader.GetString(1));
+            var ordered = new List<string>();
+            while (reader.Read())
+            {
+                var column = reader.GetString(1);
+                found.Add(column);
+                ordered.Add(column);
+            }
             if (columns.Any(column => !found.Contains(column)))
                 throw new InvalidDataException("The selected file is not a supported DMS database backup.");
+            if (table is "recipes" or "ingredients" &&
+                !ordered.Take(columns.Length).SequenceEqual(columns, StringComparer.OrdinalIgnoreCase))
+                throw new InvalidDataException("The selected backup has unsupported column ordering.");
+        }
+
+        // Recipes do not have unique indexes in any supported DMS schema.
+        // A backup-supplied unique constraint can replace another recipe on insert.
+        using (var indexes = source.CreateCommand())
+        {
+            indexes.CommandText = "PRAGMA index_list(\"recipes\")";
+            using var reader = indexes.ExecuteReader();
+            while (reader.Read())
+                if (reader.GetInt64(2) != 0)
+                    throw new InvalidDataException("The selected backup contains unsupported recipe constraints.");
         }
 
         // Startup reads these rows immediately after restore. Use the same
@@ -1092,6 +1256,7 @@ public partial class DatabaseService : IDisposable
                 while (reader.Read()) ReadMenuCategory(reader);
             }
             if (BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
+            if (hasRelationships) ValidateRelationshipRows(source);
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException
             or InvalidCastException or FormatException or OverflowException or SqliteException)
@@ -1106,6 +1271,31 @@ public partial class DatabaseService : IDisposable
         command.CommandText = "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = @name COLLATE NOCASE";
         command.Parameters.AddWithValue("@name", table);
         return command.ExecuteScalar() != null;
+    }
+
+    private static bool BackupHasMigration(SqliteConnection source, int version)
+    {
+        if (!BackupHasTable(source, "schema_migrations")) return false;
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=@version";
+        command.Parameters.AddWithValue("@version", version);
+        return Convert.ToInt64(command.ExecuteScalar()) > 0;
+    }
+
+    private static void ValidateRelationshipRows(SqliteConnection source)
+    {
+        foreach (var table in new[]
+        {
+            "recipe_ingredients",
+            "ingredient_allergens",
+            "recipe_additional_allergens"
+        })
+        {
+            using var command = source.CreateCommand();
+            command.CommandText = $"SELECT 1 FROM {table} WHERE position < 0 OR saved_name IS NULL OR length(saved_name)=0 LIMIT 1";
+            if (command.ExecuteScalar() != null)
+                throw new InvalidDataException("The selected backup contains invalid relationship data.");
+        }
     }
 
     public async Task VacuumAsync()

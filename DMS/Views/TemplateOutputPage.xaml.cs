@@ -163,14 +163,8 @@ public sealed partial class TemplateOutputPage : Page
             if (!_loaded || generation != _generation) return;
             _monday = monday; _document = template.Document ?? throw new InvalidOperationException("The template has no document.");
             _recipes = recipes; _ingredients = ingredients; _weekendEnabled = settings.WeekendPlanningEnabled;
-            bool Fits(int[] days)
-            {
-                var measured = TemplateRenderer.Create(_document, _monday, entries, _recipes, _ingredients, includeWeekend: _weekendEnabled, measureOnly: true, pageDays: days);
-                try { return !measured.Overflowed; }
-                finally { measured.Lifetime.Dispose(); }
-            }
             _weekEntries = entries;
-            _pageDays = TemplatePagination.Plan(TemplatePageLayout.VisibleDayIndexes(monday, entries, _recipes, _document.HideEmptyDays, _weekendEnabled), Fits);
+            _pageDays = TemplateRenderer.PlanPages(_document, monday, entries, _recipes, _ingredients, _weekendEnabled);
             var results = new List<TemplatePageResult>();
             try
             {
@@ -434,7 +428,7 @@ public sealed partial class TemplateOutputPage : Page
         catch (Exception ex)
         {
             App.Logger.LogError(ex, "Unable to save the menu as a PDF");
-            StatusText.Text = L.Get(outputStarted ? "ErrorPngIncomplete" : "ErrorOutput");
+            StatusText.Text = L.Get(outputStarted ? "ErrorPdfIncomplete" : "ErrorOutput");
         }
         finally { _busy = false; SetReady(_ready); }
     }

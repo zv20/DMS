@@ -130,10 +130,20 @@ public sealed partial class MainWindow : Window
         args.Cancel = true;
         if (_closing) return;
         _closing = true;
-        if (App.CurrentWindow == this && ContentFrame.Content is SettingsPage settingsPage)
+        if (App.CurrentWindow == this && SetupWizard.IsSaving(RootGrid.XamlRoot))
         {
-            try { if (!await settingsPage.CanLeaveAsync()) { _closing = false; return; } }
-            catch (Exception ex) { _closing = false; App.Logger.LogError(ex, "Unable to confirm unsaved settings"); return; }
+            _closing = false;
+            return;
+        }
+        if (App.CurrentWindow == this && OutputFrame.Content is TemplateOutputPage outputPage && !outputPage.CanClose)
+        {
+            _closing = false;
+            return;
+        }
+        if (App.CurrentWindow == this && ContentFrame.Content is IUnsavedEditor editor)
+        {
+            try { if (!await editor.CanLeaveAsync()) { _closing = false; return; } }
+            catch (Exception ex) { _closing = false; App.Logger.LogError(ex, "Unable to confirm unsaved changes"); return; }
         }
         try
         {

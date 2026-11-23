@@ -136,9 +136,104 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         await current.RestoreFromAsync(PathFor("legacy.db"));
         var recipe = Assert.Single(await current.GetAllRecipesAsync());
         Assert.Equal(new[] { "Flour" }, recipe.Ingredients);
-        Assert.Empty(recipe.Allergens);
+        Assert.Equal(new[] { "Gluten" }, recipe.Allergens);
         Assert.Equal("Flour", Assert.Single(await current.GetAllIngredientsAsync()).Name);
         Assert.NotEmpty(await current.GetAllAllergensAsync());
+    }
+
+    [Fact]
+    public async Task RestoreRejectsEmptyDatabaseWithReorderedRecipeColumns()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE recipes; CREATE TABLE recipes (name TEXT, id INTEGER PRIMARY KEY, category TEXT, portion_size TEXT, calories INTEGER, instructions TEXT, ingredients_json TEXT, allergens_json TEXT, created_at TEXT, updated_at TEXT)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+    }
+
+    [Fact]
+    public async Task RestoreRejectsConflictPolicyOnIngredientTable()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE ingredients; CREATE TABLE ingredients (id INTEGER PRIMARY KEY, name TEXT UNIQUE ON /* rule */ CONFLICT REPLACE, allergens_json TEXT, created_at TEXT)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsUnexpectedUniqueRecipeConstraint()
+    {
+        using (var source = Open("source.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Source", Category = "soup" });
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE UNIQUE INDEX custom_recipe_name ON recipes(name)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsNewerBackupMissingRelationshipTables()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE recipe_additional_allergens";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsImageWhoseHashDoesNotMatchItsId()
+    {
+        var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
+        using (var source = Open("source.db"))
+        {
+            await source.SaveTemplateImageAsync("Logo", "image/png", png);
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE template_image_assets SET id='invalid-hash'";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
     }
 
     [Fact]

@@ -314,7 +314,9 @@
   <data name="DataSaveFailed" xml:space="preserve"><value>Could not save your changes. Try again.</value></data>
   <data name="DataFilterFailed" xml:space="preserve"><value>Could not filter the list. Try again.</value></data>
   <data name="DataRecipeInUse" xml:space="preserve"><value>This recipe is used in meal plans. Remove it from those plans before deleting it.</value></data>
+  <data name="DataIngredientInUse" xml:space="preserve"><value>This ingredient is used in recipes. Remove it from those recipes before deleting it.</value></data>
   <data name="ActionFailed" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
+  <data name="ErrorPdfIncomplete" xml:space="preserve"><value>Could not finish exporting the PDF. The selected file may be incomplete.</value></data>
   <data name="ErrorPngIncomplete" xml:space="preserve"><value>Could not finish exporting the image. The selected file may be incomplete.</value></data>
   <data name="LogViewerSavedApplyFailed" xml:space="preserve"><value>The setting was saved, but could not be applied. Restart the app and check the log if the problem continues.</value></data>
   <data name="LogViewerMaintenanceFailed" xml:space="preserve"><value>Database maintenance failed. Check the diagnostic log for details.</value></data>
@@ -351,6 +353,8 @@
   <data name="AllergenChooseColor" xml:space="preserve"><value>Choose color</value></data>
   <data name="RemoveAllergen" xml:space="preserve"><value>Remove allergen {0}</value></data>
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Included by a selected ingredient</value></data>
+  <data name="RecipeInheritedAllergens" xml:space="preserve"><value>From ingredients</value></data>
+  <data name="RecipeAdditionalAllergens" xml:space="preserve"><value>Additional allergens</value></data>
   <data name="PlannerClearDay" xml:space="preserve"><value>Clear day</value></data>
   <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Clear all meals for {0}?</value></data>
   <data name="LogRetention.Header" xml:space="preserve"><value>Keep warnings and errors</value></data>
@@ -387,7 +391,7 @@
   <data name="PresetKidsChristmas" xml:space="preserve"><value>Kids Christmas</value></data>
   <data name="PresetKidsEaster" xml:space="preserve"><value>Kids Easter</value></data>
   <data name="PresetKidsRainyDay" xml:space="preserve"><value>Kids Rainy Day</value></data>
-  <data name="PresetAllergenFooter" xml:space="preserve"><value>Allergens are highlighted in red.</value></data>
+  <data name="PresetAllergenFooter" xml:space="preserve"><value>Allergens are highlighted.</value></data>
   <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} kcal</value></data>
   <data name="PresetArtwork" xml:space="preserve"><value>{0} artwork</value></data>
 </root>

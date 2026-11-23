@@ -66,8 +66,6 @@ dotnet build DMS.sln --configuration Release --no-restore -p:Platform=x64
 dotnet test DMS.sln --configuration Release --no-build -p:Platform=x64
 ```
 
-For a repeatable memory investigation, see [memory diagnostics](scripts/MEMORY-DIAGNOSTICS.md).
-
 Run the app from Visual Studio. To build the online setup, run:
 
 ```powershell
@@ -109,8 +107,6 @@ English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
 placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in
 `%APPDATA%\DMS\RestoreBackups`, and logs in Settings or `%APPDATA%\DMS\Logs\dms.log`.
 
-Before release, use disposable data to check edits and restart persistence,
-backup/restore with images, language switching, template save/reopen, PDF/image
-export and A4 printing in the installed app. Record the revision and results.
+See [Testing on Windows](scripts/TESTING.md) for installed-app checks and performance and memory captures.
 
 </details>
