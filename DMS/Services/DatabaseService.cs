@@ -202,6 +202,7 @@ public partial class DatabaseService : IDisposable
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
         InitializeRelationships();
+        InitializeTemplateStorage();
         if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
@@ -715,6 +716,13 @@ public partial class DatabaseService : IDisposable
                 case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
             }
         }
+        reader.Close();
+        cmd.CommandText = "SELECT id,name FROM meal_categories ORDER BY position";
+        settings.MealCategories = [];
+        using (var rows = cmd.ExecuteReader()) while (rows.Read()) settings.MealCategories.Add(new MealCategory { Id=rows.GetString(0), Name=rows.GetString(1) });
+        cmd.CommandText = "SELECT color FROM recent_template_colors ORDER BY position";
+        settings.RecentTemplateColors = [];
+        using (var rows = cmd.ExecuteReader()) while (rows.Read()) settings.RecentTemplateColors.Add(rows.GetString(0));
         return settings;
     }
 
@@ -796,9 +804,7 @@ public partial class DatabaseService : IDisposable
             ("log_retention_days", settings.LogRetentionDays.ToString()),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("meals_per_day", Math.Clamp(settings.MealsPerDay, 1, 100).ToString()),
-            ("meal_categories", mealCategories),
-            ("data_folder", settings.DataFolder ?? ""),
-            ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
+            ("data_folder", settings.DataFolder ?? "")
             ,("window_x", settings.WindowX?.ToString() ?? "")
             ,("window_y", settings.WindowY?.ToString() ?? "")
             ,("window_width", settings.WindowWidth?.ToString() ?? "")
@@ -812,6 +818,7 @@ public partial class DatabaseService : IDisposable
             cmd.Parameters.AddWithValue("@value", value);
             await cmd.ExecuteNonQueryAsync();
         }
+        WriteSettingsLists(settings.MealCategories, settings.RecentTemplateColors ?? [], transaction);
         if (completeSetup)
         {
             cmd.Parameters.Clear();
@@ -826,17 +833,14 @@ public partial class DatabaseService : IDisposable
     public async Task<List<MenuTemplate>> GetAllTemplatesAsync()
     {
         await InitializeAsync();
-        var list = new List<MenuTemplate>();
+        var names = new List<(string Name, bool Preset)>();
         using (var cmd = _connection!.CreateCommand())
         {
-            cmd.CommandText = "SELECT name, data_json, is_preset FROM templates ORDER BY is_preset DESC, name";
+            cmd.CommandText = "SELECT name,is_preset FROM templates ORDER BY is_preset DESC,name";
             using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (ReadTemplate(reader) is { } template) list.Add(template);
-            }
+            while (reader.Read()) names.Add((reader.GetString(0), reader.GetInt32(1) == 1));
         }
-        return list;
+        return names.Select(item => ReadStoredTemplate(item.Name,item.Preset)).ToList();
     }
 
     private static MenuTemplate? ReadTemplate(SqliteDataReader reader)
@@ -863,16 +867,15 @@ public partial class DatabaseService : IDisposable
         var references = ExtractTemplateImages(stored, transaction);
         using var cmd = _connection.CreateCommand();
         cmd.Transaction = transaction;
-        var json = System.Text.Json.JsonSerializer.Serialize(stored);
         var now = DateTime.UtcNow.ToString("O");
-        cmd.CommandText = @"INSERT INTO templates (name, data_json, is_preset, created_at, updated_at)
-                           VALUES (@name, @data, @preset, @now, @now)
-                           ON CONFLICT(name) DO UPDATE SET data_json=@data, is_preset=@preset, updated_at=@now";
+        cmd.CommandText = @"INSERT INTO templates (name, is_preset, created_at, updated_at)
+                           VALUES (@name, @preset, @now, @now)
+                           ON CONFLICT(name) DO UPDATE SET is_preset=@preset, updated_at=@now";
         cmd.Parameters.AddWithValue("@name", template.Name);
-        cmd.Parameters.AddWithValue("@data", json);
         cmd.Parameters.AddWithValue("@preset", template.IsPreset ? 1 : 0);
         cmd.Parameters.AddWithValue("@now", now);
         cmd.ExecuteNonQuery();
+        WriteTemplateDocument(stored, transaction);
         ReplaceTemplateImageReferences(template.Name, references, transaction);
         transaction.Commit();
     }
@@ -884,16 +887,14 @@ public partial class DatabaseService : IDisposable
         newName = newName.Trim();
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
-        string json;
         using (var source = _connection.CreateCommand())
         {
             source.Transaction = transaction;
-            source.CommandText = "SELECT data_json, is_preset FROM templates WHERE name = @name";
+            source.CommandText = "SELECT is_preset FROM templates WHERE name = @name";
             source.Parameters.AddWithValue("@name", currentName);
             using var reader = await source.ExecuteReaderAsync();
             if (!await reader.ReadAsync()) throw new InvalidOperationException("The selected template no longer exists.");
-            if (reader.GetInt32(1) != 0) throw new InvalidOperationException("Built-in templates cannot be renamed.");
-            json = reader.GetString(0);
+            if (reader.GetInt32(0) != 0) throw new InvalidOperationException("Built-in templates cannot be renamed.");
         }
         using (var names = _connection.CreateCommand())
         {
@@ -905,14 +906,10 @@ public partial class DatabaseService : IDisposable
                 if (string.Equals(reader.GetString(0), newName, StringComparison.OrdinalIgnoreCase))
                     throw new InvalidOperationException("A template with this name already exists.");
         }
-        var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(json)
-            ?? throw new InvalidOperationException("The selected template cannot be read.");
-        template.Name = newName;
         using var update = _connection.CreateCommand();
         update.Transaction = transaction;
-        update.CommandText = "UPDATE templates SET name = @new, data_json = @json, updated_at = @now WHERE name = @old";
+        update.CommandText = "UPDATE templates SET name = @new, updated_at = @now WHERE name = @old";
         update.Parameters.AddWithValue("@new", newName);
-        update.Parameters.AddWithValue("@json", System.Text.Json.JsonSerializer.Serialize(template));
         update.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
         update.Parameters.AddWithValue("@old", currentName);
         await update.ExecuteNonQueryAsync();
@@ -1065,6 +1062,11 @@ public partial class DatabaseService : IDisposable
                 var relationship = string.Join("|", Enumerable.Range(0, 6).Select(reader.GetString)).ToLowerInvariant();
                 if (relationship is not ("menu|recipes|recipe_id|id|no action|restrict"
                     or "template_image_references|templates|template_name|name|cascade|cascade"
+                    or "template_documents|templates|template_name|name|cascade|cascade"
+                    or "template_day_layouts|templates|template_name|name|cascade|cascade"
+                    or "template_text_styles|templates|template_name|name|cascade|cascade"
+                    or "template_block_appearances|templates|template_name|name|cascade|cascade"
+                    or "template_image_placements|templates|template_name|name|cascade|cascade"
                     or "template_image_references|template_image_assets|asset_id|id|no action|restrict"
                     or "recipe_ingredients|recipes|recipe_id|id|no action|cascade"
                     or "recipe_ingredients|ingredients|ingredient_id|id|no action|set null"
@@ -1085,13 +1087,14 @@ public partial class DatabaseService : IDisposable
         using (var version = source.CreateCommand())
         {
             version.CommandText = "PRAGMA user_version";
-            if (Convert.ToInt64(version.ExecuteScalar()) > 5)
+            if (Convert.ToInt64(version.ExecuteScalar()) > 6)
                 throw new InvalidDataException("This backup was created by a newer DMS database version.");
         }
 
         // Older DMS databases may lack later optional tables or columns; schema
         // initialization can add those after the restore succeeds.
         var relationalOnly = BackupHasMigration(source, 5);
+        var normalizedTemplates = BackupHasMigration(source, 6);
         var required = new Dictionary<string, string[]>
         {
             ["recipes"] = relationalOnly
@@ -1100,9 +1103,21 @@ public partial class DatabaseService : IDisposable
             ["ingredients"] = relationalOnly ? ["id", "name", "created_at"] : ["id", "name", "allergens_json", "created_at"],
             ["allergens"] = ["id", "name", "color", "created_at"],
             ["menu"] = ["id", "date", "slot", "recipe_id", "created_at"],
-            ["templates"] = ["name", "data_json", "is_preset", "created_at", "updated_at"],
+            ["templates"] = normalizedTemplates ? ["name", "is_preset", "created_at", "updated_at"] : ["name", "data_json", "is_preset", "created_at", "updated_at"],
             ["settings"] = ["key", "value"]
         };
+        if (normalizedTemplates)
+        {
+            required["template_image_assets"] = ["id", "name", "content_type", "data"];
+            required["template_image_references"] = ["template_name", "asset_id"];
+            required["template_documents"] = ["template_name", .. DocumentFields.Select(p => p.Name)];
+            required["template_day_layouts"] = ["template_name", "position", "height"];
+            required["template_text_styles"] = ["template_name", "key", .. StyleFields.Select(p => p.Name)];
+            required["template_block_appearances"] = ["template_name", "key", .. AppearanceFields.Select(p => p.Name)];
+            required["template_image_placements"] = ["template_name", "position", .. ImageFields.Select(p => p.Name)];
+            required["meal_categories"] = ["position", "id", "name"];
+            required["recent_template_colors"] = ["position", "color"];
+        }
         var hasMenuCategories = BackupHasTable(source, "menu_slot_categories");
         if (hasMenuCategories) required["menu_slot_categories"] = ["date", "slot", "category"];
         var hasRelationships = BackupHasMigration(source, 4);
@@ -1199,7 +1214,7 @@ public partial class DatabaseService : IDisposable
             {
                 // Migration 3 removes obsolete template formats from older backups.
                 templates.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=3";
-                if (BackupHasTable(source, "schema_migrations") && Convert.ToInt32(templates.ExecuteScalar()) > 0)
+                if (!normalizedTemplates && BackupHasTable(source, "schema_migrations") && Convert.ToInt32(templates.ExecuteScalar()) > 0)
                 {
                     templates.CommandText = "SELECT name, data_json, is_preset FROM templates";
                     using var reader = templates.ExecuteReader();
@@ -1238,12 +1253,46 @@ public partial class DatabaseService : IDisposable
             }
             if (BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
             if (hasRelationships) ValidateRelationshipRows(source);
+            if (normalizedTemplates) ValidateNormalizedRows(source);
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException
             or InvalidCastException or FormatException or OverflowException or SqliteException)
         {
             throw new InvalidDataException("The selected backup contains unreadable startup data.", ex);
         }
+    }
+
+    private static void ValidateNormalizedRows(SqliteConnection source)
+    {
+        foreach (var table in new[] { "template_documents", "template_day_layouts", "template_text_styles", "template_block_appearances", "template_image_placements" })
+        {
+            using var check = source.CreateCommand();
+            check.CommandText = $"SELECT 1 FROM {table} c WHERE NOT EXISTS (SELECT 1 FROM templates t WHERE t.name=c.template_name) LIMIT 1";
+            if (check.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains orphaned template rows.");
+        }
+        using var templates = source.CreateCommand(); templates.CommandText="SELECT name,is_preset FROM templates";
+        using var rows = templates.ExecuteReader();
+        var names = new List<(string,bool)>(); while(rows.Read()) { var preset=rows.GetInt64(1); if(preset is not (0 or 1)) throw new InvalidDataException("Invalid template preset."); names.Add((rows.GetString(0),preset==1)); } rows.Close();
+        foreach (var (name,preset) in names) ReadStoredTemplate(source, name, preset);
+        using (var usage = source.CreateCommand())
+        {
+            usage.CommandText = @"WITH expected AS (
+                SELECT d.template_name, d.BackgroundImageAssetId AS asset_id FROM template_documents d
+                JOIN template_image_assets a ON a.id=d.BackgroundImageAssetId
+                UNION SELECT p.template_name, p.AssetId FROM template_image_placements p
+                JOIN template_image_assets a ON a.id=p.AssetId
+            ) SELECT 1 FROM (
+                SELECT * FROM (SELECT template_name,asset_id FROM expected EXCEPT SELECT template_name,asset_id FROM template_image_references)
+                UNION ALL SELECT * FROM (SELECT template_name,asset_id FROM template_image_references EXCEPT SELECT template_name,asset_id FROM expected)
+            ) LIMIT 1";
+            if (usage.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains inconsistent template image usage.");
+        }
+        foreach (var table in new[] { "meal_categories", "recent_template_colors" })
+        {
+            using var check=source.CreateCommand(); check.CommandText=$"SELECT position FROM {table} ORDER BY position"; using var reader=check.ExecuteReader(); var i=0; while(reader.Read()) if(reader.GetInt32(0)!=i++) throw new InvalidDataException("Invalid settings order.");
+        }
+        using (var colors = source.CreateCommand()) { colors.CommandText="SELECT color FROM recent_template_colors"; using var reader=colors.ExecuteReader(); while(reader.Read()) _ = reader.GetString(0); }
+        using var categories=source.CreateCommand(); categories.CommandText="SELECT id,name FROM meal_categories ORDER BY position"; using var values=categories.ExecuteReader(); var list=new List<MealCategory>(); while(values.Read()) list.Add(new MealCategory { Id=values.GetString(0), Name=values.GetString(1) }); ParseMealCategories(System.Text.Json.JsonSerializer.Serialize(list));
     }
 
     private static bool BackupHasTable(SqliteConnection source, string table)

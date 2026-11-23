@@ -29,7 +29,7 @@ public partial class DatabaseService
         using var check = _connection.CreateCommand();
         check.Transaction = transaction;
         check.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version = 2";
-        if (Convert.ToInt64(check.ExecuteScalar()) == 0)
+        if (Convert.ToInt64(check.ExecuteScalar()) == 0 && HasColumn("templates", "data_json"))
         {
             // Close the reader before updating templates in the same transaction.
             var rows = ReadTemplateRows(transaction).ToList();
@@ -71,7 +71,7 @@ public partial class DatabaseService
         {
             legacyCheck.Transaction = transaction;
             legacyCheck.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version = 3";
-            if (Convert.ToInt64(legacyCheck.ExecuteScalar()) == 0)
+            if (Convert.ToInt64(legacyCheck.ExecuteScalar()) == 0 && HasColumn("templates", "data_json"))
             {
                 var obsolete = new List<string>();
                 foreach (var (name, json) in ReadTemplateRows(transaction))
@@ -131,20 +131,14 @@ public partial class DatabaseService
         {
             using var exists = _connection.CreateCommand();
             exists.Transaction = transaction;
-            exists.CommandText = "SELECT data_json FROM templates WHERE name=@name";
+            exists.CommandText = "SELECT is_preset FROM templates WHERE name=@name";
             exists.Parameters.AddWithValue("@name", definition.Name);
-            if (exists.ExecuteScalar() is string existingJson)
+            if (exists.ExecuteScalar() is long preset)
             {
-                if (SeasonalTemplateDefaults.TryApplyRoomierTypography(existingJson, out var refreshedJson))
-                {
-                    using var update = _connection.CreateCommand();
-                    update.Transaction = transaction;
-                    update.CommandText = "UPDATE templates SET data_json=@data, updated_at=@now WHERE name=@name";
-                    update.Parameters.AddWithValue("@data", refreshedJson);
-                    update.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
-                    update.Parameters.AddWithValue("@name", definition.Name);
-                    update.ExecuteNonQuery();
-                }
+                var existing = ReadStoredTemplate(definition.Name, preset != 0, transaction);
+                var json = JsonSerializer.Serialize(existing);
+                if (SeasonalTemplateDefaults.TryApplyRoomierTypography(json, out var refreshed))
+                    WriteTemplateDocument(JsonSerializer.Deserialize<MenuTemplate>(refreshed)!, transaction);
                 continue;
             }
 
@@ -157,12 +151,11 @@ public partial class DatabaseService
             var template = SeasonalTemplateDefaults.Create(definition, image.Id);
             using var insert = _connection.CreateCommand();
             insert.Transaction = transaction;
-            insert.CommandText = @"INSERT INTO templates (name, data_json, is_preset, created_at, updated_at)
-                VALUES (@name, @data, 1, @now, @now)";
+            insert.CommandText = @"INSERT INTO templates (name, is_preset, created_at, updated_at) VALUES (@name, 1, @now, @now)";
             insert.Parameters.AddWithValue("@name", template.Name);
-            insert.Parameters.AddWithValue("@data", JsonSerializer.Serialize(template));
             insert.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
             insert.ExecuteNonQuery();
+            WriteTemplateDocument(template, transaction);
             ReplaceTemplateImageReferences(template.Name, (string[])[image.Id], transaction);
         }
         transaction.Commit();

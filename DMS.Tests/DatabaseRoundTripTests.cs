@@ -9,6 +9,146 @@ namespace DMS.Tests;
 public sealed class DatabaseRoundTripTests : IDisposable
 {
     [Fact]
+    public async Task FailedVersionSixMigrationLeavesLegacySchemaAndSettingsIntact()
+    {
+        using (var db = Open("rollback.db")) await db.InitializeAsync();
+        using (var connection = new SqliteConnection($"Data Source={PathFor("rollback.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = @"DROP TABLE template_documents; DROP TABLE template_day_layouts;
+                DROP TABLE template_text_styles; DROP TABLE template_block_appearances; DROP TABLE template_image_placements;
+                DROP TABLE meal_categories; DROP TABLE recent_template_colors;
+                ALTER TABLE templates ADD COLUMN data_json TEXT;
+                INSERT INTO settings(key,value) VALUES('meal_categories','invalid-json');
+                DELETE FROM schema_migrations WHERE version=6; PRAGMA user_version=5;";
+            command.ExecuteNonQuery();
+        }
+        using (var db = Open("rollback.db")) await Assert.ThrowsAsync<InvalidDataException>(() => db.InitializeAsync());
+        using var check = new SqliteConnection($"Data Source={PathFor("rollback.db")};Pooling=False");
+        check.Open(); using var query = check.CreateCommand();
+        query.CommandText = "SELECT COUNT(*) FROM pragma_table_info('templates') WHERE name='data_json'";
+        Assert.Equal(1L, query.ExecuteScalar());
+        query.CommandText = "SELECT value FROM settings WHERE key='meal_categories'";
+        Assert.Equal("invalid-json", query.ExecuteScalar());
+        query.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=6";
+        Assert.Equal(0L, query.ExecuteScalar());
+    }
+
+    [Fact]
+    public async Task FreshDatabaseSeedsProtectedPresetsWithArtwork()
+    {
+        Directory.CreateDirectory(_folder);
+        using var db = new DatabaseService(NullLogger<DatabaseService>.Instance, PathFor("presets.db"));
+        var templates = await db.GetAllTemplatesAsync();
+        Assert.Equal(15, templates.Count);
+        var preset = templates[0];
+        Assert.True(preset.IsPreset);
+        Assert.NotNull(preset.Document!.BackgroundImageAssetId);
+        Assert.NotNull(await db.GetTemplateImageAsync(preset.Document.BackgroundImageAssetId!));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => db.RenameTemplateAsync(preset.Name, "Renamed"));
+        await db.DeleteTemplateAsync(preset.Name);
+        Assert.Equal(15, (await db.GetAllTemplatesAsync()).Count);
+    }
+
+    [Fact]
+    public async Task VersionFiveBackupMigratesTemplateImagesAndOrderedSettings()
+    {
+        using (var db = Open("version-five.db")) await db.InitializeAsync();
+        var template = new MenuTemplate { Name = "Legacy", Document = new TemplateDocument
+        {
+            BackgroundImageDataUri = "data:image/png;base64," + Convert.ToBase64String(Image),
+            DecorativeImages = [new TemplateImage { DataUri = "data:image/png;base64," + Convert.ToBase64String(Image), X = 31 }]
+        } };
+        using (var connection = new SqliteConnection($"Data Source={PathFor("version-five.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = @"DROP TABLE template_documents; DROP TABLE template_day_layouts;
+                DROP TABLE template_text_styles; DROP TABLE template_block_appearances; DROP TABLE template_image_placements;
+                DROP TABLE meal_categories; DROP TABLE recent_template_colors;
+                ALTER TABLE templates ADD COLUMN data_json TEXT;
+                INSERT INTO templates(name,data_json) VALUES('Legacy',@json);
+                INSERT INTO settings(key,value) VALUES('meal_categories','[{""Id"":""b"",""Name"":""B""},{""Id"":""a"",""Name"":""A""}]');
+                INSERT INTO settings(key,value) VALUES('recent_template_colors','[""#123456"",""#abcdef""]');
+                DELETE FROM schema_migrations WHERE version=6; PRAGMA user_version=5;";
+            command.Parameters.AddWithValue("@json", System.Text.Json.JsonSerializer.Serialize(template));
+            command.ExecuteNonQuery();
+        }
+        using var restored = Open("version-five-restored.db");
+        await restored.RestoreFromAsync(PathFor("version-five.db"));
+        var loaded = Assert.Single(await restored.GetAllTemplatesAsync());
+        Assert.NotNull(loaded.Document!.BackgroundImageAssetId);
+        Assert.Equal(loaded.Document.BackgroundImageAssetId, Assert.Single(loaded.Document.DecorativeImages).AssetId);
+        Assert.Equal(31, loaded.Document.DecorativeImages[0].X);
+        Assert.Equal(new[] { "Legacy" }, await restored.GetTemplateImageUsageAsync(loaded.Document.BackgroundImageAssetId!));
+        var settings = (await restored.GetSettingsAsync())!;
+        Assert.Equal(new[] { "b", "a" }, settings.MealCategories.Select(c => c.Id));
+        Assert.Equal(new[] { "#123456", "#abcdef" }, settings.RecentTemplateColors);
+    }
+
+    [Fact]
+    public async Task RelationalTemplateAndSettingsSurviveReopenRenameAndBackup()
+    {
+        using (var db = Open("normalized.db"))
+        {
+            var image = await db.SaveTemplateImageAsync("Art", "image/png", Image);
+            await db.SaveTemplateAsync(new MenuTemplate { Name = "Original", Document = new TemplateDocument
+            {
+                BackgroundImageAssetId = image.Id,
+                DecorativeImages = [new TemplateImage { AssetId = image.Id, X = 42, Y = 73, Width = 125 }],
+                DayHeights = [10, null, 30, null, null, null, null],
+                TextStyles = new() { ["header"] = new() { FontSize = 27, Bold = true } },
+                BlockAppearances = new() { ["day"] = new() { Padding = 9 } }
+            } });
+            var settings = (await db.GetSettingsAsync())!;
+            settings.MealCategories = [new() { Id = "second", Name = "Second" }, new() { Id = "first", Name = "First" }];
+            settings.RecentTemplateColors = ["#123456", "#abcdef"];
+            await db.SaveSettingsAsync(settings);
+            await db.RenameTemplateAsync("Original", "Renamed");
+            Assert.Equal(new[] { "Renamed" }, await db.GetTemplateImageUsageAsync(image.Id));
+            await db.CreateBackupAsync(PathFor("normalized-backup.db"));
+        }
+        using var restored = Open("normalized-restored.db");
+        await restored.RestoreFromAsync(PathFor("normalized-backup.db"));
+        var template = Assert.Single(await restored.GetAllTemplatesAsync());
+        Assert.Equal("Renamed", template.Name);
+        var placement = Assert.Single(template.Document!.DecorativeImages);
+        Assert.Equal(template.Document.BackgroundImageAssetId, placement.AssetId);
+        Assert.Equal(42, placement.X); Assert.Equal(73, placement.Y); Assert.Equal(125, placement.Width);
+        Assert.Equal(new double?[] { 10, null, 30, null, null, null, null }, template.Document.DayHeights);
+        Assert.True(template.Document.TextStyles["header"].Bold);
+        Assert.Equal(27, template.Document.TextStyles["header"].FontSize);
+        Assert.Equal(9, template.Document.BlockAppearances["day"].Padding);
+        var saved = (await restored.GetSettingsAsync())!;
+        Assert.Equal(new[] { "second", "first" }, saved.MealCategories.Select(c => c.Id));
+        Assert.Equal(new[] { "#123456", "#abcdef" }, saved.RecentTemplateColors);
+        await restored.DeleteTemplateAsync("Renamed");
+        Assert.Empty(await restored.GetTemplateImageUsageAsync(placement.AssetId!));
+    }
+
+    [Fact]
+    public async Task FreshSchemaStoresTemplatesAndSettingsListsInRelationalTables()
+    {
+        using var db = Open("final-relational-schema.db");
+        await db.InitializeAsync();
+        using var connection = new SqliteConnection($"Data Source={db.GetDatabasePath()};Pooling=False");
+        await connection.OpenAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM pragma_table_info('templates')";
+        using (var reader = await command.ExecuteReaderAsync())
+        {
+            var columns = new List<string>();
+            while (await reader.ReadAsync()) columns.Add(reader.GetString(0));
+            Assert.DoesNotContain("data_json", columns);
+        }
+        command.CommandText = "SELECT name FROM sqlite_master WHERE type='table'";
+        using var tables = await command.ExecuteReaderAsync();
+        var names = new List<string>();
+        while (await tables.ReadAsync()) names.Add(tables.GetString(0));
+        foreach (var name in new[] { "template_documents", "template_day_layouts", "template_text_styles", "template_block_appearances", "template_image_placements", "meal_categories", "recent_template_colors" })
+            Assert.Contains(name, names);
+    }
+
+    [Fact]
     public async Task CurrentSchemaStoresRecipeAndIngredientRelationshipsOnlyInTables()
     {
         using var db = Open("relational-schema.db");

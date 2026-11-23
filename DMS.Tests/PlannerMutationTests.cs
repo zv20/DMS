@@ -180,7 +180,7 @@ public sealed class PlannerMutationTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathForDb};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TRIGGER reject_categories BEFORE INSERT ON settings WHEN NEW.key='meal_categories' BEGIN SELECT RAISE(ABORT, 'simulated failure'); END";
+            command.CommandText = "CREATE TRIGGER reject_categories BEFORE INSERT ON meal_categories BEGIN SELECT RAISE(ABORT, 'simulated failure'); END";
             command.ExecuteNonQuery();
         }
         await Assert.ThrowsAsync<SqliteException>(() => database.SaveSettingsAsync(settings));
