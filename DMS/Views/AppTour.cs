@@ -6,27 +6,29 @@ namespace DMS.Views;
 
 internal static class AppTour
 {
-    public static async Task ShowAsync(XamlRoot root, Func<string, Task> navigateAsync)
+    public static async Task ShowAsync(Grid host, IReadOnlyList<FrameworkElement> targets)
     {
-        for (var index = 0; index < AppTourPlan.Steps.Count;)
+        for (var index = 0; index < AppTourPlan.Steps.Count; index++)
         {
             var step = AppTourPlan.Steps[index];
-            await navigateAsync(step.NavigationTag);
             var isLast = index == AppTourPlan.Steps.Count - 1;
-            var dialog = new ContentDialog
+            var completed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var tip = new TeachingTip
             {
-                XamlRoot = root,
                 Title = $"{Localization.Get(step.TitleKey)} ({index + 1}/{AppTourPlan.Steps.Count})",
                 Content = new TextBlock { Text = Localization.Get(step.DescriptionKey), TextWrapping = TextWrapping.Wrap },
+                Target = targets[index],
                 PrimaryButtonText = Localization.Get(isLast ? "TourFinish" : "TourNext"),
-                SecondaryButtonText = index == 0 ? null : Localization.Get("TourBack"),
-                CloseButtonText = Localization.Get("TourSkip"),
-                DefaultButton = ContentDialogButton.Primary
+                CloseButtonContent = Localization.Get("TourSkip")
             };
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary) { index++; continue; }
-            if (result == ContentDialogResult.Secondary) { index--; continue; }
-            return;
+            tip.ActionButtonClick += (_, _) => completed.TrySetResult(true);
+            tip.CloseButtonClick += (_, _) => completed.TrySetResult(false);
+            host.Children.Add(tip);
+            tip.IsOpen = true;
+            var continueTour = await completed.Task;
+            tip.IsOpen = false;
+            host.Children.Remove(tip);
+            if (!continueTour) return;
         }
     }
 }

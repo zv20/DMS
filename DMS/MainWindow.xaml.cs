@@ -201,15 +201,21 @@ public sealed partial class MainWindow : Window
         _ => null
     };
 
-    public Task ShowTourAsync() => AppTour.ShowAsync(RootGrid.XamlRoot, NavigateTourStepAsync);
-
-    private Task NavigateTourStepAsync(string tag)
+    public async Task ShowTourAsync()
     {
-        var pageType = PageForTag(tag);
-        if (pageType == null) return Task.CompletedTask;
-        var item = pageType == typeof(SettingsPage) ? NavView.SettingsItem :
-            NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(entry => Equals(entry.Tag, tag));
-        return NavigateToAsync(pageType, item);
+        var wasPaneOpen = NavView.IsPaneOpen;
+        NavView.IsPaneOpen = true;
+        try
+        {
+            var targets = AppTourPlan.Steps.Select(step => FindTourTarget(step.NavigationTag)).OfType<FrameworkElement>().ToList();
+            if (targets.Count == AppTourPlan.Steps.Count) await AppTour.ShowAsync(RootGrid, targets);
+        }
+        finally { NavView.IsPaneOpen = wasPaneOpen; }
+    }
+
+    private FrameworkElement? FindTourTarget(string tag) => tag == "settings"
+        ? NavView.SettingsItem as FrameworkElement
+        : NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, tag));
     }
 
     private async Task ShowNavigationErrorAsync()
