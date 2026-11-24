@@ -17,14 +17,14 @@ public sealed class AutomaticBackupTests : IDisposable
         using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, path);
         var backupFolder = Path.Combine(_folder, "AutomaticBackups");
         Directory.CreateDirectory(backupFolder);
-        var unrelated = Path.Combine(backupFolder, "DMS-auto-manual.db");
+        var unrelated = Path.Combine(backupFolder, "DMS-auto-manual.dmsbackup");
         await File.WriteAllTextAsync(unrelated, "keep");
         for (var i = 1; i <= 4; i++)
         {
             await database.SaveRecipeAsync(new Recipe { Name = $"Recipe {i}", Category = "soup" });
             await AutomaticBackup.CreateAsync(database);
         }
-        var backups = Directory.GetFiles(backupFolder, "DMS-auto-*.db").Where(file => file != unrelated).OrderBy(file => file).ToArray();
+        var backups = Directory.GetFiles(backupFolder, "DMS-auto-*.dmsbackup").Where(file => file != unrelated).OrderBy(file => file).ToArray();
         Assert.Equal(3, backups.Length);
         Assert.True(File.Exists(unrelated));
         using var restored = new DatabaseService(NullLogger<DatabaseService>.Instance, Path.Combine(_folder, "restored.db"));
@@ -40,10 +40,10 @@ public sealed class AutomaticBackupTests : IDisposable
         using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, path);
         await AutomaticBackup.CreateAsync(database);
         var folder = Path.Combine(_folder, "AutomaticBackups");
-        var previous = Assert.Single(Directory.GetFiles(folder, "*.db"));
+        var previous = Assert.Single(Directory.GetFiles(folder, "*.dmsbackup"));
         await File.WriteAllTextAsync(path + ".recovery-required", "recovery.db");
         await Assert.ThrowsAnyAsync<Exception>(() => AutomaticBackup.CreateAsync(database));
-        Assert.Equal(previous, Assert.Single(Directory.GetFiles(folder, "*.db")));
+        Assert.Equal(previous, Assert.Single(Directory.GetFiles(folder, "*.dmsbackup")));
     }
 
     public void Dispose()

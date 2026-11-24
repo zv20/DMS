@@ -9,6 +9,25 @@ namespace DMS.Tests;
 public sealed class DatabaseRestoreSafetyTests : IDisposable
 {
     [Fact]
+    public async Task RestoreRejectsArchiveWithUnexpectedFilesBeforeReplacingLiveDatabase()
+    {
+        var archive = PathFor("unsafe.dmsbackup");
+        using (var source = Open("archive-source.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Source", Category = "soup" });
+            await source.CreateBackupAsync(archive);
+        }
+        using (var zip = System.IO.Compression.ZipFile.Open(archive, System.IO.Compression.ZipArchiveMode.Update))
+        using (var writer = new StreamWriter(zip.CreateEntry("unexpected.txt").Open()))
+            await writer.WriteAsync("unexpected");
+
+        using var current = Open("archive-current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(archive));
+        Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
     public async Task RestoreRejectsMissingImageUsageBeforeReplacingLiveDatabase()
     {
         var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");

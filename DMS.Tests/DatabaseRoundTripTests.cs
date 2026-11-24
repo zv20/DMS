@@ -9,6 +9,75 @@ namespace DMS.Tests;
 public sealed class DatabaseRoundTripTests : IDisposable
 {
     [Fact]
+    public async Task ArchiveBackupIncludesManagedImagesAndRestoresThem()
+    {
+        var archive = PathFor("backup.dmsbackup");
+        string imageId;
+        using (var source = Open("archive-source.db"))
+        {
+            imageId = (await source.SaveTemplateImageAsync("Archive image", "image/png", Image)).Id;
+            await source.SaveTemplateAsync(new MenuTemplate { Name = "Archive", Document = new TemplateDocument { BackgroundImageAssetId = imageId } });
+            await source.CreateBackupAsync(archive);
+        }
+        using (var zip = System.IO.Compression.ZipFile.OpenRead(archive))
+        {
+            Assert.NotNull(zip.GetEntry("manifest.json"));
+            Assert.NotNull(zip.GetEntry("dms.db"));
+            Assert.NotNull(zip.GetEntry($"template-images/{imageId}.png"));
+        }
+        using var restored = Open("archive-restored.db");
+        await restored.RestoreFromAsync(archive);
+        Assert.Equal(Image, (await restored.GetTemplateImageAsync(imageId))!.Data);
+        Assert.True(File.Exists(Path.Combine(_folder, "template-images", imageId + ".png")));
+    }
+
+    [Fact]
+    public async Task TemplateImagesAreStoredInManagedFilesInsteadOfDatabaseBlobs()
+    {
+        using var db = Open("file-images.db");
+        var image = await db.SaveTemplateImageAsync("Managed", "image/png", Image);
+        var imagePath = Path.Combine(Path.GetDirectoryName(db.GetDatabasePath())!, "template-images", image.Id + ".png");
+        Assert.True(File.Exists(imagePath));
+        Assert.Equal(Image, await File.ReadAllBytesAsync(imagePath));
+
+        using var connection = new SqliteConnection($"Data Source={db.GetDatabasePath()};Pooling=False");
+        await connection.OpenAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM pragma_table_info('template_image_assets')";
+        using var reader = await command.ExecuteReaderAsync();
+        var columns = new List<string>();
+        while (await reader.ReadAsync()) columns.Add(reader.GetString(0));
+        Assert.Contains("relative_path", columns);
+        Assert.DoesNotContain("data", columns);
+        await db.DeleteTemplateImageAsync(image.Id, []);
+        Assert.False(File.Exists(imagePath));
+    }
+
+    [Fact]
+    public async Task LegacyImageBlobsMigrateToManagedFiles()
+    {
+        using (var db = Open("legacy-image.db")) await db.InitializeAsync();
+        using (var connection = new SqliteConnection($"Data Source={PathFor("legacy-image.db")};Pooling=False"))
+        {
+            await connection.OpenAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = @"PRAGMA foreign_keys=OFF;
+                DROP TABLE template_image_assets;
+                CREATE TABLE template_image_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, content_type TEXT NOT NULL, data BLOB NOT NULL);
+                INSERT INTO template_image_assets VALUES(@id, 'Legacy', 'image/png', @data);
+                DELETE FROM schema_migrations WHERE version=7; PRAGMA user_version=6;";
+            var id = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Image)).ToLowerInvariant();
+            command.Parameters.AddWithValue("@id", id);
+            command.Parameters.Add("@data", SqliteType.Blob).Value = Image;
+            await command.ExecuteNonQueryAsync();
+        }
+        using var migrated = Open("legacy-image.db");
+        var idAfter = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Image)).ToLowerInvariant();
+        Assert.Equal(Image, (await migrated.GetTemplateImageAsync(idAfter))!.Data);
+        Assert.True(File.Exists(Path.Combine(_folder, "template-images", idAfter + ".png")));
+    }
+
+    [Fact]
     public async Task FailedVersionSixMigrationLeavesLegacySchemaAndSettingsIntact()
     {
         using (var db = Open("rollback.db")) await db.InitializeAsync();

@@ -104,8 +104,9 @@ version.
 For automatic promotion, enable **Allow GitHub Actions to create and approve pull requests** in repository Actions settings. If publishing fails after promotion, rerun the failed publish job.
 
 English and Bulgarian resources are in `DMS/Strings/`; keep keys and format
-placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, pre-restore copies in
-`%APPDATA%\DMS\RestoreBackups`, and logs in Settings or `%APPDATA%\DMS\Logs\dms.log`.
+placeholders aligned. Data is in `%APPDATA%\DMS\dms.db`, template artwork is in
+`%APPDATA%\DMS\template-images`, pre-restore copies are in `%APPDATA%\DMS\RestoreBackups`,
+and logs are in Settings or `%APPDATA%\DMS\Logs\dms.log`.
 
 See [Testing on Windows](scripts/TESTING.md) for installed-app checks and performance and memory captures.
 

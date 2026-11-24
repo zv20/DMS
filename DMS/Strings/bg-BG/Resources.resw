@@ -69,6 +69,7 @@
   <data name="Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази съставка?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450" xml:space="preserve"><value>Сигурни ли сте, че искате да изтриете тази рецепта?</value></data>
   <data name="Text_Backup_Complete_8b1525" xml:space="preserve"><value>Резервното копие е създадено</value></data>
+  <data name="BackupArchiveFileType" xml:space="preserve"><value>Архивно копие на DMS</value></data>
   <data name="Text_Blue_b81516.Content" xml:space="preserve"><value>🔵 Син</value></data>
   <data name="Text_Built_for_meal_planning_and_recipe_management_49409f.Text" xml:space="preserve"><value>За планиране на меню и управление на рецепти</value></data>
   <data name="Text_Bulgarian_a7a43a.Content" xml:space="preserve"><value>Български</value></data>

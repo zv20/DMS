@@ -932,6 +932,11 @@ public partial class DatabaseService : IDisposable
     public async Task CreateBackupAsync(string destinationPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        if (IsArchiveBackup(destinationPath))
+        {
+            await CreateArchiveBackupAsync(destinationPath);
+            return;
+        }
         await InitializeAsync();
 
         await using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = destinationPath, Pooling = false }.ToString());
@@ -944,6 +949,11 @@ public partial class DatabaseService : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         if (!File.Exists(sourcePath)) throw new FileNotFoundException("The selected backup file no longer exists.", sourcePath);
+        if (IsArchiveBackup(sourcePath))
+        {
+            await RestoreArchiveAsync(sourcePath);
+            return;
+        }
         var source = Path.GetFullPath(sourcePath);
         var current = Path.GetFullPath(_dbPath);
         if (string.Equals(source, current, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
@@ -964,7 +974,24 @@ public partial class DatabaseService : IDisposable
             await using var backup = new SqliteConnection(snapshotOptions.ToString());
             await backup.OpenAsync();
             sourceConnection.BackupDatabase(backup);
+            if (BackupHasMigration(sourceConnection, 7))
+            {
+                var sourceImages = Path.Combine(Path.GetDirectoryName(source)!, "template-images");
+                var snapshotImages = Path.Combine(snapshotDirectory, "template-images");
+                if (Directory.Exists(sourceImages))
+                {
+                    Directory.CreateDirectory(snapshotImages);
+                    foreach (var file in Directory.EnumerateFiles(sourceImages))
+                        File.Copy(file, Path.Combine(snapshotImages, Path.GetFileName(file)));
+                }
+            }
             ValidateRestoreSource(backup);
+            if (BackupHasMigration(sourceConnection, 7))
+            {
+                // Copy is additive: the current database continues to have every
+                // image it references until the database replacement succeeds.
+                CopyDirectory(Path.Combine(snapshotDirectory, "template-images"), TemplateImageDirectory);
+            }
             await InitializeAsync();
 
             await _initLock.WaitAsync();
@@ -1091,7 +1118,7 @@ public partial class DatabaseService : IDisposable
         using (var version = source.CreateCommand())
         {
             version.CommandText = "PRAGMA user_version";
-            if (Convert.ToInt64(version.ExecuteScalar()) > 6)
+            if (Convert.ToInt64(version.ExecuteScalar()) > 7)
                 throw new InvalidDataException("This backup was created by a newer DMS database version.");
         }
 
@@ -1099,6 +1126,7 @@ public partial class DatabaseService : IDisposable
         // initialization can add those after the restore succeeds.
         var relationalOnly = BackupHasMigration(source, 5);
         var normalizedTemplates = BackupHasMigration(source, 6);
+        var fileBackedImages = BackupHasMigration(source, 7);
         var required = new Dictionary<string, string[]>
         {
             ["recipes"] = relationalOnly
@@ -1112,7 +1140,9 @@ public partial class DatabaseService : IDisposable
         };
         if (normalizedTemplates)
         {
-            required["template_image_assets"] = ["id", "name", "content_type", "data"];
+            required["template_image_assets"] = fileBackedImages
+                ? ["id", "name", "content_type", "relative_path"]
+                : ["id", "name", "content_type", "data"];
             required["template_image_references"] = ["template_name", "asset_id"];
             required["template_documents"] = ["template_name", .. DocumentFields.Select(p => p.Name)];
             required["template_day_layouts"] = ["template_name", "position", "height"];
@@ -1255,7 +1285,8 @@ public partial class DatabaseService : IDisposable
                 using var reader = categories.ExecuteReader();
                 while (reader.Read()) ReadMenuCategory(reader);
             }
-            if (BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
+            if (!fileBackedImages && BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
+            if (fileBackedImages) ValidateFileBackedImageAssets(source, Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
             if (hasRelationships) ValidateRelationshipRows(source);
             if (normalizedTemplates) ValidateNormalizedRows(source);
         }

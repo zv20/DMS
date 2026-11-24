@@ -1,6 +1,6 @@
 # Database relationships (schema version 6)
 
-The diagram shows declared foreign keys. Saved names in relationship tables preserve references to catalog entries that no longer exist. Template image usage is tracked separately from placements so an asset can be shared by templates; image bytes are stored in SQLite.
+The diagram shows declared foreign keys. Saved names in relationship tables preserve references to catalog entries that no longer exist. Template image usage is tracked separately from placements so an asset can be shared by templates; image files are stored under the DMS data folder and are addressed by their SHA-256 IDs.
 
 ```mermaid
 erDiagram
@@ -43,4 +43,4 @@ erDiagram
     schema_migrations { integer version PK }
 ```
 
-`template_documents`, styles, appearances, and placements store scalar model properties in individual columns. Day heights, meal categories, and recent colors use ordered rows. Image placements and the document retain asset IDs; `template_image_references` records the corresponding existing assets. `menu_slot_categories`, settings, and schema migrations are independent tables.
+`template_documents`, styles, appearances, and placements store scalar model properties in individual columns. Day heights, meal categories, and recent colors use ordered rows. Image placements and the document retain asset IDs; `template_image_assets.relative_path` points to the managed `template-images` folder, while `template_image_references` records asset use. `menu_slot_categories`, settings, and schema migrations are independent tables.

@@ -10,6 +10,7 @@ public partial class DatabaseService
 {
     internal const int MaxImageBytes = 4 * 1024 * 1024;
     private const string ValidImageBlob = "CASE WHEN typeof(data) = 'blob' THEN length(data) BETWEEN 1 AND @maxBytes ELSE 0 END";
+    private string TemplateImageDirectory => Path.Combine(Path.GetDirectoryName(_dbPath)!, "template-images");
 
     private void InitializeTemplateImages()
     {
@@ -18,7 +19,7 @@ public partial class DatabaseService
         {
             schema.Transaction = transaction;
             schema.CommandText = @"CREATE TABLE IF NOT EXISTS template_image_assets (
-                id TEXT PRIMARY KEY, name TEXT NOT NULL, content_type TEXT NOT NULL, data BLOB NOT NULL);
+                id TEXT PRIMARY KEY, name TEXT NOT NULL, content_type TEXT NOT NULL, relative_path TEXT NOT NULL);
               CREATE TABLE IF NOT EXISTS template_image_references (
                 template_name TEXT NOT NULL REFERENCES templates(name) ON UPDATE CASCADE ON DELETE CASCADE,
                 asset_id TEXT NOT NULL REFERENCES template_image_assets(id) ON DELETE RESTRICT,
@@ -102,7 +103,76 @@ public partial class DatabaseService
                 version.ExecuteNonQuery();
             }
         }
+        MigrateTemplateImagesToFiles(transaction);
         transaction.Commit();
+    }
+
+    private void MigrateTemplateImagesToFiles(SqliteTransaction transaction)
+    {
+        using var version = _connection!.CreateCommand();
+        version.Transaction = transaction;
+        version.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=7";
+        if (Convert.ToInt64(version.ExecuteScalar()) != 0) return;
+
+        if (HasColumn("template_image_assets", "data"))
+        {
+            var images = new List<(string Id, string Type, byte[] Data)>();
+            using (var read = _connection.CreateCommand())
+            {
+                read.Transaction = transaction;
+                read.CommandText = "SELECT id,content_type,data FROM template_image_assets";
+                using var reader = read.ExecuteReader();
+                while (reader.Read()) images.Add((reader.GetString(0), reader.GetString(1), (byte[])reader[2]));
+            }
+            foreach (var image in images)
+            {
+                if (!ValidImageSignature(image.Type, image.Data) || !string.Equals(image.Id, Convert.ToHexString(SHA256.HashData(image.Data)).ToLowerInvariant(), StringComparison.Ordinal))
+                    throw new InvalidDataException("Stored template image is invalid.");
+                WriteManagedImage(image.Id, image.Type, image.Data);
+            }
+            version.CommandText = "ALTER TABLE template_image_assets ADD COLUMN relative_path TEXT";
+            version.ExecuteNonQuery();
+            foreach (var image in images)
+            {
+                version.CommandText = "UPDATE template_image_assets SET relative_path=@path WHERE id=@id";
+                version.Parameters.Clear();
+                version.Parameters.AddWithValue("@path", RelativeImagePath(image.Id, image.Type));
+                version.Parameters.AddWithValue("@id", image.Id);
+                version.ExecuteNonQuery();
+            }
+            version.CommandText = "ALTER TABLE template_image_assets DROP COLUMN data";
+            version.ExecuteNonQuery();
+        }
+        version.CommandText = "INSERT INTO schema_migrations(version) VALUES (7); PRAGMA user_version=7";
+        version.ExecuteNonQuery();
+    }
+
+    private static string ImageExtension(string contentType) => contentType == "image/png" ? ".png" : ".jpg";
+
+    private static string RelativeImagePath(string id, string contentType) => $"template-images/{id}{ImageExtension(contentType)}";
+
+    private string AbsoluteImagePath(string relativePath) => Path.Combine(Path.GetDirectoryName(_dbPath)!, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+    private void WriteManagedImage(string id, string contentType, byte[] data)
+    {
+        var path = AbsoluteImagePath(RelativeImagePath(id, contentType));
+        Directory.CreateDirectory(TemplateImageDirectory);
+        if (File.Exists(path))
+        {
+            var existing = File.ReadAllBytes(path);
+            if (existing.AsSpan().SequenceEqual(data)) return;
+            throw new InvalidDataException("An existing managed template image has an unexpected hash.");
+        }
+        var temporary = path + ".tmp-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            File.WriteAllBytes(temporary, data);
+            File.Move(temporary, path);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
     }
 
     private IEnumerable<(string Name, string Json)> ReadTemplateRows(SqliteTransaction transaction)
@@ -168,13 +238,18 @@ public partial class DatabaseService
         if (data == null || data.Length == 0 || data.Length > MaxImageBytes) throw new InvalidDataException("Image size is invalid.");
         if (!ValidImageSignature(contentType, data)) throw new InvalidDataException("Image contents do not match the selected PNG or JPEG format.");
         var id = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+        WriteManagedImage(id, contentType, data);
         using var insert = _connection!.CreateCommand();
         insert.Transaction = transaction;
-        insert.CommandText = "INSERT OR IGNORE INTO template_image_assets(id, name, content_type, data) VALUES (@id,@name,@type,@data)";
+        var legacyBlob = HasColumn("template_image_assets", "data");
+        insert.CommandText = legacyBlob
+            ? "INSERT OR IGNORE INTO template_image_assets(id, name, content_type, data) VALUES (@id,@name,@type,@data)"
+            : "INSERT OR IGNORE INTO template_image_assets(id, name, content_type, relative_path) VALUES (@id,@name,@type,@path)";
         insert.Parameters.AddWithValue("@id", id);
         insert.Parameters.AddWithValue("@name", name.Trim());
         insert.Parameters.AddWithValue("@type", contentType);
-        insert.Parameters.Add("@data", SqliteType.Blob).Value = data;
+        if (legacyBlob) insert.Parameters.Add("@data", SqliteType.Blob).Value = data;
+        else insert.Parameters.AddWithValue("@path", RelativeImagePath(id, contentType));
         insert.ExecuteNonQuery();
         return ReadTemplateImage(id, transaction)!;
     }
@@ -190,15 +265,20 @@ public partial class DatabaseService
     {
         using var cmd = _connection!.CreateCommand();
         cmd.Transaction = transaction;
-        cmd.CommandText = $"SELECT id,name,content_type,CASE WHEN {ValidImageBlob} THEN data END FROM template_image_assets WHERE id=@id";
+        var fileBacked = HasColumn("template_image_assets", "relative_path");
+        cmd.CommandText = fileBacked
+            ? "SELECT id,name,content_type,relative_path FROM template_image_assets WHERE id=@id"
+            : $"SELECT id,name,content_type,CASE WHEN {ValidImageBlob} THEN data END FROM template_image_assets WHERE id=@id";
         cmd.Parameters.AddWithValue("@id", id);
         cmd.Parameters.AddWithValue("@maxBytes", MaxImageBytes);
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
         if (reader.IsDBNull(3)) throw new InvalidDataException("Stored template image size or type is invalid.");
         var contentType = reader.GetString(2);
-        var data = (byte[])reader[3];
+        var data = fileBacked ? File.ReadAllBytes(AbsoluteImagePath(reader.GetString(3))) : (byte[])reader[3];
+        if (data.Length is < 1 or > MaxImageBytes) throw new InvalidDataException("Stored template image size is invalid.");
         if (!ValidImageSignature(contentType, data)) throw new InvalidDataException("Stored template image format is invalid.");
+        if (!string.Equals(reader.GetString(0), Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant(), StringComparison.Ordinal)) throw new InvalidDataException("Stored template image hash is invalid.");
         return new TemplateImageAsset { Id = reader.GetString(0), Name = reader.GetString(1), ContentType = contentType, Data = data };
     }
 
@@ -218,6 +298,27 @@ public partial class DatabaseService
             var data = (byte[])reader[2];
             var expectedId = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
             if (!ValidImageSignature(contentType, data) || !string.Equals(id, expectedId, StringComparison.Ordinal))
+                throw new InvalidDataException("The selected backup contains an invalid template image.");
+        }
+    }
+
+    private static void ValidateFileBackedImageAssets(SqliteConnection source, string imageRoot)
+    {
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT id,content_type,relative_path FROM template_image_assets";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var id = reader.GetString(0);
+            var contentType = reader.GetString(1);
+            var relativePath = reader.GetString(2);
+            if (!string.Equals(relativePath, RelativeImagePath(id, contentType), StringComparison.Ordinal))
+                throw new InvalidDataException("The selected backup contains an invalid template image path.");
+            var path = Path.Combine(imageRoot, Path.GetFileName(relativePath));
+            if (!File.Exists(path)) throw new InvalidDataException("The selected backup is missing a template image.");
+            var data = File.ReadAllBytes(path);
+            if (data.Length is < 1 or > MaxImageBytes || !ValidImageSignature(contentType, data)
+                || !string.Equals(id, Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant(), StringComparison.Ordinal))
                 throw new InvalidDataException("The selected backup contains an invalid template image.");
         }
     }
@@ -405,6 +506,7 @@ public partial class DatabaseService
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
         if (!TemplateImageExists(id, transaction)) throw new InvalidOperationException("The image no longer exists.");
+        var asset = ReadTemplateImage(id, transaction)!;
         var actual = ReadTemplateImageUsage(id, transaction);
         if (!actual.ToHashSet(StringComparer.Ordinal).SetEquals(expectedTemplateNames))
             throw new InvalidOperationException("The templates using this image changed. Review the list and try again.");
@@ -431,6 +533,8 @@ public partial class DatabaseService
         deleteImage.Parameters.AddWithValue("@id", id);
         deleteImage.ExecuteNonQuery();
         transaction.Commit();
+        var path = AbsoluteImagePath(RelativeImagePath(asset.Id, asset.ContentType));
+        if (File.Exists(path)) File.Delete(path);
         return actual;
     }
 }
