@@ -26,6 +26,7 @@ public sealed class AutomaticBackupTests : IDisposable
         }
         var backups = Directory.GetFiles(backupFolder, "DMS-auto-*.dmsbackup").Where(file => file != unrelated).OrderBy(file => file).ToArray();
         Assert.Equal(3, backups.Length);
+        Assert.Empty(Directory.GetFiles(backupFolder, "*.tmp.dmsbackup"));
         Assert.True(File.Exists(unrelated));
         using var restored = new DatabaseService(NullLogger<DatabaseService>.Instance, Path.Combine(_folder, "restored.db"));
         await restored.RestoreFromAsync(backups[^1]);

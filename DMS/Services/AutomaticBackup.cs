@@ -18,9 +18,11 @@ internal static class AutomaticBackup
         try
         {
             await database.CreateBackupAsync(temporary);
-            using var archive = ZipFile.OpenRead(temporary);
-            if (archive.GetEntry("manifest.json") == null || archive.GetEntry("dms.db") == null)
-                throw new InvalidDataException("Automatic backup archive is incomplete.");
+            using (var archive = ZipFile.OpenRead(temporary))
+            {
+                if (archive.GetEntry("manifest.json") == null || archive.GetEntry("dms.db") == null)
+                    throw new InvalidDataException("Automatic backup archive is incomplete.");
+            }
             File.Move(temporary, completed);
             // Only backups created by this feature are eligible for rotation.
             foreach (var old in Directory.EnumerateFiles(folder, Prefix + "*.dmsbackup")
