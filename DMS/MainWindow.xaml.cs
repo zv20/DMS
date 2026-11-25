@@ -91,10 +91,12 @@ public sealed partial class MainWindow : Window
                     await App.Services.GetRequiredService<SettingsService>().LoadAsync();
                     var configured = await database.GetSettingsAsync();
                     Localization.Apply(configured!.Language);
+                    await database.RequestAppTourAsync();
                     App.ReloadLanguage();
                     return;
                 }
             }
+            if (await database.TakePendingAppTourAsync()) await ShowTourAsync();
             StartPerformanceNavigation();
             // An opt-in signal lets the packaging check verify that the installed
             // app reached its main window and loaded application resources.
@@ -130,10 +132,20 @@ public sealed partial class MainWindow : Window
         args.Cancel = true;
         if (_closing) return;
         _closing = true;
-        if (App.CurrentWindow == this && ContentFrame.Content is SettingsPage settingsPage)
+        if (App.CurrentWindow == this && SetupWizard.IsSaving(RootGrid.XamlRoot))
         {
-            try { if (!await settingsPage.CanLeaveAsync()) { _closing = false; return; } }
-            catch (Exception ex) { _closing = false; App.Logger.LogError(ex, "Unable to confirm unsaved settings"); return; }
+            _closing = false;
+            return;
+        }
+        if (App.CurrentWindow == this && OutputFrame.Content is TemplateOutputPage outputPage && !outputPage.CanClose)
+        {
+            _closing = false;
+            return;
+        }
+        if (App.CurrentWindow == this && ContentFrame.Content is IUnsavedEditor editor)
+        {
+            try { if (!await editor.CanLeaveAsync()) { _closing = false; return; } }
+            catch (Exception ex) { _closing = false; App.Logger.LogError(ex, "Unable to confirm unsaved changes"); return; }
         }
         try
         {
@@ -188,6 +200,22 @@ public sealed partial class MainWindow : Window
         "settings" => typeof(SettingsPage),
         _ => null
     };
+
+    public async Task ShowTourAsync()
+    {
+        var wasPaneOpen = NavView.IsPaneOpen;
+        NavView.IsPaneOpen = true;
+        try
+        {
+            var targets = AppTourPlan.Steps.Select(step => FindTourTarget(step.NavigationTag)).OfType<FrameworkElement>().ToList();
+            if (targets.Count == AppTourPlan.Steps.Count) await AppTour.ShowAsync(RootGrid, targets);
+        }
+        finally { NavView.IsPaneOpen = wasPaneOpen; }
+    }
+
+    private FrameworkElement? FindTourTarget(string tag) => tag == "settings"
+        ? NavView.SettingsItem as FrameworkElement
+        : NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, tag));
 
     private async Task ShowNavigationErrorAsync()
     {

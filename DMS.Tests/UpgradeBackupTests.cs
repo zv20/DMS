@@ -1,9 +1,32 @@
 using DMS.Services;
+using DMS.Models;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 public class UpgradeBackupTests
 {
+    [Fact]
+    public async Task FileBackedImagesProducePortablePreUpdateArchive()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "dms-upgrade-archive-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var databasePath = Path.Combine(folder, "dms.db");
+            string imageId;
+            using (var database = new DatabaseService(NullLogger<DatabaseService>.Instance, databasePath, seedBuiltInTemplates: false))
+                imageId = (await database.SaveTemplateImageAsync("Image", "image/png", Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII="))).Id;
+
+            var archive = UpgradeBackup.Create(databasePath, Path.Combine(folder, "backups"));
+            Assert.NotNull(archive);
+            Assert.EndsWith(".dmsbackup", archive, StringComparison.OrdinalIgnoreCase);
+            using var zip = System.IO.Compression.ZipFile.OpenRead(archive);
+            Assert.NotNull(zip.GetEntry($"template-images/{imageId}.png"));
+        }
+        finally { Directory.Delete(folder, recursive: true); }
+    }
+
     [Fact]
     public void InsufficientSpaceStopsBackup()
     {

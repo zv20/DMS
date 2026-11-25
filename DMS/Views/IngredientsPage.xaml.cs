@@ -196,7 +196,8 @@ public sealed partial class IngredientsPage : Page, IUnsavedEditor
                 return false;
             }
 
-            if (_ingredients.Any(item => item.Id != ingredient.Id && string.Equals(item.Name, nameBox.Text.Trim(), StringComparison.Ordinal)))
+            if (!string.Equals(ingredient.Name, nameBox.Text.Trim(), StringComparison.Ordinal) &&
+                _ingredients.Any(item => item.Id != ingredient.Id && string.Equals(item.Name, nameBox.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
             {
                 _editor.SetError(L.Get("DuplicateIngredientError"));
                 nameBox.Focus(FocusState.Programmatic);

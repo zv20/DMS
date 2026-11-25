@@ -332,6 +332,17 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
         finally { RunSetupButton.IsEnabled = true; }
     }
 
+    private async void ShowTour_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await CanLeaveAsync()) return;
+        ShowTourButton.IsEnabled = false;
+        try
+        {
+            if (App.CurrentWindow is MainWindow window) await window.ShowTourAsync();
+        }
+        finally { ShowTourButton.IsEnabled = true; }
+    }
+
     private async void SavePlanning_Click(object sender, RoutedEventArgs e)
     {
         var names = _categoryEditors.Select(item => item.Name.Text.Trim()).ToArray();
@@ -397,7 +408,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             var picker = new Windows.Storage.Pickers.FileSavePicker
             {
                 SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-                FileTypeChoices = { { "SQLite Database", new[] { ".db" } } },
+                FileTypeChoices = { { L.Get("BackupArchiveFileType"), new[] { ".dmsbackup" } } },
                 SuggestedFileName = $"DMS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}"
             };
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
@@ -429,7 +440,7 @@ public sealed partial class SettingsPage : Page, IUnsavedEditor
             var picker = new Windows.Storage.Pickers.FileOpenPicker
             {
                 SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-                FileTypeFilter = { ".db" }
+                FileTypeFilter = { ".dmsbackup", ".db" }
             };
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow));
             var file = await picker.PickSingleFileAsync();

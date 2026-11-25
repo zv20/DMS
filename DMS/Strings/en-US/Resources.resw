@@ -69,6 +69,7 @@
   <data name="Text_Are_you_sure_you_want_to_delete_this_ingredient_66dbd2" xml:space="preserve"><value>Are you sure you want to delete this ingredient?</value></data>
   <data name="Text_Are_you_sure_you_want_to_delete_this_recipe_dd1450" xml:space="preserve"><value>Are you sure you want to delete this recipe?</value></data>
   <data name="Text_Backup_Complete_8b1525" xml:space="preserve"><value>Backup Complete</value></data>
+  <data name="BackupArchiveFileType" xml:space="preserve"><value>DMS backup archive</value></data>
   <data name="Text_Blue_b81516.Content" xml:space="preserve"><value>🔵 Blue</value></data>
   <data name="Text_Built_for_meal_planning_and_recipe_management_49409f.Text" xml:space="preserve"><value>Built for meal planning and recipe management</value></data>
   <data name="Text_Bulgarian_a7a43a.Content" xml:space="preserve"><value>🇧🇬 Bulgarian</value></data>
@@ -314,7 +315,9 @@
   <data name="DataSaveFailed" xml:space="preserve"><value>Could not save your changes. Try again.</value></data>
   <data name="DataFilterFailed" xml:space="preserve"><value>Could not filter the list. Try again.</value></data>
   <data name="DataRecipeInUse" xml:space="preserve"><value>This recipe is used in meal plans. Remove it from those plans before deleting it.</value></data>
+  <data name="DataIngredientInUse" xml:space="preserve"><value>This ingredient is used in recipes. Remove it from those recipes before deleting it.</value></data>
   <data name="ActionFailed" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
+  <data name="ErrorPdfIncomplete" xml:space="preserve"><value>Could not finish exporting the PDF. The selected file may be incomplete.</value></data>
   <data name="ErrorPngIncomplete" xml:space="preserve"><value>Could not finish exporting the image. The selected file may be incomplete.</value></data>
   <data name="LogViewerSavedApplyFailed" xml:space="preserve"><value>The setting was saved, but could not be applied. Restart the app and check the log if the problem continues.</value></data>
   <data name="LogViewerMaintenanceFailed" xml:space="preserve"><value>Database maintenance failed. Check the diagnostic log for details.</value></data>
@@ -351,6 +354,8 @@
   <data name="AllergenChooseColor" xml:space="preserve"><value>Choose color</value></data>
   <data name="RemoveAllergen" xml:space="preserve"><value>Remove allergen {0}</value></data>
   <data name="AllergenFromIngredient" xml:space="preserve"><value>Included by a selected ingredient</value></data>
+  <data name="RecipeInheritedAllergens" xml:space="preserve"><value>From ingredients</value></data>
+  <data name="RecipeAdditionalAllergens" xml:space="preserve"><value>Additional allergens</value></data>
   <data name="PlannerClearDay" xml:space="preserve"><value>Clear day</value></data>
   <data name="PlannerClearDayConfirm" xml:space="preserve"><value>Clear all meals for {0}?</value></data>
   <data name="LogRetention.Header" xml:space="preserve"><value>Keep warnings and errors</value></data>
@@ -387,7 +392,22 @@
   <data name="PresetKidsChristmas" xml:space="preserve"><value>Kids Christmas</value></data>
   <data name="PresetKidsEaster" xml:space="preserve"><value>Kids Easter</value></data>
   <data name="PresetKidsRainyDay" xml:space="preserve"><value>Kids Rainy Day</value></data>
-  <data name="PresetAllergenFooter" xml:space="preserve"><value>Allergens are highlighted in red.</value></data>
+  <data name="PresetAllergenFooter" xml:space="preserve"><value>Allergens are highlighted.</value></data>
   <data name="MenuEnergyKcal" xml:space="preserve"><value>{0} kcal</value></data>
   <data name="PresetArtwork" xml:space="preserve"><value>{0} artwork</value></data>
+  <data name="ShowTour.Content" xml:space="preserve"><value>Take a tour</value></data>
+  <data name="TourNext" xml:space="preserve"><value>Next</value></data>
+  <data name="TourBack" xml:space="preserve"><value>Back</value></data>
+  <data name="TourSkip" xml:space="preserve"><value>Skip tour</value></data>
+  <data name="TourFinish" xml:space="preserve"><value>Finish</value></data>
+  <data name="TourMenuTitle" xml:space="preserve"><value>Plan your week</value></data>
+  <data name="TourMenuDescription" xml:space="preserve"><value>Use the Menu Planner to assign recipes to each meal and day.</value></data>
+  <data name="TourRecipesTitle" xml:space="preserve"><value>Build your recipe library</value></data>
+  <data name="TourRecipesDescription" xml:space="preserve"><value>Create recipes here. Their ingredients, portions, calories, and allergens stay together.</value></data>
+  <data name="TourIngredientsTitle" xml:space="preserve"><value>Manage ingredients and allergens</value></data>
+  <data name="TourIngredientsDescription" xml:space="preserve"><value>Set allergens on ingredients once. Recipes inherit them automatically, while still allowing recipe-only allergens.</value></data>
+  <data name="TourTemplateTitle" xml:space="preserve"><value>Design your menu output</value></data>
+  <data name="TourTemplateDescription" xml:space="preserve"><value>Use Template Builder to customize the weekly menu before printing or exporting it.</value></data>
+  <data name="TourSettingsTitle" xml:space="preserve"><value>Adjust your workspace</value></data>
+  <data name="TourSettingsDescription" xml:space="preserve"><value>Settings contains planning options, backups, appearance, setup, and this tour whenever you need it.</value></data>
 </root>

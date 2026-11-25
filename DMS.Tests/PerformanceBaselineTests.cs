@@ -44,7 +44,7 @@ public sealed class PerformanceBaselineTests(ITestOutputHelper output)
                     using var transaction = connection.BeginTransaction();
                     using var command = connection.CreateCommand();
                     command.Transaction = transaction;
-                    command.CommandText = "INSERT INTO recipes (id, name, category, ingredients_json, allergens_json) VALUES ($id, $name, 'main', '[\"Ingredient 0001\",\"Ingredient 0002\"]', '[\"milk\"]'); INSERT INTO ingredients (name, allergens_json) VALUES ($ingredient, '[\"milk\"]')";
+                    command.CommandText = "INSERT INTO recipes (id, name, category) VALUES ($id, $name, 'main'); INSERT INTO ingredients (id, name) VALUES ($id, $ingredient); INSERT INTO recipe_ingredients (recipe_id, position, ingredient_id, saved_name) VALUES ($id, 0, $id, $ingredient)";
                     var id = command.Parameters.Add("$id", SqliteType.Integer);
                     var name = command.Parameters.Add("$name", SqliteType.Text);
                     var ingredient = command.Parameters.Add("$ingredient", SqliteType.Text);

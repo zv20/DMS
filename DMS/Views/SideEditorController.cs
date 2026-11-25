@@ -105,6 +105,11 @@ internal sealed class SideEditorController
             if (EditingId == id && !await CanLeaveAsync()) return;
 
             try { await delete(id); }
+            catch (IngredientInUseException)
+            {
+                setPageStatus("DataIngredientInUse");
+                return;
+            }
             catch (Exception ex)
             {
                 App.Logger.LogError(ex, "Failed to delete item {Id} on {Page}", id, pageName);

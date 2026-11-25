@@ -9,6 +9,10 @@ namespace DMS.Views;
 
 internal static class SetupWizard
 {
+    private static readonly HashSet<XamlRoot> SavingRoots = [];
+
+    public static bool IsSaving(XamlRoot root) => SavingRoots.Contains(root);
+
     public static async Task<bool> ShowAsync(XamlRoot root, DatabaseService database)
     {
         if (root.Content is not Grid host) throw new InvalidOperationException("Setup requires the main window.");
@@ -137,7 +141,10 @@ internal static class SetupWizard
                     if (names.Any(string.IsNullOrWhiteSpace) || names.Distinct(StringComparer.CurrentCultureIgnoreCase).Count() != names.Length) { status.Text = Localization.Get("MealSettingsInvalid"); return; }
                 }
                 if (step < 4) { step++; Render(); return; }
-                next.IsEnabled = false;
+                // Grid is a layout panel, not a Control. Disable interaction on
+                // its content while saving, while keeping the status text visible.
+                columns.IsHitTestVisible = false;
+                SavingRoots.Add(root);
                 try
                 {
                     var clear = settings.MealsPerDay != originalMeals;
@@ -146,7 +153,7 @@ internal static class SetupWizard
                     completed.TrySetResult(true);
                 }
                 catch (Exception ex) { App.Logger.LogError(ex, "Could not complete setup"); status.Text = Localization.Get("DataSaveFailed"); }
-                finally { next.IsEnabled = true; }
+                finally { SavingRoots.Remove(root); columns.IsHitTestVisible = true; }
             };
             controls.Children.Add(next); sidebar.Children.Add(controls);
             Preview();

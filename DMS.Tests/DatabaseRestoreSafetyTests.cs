@@ -8,6 +8,62 @@ namespace DMS.Tests;
 
 public sealed class DatabaseRestoreSafetyTests : IDisposable
 {
+    [Fact]
+    public async Task RestoreRejectsArchiveWithUnexpectedFilesBeforeReplacingLiveDatabase()
+    {
+        var archive = PathFor("unsafe.dmsbackup");
+        using (var source = Open("archive-source.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Source", Category = "soup" });
+            await source.CreateBackupAsync(archive);
+        }
+        using (var zip = System.IO.Compression.ZipFile.Open(archive, System.IO.Compression.ZipArchiveMode.Update))
+        using (var writer = new StreamWriter(zip.CreateEntry("unexpected.txt").Open()))
+            await writer.WriteAsync("unexpected");
+
+        using var current = Open("archive-current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(archive));
+        Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsMissingImageUsageBeforeReplacingLiveDatabase()
+    {
+        var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
+        using (var source = Open("missing-usage.db"))
+        {
+            var image = await source.SaveTemplateImageAsync("Art", "image/png", png);
+            await source.SaveTemplateAsync(new MenuTemplate { Name = "Template", Document = new TemplateDocument { BackgroundImageAssetId = image.Id } });
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("missing-usage.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM template_image_references"; command.ExecuteNonQuery();
+        }
+        using var current = Open("missing-usage-current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("missing-usage.db")));
+        Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsNullRequiredTemplateValueBeforeReplacingLiveDatabase()
+    {
+        using (var source = Open("null-template.db"))
+            await source.SaveTemplateAsync(new MenuTemplate { Name = "Template", Document = new TemplateDocument() });
+        using (var connection = new SqliteConnection($"Data Source={PathFor("null-template.db")};Pooling=False"))
+        {
+            connection.Open(); using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE template_documents SET HeaderText=NULL";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("null-template-current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("null-template.db")));
+        Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "DMS.Restore.Tests", Guid.NewGuid().ToString("N"));
     private string PathFor(string name) => Path.Combine(_folder, name);
     private DatabaseService Open(string name) { Directory.CreateDirectory(_folder); return new(NullLogger<DatabaseService>.Instance, PathFor(name)); }
@@ -80,16 +136,13 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     }
 
     [Theory]
-    [InlineData("INSERT INTO templates(name,data_json) VALUES('Broken','not-json')")]
+    [InlineData("INSERT INTO templates(name) VALUES('Broken')")]
+    [InlineData("INSERT INTO recent_template_colors(position,color) VALUES(3,'#123456')")]
+    [InlineData("DROP TABLE recent_template_colors; CREATE TABLE recent_template_colors(position INTEGER PRIMARY KEY,color TEXT); INSERT INTO recent_template_colors VALUES(0,NULL)")]
+    [InlineData("INSERT INTO templates(name) VALUES('Broken'); INSERT INTO template_documents(template_name) VALUES('Broken')")]
     [InlineData("ALTER TABLE allergens RENAME COLUMN color TO old_color; ALTER TABLE allergens ADD COLUMN color TEXT")]
     [InlineData("PRAGMA foreign_keys=OFF; INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
     [InlineData("DROP TABLE menu; CREATE TABLE menu(id INTEGER PRIMARY KEY,date TEXT,slot TEXT,recipe_id INTEGER,created_at TEXT, UNIQUE(date,slot)); INSERT INTO menu(date,slot,recipe_id) VALUES('2026-01-01','slot1',-1)")]
-    [InlineData("UPDATE recipes SET ingredients_json='not-json'")]
-    [InlineData("UPDATE recipes SET allergens_json='{}'")]
-    [InlineData("UPDATE ingredients SET allergens_json='[42]'")]
-    [InlineData("UPDATE recipes SET ingredients_json='[null]'")]
-    [InlineData("UPDATE recipes SET allergens_json='[null]'")]
-    [InlineData("UPDATE ingredients SET allergens_json='[null]'")]
     [InlineData("DROP TABLE ingredients; CREATE TABLE ingredients (name TEXT NOT NULL UNIQUE, id INTEGER PRIMARY KEY, allergens_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT '')")]
     [InlineData("ALTER TABLE settings RENAME TO old_settings; CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT); INSERT INTO settings SELECT * FROM old_settings; DROP TABLE old_settings; UPDATE settings SET value=NULL WHERE key='language'")]
     [InlineData("INSERT OR REPLACE INTO settings (key, value) VALUES ('meal_categories', 'not-json')")]
@@ -129,16 +182,111 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
         using (var connection = new SqliteConnection($"Data Source={PathFor("legacy.db")};Pooling=False"))
         {
             connection.Open(); using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE recipes SET allergens_json='null'; DROP TABLE menu_slot_categories; ALTER TABLE allergens DROP COLUMN icon";
+            command.CommandText = "DROP TABLE menu_slot_categories; ALTER TABLE allergens DROP COLUMN icon";
             command.ExecuteNonQuery();
         }
         using var current = Open("current.db");
         await current.RestoreFromAsync(PathFor("legacy.db"));
         var recipe = Assert.Single(await current.GetAllRecipesAsync());
         Assert.Equal(new[] { "Flour" }, recipe.Ingredients);
-        Assert.Empty(recipe.Allergens);
+        Assert.Equal(new[] { "Gluten" }, recipe.Allergens);
         Assert.Equal("Flour", Assert.Single(await current.GetAllIngredientsAsync()).Name);
         Assert.NotEmpty(await current.GetAllAllergensAsync());
+    }
+
+    [Fact]
+    public async Task RestoreRejectsEmptyDatabaseWithReorderedRecipeColumns()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE recipes; CREATE TABLE recipes (name TEXT, id INTEGER PRIMARY KEY, category TEXT, portion_size TEXT, calories INTEGER, instructions TEXT, ingredients_json TEXT, allergens_json TEXT, created_at TEXT, updated_at TEXT)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+    }
+
+    [Fact]
+    public async Task RestoreRejectsConflictPolicyOnIngredientTable()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE ingredients; CREATE TABLE ingredients (id INTEGER PRIMARY KEY, name TEXT UNIQUE ON /* rule */ CONFLICT REPLACE, allergens_json TEXT, created_at TEXT)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsUnexpectedUniqueRecipeConstraint()
+    {
+        using (var source = Open("source.db"))
+        {
+            await source.SaveRecipeAsync(new Recipe { Name = "Source", Category = "soup" });
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE UNIQUE INDEX custom_recipe_name ON recipes(name)";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsNewerBackupMissingRelationshipTables()
+    {
+        using (var source = Open("source.db"))
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE recipe_additional_allergens";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RestoreRejectsImageWhoseHashDoesNotMatchItsId()
+    {
+        var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
+        using (var source = Open("source.db"))
+        {
+            await source.SaveTemplateImageAsync("Logo", "image/png", png);
+            await source.CreateBackupAsync(PathFor("backup.db"));
+        }
+        using (var connection = new SqliteConnection($"Data Source={PathFor("backup.db")};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE template_image_assets SET id='invalid-hash' WHERE name='Logo'";
+            command.ExecuteNonQuery();
+        }
+        using var current = Open("current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Keep", Category = "soup" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("backup.db")));
+        Assert.Equal("Keep", Assert.Single(await current.GetAllRecipesAsync()).Name);
     }
 
     [Fact]

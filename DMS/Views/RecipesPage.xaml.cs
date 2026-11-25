@@ -304,39 +304,35 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         // Ingredients: searchable dropdown plus removable wrapping chips.
         var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
         var ingredientByName = availableIngredients.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-        var inheritedAllergens = selectedIngredients
-            .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var manualAllergens = recipe.Allergens
-            .Where(name => !inheritedAllergens.Contains(name))
+        var manualAllergens = (recipe.AdditionalAllergens ?? recipe.Allergens)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var selectedAllergens = new ObservableCollection<string>();
-        var allergenChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        var inheritedChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        var additionalChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         void RebuildAllergensFromIngredients()
         {
             selectedAllergens.Clear();
-            allergenChips.Children.Clear();
+            inheritedChips.Children.Clear();
+            additionalChips.Children.Clear();
             var inherited = selectedIngredients
                 .SelectMany(name => ingredientByName.TryGetValue(name, out var item) ? item.Allergens : [])
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (var allergen in inherited.Concat(manualAllergens).Distinct(StringComparer.OrdinalIgnoreCase))
+            foreach (var allergen in inherited)
             {
                 selectedAllergens.Add(allergen);
-                if (inherited.Contains(allergen))
-                {
-                    var inheritedChip = new Border { CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6), Child = new TextBlock { Text = L.Allergen(allergen) } };
-                    ToolTipService.SetToolTip(inheritedChip, L.Get("AllergenFromIngredient"));
-                    allergenChips.Children.Add(inheritedChip);
-                }
-                else
-                {
-                    var chip = new Button { Content = $"{L.Allergen(allergen)}  ✕", CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
-                    var label = L.Format("RemoveAllergen", L.Allergen(allergen));
-                    ToolTipService.SetToolTip(chip, label);
-                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, label);
-                    chip.Click += (_, _) => { manualAllergens.Remove(allergen); RebuildAllergensFromIngredients(); };
-                    allergenChips.Children.Add(chip);
-                }
+                var chip = new Border { CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6), Child = new TextBlock { Text = L.Allergen(allergen) } };
+                ToolTipService.SetToolTip(chip, L.Get("AllergenFromIngredient"));
+                inheritedChips.Children.Add(chip);
+            }
+            foreach (var allergen in manualAllergens)
+            {
+                if (!inherited.Contains(allergen)) selectedAllergens.Add(allergen);
+                var chip = new Button { Content = $"{L.Allergen(allergen)}  ✕", CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
+                var label = L.Format("RemoveAllergen", L.Allergen(allergen));
+                ToolTipService.SetToolTip(chip, label);
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, label);
+                chip.Click += (_, _) => { manualAllergens.Remove(allergen); RebuildAllergensFromIngredients(); };
+                additionalChips.Children.Add(chip);
             }
         }
         RebuildAllergensFromIngredients();
@@ -388,13 +384,14 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(ingredientChips);
 
         // Allergens: searchable dropdown plus removable selected list.
-        var allergensLabel = new TextBlock { Text = L.Get("Text_Allergens_537261"), FontSize = 14, FontWeight = FontWeights.SemiBold };
-        panel.Children.Add(allergensLabel);
+        panel.Children.Add(new TextBlock { Text = L.Get("RecipeInheritedAllergens"), FontSize = 14, FontWeight = FontWeights.SemiBold });
+        panel.Children.Add(inheritedChips);
+        panel.Children.Add(new TextBlock { Text = L.Get("RecipeAdditionalAllergens"), FontSize = 14, FontWeight = FontWeights.SemiBold });
         var allergenSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_allergens_c1743a"), QueryIcon = new SymbolIcon(Symbol.Find) };
         allergenSearch.DisplayMemberPath = "DisplayName";
         allergenSearch.TextMemberPath = "DisplayName";
         SearchPicker.Attach(allergenSearch, query => availableAllergens
-            .Where(item => !selectedAllergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .Where(item => !manualAllergens.Contains(item.Name) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .ToList());
         allergenSearch.SuggestionChosen += (sender, args) =>
         {
@@ -406,7 +403,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             SearchPicker.ClearAfterSelection(allergenSearch);
         };
         panel.Children.Add(allergenSearch);
-        panel.Children.Add(allergenChips);
+        panel.Children.Add(additionalChips);
 
         _editingRecipeId = isEditing ? recipe.Id : null;
         UpdateRecipeSelection();
@@ -437,6 +434,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             recipe.Instructions = instructionsBox.Text?.Trim() ?? "";
             recipe.Ingredients = selectedIngredients.ToList();
             recipe.Allergens = selectedAllergens.ToList();
+            recipe.AdditionalAllergens = manualAllergens.ToList();
 
             recipe.Id = await _database.SaveRecipeAsync(recipe);
             _editorDirty = false;
@@ -487,6 +485,7 @@ public class RecipeItemViewModel
     public string Instructions { get; set; } = "";
     public List<string> Ingredients { get; set; } = new();
     public List<string> Allergens { get; set; } = new();
+    public List<string>? AdditionalAllergens { get; set; }
     public IReadOnlyDictionary<string, string> AllergenIcons { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public string PortionDisplay => string.IsNullOrEmpty(PortionSize) ? "" : $"🍽️ {PortionSize}";
@@ -507,6 +506,7 @@ public class RecipeItemViewModel
         Instructions = recipe.Instructions;
         Ingredients = recipe.Ingredients;
         Allergens = recipe.Allergens;
+        AdditionalAllergens = recipe.AdditionalAllergens;
     }
 
     public Recipe ToRecipe()
@@ -520,7 +520,8 @@ public class RecipeItemViewModel
             Calories = Calories,
             Instructions = Instructions,
             Ingredients = Ingredients,
-            Allergens = Allergens
+            Allergens = Allergens,
+            AdditionalAllergens = AdditionalAllergens
         };
     }
 

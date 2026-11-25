@@ -1,5 +1,5 @@
-using Microsoft.Data.Sqlite;
 using System.IO;
+using System.IO.Compression;
 
 namespace DMS.Services;
 
@@ -13,23 +13,19 @@ internal static class AutomaticBackup
         var folder = Path.Combine(Path.GetDirectoryName(database.GetDatabasePath())!, "AutomaticBackups");
         Directory.CreateDirectory(folder);
         var name = $"{Prefix}{DateTime.UtcNow:yyyyMMddHHmmssfffffff}-{Guid.NewGuid():N}";
-        var temporary = Path.Combine(folder, name + ".tmp");
-        var completed = Path.Combine(folder, name + ".db");
+        var temporary = Path.Combine(folder, name + ".tmp.dmsbackup");
+        var completed = Path.Combine(folder, name + ".dmsbackup");
         try
         {
             await database.CreateBackupAsync(temporary);
-            var options = new SqliteConnectionStringBuilder { DataSource = temporary, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
-            await using (var connection = new SqliteConnection(options.ToString()))
+            using (var archive = ZipFile.OpenRead(temporary))
             {
-                await connection.OpenAsync();
-                using var command = connection.CreateCommand();
-                command.CommandText = "PRAGMA integrity_check";
-                if (!string.Equals(Convert.ToString(await command.ExecuteScalarAsync()), "ok", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("Automatic backup failed its integrity check.");
+                if (archive.GetEntry("manifest.json") == null || archive.GetEntry("dms.db") == null)
+                    throw new InvalidDataException("Automatic backup archive is incomplete.");
             }
             File.Move(temporary, completed);
             // Only backups created by this feature are eligible for rotation.
-            foreach (var old in Directory.EnumerateFiles(folder, Prefix + "*.db")
+            foreach (var old in Directory.EnumerateFiles(folder, Prefix + "*.dmsbackup")
                 .Where(IsAutomaticBackup)
                 .OrderByDescending(Path.GetFileName, StringComparer.Ordinal).Skip(RetainedCount))
                 File.Delete(old);

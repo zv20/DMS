@@ -11,6 +11,8 @@ public sealed class RecipeInUseException : InvalidOperationException
     public RecipeInUseException() : base("This recipe is assigned to one or more menu entries. Remove or replace those entries before deleting the recipe.") { }
 }
 
+public sealed class IngredientInUseException : InvalidOperationException;
+
 public partial class DatabaseService : IDisposable
 {
     private const string MenuDateFormat = "yyyy-MM-dd";
@@ -146,15 +148,12 @@ public partial class DatabaseService : IDisposable
                 portion_size TEXT,
                 calories INTEGER,
                 instructions TEXT,
-                ingredients_json TEXT NOT NULL DEFAULT '[]',
-                allergens_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
             @"CREATE TABLE IF NOT EXISTS ingredients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
-                allergens_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )",
             @"CREATE TABLE IF NOT EXISTS menu (
@@ -202,6 +201,8 @@ public partial class DatabaseService : IDisposable
         await SeedDefaultsAsync();
         await RecordSchemaVersionAsync();
         InitializeTemplateImages();
+        InitializeRelationships();
+        InitializeTemplateStorage();
         if (_seedBuiltInTemplates) SeedSeasonalTemplatePresets();
     }
 
@@ -313,31 +314,50 @@ public partial class DatabaseService : IDisposable
     {
         await InitializeAsync();
         var recipes = new List<Recipe>();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM recipes ORDER BY name";
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) recipes.Add(ReadRecipe(reader));
+        using (var cmd = _connection!.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM recipes ORDER BY name";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) recipes.Add(ReadRecipe(reader));
+        }
+        var ingredients = ReadRelations("recipe_ingredients", "recipe_id", "ingredient_id", "ingredients", useCurrentNames: false);
+        var additional = ReadRelations("recipe_additional_allergens", "recipe_id", "allergen_id", "allergens");
+        var ingredientAllergens = ReadRelations("ingredient_allergens", "ingredient_id", "allergen_id", "allergens");
+        var ingredientIds = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = "SELECT id,name FROM ingredients ORDER BY name";
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) ingredientIds.TryAdd(reader.GetString(1), reader.GetInt64(0));
+        }
+        foreach (var recipe in recipes)
+        {
+            recipe.Ingredients = ingredients.GetValueOrDefault(recipe.Id) ?? [];
+            recipe.AdditionalAllergens = additional.GetValueOrDefault(recipe.Id) ?? [];
+            recipe.Allergens = recipe.Ingredients.Where(ingredientIds.ContainsKey)
+                .SelectMany(name => ingredientAllergens.GetValueOrDefault(ingredientIds[name]) ?? [])
+                .Concat(recipe.AdditionalAllergens).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
         return recipes;
     }
 
     public async Task<int> SaveRecipeAsync(Recipe recipe)
     {
         await InitializeAsync();
-        using var cmd = _connection!.CreateCommand();
+        using var transaction = _connection!.BeginTransaction();
+        using var cmd = _connection.CreateCommand();
+        cmd.Transaction = transaction;
         var now = DateTime.UtcNow.ToString("O");
-        var ingredientsJson = System.Text.Json.JsonSerializer.Serialize(recipe.Ingredients);
-        var allergensJson = System.Text.Json.JsonSerializer.Serialize(recipe.Allergens);
-
         if (recipe.Id == 0)
         {
-            cmd.CommandText = @"INSERT INTO recipes (name, category, portion_size, calories, instructions, ingredients_json, allergens_json, created_at, updated_at)
-                               VALUES (@name, @category, @portion, @calories, @instructions, @ingredients, @allergens, @now, @now);
+            cmd.CommandText = @"INSERT INTO recipes (name, category, portion_size, calories, instructions, created_at, updated_at)
+                               VALUES (@name, @category, @portion, @calories, @instructions, @now, @now);
                                SELECT last_insert_rowid();";
         }
         else
         {
             cmd.CommandText = @"UPDATE recipes SET name=@name, category=@category, portion_size=@portion, calories=@calories,
-                               instructions=@instructions, ingredients_json=@ingredients, allergens_json=@allergens, updated_at=@now
+                               instructions=@instructions, updated_at=@now
                                WHERE id=@id";
             cmd.Parameters.AddWithValue("@id", recipe.Id);
         }
@@ -347,12 +367,13 @@ public partial class DatabaseService : IDisposable
         cmd.Parameters.AddWithValue("@portion", recipe.PortionSize);
         cmd.Parameters.AddWithValue("@calories", recipe.Calories);
         cmd.Parameters.AddWithValue("@instructions", recipe.Instructions ?? "");
-        cmd.Parameters.AddWithValue("@ingredients", ingredientsJson);
-        cmd.Parameters.AddWithValue("@allergens", allergensJson);
         cmd.Parameters.AddWithValue("@now", now);
 
         var result = await cmd.ExecuteScalarAsync();
         var id = recipe.Id == 0 ? Convert.ToInt32(result!) : recipe.Id;
+        ReplaceRelations("recipe_ingredients", "recipe_id", id, "ingredient_id", "ingredients", recipe.Ingredients, transaction);
+        ReplaceRelations("recipe_additional_allergens", "recipe_id", id, "allergen_id", "allergens", recipe.AdditionalAllergens ?? recipe.Allergens, transaction);
+        transaction.Commit();
         _logger.LogInformation("Saved recipe {Id}: {Name}", id, recipe.Name);
         return id;
     }
@@ -388,8 +409,7 @@ public partial class DatabaseService : IDisposable
             PortionSize = reader.IsDBNull(3) ? "" : reader.GetString(3),
             Calories = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
             Instructions = reader.IsDBNull(5) ? "" : reader.GetString(5),
-            Ingredients = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(6)) ?? new(),
-            Allergens = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(7)) ?? new()
+            Ingredients = [], Allergens = []
         };
     }
 
@@ -398,38 +418,80 @@ public partial class DatabaseService : IDisposable
     {
         await InitializeAsync();
         var list = new List<Ingredient>();
-        using var cmd = _connection!.CreateCommand();
-        cmd.CommandText = "SELECT * FROM ingredients ORDER BY name";
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) list.Add(ReadIngredient(reader));
+        using (var cmd = _connection!.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM ingredients ORDER BY name";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) list.Add(ReadIngredient(reader));
+        }
+        var allergens = ReadRelations("ingredient_allergens", "ingredient_id", "allergen_id", "allergens");
+        foreach (var ingredient in list) ingredient.Allergens = allergens.GetValueOrDefault(ingredient.Id) ?? [];
         return list;
     }
 
     public async Task<int> SaveIngredientAsync(Ingredient ingredient)
     {
         await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
         using var cmd = _connection!.CreateCommand();
-        var allergensJson = System.Text.Json.JsonSerializer.Serialize(ingredient.Allergens);
+        cmd.Transaction = transaction;
         var now = DateTime.UtcNow.ToString("O");
+
+        if (ingredient.Id != 0)
+        {
+            using var previous = _connection.CreateCommand();
+            previous.Transaction = transaction;
+            previous.CommandText = "SELECT name FROM ingredients WHERE id=@id";
+            previous.Parameters.AddWithValue("@id", ingredient.Id);
+            var oldName = await previous.ExecuteScalarAsync() as string;
+            if (oldName != null && oldName != ingredient.Name)
+            {
+                using var candidates = _connection.CreateCommand();
+                candidates.Transaction = transaction;
+                candidates.CommandText = "SELECT id, name FROM ingredients ORDER BY name";
+                var firstMatch = 0L;
+                using (var reader = await candidates.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var candidateId = reader.GetInt64(0);
+                        var candidateName = reader.GetString(1);
+                        if (firstMatch == 0 && string.Equals(candidateName, oldName, StringComparison.OrdinalIgnoreCase)) firstMatch = candidateId;
+                        if (candidateId != ingredient.Id && string.Equals(candidateName, ingredient.Name, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidOperationException("Ingredient name conflicts with another ingredient.");
+                    }
+                }
+                if (firstMatch == ingredient.Id)
+                {
+                    using var updateRelations = _connection.CreateCommand();
+                    updateRelations.Transaction = transaction;
+                    updateRelations.CommandText = "UPDATE recipe_ingredients SET saved_name=@new WHERE ingredient_id=@id";
+                    updateRelations.Parameters.AddWithValue("@new", ingredient.Name);
+                    updateRelations.Parameters.AddWithValue("@id", ingredient.Id);
+                    await updateRelations.ExecuteNonQueryAsync();
+                }
+            }
+        }
 
         if (ingredient.Id == 0)
         {
-            cmd.CommandText = @"INSERT INTO ingredients (name, allergens_json, created_at)
-                               VALUES (@name, @allergens, @now);
+            cmd.CommandText = @"INSERT INTO ingredients (name, created_at)
+                               VALUES (@name, @now);
                                SELECT last_insert_rowid();";
         }
         else
         {
-            cmd.CommandText = "UPDATE ingredients SET name=@name, allergens_json=@allergens WHERE id=@id";
+            cmd.CommandText = "UPDATE ingredients SET name=@name WHERE id=@id";
             cmd.Parameters.AddWithValue("@id", ingredient.Id);
         }
 
         cmd.Parameters.AddWithValue("@name", ingredient.Name);
-        cmd.Parameters.AddWithValue("@allergens", allergensJson);
         cmd.Parameters.AddWithValue("@now", now);
 
         var result = await cmd.ExecuteScalarAsync();
         var id = ingredient.Id == 0 ? Convert.ToInt32(result!) : ingredient.Id;
+        ReplaceRelations("ingredient_allergens", "ingredient_id", id, "allergen_id", "allergens", ingredient.Allergens, transaction);
+        transaction.Commit();
         _logger.LogInformation("Saved ingredient {Id}: {Name}", id, ingredient.Name);
         return id;
     }
@@ -437,10 +499,20 @@ public partial class DatabaseService : IDisposable
     public async Task DeleteIngredientAsync(int id)
     {
         await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using (var ingredient = _connection.CreateCommand())
+        {
+            ingredient.Transaction = transaction;
+            ingredient.CommandText = "SELECT 1 FROM recipe_ingredients WHERE ingredient_id=@id LIMIT 1";
+            ingredient.Parameters.AddWithValue("@id", id);
+            if (await ingredient.ExecuteScalarAsync() != null) throw new IngredientInUseException();
+        }
         using var cmd = _connection!.CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = "DELETE FROM ingredients WHERE id = @id";
         cmd.Parameters.AddWithValue("@id", id);
         await cmd.ExecuteNonQueryAsync();
+        transaction.Commit();
         _logger.LogInformation("Deleted ingredient {Id}", id);
     }
 
@@ -450,7 +522,7 @@ public partial class DatabaseService : IDisposable
         {
             Id = reader.GetInt32(0),
             Name = reader.GetString(1),
-            Allergens = System.Text.Json.JsonSerializer.Deserialize<List<string>>(reader.GetString(2)) ?? new()
+            Allergens = []
         };
     }
 
@@ -644,6 +716,13 @@ public partial class DatabaseService : IDisposable
                 case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
             }
         }
+        reader.Close();
+        cmd.CommandText = "SELECT id,name FROM meal_categories ORDER BY position";
+        settings.MealCategories = [];
+        using (var rows = cmd.ExecuteReader()) while (rows.Read()) settings.MealCategories.Add(new MealCategory { Id=rows.GetString(0), Name=rows.GetString(1) });
+        cmd.CommandText = "SELECT color FROM recent_template_colors ORDER BY position";
+        settings.RecentTemplateColors = [];
+        using (var rows = cmd.ExecuteReader()) while (rows.Read()) settings.RecentTemplateColors.Add(rows.GetString(0));
         return settings;
     }
 
@@ -652,11 +731,16 @@ public partial class DatabaseService : IDisposable
         try
         {
             var categories = System.Text.Json.JsonSerializer.Deserialize<List<MealCategory>>(value);
-            if (categories is not { Count: > 0 } || categories.Any(c => c == null || string.IsNullOrWhiteSpace(c.Id)) || categories.Select(c => c.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != categories.Count)
-                throw new InvalidDataException("The saved meal categories are invalid.");
-            return categories;
+            ValidateMealCategories(categories);
+            return categories!;
         }
         catch (System.Text.Json.JsonException ex) { throw new InvalidDataException("The saved meal categories are invalid.", ex); }
+    }
+
+    private static void ValidateMealCategories(List<MealCategory>? categories)
+    {
+        if (categories is not { Count: > 0 } || categories.Any(c => c == null || string.IsNullOrWhiteSpace(c.Id)) || categories.Select(c => c.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != categories.Count)
+            throw new InvalidDataException("The saved meal categories are invalid.");
     }
 
     private static int ParseMealsPerDay(string value) => int.TryParse(value, out var count) && count is >= 1 and <= 100
@@ -674,10 +758,35 @@ public partial class DatabaseService : IDisposable
         return string.Equals(await command.ExecuteScalarAsync() as string, "true", StringComparison.OrdinalIgnoreCase);
     }
 
+    public async Task RequestAppTourAsync()
+    {
+        await InitializeAsync();
+        using var command = _connection!.CreateCommand();
+        command.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES ('app_tour_pending', 'true')";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<bool> TakePendingAppTourAsync()
+    {
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT value FROM settings WHERE key = 'app_tour_pending'";
+        if (!string.Equals(await command.ExecuteScalarAsync() as string, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            transaction.Commit();
+            return false;
+        }
+        command.CommandText = "UPDATE settings SET value = 'false' WHERE key = 'app_tour_pending'";
+        await command.ExecuteNonQueryAsync();
+        transaction.Commit();
+        return true;
+    }
+
     private async Task SaveSettingsAsync(AppSettings settings, bool clearPlans, bool completeSetup)
     {
-        var mealCategories = System.Text.Json.JsonSerializer.Serialize(settings.MealCategories);
-        ParseMealCategories(mealCategories);
+        ValidateMealCategories(settings.MealCategories);
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
         if (clearPlans)
@@ -699,9 +808,7 @@ public partial class DatabaseService : IDisposable
             ("log_retention_days", settings.LogRetentionDays.ToString()),
             ("weekend_planning_enabled", settings.WeekendPlanningEnabled.ToString()),
             ("meals_per_day", Math.Clamp(settings.MealsPerDay, 1, 100).ToString()),
-            ("meal_categories", mealCategories),
-            ("data_folder", settings.DataFolder ?? ""),
-            ("recent_template_colors", System.Text.Json.JsonSerializer.Serialize(settings.RecentTemplateColors ?? []))
+            ("data_folder", settings.DataFolder ?? "")
             ,("window_x", settings.WindowX?.ToString() ?? "")
             ,("window_y", settings.WindowY?.ToString() ?? "")
             ,("window_width", settings.WindowWidth?.ToString() ?? "")
@@ -715,6 +822,7 @@ public partial class DatabaseService : IDisposable
             cmd.Parameters.AddWithValue("@value", value);
             await cmd.ExecuteNonQueryAsync();
         }
+        WriteSettingsLists(settings.MealCategories, settings.RecentTemplateColors ?? [], transaction);
         if (completeSetup)
         {
             cmd.Parameters.Clear();
@@ -729,17 +837,14 @@ public partial class DatabaseService : IDisposable
     public async Task<List<MenuTemplate>> GetAllTemplatesAsync()
     {
         await InitializeAsync();
-        var list = new List<MenuTemplate>();
+        var names = new List<(string Name, bool Preset)>();
         using (var cmd = _connection!.CreateCommand())
         {
-            cmd.CommandText = "SELECT name, data_json, is_preset FROM templates ORDER BY is_preset DESC, name";
+            cmd.CommandText = "SELECT name,is_preset FROM templates ORDER BY is_preset DESC,name";
             using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (ReadTemplate(reader) is { } template) list.Add(template);
-            }
+            while (reader.Read()) names.Add((reader.GetString(0), reader.GetInt32(1) == 1));
         }
-        return list;
+        return names.Select(item => ReadStoredTemplate(item.Name,item.Preset)).ToList();
     }
 
     private static MenuTemplate? ReadTemplate(SqliteDataReader reader)
@@ -766,16 +871,15 @@ public partial class DatabaseService : IDisposable
         var references = ExtractTemplateImages(stored, transaction);
         using var cmd = _connection.CreateCommand();
         cmd.Transaction = transaction;
-        var json = System.Text.Json.JsonSerializer.Serialize(stored);
         var now = DateTime.UtcNow.ToString("O");
-        cmd.CommandText = @"INSERT INTO templates (name, data_json, is_preset, created_at, updated_at)
-                           VALUES (@name, @data, @preset, @now, @now)
-                           ON CONFLICT(name) DO UPDATE SET data_json=@data, is_preset=@preset, updated_at=@now";
+        cmd.CommandText = @"INSERT INTO templates (name, is_preset, created_at, updated_at)
+                           VALUES (@name, @preset, @now, @now)
+                           ON CONFLICT(name) DO UPDATE SET is_preset=@preset, updated_at=@now";
         cmd.Parameters.AddWithValue("@name", template.Name);
-        cmd.Parameters.AddWithValue("@data", json);
         cmd.Parameters.AddWithValue("@preset", template.IsPreset ? 1 : 0);
         cmd.Parameters.AddWithValue("@now", now);
         cmd.ExecuteNonQuery();
+        WriteTemplateDocument(stored, transaction);
         ReplaceTemplateImageReferences(template.Name, references, transaction);
         transaction.Commit();
     }
@@ -787,16 +891,14 @@ public partial class DatabaseService : IDisposable
         newName = newName.Trim();
         await InitializeAsync();
         using var transaction = _connection!.BeginTransaction();
-        string json;
         using (var source = _connection.CreateCommand())
         {
             source.Transaction = transaction;
-            source.CommandText = "SELECT data_json, is_preset FROM templates WHERE name = @name";
+            source.CommandText = "SELECT is_preset FROM templates WHERE name = @name";
             source.Parameters.AddWithValue("@name", currentName);
             using var reader = await source.ExecuteReaderAsync();
             if (!await reader.ReadAsync()) throw new InvalidOperationException("The selected template no longer exists.");
-            if (reader.GetInt32(1) != 0) throw new InvalidOperationException("Built-in templates cannot be renamed.");
-            json = reader.GetString(0);
+            if (reader.GetInt32(0) != 0) throw new InvalidOperationException("Built-in templates cannot be renamed.");
         }
         using (var names = _connection.CreateCommand())
         {
@@ -808,14 +910,10 @@ public partial class DatabaseService : IDisposable
                 if (string.Equals(reader.GetString(0), newName, StringComparison.OrdinalIgnoreCase))
                     throw new InvalidOperationException("A template with this name already exists.");
         }
-        var template = System.Text.Json.JsonSerializer.Deserialize<MenuTemplate>(json)
-            ?? throw new InvalidOperationException("The selected template cannot be read.");
-        template.Name = newName;
         using var update = _connection.CreateCommand();
         update.Transaction = transaction;
-        update.CommandText = "UPDATE templates SET name = @new, data_json = @json, updated_at = @now WHERE name = @old";
+        update.CommandText = "UPDATE templates SET name = @new, updated_at = @now WHERE name = @old";
         update.Parameters.AddWithValue("@new", newName);
-        update.Parameters.AddWithValue("@json", System.Text.Json.JsonSerializer.Serialize(template));
         update.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("O"));
         update.Parameters.AddWithValue("@old", currentName);
         await update.ExecuteNonQueryAsync();
@@ -834,6 +932,11 @@ public partial class DatabaseService : IDisposable
     public async Task CreateBackupAsync(string destinationPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        if (IsArchiveBackup(destinationPath))
+        {
+            await CreateArchiveBackupAsync(destinationPath);
+            return;
+        }
         await InitializeAsync();
 
         await using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = destinationPath, Pooling = false }.ToString());
@@ -846,6 +949,11 @@ public partial class DatabaseService : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         if (!File.Exists(sourcePath)) throw new FileNotFoundException("The selected backup file no longer exists.", sourcePath);
+        if (IsArchiveBackup(sourcePath))
+        {
+            await RestoreArchiveAsync(sourcePath);
+            return;
+        }
         var source = Path.GetFullPath(sourcePath);
         var current = Path.GetFullPath(_dbPath);
         if (string.Equals(source, current, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
@@ -866,7 +974,24 @@ public partial class DatabaseService : IDisposable
             await using var backup = new SqliteConnection(snapshotOptions.ToString());
             await backup.OpenAsync();
             sourceConnection.BackupDatabase(backup);
+            if (BackupHasMigration(sourceConnection, 7))
+            {
+                var sourceImages = Path.Combine(Path.GetDirectoryName(source)!, "template-images");
+                var snapshotImages = Path.Combine(snapshotDirectory, "template-images");
+                if (Directory.Exists(sourceImages))
+                {
+                    Directory.CreateDirectory(snapshotImages);
+                    foreach (var file in Directory.EnumerateFiles(sourceImages))
+                        File.Copy(file, Path.Combine(snapshotImages, Path.GetFileName(file)));
+                }
+            }
             ValidateRestoreSource(backup);
+            if (BackupHasMigration(sourceConnection, 7))
+            {
+                // Copy is additive: the current database continues to have every
+                // image it references until the database replacement succeeds.
+                CopyDirectory(Path.Combine(snapshotDirectory, "template-images"), TemplateImageDirectory);
+            }
             await InitializeAsync();
 
             await _initLock.WaitAsync();
@@ -935,6 +1060,18 @@ public partial class DatabaseService : IDisposable
             if (objects.ExecuteScalar() != null)
                 throw new InvalidDataException("The selected backup contains unsupported database objects.");
         }
+        using (var definitions = source.CreateCommand())
+        {
+            definitions.CommandText = "SELECT sql FROM sqlite_schema WHERE type='table' AND sql IS NOT NULL";
+            using var reader = definitions.ExecuteReader();
+            while (reader.Read())
+            {
+                var sql = reader.GetString(0);
+                const string conflictClause = @"\bon\s*(?:(?:/\*[\s\S]*?\*/|--[^\r\n]*(?:\r?\n|$))\s*)*conflict\b";
+                if (System.Text.RegularExpressions.Regex.IsMatch(sql, conflictClause, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                    throw new InvalidDataException("The selected backup contains unsupported conflict rules.");
+            }
+        }
         using (var tables = source.CreateCommand())
         {
             tables.CommandText = "PRAGMA table_list";
@@ -956,7 +1093,18 @@ public partial class DatabaseService : IDisposable
                 var relationship = string.Join("|", Enumerable.Range(0, 6).Select(reader.GetString)).ToLowerInvariant();
                 if (relationship is not ("menu|recipes|recipe_id|id|no action|restrict"
                     or "template_image_references|templates|template_name|name|cascade|cascade"
-                    or "template_image_references|template_image_assets|asset_id|id|no action|restrict"))
+                    or "template_documents|templates|template_name|name|cascade|cascade"
+                    or "template_day_layouts|templates|template_name|name|cascade|cascade"
+                    or "template_text_styles|templates|template_name|name|cascade|cascade"
+                    or "template_block_appearances|templates|template_name|name|cascade|cascade"
+                    or "template_image_placements|templates|template_name|name|cascade|cascade"
+                    or "template_image_references|template_image_assets|asset_id|id|no action|restrict"
+                    or "recipe_ingredients|recipes|recipe_id|id|no action|cascade"
+                    or "recipe_ingredients|ingredients|ingredient_id|id|no action|set null"
+                    or "ingredient_allergens|ingredients|ingredient_id|id|no action|cascade"
+                    or "ingredient_allergens|allergens|allergen_id|id|no action|set null"
+                    or "recipe_additional_allergens|recipes|recipe_id|id|no action|cascade"
+                    or "recipe_additional_allergens|allergens|allergen_id|id|no action|set null"))
                     throw new InvalidDataException("The selected backup contains unsupported database relationships.");
             }
         }
@@ -970,32 +1118,78 @@ public partial class DatabaseService : IDisposable
         using (var version = source.CreateCommand())
         {
             version.CommandText = "PRAGMA user_version";
-            if (Convert.ToInt64(version.ExecuteScalar()) > 2)
+            if (Convert.ToInt64(version.ExecuteScalar()) > 7)
                 throw new InvalidDataException("This backup was created by a newer DMS database version.");
         }
 
         // Older DMS databases may lack later optional tables or columns; schema
         // initialization can add those after the restore succeeds.
+        var relationalOnly = BackupHasMigration(source, 5);
+        var normalizedTemplates = BackupHasMigration(source, 6);
+        var fileBackedImages = BackupHasMigration(source, 7);
         var required = new Dictionary<string, string[]>
         {
-            ["recipes"] = ["id", "name", "category", "portion_size", "calories", "instructions", "ingredients_json", "allergens_json", "created_at", "updated_at"],
-            ["ingredients"] = ["id", "name", "allergens_json", "created_at"],
+            ["recipes"] = relationalOnly
+                ? ["id", "name", "category", "portion_size", "calories", "instructions", "created_at", "updated_at"]
+                : ["id", "name", "category", "portion_size", "calories", "instructions", "ingredients_json", "allergens_json", "created_at", "updated_at"],
+            ["ingredients"] = relationalOnly ? ["id", "name", "created_at"] : ["id", "name", "allergens_json", "created_at"],
             ["allergens"] = ["id", "name", "color", "created_at"],
             ["menu"] = ["id", "date", "slot", "recipe_id", "created_at"],
-            ["templates"] = ["name", "data_json", "is_preset", "created_at", "updated_at"],
+            ["templates"] = normalizedTemplates ? ["name", "is_preset", "created_at", "updated_at"] : ["name", "data_json", "is_preset", "created_at", "updated_at"],
             ["settings"] = ["key", "value"]
         };
+        if (normalizedTemplates)
+        {
+            required["template_image_assets"] = fileBackedImages
+                ? ["id", "name", "content_type", "relative_path"]
+                : ["id", "name", "content_type", "data"];
+            required["template_image_references"] = ["template_name", "asset_id"];
+            required["template_documents"] = ["template_name", .. DocumentFields.Select(p => p.Name)];
+            required["template_day_layouts"] = ["template_name", "position", "height"];
+            required["template_text_styles"] = ["template_name", "key", .. StyleFields.Select(p => p.Name)];
+            required["template_block_appearances"] = ["template_name", "key", .. AppearanceFields.Select(p => p.Name)];
+            required["template_image_placements"] = ["template_name", "position", .. ImageFields.Select(p => p.Name)];
+            required["meal_categories"] = ["position", "id", "name"];
+            required["recent_template_colors"] = ["position", "color"];
+        }
         var hasMenuCategories = BackupHasTable(source, "menu_slot_categories");
         if (hasMenuCategories) required["menu_slot_categories"] = ["date", "slot", "category"];
+        var hasRelationships = BackupHasMigration(source, 4);
+        if (hasRelationships)
+        {
+            required["recipe_ingredients"] = ["recipe_id", "position", "ingredient_id", "saved_name"];
+            required["ingredient_allergens"] = ["ingredient_id", "position", "allergen_id", "saved_name"];
+            required["recipe_additional_allergens"] = ["recipe_id", "position", "allergen_id", "saved_name"];
+        }
         foreach (var (table, columns) in required)
         {
             using var command = source.CreateCommand();
             command.CommandText = $"PRAGMA table_info(\"{table}\")";
             using var reader = command.ExecuteReader();
             var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            while (reader.Read()) found.Add(reader.GetString(1));
+            var ordered = new List<string>();
+            while (reader.Read())
+            {
+                var column = reader.GetString(1);
+                found.Add(column);
+                ordered.Add(column);
+            }
             if (columns.Any(column => !found.Contains(column)))
                 throw new InvalidDataException("The selected file is not a supported DMS database backup.");
+            if (table is "recipes" or "ingredients" &&
+                !ordered.Take(columns.Length).SequenceEqual(columns, StringComparer.OrdinalIgnoreCase))
+                throw new InvalidDataException("The selected backup has unsupported column ordering.");
+        }
+
+        // Recipes do not have unique indexes in any supported DMS schema.
+        // A backup-supplied unique constraint can replace another recipe on insert.
+        using (var indexes = source.CreateCommand())
+        {
+            indexes.CommandText = "PRAGMA index_list(\"recipes\")";
+            using var reader = indexes.ExecuteReader();
+            while (reader.Read())
+                if (reader.GetInt64(2) != 0)
+                    throw new InvalidDataException("The selected backup contains unsupported recipe constraints.");
         }
 
         // Startup reads these rows immediately after restore. Use the same
@@ -1018,13 +1212,13 @@ public partial class DatabaseService : IDisposable
             {
                 recipes.CommandText = "SELECT * FROM recipes ORDER BY name";
                 using var reader = recipes.ExecuteReader();
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < required["recipes"].Length; i++)
                     if (!string.Equals(reader.GetName(i), required["recipes"][i], StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("The selected backup has an unsupported recipe column order.");
                 while (reader.Read())
                 {
                     var recipe = ReadRecipe(reader);
-                    if (recipe.Ingredients.Any(value => value is null) || recipe.Allergens.Any(value => value is null))
+                    if (!relationalOnly && (ReadNames(reader.GetString(6)).Any(value => value is null) || ReadNames(reader.GetString(7)).Any(value => value is null)))
                         throw new InvalidDataException("The selected backup contains an invalid recipe list.");
                 }
             }
@@ -1032,13 +1226,13 @@ public partial class DatabaseService : IDisposable
             {
                 ingredients.CommandText = "SELECT * FROM ingredients ORDER BY name";
                 using var reader = ingredients.ExecuteReader();
-                for (var i = 0; i < 3; i++)
+                for (var i = 0; i < required["ingredients"].Length; i++)
                     if (!string.Equals(reader.GetName(i), required["ingredients"][i], StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("The selected backup has an unsupported ingredient column order.");
                 while (reader.Read())
                 {
                     var ingredient = ReadIngredient(reader);
-                    if (ingredient.Allergens.Any(value => value is null))
+                    if (!relationalOnly && ReadNames(reader.GetString(2)).Any(value => value is null))
                         throw new InvalidDataException("The selected backup contains an invalid ingredient list.");
                 }
             }
@@ -1054,7 +1248,7 @@ public partial class DatabaseService : IDisposable
             {
                 // Migration 3 removes obsolete template formats from older backups.
                 templates.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=3";
-                if (BackupHasTable(source, "schema_migrations") && Convert.ToInt32(templates.ExecuteScalar()) > 0)
+                if (!normalizedTemplates && BackupHasTable(source, "schema_migrations") && Convert.ToInt32(templates.ExecuteScalar()) > 0)
                 {
                     templates.CommandText = "SELECT name, data_json, is_preset FROM templates";
                     using var reader = templates.ExecuteReader();
@@ -1091,7 +1285,10 @@ public partial class DatabaseService : IDisposable
                 using var reader = categories.ExecuteReader();
                 while (reader.Read()) ReadMenuCategory(reader);
             }
-            if (BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
+            if (!fileBackedImages && BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
+            if (fileBackedImages) ValidateFileBackedImageAssets(source, Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
+            if (hasRelationships) ValidateRelationshipRows(source);
+            if (normalizedTemplates) ValidateNormalizedRows(source);
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException
             or InvalidCastException or FormatException or OverflowException or SqliteException)
@@ -1100,12 +1297,70 @@ public partial class DatabaseService : IDisposable
         }
     }
 
+    private static void ValidateNormalizedRows(SqliteConnection source)
+    {
+        foreach (var table in new[] { "template_documents", "template_day_layouts", "template_text_styles", "template_block_appearances", "template_image_placements" })
+        {
+            using var check = source.CreateCommand();
+            check.CommandText = $"SELECT 1 FROM {table} c WHERE NOT EXISTS (SELECT 1 FROM templates t WHERE t.name=c.template_name) LIMIT 1";
+            if (check.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains orphaned template rows.");
+        }
+        using var templates = source.CreateCommand(); templates.CommandText="SELECT name,is_preset FROM templates";
+        using var rows = templates.ExecuteReader();
+        var names = new List<(string,bool)>(); while(rows.Read()) { var preset=rows.GetInt64(1); if(preset is not (0 or 1)) throw new InvalidDataException("Invalid template preset."); names.Add((rows.GetString(0),preset==1)); } rows.Close();
+        foreach (var (name,preset) in names) ReadStoredTemplate(source, name, preset);
+        using (var usage = source.CreateCommand())
+        {
+            usage.CommandText = @"WITH expected AS (
+                SELECT d.template_name, d.BackgroundImageAssetId AS asset_id FROM template_documents d
+                JOIN template_image_assets a ON a.id=d.BackgroundImageAssetId
+                UNION SELECT p.template_name, p.AssetId FROM template_image_placements p
+                JOIN template_image_assets a ON a.id=p.AssetId
+            ) SELECT 1 FROM (
+                SELECT * FROM (SELECT template_name,asset_id FROM expected EXCEPT SELECT template_name,asset_id FROM template_image_references)
+                UNION ALL SELECT * FROM (SELECT template_name,asset_id FROM template_image_references EXCEPT SELECT template_name,asset_id FROM expected)
+            ) LIMIT 1";
+            if (usage.ExecuteScalar() != null) throw new InvalidDataException("The selected backup contains inconsistent template image usage.");
+        }
+        foreach (var table in new[] { "meal_categories", "recent_template_colors" })
+        {
+            using var check=source.CreateCommand(); check.CommandText=$"SELECT position FROM {table} ORDER BY position"; using var reader=check.ExecuteReader(); var i=0; while(reader.Read()) if(reader.GetInt32(0)!=i++) throw new InvalidDataException("Invalid settings order.");
+        }
+        using (var colors = source.CreateCommand()) { colors.CommandText="SELECT color FROM recent_template_colors"; using var reader=colors.ExecuteReader(); while(reader.Read()) _ = reader.GetString(0); }
+        using var categories=source.CreateCommand(); categories.CommandText="SELECT id,name FROM meal_categories ORDER BY position"; using var values=categories.ExecuteReader(); var list=new List<MealCategory>(); while(values.Read()) list.Add(new MealCategory { Id=values.GetString(0), Name=values.GetString(1) }); ValidateMealCategories(list);
+    }
+
     private static bool BackupHasTable(SqliteConnection source, string table)
     {
         using var command = source.CreateCommand();
         command.CommandText = "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = @name COLLATE NOCASE";
         command.Parameters.AddWithValue("@name", table);
         return command.ExecuteScalar() != null;
+    }
+
+    private static bool BackupHasMigration(SqliteConnection source, int version)
+    {
+        if (!BackupHasTable(source, "schema_migrations")) return false;
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM schema_migrations WHERE version=@version";
+        command.Parameters.AddWithValue("@version", version);
+        return Convert.ToInt64(command.ExecuteScalar()) > 0;
+    }
+
+    private static void ValidateRelationshipRows(SqliteConnection source)
+    {
+        foreach (var table in new[]
+        {
+            "recipe_ingredients",
+            "ingredient_allergens",
+            "recipe_additional_allergens"
+        })
+        {
+            using var command = source.CreateCommand();
+            command.CommandText = $"SELECT 1 FROM {table} WHERE position < 0 OR saved_name IS NULL OR length(saved_name)=0 LIMIT 1";
+            if (command.ExecuteScalar() != null)
+                throw new InvalidDataException("The selected backup contains invalid relationship data.");
+        }
     }
 
     public async Task VacuumAsync()

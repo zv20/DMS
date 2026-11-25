@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8
+
+- Store template images as verified files beside the database instead of SQLite BLOBs, reducing database size while preserving existing templates.
+- Create portable DMS backup archives containing the database, template images, and validation manifest; keep legacy database backups restorable.
+- Harden automatic backup finalization on Windows.
+
 ## 0.1.7
 
 - Keep each day’s meals together across template preview, print, PDF and image export.

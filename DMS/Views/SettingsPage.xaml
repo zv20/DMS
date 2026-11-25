@@ -62,7 +62,10 @@
                 <Expander.Header><TextBlock FontSize="16" FontWeight="SemiBold" x:Uid="SetupSection" /></Expander.Header>
                 <StackPanel Margin="16,8,16,16" Spacing="12">
                     <TextBlock TextWrapping="Wrap" x:Uid="SetupSectionHint" />
-                    <Button x:Name="RunSetupButton" Click="RunSetup_Click" HorizontalAlignment="Left" x:Uid="RunSetup" />
+                    <local:WrappingPanel>
+                        <Button x:Name="RunSetupButton" Click="RunSetup_Click" Margin="0,0,8,8" x:Uid="RunSetup" />
+                        <Button x:Name="ShowTourButton" Click="ShowTour_Click" Margin="0,0,8,8" x:Uid="ShowTour" />
+                    </local:WrappingPanel>
                 </StackPanel>
             </Expander>
             <!-- Data Management Section -->

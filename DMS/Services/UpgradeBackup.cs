@@ -49,15 +49,19 @@ internal static class UpgradeBackup
         var root = Path.GetPathRoot(Path.GetFullPath(backupDirectory))
             ?? throw new IOException("Could not determine the backup drive.");
         var wal = sourcePath + "-wal";
-        var required = checked(new FileInfo(sourcePath).Length + (File.Exists(wal) ? new FileInfo(wal).Length : 0) + 16L * 1024 * 1024);
+        var imageFolder = Path.Combine(Path.GetDirectoryName(sourcePath)!, "template-images");
+        var imageBytes = Directory.Exists(imageFolder) ? Directory.EnumerateFiles(imageFolder).Sum(path => new FileInfo(path).Length) : 0;
+        var required = checked(new FileInfo(sourcePath).Length + imageBytes + (File.Exists(wal) ? new FileInfo(wal).Length : 0) + 16L * 1024 * 1024);
         EnsureSpace(new DriveInfo(root).AvailableFreeSpace, required);
         var name = $"DMS-before-update-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}";
-        var temporary = Path.Combine(backupDirectory, name + ".tmp");
-        var completed = Path.Combine(backupDirectory, name + ".db");
+        var snapshot = Path.Combine(backupDirectory, name + ".snapshot.db");
+        var archive = HasFileBackedImages(sourcePath);
+        var temporary = Path.Combine(backupDirectory, name + (archive ? ".tmp.dmsbackup" : ".tmp"));
+        var completed = Path.Combine(backupDirectory, name + (archive ? ".dmsbackup" : ".db"));
         try
         {
             var sourceOptions = new SqliteConnectionStringBuilder { DataSource = sourcePath, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
-            var destinationOptions = new SqliteConnectionStringBuilder { DataSource = temporary, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false };
+            var destinationOptions = new SqliteConnectionStringBuilder { DataSource = archive ? snapshot : temporary, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false };
             using (var source = new SqliteConnection(sourceOptions.ToString()))
             using (var destination = new SqliteConnection(destinationOptions.ToString()))
             {
@@ -69,6 +73,7 @@ internal static class UpgradeBackup
                 if (!string.Equals(Convert.ToString(check.ExecuteScalar()), "ok", StringComparison.OrdinalIgnoreCase))
                     throw new InvalidDataException("The backup did not pass its integrity check.");
             }
+            if (archive) DatabaseService.CreateArchiveFile(snapshot, imageFolder, temporary);
             File.Move(temporary, completed);
             return completed;
         }
@@ -77,11 +82,26 @@ internal static class UpgradeBackup
             AutomaticBackup.DeleteFailedBackup(temporary);
             throw;
         }
+        finally
+        {
+            if (File.Exists(snapshot)) File.Delete(snapshot);
+        }
     }
 
     internal static void EnsureSpace(long available, long required)
     {
         if (available < required)
             throw new IOException("Not enough free space to create the backup. Free space on the Documents drive and try again.");
+    }
+
+    private static bool HasFileBackedImages(string databasePath)
+    {
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = databasePath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_schema WHERE type='table' AND name='template_image_assets'";
+        if (Convert.ToInt32(command.ExecuteScalar()) == 0) return false;
+        command.CommandText = "SELECT COUNT(*) FROM pragma_table_info('template_image_assets') WHERE name='relative_path'";
+        return Convert.ToInt32(command.ExecuteScalar()) != 0;
     }
 }
