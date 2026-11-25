@@ -25,19 +25,9 @@ internal static class AllergenDisplay
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    internal static (List<string> Standard, List<string> WithAllergens) GroupIngredients(Recipe recipe, IReadOnlyDictionary<string, Ingredient> ingredients)
-    {
-        var standard = new List<string>();
-        var withAllergens = new List<string>();
-        foreach (var name in recipe.Ingredients)
-        {
-            if (ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0)
-                withAllergens.Add(name);
-            else
-                standard.Add(name);
-        }
-        return (standard, withAllergens);
-    }
+    internal static List<IngredientDisplayItem> BuildIngredientItems(Recipe recipe, IReadOnlyDictionary<string, Ingredient> ingredients) =>
+        recipe.Ingredients.Select(name => new IngredientDisplayItem(name,
+            ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0)).ToList();
 
     internal static string Icon(string name) => name.Trim().ToLowerInvariant() switch
     {
@@ -47,6 +37,8 @@ internal static class AllergenDisplay
         "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
     };
 }
+
+public sealed record IngredientDisplayItem(string Name, bool HasAllergens);
 
 internal static class IngredientPicker
 {

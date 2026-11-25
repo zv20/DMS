@@ -341,6 +341,15 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(ingredientsLabel);
         var ingredientChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         var ingredientSearch = new TextBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992") };
+        var addIngredientButton = new Button { Content = new SymbolIcon(Symbol.Add), MinWidth = 40 };
+        ToolTipService.SetToolTip(addIngredientButton, L.Get("Text_Add_Ingredient_73b214"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(addIngredientButton, L.Get("Text_Add_Ingredient_73b214"));
+        var ingredientInput = new Grid { ColumnSpacing = 6 };
+        ingredientInput.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        ingredientInput.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        ingredientInput.Children.Add(ingredientSearch);
+        Grid.SetColumn(addIngredientButton, 1);
+        ingredientInput.Children.Add(addIngredientButton);
         var ingredientSuggestionItems = new StackPanel { Spacing = 2 };
         var ingredientSuggestionPanel = new Border
         {
@@ -387,6 +396,93 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             ingredientSearch.Text = "";
             UpdateIngredientSuggestions();
         }
+        async Task AddIngredientAsync()
+        {
+            Ingredient? addedIngredient = null;
+            var nameBox = new TextBox { Header = L.Get("Text_Name_d145bb"), PlaceholderText = L.Get("Text_Ingredient_name_6f2b4d") };
+            var selectedIngredientAllergens = new ObservableCollection<string>();
+            var allergenSearch = new AutoSuggestBox
+            {
+                Header = L.Get("Text_Allergens_537261"),
+                PlaceholderText = L.Get("String_Text_Search_allergens_c1743a"),
+                QueryIcon = new SymbolIcon(Symbol.Find),
+                DisplayMemberPath = "DisplayName",
+                TextMemberPath = "DisplayName"
+            };
+            var allergenChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+            void RebuildAllergenChips()
+            {
+                allergenChips.Children.Clear();
+                foreach (var allergenName in selectedIngredientAllergens)
+                {
+                    var chip = new Button { Content = $"{L.Allergen(allergenName)}  ✕", CornerRadius = new CornerRadius(14), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 6) };
+                    chip.Click += (_, _) => selectedIngredientAllergens.Remove(allergenName);
+                    allergenChips.Children.Add(chip);
+                }
+            }
+            SearchPicker.Attach(allergenSearch, query => availableAllergens
+                .Where(item => !selectedIngredientAllergens.Contains(item.Name, StringComparer.OrdinalIgnoreCase) &&
+                    (query.Length == 0 || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                .ToList());
+            allergenSearch.SuggestionChosen += (_, args) =>
+            {
+                if (args.SelectedItem is Allergen allergen && !selectedIngredientAllergens.Contains(allergen.Name, StringComparer.OrdinalIgnoreCase)) selectedIngredientAllergens.Add(allergen.Name);
+                SearchPicker.ClearAfterSelection(allergenSearch);
+            };
+            selectedIngredientAllergens.CollectionChanged += (_, _) => RebuildAllergenChips();
+
+            var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+            var content = new StackPanel { Spacing = 10 };
+            content.Children.Add(nameBox);
+            content.Children.Add(allergenSearch);
+            content.Children.Add(allergenChips);
+            content.Children.Add(error);
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = L.Get("Text_Add_Ingredient_73b214"),
+                Content = content,
+                PrimaryButtonText = L.Get("Text_Save_efc007"),
+                CloseButtonText = L.Get("Text_Cancel_77dfd2"),
+                DefaultButton = ContentDialogButton.Primary
+            };
+            dialog.PrimaryButtonClick += async (_, args) =>
+            {
+                var deferral = args.GetDeferral();
+                try
+                {
+                    var name = nameBox.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        args.Cancel = true;
+                        error.Text = L.Get("Text_Ingredient_name_is_required_468003");
+                        error.Visibility = Visibility.Visible;
+                        return;
+                    }
+                    if (availableIngredients.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        args.Cancel = true;
+                        error.Text = L.Get("DuplicateIngredientError");
+                        error.Visibility = Visibility.Visible;
+                        return;
+                    }
+                    addedIngredient = new Ingredient { Name = name, Allergens = selectedIngredientAllergens.ToList() };
+                    addedIngredient.Id = await _database.SaveIngredientAsync(addedIngredient);
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.LogError(ex, "Could not add ingredient from the recipe editor");
+                    args.Cancel = true;
+                    error.Text = L.Get("DataSaveFailed");
+                    error.Visibility = Visibility.Visible;
+                }
+                finally { deferral.Complete(); }
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary || addedIngredient == null) return;
+            availableIngredients.Add(addedIngredient);
+            ingredientByName[addedIngredient.Name] = addedIngredient;
+            ChooseIngredient(addedIngredient.Name);
+        }
         void AddIngredientChip(string name)
         {
             var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 260 };
@@ -414,6 +510,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             ingredientChips.Children.Add(chip);
         }
         foreach (var ingredientName in selectedIngredients) AddIngredientChip(ingredientName);
+        addIngredientButton.Click += async (_, _) => await AddIngredientAsync();
         ingredientSearch.GotFocus += (_, _) => UpdateIngredientSuggestions();
         ingredientSearch.TextChanged += (_, _) => UpdateIngredientSuggestions();
         ingredientSearch.KeyDown += (_, args) =>
@@ -424,7 +521,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
                 ChooseIngredient(name);
             }
         };
-        panel.Children.Add(ingredientSearch);
+        panel.Children.Add(ingredientInput);
         panel.Children.Add(ingredientSuggestionPanel);
         panel.Children.Add(ingredientChips);
 

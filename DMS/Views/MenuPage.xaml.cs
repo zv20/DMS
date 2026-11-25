@@ -553,14 +553,34 @@ public sealed class MenuRecipeSuggestion
 {
     public Recipe Recipe { get; }
     public string Name => Recipe.Name;
-    public string StandardIngredients { get; }
-    public string AllergenIngredients { get; }
+    public IReadOnlyList<IngredientDisplayItem> IngredientItems { get; }
 
     public MenuRecipeSuggestion(Recipe recipe, IReadOnlyDictionary<string, Ingredient> ingredients)
     {
         Recipe = recipe;
-        var groups = AllergenDisplay.GroupIngredients(recipe, ingredients);
-        StandardIngredients = string.Join(", ", groups.Standard);
-        AllergenIngredients = string.Join(", ", groups.WithAllergens);
+        IngredientItems = AllergenDisplay.BuildIngredientItems(recipe, ingredients);
+    }
+}
+
+public sealed class InlineRecipeIngredients : TextBlock
+{
+    private IReadOnlyList<IngredientDisplayItem>? _items;
+
+    public IReadOnlyList<IngredientDisplayItem>? Items
+    {
+        get => _items;
+        set
+        {
+            _items = value;
+            Inlines.Clear();
+            if (value == null) return;
+            foreach (var (item, index) in value.Select((item, index) => (item, index)))
+            {
+                if (index > 0) Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = ", " });
+                var run = new Microsoft.UI.Xaml.Documents.Run { Text = item.Name };
+                if (item.HasAllergens) run.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
+                Inlines.Add(run);
+            }
+        }
     }
 }

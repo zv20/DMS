@@ -19,7 +19,7 @@ public sealed class AllergenDisplayTests
     }
 
     [Fact]
-    public void IngredientGroupsSeparateIngredientsThatContainAllergens()
+    public void IngredientItemsKeepRecipeOrderAndMarkAllergenIngredients()
     {
         var recipe = new Recipe { Ingredients = ["Flour", "Salt", "Unknown"] };
         var ingredients = new Dictionary<string, Ingredient>(StringComparer.OrdinalIgnoreCase)
@@ -28,10 +28,10 @@ public sealed class AllergenDisplayTests
             ["salt"] = new() { Name = "salt" }
         };
 
-        var groups = AllergenDisplay.GroupIngredients(recipe, ingredients);
+        var items = AllergenDisplay.BuildIngredientItems(recipe, ingredients);
 
-        Assert.Equal(new[] { "Salt", "Unknown" }, groups.Standard);
-        Assert.Equal(new[] { "Flour" }, groups.WithAllergens);
+        Assert.Equal(new[] { "Flour", "Salt", "Unknown" }, items.Select(item => item.Name));
+        Assert.Equal(new[] { true, false, false }, items.Select(item => item.HasAllergens));
     }
 
     [Fact]

@@ -3,9 +3,8 @@
   <DataTemplate x:Key="PlannerRecipeSuggestionTemplate" x:DataType="local:MenuRecipeSuggestion">
    <Border Margin="2" Padding="10,7" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
     <StackPanel Spacing="2">
-     <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-     <TextBlock Text="{x:Bind StandardIngredients}" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
-     <TextBlock Text="{x:Bind AllergenIngredients}" FontSize="12" Foreground="{ThemeResource DmsAccentBrush}" TextWrapping="Wrap" />
+     <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+     <local:InlineRecipeIngredients Items="{x:Bind IngredientItems}" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" />
     </StackPanel>
    </Border>
   </DataTemplate>
