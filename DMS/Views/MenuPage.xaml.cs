@@ -562,9 +562,12 @@ public sealed class MenuRecipeSuggestion
     }
 }
 
-public sealed class InlineRecipeIngredients : TextBlock
+public sealed class InlineRecipeIngredients : UserControl
 {
+    private readonly TextBlock _textBlock = new() { TextWrapping = TextWrapping.Wrap };
     private IReadOnlyList<IngredientDisplayItem>? _items;
+
+    public InlineRecipeIngredients() => Content = _textBlock;
 
     public IReadOnlyList<IngredientDisplayItem>? Items
     {
@@ -572,14 +575,14 @@ public sealed class InlineRecipeIngredients : TextBlock
         set
         {
             _items = value;
-            Inlines.Clear();
+            _textBlock.Inlines.Clear();
             if (value == null) return;
             foreach (var (item, index) in value.Select((item, index) => (item, index)))
             {
-                if (index > 0) Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = ", " });
+                if (index > 0) _textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = ", " });
                 var run = new Microsoft.UI.Xaml.Documents.Run { Text = item.Name };
                 if (item.HasAllergens) run.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
-                Inlines.Add(run);
+                _textBlock.Inlines.Add(run);
             }
         }
     }
