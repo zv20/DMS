@@ -301,7 +301,8 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         var instructionsBox = new TextBox { Header = L.Get("Text_Instructions_ed58f2"), Text = recipe.Instructions, PlaceholderText = L.Get("Text_Cooking_steps_c3f1dd"), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         panel.Children.Add(instructionsBox);
 
-        // Ingredients: searchable dropdown plus removable wrapping chips.
+        // Ingredients: inline results plus removable wrapping chips. The list
+        // reserves layout space instead of covering selected ingredients.
         var selectedIngredients = new ObservableCollection<string>(recipe.Ingredients);
         var ingredientByName = availableIngredients.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         var manualAllergens = (recipe.AdditionalAllergens ?? recipe.Allergens)
@@ -338,8 +339,44 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         RebuildAllergensFromIngredients();
         var ingredientsLabel = new TextBlock { Text = L.Get("Text_Ingredients_f9e84e"), FontSize = 14, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(ingredientsLabel);
-        var ingredientSearch = new AutoSuggestBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992"), QueryIcon = new SymbolIcon(Symbol.Find) };
         var ingredientChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
+        var ingredientSearch = new TextBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992") };
+        var ingredientSuggestions = new ListView
+        {
+            IsItemClickEnabled = true,
+            SelectionMode = ListViewSelectionMode.None,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            MaxHeight = 176,
+            Visibility = Visibility.Collapsed
+        };
+        var ingredientSuggestionPanel = new Border
+        {
+            BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"],
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Child = ingredientSuggestions,
+            Visibility = Visibility.Collapsed
+        };
+        List<string> MatchingIngredients() => availableIngredients
+            .Where(item => !selectedIngredients.Contains(item.Name, StringComparer.OrdinalIgnoreCase)
+                && (string.IsNullOrWhiteSpace(ingredientSearch.Text) || item.Name.Contains(ingredientSearch.Text, StringComparison.OrdinalIgnoreCase)))
+            .Select(item => item.Name)
+            .ToList();
+        void UpdateIngredientSuggestions()
+        {
+            var matches = MatchingIngredients();
+            ingredientSuggestions.ItemsSource = matches;
+            ingredientSuggestionPanel.Visibility = matches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        void ChooseIngredient(string name)
+        {
+            if (selectedIngredients.Contains(name, StringComparer.OrdinalIgnoreCase)) return;
+            selectedIngredients.Add(name);
+            AddIngredientChip(name);
+            RebuildAllergensFromIngredients();
+            ingredientSearch.Text = "";
+            UpdateIngredientSuggestions();
+        }
         void AddIngredientChip(string name)
         {
             var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 260 };
@@ -362,25 +399,23 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
                 selectedIngredients.Remove(name);
                 ingredientChips.Children.Remove(chip);
                 RebuildAllergensFromIngredients();
+                UpdateIngredientSuggestions();
             };
             ingredientChips.Children.Add(chip);
         }
         foreach (var ingredientName in selectedIngredients) AddIngredientChip(ingredientName);
-        SearchPicker.Attach(ingredientSearch, query => availableIngredients
-                .Where(item => !selectedIngredients.Contains(item.Name, StringComparer.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
-                .Select(item => item.Name)
-                .ToList());
-        ingredientSearch.SuggestionChosen += (sender, args) =>
+        ingredientSearch.TextChanged += (_, _) => UpdateIngredientSuggestions();
+        ingredientSearch.KeyDown += (_, args) =>
         {
-            if (args.SelectedItem is string name && !selectedIngredients.Contains(name, StringComparer.OrdinalIgnoreCase))
+            if (args.Key == Windows.System.VirtualKey.Enter && MatchingIngredients().FirstOrDefault() is { } name)
             {
-                selectedIngredients.Add(name);
-                AddIngredientChip(name);
-                RebuildAllergensFromIngredients();
+                args.Handled = true;
+                ChooseIngredient(name);
             }
-            SearchPicker.ClearAfterSelection(ingredientSearch);
         };
+        ingredientSuggestions.ItemClick += (_, args) => { if (args.ClickedItem is string name) ChooseIngredient(name); };
         panel.Children.Add(ingredientSearch);
+        panel.Children.Add(ingredientSuggestionPanel);
         panel.Children.Add(ingredientChips);
 
         // Allergens: searchable dropdown plus removable selected list.

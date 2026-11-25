@@ -15,4 +15,6 @@ public sealed class AppSettings
     public int? WindowY { get; set; }
     public int? WindowWidth { get; set; }
     public int? WindowHeight { get; set; }
+    public DateTime? PlannerDate { get; set; }
+    public bool PlannerMonthly { get; set; } = true;
 }

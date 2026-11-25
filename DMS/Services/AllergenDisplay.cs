@@ -25,6 +25,20 @@ internal static class AllergenDisplay
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    internal static (List<string> Standard, List<string> WithAllergens) GroupIngredients(Recipe recipe, IReadOnlyDictionary<string, Ingredient> ingredients)
+    {
+        var standard = new List<string>();
+        var withAllergens = new List<string>();
+        foreach (var name in recipe.Ingredients)
+        {
+            if (ingredients.TryGetValue(name, out var ingredient) && ingredient.Allergens.Count > 0)
+                withAllergens.Add(name);
+            else
+                standard.Add(name);
+        }
+        return (standard, withAllergens);
+    }
+
     internal static string Icon(string name) => name.Trim().ToLowerInvariant() switch
     {
         "глутен" => "🌾", "ракообразни" => "🦐", "яйца" => "🥚", "риба" => "🐟",

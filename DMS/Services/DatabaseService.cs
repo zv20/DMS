@@ -714,6 +714,8 @@ public partial class DatabaseService : IDisposable
                 case "window_y": settings.WindowY = int.TryParse(value, out var y) ? y : null; break;
                 case "window_width": settings.WindowWidth = int.TryParse(value, out var width) ? width : null; break;
                 case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
+                case "planner_date": settings.PlannerDate = DateTime.TryParseExact(value, MenuDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var plannerDate) ? plannerDate : null; break;
+                case "planner_monthly": settings.PlannerMonthly = !bool.TryParse(value, out var monthly) || monthly; break;
             }
         }
         reader.Close();
@@ -747,6 +749,27 @@ public partial class DatabaseService : IDisposable
         ? count : throw new InvalidDataException("The saved meals per day setting is invalid.");
 
     public Task SaveSettingsAsync(AppSettings settings) => SaveSettingsAsync(settings, false, false);
+
+    public async Task SavePlannerViewAsync(DateTime date, bool monthly)
+    {
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES (@key, @value)";
+        foreach (var (key, value) in new[]
+        {
+            ("planner_date", date.Date.ToString(MenuDateFormat, CultureInfo.InvariantCulture)),
+            ("planner_monthly", monthly.ToString())
+        })
+        {
+            command.Parameters.Clear();
+            command.Parameters.AddWithValue("@key", key);
+            command.Parameters.AddWithValue("@value", value);
+            await command.ExecuteNonQueryAsync();
+        }
+        transaction.Commit();
+    }
 
     public Task CompleteSetupAsync(AppSettings settings, bool clearPlans) => SaveSettingsAsync(settings, clearPlans, true);
 
