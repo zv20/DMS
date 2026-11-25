@@ -341,31 +341,41 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
         panel.Children.Add(ingredientsLabel);
         var ingredientChips = new WrappingPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         var ingredientSearch = new TextBox { PlaceholderText = L.Get("String_Text_Search_ingredients_540992") };
-        var ingredientSuggestions = new ListView
-        {
-            IsItemClickEnabled = true,
-            SelectionMode = ListViewSelectionMode.None,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            MaxHeight = 176,
-            Visibility = Visibility.Collapsed
-        };
+        var ingredientSuggestionItems = new StackPanel { Spacing = 2 };
         var ingredientSuggestionPanel = new Border
         {
             BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"],
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
-            Child = ingredientSuggestions,
+            Child = new ScrollViewer
+            {
+                Content = ingredientSuggestionItems,
+                MaxHeight = 176,
+                HorizontalScrollMode = ScrollMode.Disabled,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                VerticalScrollMode = ScrollMode.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            },
             Visibility = Visibility.Collapsed
         };
-        List<string> MatchingIngredients() => availableIngredients
-            .Where(item => !selectedIngredients.Contains(item.Name, StringComparer.OrdinalIgnoreCase)
-                && (string.IsNullOrWhiteSpace(ingredientSearch.Text) || item.Name.Contains(ingredientSearch.Text, StringComparison.OrdinalIgnoreCase)))
-            .Select(item => item.Name)
-            .ToList();
+        List<string> MatchingIngredients() => IngredientPicker.Search(availableIngredients, selectedIngredients, ingredientSearch.Text);
         void UpdateIngredientSuggestions()
         {
             var matches = MatchingIngredients();
-            ingredientSuggestions.ItemsSource = matches;
+            ingredientSuggestionItems.Children.Clear();
+            foreach (var name in matches)
+            {
+                var option = new Button
+                {
+                    Content = name,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Padding = new Thickness(10, 6, 10, 6)
+                };
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(option, name);
+                option.Click += (_, _) => ChooseIngredient(name);
+                ingredientSuggestionItems.Children.Add(option);
+            }
             ingredientSuggestionPanel.Visibility = matches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         void ChooseIngredient(string name)
@@ -404,6 +414,7 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
             ingredientChips.Children.Add(chip);
         }
         foreach (var ingredientName in selectedIngredients) AddIngredientChip(ingredientName);
+        ingredientSearch.GotFocus += (_, _) => UpdateIngredientSuggestions();
         ingredientSearch.TextChanged += (_, _) => UpdateIngredientSuggestions();
         ingredientSearch.KeyDown += (_, args) =>
         {
@@ -413,7 +424,6 @@ public sealed partial class RecipesPage : Page, IUnsavedEditor
                 ChooseIngredient(name);
             }
         };
-        ingredientSuggestions.ItemClick += (_, args) => { if (args.ClickedItem is string name) ChooseIngredient(name); };
         panel.Children.Add(ingredientSearch);
         panel.Children.Add(ingredientSuggestionPanel);
         panel.Children.Add(ingredientChips);

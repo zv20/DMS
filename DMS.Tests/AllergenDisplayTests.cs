@@ -33,4 +33,18 @@ public sealed class AllergenDisplayTests
         Assert.Equal(new[] { "Salt", "Unknown" }, groups.Standard);
         Assert.Equal(new[] { "Flour" }, groups.WithAllergens);
     }
+
+    [Fact]
+    public void IngredientSearchMatchesBulgarianNamesIgnoringCaseAndExcludesSelectedIngredients()
+    {
+        var ingredients = new[]
+        {
+            new Ingredient { Name = "Масло" },
+            new Ingredient { Name = "Сол" }
+        };
+
+        var matches = IngredientPicker.Search(ingredients, ["Сол"], "масло");
+
+        Assert.Equal(new[] { "Масло" }, matches);
+    }
 }

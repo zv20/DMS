@@ -47,3 +47,16 @@ internal static class AllergenDisplay
         "серен диоксид и сулфити" => "⚗️", "лупина" => "🌸", "мекотели" => "🐚", _ => "⚠️"
     };
 }
+
+internal static class IngredientPicker
+{
+    internal static List<string> Search(IEnumerable<Ingredient> ingredients, IEnumerable<string> selectedIngredients, string? query)
+    {
+        var selected = selectedIngredients.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return ingredients
+            .Where(item => !selected.Contains(item.Name)
+                && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .Select(item => item.Name)
+            .ToList();
+    }
+}
