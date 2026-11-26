@@ -50,4 +50,10 @@ assert not any(
     for element in elements if local_name(element) == "Property"
 )
 
+release_workflow = (ROOT / ".github" / "workflows" / "auto-release.yml").read_text(encoding="utf-8")
+assert "DELETE_DMS_DATA=1" in release_workflow
+assert "Clean uninstall left DMS data behind." in release_workflow
+assert "Clean uninstall removed a Documents backup." in release_workflow
+assert "'WelcomeDlg', 'UpgradeInfoDlg', 'RemoveDataDlg', 'VerifyReadyDlg', 'ExitDialog'" in release_workflow
+
 print("Installer clean-uninstall definition checks passed.")
