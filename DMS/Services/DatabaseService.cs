@@ -1036,6 +1036,10 @@ public partial class DatabaseService : IDisposable
                     backup.BackupDatabase(_connection);
                     await ConfigureConnectionAsync();
                     await CreateSchemaAsync();
+                    // The source snapshot was validated before replacement. Verify
+                    // the live database and its copied image files once more before
+                    // reporting a successful restore.
+                    ValidateRestoreSource(_connection);
                     _initialized = true;
                     File.Delete(RecoveryMarkerPath);
                     _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);

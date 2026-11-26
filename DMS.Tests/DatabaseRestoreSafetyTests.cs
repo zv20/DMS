@@ -48,6 +48,29 @@ public sealed class DatabaseRestoreSafetyTests : IDisposable
     }
 
     [Fact]
+    public async Task RestoreRejectsFileBackedImageMissingFromSourceBeforeReplacingLiveDatabase()
+    {
+        var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII=");
+        string imageId;
+        using (var source = Open("missing-image.db"))
+        {
+            imageId = (await source.SaveTemplateImageAsync("Art", "image/png", png)).Id;
+            await source.SaveTemplateAsync(new MenuTemplate { Name = "Template", Document = new TemplateDocument { BackgroundImageAssetId = imageId } });
+        }
+        var imagePath = Path.Combine(_folder, "template-images", imageId + ".png");
+        File.Delete(imagePath);
+
+        using var current = Open("missing-image-current.db");
+        await current.SaveRecipeAsync(new Recipe { Name = "Original", Category = "soup" });
+
+        var error = await Assert.ThrowsAsync<InvalidDataException>(() => current.RestoreFromAsync(PathFor("missing-image.db")));
+
+        Assert.Contains(imageId, error.Message, StringComparison.Ordinal);
+        Assert.Contains(imagePath, error.Message, StringComparison.Ordinal);
+        Assert.Equal("Original", Assert.Single(await current.GetAllRecipesAsync()).Name);
+    }
+
+    [Fact]
     public async Task RestoreRejectsNullRequiredTemplateValueBeforeReplacingLiveDatabase()
     {
         using (var source = Open("null-template.db"))
