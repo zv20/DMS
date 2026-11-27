@@ -94,7 +94,7 @@ if ($backup.Extension -eq '.dmsbackup') {
     try {
         $databaseEntry = $archive.GetEntry('dms.db')
         if (!$databaseEntry) { throw 'The pre-update archive does not contain its database.' }
-        $databaseEntry.ExtractToFile($backupDatabase, $true)
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($databaseEntry, $backupDatabase, $true)
     } finally { $archive.Dispose() }
 }
 python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; assert c.execute('SELECT hex(value) FROM upgrade_backup_test').fetchone()[0] == '010203'; c.close()" $backupDatabase
