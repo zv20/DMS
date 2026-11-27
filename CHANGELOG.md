@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Improve planner recipe and ingredient selection, including remembered list view preferences.
+- Strengthen backup image integrity checks and automatic-backup finalization.
+- Add an opt-in clean-uninstall choice that can also remove local DMS data.
+
 ## 0.1.8
 
 - Store template images as verified files beside the database instead of SQLite BLOBs, reducing database size while preserving existing templates.
