@@ -4,6 +4,7 @@
 
 - Improve planner recipe and ingredient selection, including remembered list view preferences.
 - Strengthen backup image integrity checks and automatic-backup finalization.
+- Point restore errors for missing template images to the original backup folder.
 - Add an opt-in clean-uninstall choice that can also remove local DMS data.
 
 ## 0.1.8

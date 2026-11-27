@@ -997,9 +997,11 @@ public partial class DatabaseService : IDisposable
             await using var backup = new SqliteConnection(snapshotOptions.ToString());
             await backup.OpenAsync();
             sourceConnection.BackupDatabase(backup);
-            if (BackupHasMigration(sourceConnection, 7))
+            var sourceImages = BackupHasMigration(sourceConnection, 7)
+                ? Path.Combine(Path.GetDirectoryName(source)!, "template-images")
+                : null;
+            if (sourceImages != null)
             {
-                var sourceImages = Path.Combine(Path.GetDirectoryName(source)!, "template-images");
                 var snapshotImages = Path.Combine(snapshotDirectory, "template-images");
                 if (Directory.Exists(sourceImages))
                 {
@@ -1008,8 +1010,8 @@ public partial class DatabaseService : IDisposable
                         File.Copy(file, Path.Combine(snapshotImages, Path.GetFileName(file)));
                 }
             }
-            ValidateRestoreSource(backup);
-            if (BackupHasMigration(sourceConnection, 7))
+            ValidateRestoreSource(backup, sourceImages);
+            if (sourceImages != null)
             {
                 // Copy is additive: the current database continues to have every
                 // image it references until the database replacement succeeds.
@@ -1077,7 +1079,7 @@ public partial class DatabaseService : IDisposable
         }
     }
 
-    private static void ValidateRestoreSource(SqliteConnection source)
+    private static void ValidateRestoreSource(SqliteConnection source, string? fileBackedImageRoot = null)
     {
         // DMS does not create triggers, views, or virtual tables. They can carry
         // behavior supplied by a backup author into later application operations.
@@ -1313,7 +1315,7 @@ public partial class DatabaseService : IDisposable
                 while (reader.Read()) ReadMenuCategory(reader);
             }
             if (!fileBackedImages && BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
-            if (fileBackedImages) ValidateFileBackedImageAssets(source, Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
+            if (fileBackedImages) ValidateFileBackedImageAssets(source, fileBackedImageRoot ?? Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
             if (hasRelationships) ValidateRelationshipRows(source);
             if (normalizedTemplates) ValidateNormalizedRows(source);
         }
