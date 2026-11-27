@@ -82,9 +82,22 @@ $currentSetup = [IO.Path]::ChangeExtension($CurrentMsi, 'exe')
 $setupLog = Join-Path $env:RUNNER_TEMP 'dms-upgrade-setup.log'
 $result = Start-Process $currentSetup -ArgumentList @('/quiet', '/norestart', "InstallFolder=`"$installDir`"", '/log', "`"$setupLog`"") -Wait -PassThru
 if ($result.ExitCode -ne 0) { Get-Content $setupLog; throw "Setup upgrade failed: $($result.ExitCode)" }
-$backup = Get-ChildItem -LiteralPath $backupDir -Filter 'DMS-before-update-*.db' | Select-Object -First 1
+$backup = Get-ChildItem -LiteralPath $backupDir | Where-Object {
+    $_.Name -like 'DMS-before-update-*' -and $_.Extension -in @('.db', '.dmsbackup')
+} | Select-Object -First 1
 if (!$backup) { throw 'Upgrade did not create a backup.' }
-python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; assert c.execute('SELECT hex(value) FROM upgrade_backup_test').fetchone()[0] == '010203'; c.close()" $backup.FullName
+$backupDatabase = $backup.FullName
+if ($backup.Extension -eq '.dmsbackup') {
+    $backupDatabase = Join-Path $env:RUNNER_TEMP 'dms-upgrade-backup.db'
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [IO.Compression.ZipFile]::OpenRead($backup.FullName)
+    try {
+        $databaseEntry = $archive.GetEntry('dms.db')
+        if (!$databaseEntry) { throw 'The pre-update archive does not contain its database.' }
+        $databaseEntry.ExtractToFile($backupDatabase, $true)
+    } finally { $archive.Dispose() }
+}
+python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; assert c.execute('SELECT hex(value) FROM upgrade_backup_test').fetchone()[0] == '010203'; c.close()" $backupDatabase
 if ($LASTEXITCODE -ne 0) { throw 'The pre-update backup failed validation.' }
 if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $hash -or (Get-Content $marker -Raw).Trim() -ne 'existing user data') {
     throw 'Upgrade removed or changed existing data.'
