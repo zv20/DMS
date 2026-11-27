@@ -189,7 +189,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $installer = New-Object -ComObject WindowsInstaller.Installer
           $database = $installer.OpenDatabase((Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path, 0)
-          foreach ($dialog in @('WelcomeDlg', 'UpgradeInfoDlg', 'VerifyReadyDlg', 'ExitDialog')) {
+          foreach ($dialog in @('WelcomeDlg', 'UpgradeInfoDlg', 'RemoveDataDlg', 'VerifyReadyDlg', 'ExitDialog')) {
             $view = $database.OpenView("SELECT ``Dialog`` FROM ``Dialog`` WHERE ``Dialog`` = '$dialog'")
             $view.Execute()
             if (!$view.Fetch()) { throw "Missing installer dialog: $dialog" }
@@ -245,6 +245,19 @@ jobs:
           if ($result.ExitCode -ne 0) { throw "Uninstall exited with $($result.ExitCode)" }
           if (Test-Path (Join-Path $installDir 'DMS.exe')) { throw 'DMS.exe remained after uninstall.' }
           if (!(Test-Path $database) -or (Get-FileHash $database).Hash -ne $databaseHash) { throw 'Uninstall removed or changed the application database.' }
+          $msi = (Resolve-Path "artifacts/installer/DMS-Setup-$version.msi").Path
+          $documentsBackupDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'DMS Backups'
+          $documentsBackupMarker = Join-Path $documentsBackupDir 'clean-uninstall-retain.txt'
+          $cleanUninstallMarker = Join-Path $dataDir 'clean-uninstall-delete.txt'
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/i', "`"$msi`"", '/qn', '/norestart', "INSTALLFOLDER=`"$installDir`"") -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "MSI reinstall exited with $($result.ExitCode)" }
+          New-Item -ItemType Directory -Force $documentsBackupDir | Out-Null
+          Set-Content -LiteralPath $documentsBackupMarker -Value 'Retain this backup marker.'
+          Set-Content -LiteralPath $cleanUninstallMarker -Value 'Delete this local data marker.'
+          $result = Start-Process -FilePath msiexec.exe -ArgumentList @('/x', "`"$msi`"", '/qn', '/norestart', 'DELETE_DMS_DATA=1') -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Clean uninstall exited with $($result.ExitCode)" }
+          if (Test-Path -LiteralPath $dataDir) { throw 'Clean uninstall left DMS data behind.' }
+          if (!(Test-Path -LiteralPath $documentsBackupMarker)) { throw 'Clean uninstall removed a Documents backup.' }
 
       - name: Verify upgrade from the previous MSI
         shell: pwsh

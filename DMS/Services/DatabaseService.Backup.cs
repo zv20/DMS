@@ -65,7 +65,7 @@ public partial class DatabaseService
             if (!string.Equals(relativePath, RelativeImagePath(id, contentType), StringComparison.Ordinal))
                 throw new InvalidDataException("Stored template image path is invalid.");
             var path = Path.Combine(imageRoot, Path.GetFileName(relativePath));
-            var data = File.ReadAllBytes(path);
+            var data = ReadFileBackedImage(id, path);
             if (data.Length is < 1 or > MaxImageBytes || !ValidImageSignature(contentType, data))
                 throw new InvalidDataException("Stored template image file is invalid.");
             var hash = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
@@ -93,13 +93,10 @@ public partial class DatabaseService
             var manifest = ExtractAndValidateArchive(sourcePath, staging);
             var databasePath = Path.Combine(staging, "dms.db");
             ValidateArchiveDatabase(databasePath, staging, manifest);
-            var images = Path.Combine(staging, "template-images");
-            Directory.CreateDirectory(images);
-            // Do not remove the current image set before the database is restored.
-            // Asset IDs are content hashes, so retaining images that the restored
-            // database does not reference is harmless and keeps an interrupted
-            // restore usable with its previous database.
-            CopyDirectory(images, TemplateImageDirectory);
+            // RestoreFromAsync snapshots and validates this staging directory,
+            // copies its assets, then swaps the database. Keeping the handoff in
+            // one path prevents the archive restore from pre-populating the live
+            // image folder separately from the database replacement.
             await RestoreFromAsync(databasePath);
         }
         finally

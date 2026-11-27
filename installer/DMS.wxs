@@ -28,6 +28,16 @@
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next"><Publish Event="NewDialog" Value="VerifyReadyDlg" /></Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel"><Publish Event="SpawnDialog" Value="CancelDlg" /></Control>
       </Dialog>
+      <Dialog Id="RemoveDataDlg" Width="370" Height="270" Title="Uninstall [ProductName]">
+        <Control Id="Title" Type="Text" X="15" Y="10" Width="340" Height="25" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Remove DMS data?" />
+        <Control Id="Explanation" Type="Text" X="20" Y="45" Width="330" Height="35" Text="DMS can remove the app and keep your data, or permanently delete its local data too." />
+        <Control Id="DeleteDmsData" Type="CheckBox" X="20" Y="92" Width="330" Height="18" Property="DELETE_DMS_DATA" CheckBoxValue="1" Text="Also permanently delete all DMS data" />
+        <Control Id="Details" Type="Text" X="20" Y="116" Width="330" Height="65" Text="This deletes the database, images, settings, logs, and automatic backups in %APPDATA%\DMS. Backups saved elsewhere, including Documents\DMS Backups, are kept." />
+        <Control Id="Warning" Type="Text" X="20" Y="187" Width="330" Height="24" Text="This choice cannot be undone." />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back"><Publish Event="NewDialog" Value="MaintenanceTypeDlg" /></Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next"><Publish Event="NewDialog" Value="VerifyReadyDlg" /></Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel"><Publish Event="SpawnDialog" Value="CancelDlg" /></Control>
+      </Dialog>
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="UpgradeInfoDlg" Condition="WIX_UPGRADE_DETECTED" />
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="NOT WIX_UPGRADE_DETECTED" />
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="UpgradeInfoDlg" Condition="NOT Installed AND WIX_UPGRADE_DETECTED" />
@@ -35,7 +45,7 @@
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Condition="Installed" />
       <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" />
       <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" />
-      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="RemoveDataDlg" />
       <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
       <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="SetLaunchTarget" Order="1" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
       <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchDms" Order="2" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
@@ -43,6 +53,8 @@
       <UIRef Id="WixUI_Common" />
     </UI>
     <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="DELETE_DMS_DATA" Value="0" />
+    <Property Id="DmsDataFolder" Value="%APPDATA%\DMS" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch DMS" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
     <CustomAction Id="SetLaunchTarget" Property="WixShellExecTarget" Value="[INSTALLFOLDER]DMS.exe" />
@@ -78,6 +90,7 @@
       <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder" Guid="*">
         <Shortcut Id="DmsShortcut" Name="DMS" Target="[INSTALLFOLDER]DMS.exe" WorkingDirectory="INSTALLFOLDER" />
         <RegistryValue Root="HKCU" Key="Software\DMS\Installer" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+        <util:RemoveFolderEx On="uninstall" Property="DmsDataFolder" Condition="DELETE_DMS_DATA = 1 AND NOT UPGRADINGPRODUCTCODE" />
       </Component>
     </Feature>
   </Package>

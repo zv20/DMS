@@ -714,6 +714,8 @@ public partial class DatabaseService : IDisposable
                 case "window_y": settings.WindowY = int.TryParse(value, out var y) ? y : null; break;
                 case "window_width": settings.WindowWidth = int.TryParse(value, out var width) ? width : null; break;
                 case "window_height": settings.WindowHeight = int.TryParse(value, out var height) ? height : null; break;
+                case "planner_date": settings.PlannerDate = DateTime.TryParseExact(value, MenuDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var plannerDate) ? plannerDate : null; break;
+                case "planner_monthly": settings.PlannerMonthly = !bool.TryParse(value, out var monthly) || monthly; break;
             }
         }
         reader.Close();
@@ -747,6 +749,27 @@ public partial class DatabaseService : IDisposable
         ? count : throw new InvalidDataException("The saved meals per day setting is invalid.");
 
     public Task SaveSettingsAsync(AppSettings settings) => SaveSettingsAsync(settings, false, false);
+
+    public async Task SavePlannerViewAsync(DateTime date, bool monthly)
+    {
+        await InitializeAsync();
+        using var transaction = _connection!.BeginTransaction();
+        using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT OR REPLACE INTO settings (key, value) VALUES (@key, @value)";
+        foreach (var (key, value) in new[]
+        {
+            ("planner_date", date.Date.ToString(MenuDateFormat, CultureInfo.InvariantCulture)),
+            ("planner_monthly", monthly.ToString())
+        })
+        {
+            command.Parameters.Clear();
+            command.Parameters.AddWithValue("@key", key);
+            command.Parameters.AddWithValue("@value", value);
+            await command.ExecuteNonQueryAsync();
+        }
+        transaction.Commit();
+    }
 
     public Task CompleteSetupAsync(AppSettings settings, bool clearPlans) => SaveSettingsAsync(settings, clearPlans, true);
 
@@ -974,9 +997,11 @@ public partial class DatabaseService : IDisposable
             await using var backup = new SqliteConnection(snapshotOptions.ToString());
             await backup.OpenAsync();
             sourceConnection.BackupDatabase(backup);
-            if (BackupHasMigration(sourceConnection, 7))
+            var sourceImages = BackupHasMigration(sourceConnection, 7)
+                ? Path.Combine(Path.GetDirectoryName(source)!, "template-images")
+                : null;
+            if (sourceImages != null)
             {
-                var sourceImages = Path.Combine(Path.GetDirectoryName(source)!, "template-images");
                 var snapshotImages = Path.Combine(snapshotDirectory, "template-images");
                 if (Directory.Exists(sourceImages))
                 {
@@ -985,8 +1010,8 @@ public partial class DatabaseService : IDisposable
                         File.Copy(file, Path.Combine(snapshotImages, Path.GetFileName(file)));
                 }
             }
-            ValidateRestoreSource(backup);
-            if (BackupHasMigration(sourceConnection, 7))
+            ValidateRestoreSource(backup, sourceImages);
+            if (sourceImages != null)
             {
                 // Copy is additive: the current database continues to have every
                 // image it references until the database replacement succeeds.
@@ -1013,6 +1038,10 @@ public partial class DatabaseService : IDisposable
                     backup.BackupDatabase(_connection);
                     await ConfigureConnectionAsync();
                     await CreateSchemaAsync();
+                    // The source snapshot was validated before replacement. Verify
+                    // the live database and its copied image files once more before
+                    // reporting a successful restore.
+                    ValidateRestoreSource(_connection);
                     _initialized = true;
                     File.Delete(RecoveryMarkerPath);
                     _logger.LogInformation("Restored database from {Path}; prior data saved at {RecoveryPath}", source, recoveryPath);
@@ -1050,7 +1079,7 @@ public partial class DatabaseService : IDisposable
         }
     }
 
-    private static void ValidateRestoreSource(SqliteConnection source)
+    private static void ValidateRestoreSource(SqliteConnection source, string? fileBackedImageRoot = null)
     {
         // DMS does not create triggers, views, or virtual tables. They can carry
         // behavior supplied by a backup author into later application operations.
@@ -1286,7 +1315,7 @@ public partial class DatabaseService : IDisposable
                 while (reader.Read()) ReadMenuCategory(reader);
             }
             if (!fileBackedImages && BackupHasTable(source, "template_image_assets")) ValidateBackupImageAssets(source);
-            if (fileBackedImages) ValidateFileBackedImageAssets(source, Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
+            if (fileBackedImages) ValidateFileBackedImageAssets(source, fileBackedImageRoot ?? Path.Combine(Path.GetDirectoryName(source.DataSource)!, "template-images"));
             if (hasRelationships) ValidateRelationshipRows(source);
             if (normalizedTemplates) ValidateNormalizedRows(source);
         }

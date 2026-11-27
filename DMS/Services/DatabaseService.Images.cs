@@ -315,11 +315,22 @@ public partial class DatabaseService
             if (!string.Equals(relativePath, RelativeImagePath(id, contentType), StringComparison.Ordinal))
                 throw new InvalidDataException("The selected backup contains an invalid template image path.");
             var path = Path.Combine(imageRoot, Path.GetFileName(relativePath));
-            if (!File.Exists(path)) throw new InvalidDataException("The selected backup is missing a template image.");
-            var data = File.ReadAllBytes(path);
+            var data = ReadFileBackedImage(id, path);
             if (data.Length is < 1 or > MaxImageBytes || !ValidImageSignature(contentType, data)
                 || !string.Equals(id, Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant(), StringComparison.Ordinal))
                 throw new InvalidDataException("The selected backup contains an invalid template image.");
+        }
+    }
+
+    private static byte[] ReadFileBackedImage(string id, string path)
+    {
+        try
+        {
+            return File.ReadAllBytes(path);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        {
+            throw new InvalidDataException($"Template image '{id}' is missing at '{path}'.", ex);
         }
     }
 

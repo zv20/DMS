@@ -134,6 +134,21 @@ public sealed class PlannerMutationTests : IDisposable
     }
 
     [Fact]
+    public async Task PlannerViewPersistsTheLastDisplayedWeekAndMode()
+    {
+        using (var database = Open())
+        {
+            await database.SavePlannerViewAsync(new DateTime(2026, 11, 16), monthly: false);
+        }
+
+        using var reopened = Open();
+        var settings = (await reopened.GetSettingsAsync())!;
+
+        Assert.Equal(new DateTime(2026, 11, 16), settings.PlannerDate);
+        Assert.False(settings.PlannerMonthly);
+    }
+
+    [Fact]
     public void NumberedSlotsSortNumerically()
     {
         Assert.Equal(new[] { "slot1", "slot2", "slot10" }, new[] { "slot10", "slot2", "slot1" }.OrderBy(MenuOutputService.SlotOrder));

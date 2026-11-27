@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DMS.Models;
 using DMS.Services;
+using System.Globalization;
 
 namespace DMS.Views;
 
@@ -33,7 +34,11 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         PlannerRoot.AddHandler(UIElement.PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(PlannerRoot_PointerPressed), true);
         _database = App.Services.GetRequiredService<DatabaseService>();
         UpdateViewButtons();
-        Loaded += async (_, _) => await RefreshAsync();
+        Loaded += async (_, _) =>
+        {
+            await RestorePlannerViewAsync();
+            await RefreshAsync();
+        };
     }
 
     internal void SetSetupPreview(AppSettings settings, bool monthly)
@@ -73,13 +78,37 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         try
         {
             if (_busy || _activeSlotSaves > 0 || !await ConfirmDiscardAsync()) return;
-            change(); UpdateViewButtons(); await RefreshAsync();
+            change(); UpdateViewButtons(); await RefreshAsync(); await PersistPlannerViewAsync();
         }
         catch (Exception ex)
         {
             App.Logger.LogError(ex, "Could not change the planner view");
             PeriodLabel.Text = L.Get("DataLoadFailed");
         }
+    }
+
+    private async Task RestorePlannerViewAsync()
+    {
+        if (_previewSettings != null) return;
+        try
+        {
+            var settings = await _database.GetSettingsAsync();
+            if (settings?.PlannerDate is not { } date) return;
+            _date = date;
+            _monthly = settings.PlannerMonthly;
+            UpdateViewButtons();
+        }
+        catch (Exception ex)
+        {
+            App.Logger.LogWarning(ex, "Could not restore the last meal planner view");
+        }
+    }
+
+    private async Task PersistPlannerViewAsync()
+    {
+        if (_previewSettings != null) return;
+        try { await _database.SavePlannerViewAsync(_date, _monthly); }
+        catch (Exception ex) { App.Logger.LogWarning(ex, "Could not save the last meal planner view"); }
     }
     private async void Monthly_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _monthly = true);
     private async void Weekly_Click(object sender, RoutedEventArgs e) => await ChangeViewAsync(() => _monthly = false);
@@ -231,10 +260,14 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
                 .ToList();
         var entriesByDay = entries.ToLookup(entry => entry.Date.Date);
         var recipesById = recipes.ToDictionary(recipe => recipe.Id);
+        var ingredientByName = monthly ? new Dictionary<string, Ingredient>(StringComparer.OrdinalIgnoreCase) :
+            (await _database.GetAllIngredientsAsync()).GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         var recipesByCategory = monthly ? null : recipes
             .GroupBy(recipe => recipe.Category, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key,
-                group => new Lazy<Recipe[]>(() => group.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase).ToArray()),
+                group => new Lazy<MenuRecipeSuggestion[]>(() => group.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(recipe => new MenuRecipeSuggestion(recipe, ingredientByName)).ToArray()),
                 StringComparer.OrdinalIgnoreCase);
         var categories = monthly
             ? new Dictionary<(DateTime Date, string Slot), string>()
@@ -255,7 +288,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             var dayEntries = entriesByDay[day];
             var panel = new StackPanel { Spacing = 8 };
-            panel.Children.Add(new TextBlock { Text = day.ToString("ddd dd MMM"), FontSize = monthly ? 14 : 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(new TextBlock { Text = day.ToString("dddd d", CultureInfo.CurrentCulture), FontSize = monthly ? 14 : 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             if (monthly)
             {
                 var names = Enumerable.Range(0, settings.MealsPerDay).Select(index =>
@@ -375,7 +408,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             InvalidateRecipeTextBox(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i));
     }
 
-    private StackPanel CreateSlot(DateTime day, int index, Recipe? current, IReadOnlyDictionary<string, Lazy<Recipe[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
+    private StackPanel CreateSlot(DateTime day, int index, Recipe? current, IReadOnlyDictionary<string, Lazy<MenuRecipeSuggestion[]>> recipesByCategory, IReadOnlyDictionary<(DateTime Date, string Slot), string> categories, IReadOnlyList<MealCategory> mealCategories)
     {
         var slot = $"slot{index + 1}";
         var selectedCategory = categories.GetValueOrDefault((day.Date, slot)) ?? (current != null && mealCategories.Any(c => c.Id == current.Category) ? current.Category : mealCategories[Math.Min(index, mealCategories.Count - 1)].Id);
@@ -383,7 +416,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         var select = new Button { Width = 36, Height = 32, MinWidth = 0, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
         var categoryMenu = new MenuFlyout();
         select.Flyout = categoryMenu;
-        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, TextMemberPath = "Name", Style = (Style)Application.Current.Resources["PlannerRecipeSuggestStyle"] };
+        var search = new AutoSuggestBox { PlaceholderText = L.Get("Text_Select_recipe_c2831b"), Text = current?.Name ?? "", FontSize = 15, MinWidth = 0, TextMemberPath = "Name", ItemTemplate = (DataTemplate)Resources["PlannerRecipeSuggestionTemplate"], Style = (Style)Application.Current.Resources["PlannerRecipeSuggestStyle"] };
         ToolTipService.SetToolTip(search, current?.Name ?? "");
         search.SizeChanged += (_, args) =>
         {
@@ -453,7 +486,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         {
             try
             {
-                var recipes = recipesByCategory.GetValueOrDefault(selectedCategory)?.Value ?? Array.Empty<Recipe>();
+                var recipes = recipesByCategory.GetValueOrDefault(selectedCategory)?.Value ?? Array.Empty<MenuRecipeSuggestion>();
                 var query = search.Text.Trim();
                 search.ItemsSource = query.Length == 0 ? recipes :
                     Array.FindAll(recipes, recipe => recipe.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
@@ -477,7 +510,7 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
             Suggest();
             if (string.IsNullOrWhiteSpace(search.Text)) await SaveAsync(null, selectedCategory);
         };
-        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is Recipe recipe) await SaveAsync(recipe, selectedCategory); };
+        search.SuggestionChosen += async (_, args) => { if (args.SelectedItem is MenuRecipeSuggestion suggestion) await SaveAsync(suggestion.Recipe, selectedCategory); };
         categoryMenu.Opening += (_, _) =>
         {
             if (categoryMenu.Items.Count != 0) return;
@@ -513,5 +546,44 @@ public sealed partial class MenuPage : Page, IUnsavedEditor
         panel.Children.Add(status);
         panel.Children.Add(retry);
         return panel;
+    }
+}
+
+public sealed class MenuRecipeSuggestion
+{
+    public Recipe Recipe { get; }
+    public string Name => Recipe.Name;
+    public IReadOnlyList<IngredientDisplayItem> IngredientItems { get; }
+
+    public MenuRecipeSuggestion(Recipe recipe, IReadOnlyDictionary<string, Ingredient> ingredients)
+    {
+        Recipe = recipe;
+        IngredientItems = AllergenDisplay.BuildIngredientItems(recipe, ingredients);
+    }
+}
+
+public sealed class InlineRecipeIngredients : UserControl
+{
+    private readonly TextBlock _textBlock = new() { TextWrapping = TextWrapping.Wrap };
+    private IReadOnlyList<IngredientDisplayItem>? _items;
+
+    public InlineRecipeIngredients() => Content = _textBlock;
+
+    public IReadOnlyList<IngredientDisplayItem>? Items
+    {
+        get => _items;
+        set
+        {
+            _items = value;
+            _textBlock.Inlines.Clear();
+            if (value == null) return;
+            foreach (var (item, index) in value.Select((item, index) => (item, index)))
+            {
+                if (index > 0) _textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = ", " });
+                var run = new Microsoft.UI.Xaml.Documents.Run { Text = item.Name };
+                if (item.HasAllergens) run.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DmsAccentBrush"];
+                _textBlock.Inlines.Add(run);
+            }
+        }
     }
 }

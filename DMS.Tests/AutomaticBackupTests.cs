@@ -47,6 +47,24 @@ public sealed class AutomaticBackupTests : IDisposable
         Assert.Equal(previous, Assert.Single(Directory.GetFiles(folder, "*.dmsbackup")));
     }
 
+    [Fact]
+    public async Task MissingTemplateImageFailsWithoutCreatingAnIncompleteArchive()
+    {
+        Directory.CreateDirectory(_folder);
+        var path = Path.Combine(_folder, "dms.db");
+        string imageId;
+        using var database = new DatabaseService(NullLogger<DatabaseService>.Instance, path);
+        imageId = (await database.SaveTemplateImageAsync("Art", "image/png", Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a6sAAAAASUVORK5CYII="))).Id;
+        var imagePath = Path.Combine(_folder, "template-images", imageId + ".png");
+        File.Delete(imagePath);
+
+        var error = await Assert.ThrowsAsync<InvalidDataException>(() => AutomaticBackup.CreateAsync(database));
+
+        Assert.Contains(imageId, error.Message, StringComparison.Ordinal);
+        Assert.Contains(imagePath, error.Message, StringComparison.Ordinal);
+        Assert.Empty(Directory.GetFiles(Path.Combine(_folder, "AutomaticBackups"), "*.dmsbackup"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_folder)) Directory.Delete(_folder, true);
