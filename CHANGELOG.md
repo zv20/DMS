@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.9
 
 - Improve planner recipe and ingredient selection, including remembered list view preferences.
 - Strengthen backup image integrity checks and automatic-backup finalization.
